@@ -160,6 +160,8 @@ avalon.directive("duplex", {
             elem.dispose = disposeDuplex
 
         }
+        var duplexData  = elem.duplexData
+        delete elem.duplexVm
 
         var value = elem.props.value = duplexData.getter(duplexData.vmodel)
         if (!duplexData.elem) {

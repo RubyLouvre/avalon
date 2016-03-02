@@ -22,8 +22,6 @@ var $emit = dispatch.$emit
 //所有vmodel都储存在这
 avalon.vmodels = {}
 
-
-
 /**
  * avalon最核心的方法的两个方法之一（另一个是avalon.scan），返回一个vm
  *  vm拥有如下私有属性

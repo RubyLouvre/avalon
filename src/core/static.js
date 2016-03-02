@@ -7,7 +7,6 @@ var cssHooks = {}
 avalon.mix({
     caches: {},
     version: 1.6,
-    vtree: vars.vtree,
     ui: {}, //兼容1.4.*
     bindingHandlers: {}, //兼容1.4.*
     bindingExecutors: {}, //兼容1.4.*

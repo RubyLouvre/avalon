@@ -11,8 +11,6 @@ var window = global
 var serialize = op.toString
 
 
-
-
 function noop() {
 }
 var builtin = {
@@ -22,8 +20,6 @@ var builtin = {
             Function.apply.call(console.log, console, arguments)
         }
     },
-    vtree: {},
-    dtree: {},
     error: function (str, e) {
         throw (e || Error)(str)
     },

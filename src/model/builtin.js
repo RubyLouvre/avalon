@@ -43,9 +43,9 @@ function makeComputed(sid, spath, heirloom, key, value) {
                         }
                         $emit(get.heirloom[spath], this, spath, val, older)
                         var vid = vm.$id.split(".")[0]
-                        if (avalon.vtree[ vid ]) {
-                            batchUpdateEntity(vid)
-                        }
+
+                        batchUpdateEntity(vid, true)
+
                     }
                 }
             }

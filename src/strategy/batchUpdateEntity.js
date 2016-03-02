@@ -5,8 +5,6 @@ var root = builtin.root
 var document = builtin.document
 var diff = require("../parser/diff")
 
-var vtree = builtin.vtree
-var dtree = builtin.dtree
 //如果正在更新一个子树,那么将它放到
 var dirtyTrees = {}
 var isBatchingUpdates = false
@@ -27,7 +25,9 @@ function batchUpdateEntity(id, immediate) {
         flushUpdate(function () {
             isBatchingUpdates = true
             var neo = vm.$render(vm)
-            diff(neo, dom.vnode)
+            // console.log(dom, dom.vnode,"!!!")
+            diff(neo, dom.vnode|| [])
+           
             updateEntity([dom], neo)
             dom.vnode = neo
             avalon.log("rerender", new Date - avalon.rerenderStart)

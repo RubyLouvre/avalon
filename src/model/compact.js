@@ -20,7 +20,6 @@ var createRender = require("../parser/createRender")
 var diff = require("../parser/diff")
 
 var batchUpdateEntity = require("../strategy/batchUpdateEntity")
-var updateEntity = require("../strategy/updateEntity")
 
 var dispatch = require("./dispatch")
 var $watch = dispatch.$watch
@@ -28,8 +27,6 @@ var $emit = dispatch.$emit
 
 //所有vmodel都储存在这
 avalon.vmodels = {}
-
-avalon.vtree = vars.vtree
 
 /**
  * avalon最核心的方法的两个方法之一（另一个是avalon.scan），返回一个vm
@@ -71,18 +68,8 @@ function define(definition) {
         now = new Date
         vm.$render = avalon.createRender(vnode)
         avalon.log("create template Function ", new Date - now)
-        now = new Date
-        var vnodeHasData = vm.$render(vm)
-        avalon.log("create vtree that has data", new Date - now)
-        now = new Date
-        diff(vnodeHasData, vnode)
-        avalon.log("diff vtrees", new Date - now)
-        now = new Date
-
-        updateEntity([elem], vnodeHasData)
-        avalon.log("render dom tree", new Date - now)
-
-        elem.vnode = vnodeHasData
+      
+        batchUpdateEntity($id)
 
     })
 
@@ -637,7 +624,6 @@ arrayMethods.forEach(function (method) {
             for (var j = 0, jn = neo.length; j < jn; j++) {
                 args[j + 2] = observe(neo[j], old[j], old[j] && old[j].$events, options)
             }
-            //console.log(args)
         } else {
             for (var i = 0, n = arguments.length; i < n; i++) {
                 args[i] = observeItem(arguments[i], {}, options)

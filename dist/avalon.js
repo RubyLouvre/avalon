@@ -230,8 +230,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var serialize = op.toString
 
 
-
-
 	function noop() {
 	}
 	var builtin = {
@@ -241,8 +239,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            Function.apply.call(console.log, console, arguments)
 	        }
 	    },
-	    vtree: {},
-	    dtree: {},
 	    error: function (str, e) {
 	        throw (e || Error)(str)
 	    },
@@ -679,7 +675,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.mix({
 	    caches: {},
 	    version: 1.6,
-	    vtree: vars.vtree,
 	    ui: {}, //兼容1.4.*
 	    bindingHandlers: {}, //兼容1.4.*
 	    bindingExecutors: {}, //兼容1.4.*
@@ -2857,7 +2852,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var diff = __webpack_require__(26)
 
 	var batchUpdateEntity = __webpack_require__(24)
-	var updateEntity = __webpack_require__(25)
 
 	var dispatch = __webpack_require__(48)
 	var $watch = dispatch.$watch
@@ -2865,8 +2859,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	//所有vmodel都储存在这
 	avalon.vmodels = {}
-
-	avalon.vtree = vars.vtree
 
 	/**
 	 * avalon最核心的方法的两个方法之一（另一个是avalon.scan），返回一个vm
@@ -2908,18 +2900,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        now = new Date
 	        vm.$render = avalon.createRender(vnode)
 	        avalon.log("create template Function ", new Date - now)
-	        now = new Date
-	        var vnodeHasData = vm.$render(vm)
-	        avalon.log("create vtree that has data", new Date - now)
-	        now = new Date
-	        diff(vnodeHasData, vnode)
-	        avalon.log("diff vtrees", new Date - now)
-	        now = new Date
-
-	        updateEntity([elem], vnodeHasData)
-	        avalon.log("render dom tree", new Date - now)
-
-	        elem.vnode = vnodeHasData
+	      
+	        batchUpdateEntity($id)
 
 	    })
 
@@ -3474,7 +3456,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            for (var j = 0, jn = neo.length; j < jn; j++) {
 	                args[j + 2] = observe(neo[j], old[j], old[j] && old[j].$events, options)
 	            }
-	            //console.log(args)
 	        } else {
 	            for (var i = 0, n = arguments.length; i < n; i++) {
 	                args[i] = observeItem(arguments[i], {}, options)
@@ -3722,9 +3703,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        }
 	                        $emit(get.heirloom[spath], this, spath, val, older)
 	                        var vid = vm.$id.split(".")[0]
-	                        if (avalon.vtree[ vid ]) {
-	                            batchUpdateEntity(vid)
-	                        }
+
+	                        batchUpdateEntity(vid, true)
+
 	                    }
 	                }
 	            }
@@ -3809,8 +3790,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var document = builtin.document
 	var diff = __webpack_require__(26)
 
-	var vtree = builtin.vtree
-	var dtree = builtin.dtree
 	//如果正在更新一个子树,那么将它放到
 	var dirtyTrees = {}
 	var isBatchingUpdates = false
@@ -3831,7 +3810,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        flushUpdate(function () {
 	            isBatchingUpdates = true
 	            var neo = vm.$render(vm)
-	            diff(neo, dom.vnode)
+	            // console.log(dom, dom.vnode,"!!!")
+	            diff(neo, dom.vnode|| [])
+	           
 	            updateEntity([dom], neo)
 	            dom.vnode = neo
 	            avalon.log("rerender", new Date - avalon.rerenderStart)
@@ -5499,6 +5480,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            elem.dispose = disposeDuplex
 
 	        }
+	        var duplexData  = elem.duplexData
+	        delete elem.duplexVm
 
 	        var value = elem.props.value = duplexData.getter(duplexData.vmodel)
 	        if (!duplexData.elem) {
