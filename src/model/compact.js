@@ -1,24 +1,25 @@
+
+var $$skipArray = require("./skipArray.compact")
 var canHideProperty = require("./canHideProperty")
 var defineProperties = require("./defineProperties")
-var $$skipArray = require("./skipArray.compact")
-
 var vars = require("../base/builtin")
 
-var oneObject = vars.oneObject
-var makeHashCode = vars.makeHashCode
+
 var ap = vars.ap
 var W3C = vars.ap
 var rword = vars.rword
+var oneObject = vars.oneObject
+var makeHashCode = vars.makeHashCode
 
 var innerBuiltin = require("./builtin")
 var isSkip = innerBuiltin.isSkip
+var rtopsub = innerBuiltin.rtopsub
+var Observer = innerBuiltin.Observer
 var getComputed = innerBuiltin.getComputed
 var makeComputed = innerBuiltin.makeComputed
-var Observer = innerBuiltin.Observer
-var rtopsub = innerBuiltin.rtopsub
-var createRender = require("../parser/createRender")
-var diff = require("../parser/diff")
 
+var diff = require("../parser/diff")
+var createRender = require("../parser/createRender")
 var batchUpdateEntity = require("../strategy/batchUpdateEntity")
 
 var dispatch = require("./dispatch")
@@ -29,7 +30,7 @@ var $emit = dispatch.$emit
 avalon.vmodels = {}
 
 /**
- * avalon最核心的方法的两个方法之一（另一个是avalon.scan），返回一个vm
+ * avalon最核心的方法的方法，返回一个vm
  *  vm拥有如下私有属性
  
  $id: vm.id
@@ -68,7 +69,7 @@ function define(definition) {
         now = new Date
         vm.$render = avalon.createRender(vnode)
         avalon.log("create template Function ", new Date - now)
-      
+
         batchUpdateEntity($id)
 
     })
@@ -253,8 +254,6 @@ function makeObservable(sid, spath, heirloom) {
                 var vid = vm.$id.split(".")[0]
                 avalon.rerenderStart = new Date
                 batchUpdateEntity(vid, true)
-
-
             }
         },
         enumerable: true,
@@ -494,15 +493,17 @@ function observeArray(array, old, heirloom, options) {
         if (options.top) {
             makeFire(array, heirloom)
         }
-        array.notify = function (a, b, c) {
+        array.notify = function (a, b, c, d) {
             var vm = heirloom.__vmodel__
             if (vm) {
                 var path = a === null || a === void 0 ?
                         options.pathname :
                         options.pathname + "." + a
                 vm.$fire(path, b, c)
-                avalon.rerenderStart = new Date
-                batchUpdateEntity(vm.$id, true)
+                if (!d) {
+                    avalon.rerenderStart = new Date
+                    batchUpdateEntity(vm.$id, true)
+                }
             }
         }
 
@@ -540,7 +541,7 @@ var newProto = {
             if (index > this.length) {
                 throw Error(index + "set方法的第一个参数不能大于原数组长度")
             }
-            this.notify("*", val, this[index])
+            this.notify("*", val, this[index], true)
             this.splice(index, 1, val)
         }
     },
@@ -566,7 +567,7 @@ var newProto = {
         return []
     },
     removeAll: function (all) { //移除N个元素
-        var on = this.length
+        var size = this.length
         if (Array.isArray(all)) {
             for (var i = this.length - 1; i >= 0; i--) {
                 if (all.indexOf(this[i]) !== -1) {
@@ -587,8 +588,9 @@ var newProto = {
         if (!W3C) {
             this.$model = toJson(this)
         }
+        notifySize(this, size)
         this.notify()
-        notifySize(this, on)
+
     },
     clear: function () {
         this.removeAll()
@@ -596,9 +598,9 @@ var newProto = {
     }
 }
 
-function notifySize(array, on) {
-    if (array.length !== on) {
-        array.notify("length", array.length, on)
+function notifySize(array, size) {
+    if (array.length !== size) {
+        array.notify("length", array.length, size, true)
     }
 }
 
@@ -608,7 +610,7 @@ arrayMethods.forEach(function (method) {
     var original = ap[method]
     newProto[method] = function (a, b) {
         // 继续尝试劫持数组元素的属性
-        var args = [], on = this.length
+        var args = [], size = this.length
         var options = {
             idname: this.$id + ".*",
             top: true
@@ -631,8 +633,9 @@ arrayMethods.forEach(function (method) {
         if (!W3C) {
             this.$model = toJson(this)
         }
+        notifySize(this, size)
         this.notify()
-        notifySize(this, on)
+
         return result
     }
 })

@@ -850,22 +850,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        },
 	        set: fixNull
 	    },
-	    numeric: {
-	        get: function (val, elem) {
-	            var number = parseFloat(val + "")
-	            if (number !== number) {
-	                var arr = /strong|medium|weak/.exec(elem.getAttribute("data-duplex-number")) || ["medium"]
-	                switch (arr[0]) {
-	                    case "strong":
-	                        return 0
-	                    case "medium":
-	                        return val === "" ? "" : 0
-	                    case "weak":
-	                        return val
-	                }
-	            } else {
-	                return number
-	            }
+	    number: {
+	        get: function (val) {
+	            return number(val)
 	        },
 	        set: fixNull
 	    }
@@ -883,6 +870,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //decimals 可选，规定多少个小数位。
 	    //point 可选，规定用作小数点的字符串（默认为 . ）。
 	    //thousands 可选，规定用作千位分隔符的字符串（默认为 , ），如果设置了该参数，那么所有其他参数都是必需的。
+	    if (aguments.length === 1) {
+	        var a = parseFloat(number)
+	        return number === "" ? "" : a !== a ? 0 : a
+	    }
 	    number = (number + '')
 	            .replace(/[^0-9+\-Ee.]/g, '')
 	    var n = !isFinite(+number) ? 0 : +number,
@@ -911,6 +902,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	module.exports = numberFormat
+
+	//处理 货币 http://openexchangerates.github.io/accounting.js/
 
 /***/ },
 /* 13 */
@@ -3385,14 +3378,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    duplexData.vnode = elem
 	    duplexData.set = function (val, checked) {
 	        var vnode = this.vnode
-	        if (typeof vnode.props.xtype === "checkbox") {
+	        if (vnode.props.xtype === "checkbox") {
 	            var array = vnode.props.value
 	            if (!Array.isArray(array)) {
 	                log("ms-duplex应用于checkbox上要对应一个数组")
 	                array = [array]
 	            }
 	            var method = checked ? "ensure" : "remove"
-	            avalon.Array[method](array, val)
+	            if (array[method]) {
+	                array[method](val)
+	            }
 	        } else {
 	            this.setter(this.vmodel, val, this.elem)
 	        }
@@ -3433,12 +3428,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function duplexChecked() {
 	    var elem = this
-	    var a = elem.duplexData.get(elem.checked)
-	    console.log(a)
-	    var lastValue = elem.oldValue = a
-	    elem.duplexData.set(lastValue)
+	    var binding = elem.duplexData
+	    var lastValue = elem.oldValue = binding.get()
+	    binding.set(lastValue)
 	}
 
+	function duplexCheckBox() {
+	    var elem = this
+	    var val = elem.duplexData.get(elem.value)
+	    elem.duplexData.set(val, elem.checked)
+	}
 
 	function duplexValueHack(e) {
 	    if (e.propertyName === "value") {
@@ -3453,11 +3452,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, 17)
 	}
 
-	function duplexCheckBox() {
-	    var elem = this
-	    var val = elem.duplexData.get(elem.value)
-	    elem.duplexData.set(val, elem.checked)
-	}
+
 	function duplexValue(e) { //原来的updateVModel
 	    var elem = this, fixCaret
 	    var val = elem.value //防止递归调用形成死循环
@@ -3617,7 +3612,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-	//处理 货币 http://openexchangerates.github.io/accounting.js/
+
 
 /***/ },
 /* 46 */
@@ -4558,14 +4553,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!$id) {
 	        avalon.log("warning: vm必须指定$id")
 	    }
-	    var vmodel = observeObject(definition, {}, {
+	    var vm = observeObject(definition, {}, {
 	        pathname: "",
 	        idname: $id,
 	        top: true
 	    })
-
-	    avalon.vmodels[$id] = vmodel
-	    return vmodel
+	    avalon.vmodels[$id] = vm
+	    avalon.ready(function () {
+	        var elem = document.getElementById($id)
+	        vm.$element = elem
+	        var now = new Date - 0
+	        var vnode = avalon.createVirtual(elem.outerHTML)
+	        avalon.log("create primitive vtree", new Date - now)
+	        now = new Date
+	        vm.$render = avalon.createRender(vnode)
+	        avalon.log("create template Function ", new Date - now)
+	        batchUpdateEntity($id)
+	    })
+	    
+	    return vm
 	}
 
 
@@ -4707,7 +4713,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    get.heirloom = heirloom
 	    return {
 	        get: get,
-	        set: function(val) {
+	        set: function (val) {
 	            if (old === val) {
 	                return
 	            }
@@ -4743,10 +4749,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        $emit(top.$events[ path ], this, path, val, older)
 	                    }
 	                }
-	                if (avalon.vtree[ vm.$id.split(".")[0] ]) {
-	                    batchUpdateEntity(vm.$id.split(".")[0])
-	                }
-
+	                
+	                avalon.rerenderStart = new Date
+	                batchUpdateEntity(vm.$id.split(".")[0])
 	            }
 	        },
 	        enumerable: true,
@@ -4763,7 +4768,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    heirloom.__vmodel__ = $vmodel
 	    hideProperty($vmodel, "$events", heirloom)
 	    hideProperty($vmodel, "$watch", $watch)
-	    hideProperty($vmodel, "$fire", function(expr, a, b) {
+	    hideProperty($vmodel, "$fire", function (expr, a, b) {
 	        if (expr.indexOf("all!") === 0) {
 	            var p = expr.slice(4)
 	            for (var i in avalon.vmodels) {
@@ -4807,7 +4812,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	//$model的PropertyDescriptor
 	var $modelAccessor = {
-	    get: function() {
+	    get: function () {
 	        return toJson(this)
 	    },
 	    set: avalon.noop,
@@ -4967,16 +4972,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (options.top) {
 	            makeFire(array, heirloom)
 	        }
-	        array.notify = function(a, b, c) {
+	        array.notify = function (a, b, c, d) {
 	            var vm = heirloom.__vmodel__
 	            if (vm) {
 	                var path = a === null || a === void 0 ?
 	                        options.pathname :
 	                        options.pathname + "." + a
 	                vm.$fire(path, b, c)
+	                if (!d) {
+	                    avalon.rerenderStart = new Date
+	                    batchUpdateEntity(vm.$id, true)
+	                }
 	            }
 	        }
-
 
 	        hideProperty(array, "$model", $modelAccessor)
 
@@ -5003,43 +5011,39 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var arrayMethods = ['push', 'pop', 'shift', 'unshift', 'splice']
 	var newProto = {
-	    set: function(index, val) {
+	    set: function (index, val) {
 	        if (((index >>> 0) === index) && this[index] !== val) {
 	            if (index > this.length) {
 	                throw Error(index + "set方法的第一个参数不能大于原数组长度")
 	            }
 
-	            this.notify("*", val, this[index])
+	            this.notify("*", val, this[index], true)
 	            this.splice(index, 1, val)
 	        }
 	    },
-	    contains: function(el) { //判定是否包含
+	    contains: function (el) { //判定是否包含
 	        return this.indexOf(el) !== -1
 	    },
-	    ensure: function(el) {
+	    ensure: function (el) {
 	        if (!this.contains(el)) { //只有不存在才push
 	            this.push(el)
 	        }
 	        return this
 	    },
-	    pushArray: function(arr) {
+	    pushArray: function (arr) {
 	        return this.push.apply(this, arr)
 	    },
-	    remove: function(el) { //移除第一个等于给定值的元素
+	    remove: function (el) { //移除第一个等于给定值的元素
 	        return this.removeAt(this.indexOf(el))
 	    },
-	    removeAt: function(index) { //移除指定索引上的元素
+	    removeAt: function (index) { //移除指定索引上的元素
 	        if ((index >>> 0) === index) {
 	            return this.splice(index, 1)
 	        }
 	        return []
 	    },
-	    size: function() { //取得数组长度，这个函数可以同步视图，length不能
-	        avalon.log("warnning: array.size()将被废弃！")
-	        return this.length
-	    },
-	    removeAll: function(all) { //移除N个元素
-	        var on = this.length
+	    removeAll: function (all) { //移除N个元素
+	        var size = this.length
 	        if (Array.isArray(all)) {
 	            for (var i = this.length - 1; i >= 0; i--) {
 	                if (all.indexOf(this[i]) !== -1) {
@@ -5058,46 +5062,56 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        }
 
+	        notifySize(this, size)
 	        this.notify()
-	        notifySize(this, on)
+
 	    },
-	    clear: function() {
+	    clear: function () {
 	        this.removeAll()
 	        return this
 	    }
 	}
 
-	function notifySize(array, on) {
-	    if (array.length !== on) {
-	        array.notify("size", array.length, on)
-	        array.notify("length", array.length, on)
+	function notifySize(array, size) {
+	    if (array.length !== size) {
+	        array.notify("length", array.length, size, true)
 	    }
 	}
 
 	var _splice = ap.splice
 
-	arrayMethods.forEach(function(method) {
+	arrayMethods.forEach(function (method) {
 	    var original = ap[method]
-	    newProto[method] = function() {
+	    newProto[method] = function () {
 	        // 继续尝试劫持数组元素的属性
-	        var args = [], on = this.length
-
-	        for (var i = 0, n = arguments.length; i < n; i++) {
-	            args[i] = observeItem(arguments[i], {}, {
-	                idname: this.$id + ".*",
-	                top: true
-	            })
+	        var args = [], size = this.length
+	        var options = {
+	            idname: this.$id + ".*",
+	            top: true
 	        }
-	        var result = original.apply(this, args)
+	        if (method === "splice" && this[0] && typeof this[0] === "object") {
+	            var old = this.slice(a, b)
+	            var neo = ap.slice.call(arguments, 2)
+	            var args = [a, b]
+	            for (var j = 0, jn = neo.length; j < jn; j++) {
+	                args[j + 2] = observe(neo[j], old[j], old[j] && old[j].$events, options)
+	            }
+	        } else {
+	            for (var i = 0, n = arguments.length; i < n; i++) {
+	                args[i] = observeItem(arguments[i], {}, options)
+	            }
+	        }
 
+
+	        var result = original.apply(this, args)
+	        notifySize(this, size)
 	        this.notify()
-	        notifySize(this, on)
 	        return result
 	    }
 	})
 
-	"sort,reverse".replace(rword, function(method) {
-	    newProto[method] = function() {
+	"sort,reverse".replace(rword, function (method) {
+	    newProto[method] = function () {
 	        ap[method].apply(this, arguments)
 
 	        this.notify()
@@ -5398,14 +5412,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    duplexData.vnode = elem
 	    duplexData.set = function (val, checked) {
 	        var vnode = this.vnode
-	        if (typeof vnode.props.xtype === "checkbox") {
+	        if (vnode.props.xtype === "checkbox") {
 	            var array = vnode.props.value
 	            if (!Array.isArray(array)) {
 	                log("ms-duplex应用于checkbox上要对应一个数组")
 	                array = [array]
 	            }
 	            var method = checked ? "ensure" : "remove"
-	            avalon.Array[method](array, val)
+	            if (array[method]) {
+	                array[method](val)
+	            }
 	        } else {
 	            this.setter(this.vmodel, val, this.elem)
 	        }
@@ -5446,10 +5462,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function duplexChecked() {
 	    var elem = this
-	    var lastValue = elem.oldValue = elem.duplexData.get(elem.checked)
-	    elem.duplexData.set(lastValue)
+	    var binding = elem.duplexData
+	    var lastValue = elem.oldValue = binding.get()
+	    binding.set(lastValue)
 	}
 
+	function duplexCheckBox() {
+	    var elem = this
+	    var val = elem.duplexData.get(elem.value)
+	    elem.duplexData.set(val, elem.checked)
+	}
 
 	function duplexDragEnd(e) {
 	    var elem = this
@@ -5458,11 +5480,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, 17)
 	}
 
-	function duplexCheckBox() {
-	    var elem = this
-	    var val = elem.duplexData.get(elem.value)
-	    elem.duplexData.set(val, elem.checked)
-	}
+
 	function duplexValue() { //原来的updateVModel
 	    var elem = this, fixCaret
 	    var val = elem.value //防止递归调用形成死循环

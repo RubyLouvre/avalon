@@ -2185,22 +2185,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        },
 	        set: fixNull
 	    },
-	    numeric: {
-	        get: function (val, elem) {
-	            var number = parseFloat(val + "")
-	            if (number !== number) {
-	                var arr = /strong|medium|weak/.exec(elem.getAttribute("data-duplex-number")) || ["medium"]
-	                switch (arr[0]) {
-	                    case "strong":
-	                        return 0
-	                    case "medium":
-	                        return val === "" ? "" : 0
-	                    case "weak":
-	                        return val
-	                }
-	            } else {
-	                return number
-	            }
+	    number: {
+	        get: function (val) {
+	            return number(val)
 	        },
 	        set: fixNull
 	    }
@@ -2218,6 +2205,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //decimals 可选，规定多少个小数位。
 	    //point 可选，规定用作小数点的字符串（默认为 . ）。
 	    //thousands 可选，规定用作千位分隔符的字符串（默认为 , ），如果设置了该参数，那么所有其他参数都是必需的。
+	    if (aguments.length === 1) {
+	        var a = parseFloat(number)
+	        return number === "" ? "" : a !== a ? 0 : a
+	    }
 	    number = (number + '')
 	            .replace(/[^0-9+\-Ee.]/g, '')
 	    var n = !isFinite(+number) ? 0 : +number,
@@ -2246,6 +2237,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	module.exports = numberFormat
+
+	//处理 货币 http://openexchangerates.github.io/accounting.js/
 
 /***/ },
 /* 13 */
@@ -2826,27 +2819,28 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
+	
+	var $$skipArray = __webpack_require__(22)
 	var canHideProperty = __webpack_require__(20)
 	var defineProperties = __webpack_require__(21)
-	var $$skipArray = __webpack_require__(22)
-
 	var vars = __webpack_require__(2)
 
-	var oneObject = vars.oneObject
-	var makeHashCode = vars.makeHashCode
+
 	var ap = vars.ap
 	var W3C = vars.ap
 	var rword = vars.rword
+	var oneObject = vars.oneObject
+	var makeHashCode = vars.makeHashCode
 
 	var innerBuiltin = __webpack_require__(23)
 	var isSkip = innerBuiltin.isSkip
+	var rtopsub = innerBuiltin.rtopsub
+	var Observer = innerBuiltin.Observer
 	var getComputed = innerBuiltin.getComputed
 	var makeComputed = innerBuiltin.makeComputed
-	var Observer = innerBuiltin.Observer
-	var rtopsub = innerBuiltin.rtopsub
-	var createRender = __webpack_require__(49)
-	var diff = __webpack_require__(26)
 
+	var diff = __webpack_require__(26)
+	var createRender = __webpack_require__(49)
 	var batchUpdateEntity = __webpack_require__(24)
 
 	var dispatch = __webpack_require__(48)
@@ -2857,7 +2851,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.vmodels = {}
 
 	/**
-	 * avalon最核心的方法的两个方法之一（另一个是avalon.scan），返回一个vm
+	 * avalon最核心的方法的方法，返回一个vm
 	 *  vm拥有如下私有属性
 	 
 	 $id: vm.id
@@ -2896,7 +2890,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        now = new Date
 	        vm.$render = avalon.createRender(vnode)
 	        avalon.log("create template Function ", new Date - now)
-	      
+
 	        batchUpdateEntity($id)
 
 	    })
@@ -3081,8 +3075,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var vid = vm.$id.split(".")[0]
 	                avalon.rerenderStart = new Date
 	                batchUpdateEntity(vid, true)
-
-
 	            }
 	        },
 	        enumerable: true,
@@ -3322,13 +3314,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (options.top) {
 	            makeFire(array, heirloom)
 	        }
-	        array.notify = function (a, b, c) {
+	        array.notify = function (a, b, c, d) {
 	            var vm = heirloom.__vmodel__
 	            if (vm) {
 	                var path = a === null || a === void 0 ?
 	                        options.pathname :
 	                        options.pathname + "." + a
 	                vm.$fire(path, b, c)
+	                if (!d) {
+	                    avalon.rerenderStart = new Date
+	                    batchUpdateEntity(vm.$id, true)
+	                }
 	            }
 	        }
 
@@ -3366,7 +3362,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (index > this.length) {
 	                throw Error(index + "set方法的第一个参数不能大于原数组长度")
 	            }
-	            this.notify("*", val, this[index])
+	            this.notify("*", val, this[index], true)
 	            this.splice(index, 1, val)
 	        }
 	    },
@@ -3391,12 +3387,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        return []
 	    },
-	    size: function () { //取得数组长度，这个函数可以同步视图，length不能
-	        avalon.log("warnning: array.size()将被废弃！")
-	        return this.length
-	    },
 	    removeAll: function (all) { //移除N个元素
-	        var on = this.length
+	        var size = this.length
 	        if (Array.isArray(all)) {
 	            for (var i = this.length - 1; i >= 0; i--) {
 	                if (all.indexOf(this[i]) !== -1) {
@@ -3417,8 +3409,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!W3C) {
 	            this.$model = toJson(this)
 	        }
+	        notifySize(this, size)
 	        this.notify()
-	        notifySize(this, on)
+
 	    },
 	    clear: function () {
 	        this.removeAll()
@@ -3426,10 +3419,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-	function notifySize(array, on) {
-	    if (array.length !== on) {
-	        array.notify("size", array.length, on)
-	        array.notify("length", array.length, on)
+	function notifySize(array, size) {
+	    if (array.length !== size) {
+	        array.notify("length", array.length, size, true)
 	    }
 	}
 
@@ -3439,8 +3431,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var original = ap[method]
 	    newProto[method] = function (a, b) {
 	        // 继续尝试劫持数组元素的属性
-	        var args = [], on = this.length
-	        //observe(definition, old, heirloom, options)
+	        var args = [], size = this.length
 	        var options = {
 	            idname: this.$id + ".*",
 	            top: true
@@ -3460,12 +3451,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	        var result = original.apply(this, args)
-	        console.log(this, "---")
 	        if (!W3C) {
 	            this.$model = toJson(this)
 	        }
+	        notifySize(this, size)
 	        this.notify()
-	        notifySize(this, on)
+
 	        return result
 	    }
 	})
@@ -5544,14 +5535,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    duplexData.vnode = elem
 	    duplexData.set = function (val, checked) {
 	        var vnode = this.vnode
-	        if (typeof vnode.props.xtype === "checkbox") {
+	        if (vnode.props.xtype === "checkbox") {
 	            var array = vnode.props.value
 	            if (!Array.isArray(array)) {
 	                log("ms-duplex应用于checkbox上要对应一个数组")
 	                array = [array]
 	            }
 	            var method = checked ? "ensure" : "remove"
-	            avalon.Array[method](array, val)
+	            if (array[method]) {
+	                array[method](val)
+	            }
 	        } else {
 	            this.setter(this.vmodel, val, this.elem)
 	        }
@@ -5592,12 +5585,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function duplexChecked() {
 	    var elem = this
-	    var a = elem.duplexData.get(elem.checked)
-	    console.log(a)
-	    var lastValue = elem.oldValue = a
-	    elem.duplexData.set(lastValue)
+	    var binding = elem.duplexData
+	    var lastValue = elem.oldValue = binding.get()
+	    binding.set(lastValue)
 	}
 
+	function duplexCheckBox() {
+	    var elem = this
+	    var val = elem.duplexData.get(elem.value)
+	    elem.duplexData.set(val, elem.checked)
+	}
 
 	function duplexValueHack(e) {
 	    if (e.propertyName === "value") {
@@ -5612,11 +5609,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }, 17)
 	}
 
-	function duplexCheckBox() {
-	    var elem = this
-	    var val = elem.duplexData.get(elem.value)
-	    elem.duplexData.set(val, elem.checked)
-	}
+
 	function duplexValue(e) { //原来的updateVModel
 	    var elem = this, fixCaret
 	    var val = elem.value //防止递归调用形成死循环
@@ -5776,7 +5769,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-	//处理 货币 http://openexchangerates.github.io/accounting.js/
+
 
 /***/ },
 /* 46 */
