@@ -501,6 +501,8 @@ function observeArray(array, old, heirloom, options) {
                         options.pathname :
                         options.pathname + "." + a
                 vm.$fire(path, b, c)
+                avalon.rerenderStart = new Date
+                batchUpdateEntity(vm.$id, true)
             }
         }
 
@@ -563,10 +565,6 @@ var newProto = {
         }
         return []
     },
-    size: function () { //取得数组长度，这个函数可以同步视图，length不能
-        avalon.log("warnning: array.size()将被废弃！")
-        return this.length
-    },
     removeAll: function (all) { //移除N个元素
         var on = this.length
         if (Array.isArray(all)) {
@@ -600,7 +598,6 @@ var newProto = {
 
 function notifySize(array, on) {
     if (array.length !== on) {
-        array.notify("size", array.length, on)
         array.notify("length", array.length, on)
     }
 }
@@ -612,7 +609,6 @@ arrayMethods.forEach(function (method) {
     newProto[method] = function (a, b) {
         // 继续尝试劫持数组元素的属性
         var args = [], on = this.length
-        //observe(definition, old, heirloom, options)
         var options = {
             idname: this.$id + ".*",
             top: true
@@ -632,7 +628,6 @@ arrayMethods.forEach(function (method) {
 
 
         var result = original.apply(this, args)
-        console.log(this, "---")
         if (!W3C) {
             this.$model = toJson(this)
         }

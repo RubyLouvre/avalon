@@ -228,9 +228,9 @@ function makeObservable(sid, spath, heirloom) {
                         $emit(top.$events[ path ], this, path, val, older)
                     }
                 }
-                if (avalon.vtree[ vm.$id.split(".")[0] ]) {
+               
                     batchUpdateEntity(vm.$id.split(".")[0])
-                }
+                
 
             }
         },
@@ -459,6 +459,8 @@ function observeArray(array, old, heirloom, options) {
                         options.pathname :
                         options.pathname + "." + a
                 vm.$fire(path, b, c)
+                avalon.rerenderStart = new Date
+                batchUpdateEntity(vm.$id, true)
             }
         }
 
@@ -519,10 +521,7 @@ var newProto = {
         }
         return []
     },
-    size: function() { //取得数组长度，这个函数可以同步视图，length不能
-        avalon.log("warnning: array.size()将被废弃！")
-        return this.length
-    },
+    
     removeAll: function(all) { //移除N个元素
         var on = this.length
         if (Array.isArray(all)) {
@@ -554,7 +553,6 @@ var newProto = {
 
 function notifySize(array, on) {
     if (array.length !== on) {
-        array.notify("size", array.length, on)
         array.notify("length", array.length, on)
     }
 }

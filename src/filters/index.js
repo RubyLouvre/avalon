@@ -59,22 +59,9 @@ avalon.mix(avalon.filters, {
         },
         set: fixNull
     },
-    numeric: {
-        get: function (val, elem) {
-            var number = parseFloat(val + "")
-            if (number !== number) {
-                var arr = /strong|medium|weak/.exec(elem.getAttribute("data-duplex-number")) || ["medium"]
-                switch (arr[0]) {
-                    case "strong":
-                        return 0
-                    case "medium":
-                        return val === "" ? "" : 0
-                    case "weak":
-                        return val
-                }
-            } else {
-                return number
-            }
+    number: {
+        get: function (val) {
+            return number(val)
         },
         set: fixNull
     }

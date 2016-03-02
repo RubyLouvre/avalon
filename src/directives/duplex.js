@@ -228,14 +228,16 @@ function initDuplexData(elem) {
     duplexData.vnode = elem
     duplexData.set = function (val, checked) {
         var vnode = this.vnode
-        if (typeof vnode.props.xtype === "checkbox") {
+        if (vnode.props.xtype === "checkbox") {
             var array = vnode.props.value
             if (!Array.isArray(array)) {
                 log("ms-duplex应用于checkbox上要对应一个数组")
                 array = [array]
             }
             var method = checked ? "ensure" : "remove"
-            avalon.Array[method](array, val)
+            if (array[method]) {
+                array[method](val)
+            }
         } else {
             this.setter(this.vmodel, val, this.elem)
         }
@@ -276,12 +278,16 @@ function duplexBlur() {
 
 function duplexChecked() {
     var elem = this
-    var a = elem.duplexData.get(elem.checked)
-    console.log(a)
-    var lastValue = elem.oldValue = a
-    elem.duplexData.set(lastValue)
+    var binding = elem.duplexData
+    var lastValue = elem.oldValue = binding.get()
+    binding.set(lastValue)
 }
 
+function duplexCheckBox() {
+    var elem = this
+    var val = elem.duplexData.get(elem.value)
+    elem.duplexData.set(val, elem.checked)
+}
 
 function duplexValueHack(e) {
     if (e.propertyName === "value") {
@@ -296,11 +302,7 @@ function duplexDragEnd(e) {
     }, 17)
 }
 
-function duplexCheckBox() {
-    var elem = this
-    var val = elem.duplexData.get(elem.value)
-    elem.duplexData.set(val, elem.checked)
-}
+
 function duplexValue(e) { //原来的updateVModel
     var elem = this, fixCaret
     var val = elem.value //防止递归调用形成死循环
@@ -460,4 +462,3 @@ function setCaret(ctrl, begin, end) {
     }
 }
 
-//处理 货币 http://openexchangerates.github.io/accounting.js/

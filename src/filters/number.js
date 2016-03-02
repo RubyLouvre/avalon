@@ -4,6 +4,10 @@ function numberFormat(number, decimals, point, thousands) {
     //decimals 可选，规定多少个小数位。
     //point 可选，规定用作小数点的字符串（默认为 . ）。
     //thousands 可选，规定用作千位分隔符的字符串（默认为 , ），如果设置了该参数，那么所有其他参数都是必需的。
+    if (aguments.length === 1) {
+        var a = parseFloat(number)
+        return number === "" ? "" : a !== a ? 0 : a
+    }
     number = (number + '')
             .replace(/[^0-9+\-Ee.]/g, '')
     var n = !isFinite(+number) ? 0 : +number,
@@ -32,3 +36,5 @@ function numberFormat(number, decimals, point, thousands) {
 }
 
 module.exports = numberFormat
+
+//处理 货币 http://openexchangerates.github.io/accounting.js/
