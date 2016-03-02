@@ -1,8 +1,6 @@
 
-var parse = require("../parser/parser")
+var parse = require("../parser/parse")
 
-//var scanNodes = require("../scan/scanNodes")
-//var addHooks = require("../vdom/hooks").addHooks
 avalon.caches["text:all"] = function () {
     var a = this.props["av-text"]
     a = a == null ? '' : a + ""

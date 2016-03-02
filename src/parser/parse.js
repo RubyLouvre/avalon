@@ -1,7 +1,5 @@
 
 var Cache = require("../core/cache")
-//var escapeRegExp = require("../core/config").escapeRegExp
-//var scanExpr = require("../scan/scanExpr")
 
 var rexpr = avalon.config.rexpr
 var quote = require("../base/builtin").quote

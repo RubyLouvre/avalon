@@ -1,6 +1,6 @@
 
 var attrUpdate = require("../dom/attr")
-var parse = require("../parser/parser")
+var parse = require("../parser/parse")
 
 
 var attrDir = avalon.directive("attr", {

@@ -1,6 +1,6 @@
 
 var createVirtual = require("../strategy/createVirtual")
-var parse = require("../parser/parser")
+var parse = require("../parser/parse")
 var VElement = require("../vdom/VElement")
 
 avalon.createRenderProxy = function (str) {

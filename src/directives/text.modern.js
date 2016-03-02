@@ -1,7 +1,5 @@
-var parse = require("../parser/parser")
+var parse = require("../parser/parse")
 
-//var scanNodes = require("../scan/scanNodes")
-//var addHooks = require("../vdom/hooks").addHooks
 function wrapText(text, num) {
     return "(function(){\nvar dynamic" + num + " = " + text + ";\n" +
             "vnode" + num + ".$render = function(a, vm){\n" +

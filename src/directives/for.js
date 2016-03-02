@@ -1,5 +1,4 @@
-var parse = require("../parser/parser")
-
+var parse = require("../parser/parse")
 
 avalon._each = function (obj, fn) {
     if (Array.isArray(obj)) {

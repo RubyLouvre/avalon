@@ -1,6 +1,6 @@
 var rline = /\r?\n/g
 
-function parseExpr(str, useTrim) {
+function parseInterpolate(str, useTrim) {
     var tokens = [],
             value, start = 0,
             stop
@@ -42,4 +42,4 @@ function parseExpr(str, useTrim) {
     return tokens
 }
 
-module.exports = parseExpr
+module.exports = parseInterpolate

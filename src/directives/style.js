@@ -1,5 +1,5 @@
 
-var parse = require("../parser/parser")
+var parse = require("../parser/parse")
 
 avalon.directive("style", {
     parse: function (binding, num) {

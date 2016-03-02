@@ -1,9 +1,6 @@
 var markID = require("../base/builtin").markID
 var quote = require("../base/builtin").quote
 
-//var hooks = require("../vdom/hooks")
-//var addData = hooks.addData
-//var addHooks = hooks.addHooks
 
 //基于事件代理的高性能事件绑定
 var rdash = /\(([^)]*)\)/

@@ -2,7 +2,7 @@ var builtin = require("../base/builtin")
 var document = builtin.document
 var W3C = builtin.W3C
 var root = builtin.root
-var parse = require("../parser/parser")
+var parse = require("../parser/parse")
 
 function parseDisplay(nodeName, val) {
     //用于取得此类标签的默认display值

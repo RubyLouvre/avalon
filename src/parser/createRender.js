@@ -1,7 +1,8 @@
 
+var parse = require("./parse")
 var parseBindings = require("./parseBindings")
-var parseExpr = require("./parseExpr")
-var parse = require("./parser")
+var parseInterpolate = require("./parseInterpolate")
+
 
 var rexpr = avalon.config.rexpr
 var quote = require("../base/builtin").quote
@@ -34,7 +35,7 @@ function toTemplate(arr, num) {
             var hasExpr = rexpr.test(el.nodeValue)
 
             if (hasExpr) {
-                var array = parseExpr(el.nodeValue, false)
+                var array = parseInterpolate(el.nodeValue, false)
                 if (array.length === 1) {
                     var a = parse(array[0].expr)
                 } else {

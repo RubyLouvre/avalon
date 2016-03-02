@@ -8,7 +8,7 @@ var pushArray = builtin.pushArray
 var quote = builtin.quote
 
 var createVirtual = require("../strategy/createVirtual")
-var parse = require("../parser/parser")
+var parse = require("../parser/parse")
 
 var rcheckedType = /^(?:checkbox|radio)$/
 var rcheckedFilter = /\|\s*checked\b/
