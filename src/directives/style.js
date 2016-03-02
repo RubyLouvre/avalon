@@ -32,7 +32,7 @@ avalon.directive("style", {
                 avalon.Array.ensure(list, this.update)
             }
         } else {
-            cur.props["av-style"] = pre.props["av-style"]
+            cur.props["av-style"] = p
         }
     },
     update: function (node, vnode) {
