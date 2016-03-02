@@ -9,6 +9,5 @@ avalon.define = require("./model/modern").define
 avalon.mediatorFactory = require("./model/modern").mediatorFactory
 
 require("./strategy/createVirtual")
-require("./scan/scan")
 require("./directives/modern")
 module.exports = avalon

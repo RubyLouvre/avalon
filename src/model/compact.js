@@ -64,25 +64,26 @@ function define(definition) {
     avalon.vmodels[$id] = vm
     avalon.ready(function () {
         var elem = document.getElementById($id)
+        vm.$element = elem
         var now = new Date - 0
         var vnode = avalon.createVirtual(elem.outerHTML)
-        console.log("create primitive vtree", new Date - now)
+        avalon.log("create primitive vtree", new Date - now)
         now = new Date
         vm.$render = avalon.createRender(vnode)
-        console.log("create template Function ", new Date - now)
+        avalon.log("create template Function ", new Date - now)
         now = new Date
         var vnodeHasData = vm.$render(vm)
-        console.log("create vtree that has data", new Date - now)
+        avalon.log("create vtree that has data", new Date - now)
         now = new Date
         diff(vnodeHasData, vnode)
-        console.log("diff vtrees", new Date - now)
+        avalon.log("diff vtrees", new Date - now)
         now = new Date
 
         updateEntity([elem], vnodeHasData)
-        console.log("render dom tree", new Date - now)
-      
+        avalon.log("render dom tree", new Date - now)
+
         elem.vnode = vnodeHasData
-       
+
     })
 
     return vm
@@ -263,9 +264,9 @@ function makeObservable(sid, spath, heirloom) {
                     }
                 }
                 var vid = vm.$id.split(".")[0]
-                if (avalon.vtree[ vid ]) {
-                    batchUpdateEntity(vid)
-                }
+                avalon.rerenderStart = new Date
+                batchUpdateEntity(vid, true)
+
 
             }
         },

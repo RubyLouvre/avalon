@@ -2,7 +2,15 @@ var oneObject = require("../base/builtin").oneObject
 
 var directives = avalon.directives
 
-
+var priorityMap = {
+    "if": 10,
+    "repeat": 90,
+    "data": 100,
+    "each": 1400,
+    "with": 1500,
+    "duplex": 20000,
+    "on": 30000
+}
 var eventMap = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
 
 var rmsAttr = /^(?:ms|av)-(\w+)-?(.*)/
