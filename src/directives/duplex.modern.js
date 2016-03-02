@@ -21,31 +21,39 @@ avalon.directive("duplex", {
     priority: 2000,
     parse: function (binding, num, elem) {
         var expr = binding.expr
-        var elemType = elem.props.type
+        var etype = elem.props.type
+
         if (rcheckedFilter.test(expr)) {
-            if (rcheckedType.test(elemType)) {
-                elem.props.xtype = "checked"
+            if (rcheckedType.test(etype)) {
+                xtype = "checked"
             } else {
                 avalon.log("只有radio与checkbox才能用checked过滤器")
                 expr = expr.replace(rcheckedFilter, "")
             }
         }
+
         if (rchangeFilter.test(expr)) {
-            if (rnoduplexInput.test(elemType)) {
-                avalon.log(elemType + "不支持change过滤器")
+            if (rnoduplexInput.test(etype)) {
+                avalon.log(etype + "不支持change过滤器")
                 expr = expr.replace(rchangeFilter, "")
             } else {
-                elem.props.xtype = "change"
+                xtype = "change"
             }
+        }
+
+        if (!xtype) {
+            xtype = etype === "select" ? "select" :
+                    etype === "checkbox" ? "checkbox" :
+                    etype === "radio" ? "radio" :
+                    "input"
         }
         binding.expr = expr
         parse(binding, "duplex")
         return "vnode" + num + ".duplexVm = __vmodel__;\n" +
+                "vnode" + num + ".props.xtype = " + quote(xtype) + ";\n" +
                 "vnode" + num + ".props['av-duplex'] = " + quote(binding.expr) + ";\n"
     },
     diff: function (cur, pre) {
-
-        cur.props.xtype = pre.props.xtype
         if (pre.duplexData && pre.duplexData.set) {
             cur.duplexData = pre.duplexData
         } else {
@@ -136,17 +144,10 @@ avalon.directive("duplex", {
 })
 
 function initDuplexData(elem) {
-    var elemType = elem.props.type
-    //获取controll
-    if (!elem.props.xtype) {
-        elem.props.xtype =
-                elemType === "select" ? "select" :
-                elemType === "checkbox" ? "checkbox" :
-                elemType === "radio" ? "radio" :
-                "input"
-    }
+    var etype = elem.props.type
+    var xtype = elem.props.xtype
     var duplexData = {}
-    switch (elem.props.xtype) {
+    switch (xtype) {
         case "checked"://当用户指定了checked过滤器
             duplexData.click = duplexChecked
             break
@@ -193,8 +194,8 @@ function initDuplexData(elem) {
 
     }
 
-    if (elem.props.xtype === "input" && !rnoduplexInput.test(elemType)) {
-        if (elemType !== "hidden") {
+    if (xtype === "input" && !rnoduplexInput.test(etype)) {
+        if (etype !== "hidden") {
             duplexData.focus = duplexFocus
             duplexData.blur = duplexBlur
         }
