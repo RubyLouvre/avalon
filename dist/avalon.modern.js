@@ -4240,6 +4240,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var builtin = __webpack_require__(2)
 	__webpack_require__(6)
 	__webpack_require__(8)
+	__webpack_require__(60)
 	var document = builtin.document
 	var window = builtin.window
 	var root = builtin.root
@@ -5752,6 +5753,45 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	//处理 货币 http://openexchangerates.github.io/accounting.js/
+
+
+/***/ },
+/* 59 */,
+/* 60 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*********************************************************************
+	 *                           DOMReady                               *
+	 **********************************************************************/
+	var builtin = __webpack_require__(2)
+	var document = builtin.document
+	var window = builtin.window
+
+	var readyList = [], isReady
+	var fireReady = function (fn) {
+	    isReady = true
+
+	    while (fn = readyList.shift()) {
+	        fn(avalon)
+	    }
+	}
+
+	if (document.readyState === "complete") {
+	    setTimeout(fireReady) //如果在domReady之外加载
+	} else {
+	    document.addEventListener("DOMContentLoaded", fireReady)
+	}
+
+	avalon.bind(window, "load", fireReady)
+
+	avalon.ready = function (fn) {
+	    if (!isReady) {
+	        readyList.push(fn)
+	    } else {
+	        fn(avalon)
+	    }
+	}
+
 
 
 /***/ }

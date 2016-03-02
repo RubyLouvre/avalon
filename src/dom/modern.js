@@ -6,6 +6,7 @@
 var builtin = require("../base/builtin")
 require("./attr")
 require("./css")
+require("./ready.modern")
 var document = builtin.document
 var window = builtin.window
 var root = builtin.root

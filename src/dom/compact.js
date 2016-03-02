@@ -7,6 +7,7 @@
 var builtin = require("../base/builtin")
 require("./attr")
 require("./css")
+require("./ready")
 var document = builtin.document
 var window = builtin.window
 var oneObject = builtin.oneObject

@@ -766,6 +766,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var builtin = __webpack_require__(2)
 	__webpack_require__(6)
 	__webpack_require__(8)
+	__webpack_require__(59)
 	var document = builtin.document
 	var window = builtin.window
 	var oneObject = builtin.oneObject
@@ -6451,6 +6452,74 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	module.exports = parseExpr
+
+
+/***/ },
+/* 52 */,
+/* 53 */,
+/* 54 */,
+/* 55 */,
+/* 56 */,
+/* 57 */,
+/* 58 */,
+/* 59 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*********************************************************************
+	 *                           DOMReady                               *
+	 **********************************************************************/
+	var builtin = __webpack_require__(2)
+	var document = builtin.document
+	var window = builtin.window
+	var root = builtin.root
+	var W3C = builtin.W3C
+
+	var readyList = [], isReady
+	var fireReady = function(fn) {
+	    isReady = true
+	   
+	    while(fn = readyList.shift()){
+	        fn(avalon)
+	    }
+	}
+
+	function doScrollCheck() {
+	    try { //IE下通过doScrollCheck检测DOM树是否建完
+	        root.doScroll("left")
+	        fireReady()
+	    } catch (e) {
+	        setTimeout(doScrollCheck)
+	    }
+	}
+
+	if (document.readyState === "complete") {
+	    setTimeout(fireReady) //如果在domReady之外加载
+	} else if (W3C) {
+	    document.addEventListener("DOMContentLoaded", fireReady)
+	} else {
+	    document.attachEvent("onreadystatechange", function() {
+	        if (document.readyState === "complete") {
+	            fireReady()
+	        }
+	    })
+	    try {
+	        var isTop = window.frameElement === null
+	    } catch (e) {
+	    }
+	    if (root.doScroll && isTop && window.external) {//fix IE iframe BUG
+	        doScrollCheck()
+	    }
+	}
+	avalon.bind(window, "load", fireReady)
+
+	avalon.ready = function(fn) {
+	    if (!isReady) {
+	        readyList.push(fn)
+	    } else {
+	        fn(avalon)
+	    }
+	}
+
 
 
 /***/ }
