@@ -6,11 +6,8 @@ var cssHooks = {}
 
 avalon.mix({
     caches: {},
-    version: 1.6,
+    version: 2.0,
     ui: {}, //兼容1.4.*
-    bindingHandlers: {}, //兼容1.4.*
-    bindingExecutors: {}, //兼容1.4.*
-    getWidgetData: avalon.noop, //兼容1.4.*
 
     eventHooks: {},
     cssHooks: cssHooks,
@@ -44,11 +41,10 @@ avalon.mix({
         }
     },
     components: {}, //1.5新增
-    
+
     isObject: function (a) {//1.6新增
         return a !== null && typeof a === "object"
     },
-    
     Array: {
         /*只有当前数组不存在此元素时只添加它*/
         ensure: function (target, item) {
@@ -73,8 +69,8 @@ avalon.mix({
 var directives = avalon.directives = {}
 
 avalon.directive = function (name, obj) {
-    avalon.bindingHandlers[name] = obj.init = (obj.init || noop)
-    avalon.bindingExecutors[name] = obj.update = (obj.update || noop)
+    obj.init = (obj.init || noop)
+    obj.update = (obj.update || noop)
 
     return directives[name] = obj
 }
