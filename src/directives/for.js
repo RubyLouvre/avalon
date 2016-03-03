@@ -1,5 +1,7 @@
 var parse = require("../parser/parse")
 
+var updateEntity = require("../strategy/updateEntity")
+
 avalon._each = function (obj, fn) {
     if (Array.isArray(obj)) {
         for (var i = 0; i < obj.length; i++) {
@@ -16,10 +18,10 @@ avalon._each = function (obj, fn) {
         }
     }
 }
-var rforPrefix = /av-for:\s+/
+var rforPrefix = /av-for\:\s*/
 var rforLeft = /^\s*\(\s*/
 var rforRight = /\s*\)\s*$/
-var rforSplit = /\s+,\s+/
+var rforSplit = /\s*,\s*/
 avalon.directive("for", {
     parse: function (str, num) {
         var arr = str.replace(rforPrefix, "").split(" in ")
@@ -74,6 +76,7 @@ avalon.directive("for", {
                 var p = isInCache(cache, c.key)
                 if (p) {
                     indexes[c.index] = p.index
+                    avalon.diff(p.children, c.children)
                 }
             }
             //这是新添加的元素
@@ -182,7 +185,6 @@ function getForByKey(nodes, signature) {
         }
     }
     return components
-    //components.push(com)
 }
 
 //从一组节点,取得要循环的部分(第二次生成的虚拟DOM树会走这分支)

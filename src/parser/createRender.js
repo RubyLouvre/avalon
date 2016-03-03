@@ -18,6 +18,7 @@ function createRender(arr) {
     var body = toTemplate(arr, num) + "\n\nreturn nodes" + num
     // console.log(body)
     var fn = Function("__vmodel__", body)
+    // console.log(fn+"")
     return fn
 }
 function toTemplate(arr, num) {

@@ -36,11 +36,15 @@ function updateEntity(nodes, vnodes, parent) {
                 }
                 delete vnode.change
             }
+            execHooks(node, vnode, parent, "afterChange")
+            continue
          //ms-html,ms-text, ms-visible
         } else if (false === execHooks(node, vnode, parent, "change")) {
             execHooks(node, vnode, parent, "afterChange")//ms-duplex
             continue
-        } else if (!vnode.skipContent && vnode.children && node && node.nodeType === 1) {
+        } 
+        
+        if (!vnode.skipContent && vnode.children && node && node.nodeType === 1) {
             //处理子节点
             updateEntity(avalon.slice(node.childNodes), vnode.children, node)
         }
