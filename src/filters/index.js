@@ -61,7 +61,14 @@ avalon.mix(avalon.filters, {
     },
     number: {
         get: function (val) {
-            return number(val)
+            if (arguments.length === 2) {
+                var last = arguments[1]
+                if (last && last.nodeType === 1) {
+                    var a = parseFloat(val)
+                    return  a === "" ? "" : a !== a ? 0 : a
+                }
+            }
+            return number.apply(0, arguments)
         },
         set: fixNull
     }
