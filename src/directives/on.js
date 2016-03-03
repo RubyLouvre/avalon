@@ -3,52 +3,56 @@ var quote = require("../base/builtin").quote
 
 
 //基于事件代理的高性能事件绑定
-var rdash = /\(([^)]*)\)/
+var parse = require("../parser/parse")
+var revent = /^av-on-(\w+)/
 avalon.directive("on", {
     priority: 3000,
     parse: function (binding, num) {
         return  "vnode" + num + ".onVm = __vmodel__\n" +
-                "vnode" + num + ".props[" + quote(binding.name) + "] = " +
-                "avalon.caches[" + quote(binding.type + ":" + binding.expr) + "] = " +
-                "avalon.caches[" + quote(binding.type + ":" + binding.expr) + "] || " +
-                "avalon.parseExprProxy(" + quote(binding.expr) + ",'on');\n"
+                "vnode" + num + ".props[" + quote(binding.name) + "] = " + parse(binding, "on") + "\n"
     },
     diff: function (cur, pre, type, name) {
-        var curValue = cur.props[name]
-        var preValue = pre.props[name]
-        
-        if (curValue !== preValue) {
-            type = name.replace("av-on-", "").replace(/-\d+$/, "")
-            var uuid = markID(curValue)
-            var search = type + ":" + uuid
+        var fn0 = cur.props[name]
+        var fn1 = pre.props[name]
+        if (fn0 !== fn1) {
+            var match = name.match(revent)
+            type = match[1]
+
+            var search = type + ":" + markID(fn0)
+            cur.addEvents = cur.addEvents || {}
+            cur.addEvents[search] = fn0
+
+            if (typeof fn1 === "function") {
+                cur.removeEvents = cur.removeEvents || {}
+                cur.removeEvents[type + ":" + fn1.uuid] = fn1
+            }
+
             if (!avalon.__eventVM__[search]) {//注册事件回调
                 avalon.__eventVM__[search] = cur.onVm
             }
             delete cur.onVm
-            cur.changeEvents = cur.changeEvents || {}
-            cur.changeEvents[search] = curValue
+            
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
         }
     },
     update: function (node, vnode) {
-        if (!vnode.disposed) {
-            vnode.dom = node
-            for (var key in vnode.changeEvents) {
-                var type = key.split(":").shift()
-                var listener = vnode.changeEvents[key]
-                avalon.bind(node, type.replace(/-\d+$/, ""), listener)
-            }
-            delete vnode.changeEvents
+        var key, type, listener
+        for (key in vnode.removeEvents) {
+            type = key.split(":").shift()
+            listener = vnode.removeEvents[key]
+            avalon.unbind(node, type, listener)
         }
+        delete vnode.removeEvents
+        for (key in vnode.addEvents) {
+            type = key.split(":").shift()
+            listener = vnode.addEvents[key]
+            avalon.bind(node, type, listener)
+        }
+        delete vnode.addEvents
     }
 })
 
-function disposeOn() {
-    if (this._) {
-        avalon.unbind(this._)
-        this.dom = null
-    }
-}
+
 
 
