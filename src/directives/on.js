@@ -7,10 +7,11 @@ var parse = require("../parser/parse")
 var revent = /^av-on-(\w+)/
 var rfilters = /\|.+/g
 var rvar = /([@$]?\w+)/g
+var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
 avalon.directive("on", {
     priority: 3000,
     parse: function (binding, num) {
-        var vars = binding.expr.replace(rfilters, "").match(rvar)
+        var vars = binding.expr.replace(rstring," ").replace(rfilters, "").match(rvar)
         var canCache = vars.every(function (el) {
             return el.charAt(0) === "@" || el === "$event"
         })

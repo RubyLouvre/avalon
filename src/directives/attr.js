@@ -41,4 +41,3 @@ var attrDir = avalon.directive("attr", {
     update: attrUpdate
 })
 
-"aa:2, aa:2"

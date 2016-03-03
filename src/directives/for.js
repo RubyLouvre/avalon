@@ -93,12 +93,12 @@ avalon.directive("for", {
         return i + curLoop.length - 1
 
     },
-    update: function (nodes, virtual, parent) {
-        var bellwether = virtual[0]
-        var action = bellwether.action
-        var startRepeat = nodes[0]
+    update: function (startRepeat, vnode, parent) {
+        var repeatVnodes = vnode.repeatVnodes
+        var nodes = vnode.repeatNodes
+        var action = vnode.action
         var endRepeat = nodes[nodes.length - 1]
-        var vnodes = virtual.slice(1, -1)
+        var vnodes = repeatVnodes.slice(1, -1)
 
         if (action === "replace") {
             var node = startRepeat.nextSibling
@@ -116,8 +116,8 @@ avalon.directive("for", {
             parent.insertBefore(fragment, endRepeat)
             updateEntity(entity, vnodes, parent)
         } else {
-            var groupText = bellwether.signature
-            var indexes = bellwether.indexes
+            var groupText = vnode.signature
+            var indexes = vnode.indexes
             var emptyFragment = document.createDocumentFragment()
             var fragment = emptyFragment.cloneNode(false)
 
@@ -132,7 +132,7 @@ avalon.directive("for", {
                         sortedFragments[indexes[i]] = fragment
                         delete indexes[i]
                     } else {
-                        fragments.push(fragment)
+                        fragments.push(fragment)//?
                     }
                     i++
                     fragment = emptyFragment.cloneNode(false)
@@ -144,12 +144,7 @@ avalon.directive("for", {
             for (i in indexes) {
                 var com = indexes[i]
                 i = parseFloat(i)
-//                fragment = fragments.shift()
-//                if (fragment) {
-//                    sortedFragments[ i ] = fragment
-//                } else {
                 sortedFragments[ i ] = componentToDom(com, emptyFragment.cloneNode(false))
-//                }
             }
 
             for (i = 0, el; el = sortedFragments[i++]; ) {
