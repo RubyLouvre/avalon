@@ -17,27 +17,31 @@ function updateEntity(nodes, vnodes, parent) {
         var node = next
         if (node)
             next = node.nextSibling
-       
-        if (vnode.signature) {//ms-repeat
 
-            var entity = [node], cur = node
-            innerLoop:
-                    while (cur && (cur = cur.nextSibling)) {
-                entity.push(cur)
-                if ((cur.nodeValue || "").indexOf("av-for-end:") === 0) {
-                    next = cur.nextSibling
-                    break innerLoop
+        if (vnode.directive === "for") {//ms-repeat
+            var hooks = vnode.change
+            if (hooks && hooks.length) {
+                var repeatNodes = [node], cur = node
+                innerLoop:
+                        while (cur && (cur = cur.nextSibling)) {
+                    repeatNodes.push(cur)
+                    if ((cur.nodeValue || "").indexOf("av-for-end:") === 0) {
+                        next = cur.nextSibling
+                        break innerLoop
+                    }
                 }
+                var hook, h = 0
+                while(hook = hooks[h++]){
+                    hook(repeatNodes, vnode.repeatVnodes, parent)
+                }
+                delete vnode.change
             }
-            vnode.entity = entity
-            execHooks(node, vnode, parent, "change")
+         //ms-html,ms-text, ms-visible
         } else if (false === execHooks(node, vnode, parent, "change")) {
-            //ms-if,ms-each,ms-repeat这些破坏原来结构的指令会这里进行中断
-            execHooks(node, vnode, parent, "afterChange")
+            execHooks(node, vnode, parent, "afterChange")//ms-duplex
             continue
-
         } else if (!vnode.skipContent && vnode.children && node && node.nodeType === 1) {
-
+            //处理子节点
             updateEntity(avalon.slice(node.childNodes), vnode.children, node)
         }
 
