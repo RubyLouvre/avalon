@@ -397,7 +397,7 @@ var withProxyPool = []
 
 function withProxyAgent(data) {
     var itemName = data.param || "el"
-    return withProxyPool.pop() || withProxyFactory()
+    return withProxyPool.pop() || withProxyFactory(itemName)
 }
 
 function withProxyFactory(itemName) {
