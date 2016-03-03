@@ -5,7 +5,7 @@ avalon._each = function (obj, fn) {
         for (var i = 0; i < obj.length; i++) {
             var value = obj[i]
             var type = typeof value
-            var key = value && type === "object" ? obj : type + value
+            var key = value && type === "object" ? obj.$hashcode : type + value
             fn(i, obj[i], key)
         }
     } else {
@@ -25,7 +25,6 @@ avalon.directive("for", {
         var arr = str.replace(rforPrefix, "").split(" in ")
 
         var def = "var loop" + num + " = " + parse(arr[1]) + "\n"
-
         var kv = arr[0].replace(rforLeft, "").replace(rforRight, "").split(rforSplit)
         if (kv.length === 1) {
             kv.unshift("$key")
@@ -34,15 +33,12 @@ avalon.directive("for", {
         return def + "avalon._each(loop" + num + ", function(" + kv + ",traceKey){\n\n"
     },
     diff: function (current, previous, i) {
-
-
-        var first = current[i]
-        var hasSign1 = "directive" in first
-        var hasSign2 = "directive" in (previous[i] || {})
-        //console.log(first, previous[i],"!")
+        var cur = current[i]
+        var pre = previous[i] || {}
+        var hasSign1 = "directive" in cur
+        var hasSign2 = "directive" in pre
         var curLoop = hasSign1 ? getForBySignature(current, i) :
                 getForByNodeValue(current, i)
-
 
         var preLoop = hasSign2 ? getForBySignature(previous, i) :
                 getForByNodeValue(previous, i)
@@ -57,16 +53,37 @@ avalon.directive("for", {
         } else {
             previous.splice.apply(previous, [i, Math.abs(n)])
         }
-        first.action = !hasSign2 ? "replace" : "update"
-        first.repeatVnodes = curLoop
-        // first.skipContent = false
-        var list = first.change || (first.change = [])
+        cur.action = !hasSign2 ? "replace" : "reorder"
+        cur.repeatVnodes = curLoop
+        var ccom = cur.components = getForByKey(curLoop.slice(1, -1), cur.signature)
+
+        if (cur.action === "reorder") {
+            var cache = {}
+            var order = {}
+            for (var i = 0, c; c = ccom[i++]; ) {
+                saveInCache(cache, c)
+            }
+
+            var pcom = pre.components
+
+            for (var i = 0, c; c = pcom[i++]; ) {
+                var p = isInCache(cache, c.key)
+                if (p) {
+                    order[c.index] = p.index
+                }
+            }
+            cur.order = order
+            //   console.log(order)
+        }
+
+        var list = cur.change || (cur.change = [])
         avalon.Array.ensure(list, this.update)
         return i + curLoop.length - 1
 
     },
     update: function (nodes, vnodes, parent) {
-        var action = vnodes[0].action
+        var bellwether = vnodes[0]
+        var action = bellwether.action
         var startRepeat = nodes[0]
         var endRepeat = nodes[nodes.length - 1]
         if (action === "replace") {
@@ -81,11 +98,63 @@ avalon.directive("for", {
             })
             parent.insertBefore(fragment, endRepeat)
 
+        } else {
+            var groupText = bellwether.signature
+            var indexes = bellwether.order
+            var emptyFragment = document.createDocumentFragment()
+            var fragment = emptyFragment.cloneNode(false)
+
+            var next, sortedFragments = {}, fragments = [],
+                    i = 0, el
+            while (next = startRepeat.nextSibling) {
+                if (next === endRepeat) {
+                    break
+                } else if (next.nodeValue === groupText) {
+                    fragment.appendChild(next)
+                    if (indexes[i] !== void 0) {
+                        // showLog && avalon.log("使用已有的节点")
+                        sortedFragments[indexes[i]] = fragment
+                        delete indexes[i]
+                    } else {
+                        fragments.push(fragment)
+                    }
+                    i++
+                    fragment = emptyFragment.cloneNode(false)
+                } else {
+                    fragment.appendChild(next)
+                }
+            }
+
+            for (i = 0, el; el = sortedFragments[i++]; ) {
+                emptyFragment.appendChild(el)
+            }
+            // console.log(endRepeat, emptyFragment)
+            parent.insertBefore(emptyFragment, endRepeat)
         }
 
     }
 })
-
+function getForByKey(nodes, signature) {
+    var components = []
+    var com = {
+        children: []
+    }
+    for (var i = 0, el; el = nodes[i]; i++) {
+        if (el.type === "#comment" && el.nodeValue === signature) {
+            com.children.push(el)
+            com.key = el.key
+            com.index = components.length
+            components.push(com)
+            com = {
+                children: []
+            }
+        } else {
+            com.children.push(el)
+        }
+    }
+    return components
+    //components.push(com)
+}
 function getForBySignature(nodes, i) {
     var start = nodes[i], node
     var endText = start.nodeValue.replace(":start", ":end")
@@ -115,4 +184,42 @@ function getForByNodeValue(nodes, i) {
         }
     }
     return ret
+}
+
+// 新 位置: 旧位置
+function isInCache(cache, id) {
+    var c = cache[id]
+    if (c) {
+        var stack = [{id: id, c: c}]
+        while (1) {
+            id += "_"
+            if (cache[id]) {
+                stack.push({
+                    id: id,
+                    c: cache[id]
+                })
+            } else {
+                break
+            }
+        }
+        var a = stack.pop()
+        delete cache[a.id]
+        return a.c
+    }
+    return c
+}
+
+function saveInCache(cache, component) {
+    var trackId = component.key
+    if (!cache[trackId]) {
+        cache[trackId] = component
+    } else {
+        while (1) {
+            trackId += "_"
+            if (!cache[trackId]) {
+                cache[trackId] = component
+                break
+            }
+        }
+    }
 }
