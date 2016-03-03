@@ -34,10 +34,12 @@ avalon.directive("for", {
         return def + "avalon._each(loop" + num + ", function(" + kv + ",traceKey){\n\n"
     },
     diff: function (current, previous, i) {
-        var first = current[i]
-        var hasSign1 = "signature" in first
-        var hasSign2 = "signature" in previous[i]
 
+
+        var first = current[i]
+        var hasSign1 = "directive" in first
+        var hasSign2 = "directive" in (previous[i] || {})
+        //console.log(first, previous[i],"!")
         var curLoop = hasSign1 ? getForBySignature(current, i) :
                 getForByNodeValue(current, i)
 
@@ -55,39 +57,38 @@ avalon.directive("for", {
         } else {
             previous.splice.apply(previous, [i, Math.abs(n)])
         }
-        // console.log(current)
-        if (!hasSign2) {
-            first.change = first.change || []
-            first.change.push(function (a, b, parent) {
-                var entity = b.entity
-                var virtual = b.virtual
-               
-                for (var i = 1, n = entity.length - 1; i < n; i++) {
-                    parent.removeChild(entity[i])
-                }
-                var fragment = document.createDocumentFragment()
-                virtual.slice(1, -1).forEach(function (c) {
-                    console.log(avalon.vdomAdaptor(c), "====")
-                    fragment.appendChild(avalon.vdomAdaptor(c).toDOM())
-                })
-
-
-                parent.appendChild(fragment)
-                //挖空它的内部
-                return false
-            })
-        }else{
-            
-        }
-        first.virtual = curLoop
+        first.action = !hasSign2 ? "replace" : "update"
+        first.repeatVnodes = curLoop
+        // first.skipContent = false
+        var list = first.change || (first.change = [])
+        avalon.Array.ensure(list, this.update)
         return i + curLoop.length - 1
+
+    },
+    update: function (nodes, vnodes, parent) {
+        var action = vnodes[0].action
+        var startRepeat = nodes[0]
+        var endRepeat = nodes[nodes.length - 1]
+        if (action === "replace") {
+            var node = startRepeat.nextSibling
+            while (node !== endRepeat) {
+                parent.removeChild(node)
+                node = startRepeat.nextSibling
+            }
+            var fragment = document.createDocumentFragment()
+            vnodes[0].repeatVnodes.slice(1, -1).forEach(function (c) {
+                fragment.appendChild(avalon.vdomAdaptor(c).toDOM())
+            })
+            parent.insertBefore(fragment, endRepeat)
+
+        }
 
     }
 })
 
 function getForBySignature(nodes, i) {
     var start = nodes[i], node
-    var endText = start.signature + ":end"
+    var endText = start.nodeValue.replace(":start", ":end")
     var ret = []
     while (node = nodes[i++]) {
         ret.push(node)
