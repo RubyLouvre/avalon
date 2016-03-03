@@ -7,24 +7,30 @@ function diff(current, previous) {
     for (var i = 0; i < current.length; i++) {
         var cur = current[i]
         var pre = previous[i] || empty
-        if (cur.type === "#text") {
-            if (!cur.skipContent) {
-                directives.expr.diff(cur, pre)
-            }
-        } else if (cur.type === "#comment") {
-            if (!cur.skipContent) {
-                if (cur.signature + ":start" === cur.nodeValue) {
-                    i = directives["for"].diff(current, previous, i)
+        switch (cur.type) {
+            case "#text":
+                if (!cur.skipContent) {
+                    directives.expr.diff(cur, pre)
                 }
-            }
-        } else {
-            if (!cur.skipAttrs) {
-                diffProps(cur, pre)
-            }
-            if (!cur.skipContent) {
-                diff(cur.children, pre.children)
-            }
+                break
+            case "#comment":
+                if (cur.directive === "for") {
+                    i = directives["for"].diff(current, previous, i)
+                } else if (cur.directive === "if") {
+                    directives["if"].diff(cur, pre)
+                }
+                break
+            default:
+                if (!cur.skipAttrs) {
+                    diffProps(cur, pre)
+                }
+                if (!cur.skipContent) {
+                    diff(cur.children, pre.children)
+                }
+                break
+
         }
+
     }
 }
 var rmsAttr = /^(?:ms|av)-(\w+)-?(.*)/

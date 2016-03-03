@@ -1,6 +1,3 @@
-
-var parse = require("../parser/parse")
-
 var makeHashCode = require("../base/builtin").makeHashCode
 var quote = require("../base/builtin").quote
 

@@ -16,7 +16,7 @@ function wrap(a, num) {
 function createRender(arr) {
     var num = num || String(new Date - 0).slice(0, 6)
     var body = toTemplate(arr, num) + "\n\nreturn nodes" + num
-   // console.log(body)
+    // console.log(body)
     var fn = Function("__vmodel__", body)
     return fn
 }
@@ -60,30 +60,29 @@ function toTemplate(arr, num) {
                 forstack.push(signature)
                 str += children + ".push({" +
                         "\n\ttype:'#comment'," +
-                        "\n\tsignature:" + quote(signature) + "," +
+                        "\n\tdirective:'for'," +
+                        "\n\tskipContent:false," +
                         "\n\tnodeValue:" + quote(signature + ":start") + "," +
                         "\n})\n"
                 str += avalon.directives["for"].parse(nodeValue, num)
-                
-            } else if (nodeValue.indexOf("av-for-end:") === 0) {
-                 var signature = forstack[forstack.length - 1]
 
-                 str += children + ".push({" +
-                    "\n\ttype:'#comment'," +
-                    "\n\tskipContent:true," +
-                    "\n\tsignature:" + quote(signature) + "," +
-                    "\n\tnodeValue:" + quote(signature) + "," +
-                    "\n\tkey:traceKey\n})\n"
+            } else if (nodeValue.indexOf("av-for-end:") === 0) {
+                var signature = forstack[forstack.length - 1]
+
+                str += children + ".push({" +
+                        "\n\ttype:'#comment'," +
+                        "\n\tskipContent:true," +
+                        "\n\tnodeValue:" + quote(signature) + "," +
+                        "\n\tkey:traceKey\n})\n"
                 str += "\n})\n" //结束循环
                 if (forstack.length) {
                     var signature = forstack[forstack.length - 1]
                     str += children + ".push({" +
                             "\n\ttype:'#comment'," +
                             "\n\tskipContent:true," +
-                            "\n\tsignature:" + quote(signature) + "," +
                             "\n\tnodeValue:" + quote(signature + ":end") + "," +
                             "\n})\n"
-                    
+
                     forstack.pop()
                 }
             } else if (nodeValue.indexOf("js:") === 0) {
@@ -93,26 +92,28 @@ function toTemplate(arr, num) {
             }
             continue
         } else { //处理元素节点
-            str += "var " + vnode + " = {type:" + quote(el.type) + ", props:{}, children:[], template:''}\n"
-            str += vnode + ".isVoidTag = " + !!el.isVoidTag + "\n"
             var hasIf = el.props["av-if"]
-
-            if (hasIf) {
-
-                str += "if(!(" + parse(hasIf,'if') + ")){\n"
+            if (hasIf) { // 优化处理av-if指令
+                str += "if(!(" + parse(hasIf, 'if') + ")){\n"
                 str += children + ".push({" +
-                        "\n\ttype:'#comment'," +
+                        "\n\ttype: '#comment'," +
+                        "\n\tdirective: 'if'," +
                         "\n\tnodeValue: '<!--av-if:-->'," +
-                        "\n\tskipContent:true," +
-                        "\n\tprops:{'av-if':true}})\n"
+                        "\n\tprops: {'av-if':true} })\n"
                 str += "\n}else{\n\n"
 
             }
-            var hasBindings = parseBindings( el.props, num,  el )
+            str += "var " + vnode + " = {" +
+                    "\n\ttype: " + quote(el.type) + "," +
+                    "\n\tprops: {}," +
+                    "\n\tchildren: []," +
+                    "\n\tisVoidTag: " + !!el.isVoidTag + "," +
+                    "\n\ttemplate: '' }\n"
+            var hasBindings = parseBindings(el.props, num,  el)
             if (hasBindings) {
                 str += hasBindings
             } else {
-                str += vnode + "template= " + quote(el.template) + "\n"
+                str += vnode + ".template= " + quote(el.template) + "\n"
             }
             //av-text,av-html,会将一个元素变成组件
             str += "if(" + vnode + ".$render){\n"
@@ -127,7 +128,7 @@ function toTemplate(arr, num) {
                 str += "}\n"
                 hasIf = false
             }
-        } 
+        }
 
     }
     return str
