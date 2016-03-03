@@ -32,6 +32,8 @@ function fill(a) {
     return val
 }
 var pushArray = require("../base/builtin").pushArray
+var makeHashCode = require("../base/builtin").makeHashCode
+
 var vdom = require("../vdom/index")
 var VText = vdom.VText
 var VComment = vdom.VComment
@@ -183,13 +185,14 @@ function createVirtual(text, recursive) {
                 if (type === "input" && !node.props.type) {
                     node.props.type = "text"
                 }
-                //  controllerHook(node)
+              
             }
         }
         if (node) {
             nodes.push(node)
             text = text.slice(matchText.length)
             if (node.type === '#comment' && rspAfterForStart.test(node.nodeValue)) {
+                node.signature = makeHashCode("for")
                 //移除紧挨着<!--av-for:xxxx-->后的空白节点
                 text = text.replace(rleftTrim, "")
             }
