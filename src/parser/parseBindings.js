@@ -22,17 +22,21 @@ function parseBindings(props, num, elem) {
             return  "vnode" + num + ".skipAttrs = true\n"
         }
         if (value && (match = i.match(rmsAttr))) {
+
             var type = match[1]
             var param = match[2] || ""
             var name = i
+
             if (eventMap[type]) {
                 param = type
                 type = "on"
+            }
+            name = "av-" + type + (param ? "-" + param : "")
+            if (i !== name) {
                 delete props[name]
-                name = "av-on-"+param
                 props[name] = value
             }
-            
+
             if (directives[type]) {
 
                 var binding = {
@@ -43,7 +47,6 @@ function parseBindings(props, num, elem) {
                     priority: directives[type].priority ||
                             type.charCodeAt(0) * 100 + (Number(param.replace(/\D/g, "")) || 0)
                 }
-
                 bindings.push(binding)
             }
         }
