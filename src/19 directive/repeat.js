@@ -199,7 +199,7 @@ avalon.directive("repeat", {
                             staggerIndex = mayStaggerAnimate(binding.effectEnterStagger, function () {
                                 parent.insertBefore(fragment.content, preElement.nextSibling)
                                 scanNodeArray(nodes, vmodels)
-                                animateRepeat(nodes, 1, binding)
+                                !init && animateRepeat(nodes, 1, binding)
                             }, staggerIndex)
                         }
                         fragment.nodes = fragment.vmodels = null
