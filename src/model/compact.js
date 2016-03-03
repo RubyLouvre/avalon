@@ -68,8 +68,10 @@ function define(definition) {
         avalon.log("create primitive vtree", new Date - now)
         now = new Date
         vm.$render = avalon.createRender(vnode)
-        avalon.log("create template Function ", new Date - now)
 
+        avalon.log("create template Function ", new Date - now)
+        avalon.rerenderStart = new Date
+        elem.vnode = vnode
         batchUpdateEntity($id)
 
     })

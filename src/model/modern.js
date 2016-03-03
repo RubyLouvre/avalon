@@ -26,9 +26,13 @@ avalon.vmodels = {}
  * avalon最核心的方法的两个方法之一（另一个是avalon.scan），返回一个vm
  *  vm拥有如下私有属性
  
- $id: vm.id
+ $id: vm.$id
  $events: 放置$watch回调与绑定对象
  $watch: 增强版$watch
+ $element: 关联ID为vm.$id的元素节点
+ $render: vm的模板函数
+ $watch: 增强版$watch
+
  $fire: 触发$watch回调
  $hashcode:相当于uuid,但为false时会防止依赖收集,让框架来回收
  $model:返回一个纯净的JS对象
