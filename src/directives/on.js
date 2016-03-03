@@ -1,15 +1,31 @@
 var markID = require("../base/builtin").markID
 var quote = require("../base/builtin").quote
+var parse = require("../parser/parse")
 
 
 //基于事件代理的高性能事件绑定
-var parse = require("../parser/parse")
 var revent = /^av-on-(\w+)/
+var rfilters = /\|.+/g
+var rvar = /([@$]?\w+)/g
 avalon.directive("on", {
     priority: 3000,
     parse: function (binding, num) {
-        return  "vnode" + num + ".onVm = __vmodel__\n" +
-                "vnode" + num + ".props[" + quote(binding.name) + "] = " + parse(binding, "on") + "\n"
+        var vars = binding.expr.replace(rfilters, "").match(rvar)
+        var canCache = vars.every(function (el) {
+            return el.charAt(0) === "@" || el === "$event"
+        })
+        var vmDefine = "vnode" + num + ".onVm = __vmodel__\n"
+        var pid = quote(binding.name)
+        if (canCache) {
+            var fn = Function("return " + parse(binding, "on"))()
+            var key = "on:" + binding.expr
+            avalon.caches[key] = fn
+            return vmDefine + "vnode" + num + ".props[" + pid +
+                    "] = avalon.caches[" + quote(key) + "]\n"
+        } else {
+            return vmDefine + "vnode" + num + ".props[" + pid +
+                    "] = " + parse(binding, "on") + "\n"
+        }
     },
     diff: function (cur, pre, type, name) {
         var fn0 = cur.props[name]
@@ -31,7 +47,7 @@ avalon.directive("on", {
                 avalon.__eventVM__[search] = cur.onVm
             }
             delete cur.onVm
-            
+
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
         }
