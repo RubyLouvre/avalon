@@ -18,37 +18,30 @@ function updateEntity(nodes, vnodes, parent) {
         if (node)
             next = node.nextSibling
 
-        if (vnode.directive === "for") {//ms-repeat
-            var hooks = vnode.change
-            if (hooks && hooks.length) {
-                var repeatNodes = [node], cur = node
-                innerLoop:
-                        while (cur && (cur = cur.nextSibling)) {
-                    repeatNodes.push(cur)
-                    if ((cur.nodeValue || "").indexOf("av-for-end:") === 0) {
-                        next = cur.nextSibling
-                        break innerLoop
-                    }
+        if (vnode.directive === "for" && vnode.change) {
+            var repeatNodes = [node], cur = node
+            innerLoop:
+                    while (cur && (cur = cur.nextSibling)) {
+                repeatNodes.push(cur)
+                if ((cur.nodeValue || "").indexOf("av-for-end:") === 0) {
+                    next = cur.nextSibling
+                    break innerLoop
                 }
-                var hook, h = 0
-                while(hook = hooks[h++]){
-                    hook(repeatNodes, vnode.repeatVnodes, parent)
-                }
-                delete vnode.change
             }
+            vnode.repeatNodes = repeatNodes
+        }
+
+        //ms-repeat,ms-if会返回false
+        if (false === execHooks(node, vnode, parent, "change")) {
             execHooks(node, vnode, parent, "afterChange")
             continue
-         //ms-html,ms-text, ms-visible
-        } else if (false === execHooks(node, vnode, parent, "change")) {
-            execHooks(node, vnode, parent, "afterChange")//ms-duplex
-            continue
-        } 
-        
+        }
+
         if (!vnode.skipContent && vnode.children && node && node.nodeType === 1) {
             //处理子节点
             updateEntity(avalon.slice(node.childNodes), vnode.children, node)
         }
-
+        //ms-duplex
         execHooks(node, vnode, parent, "afterChange")
     }
 }
