@@ -41,7 +41,7 @@ function diffProps(current, previous) {
         if (match) {
             var type = match[1]
             try {
-                directives[type] && directives[type].diff(current, previous, type, name)
+                directives[type] && directives[type].diff(current, previous || empty, type, name)
             } catch (e) {
                 avalon.log(current, previous, e, "diffProps error")
             }

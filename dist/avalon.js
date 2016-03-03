@@ -3802,7 +3802,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        flushUpdate(function () {
 	            isBatchingUpdates = true
 	            var neo = vm.$render(vm)
-	            // console.log(dom, dom.vnode,"!!!")
 	            diff(neo, dom.vnode|| [])
 	           
 	            updateEntity([dom], neo)
@@ -3873,11 +3872,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	                delete vnode.change
 	            }
+	            execHooks(node, vnode, parent, "afterChange")
+	            continue
 	         //ms-html,ms-text, ms-visible
 	        } else if (false === execHooks(node, vnode, parent, "change")) {
 	            execHooks(node, vnode, parent, "afterChange")//ms-duplex
 	            continue
-	        } else if (!vnode.skipContent && vnode.children && node && node.nodeType === 1) {
+	        } 
+	        
+	        if (!vnode.skipContent && vnode.children && node && node.nodeType === 1) {
 	            //处理子节点
 	            updateEntity(avalon.slice(node.childNodes), vnode.children, node)
 	        }
@@ -3956,7 +3959,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (match) {
 	            var type = match[1]
 	            try {
-	                directives[type] && directives[type].diff(current, previous, type, name)
+	                directives[type] && directives[type].diff(current, previous || empty, type, name)
 	            } catch (e) {
 	                avalon.log(current, previous, e, "diffProps error")
 	            }
@@ -4915,7 +4918,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var dom = document.createElement(this.type)
 
 	        for (var i in this.props) {
-	            if (this.props[i] !== false) {
+	            if (this.props[i] !== false && typeof this.props[i] !== "function") {
 	                dom.setAttribute(i, String(this.props[i]))
 	            }
 	        }
@@ -5139,8 +5142,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var markID = __webpack_require__(2).markID
 	var parse = __webpack_require__(29)
 
-
-
 	var directives = avalon.directives
 	avalon.directive("class", {
 	    parse: function (binding, num) {
@@ -5268,53 +5269,57 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	//基于事件代理的高性能事件绑定
-	var rdash = /\(([^)]*)\)/
+	var parse = __webpack_require__(29)
+	var revent = /^av-on-(\w+)/
 	avalon.directive("on", {
 	    priority: 3000,
 	    parse: function (binding, num) {
 	        return  "vnode" + num + ".onVm = __vmodel__\n" +
-	                "vnode" + num + ".props[" + quote(binding.name) + "] = " +
-	                "avalon.caches[" + quote(binding.type + ":" + binding.expr) + "] = " +
-	                "avalon.caches[" + quote(binding.type + ":" + binding.expr) + "] || " +
-	                "avalon.parseExprProxy(" + quote(binding.expr) + ",'on');\n"
+	                "vnode" + num + ".props[" + quote(binding.name) + "] = " + parse(binding, "on") + "\n"
 	    },
 	    diff: function (cur, pre, type, name) {
-	        var curValue = cur.props[name]
-	        var preValue = pre.props[name]
-	        
-	        if (curValue !== preValue) {
-	            type = name.replace("av-on-", "").replace(/-\d+$/, "")
-	            var uuid = markID(curValue)
-	            var search = type + ":" + uuid
+	        var fn0 = cur.props[name]
+	        var fn1 = pre.props[name]
+	        if (fn0 !== fn1) {
+	            var match = name.match(revent)
+	            type = match[1]
+
+	            var search = type + ":" + markID(fn0)
+	            cur.addEvents = cur.addEvents || {}
+	            cur.addEvents[search] = fn0
+
+	            if (typeof fn1 === "function") {
+	                cur.removeEvents = cur.removeEvents || {}
+	                cur.removeEvents[type + ":" + fn1.uuid] = fn1
+	            }
+
 	            if (!avalon.__eventVM__[search]) {//注册事件回调
 	                avalon.__eventVM__[search] = cur.onVm
 	            }
 	            delete cur.onVm
-	            cur.changeEvents = cur.changeEvents || {}
-	            cur.changeEvents[search] = curValue
+	            
 	            var list = cur.change || (cur.change = [])
 	            avalon.Array.ensure(list, this.update)
 	        }
 	    },
 	    update: function (node, vnode) {
-	        if (!vnode.disposed) {
-	            vnode.dom = node
-	            for (var key in vnode.changeEvents) {
-	                var type = key.split(":").shift()
-	                var listener = vnode.changeEvents[key]
-	                avalon.bind(node, type.replace(/-\d+$/, ""), listener)
-	            }
-	            delete vnode.changeEvents
+	        var key, type, listener
+	        for (key in vnode.removeEvents) {
+	            type = key.split(":").shift()
+	            listener = vnode.removeEvents[key]
+	            avalon.unbind(node, type, listener)
 	        }
+	        delete vnode.removeEvents
+	        for (key in vnode.addEvents) {
+	            type = key.split(":").shift()
+	            listener = vnode.addEvents[key]
+	            avalon.bind(node, type, listener)
+	        }
+	        delete vnode.addEvents
 	    }
 	})
 
-	function disposeOn() {
-	    if (this._) {
-	        avalon.unbind(this._)
-	        this.dom = null
-	    }
-	}
+
 
 
 
@@ -5837,6 +5842,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var parse = __webpack_require__(29)
 
+	var updateEntity = __webpack_require__(25)
+
 	avalon._each = function (obj, fn) {
 	    if (Array.isArray(obj)) {
 	        for (var i = 0; i < obj.length; i++) {
@@ -5853,10 +5860,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	}
-	var rforPrefix = /av-for:\s+/
+	var rforPrefix = /av-for\:\s*/
 	var rforLeft = /^\s*\(\s*/
 	var rforRight = /\s*\)\s*$/
-	var rforSplit = /\s+,\s+/
+	var rforSplit = /\s*,\s*/
 	avalon.directive("for", {
 	    parse: function (str, num) {
 	        var arr = str.replace(rforPrefix, "").split(" in ")
@@ -5911,12 +5918,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var p = isInCache(cache, c.key)
 	                if (p) {
 	                    indexes[c.index] = p.index
+	                    avalon.diff(p.children, c.children)
 	                }
 	            }
 	            //这是新添加的元素
 	            for (var i in cache) {
 	                p = cache[i]
 	                indexes[p.index + "_"] = p
+	                avalon.diff(p.children, [])
 	            }
 	            cur.indexes = indexes
 	        }
@@ -5926,11 +5935,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return i + curLoop.length - 1
 
 	    },
-	    update: function (nodes, vnodes, parent) {
-	        var bellwether = vnodes[0]
+	    update: function (nodes, virtual, parent) {
+	        var bellwether = virtual[0]
 	        var action = bellwether.action
 	        var startRepeat = nodes[0]
 	        var endRepeat = nodes[nodes.length - 1]
+	        var vnodes = virtual.slice(1, -1)
+
 	        if (action === "replace") {
 	            var node = startRepeat.nextSibling
 	            while (node !== endRepeat) {
@@ -5938,11 +5949,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                node = startRepeat.nextSibling
 	            }
 	            var fragment = document.createDocumentFragment()
-	            vnodes[0].repeatVnodes.slice(1, -1).forEach(function (c) {
+	            vnodes.forEach(function (c) {
 	                fragment.appendChild(avalon.vdomAdaptor(c).toDOM())
 	            })
-	            parent.insertBefore(fragment, endRepeat)
 
+	            var entity = avalon.slice(fragment.childNodes)
+	            avalon.diff(vnodes, [])
+	            parent.insertBefore(fragment, endRepeat)
+	            updateEntity(entity, vnodes, parent)
 	        } else {
 	            var groupText = bellwether.signature
 	            var indexes = bellwether.indexes
@@ -5986,7 +6000,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            var entity = avalon.slice(emptyFragment.childNodes)
 	            parent.insertBefore(emptyFragment, endRepeat)
-	            updateEntity(entity, vnodes.slice(1, -1), parent)
+	            updateEntity(entity, vnodes, parent)
 	        }
 
 	    }
@@ -6019,7 +6033,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	    return components
-	    //components.push(com)
 	}
 
 	//从一组节点,取得要循环的部分(第二次生成的虚拟DOM树会走这分支)
@@ -6221,6 +6234,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var body = toTemplate(arr, num) + "\n\nreturn nodes" + num
 	    // console.log(body)
 	    var fn = Function("__vmodel__", body)
+	    // console.log(fn+"")
 	    return fn
 	}
 	function toTemplate(arr, num) {
@@ -6369,17 +6383,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return  "vnode" + num + ".skipAttrs = true\n"
 	        }
 	        if (value && (match = i.match(rmsAttr))) {
+
 	            var type = match[1]
 	            var param = match[2] || ""
 	            var name = i
+
 	            if (eventMap[type]) {
 	                param = type
 	                type = "on"
+	            }
+	            name = "av-" + type + (param ? "-" + param : "")
+	            if (i !== name) {
 	                delete props[name]
-	                name = "av-on-"+param
 	                props[name] = value
 	            }
-	            
+
 	            if (directives[type]) {
 
 	                var binding = {
@@ -6390,7 +6408,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    priority: directives[type].priority ||
 	                            type.charCodeAt(0) * 100 + (Number(param.replace(/\D/g, "")) || 0)
 	                }
-
 	                bindings.push(binding)
 	            }
 	        }
