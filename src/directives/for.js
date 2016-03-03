@@ -83,6 +83,7 @@ avalon.directive("for", {
             for (var i in cache) {
                 p = cache[i]
                 indexes[p.index + "_"] = p
+                avalon.diff(p.children, [])
             }
             cur.indexes = indexes
         }
@@ -92,11 +93,13 @@ avalon.directive("for", {
         return i + curLoop.length - 1
 
     },
-    update: function (nodes, vnodes, parent) {
-        var bellwether = vnodes[0]
+    update: function (nodes, virtual, parent) {
+        var bellwether = virtual[0]
         var action = bellwether.action
         var startRepeat = nodes[0]
         var endRepeat = nodes[nodes.length - 1]
+        var vnodes = virtual.slice(1, -1)
+
         if (action === "replace") {
             var node = startRepeat.nextSibling
             while (node !== endRepeat) {
@@ -104,11 +107,14 @@ avalon.directive("for", {
                 node = startRepeat.nextSibling
             }
             var fragment = document.createDocumentFragment()
-            vnodes[0].repeatVnodes.slice(1, -1).forEach(function (c) {
+            vnodes.forEach(function (c) {
                 fragment.appendChild(avalon.vdomAdaptor(c).toDOM())
             })
-            parent.insertBefore(fragment, endRepeat)
 
+            var entity = avalon.slice(fragment.childNodes)
+            avalon.diff(vnodes, [])
+            parent.insertBefore(fragment, endRepeat)
+            updateEntity(entity, vnodes, parent)
         } else {
             var groupText = bellwether.signature
             var indexes = bellwether.indexes
@@ -152,7 +158,7 @@ avalon.directive("for", {
 
             var entity = avalon.slice(emptyFragment.childNodes)
             parent.insertBefore(emptyFragment, endRepeat)
-            updateEntity(entity, vnodes.slice(1, -1), parent)
+            updateEntity(entity, vnodes, parent)
         }
 
     }

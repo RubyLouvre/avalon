@@ -3,8 +3,6 @@
 var markID = require("../base/builtin").markID
 var parse = require("../parser/parse")
 
-
-
 var directives = avalon.directives
 avalon.directive("class", {
     parse: function (binding, num) {
