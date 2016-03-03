@@ -25,7 +25,6 @@ function batchUpdateEntity(id, immediate) {
         flushUpdate(function () {
             isBatchingUpdates = true
             var neo = vm.$render(vm)
-            // console.log(dom, dom.vnode,"!!!")
             diff(neo, dom.vnode|| [])
            
             updateEntity([dom], neo)

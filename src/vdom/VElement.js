@@ -37,7 +37,7 @@ VElement.prototype = {
         var dom = document.createElement(this.type)
 
         for (var i in this.props) {
-            if (this.props[i] !== false) {
+            if (this.props[i] !== false && typeof this.props[i] !== "function") {
                 dom.setAttribute(i, String(this.props[i]))
             }
         }
