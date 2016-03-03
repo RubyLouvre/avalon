@@ -56,12 +56,13 @@ function toTemplate(arr, num) {
         } else if (el.type === "#comment") {
             var nodeValue = el.nodeValue
             if (nodeValue.indexOf("av-for:") === 0) {
-                var signature = makeHashCode("for")
+                var signature = el.signature
                 forstack.push(signature)
                 str += children + ".push({" +
                         "\n\ttype:'#comment'," +
                         "\n\tdirective:'for'," +
                         "\n\tskipContent:false," +
+                        "\n\tsignature:" + quote(signature) + "," +
                         "\n\tnodeValue:" + quote(signature + ":start") + "," +
                         "\n})\n"
                 str += avalon.directives["for"].parse(nodeValue, num)
@@ -80,6 +81,7 @@ function toTemplate(arr, num) {
                     str += children + ".push({" +
                             "\n\ttype:'#comment'," +
                             "\n\tskipContent:true," +
+                            "\n\tsignature:" + quote(signature) + "," +
                             "\n\tnodeValue:" + quote(signature + ":end") + "," +
                             "\n})\n"
 
