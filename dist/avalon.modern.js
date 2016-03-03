@@ -128,7 +128,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    noop: noop,
 	    //作用类似于noop，只用于代码防御，千万不要在它上面添加属性
 	    nullObject: {},
-	    //切割字符串为一个个小块，以空格或豆号分开它们，结合replace实现字符串的forEach
+	    //切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach
 	    rword: rword,
 	    rw20g: /\w+/g,
 	    rsvg: /^\[object SVG\w*Element\]$/,
@@ -852,7 +852,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    number: {
 	        get: function (val) {
-	            return number(val)
+	            if (arguments.length === 2) {
+	                var last = arguments[1]
+	                if (last && last.nodeType === 1) {
+	                    var a = parseFloat(val)
+	                    return  a === "" ? "" : a !== a ? 0 : a
+	                }
+	            }
+	            return number.apply(0, arguments)
 	        },
 	        set: fixNull
 	    }
@@ -870,10 +877,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //decimals 可选，规定多少个小数位。
 	    //point 可选，规定用作小数点的字符串（默认为 . ）。
 	    //thousands 可选，规定用作千位分隔符的字符串（默认为 , ），如果设置了该参数，那么所有其他参数都是必需的。
-	    if (aguments.length === 1) {
-	        var a = parseFloat(number)
-	        return number === "" ? "" : a !== a ? 0 : a
-	    }
 	    number = (number + '')
 	            .replace(/[^0-9+\-Ee.]/g, '')
 	    var n = !isFinite(+number) ? 0 : +number,
@@ -1692,27 +1695,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var node = next
 	        if (node)
 	            next = node.nextSibling
-	       
-	        if (vnode.signature) {//ms-repeat
 
-	            var entity = [node], cur = node
-	            innerLoop:
-	                    while (cur && (cur = cur.nextSibling)) {
-	                entity.push(cur)
-	                if ((cur.nodeValue || "").indexOf("av-for-end:") === 0) {
-	                    next = cur.nextSibling
-	                    break innerLoop
+	        if (vnode.directive === "for") {//ms-repeat
+	            var hooks = vnode.change
+	            if (hooks && hooks.length) {
+	                var repeatNodes = [node], cur = node
+	                innerLoop:
+	                        while (cur && (cur = cur.nextSibling)) {
+	                    repeatNodes.push(cur)
+	                    if ((cur.nodeValue || "").indexOf("av-for-end:") === 0) {
+	                        next = cur.nextSibling
+	                        break innerLoop
+	                    }
 	                }
+	                var hook, h = 0
+	                while(hook = hooks[h++]){
+	                    hook(repeatNodes, vnode.repeatVnodes, parent)
+	                }
+	                delete vnode.change
 	            }
-	            vnode.entity = entity
-	            execHooks(node, vnode, parent, "change")
+	         //ms-html,ms-text, ms-visible
 	        } else if (false === execHooks(node, vnode, parent, "change")) {
-	            //ms-if,ms-each,ms-repeat这些破坏原来结构的指令会这里进行中断
-	            execHooks(node, vnode, parent, "afterChange")
+	            execHooks(node, vnode, parent, "afterChange")//ms-duplex
 	            continue
-
 	        } else if (!vnode.skipContent && vnode.children && node && node.nodeType === 1) {
-
+	            //处理子节点
 	            updateEntity(avalon.slice(node.childNodes), vnode.children, node)
 	        }
 
@@ -1756,24 +1763,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (var i = 0; i < current.length; i++) {
 	        var cur = current[i]
 	        var pre = previous[i] || empty
-	        if (cur.type === "#text") {
-	            if (!cur.skipContent) {
-	                directives.expr.diff(cur, pre)
-	            }
-	        } else if (cur.type === "#comment") {
-	            if (!cur.skipContent) {
-	                if (cur.signature + ":start" === cur.nodeValue) {
-	                    i = directives["for"].diff(current, previous, i)
+	        switch (cur.type) {
+	            case "#text":
+	                if (!cur.skipContent) {
+	                    directives.expr.diff(cur, pre)
 	                }
-	            }
-	        } else {
-	            if (!cur.skipAttrs) {
-	                diffProps(cur, pre)
-	            }
-	            if (!cur.skipContent) {
-	                diff(cur.children, pre.children)
-	            }
+	                break
+	            case "#comment":
+	                if (cur.directive === "for") {
+	                    i = directives["for"].diff(current, previous, i)
+	                } else if (cur.directive === "if") {
+	                    directives["if"].diff(cur, pre)
+	                }
+	                break
+	            default:
+	                if (!cur.skipAttrs) {
+	                    diffProps(cur, pre)
+	                }
+	                if (!cur.skipContent) {
+	                    diff(cur.children, pre.children)
+	                }
+	                break
+
 	        }
+
 	    }
 	}
 	var rmsAttr = /^(?:ms|av)-(\w+)-?(.*)/
@@ -2339,6 +2352,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return val
 	}
 	var pushArray = __webpack_require__(2).pushArray
+	var makeHashCode = __webpack_require__(2).makeHashCode
+
 	var vdom = __webpack_require__(37)
 	var VText = vdom.VText
 	var VComment = vdom.VComment
@@ -2490,13 +2505,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (type === "input" && !node.props.type) {
 	                    node.props.type = "text"
 	                }
-	                //  controllerHook(node)
+	              
 	            }
 	        }
 	        if (node) {
 	            nodes.push(node)
 	            text = text.slice(matchText.length)
 	            if (node.type === '#comment' && rspAfterForStart.test(node.nodeValue)) {
+	                node.signature = makeHashCode("for")
 	                //移除紧挨着<!--av-for:xxxx-->后的空白节点
 	                text = text.replace(rleftTrim, "")
 	            }
@@ -3618,9 +3634,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
-	var parse = __webpack_require__(29)
-
 	var makeHashCode = __webpack_require__(2).makeHashCode
 	var quote = __webpack_require__(2).quote
 
@@ -3670,7 +3683,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (var i = 0; i < obj.length; i++) {
 	            var value = obj[i]
 	            var type = typeof value
-	            var key = value && type === "object" ? obj : type + value
+	            var key = value && type === "object" ? obj.$hashcode : type + value
 	            fn(i, obj[i], key)
 	        }
 	    } else {
@@ -3690,7 +3703,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var arr = str.replace(rforPrefix, "").split(" in ")
 
 	        var def = "var loop" + num + " = " + parse(arr[1]) + "\n"
-
 	        var kv = arr[0].replace(rforLeft, "").replace(rforRight, "").split(rforSplit)
 	        if (kv.length === 1) {
 	            kv.unshift("$key")
@@ -3699,13 +3711,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return def + "avalon._each(loop" + num + ", function(" + kv + ",traceKey){\n\n"
 	    },
 	    diff: function (current, previous, i) {
-	        var first = current[i]
-	        var hasSign1 = "signature" in first
-	        var hasSign2 = "signature" in previous[i]
-
+	        var cur = current[i]
+	        var pre = previous[i] || {}
+	        var hasSign1 = "directive" in cur
+	        var hasSign2 = "directive" in pre
 	        var curLoop = hasSign1 ? getForBySignature(current, i) :
 	                getForByNodeValue(current, i)
-
 
 	        var preLoop = hasSign2 ? getForBySignature(previous, i) :
 	                getForByNodeValue(previous, i)
@@ -3720,39 +3731,111 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else {
 	            previous.splice.apply(previous, [i, Math.abs(n)])
 	        }
-	        // console.log(current)
-	        if (!hasSign2) {
-	            first.change = first.change || []
-	            first.change.push(function (a, b, parent) {
-	                var entity = b.entity
-	                var virtual = b.virtual
-	               
-	                for (var i = 1, n = entity.length - 1; i < n; i++) {
-	                    parent.removeChild(entity[i])
+	        cur.action = !hasSign2 ? "replace" : "reorder"
+	        cur.repeatVnodes = curLoop
+	        var ccom = cur.components = getForByKey(curLoop.slice(1, -1), cur.signature)
+
+	        if (cur.action === "reorder") {
+	            var cache = {}
+	            var order = {}
+	            for (var i = 0, c; c = ccom[i++]; ) {
+	                saveInCache(cache, c)
+	            }
+
+	            var pcom = pre.components
+
+	            for (var i = 0, c; c = pcom[i++]; ) {
+	                var p = isInCache(cache, c.key)
+	                if (p) {
+	                    order[c.index] = p.index
 	                }
-	                var fragment = document.createDocumentFragment()
-	                virtual.slice(1, -1).forEach(function (c) {
-	                    console.log(avalon.vdomAdaptor(c), "====")
-	                    fragment.appendChild(avalon.vdomAdaptor(c).toDOM())
-	                })
-
-
-	                parent.appendChild(fragment)
-	                //挖空它的内部
-	                return false
-	            })
-	        }else{
-	            
+	            }
+	            cur.order = order
+	            //   console.log(order)
 	        }
-	        first.virtual = curLoop
+
+	        var list = cur.change || (cur.change = [])
+	        avalon.Array.ensure(list, this.update)
 	        return i + curLoop.length - 1
+
+	    },
+	    update: function (nodes, vnodes, parent) {
+	        var bellwether = vnodes[0]
+	        var action = bellwether.action
+	        var startRepeat = nodes[0]
+	        var endRepeat = nodes[nodes.length - 1]
+	        if (action === "replace") {
+	            var node = startRepeat.nextSibling
+	            while (node !== endRepeat) {
+	                parent.removeChild(node)
+	                node = startRepeat.nextSibling
+	            }
+	            var fragment = document.createDocumentFragment()
+	            vnodes[0].repeatVnodes.slice(1, -1).forEach(function (c) {
+	                fragment.appendChild(avalon.vdomAdaptor(c).toDOM())
+	            })
+	            parent.insertBefore(fragment, endRepeat)
+
+	        } else {
+	            var groupText = bellwether.signature
+	            var indexes = bellwether.order
+	            var emptyFragment = document.createDocumentFragment()
+	            var fragment = emptyFragment.cloneNode(false)
+
+	            var next, sortedFragments = {}, fragments = [],
+	                    i = 0, el
+	            while (next = startRepeat.nextSibling) {
+	                if (next === endRepeat) {
+	                    break
+	                } else if (next.nodeValue === groupText) {
+	                    fragment.appendChild(next)
+	                    if (indexes[i] !== void 0) {
+	                        // showLog && avalon.log("使用已有的节点")
+	                        sortedFragments[indexes[i]] = fragment
+	                        delete indexes[i]
+	                    } else {
+	                        fragments.push(fragment)
+	                    }
+	                    i++
+	                    fragment = emptyFragment.cloneNode(false)
+	                } else {
+	                    fragment.appendChild(next)
+	                }
+	            }
+
+	            for (i = 0, el; el = sortedFragments[i++]; ) {
+	                emptyFragment.appendChild(el)
+	            }
+	            // console.log(endRepeat, emptyFragment)
+	            parent.insertBefore(emptyFragment, endRepeat)
+	        }
 
 	    }
 	})
-
+	function getForByKey(nodes, signature) {
+	    var components = []
+	    var com = {
+	        children: []
+	    }
+	    for (var i = 0, el; el = nodes[i]; i++) {
+	        if (el.type === "#comment" && el.nodeValue === signature) {
+	            com.children.push(el)
+	            com.key = el.key
+	            com.index = components.length
+	            components.push(com)
+	            com = {
+	                children: []
+	            }
+	        } else {
+	            com.children.push(el)
+	        }
+	    }
+	    return components
+	    //components.push(com)
+	}
 	function getForBySignature(nodes, i) {
 	    var start = nodes[i], node
-	    var endText = start.signature + ":end"
+	    var endText = start.nodeValue.replace(":start", ":end")
 	    var ret = []
 	    while (node = nodes[i++]) {
 	        ret.push(node)
@@ -3779,6 +3862,44 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	    return ret
+	}
+
+	// 新 位置: 旧位置
+	function isInCache(cache, id) {
+	    var c = cache[id]
+	    if (c) {
+	        var stack = [{id: id, c: c}]
+	        while (1) {
+	            id += "_"
+	            if (cache[id]) {
+	                stack.push({
+	                    id: id,
+	                    c: cache[id]
+	                })
+	            } else {
+	                break
+	            }
+	        }
+	        var a = stack.pop()
+	        delete cache[a.id]
+	        return a.c
+	    }
+	    return c
+	}
+
+	function saveInCache(cache, component) {
+	    var trackId = component.key
+	    if (!cache[trackId]) {
+	        cache[trackId] = component
+	    } else {
+	        while (1) {
+	            trackId += "_"
+	            if (!cache[trackId]) {
+	                cache[trackId] = component
+	                break
+	            }
+	        }
+	    }
 	}
 
 
@@ -4536,9 +4657,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * avalon最核心的方法的两个方法之一（另一个是avalon.scan），返回一个vm
 	 *  vm拥有如下私有属性
 	 
-	 $id: vm.id
+	 $id: vm.$id
 	 $events: 放置$watch回调与绑定对象
 	 $watch: 增强版$watch
+	 $element: 关联ID为vm.$id的元素节点
+	 $render: vm的模板函数
+	 $watch: 增强版$watch
+
 	 $fire: 触发$watch回调
 	 $hashcode:相当于uuid,但为false时会防止依赖收集,让框架来回收
 	 $model:返回一个纯净的JS对象
