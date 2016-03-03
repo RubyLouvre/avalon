@@ -5874,11 +5874,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var pre = previous[i] || {}
 	        var hasSign1 = "directive" in cur
 	        var hasSign2 = "directive" in pre
+
 	        var curLoop = hasSign1 ? getForBySignature(current, i) :
 	                getForByNodeValue(current, i)
 
-	        var preLoop = hasSign2 ? getForBySignature(previous, i) :
-	                getForByNodeValue(previous, i)
+	        var preLoop = pre.repeatVnodes
+	        if (!preLoop) {
+	            preLoop = hasSign2 ? getForBySignature(previous, i) :
+	                    getForByNodeValue(previous, i)
+	        }
 
 	        var n = curLoop.length - preLoop.length
 	        if (n > 0) {
@@ -5891,26 +5895,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	            previous.splice.apply(previous, [i, Math.abs(n)])
 	        }
 	        cur.action = !hasSign2 ? "replace" : "reorder"
+
 	        cur.repeatVnodes = curLoop
 	        var ccom = cur.components = getForByKey(curLoop.slice(1, -1), cur.signature)
 
 	        if (cur.action === "reorder") {
 	            var cache = {}
-	            var order = {}
+	            var indexes = {}
 	            for (var i = 0, c; c = ccom[i++]; ) {
 	                saveInCache(cache, c)
 	            }
-
 	            var pcom = pre.components
 
 	            for (var i = 0, c; c = pcom[i++]; ) {
 	                var p = isInCache(cache, c.key)
 	                if (p) {
-	                    order[c.index] = p.index
+	                    indexes[c.index] = p.index
 	                }
 	            }
-	            cur.order = order
-	            //   console.log(order)
+	            //这是新添加的元素
+	            for (var i in cache) {
+	                p = cache[i]
+	                indexes[p.index + "_"] = p
+	            }
+	            cur.indexes = indexes
 	        }
 
 	        var list = cur.change || (cur.change = [])
@@ -5937,7 +5945,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        } else {
 	            var groupText = bellwether.signature
-	            var indexes = bellwether.order
+	            var indexes = bellwether.indexes
 	            var emptyFragment = document.createDocumentFragment()
 	            var fragment = emptyFragment.cloneNode(false)
 
@@ -5949,7 +5957,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                } else if (next.nodeValue === groupText) {
 	                    fragment.appendChild(next)
 	                    if (indexes[i] !== void 0) {
-	                        // showLog && avalon.log("使用已有的节点")
 	                        sortedFragments[indexes[i]] = fragment
 	                        delete indexes[i]
 	                    } else {
@@ -5962,15 +5969,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 
+	            for (i in indexes) {
+	                var com = indexes[i]
+	                i = parseFloat(i)
+	//                fragment = fragments.shift()
+	//                if (fragment) {
+	//                    sortedFragments[ i ] = fragment
+	//                } else {
+	                sortedFragments[ i ] = componentToDom(com, emptyFragment.cloneNode(false))
+	//                }
+	            }
+
 	            for (i = 0, el; el = sortedFragments[i++]; ) {
 	                emptyFragment.appendChild(el)
 	            }
-	            // console.log(endRepeat, emptyFragment)
+
+	            var entity = avalon.slice(emptyFragment.childNodes)
 	            parent.insertBefore(emptyFragment, endRepeat)
+	            updateEntity(entity, vnodes.slice(1, -1), parent)
 	        }
 
 	    }
 	})
+
+	function componentToDom(com, fragment) {
+	    com.children.forEach(function (c) {
+	        fragment.appendChild(avalon.vdomAdaptor(c).toDOM())
+	    })
+	    return fragment
+	}
+
+	//将要循环的节点根据锚点元素再分成一个个更大的单元,用于diff
 	function getForByKey(nodes, signature) {
 	    var components = []
 	    var com = {
@@ -5992,6 +6021,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return components
 	    //components.push(com)
 	}
+
+	//从一组节点,取得要循环的部分(第二次生成的虚拟DOM树会走这分支)
 	function getForBySignature(nodes, i) {
 	    var start = nodes[i], node
 	    var endText = start.nodeValue.replace(":start", ":end")
@@ -6005,6 +6036,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return ret
 	}
 
+	//从一组节点,取得要循环的部分(初次生成的虚拟DOM树及真实DOM树会走这分支)
 	function getForByNodeValue(nodes, i) {
 	    var isBreak = 0, ret = [], node
 	    while (node = nodes[i++]) {
