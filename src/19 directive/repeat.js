@@ -307,7 +307,7 @@ function shimController(data, transation, proxy, fragments, init) {
     var itemName = data.param || "el"
     var valueItem = proxy[itemName], nv
     if (Object(valueItem) === valueItem) {
-        nv = [proxy, valueItem].concat(data.vmodels)
+        nv = [proxy].concat(data.vmodels)
     } else {
         nv = [proxy].concat(data.vmodels)
     }
