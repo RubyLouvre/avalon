@@ -130,6 +130,7 @@ avalon.directive("repeat", {
                     action = "append"
                     proxy.$key = keyOrId
                     proxy.$val = value[keyOrId] //key
+                    proxy[param] = { $key: proxy.$key, $val: proxy.$val }
                 }
                 this.cache[keyOrId] = proxy
                 var node = proxy.$anchor || (proxy.$anchor = elem.cloneNode(false))
@@ -198,7 +199,7 @@ avalon.directive("repeat", {
                             staggerIndex = mayStaggerAnimate(binding.effectEnterStagger, function () {
                                 parent.insertBefore(fragment.content, preElement.nextSibling)
                                 scanNodeArray(nodes, vmodels)
-                                animateRepeat(nodes, 1, binding)
+                                !init && animateRepeat(nodes, 1, binding)
                             }, staggerIndex)
                         }
                         fragment.nodes = fragment.vmodels = null
@@ -394,24 +395,29 @@ function eachProxyFactory(itemName) {
 
 var withProxyPool = []
 
-function withProxyAgent() {
-    return withProxyPool.pop() || withProxyFactory()
+function withProxyAgent(data) {
+    var itemName = data.param || "el"
+    return withProxyPool.pop() || withProxyFactory(itemName)
 }
 
-function withProxyFactory() {
-    var proxy = modelFactory({
+function withProxyFactory(itemName) {
+    var source = {
         $key: "",
         $val: NaN,
         $index: 0,
         $oldIndex: 0,
         $outer: {},
         $anchor: null
-    }, {
-        force: {
+    }
+    source[itemName] = NaN
+    var force = {
             $key: 1,
             $val: 1,
             $index: 1
-        }
+    }
+    force[itemName] = 1
+    var proxy = modelFactory(source, {
+        force: force
     })
     proxy.$id = generateID("$proxy$with")
     return proxy
