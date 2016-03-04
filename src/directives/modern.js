@@ -1,6 +1,8 @@
 require('./attr')
 require('./expr')
 require('./style')
+require('./cloak')
+require('./controller')
 require('./text.modern')
 require('./html')
 require('./visible')

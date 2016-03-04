@@ -1,1 +1,45 @@
-//ms-controller绑定已经在scanTag 方法中实现
+var quote = require("../base/builtin").quote
+
+avalon.directive("controller", {
+    priority: 1,
+    parse: function (binding, num) {
+        var vm = "vm" + num
+        var str =
+                "\n\n\nvar " + vm + " =  avalon.vmodels[" + quote(binding.expr) + "]\n" +
+                "if(" + vm + "){\n" +
+                "\tif(__vmodel__){\n" +
+                "\t\t__vmodel__ = avalon.mediatorFactory(__vmodel__, " + vm + ")\n" +
+                "\t}else{\n" +
+                "\t\t__vmodel__ = " + vm + "\n" +
+                "\t}\n" +
+                "}\n\n\n"
+        return str
+    },
+    diff: function () {
+    }
+})
+
+//avalon.scan = function (el) {
+//    var v = el.getAttribute("ms-controller") || el.getAttribute("av-controller")
+//    if (v) {
+//        el.removeAttribute("ms-controller")
+//        el.removeAttribute("av-controller")
+//        el.setAttribute("data-controller", v)
+//        avalon(el).removeClass("ms-controller av-controller")
+//    }
+//    if (!v) {
+//        v = el.getAttribute("data-controller")
+//    }
+//    if (v) {
+//        if (typeof el.getAttribute(":template") !== "string") {
+//            el.setAttribute(":template", el.outerHTML)
+//        } else {
+//
+//        }
+//    }
+//    for (var i = 0, child; child = el.childNodes[i++]; ) {
+//        if (child.nodeType === 1) {
+//            avalon.scan(child)
+//        }
+//    }
+//}
