@@ -27,14 +27,13 @@ avalon.directive("visible", {
     parse: function (binding, num) {
         return "vnode" + num + ".props['av-visible'] = " + parse(binding) + ";\n"
     },
-    change: function (cur, pre) {
+    diff: function (cur, pre) {
         var curValue = !!cur.props['av-visible']
         if (curValue !== Boolean(pre.props['av-visible'])) {
             cur.isShow = curValue
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
         }
-
     },
     update: function (node, vnode) {
         if (vnode.isShow) {

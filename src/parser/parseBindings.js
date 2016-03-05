@@ -33,12 +33,10 @@ function parseBindings(props, num, elem) {
             }
             name = "av-" + type + (param ? "-" + param : "")
             if (i !== name) {
-                delete props[name]
+                delete props[i]
                 props[name] = value
             }
-
             if (directives[type]) {
-
                 var binding = {
                     type: type,
                     param: param,

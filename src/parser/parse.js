@@ -63,11 +63,14 @@ function parser(str, category) {
     input = input.replace(rregexp, dig).//移除所有正则
             replace(rstring, dig).//移除所有字符串
             replace(/\|\|/g, dig).//移除所有短路与
-            replace(/\s*(\.|\1)\s*/g, "$1").//移除. |两端空白
+            replace(/\s*(\.|\|)\s*/g, "$1").//移除. |两端空白
             split(/\|(?=\w)/) //分离过滤器
 
 //还原body
     var body = input.shift().replace(rfill, fill).trim().replace(rAt, "$1__vmodel__.")
+    if (category === "js") {
+        return evaluatorPool.put(category + ":" + input, body)
+    }
 
 //处理表达式的过滤器部分
     var filters = input.map(function (str) {

@@ -1,34 +1,18 @@
 
-var parse = require("../parser/parse")
-
-avalon.caches["text:all"] = function () {
-    var a = this.props["av-text"]
-    a = a == null ? '' : a + ""
-    return [{type: '#text', nodeValue: String(a)}]
-}
-
-avalon.directive("text", {
-    parse: function (binding, num) {
-        return "vnode" + num + ".$render = avalon.caches['text:all'];\n" +
-                "vnode" + num + ".props['av-text'] =" + parse(binding.expr) + ";\n"
+avalon.directive("expr", {
+    parse: function () {
     },
-    diff: function (cur, pre) {
-        var curValue = cur.props["av-text"]
-        var preValue = pre.props["av-text"]
-        if (curValue !== preValue) {
+    diff: function (cur, pre) {//curNode, preNode
+        if (cur.nodeValue !== pre.nodeValue) {
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
         }
     },
-    update: function (node, vnode) {
-        var child = vnode.children[0]
-        if (!child) {
-            return
-        }
-        if ("textContent" in node) {
-            node.textContent = child.nodeValue + ""
+    update: function (node, vnode, parent) {
+        if (node.nodeType !== 3) {
+            parent.replaceChild(vnode.toDOM(), node)
         } else {
-            node.innerText = child.nodeValue + ""
+            node.nodeValue = vnode.nodeValue
         }
     }
 })

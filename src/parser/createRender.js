@@ -88,8 +88,8 @@ function toTemplate(arr, num) {
 
                     forstack.pop()
                 }
-            } else if (nodeValue.indexOf("js:") === 0) {
-                str += parse(nodeValue.replace("js:", "")) + "\n"
+            } else if (nodeValue.indexOf("av-js:") === 0) {
+                str += parse(nodeValue.replace("av-js:", ""), "js") + "\n"
             } else {
                 str += children + ".push(" + quote(el) + ");;;;\n"
             }
@@ -112,17 +112,17 @@ function toTemplate(arr, num) {
                     "\n\tchildren: []," +
                     "\n\tisVoidTag: " + !!el.isVoidTag + "," +
                     "\n\ttemplate: '' }\n"
-            var hasBindings = parseBindings(el.props, num,  el)
+            var hasBindings = parseBindings(el.props, num, el)
             if (hasBindings) {
                 str += hasBindings
             } else {
                 str += vnode + ".template= " + quote(el.template) + "\n"
             }
             //av-text,av-html,会将一个元素变成组件
-            str += "if(" + vnode + ".$render){\n"
+            str += "if(" + vnode + ".type !== '#component'){\n"
 
-            str += "\t" + vnode + ".children = " + vnode + ".$render(__vmodel__)\n"
-            str += "}else{\n"
+          //  str += "\t" + vnode + ".children = " + vnode + ".$render(__vmodel__)\n"
+          //  str += "}else{\n"
             str += "\t" + vnode + ".children = " + wrap(toTemplate(el.children, num), num) + "\n"
             str += "}\n"
             str += children + ".push(" + vnode + ")\n"
