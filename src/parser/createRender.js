@@ -16,7 +16,6 @@ function wrap(a, num) {
 function createRender(arr) {
     var num = num || String(new Date - 0).slice(0, 6)
     var body = toTemplate(arr, num) + "\n\nreturn nodes" + num
-    // console.log(body)
     var fn = Function("__vmodel__", body)
     // console.log(fn+"")
     return fn
@@ -111,20 +110,23 @@ function toTemplate(arr, num) {
                     "\n\tprops: {}," +
                     "\n\tchildren: []," +
                     "\n\tisVoidTag: " + !!el.isVoidTag + "," +
-                    "\n\ttemplate: '' }\n"
+                    "\n\ttemplate: ''}\n"
             var hasBindings = parseBindings(el.props, num, el)
             if (hasBindings) {
                 str += hasBindings
+            }
+//av-text,av-html,会将一个元素变成组件
+//   str += "if(" + vnode + ".$render ){\n"
+//   str += "\t" + vnode + " = " + vnode + ".$render(__vmodel__)\n"
+//   str += "}else{\n"
+            if (el.children.length) {
+                str += "if(!" + vnode + ".props.wid){\n"
+                str += "\t" + vnode + ".children = " + wrap(toTemplate(el.children, num), num) + "\n"
+                str += "}\n"
             } else {
                 str += vnode + ".template= " + quote(el.template) + "\n"
             }
-            //av-text,av-html,会将一个元素变成组件
-            str += "if(" + vnode + ".type !== '#component'){\n"
-
-          //  str += "\t" + vnode + ".children = " + vnode + ".$render(__vmodel__)\n"
-          //  str += "}else{\n"
-            str += "\t" + vnode + ".children = " + wrap(toTemplate(el.children, num), num) + "\n"
-            str += "}\n"
+//  str += "}\n"
             str += children + ".push(" + vnode + ")\n"
 
             if (hasIf) {

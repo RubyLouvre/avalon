@@ -1,5 +1,4 @@
 require('./attr')
-require('./expr')
 require('./style')
 require('./cloak')
 require('./controller')

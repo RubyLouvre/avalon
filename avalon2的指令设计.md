@@ -68,7 +68,7 @@
 ```
  av-class="{ 'class-a': @isA, 'class-b': @isB }"
  av-class="[ @a, @b ]"
- av-class="[classA, isB ? classB : '']"
+ av-class="[ @classA, @isB ? @classB : '']"
 ```
 可使用过滤器，为元素添加一组类名，当类名发生变动时，以前添加的类名会被移除。 有对象及数组两种形式。数组应该为一个字符串数组，且元素不能为空字符串。
 
@@ -94,13 +94,6 @@ av-click="@fn"
 ```
 可使用特定的过滤器(stop, prevent, up,down,right, left, esc,tab, enter,space,del),绑事事件回调
 
-### av-text
-
-可使用过滤器 类似于`{{ }}`，会清空此元素底下的所有节点，再添加新文本内容
-
-### av-html
-```/Users/qitmac000408/avalon/avaloon2 vm的设计.md
-av-html="@longtext"
 ```
 可使用过滤器，将vm中的某个字任串属性转换成HTML节点，插入到目标元素底下，
 
@@ -115,9 +108,20 @@ av-html="@longtext"
 ```
 av-wiget="@obj"
 av-wiget="{title: @ddd, $id: "sss"}"
-av-wiget="[@obj1,@obj2,{$id: 'item' + i }]"
+av-wiget="[@obj1, @obj2 ,{$id: 'item' + i }]"
 ```
-可使用过滤器，将普通元素变成一个组件
+av-widget的值可以为页面上一个临时对象,也可以是一个数组,或者指向vm中的一个对象属性
+在内部发现是一个数组,会进行合并,保证只有一个对象(下称配置对象)
+此配置对象应有$id, type这两个固定配置项
+$id为组件vm的$id, type为组件的类型 
+
+```
+<div ms-widget="{$id: @id, type:'panel',other:@param1}"></div>
+```
+如果元素为自定义元素那么,就不需要写type
+```
+<ms-panel ms-widget="{$id: @id,other:@param1}"></ms-panel>
+```
 
 ```
 av-attr="{xxx:yyy}"--> props[av-attr] = fn
@@ -132,16 +136,16 @@ av-on     --> 检测DOM的update
 | ------------- |:-----------------:| -----:|
 | av-attr       | 对象或对象数组       | yes |
 | av-style      | 对象或对象数组       | yes |
-| expr          | 字符                | yes |
-| av-class      | 布尔对象或字符串数组  | half |
-| av-hover      | 布尔对象或字符串数组  | half |
-| av-active     | 布尔对象或字符串数组  | half |
-| av-on         | 函数                | no |
-| av-text       | 字符串              | yes |
-| av-html       | 字符串              | yes |
+| av-controller | 字符串              | yes |
+| av-cloak      | 任意                | yes |
+| text          | 字符串              | yes |
+| av-class      | 布尔对象或字符串数组  | yes |
+| av-hover      | 布尔对象或字符串数组  | yes |
+| av-active     | 布尔对象或字符串数组  | yes |
+| av-on         | 函数                | yes |
 | av-effect     | 对象或对象数组        | no |
 | av-widget     | 对象或对象数组        | no |
-| if指令        |     合法JS代码       | half |
-| for指令       | 类PHP的特殊语法       | half |
+| if指令        |     合法JS代码      | half |
+| for指令       | 类PHP的特殊语法      | half |
 | forEnd指令    | 空指令（仅表示结束）   | yes|
 | js指令        |  合法JS代码          | yes|
