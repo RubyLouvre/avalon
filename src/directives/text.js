@@ -25,7 +25,6 @@ avalon.directive("text", {
                 textCache.put(curValue, nodes)
             }
             cur.children = nodes
-            console.log(cur.props['av-text'], preValue)
             if (cur.props['av-text'] !== preValue) {
                 var list = cur.change || (cur.change = [])
                 avalon.Array.ensure(list, this.update)
@@ -33,14 +32,11 @@ avalon.directive("text", {
         }
     },
     update: function (node, vnode) {
-        var child = vnode.props['av-text']
-        if (!child) {
-            return
-        }
+        var nodeValue = vnode.props['av-text']
         if ("textContent" in node) {
-            node.textContent = child.nodeValue + ""
+            node.textContent = nodeValue + ""
         } else {
-            node.innerText = child.nodeValue + ""
+            node.innerText = nodeValue + ""
         }
     }
 })
