@@ -5,7 +5,7 @@ var parse = require("../parser/parse")
 avalon.components = {
     panel: {
         template: "<div>" +
-                 "<h1>This is my component!</h1>" +
+                "<h1>This is my component!</h1>" +
                 "<av-slot>" +
                 "This will only be displayed if there is no content" +
                 "to be distributed." +
@@ -47,20 +47,28 @@ avalon.component = function (node, vm) {
 
         var compileElement = mergeTempale(mainTemplate, slots)
         var $render = avalon.createRender(compileElement)
-        var node2 = $render({})[0]
-        node2.props.wid = node.props.wid
-        node2.change = []
-        node2.change.push(function (dom, node, parent) {
+        var vnode = $render({})[0]
+        vnode.props.wid = node.props.wid
+        vnode.change = []
+        vnode.change.push(function (dom, node, parent) {
             var el = avalon.vdomAdaptor(node).toDOM()
             avalon(el).addClass(el.getAttribute("wid"))
             parent.replaceChild(el, dom)
         })
-        return node2
+        return vnode
     } else {
         return node
     }
 }
 //插入点机制,组件的模板中有一些av-slot元素,用于等待被外面的元素替代
+function wrap(str) {
+    return str.replace("return __value__", function (a) {
+        return  "if(Array.isArray(__value__)){\n" +
+                "    __value__ = avalon.mix.apply({},__value__)\n" +
+                "}\n" + a
+    })
+}
+
 avalon.directive("widget", {
     parse: function (binding, num, elem) {
         if (elem.skipContent || !elem.children.length) {
@@ -72,7 +80,7 @@ avalon.directive("widget", {
         var component = "config" + num
         return  "vnode" + num + ".props.wid = '" + uuid + "'\n" +
                 "vnode" + num + ".children = avalon.caches[vnode" + num + ".props.wid] \n" +
-                "var " + component + " = vnode" + num + ".props['av-widget'] = " + parse(binding) + ";\n" +
+                "var " + component + " = vnode" + num + ".props['av-widget'] = " + wrap(parse(binding), "widget") + ";\n" +
                 "if(" + component + " && " + component +
                 ".type && avalon.components[ " + component + ".type ]){\n" +
                 "\tvnode" + num + " = avalon.component(vnode" + num + ", __vmodel__)\n" +
@@ -80,32 +88,11 @@ avalon.directive("widget", {
 
     },
     diff: function (cur, pre) {
-        var a = cur.props["av-widget"]
-        var p = pre.props["av-widget"]
+        var a = cur.props.resolved
+        var p = pre.props.resolved
         if (a && typeof a === "object") {
-            if (Array.isArray(a)) {
-                a = cur.props["av-widget"] = avalon.mix.apply({}, a)
-            }
-            if (typeof p !== "object") {
-                cur.changeStyle = a
-            } else {
-                var patch = {}
-                var hasChange = false
-                for (var i in a) {
-                    if (a[i] !== p[i]) {
-                        hasChange = true
-                        patch = a[i]
-                    }
-                }
-                if (hasChange) {
-                    cur.changeStyle = patch
-                }
-            }
-            if (cur.changeStyle) {
 
-                var list = cur.change || (cur.change = [])
-                avalon.Array.ensure(list, this.update)
-            }
+
         } else {
             cur.props["av-widget"] = p
         }
@@ -132,3 +119,11 @@ function mergeTempale(main, slots) {
     }
     return main
 }
+/*
+ * 组件的类型 wtype
+ * 1 组件会替代原来的元素 (grid,accordion, carousel,button, flipswitch...)
+ * 2 组件替代元素的内部并不保留原内部元素 html
+ * 3 组件替代元素的内部并保留原内部元素 路由
+ * 4 组件不进行代替操作，而是出现在body的下方，当条件满足才出现（at, dialog, datepicker, dropdown）
+ * 5 组件本身不产生元素,只是为子元素绑定事件,添加某种功能(draggable)
+ */

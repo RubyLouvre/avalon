@@ -33,11 +33,11 @@ avalon.directive("duplex", {
     parse: function (binding, num, elem) {
         var expr = binding.expr
         var etype = elem.props.type
-        var xtype
+        var itype
 
         if (rcheckedFilter.test(expr)) {
             if (rcheckedType.test(etype)) {
-                xtype = "checked"
+                itype = "checked"
             } else {
                 avalon.log("只有radio与checkbox才能用checked过滤器")
                 expr = expr.replace(rcheckedFilter, "")
@@ -49,12 +49,12 @@ avalon.directive("duplex", {
                 avalon.log(etype + "不支持change过滤器")
                 expr = expr.replace(rchangeFilter, "")
             } else {
-                xtype = "change"
+                itype = "change"
             }
         }
 
-        if (!xtype) {
-            xtype = etype === "select" ? "select" :
+        if (!itype) {
+            itype = etype === "select" ? "select" :
                     etype === "checkbox" ? "checkbox" :
                     etype === "radio" ? "radio" :
                     "input"
@@ -62,7 +62,7 @@ avalon.directive("duplex", {
         binding.expr = expr
         parse(binding, "duplex")
         return "vnode" + num + ".duplexVm = __vmodel__;\n" +
-                "vnode" + num + ".props.xtype = " + quote(xtype) + ";\n" +
+                "vnode" + num + ".props.itype = " + quote(itype) + ";\n" +
                 "vnode" + num + ".props['av-duplex'] = " + quote(binding.expr) + ";\n"
     },
     diff: function (cur, pre) {
@@ -128,7 +128,7 @@ avalon.directive("duplex", {
 
         var curValue = vnode.props.value
 
-        switch (vnode.props.xtype) {
+        switch (vnode.props.itype) {
             case "input":
             case "change":
                 if (curValue !== node.oldValue) {
@@ -137,7 +137,7 @@ avalon.directive("duplex", {
                 break
             case "checked":
             case "radio":
-                curValue = vnode.props.xtype === "checked" ? !!curValue :
+                curValue = vnode.props.itype === "checked" ? !!curValue :
                         curValue + "" === node.value
                 node.oldValue = curValue
                 if (msie === 6) {
@@ -167,9 +167,9 @@ avalon.directive("duplex", {
 
 function initDuplexData(elem) {
     var etype = elem.props.type
-    var xtype = elem.props.xtype
+    var itype = elem.props.itype
     var duplexData = {}
-    switch (xtype) {
+    switch (itype) {
         case "checked"://当用户指定了checked过滤器
             duplexData.click = duplexChecked
             break
@@ -216,7 +216,7 @@ function initDuplexData(elem) {
 
     }
 
-    if (xtype === "input" && !rnoduplexInput.test(etype)) {
+    if (itype === "input" && !rnoduplexInput.test(etype)) {
         if (etype !== "hidden") {
             duplexData.focus = duplexFocus
             duplexData.blur = duplexBlur
@@ -228,7 +228,7 @@ function initDuplexData(elem) {
     duplexData.vnode = elem
     duplexData.set = function (val, checked) {
         var vnode = this.vnode
-        if (vnode.props.xtype === "checkbox") {
+        if (vnode.props.itype === "checkbox") {
             var array = vnode.props.value
             if (!Array.isArray(array)) {
                 log("ms-duplex应用于checkbox上要对应一个数组")
