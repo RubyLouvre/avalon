@@ -18,6 +18,9 @@ avalon.directive("controller", {
         return str
     },
     diff: function () {
+    },
+    update:function(){
+        
     }
 })
 
