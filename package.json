@@ -1,27 +1,29 @@
 {
-  "name": "avalon",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/RubyLouvre/vue.git"
-  },
-  "version":"2.0",
-  "description": "mvvm",
-  "main": "dist/avalon.js",
-  "keywords": ["javascript","mvvm","virtual dom"],
-  "dependencies": {},
-  "devDependencies": {
-    "chai": "^1.9.1",
-    "karma": "^0.13.19",
-    "karma-chrome-launcher": "^0.2.2",
-    "karma-coverage": "^0.5.3",
-    "karma-firefox-launcher": "^0.1.7",
-    "karma-junit-reporter": "^0.3.8",
-    "karma-mocha": "^0.1.8",
-    "karma-phantomjs-launcher": "^0.2.3",
-    "mocha": "^1.21.4"
-  },
-  "bugs": {
-    "url": "https://github.com/RubyLouvre/avalon/issues"
-  }
+    "name": "avalon",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/RubyLouvre/vue.git"
+    },
+    "version": "2.0",
+    "description": "mvvm",
+    "main": "dist/avalon.js",
+    "keywords": ["javascript", "mvvm", "virtual dom"],
+    "dependencies": {},
+    "devDependencies": {
+        "chai": "^1.9.1",
+        "karma": "^0.13.19",
+        "webpack": "^2.1",
+        "text-loader": "0.0.1",
+        "karma-chrome-launcher": "^0.2.2",
+        "karma-coverage": "^0.5.3",
+        "karma-firefox-launcher": "^0.1.7",
+        "karma-junit-reporter": "^0.3.8",
+        "karma-mocha": "^0.1.8",
+        "karma-phantomjs-launcher": "^0.2.3",
+        "mocha": "^1.21.4"
+    },
+    "bugs": {
+        "url": "https://github.com/RubyLouvre/avalon/issues"
+    }
 }

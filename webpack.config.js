@@ -2,15 +2,16 @@ var webpack = require("webpack");
 
 var path = require("path");
 var fs = require("fs")
-var json  = require("./package.json")
+var json = require("./package.json")
+
 var version = json.version.split(".")
-var v = version.shift() +"."+ version.join("")
-var text = fs.readFileSync("./src/core/static.js",'utf8')
-text = text.replace(/version\s*\:\s*([^,]+)/, function(a, b){
-    return "version: "+ v
+var v = version.shift() + "." + version.join("")
+var text = fs.readFileSync("./src/core/static.js", 'utf8')
+text = text.replace(/version\s*\:\s*([^,]+)/, function (a, b) {
+    return "version: " + v
 })
 
-fs.writeFileSync("./src/core/static.js",text, 'utf8')
+fs.writeFileSync("./src/core/static.js", text, 'utf8')
 
 module.exports = {
     entry: {
@@ -25,6 +26,9 @@ module.exports = {
     }, //页面引用的文件
 
     module: {
+        loaders: [
+            {test: /\.jade$/, loader: "text-loader"}
+        ]
     },
     resolve: {
         extensions: ['.js', "", ".css"],

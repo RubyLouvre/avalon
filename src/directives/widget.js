@@ -3,14 +3,19 @@ var parse = require("../parser/parse")
 var makeHashCode = require("../base/builtin").makeHashCode
 var createVirtual = require("../strategy/createVirtual")
 var batchUpdateEntity = require("../strategy/batchUpdateEntity")
+var camelize = require("../base/builtin").camelize
 
 
 //插入点机制,组件的模板中有一些av-slot元素,用于等待被外面的元素替代
 function wrap(str) {
     return str.replace("return __value__", function (a) {
-        return  "if(Array.isArray(__value__)){\n" +
+        var p = "if(Array.isArray(__value__)){\n" +
                 "    __value__ = avalon.mix.apply({},__value__)\n" +
-                "}\n" + a
+                "}\n" //+
+              //  "if (!/(:|-)/.test(__value__.$type)) {\n" +
+              //  "\t__value__.$type = 'av-' + __value__.$type\n" +
+              //  "}\n"
+        return p + a
     })
 }
 
@@ -25,8 +30,7 @@ avalon.directive("widget", {
         return  "vnode" + num + ".props.wid = '" + uuid + "'\n" +
                 "vnode" + num + ".children = avalon.caches[vnode" + num + ".props.wid] \n" +
                 "var " + component + " = vnode" + num + ".props['av-widget'] = " + wrap(parse(binding), "widget") + ";\n" +
-                "if(" + component + " && " + component +
-                ".type && avalon.components[ " + component + ".type ]){\n" +
+                "if(" + component + "){\n" +
                 "\tvnode" + num + " = avalon.component(vnode" + num + ", __vmodel__)\n" +
                 "}\n"
 
@@ -76,12 +80,13 @@ var updateTypes = {
 }
 avalon.component = function (node, vm) {
     var isDefine = typeof (node) === "string"
+    //console.log(isDefine)
     if (isDefine) {
         var name = node, opts = vm
         avalon.components[name] = opts
         var vms = {}
         for (var i = 0, obj; obj = componentQueue[i]; i++) {
-            if (name === obj.fullName) {
+            if (name === obj.name) {
                 componentQueue.splice(i, 1)
                 i--;
                 var vid = obj.vm.$id.split(".")[0]
@@ -91,29 +96,33 @@ avalon.component = function (node, vm) {
         for (var id in vms) {
             batchUpdateEntity(id, true)
         }
-
-
+        // console.log(batchUpdateEntity)
+        // batchUpdateEntity("test")
     } else {
+
+        var option = node.props['av-widget']
         var id = node.props.wid
+        var name = option.$type
+        if (/(\:|-)/.test(node.type)) {
+            name = node.type
+        }
+       
+        console.log(option, id, name)
         //如果组件模板已经定
         if (resolvedComponents[id])
             return resolvedComponents[id].$render()//让widget虚拟DOM重新渲染自己并进行diff, patch
-        var option = node.props['av-widget']
-        var widget = avalon.components[option.type]
+
+        var widget = avalon.components[name]
         if (!widget) {
-            var widget = option.type
-            var library = option.library || "av"
-            var fullName = library + ":" + camelize(widget)
             componentQueue.push({
-                library: library,
-                element: node,
-                fullName: fullName,
-                widget: widget,
+                name: name,
                 vm: vm
             })
             return node //返回普通的patch
         } else {
-            var mainTemplate = createVirtual(widget.template)
+
+            var template = String(widget.template).trim()
+            var mainTemplate = createVirtual(template)
             var slots = {}
             node.children.forEach(function (el) {
                 if (el.type.charAt(0) !== "#") {
@@ -129,17 +138,22 @@ avalon.component = function (node, vm) {
             if (widget.createRender) {
                 compileElement = widget.createRender(compileElement)
             }
+            if (!option.$id) {
+                option.$id = makeHashCode(name)
+            }
+            delete option.$type
             var $render = avalon.createRender(compileElement)
-            var vmodel = widget.createVm(option, vm)
-            var widgetNode = $render(vmodel)
+            var vmodel = widget.createVm(vm, option, widget.data)
+            var widgetNode = $render(vmodel || {})
             if (widgetNode.length === 1) {
                 widgetNode = widgetNode[0]
+                widgetNode.$render = $render
             } else {
                 throw "widget error"
             }
-           
+
             resolvedComponents[id] = widgetNode
-            
+
             widgetNode.$render = $render
             var wtype = node.props.wtype || 0
 
@@ -147,6 +161,7 @@ avalon.component = function (node, vm) {
             if (!widget.update) {
                 widget.update = avalon.directives.widget[updateTypes[wtype]]
             }
+
             widgetNode.change = widgetNode.change || []
             widgetNode.change.push(widget.update)
             return widgetNode

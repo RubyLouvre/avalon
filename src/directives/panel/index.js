@@ -1,11 +1,14 @@
-//var avalon  = require("avalon")
-
-avalon.component("panel", {
-    createVm: function (option, topVm) {
-
+var template = require("text!./panel.html")
+console.log(template)
+avalon.component("av:panel", {
+    template: template,
+    createVm: function (topVm, option, defaults) {
+        var after = avalon.mix({}, defaults, option)
+        var vm = avalon.mediatorFactory(topVm, after)
+        return vm
     },
-    createRender: function (nodes) {
-        return nodes
+    defaults: {
+        title: "标题"
     },
     diff: function (cur, pre) {
 
