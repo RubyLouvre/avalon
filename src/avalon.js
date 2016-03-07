@@ -13,6 +13,8 @@ avalon.mediatorFactory = require("./model/compact").mediatorFactory
 require("./strategy/createVirtual")
 
 require("./directives/compact")
+require("./directives/panel/index")
+
 module.exports = avalon
 
 
