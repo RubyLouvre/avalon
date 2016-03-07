@@ -2,6 +2,7 @@ var createVirtual = require("../strategy/createVirtual")
 var makeHashCode = require("../base/builtin").makeHashCode
 
 var parse = require("../parser/parse")
+//var require()
 avalon.components = {
     panel: {
         template: "<div>" +
@@ -24,42 +25,80 @@ avalon.components = {
  </slot>
  </div>
  */
+var resolvedComponents = {}
+var componentQueue = {}
 avalon.component = function (node, vm) {
-    // /(?:ms|av)(?:-|\:)(\w+)/node.type
-    var option = node.props['av-widget']
-    var widget = avalon.components[option.type]
-
-    if (widget) {
-        var id = node.props.cacheID
-        delete avalon.caches[id]
-        var slots = {}
-        node.children.forEach(function (el) {
-            if (el.type.charAt(0) !== "#") {
-                var name = el.props.slot || ""
-                if (slots[name]) {
-                    slots[name].push(el)
-                } else {
-                    slots[name] = [el]
-                }
+    var isDefine = typeof (node) === "string"
+    if (isDefine) {
+        var name = node, opts = vm
+        avalon.components[name] = opts
+        var vms = {}
+        for (var i = 0, obj; obj = componentQueue[i]; i++) {
+            if (name === obj.fullName) {
+                componentQueue.splice(i, 1)
+                i--;
+                var vid = obj.vm.$id.split(".")[0]
+                vms[vid] = true
+                // avalon.component(obj.node, obj.vm)
             }
-        })
-        var mainTemplate = createVirtual(widget.template)
+        }
+        for (var id in vms) {
+            batchUpdateEntity(id, true)
+        }
 
-        var compileElement = mergeTempale(mainTemplate, slots)
-        var $render = avalon.createRender(compileElement)
-        var vnode = $render({})[0]
-        vnode.props.wid = node.props.wid
-        vnode.change = []
-        vnode.change.push(function (dom, node, parent) {
-            var el = avalon.vdomAdaptor(node).toDOM()
-            avalon(el).addClass(el.getAttribute("wid"))
-            parent.replaceChild(el, dom)
-        })
-        return vnode
+
     } else {
-        return node
+        var id = node.props.wid
+        //如果组件模板已经定
+        if (resolvedComponents[id])
+            return resolvedComponents[id].$render()//让widget虚拟DOM重新渲染自己并进行diff, patch
+        var option = node.props['av-widget']
+        var widget = avalon.components[option.type]
+        if (!widget) {
+            var widget = option.type
+            var library = option.library || "av"
+            var fullName = library + ":" + camelize(widget)
+            componentQueue.push({
+                library: library,
+                element: node,
+                fullName: fullName,
+                widget: widget,
+                vm: vm
+            })
+            return node //返回普通的patch
+        } else {
+            var mainTemplate = createVirtual(widget.template)
+            var slots = {}
+            node.children.forEach(function (el) {
+                if (el.type.charAt(0) !== "#") {
+                    var name = el.props.slot || ""
+                    if (slots[name]) {
+                        slots[name].push(el)
+                    } else {
+                        slots[name] = [el]
+                    }
+                }
+            })
+            var compileElement = mergeTempale(mainTemplate, slots)
+            if (widget.createRender) {
+                compileElement = widget.createRender(compileElement)
+            }
+            var $render = avalon.createRender(compileElement)
+            var vm = widget.createVm(option, vm)
+            var widgetNode = $render(vm)
+
+            widgetNode.$render = $render
+            widgetNode.props.wid = node.props.wid
+            widgetNode.props.wtype = node.props.wtype
+            widgetNode.props.wid = node.props.wid
+         
+            widgetNode.change.push(this.update)
+            return widgetNode
+        }
     }
+
 }
+
 //插入点机制,组件的模板中有一些av-slot元素,用于等待被外面的元素替代
 function wrap(str) {
     return str.replace("return __value__", function (a) {
