@@ -17,7 +17,6 @@ function createRender(arr) {
     var num = num || String(new Date - 0).slice(0, 6)
     var body = toTemplate(arr, num) + "\n\nreturn nodes" + num
     var fn = Function("__vmodel__", body)
-    // console.log(fn+"")
     return fn
 }
 function toTemplate(arr, num) {
@@ -115,10 +114,7 @@ function toTemplate(arr, num) {
             if (hasBindings) {
                 str += hasBindings
             }
-//av-text,av-html,会将一个元素变成组件
-//   str += "if(" + vnode + ".$render ){\n"
-//   str += "\t" + vnode + " = " + vnode + ".$render(__vmodel__)\n"
-//   str += "}else{\n"
+
             if (el.children.length) {
                 str += "if(!" + vnode + ".props.wid){\n"
                 str += "\t" + vnode + ".children = " + wrap(toTemplate(el.children, num), num) + "\n"
@@ -126,7 +122,6 @@ function toTemplate(arr, num) {
             } else {
                 str += vnode + ".template= " + quote(el.template) + "\n"
             }
-//  str += "}\n"
             str += children + ".push(" + vnode + ")\n"
 
             if (hasIf) {

@@ -3,9 +3,7 @@ var Cache = require("../core/cache")
 
 var rexpr = avalon.config.rexpr
 var quote = require("../base/builtin").quote
-//function quote(a){
-//    return JSON.stringify(a)
-//}
+
 function K(a) {
     return a
 }
