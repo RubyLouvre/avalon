@@ -3,6 +3,7 @@ require("../directives/compact")
 var empty = {
     children: [], props: {}
 }
+var emptyArr = []
 function diff(current, previous) {
     for (var i = 0; i < current.length; i++) {
         var cur = current[i]
@@ -25,7 +26,7 @@ function diff(current, previous) {
                     diffProps(cur, pre)
                 }
                 if (!cur.skipContent) {
-                    diff(cur.children, pre.children)
+                    diff(cur.children, pre.children || emptyArr)
                 }
                 break
 
