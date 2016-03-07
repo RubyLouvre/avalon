@@ -1,9 +1,8 @@
 var template = require("text!./panel.html")
-console.log(template)
 avalon.component("av:panel", {
     template: template,
-    createVm: function (topVm, option, defaults) {
-        var after = avalon.mix({}, defaults, option)
+    createVm: function (topVm, defaults,options) {
+        var after = avalon.mix({}, defaults, options)
         var vm = avalon.mediatorFactory(topVm, after)
         return vm
     },

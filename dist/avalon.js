@@ -66,9 +66,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.define = __webpack_require__(19).define
 	avalon.mediatorFactory = __webpack_require__(19).mediatorFactory
 
-	__webpack_require__(41)
+	__webpack_require__(40)
 
 	__webpack_require__(27)
+	__webpack_require__(54)
+
 	module.exports = avalon
 
 
@@ -2843,10 +2845,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var makeComputed = innerBuiltin.makeComputed
 
 	var diff = __webpack_require__(26)
-	var createRender = __webpack_require__(52)
+	var createRender = __webpack_require__(51)
 	var batchUpdateEntity = __webpack_require__(24)
 
-	var dispatch = __webpack_require__(51)
+	var dispatch = __webpack_require__(50)
 	var $watch = dispatch.$watch
 	var $emit = dispatch.$emit
 
@@ -3655,7 +3657,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rtopsub = /([^.]+)\.(.+)/
 
 	var batchUpdateEntity = __webpack_require__(24)
-	var $emit = __webpack_require__(51).$emit
+	var $emit = __webpack_require__(50).$emit
 
 	//一个vm总是为Observer的实例
 	function Observer() {
@@ -3914,6 +3916,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var empty = {
 	    children: [], props: {}
 	}
+	var emptyArr = []
 	function diff(current, previous) {
 	    for (var i = 0; i < current.length; i++) {
 	        var cur = current[i]
@@ -3936,7 +3939,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    diffProps(cur, pre)
 	                }
 	                if (!cur.skipContent) {
-	                    diff(cur.children, pre.children)
+	                    diff(cur.children, pre.children || emptyArr)
 	                }
 	                break
 
@@ -3973,13 +3976,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(33)
 	__webpack_require__(34)
 	__webpack_require__(35)
+	__webpack_require__(36)
 	__webpack_require__(37)
 	__webpack_require__(38)
 	__webpack_require__(39)
-	__webpack_require__(40)
+	__webpack_require__(47)
 	__webpack_require__(48)
 	__webpack_require__(49)
-	__webpack_require__(50)
 
 /***/ },
 /* 28 */
@@ -4484,71 +4487,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    update: function (node, vnode) {
-	        var child = vnode.props['av-text']
-	        if (!child) {
-	            return
-	        }
+	        var nodeValue = vnode.props['av-text']
 	        if ("textContent" in node) {
-	            node.textContent = child.nodeValue + ""
+	            node.textContent = nodeValue + ""
 	        } else {
-	            node.innerText = child.nodeValue + ""
+	            node.innerText = nodeValue + ""
 	        }
 	    }
 	})
 
 /***/ },
 /* 36 */
-/***/ function(module, exports) {
-
-	var rline = /\r?\n/g
-
-	function parseInterpolate(str, useTrim) {
-	    var tokens = [],
-	            value, start = 0,
-	            stop
-	    do {
-	        stop = str.indexOf(avalon.config.openTag, start)
-	        if (stop === -1) {
-	            break
-	        }
-	        value = str.slice(start, stop)
-	        if (start === 0) {
-	            value = value.replace(/^\s+/,"")
-	        }
-	        if (value) { // {{ 左边的文本
-	            tokens.push({
-	                expr: value
-	            })
-	        }
-	        start = stop + avalon.config.openTag.length
-	        stop = str.indexOf(avalon.config.closeTag, start)
-	        if (stop === -1) {
-	            break
-	        }
-	        value = str.slice(start, stop)
-	        if (value) { //处理{{ }}插值表达式
-	            tokens.push({
-	                expr: value.replace(rline, ""),
-	                type: "{{}}"
-	            })
-	        }
-	        start = stop + avalon.config.closeTag.length
-	    } while (1)
-	    value = str.slice(start)
-
-	    if (value.replace(/\s+$/,"")) { //}} 右边的文本
-	        tokens.push({
-	            expr: value.replace(/\s+$/,"")
-	        })
-	    }
-	    return tokens
-	}
-
-	module.exports = parseInterpolate
-
-
-/***/ },
-/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var builtin = __webpack_require__(2)
@@ -4609,7 +4558,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 38 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	//根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag"
@@ -4736,7 +4685,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 39 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var markID = __webpack_require__(2).markID
@@ -4817,14 +4766,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 40 */
+/* 39 */
 /***/ function(module, exports, __webpack_require__) {
 
 	//双工绑定
 
 	var parse = __webpack_require__(29)
 	var builtin = __webpack_require__(2)
-	var createVirtual = __webpack_require__(41)
+	var createVirtual = __webpack_require__(40)
 
 	var W3C = builtin.W3C
 	var msie = builtin.msie
@@ -5287,7 +5236,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 41 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -5309,7 +5258,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	// /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi
 	var rnocontent = /textarea|template|script|style/
 	var tagCache = {}// 缓存所有匹配开标签闭标签的正则
-	var controllerHook = __webpack_require__(42).controllerHook
+	var controllerHook = __webpack_require__(41).controllerHook
 
 	var maps = {}
 	var number = 1
@@ -5326,7 +5275,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var pushArray = __webpack_require__(2).pushArray
 	var makeHashCode = __webpack_require__(2).makeHashCode
 
-	var vdom = __webpack_require__(43)
+	var vdom = __webpack_require__(42)
 	var VText = vdom.VText
 	var VComment = vdom.VComment
 	var VElement = vdom.VElement
@@ -5532,7 +5481,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = avalon.createVirtual = createVirtual
 
 /***/ },
-/* 42 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var attrUpdate = __webpack_require__(6)
@@ -5619,16 +5568,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 /***/ },
-/* 43 */
+/* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
 	 * 虚拟DOM的4大构造器
 	 */
-	var VText = __webpack_require__(44)
-	var VElement = __webpack_require__(45)
-	var VComment = __webpack_require__(46)
-	var VComponent = __webpack_require__(47)
+	var VText = __webpack_require__(43)
+	var VElement = __webpack_require__(44)
+	var VComment = __webpack_require__(45)
+	var VComponent = __webpack_require__(46)
 	avalon.vdomAdaptor = function (obj) {
 	    switch (obj.type) {
 	        case "#text":
@@ -5652,7 +5601,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 44 */
+/* 43 */
 /***/ function(module, exports) {
 
 	var rexpr = avalon.config.rexpr
@@ -5686,7 +5635,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = VText
 
 /***/ },
-/* 45 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var builtin = __webpack_require__(2)
@@ -5789,7 +5738,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = VElement
 
 /***/ },
-/* 46 */
+/* 45 */
 /***/ function(module, exports) {
 
 	
@@ -5820,7 +5769,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = VComment
 
 /***/ },
-/* 47 */
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var pushArray = __webpack_require__(2).pushArray
@@ -5882,7 +5831,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = VComponent
 
 /***/ },
-/* 48 */
+/* 47 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var makeHashCode = __webpack_require__(2).makeHashCode
@@ -5924,7 +5873,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 49 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var parse = __webpack_require__(29)
@@ -6190,77 +6139,27 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 50 */
+/* 49 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var createVirtual = __webpack_require__(41)
-	var makeHashCode = __webpack_require__(2).makeHashCode
-
+	
 	var parse = __webpack_require__(29)
-	avalon.components = {
-	    panel: {
-	        template: "<div>" +
-	                "<h1>This is my component!</h1>" +
-	                "<av-slot>" +
-	                "This will only be displayed if there is no content" +
-	                "to be distributed." +
-	                "</av-slot>" +
-	                "<h1>This is my component!</h1>" +
-	                "</div>"
-	    }
-	}
-	/*
-	 * 
-	 <div>
-	 <h1>This is my component!</h1>
-	 <slot>
-	 This will only be displayed if there is no content
-	 to be distributed.
-	 </slot>
-	 </div>
-	 */
-	avalon.component = function (node, vm) {
-	    // /(?:ms|av)(?:-|\:)(\w+)/node.type
-	    var option = node.props['av-widget']
-	    var widget = avalon.components[option.type]
+	var makeHashCode = __webpack_require__(2).makeHashCode
+	var createVirtual = __webpack_require__(40)
+	var batchUpdateEntity = __webpack_require__(24)
+	var camelize = __webpack_require__(2).camelize
 
-	    if (widget) {
-	        var id = node.props.cacheID
-	        delete avalon.caches[id]
-	        var slots = {}
-	        node.children.forEach(function (el) {
-	            if (el.type.charAt(0) !== "#") {
-	                var name = el.props.slot || ""
-	                if (slots[name]) {
-	                    slots[name].push(el)
-	                } else {
-	                    slots[name] = [el]
-	                }
-	            }
-	        })
-	        var mainTemplate = createVirtual(widget.template)
 
-	        var compileElement = mergeTempale(mainTemplate, slots)
-	        var $render = avalon.createRender(compileElement)
-	        var vnode = $render({})[0]
-	        vnode.props.wid = node.props.wid
-	        vnode.change = []
-	        vnode.change.push(function (dom, node, parent) {
-	            var el = avalon.vdomAdaptor(node).toDOM()
-	            avalon(el).addClass(el.getAttribute("wid"))
-	            parent.replaceChild(el, dom)
-	        })
-	        return vnode
-	    } else {
-	        return node
-	    }
-	}
 	//插入点机制,组件的模板中有一些av-slot元素,用于等待被外面的元素替代
 	function wrap(str) {
 	    return str.replace("return __value__", function (a) {
-	        return  "if(Array.isArray(__value__)){\n" +
+	        var p = "if(Array.isArray(__value__)){\n" +
 	                "    __value__ = avalon.mix.apply({},__value__)\n" +
-	                "}\n" + a
+	                "}\n" //+
+	              //  "if (!/(:|-)/.test(__value__.$type)) {\n" +
+	              //  "\t__value__.$type = 'av-' + __value__.$type\n" +
+	              //  "}\n"
+	        return p + a
 	    })
 	}
 
@@ -6271,13 +6170,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        var uuid = makeHashCode("w")
 	        avalon.caches[uuid] = elem.children
-	        //console.log(avalon.caches[uuid])
 	        var component = "config" + num
 	        return  "vnode" + num + ".props.wid = '" + uuid + "'\n" +
 	                "vnode" + num + ".children = avalon.caches[vnode" + num + ".props.wid] \n" +
 	                "var " + component + " = vnode" + num + ".props['av-widget'] = " + wrap(parse(binding), "widget") + ";\n" +
-	                "if(" + component + " && " + component +
-	                ".type && avalon.components[ " + component + ".type ]){\n" +
+	                "if(" + component + "){\n" +
 	                "\tvnode" + num + " = avalon.component(vnode" + num + ", __vmodel__)\n" +
 	                "}\n"
 
@@ -6287,17 +6184,136 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var p = pre.props.resolved
 	        if (a && typeof a === "object") {
 
-
 	        } else {
 	            cur.props["av-widget"] = p
 	        }
 
 	    },
-	    update: function (node, vnode) {
+	    update: function () {
+	    },
+	    replaceElement: function (dom, node, parent) {
+	        var el = avalon.vdomAdaptor(node).toDOM()
+	        avalon(el).addClass(el.getAttribute("wid"))
+	        parent.replaceChild(el, dom)
+	    },
+	    replaceContent: function () {
+	    },
+	    switchContent: function () {
 
-	        // console.log(vnode.props["av-widget"])
 	    }
 	})
+
+
+
+	var componentQueue = []
+	var resolvedComponents = {}
+	/*
+	 * 组件的类型 wtype
+	 * 0 组件会替代原来的元素 (grid,accordion, carousel,button, flipswitch...)
+	 * 1 组件替代元素的内部并不保留原内部元素 html
+	 * 2 组件替代元素的内部并保留原内部元素 路由
+	 * 3 组件不进行代替操作，而是出现在body的下方，当条件满足才出现（at, dialog, datepicker, dropdown）
+	 * 4 组件本身不产生元素,只是为子元素绑定事件,添加某种功能(draggable)
+	 */
+	var updateTypes = {
+	    0: "replaceElement",
+	    1: "replaceContent",
+	    2: "switchContent",
+	    3: "update",
+	    4: "update"
+	}
+	avalon.component = function (node, vm) {
+	    var isDefine = typeof (node) === "string"
+	    //console.log(isDefine)
+	    if (isDefine) {
+	        var name = node, opts = vm
+	        avalon.components[name] = opts
+	        var vms = {}
+	        for (var i = 0, obj; obj = componentQueue[i]; i++) {
+	            if (name === obj.name) {
+	                componentQueue.splice(i, 1)
+	                i--;
+	                var vid = obj.vm.$id.split(".")[0]
+	                vms[vid] = true
+	            }
+	        }
+	        for (var id in vms) {
+	            batchUpdateEntity(id, true)
+	        }
+	        // console.log(batchUpdateEntity)
+	        // batchUpdateEntity("test")
+	    } else {
+
+	        var option = node.props['av-widget']
+	        var id = node.props.wid
+	        var name = option.$type
+	        if (/(\:|-)/.test(node.type)) {
+	            name = node.type
+	        }
+	       
+	        console.log(option, id, name)
+	        //如果组件模板已经定
+	        if (resolvedComponents[id])
+	            return resolvedComponents[id].$render()//让widget虚拟DOM重新渲染自己并进行diff, patch
+
+	        var widget = avalon.components[name]
+	        if (!widget) {
+	            componentQueue.push({
+	                name: name,
+	                vm: vm
+	            })
+	            return node //返回普通的patch
+	        } else {
+
+	            var template = String(widget.template).trim()
+	            var mainTemplate = createVirtual(template)
+	            var slots = {}
+	            node.children.forEach(function (el) {
+	                if (el.type.charAt(0) !== "#") {
+	                    var name = el.props.slot || ""
+	                    if (slots[name]) {
+	                        slots[name].push(el)
+	                    } else {
+	                        slots[name] = [el]
+	                    }
+	                }
+	            })
+	            var compileElement = mergeTempale(mainTemplate, slots)
+	            if (widget.createRender) {
+	                compileElement = widget.createRender(compileElement)
+	            }
+	            if (!option.$id) {
+	                option.$id = makeHashCode(name)
+	            }
+	            delete option.$type
+	            var $render = avalon.createRender(compileElement)
+	            var vmodel = widget.createVm(vm, option, widget.data)
+	            var widgetNode = $render(vmodel || {})
+	            if (widgetNode.length === 1) {
+	                widgetNode = widgetNode[0]
+	                widgetNode.$render = $render
+	            } else {
+	                throw "widget error"
+	            }
+
+	            resolvedComponents[id] = widgetNode
+
+	            widgetNode.$render = $render
+	            var wtype = node.props.wtype || 0
+
+	            widgetNode.props.wid = node.props.wid
+	            if (!widget.update) {
+	                widget.update = avalon.directives.widget[updateTypes[wtype]]
+	            }
+
+	            widgetNode.change = widgetNode.change || []
+	            widgetNode.change.push(widget.update)
+	            return widgetNode
+	        }
+	    }
+	}
+
+
 
 	function mergeTempale(main, slots) {
 	    for (var i = 0, el; el = main[i++]; ) {
@@ -6314,18 +6330,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    return main
 	}
-	/*
-	 * 组件的类型 wtype
-	 * 1 组件会替代原来的元素 (grid,accordion, carousel,button, flipswitch...)
-	 * 2 组件替代元素的内部并不保留原内部元素 html
-	 * 3 组件替代元素的内部并保留原内部元素 路由
-	 * 4 组件不进行代替操作，而是出现在body的下方，当条件满足才出现（at, dialog, datepicker, dropdown）
-	 * 5 组件本身不产生元素,只是为子元素绑定事件,添加某种功能(draggable)
-	 */
 
 
 /***/ },
-/* 51 */
+/* 50 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*********************************************************************
@@ -6428,13 +6436,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 52 */
+/* 51 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var parse = __webpack_require__(29)
-	var parseBindings = __webpack_require__(53)
-	var parseInterpolate = __webpack_require__(36)
+	var parseBindings = __webpack_require__(52)
+	var parseInterpolate = __webpack_require__(53)
 
 
 	var rexpr = avalon.config.rexpr
@@ -6547,10 +6555,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (hasBindings) {
 	                str += hasBindings
 	            }
-	//av-text,av-html,会将一个元素变成组件
-	//   str += "if(" + vnode + ".$render ){\n"
-	//   str += "\t" + vnode + " = " + vnode + ".$render(__vmodel__)\n"
-	//   str += "}else{\n"
+
 	            if (el.children.length) {
 	                str += "if(!" + vnode + ".props.wid){\n"
 	                str += "\t" + vnode + ".children = " + wrap(toTemplate(el.children, num), num) + "\n"
@@ -6558,7 +6563,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            } else {
 	                str += vnode + ".template= " + quote(el.template) + "\n"
 	            }
-	//  str += "}\n"
 	            str += children + ".push(" + vnode + ")\n"
 
 	            if (hasIf) {
@@ -6574,7 +6578,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = avalon.createRender = createRender
 
 /***/ },
-/* 53 */
+/* 52 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var oneObject = __webpack_require__(2).oneObject
@@ -6644,6 +6648,89 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	module.exports = parseBindings
+
+/***/ },
+/* 53 */
+/***/ function(module, exports) {
+
+	var rline = /\r?\n/g
+
+	function parseInterpolate(str, useTrim) {
+	    var tokens = [],
+	            value, start = 0,
+	            stop
+	    do {
+	        stop = str.indexOf(avalon.config.openTag, start)
+	        if (stop === -1) {
+	            break
+	        }
+	        value = str.slice(start, stop)
+	        if (start === 0) {
+	            value = value.replace(/^\s+/,"")
+	        }
+	        if (value) { // {{ 左边的文本
+	            tokens.push({
+	                expr: value
+	            })
+	        }
+	        start = stop + avalon.config.openTag.length
+	        stop = str.indexOf(avalon.config.closeTag, start)
+	        if (stop === -1) {
+	            break
+	        }
+	        value = str.slice(start, stop)
+	        if (value) { //处理{{ }}插值表达式
+	            tokens.push({
+	                expr: value.replace(rline, ""),
+	                type: "{{}}"
+	            })
+	        }
+	        start = stop + avalon.config.closeTag.length
+	    } while (1)
+	    value = str.slice(start)
+
+	    if (value.replace(/\s+$/,"")) { //}} 右边的文本
+	        tokens.push({
+	            expr: value.replace(/\s+$/,"")
+	        })
+	    }
+	    return tokens
+	}
+
+	module.exports = parseInterpolate
+
+
+/***/ },
+/* 54 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var template = __webpack_require__(55)
+	console.log(template)
+	avalon.component("av:panel", {
+	    template: template,
+	    createVm: function (topVm, option, defaults) {
+	        var after = avalon.mix({}, defaults, option)
+	        var vm = avalon.mediatorFactory(topVm, after)
+	        return vm
+	    },
+	    defaults: {
+	        title: "标题"
+	    },
+	    diff: function (cur, pre) {
+
+	    },
+	    update: function (dom, node, parent) {
+	        var el = avalon.vdomAdaptor(node).toDOM()
+	        avalon(el).addClass(el.getAttribute("wid"))
+	        parent.replaceChild(el, dom)
+	    }
+	})
+
+/***/ },
+/* 55 */
+/***/ function(module, exports) {
+
+	module.exports = "\n<div>\n    <h1>{{@title}}</h1>\n    <link href=\"http://libs.baidu.com/bootstrap/3.0.3/css/bootstrap.min.css\" rel=\"stylesheet\">\n    <av-slot>\n        This will only be displayed if there is no content\n        to be distributed.\n    </av-slot>\n    <h1>This is my component!</h1>\n</div>\n\n"
 
 /***/ }
 /******/ ])
