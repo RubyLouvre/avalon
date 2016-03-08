@@ -45,8 +45,16 @@ avalon.directive("widget", {
     },
     replaceElement: function (dom, node, parent) {
         var el = avalon.vdomAdaptor(node).toDOM()
-        avalon(el).addClass(el.getAttribute("wid"))
-        parent.replaceChild(el, dom)
+       console.log(node)
+
+        if (dom) {
+            parent.replaceChild(el, dom)
+        } else {
+            parent.appendChild(el)
+        }
+        
+        avalon(el).addClass(node.props.wid)
+        el.className = node.props.wid
     },
     replaceContent: function () {
     },
@@ -101,10 +109,11 @@ avalon.component = function (node, vm) {
         if (/(\:|-)/.test(node.type)) {
             name = node.type
         }
+        name = name.replace(":", "-")
         //如果组件模板已经定
-        if (resolvedComponents[id])
+        if (resolvedComponents[id]){
             return resolvedComponents[id].$render()//让widget虚拟DOM重新渲染自己并进行diff, patch
-
+        }
         var widget = avalon.components[name]
         if (!widget) {
             componentQueue.push({
@@ -117,7 +126,7 @@ avalon.component = function (node, vm) {
                 options.$id = makeHashCode(name)
             }
             delete options.$type
-            
+
             var strTemplate = String(widget.template).trim()
             var virTemplate = createVirtual(strTemplate)
 
@@ -129,7 +138,8 @@ avalon.component = function (node, vm) {
             if (widgetNode.length === 1) {
                 widgetNode = widgetNode[0]
             } else {
-                throw "widget error"
+                console.log(widgetNode)
+                throw "组件要用一个元素包起来"
             }
 
             resolvedComponents[id] = widgetNode

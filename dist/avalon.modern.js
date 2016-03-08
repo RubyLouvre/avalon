@@ -3512,7 +3512,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    constructor: VElement,
 	    toDOM: function () {
-
 	        var dom = document.createElement(this.type)
 
 	        for (var i in this.props) {
@@ -3555,7 +3554,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    toHTML: function () {
 	        var arr = []
 	        for (var i in this.props) {
-	            arr.push(i + "=" + quote(String(this.props[i])))
+	            if (this.props[i] !== false && typeof this.props[i] !== "function") {
+	                arr.push(i + "=" + quote(String(this.props[i])))
+	            }
 	        }
 	        arr = arr.length ? " " + arr.join(" ") : ""
 	        var str = "<" + this.type + arr
@@ -3986,19 +3987,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	var makeHashCode = __webpack_require__(2).makeHashCode
 	var createVirtual = __webpack_require__(40)
 	var batchUpdateEntity = __webpack_require__(24)
-	var camelize = __webpack_require__(2).camelize
 
 
 	//插入点机制,组件的模板中有一些av-slot元素,用于等待被外面的元素替代
 	function wrap(str) {
 	    return str.replace("return __value__", function (a) {
-	        var p = "if(Array.isArray(__value__)){\n" +
+	        var prefix = "if(Array.isArray(__value__)){\n" +
 	                "    __value__ = avalon.mix.apply({},__value__)\n" +
-	                "}\n" //+
-	              //  "if (!/(:|-)/.test(__value__.$type)) {\n" +
-	              //  "\t__value__.$type = 'av-' + __value__.$type\n" +
-	              //  "}\n"
-	        return p + a
+	                "}\n"
+	        return prefix + a
 	    })
 	}
 
@@ -4032,8 +4029,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    replaceElement: function (dom, node, parent) {
 	        var el = avalon.vdomAdaptor(node).toDOM()
-	        avalon(el).addClass(el.getAttribute("wid"))
-	        parent.replaceChild(el, dom)
+	       console.log(node)
+
+	        if (dom) {
+	            parent.replaceChild(el, dom)
+	        } else {
+	            parent.appendChild(el)
+	        }
+	        
+	        avalon(el).addClass(node.props.wid)
+	        el.className = node.props.wid
 	    },
 	    replaceContent: function () {
 	    },
@@ -4065,8 +4070,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var isDefine = typeof (node) === "string"
 	    //console.log(isDefine)
 	    if (isDefine) {
-	        var name = node, opts = vm
-	        avalon.components[name] = opts
+	        var name = node, definition = vm
+	        avalon.components[name] = definition
 	        var vms = {}
 	        for (var i = 0, obj; obj = componentQueue[i]; i++) {
 	            if (name === obj.name) {
@@ -4079,22 +4084,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (var id in vms) {
 	            batchUpdateEntity(id, true)
 	        }
-	        // console.log(batchUpdateEntity)
-	        // batchUpdateEntity("test")
+
 	    } else {
 
-	        var option = node.props['av-widget']
+	        var options = node.props['av-widget']
 	        var id = node.props.wid
-	        var name = option.$type
+	        var name = options.$type
 	        if (/(\:|-)/.test(node.type)) {
 	            name = node.type
 	        }
-	       
-	        console.log(option, id, name)
+	        name = name.replace(":", "-")
 	        //如果组件模板已经定
-	        if (resolvedComponents[id])
+	        if (resolvedComponents[id]){
 	            return resolvedComponents[id].$render()//让widget虚拟DOM重新渲染自己并进行diff, patch
-
+	        }
 	        var widget = avalon.components[name]
 	        if (!widget) {
 	            componentQueue.push({
@@ -4103,45 +4106,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	            })
 	            return node //返回普通的patch
 	        } else {
+	            if (!options.$id) {
+	                options.$id = makeHashCode(name)
+	            }
+	            delete options.$type
 
-	            var template = String(widget.template).trim()
-	            var mainTemplate = createVirtual(template)
-	            var slots = {}
-	            node.children.forEach(function (el) {
-	                if (el.type.charAt(0) !== "#") {
-	                    var name = el.props.slot || ""
-	                    if (slots[name]) {
-	                        slots[name].push(el)
-	                    } else {
-	                        slots[name] = [el]
-	                    }
-	                }
-	            })
-	            var compileElement = mergeTempale(mainTemplate, slots)
-	            if (widget.createRender) {
-	                compileElement = widget.createRender(compileElement)
-	            }
-	            if (!option.$id) {
-	                option.$id = makeHashCode(name)
-	            }
-	            delete option.$type
-	            var $render = avalon.createRender(compileElement)
-	            var vmodel = widget.createVm(vm, option, widget.data)
-	            var widgetNode = $render(vmodel || {})
+	            var strTemplate = String(widget.template).trim()
+	            var virTemplate = createVirtual(strTemplate)
+
+	            insertSlots(virTemplate, node)
+	            var renderFn = avalon.createRender(virTemplate)
+	            var vmodel = widget.createVm(vm, widget.defaults, options)
+
+	            var widgetNode = renderFn(vmodel || {})
 	            if (widgetNode.length === 1) {
 	                widgetNode = widgetNode[0]
-	                widgetNode.$render = $render
 	            } else {
-	                throw "widget error"
+	                console.log(widgetNode)
+	                throw "组件要用一个元素包起来"
 	            }
 
 	            resolvedComponents[id] = widgetNode
 
-	            widgetNode.$render = $render
-	            var wtype = node.props.wtype || 0
+	            widgetNode.$render = renderFn
 
 	            widgetNode.props.wid = node.props.wid
 	            if (!widget.update) {
+	                var wtype = node.props.wtype || 0
 	                widget.update = avalon.directives.widget[updateTypes[wtype]]
 	            }
 
@@ -4168,6 +4159,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	    return main
+	}
+
+	function insertSlots(main, node) {
+	    var slots = {}
+	    node.children.forEach(function (el) {
+	        if (el.type.charAt(0) !== "#") {
+	            var name = el.props.slot || ""
+	            if (slots[name]) {
+	                slots[name].push(el)
+	            } else {
+	                slots[name] = [el]
+	            }
+	        }
+	    })
+	    mergeTempale(main, slots)
 	}
 
 

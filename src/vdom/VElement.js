@@ -33,7 +33,6 @@ VElement.prototype = {
     },
     constructor: VElement,
     toDOM: function () {
-
         var dom = document.createElement(this.type)
 
         for (var i in this.props) {
@@ -76,7 +75,9 @@ VElement.prototype = {
     toHTML: function () {
         var arr = []
         for (var i in this.props) {
-            arr.push(i + "=" + quote(String(this.props[i])))
+            if (this.props[i] !== false && typeof this.props[i] !== "function") {
+                arr.push(i + "=" + quote(String(this.props[i])))
+            }
         }
         arr = arr.length ? " " + arr.join(" ") : ""
         var str = "<" + this.type + arr
