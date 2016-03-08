@@ -10,7 +10,10 @@
             var vm = avalon.define({
                 $id: "test",
                 aaa: 111,
-                ops: {
+                panel: {
+                    $ready: function (a) {
+                        console.log(a)
+                    },
                     title: "第二个"
                 }
             })
@@ -21,7 +24,7 @@
     <body>
 
         <div id="test" >
-            <div ms-widget="{$type:'av:panel',$id:'aa'}">
+            <div ms-widget="[{$type:'av:panel',$id:'aa'}, @panel]">
                 <av-button av-widget='{}'>xxx</av-button>
             </div>
         </div>

@@ -27,27 +27,17 @@ function adjustVm(vm, expr) {
 }
 
 
-function $watch(expr, funOrObj) {
+function $watch(expr, callback) {
     var vm = adjustVm(this, expr)
     var hive = vm.$events
     var list = hive[expr] || (hive[expr] = [])
     if (vm !== this) {
         this.$events[expr] = list
     }
-    var data = typeof funOrObj === "function" ? {
-        update: funOrObj,
-        element: {},
-        expr: "[[ " + expr + " ]]",
-        shouldDispose: function () {
-            return vm.$hashcode === false
-        },
-        uuid: getUid(funOrObj)
-    } : funOrObj
-
-    funOrObj.shouldDispose = funOrObj.shouldDispose || shouldDispose
+    avalon.Array.ensure(list, callback)
 
     return function () {
-        avalon.Array.remove(list, data)
+        avalon.Array.remove(list, callback)
     }
 }
 
@@ -73,19 +63,15 @@ function $emit(list, vm, path, a, b, i) {
     if (list && list.length) {
         try {
             for (i = i || list.length - 1; i >= 0; i--) {
-                var data = list[i]
-                if (!data.element || data.element.disposed) {
-                    list.splice(i, 1)
-                } else if (data.update) {
-                    data.update.call(vm, a, b, path)
-                }
+                var callback = list[i]
+                callback.call(vm, a, b, path)
             }
         } catch (e) {
             if (i - 1 > 0)
                 $emit(list, vm, path, a, b, i - 1)
             avalon.log(e, path)
         }
-       
+
     }
 }
 
