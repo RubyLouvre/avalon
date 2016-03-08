@@ -31,7 +31,7 @@ function updateEntity(nodes, vnodes, parent) {
             vnode.repeatNodes = repeatNodes
         }
 
-        //ms-repeat,ms-if会返回false
+        //ms-repeat,ms-if, ms-widget会返回false
         if (false === execHooks(node, vnode, parent, "change")) {
             execHooks(node, vnode, parent, "afterChange")
             continue
