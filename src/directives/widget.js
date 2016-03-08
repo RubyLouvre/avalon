@@ -32,6 +32,20 @@ avalon.directive("widget", {
                 "}\n"
 
     },
+    createVm: function (topVm, defaults, options) {
+        var after = avalon.mix({}, defaults, options)
+        var events = {}
+        "$init $ready $dispose".replace(/\S+/g, function (a) {
+            if (typeof after[a] === "function")
+                events[a] = after[a]
+            delete after[a]
+        })
+        var vm = avalon.mediatorFactory(topVm, after)
+        for (var i in events) {
+            vm.$watch(i, events[i])
+        }
+        return vm
+    },
     diff: function (cur, pre) {
         var a = cur.props.resolved
         var p = pre.props.resolved
@@ -136,7 +150,8 @@ avalon.component = function (node, vm) {
             // virTemplate[0].props.wid = node.props.wid
             insertSlots(virTemplate, node)
             var renderFn = avalon.createRender(virTemplate)
-            var vmodel = widget.createVm(vm, widget.defaults, options)
+            var createVm = widget.createVm || avalon.directives.widget.createVm
+            var vmodel = createVm(vm, widget.defaults, options)
 
             var widgetNode = renderFn(vmodel || {})
             if (widgetNode.length === 1) {
@@ -154,15 +169,27 @@ avalon.component = function (node, vm) {
                 var wtype = node.props.wtype || 0
                 widget.update = avalon.directives.widget[updateTypes[wtype]]
             }
-
+            widgetNode.vmodel = vmodel
             widgetNode.change = widgetNode.change || []
             widgetNode.change.push(widget.update)
+
+            widgetNode.afterChange = widgetNode.afterChange || []
+            widgetNode.afterChange.push(afterChange)
             return widgetNode
         }
     }
 }
 
+function afterChange(dom, vnode, parent) {
+    if (componentQueue.length == 0) {
+       
+        vnode.vmodel.$fire("$ready", "ok")
+        
+    }else{
+        
+    }
 
+}
 
 function mergeTempale(main, slots) {
     for (var i = 0, el; el = main[i++]; ) {
