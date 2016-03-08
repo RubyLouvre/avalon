@@ -70,7 +70,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	__webpack_require__(27)
 	__webpack_require__(54)
-	__webpack_require__(63)
+	__webpack_require__(56)
 	module.exports = avalon
 
 
@@ -3869,7 +3869,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            vnode.repeatNodes = repeatNodes
 	        }
 
-	        //ms-repeat,ms-if会返回false
+	        //ms-repeat,ms-if, ms-widget会返回false
 	        if (false === execHooks(node, vnode, parent, "change")) {
 	            execHooks(node, vnode, parent, "afterChange")
 	            continue
@@ -6148,6 +6148,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var makeHashCode = __webpack_require__(2).makeHashCode
 	var createVirtual = __webpack_require__(40)
 	var batchUpdateEntity = __webpack_require__(24)
+	var updateEntity = __webpack_require__(25)
 
 
 	//插入点机制,组件的模板中有一些av-slot元素,用于等待被外面的元素替代
@@ -6169,7 +6170,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        avalon.caches[uuid] = elem.children
 	        var component = "config" + num
 	        return  "vnode" + num + ".props.wid = '" + uuid + "'\n" +
-	                "vnode" + num + ".props.className = '" + uuid + "'\n" +
 	                "vnode" + num + ".children = avalon.caches[vnode" + num + ".props.wid] \n" +
 	                "var " + component + " = vnode" + num + ".props['av-widget'] = " + wrap(parse(binding), "widget") + ";\n" +
 	                "if(" + component + "){\n" +
@@ -6191,16 +6191,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    replaceElement: function (dom, node, parent) {
 	        var el = avalon.vdomAdaptor(node).toDOM()
-	       console.log(node)
-
 	        if (dom) {
 	            parent.replaceChild(el, dom)
 	        } else {
 	            parent.appendChild(el)
 	        }
-	        
 	        avalon(el).addClass(node.props.wid)
-	        el.className = node.props.wid
+	        if (el.children.length) {
+	            updateEntity(el.childNodes, node.children, el)
+	        }
+
+	        return false
 	    },
 	    replaceContent: function () {
 	    },
@@ -6238,7 +6239,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (var i = 0, obj; obj = componentQueue[i]; i++) {
 	            if (name === obj.name) {
 	                componentQueue.splice(i, 1)
-	                i--;
+	                i--
 	                var vid = obj.vm.$id.split(".")[0]
 	                vms[vid] = true
 	            }
@@ -6257,14 +6258,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        name = name.replace(":", "-")
 	        //如果组件模板已经定
-	        if (resolvedComponents[id]){
+	        if (resolvedComponents[id]) {
 	            return resolvedComponents[id].$render()//让widget虚拟DOM重新渲染自己并进行diff, patch
 	        }
 	        var widget = avalon.components[name]
 	        if (!widget) {
 	            componentQueue.push({
 	                name: name,
-	                vm: vm
+	                vm: vm,
+	                node: node
 	            })
 	            return node //返回普通的patch
 	        } else {
@@ -6274,8 +6276,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            delete options.$type
 
 	            var strTemplate = String(widget.template).trim()
-	            var virTemplate = createVirtual(strTemplate)
 
+	            var virTemplate = createVirtual(strTemplate)
+	            // virTemplate[0].props.wid = node.props.wid
 	            insertSlots(virTemplate, node)
 	            var renderFn = avalon.createRender(virTemplate)
 	            var vmodel = widget.createVm(vm, widget.defaults, options)
@@ -6284,7 +6287,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (widgetNode.length === 1) {
 	                widgetNode = widgetNode[0]
 	            } else {
-	                console.log(widgetNode)
 	                throw "组件要用一个元素包起来"
 	            }
 
@@ -6588,7 +6590,10 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 52 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var oneObject = __webpack_require__(2).oneObject
+	var vars = __webpack_require__(2)
+
+	var quote = vars.quote
+	var oneObject = vars.oneObject
 
 	var directives = avalon.directives
 
@@ -6602,16 +6607,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    "on": 30000
 	}
 	var eventMap = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
-
+	var rnovar = /W/
 	var rmsAttr = /^(?:ms|av)-(\w+)-?(.*)/
 	function parseBindings(props, num, elem) {
 	    var bindings = []
+	    var skip = "ms-skip" in props || "av-skip" in props
+	    var ret = ""
 	    for (var i in props) {
 	        var value = props[i], match
-	        if (i === "av-skip") {
-	            return  "vnode" + num + ".skipAttrs = true\n"
-	        }
-	        if (value && (match = i.match(rmsAttr))) {
+
+	        if (!skip && value && (match = i.match(rmsAttr))) {
 
 	            var type = match[1]
 	            var param = match[2] || ""
@@ -6637,16 +6642,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	                bindings.push(binding)
 	            }
+	        } else {
+	            if (rnovar.test(i)) {//收集非绑定属性
+	                ret += "vnode" + num + ".props[" + quote(i) + "] = " + quote(value) + "\n"
+	            } else {
+	                ret += "vnode" + num + ".props." + i + " = " + quote(value) + "\n"
+	            }
 	        }
 	    }
 
 	    if (!bindings.length) {
-	        return "vnode" + num + ".skipAttrs = true\n"
+	        ret += "vnode" + num + ".skipAttrs = true\n"
+	    } else {
+	        bindings.sort(bindingSorter).forEach(function (binding) {
+	            ret += directives[binding.type].parse(binding, num, elem)
+	        })
 	    }
-	    var ret = ""
-	    bindings.sort(bindingSorter).forEach(function (binding) {
-	        ret += directives[binding.type].parse(binding, num, elem)
-	    })
 	    return ret
 
 	}
@@ -6743,19 +6754,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = "\n<div>\n    <h1>{{@title}}</h1>\n    <link href=\"http://libs.baidu.com/bootstrap/3.0.3/css/bootstrap.min.css\" rel=\"stylesheet\">\n    <av-slot>\n        This will only be displayed if there is no content\n        to be distributed.\n    </av-slot>\n    <h1>This is my component!</h1>\n</div>\n\n"
 
 /***/ },
-/* 56 */,
-/* 57 */,
-/* 58 */,
-/* 59 */,
-/* 60 */,
-/* 61 */,
-/* 62 */,
-/* 63 */
+/* 56 */
 /***/ function(module, exports) {
 
 	
 	avalon.component("av-button", {
-	    template: "<button type='button'><span>{{@text}}</span></button>",
+	    template: "<button type='button' aaa='test'><span>{{@text}}</span></button>",
 	    createVm: function (topVm, defaults, options) {
 	        var after = avalon.mix({}, defaults, options)
 	        var events = {}

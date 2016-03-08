@@ -1,6 +1,6 @@
 
 avalon.component("av-button", {
-    template: "<button type='button'><span>{{@text}}</span></button>",
+    template: "<button type='button' aaa='test'><span>{{@text}}</span></button>",
     createVm: function (topVm, defaults, options) {
         var after = avalon.mix({}, defaults, options)
         var events = {}

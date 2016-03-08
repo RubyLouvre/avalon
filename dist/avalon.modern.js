@@ -55,17 +55,17 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {var buildin = global.buildin = __webpack_require__(2)
-	var avalon = global.avalon = __webpack_require__(56).avalon //这个版本兼容IE10+
+	var avalon = global.avalon = __webpack_require__(57).avalon //这个版本兼容IE10+
 
 	__webpack_require__(4)
-	__webpack_require__(57)
+	__webpack_require__(58)
 	__webpack_require__(11)
 
-	avalon.define = __webpack_require__(59).define
-	avalon.mediatorFactory = __webpack_require__(59).mediatorFactory
+	avalon.define = __webpack_require__(60).define
+	avalon.mediatorFactory = __webpack_require__(60).mediatorFactory
 
 	__webpack_require__(40)
-	__webpack_require__(61)
+	__webpack_require__(62)
 	module.exports = avalon
 
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
@@ -1708,7 +1708,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            vnode.repeatNodes = repeatNodes
 	        }
 
-	        //ms-repeat,ms-if会返回false
+	        //ms-repeat,ms-if, ms-widget会返回false
 	        if (false === execHooks(node, vnode, parent, "change")) {
 	            execHooks(node, vnode, parent, "afterChange")
 	            continue
@@ -3987,6 +3987,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var makeHashCode = __webpack_require__(2).makeHashCode
 	var createVirtual = __webpack_require__(40)
 	var batchUpdateEntity = __webpack_require__(24)
+	var updateEntity = __webpack_require__(25)
 
 
 	//插入点机制,组件的模板中有一些av-slot元素,用于等待被外面的元素替代
@@ -4008,7 +4009,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        avalon.caches[uuid] = elem.children
 	        var component = "config" + num
 	        return  "vnode" + num + ".props.wid = '" + uuid + "'\n" +
-	                "vnode" + num + ".props.className = '" + uuid + "'\n" +
 	                "vnode" + num + ".children = avalon.caches[vnode" + num + ".props.wid] \n" +
 	                "var " + component + " = vnode" + num + ".props['av-widget'] = " + wrap(parse(binding), "widget") + ";\n" +
 	                "if(" + component + "){\n" +
@@ -4030,16 +4030,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    replaceElement: function (dom, node, parent) {
 	        var el = avalon.vdomAdaptor(node).toDOM()
-	       console.log(node)
-
 	        if (dom) {
 	            parent.replaceChild(el, dom)
 	        } else {
 	            parent.appendChild(el)
 	        }
-	        
 	        avalon(el).addClass(node.props.wid)
-	        el.className = node.props.wid
+	        if (el.children.length) {
+	            updateEntity(el.childNodes, node.children, el)
+	        }
+
+	        return false
 	    },
 	    replaceContent: function () {
 	    },
@@ -4077,7 +4078,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (var i = 0, obj; obj = componentQueue[i]; i++) {
 	            if (name === obj.name) {
 	                componentQueue.splice(i, 1)
-	                i--;
+	                i--
 	                var vid = obj.vm.$id.split(".")[0]
 	                vms[vid] = true
 	            }
@@ -4096,14 +4097,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        name = name.replace(":", "-")
 	        //如果组件模板已经定
-	        if (resolvedComponents[id]){
+	        if (resolvedComponents[id]) {
 	            return resolvedComponents[id].$render()//让widget虚拟DOM重新渲染自己并进行diff, patch
 	        }
 	        var widget = avalon.components[name]
 	        if (!widget) {
 	            componentQueue.push({
 	                name: name,
-	                vm: vm
+	                vm: vm,
+	                node: node
 	            })
 	            return node //返回普通的patch
 	        } else {
@@ -4113,8 +4115,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            delete options.$type
 
 	            var strTemplate = String(widget.template).trim()
-	            var virTemplate = createVirtual(strTemplate)
 
+	            var virTemplate = createVirtual(strTemplate)
+	            // virTemplate[0].props.wid = node.props.wid
 	            insertSlots(virTemplate, node)
 	            var renderFn = avalon.createRender(virTemplate)
 	            var vmodel = widget.createVm(vm, widget.defaults, options)
@@ -4123,7 +4126,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (widgetNode.length === 1) {
 	                widgetNode = widgetNode[0]
 	            } else {
-	                console.log(widgetNode)
 	                throw "组件要用一个元素包起来"
 	            }
 
@@ -4287,7 +4289,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 53 */,
 /* 54 */,
 /* 55 */,
-/* 56 */
+/* 56 */,
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var vars = __webpack_require__(2)
@@ -4433,7 +4436,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 57 */
+/* 58 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*********************************************************************
@@ -4444,7 +4447,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var builtin = __webpack_require__(2)
 	__webpack_require__(6)
 	__webpack_require__(8)
-	__webpack_require__(58)
+	__webpack_require__(59)
 	var document = builtin.document
 	var window = builtin.window
 	var root = builtin.root
@@ -4865,7 +4868,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 58 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*********************************************************************
@@ -4903,10 +4906,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 59 */
+/* 60 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var $$skipArray = __webpack_require__(60)
+	var $$skipArray = __webpack_require__(61)
 
 
 	var builtin = __webpack_require__(2)
@@ -5531,7 +5534,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 60 */
+/* 61 */
 /***/ function(module, exports) {
 
 	/**
@@ -5547,7 +5550,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 61 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	__webpack_require__(28)
@@ -5558,12 +5561,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(36)
 	__webpack_require__(37)
 	__webpack_require__(38)
-	__webpack_require__(62)
+	__webpack_require__(63)
 	__webpack_require__(47)
 	__webpack_require__(48)
 
 /***/ },
-/* 62 */
+/* 63 */
 /***/ function(module, exports, __webpack_require__) {
 
 	

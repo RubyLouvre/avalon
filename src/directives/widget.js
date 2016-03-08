@@ -25,7 +25,6 @@ avalon.directive("widget", {
         avalon.caches[uuid] = elem.children
         var component = "config" + num
         return  "vnode" + num + ".props.wid = '" + uuid + "'\n" +
-                "vnode" + num + ".props['class']= '" + uuid + "'\n" +
                 "vnode" + num + ".children = avalon.caches[vnode" + num + ".props.wid] \n" +
                 "var " + component + " = vnode" + num + ".props['av-widget'] = " + wrap(parse(binding), "widget") + ";\n" +
                 "if(" + component + "){\n" +
@@ -52,7 +51,6 @@ avalon.directive("widget", {
         } else {
             parent.appendChild(el)
         }
-        //console.log(node.props.wid, "wid")
         avalon(el).addClass(node.props.wid)
         if (el.children.length) {
             updateEntity(el.childNodes, node.children, el)
@@ -96,7 +94,7 @@ avalon.component = function (node, vm) {
         for (var i = 0, obj; obj = componentQueue[i]; i++) {
             if (name === obj.name) {
                 componentQueue.splice(i, 1)
-                i--;
+                i--
                 var vid = obj.vm.$id.split(".")[0]
                 vms[vid] = true
             }
