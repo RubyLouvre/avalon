@@ -35,6 +35,7 @@ avalon.directive("widget", {
     createVm: function (topVm, defaults, options) {
         var after = avalon.mix({}, defaults, options)
         var events = {}
+        //绑定生命周期的回调
         "$init $ready $dispose".replace(/\S+/g, function (a) {
             if (typeof after[a] === "function")
                 events[a] = after[a]
@@ -100,8 +101,7 @@ var updateTypes = {
 }
 avalon.component = function (node, vm) {
     var isDefine = typeof (node) === "string"
-    //console.log(isDefine)
-    if (isDefine) {
+    if (isDefine) {//这里用在组件定义时
         var name = node, definition = vm
         avalon.components[name] = definition
         var vms = {}
@@ -118,9 +118,9 @@ avalon.component = function (node, vm) {
         }
 
     } else {
-
+        //这里是用在组件实例化时
         var options = node.props['av-widget']
-        var id = node.props.wid
+        var wid = node.props.wid
         var name = options.$type
         if (/(\:|-)/.test(node.type)) {
             name = node.type
@@ -131,36 +131,34 @@ avalon.component = function (node, vm) {
             return resolvedComponents[id].$render()//让widget虚拟DOM重新渲染自己并进行diff, patch
         }
         var widget = avalon.components[name]
-        if (!widget) {
+        if (!widget) {//目标组件的文件还没有加载回来,放进列队中等待
             componentQueue.push({
                 name: name,
-                vm: vm,
-                node: node
+                vm: vm
             })
             return node //返回普通的patch
         } else {
-            if (!options.$id) {
-                options.$id = makeHashCode(name)
-            }
+
             delete options.$type
 
             var strTemplate = String(widget.template).trim()
-
             var virTemplate = createVirtual(strTemplate)
-            // virTemplate[0].props.wid = node.props.wid
+            
             insertSlots(virTemplate, node)
             var renderFn = avalon.createRender(virTemplate)
             var createVm = widget.createVm || avalon.directives.widget.createVm
-            var vmodel = createVm(vm, widget.defaults, options)
+            var vmodel = createVm(vm, widget.defaults, options) 
+            vmodel.$id = options.$id = makeHashCode(name)
+            avalon.vmodels[vmodel.$id] = vmodel
 
-            var widgetNode = renderFn(vmodel || {})
+            var widgetNode = renderFn(vmodel)
             if (widgetNode.length === 1) {
                 widgetNode = widgetNode[0]
             } else {
                 throw "组件要用一个元素包起来"
             }
 
-            resolvedComponents[id] = widgetNode
+            resolvedComponents[wid] = widgetNode
 
             widgetNode.$render = renderFn
 
@@ -182,13 +180,12 @@ avalon.component = function (node, vm) {
 
 function afterChange(dom, vnode, parent) {
     if (componentQueue.length == 0) {
-       
-        vnode.vmodel.$fire("$ready", "ok")
-        
-    }else{
-        
-    }
 
+        vnode.vmodel.$fire("$ready", vnode.type)
+
+    } else {
+
+    }
 }
 
 function mergeTempale(main, slots) {
