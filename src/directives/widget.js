@@ -3,6 +3,7 @@ var parse = require("../parser/parse")
 var makeHashCode = require("../base/builtin").makeHashCode
 var createVirtual = require("../strategy/createVirtual")
 var batchUpdateEntity = require("../strategy/batchUpdateEntity")
+var updateEntity = require("../strategy/updateEntity")
 
 
 //插入点机制,组件的模板中有一些av-slot元素,用于等待被外面的元素替代
@@ -24,7 +25,7 @@ avalon.directive("widget", {
         avalon.caches[uuid] = elem.children
         var component = "config" + num
         return  "vnode" + num + ".props.wid = '" + uuid + "'\n" +
-                "vnode" + num + ".props.className = '" + uuid + "'\n" +
+                "vnode" + num + ".props['class']= '" + uuid + "'\n" +
                 "vnode" + num + ".children = avalon.caches[vnode" + num + ".props.wid] \n" +
                 "var " + component + " = vnode" + num + ".props['av-widget'] = " + wrap(parse(binding), "widget") + ";\n" +
                 "if(" + component + "){\n" +
@@ -46,16 +47,18 @@ avalon.directive("widget", {
     },
     replaceElement: function (dom, node, parent) {
         var el = avalon.vdomAdaptor(node).toDOM()
-       console.log(node)
-
         if (dom) {
             parent.replaceChild(el, dom)
         } else {
             parent.appendChild(el)
         }
-        
+        //console.log(node.props.wid, "wid")
         avalon(el).addClass(node.props.wid)
-        el.className = node.props.wid
+        if (el.children.length) {
+            updateEntity(el.childNodes, node.children, el)
+        }
+
+        return false
     },
     replaceContent: function () {
     },
@@ -112,14 +115,15 @@ avalon.component = function (node, vm) {
         }
         name = name.replace(":", "-")
         //如果组件模板已经定
-        if (resolvedComponents[id]){
+        if (resolvedComponents[id]) {
             return resolvedComponents[id].$render()//让widget虚拟DOM重新渲染自己并进行diff, patch
         }
         var widget = avalon.components[name]
         if (!widget) {
             componentQueue.push({
                 name: name,
-                vm: vm
+                vm: vm,
+                node: node
             })
             return node //返回普通的patch
         } else {
@@ -129,8 +133,9 @@ avalon.component = function (node, vm) {
             delete options.$type
 
             var strTemplate = String(widget.template).trim()
-            var virTemplate = createVirtual(strTemplate)
 
+            var virTemplate = createVirtual(strTemplate)
+            // virTemplate[0].props.wid = node.props.wid
             insertSlots(virTemplate, node)
             var renderFn = avalon.createRender(virTemplate)
             var vmodel = widget.createVm(vm, widget.defaults, options)
@@ -139,7 +144,6 @@ avalon.component = function (node, vm) {
             if (widgetNode.length === 1) {
                 widgetNode = widgetNode[0]
             } else {
-                console.log(widgetNode)
                 throw "组件要用一个元素包起来"
             }
 
