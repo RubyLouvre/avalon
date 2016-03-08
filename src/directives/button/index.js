@@ -1,6 +1,6 @@
-var template = require("text!./panel.html")
-avalon.component("av-panel", {
-    template: template,
+
+avalon.component("av-button", {
+    template: "<button type='button'><span>{{@text}}</span></button>",
     createVm: function (topVm, defaults, options) {
         var after = avalon.mix({}, defaults, options)
         var events = {}
@@ -16,7 +16,7 @@ avalon.component("av-panel", {
         return vm
     },
     defaults: {
-        title: "标题"
+        text: "按钮"
     },
     diff: function (cur, pre) {
 

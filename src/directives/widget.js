@@ -24,6 +24,7 @@ avalon.directive("widget", {
         avalon.caches[uuid] = elem.children
         var component = "config" + num
         return  "vnode" + num + ".props.wid = '" + uuid + "'\n" +
+                "vnode" + num + ".props.className = '" + uuid + "'\n" +
                 "vnode" + num + ".children = avalon.caches[vnode" + num + ".props.wid] \n" +
                 "var " + component + " = vnode" + num + ".props['av-widget'] = " + wrap(parse(binding), "widget") + ";\n" +
                 "if(" + component + "){\n" +

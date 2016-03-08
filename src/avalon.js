@@ -14,7 +14,7 @@ require("./strategy/createVirtual")
 
 require("./directives/compact")
 require("./directives/panel/index")
-
+require("./directives/button/index")
 module.exports = avalon
 
 

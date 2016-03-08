@@ -6169,6 +6169,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        avalon.caches[uuid] = elem.children
 	        var component = "config" + num
 	        return  "vnode" + num + ".props.wid = '" + uuid + "'\n" +
+	                "vnode" + num + ".props.className = '" + uuid + "'\n" +
 	                "vnode" + num + ".children = avalon.caches[vnode" + num + ".props.wid] \n" +
 	                "var " + component + " = vnode" + num + ".props['av-widget'] = " + wrap(parse(binding), "widget") + ";\n" +
 	                "if(" + component + "){\n" +
@@ -6464,7 +6465,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var num = num || String(new Date - 0).slice(0, 6)
 	    var body = toTemplate(arr, num) + "\n\nreturn nodes" + num
 	    var fn = Function("__vmodel__", body)
-	    //console.log(fn+"")
 	    return fn
 	}
 	function toTemplate(arr, num) {
