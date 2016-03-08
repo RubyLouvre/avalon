@@ -1,4 +1,7 @@
-var oneObject = require("../base/builtin").oneObject
+var vars = require("../base/builtin")
+
+var quote = vars.quote
+var oneObject = vars.oneObject
 
 var directives = avalon.directives
 
@@ -12,16 +15,16 @@ var priorityMap = {
     "on": 30000
 }
 var eventMap = oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit")
-
+var rnovar = /W/
 var rmsAttr = /^(?:ms|av)-(\w+)-?(.*)/
 function parseBindings(props, num, elem) {
     var bindings = []
+    var skip = "ms-skip" in props || "av-skip" in props
+    var ret = ""
     for (var i in props) {
         var value = props[i], match
-        if (i === "av-skip") {
-            return  "vnode" + num + ".skipAttrs = true\n"
-        }
-        if (value && (match = i.match(rmsAttr))) {
+
+        if (!skip && value && (match = i.match(rmsAttr))) {
 
             var type = match[1]
             var param = match[2] || ""
@@ -47,16 +50,22 @@ function parseBindings(props, num, elem) {
                 }
                 bindings.push(binding)
             }
+        } else {
+            if (rnovar.test(i)) {//收集非绑定属性
+                ret += "vnode" + num + ".props[" + quote(i) + "] = " + quote(value) + "\n"
+            } else {
+                ret += "vnode" + num + ".props." + i + " = " + quote(value) + "\n"
+            }
         }
     }
 
     if (!bindings.length) {
-        return "vnode" + num + ".skipAttrs = true\n"
+        ret += "vnode" + num + ".skipAttrs = true\n"
+    } else {
+        bindings.sort(bindingSorter).forEach(function (binding) {
+            ret += directives[binding.type].parse(binding, num, elem)
+        })
     }
-    var ret = ""
-    bindings.sort(bindingSorter).forEach(function (binding) {
-        ret += directives[binding.type].parse(binding, num, elem)
-    })
     return ret
 
 }
