@@ -19,6 +19,12 @@ function updateEntity(nodes, vnodes, parent) {
             next = node.nextSibling
 
         if (vnode.directive === "for" && vnode.change) {
+            if (node.nodeType === 1) {
+                var startRepeat = document.createComment(vnode.nodeValue)
+                parent.insertBefore(startRepeat, node)
+                parent.insertBefore(document.createComment("av-for-end:"), node.nextSibling)
+                node = startRepeat
+            }
             var repeatNodes = [node], cur = node
             innerLoop:
                     while (cur && (cur = cur.nextSibling)) {

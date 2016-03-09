@@ -163,6 +163,21 @@ function createVirtual(text, recursive) {
                     }
                 }
                 node = new VElement(node)
+                var forExpr = node.props["ms-for"] || node.props["av-for"]
+                if (forExpr) {
+                    nodes.push({
+                        type: "#comment",
+                        nodeValue: "av-for:"+ forExpr,
+                        signature: makeHashCode("for")
+                    })
+                    delete node.props["ms-for"]
+                    delete node.props["av-for"]
+                    nodes.push(node)
+                    node = {
+                        type: "#comment",
+                        nodeValue: "av-for-end:"
+                    }
+                }
             }
         }
 
@@ -185,7 +200,7 @@ function createVirtual(text, recursive) {
                 if (type === "input" && !node.props.type) {
                     node.props.type = "text"
                 }
-              
+
             }
         }
         if (node) {

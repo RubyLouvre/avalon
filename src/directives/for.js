@@ -25,13 +25,11 @@ var rforSplit = /\s*,\s*/
 avalon.directive("for", {
     parse: function (str, num) {
         var arr = str.replace(rforPrefix, "").split(" in ")
-
         var def = "var loop" + num + " = " + parse(arr[1]) + "\n"
         var kv = arr[0].replace(rforLeft, "").replace(rforRight, "").split(rforSplit)
         if (kv.length === 1) {
             kv.unshift("$key")
         }
-
         return def + "avalon._each(loop" + num + ", function(" + kv + ",traceKey){\n\n"
     },
     diff: function (current, previous, i) {
@@ -94,6 +92,7 @@ avalon.directive("for", {
 
     },
     update: function (startRepeat, vnode, parent) {
+
         var repeatVnodes = vnode.repeatVnodes
         var nodes = vnode.repeatNodes
         var action = vnode.action
@@ -191,7 +190,7 @@ function getForByKey(nodes, signature) {
 //从一组节点,取得要循环的部分(第二次生成的虚拟DOM树会走这分支)
 function getForBySignature(nodes, i) {
     var start = nodes[i], node
-    var endText = start.nodeValue.replace(":start", ":end")
+    var endText = start.signature + ":end"
     var ret = []
     while (node = nodes[i++]) {
         ret.push(node)

@@ -62,7 +62,7 @@ function toTemplate(arr, num) {
                         "\n\tdirective:'for'," +
                         "\n\tskipContent:false," +
                         "\n\tsignature:" + quote(signature) + "," +
-                        "\n\tnodeValue:" + quote(signature + ":start") + "," +
+                        "\n\tnodeValue:" + quote(nodeValue)  +
                         "\n})\n"
                 str += avalon.directives["for"].parse(nodeValue, num)
 
