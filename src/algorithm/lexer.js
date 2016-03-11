@@ -20,16 +20,16 @@ var rfullTag = /^<([^\s>\/=.$<]+)(?:\s+[^=\s]+(?:=[^>\s]+)?)*\s*>(?:[\s\S]*)<\/\
 var rvoidTag = /^<([^\s>\/=.$<]+)\s*([^>]*?)\/?>/
 
 
-
 var rtext = /^[^<]+/
 var rcomment = /^<!--([\w\W]*?)-->/
-var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
+var rstring =/(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
+var rfill = /\?\?\d+/g
+
 var rnumber = /\d+/g
 var rsp = /^\s+$/
 var rspAfterForStart = /^(ms|av)-for\:/
 var rspBeforeForEnd = /^(ms|av)-for-end\:/
 var rleftTrim = /^\s+/
-var rfill = /\?\?\d+/g
 var rbind = avalon.config.rbind
 
 

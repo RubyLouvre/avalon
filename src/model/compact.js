@@ -65,6 +65,7 @@ function define(definition) {
         vm.$element = elem
         var now = new Date - 0
         var vnode = avalon.createVirtual(elem.outerHTML)
+        console.log(vnode)
         avalon.log("create primitive vtree", new Date - now)
         now = new Date
         vm.$render = avalon.createRender(vnode)

@@ -1,20 +1,18 @@
-require("./base/es5.shim")
-//var buildin = global.buildin = 
-require("./base/builtin")
-var avalon = global.avalon = require("./core/compact").avalon //这个版本兼容IE6
 
-require("./core/static")
-require("./dom/compact")
-require("./filters/index")
+var avalon = require('./core/compact').avalon //这个版本兼容IE6
 
-avalon.define = require("./model/compact").define
-avalon.mediatorFactory = require("./model/compact").mediatorFactory
+require('./filters/index')
+require('./vdom/index')
+require('./dom/compact')
+require('./directives/compact')
 
-require("./strategy/createVirtual")
 
-require("./directives/compact")
-require("./directives/panel/index")
-require("./directives/button/index")
+require('./model/compact')
+
+require('./parser/parse')
+
+require('./directives/panel/index')
+//require('./directives/button/index')
 module.exports = avalon
 
 

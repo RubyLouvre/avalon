@@ -1,6 +1,6 @@
 var rline = /\r?\n/g
 
-function parseInterpolate(str, useTrim) {
+function parseInterpolate(str) {
     var tokens = [],
             value, start = 0,
             stop
@@ -11,7 +11,7 @@ function parseInterpolate(str, useTrim) {
         }
         value = str.slice(start, stop)
         if (start === 0) {
-            value = value.replace(/^\s+/,"")
+            value = value.replace(/^\s+/,'')
         }
         if (value) { // {{ 左边的文本
             tokens.push({
@@ -26,17 +26,17 @@ function parseInterpolate(str, useTrim) {
         value = str.slice(start, stop)
         if (value) { //处理{{ }}插值表达式
             tokens.push({
-                expr: value.replace(rline, ""),
-                type: "{{}}"
+                expr: value.replace(rline, ''),
+                type: '{{}}'
             })
         }
         start = stop + avalon.config.closeTag.length
     } while (1)
     value = str.slice(start)
 
-    if (value.replace(/\s+$/,"")) { //}} 右边的文本
+    if (value.replace(/\s+$/,'')) { //}} 右边的文本
         tokens.push({
-            expr: value.replace(/\s+$/,"")
+            expr: value.replace(/\s+$/,'')
         })
     }
     return tokens

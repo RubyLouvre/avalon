@@ -4,6 +4,8 @@ var avalon = global.avalon = require("./core/modern").avalon //这个版本兼�
 require("./core/static")
 require("./dom/modern")
 require("./filters/index")
+require("./directives/compact")
+
 
 avalon.define = require("./model/modern").define
 avalon.mediatorFactory = require("./model/modern").mediatorFactory

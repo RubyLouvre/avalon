@@ -1,13 +1,9 @@
-require("./base/__test__")
+var avalon = require("./seed/__test__")
 
 require("./filters/__test__")
-
-require("./strategy/__test__")
-require("./model/__test__")
-
-require("./directives/__test__")
+require("./vdom/__test__")
+require("./dom/__test__")
 
 
-//require("./directives/aaa")
 
   

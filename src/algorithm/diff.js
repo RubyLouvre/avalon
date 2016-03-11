@@ -5,8 +5,9 @@
  * ------------------------------------------------------------
  */
 
+var rbinding = /^(?:ms|av)-(\w+)-?(.*)/
 var directives = avalon.directives
-var rmsAttr = /^(?:ms|av)-(\w+)-?(.*)/
+
 var emptyArr = []
 var emptyObj = {
     children: [], props: {}
@@ -46,7 +47,7 @@ function diff(current, previous) {
 function diffProps(current, previous) {
     current.change = current.change || []
     for (var name in current.props) {
-        var match = name.match(rmsAttr)
+        var match = name.match(rbinding)
         if (match) {
             var type = match[1]
             try {

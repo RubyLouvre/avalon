@@ -5,8 +5,26 @@ var sanitize = require("./sanitize")
 var date = require("./date")
 var arrayFilters = require("./array")
 var eventFilters = require("./event")
-
 var filters = avalon.filters
+
+function K(a) {
+    return a
+}
+
+avalon.mix({
+    __read__: function (name) {
+        var fn = filters[name]
+        if (fn) {
+            return fn.get ? fn.get : fn
+        }
+        return K
+    },
+    __write__: function (name) {
+        var fn = filters[name]
+        return fn && fn.set || K
+    }
+})
+
 
 avalon.mix(filters, {
     uppercase: function (str) {

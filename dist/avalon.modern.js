@@ -1696,6 +1696,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            next = node.nextSibling
 
 	        if (vnode.directive === "for" && vnode.change) {
+	            if (node.nodeType === 1) {
+	                var startRepeat = document.createComment(vnode.nodeValue)
+	                parent.insertBefore(startRepeat, node)
+	                parent.insertBefore(document.createComment("av-for-end:"), node.nextSibling)
+	                node = startRepeat
+	            }
 	            var repeatNodes = [node], cur = node
 	            innerLoop:
 	                    while (cur && (cur = cur.nextSibling)) {
@@ -1738,13 +1744,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = updateEntity
 
-	// ms-if 没有路标, 组件
-	// ms-include 没有路标, 非组件
-	// ms-repeat 一开始添加路标,组件
-	// ms-each 一开始添加路标, 组件
-	// ms-html 没有路标,非组件
-	// ms-text 没有路标,非组件
-
+	// ms-if ms-repeat
 
 /***/ },
 /* 26 */
@@ -2232,11 +2232,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                "}\n\n\n"
 	        return str
 	    },
-	    diff: function () {
-	    },
-	    update:function(){
-	        
-	    }
+	    diff: avalon.noop,
+	    update:avalon.noop
 	})
 
 	//avalon.scan = function (el) {
@@ -3242,7 +3239,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        pushArray(node.children, childs)
 	                    }
 	                }
-	                node = new VElement(node)
+	                //node = new VElement(node)
+	                var forExpr = node.props["ms-for"] || node.props["av-for"]
+	                if (forExpr) {
+	                    nodes.push({
+	                        type: "#comment",
+	                        nodeValue: "av-for:"+ forExpr,
+	                        signature: makeHashCode("for")
+	                    })
+	                    delete node.props["ms-for"]
+	                    delete node.props["av-for"]
+	                    nodes.push(node)
+	                    node = {
+	                        type: "#comment",
+	                        nodeValue: "av-for-end:"
+	                    }
+	                }
 	            }
 	        }
 
@@ -3265,7 +3277,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (type === "input" && !node.props.type) {
 	                    node.props.type = "text"
 	                }
-	              
+
 	            }
 	        }
 	        if (node) {
@@ -3297,13 +3309,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var arr = el.split("="), value = arr[1] || "",
 	                name = arr[0].toLowerCase()
 	        if (arr.length === 2) {
-	            //if (value.match(rstring)) { //if(rstring2.test(value)) {
 	            if (value.indexOf("??") === 0) {
 	                value = value.replace(rfill, fill).
 	                        slice(1, -1).
 	                        replace(ramp, "&").
 	                        replace(rquote, '"')
-
 	            }
 
 	        }
@@ -3743,13 +3753,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.directive("for", {
 	    parse: function (str, num) {
 	        var arr = str.replace(rforPrefix, "").split(" in ")
-
 	        var def = "var loop" + num + " = " + parse(arr[1]) + "\n"
 	        var kv = arr[0].replace(rforLeft, "").replace(rforRight, "").split(rforSplit)
 	        if (kv.length === 1) {
 	            kv.unshift("$key")
 	        }
-
 	        return def + "avalon._each(loop" + num + ", function(" + kv + ",traceKey){\n\n"
 	    },
 	    diff: function (current, previous, i) {
@@ -3812,6 +3820,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    },
 	    update: function (startRepeat, vnode, parent) {
+
 	        var repeatVnodes = vnode.repeatVnodes
 	        var nodes = vnode.repeatNodes
 	        var action = vnode.action
@@ -3909,7 +3918,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	//从一组节点,取得要循环的部分(第二次生成的虚拟DOM树会走这分支)
 	function getForBySignature(nodes, i) {
 	    var start = nodes[i], node
-	    var endText = start.nodeValue.replace(":start", ":end")
+	    var endText = start.signature + ":end"
 	    var ret = []
 	    while (node = nodes[i++]) {
 	        ret.push(node)
@@ -4016,6 +4025,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	                "}\n"
 
 	    },
+	    createVm: function (topVm, defaults, options) {
+	        var after = avalon.mix({}, defaults, options)
+	        var events = {}
+	        //绑定生命周期的回调
+	        "$init $ready $dispose".replace(/\S+/g, function (a) {
+	            if (typeof after[a] === "function")
+	                events[a] = after[a]
+	            delete after[a]
+	        })
+	        var vm = avalon.mediatorFactory(topVm, after)
+	        for (var i in events) {
+	            vm.$watch(i, events[i])
+	        }
+	        return vm
+	    },
 	    diff: function (cur, pre) {
 	        var a = cur.props.resolved
 	        var p = pre.props.resolved
@@ -4070,8 +4094,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	avalon.component = function (node, vm) {
 	    var isDefine = typeof (node) === "string"
-	    //console.log(isDefine)
-	    if (isDefine) {
+	    if (isDefine) {//这里用在组件定义时
 	        var name = node, definition = vm
 	        avalon.components[name] = definition
 	        var vms = {}
@@ -4088,9 +4111,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	    } else {
-
+	        //这里是用在组件实例化时
 	        var options = node.props['av-widget']
-	        var id = node.props.wid
+	        var wid = node.props.wid
 	        var name = options.$type
 	        if (/(\:|-)/.test(node.type)) {
 	            name = node.type
@@ -4101,35 +4124,34 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return resolvedComponents[id].$render()//让widget虚拟DOM重新渲染自己并进行diff, patch
 	        }
 	        var widget = avalon.components[name]
-	        if (!widget) {
+	        if (!widget) {//目标组件的文件还没有加载回来,放进列队中等待
 	            componentQueue.push({
 	                name: name,
-	                vm: vm,
-	                node: node
+	                vm: vm
 	            })
 	            return node //返回普通的patch
 	        } else {
-	            if (!options.$id) {
-	                options.$id = makeHashCode(name)
-	            }
+
 	            delete options.$type
 
 	            var strTemplate = String(widget.template).trim()
-
 	            var virTemplate = createVirtual(strTemplate)
-	            // virTemplate[0].props.wid = node.props.wid
+
 	            insertSlots(virTemplate, node)
 	            var renderFn = avalon.createRender(virTemplate)
-	            var vmodel = widget.createVm(vm, widget.defaults, options)
+	            var createVm = widget.createVm || avalon.directives.widget.createVm
+	            var vmodel = createVm(vm, widget.defaults, options)
+	            vmodel.$id = options.$id = makeHashCode(name)
+	            avalon.vmodels[vmodel.$id] = vmodel
 
-	            var widgetNode = renderFn(vmodel || {})
+	            var widgetNode = renderFn(vmodel)
 	            if (widgetNode.length === 1) {
 	                widgetNode = widgetNode[0]
 	            } else {
 	                throw "组件要用一个元素包起来"
 	            }
 
-	            resolvedComponents[id] = widgetNode
+	            resolvedComponents[wid] = widgetNode
 
 	            widgetNode.$render = renderFn
 
@@ -4138,15 +4160,43 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var wtype = node.props.wtype || 0
 	                widget.update = avalon.directives.widget[updateTypes[wtype]]
 	            }
-
+	            widgetNode.vmodel = vmodel
 	            widgetNode.change = widgetNode.change || []
 	            widgetNode.change.push(widget.update)
+
+	            widgetNode.afterChange = widgetNode.afterChange || []
+	            widgetNode.afterChange.push(afterChange)
 	            return widgetNode
 	        }
 	    }
 	}
 
-
+	function afterChange(dom, vnode, parent) {
+	    var isReady = true
+	    if (componentQueue.length !== 0) {
+	      //  vnode.vmodel.$fire("$ready", vnode.type)
+	        try {
+	            hasUnresolvedComponent(vnode)
+	        } catch (e) {
+	            isReady = false
+	        }
+	    }
+	    if (isReady) {
+	        vnode.vmodel.$fire("$ready", vnode.type)
+	    }
+	}
+	//如果组件没有resolved,元素会是这样子:
+	//<av-button wid="w453156877309" av-widget="undefined">xxx</av-button>
+	function hasUnresolvedComponent(vnode) {
+	    vnode.children.forEach(function (el) {
+	        if (el.type.charAt(0) !== '#') {
+	            if ("av-widget" in el.props) {
+	                throw "unresolved"
+	            }
+	            hasUnresolvedComponent(el)
+	        }
+	    })
+	}
 
 	function mergeTempale(main, slots) {
 	    for (var i = 0, el; el = main[i++]; ) {
@@ -4213,27 +4263,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-	function $watch(expr, funOrObj) {
+	function $watch(expr, callback) {
 	    var vm = adjustVm(this, expr)
 	    var hive = vm.$events
 	    var list = hive[expr] || (hive[expr] = [])
 	    if (vm !== this) {
 	        this.$events[expr] = list
 	    }
-	    var data = typeof funOrObj === "function" ? {
-	        update: funOrObj,
-	        element: {},
-	        expr: "[[ " + expr + " ]]",
-	        shouldDispose: function () {
-	            return vm.$hashcode === false
-	        },
-	        uuid: getUid(funOrObj)
-	    } : funOrObj
-
-	    funOrObj.shouldDispose = funOrObj.shouldDispose || shouldDispose
+	    avalon.Array.ensure(list, callback)
 
 	    return function () {
-	        avalon.Array.remove(list, data)
+	        avalon.Array.remove(list, callback)
 	    }
 	}
 
@@ -4259,19 +4299,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (list && list.length) {
 	        try {
 	            for (i = i || list.length - 1; i >= 0; i--) {
-	                var data = list[i]
-	                if (!data.element || data.element.disposed) {
-	                    list.splice(i, 1)
-	                } else if (data.update) {
-	                    data.update.call(vm, a, b, path)
-	                }
+	                var callback = list[i]
+	                callback.call(vm, a, b, path)
 	            }
 	        } catch (e) {
 	            if (i - 1 > 0)
 	                $emit(list, vm, path, a, b, i - 1)
 	            avalon.log(e, path)
 	        }
-	       
+
 	    }
 	}
 
@@ -4314,6 +4350,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.init = function (el) {
 	    this[0] = this.element = el
 	}
+
+	//seed, lang(langfix), dom(domfix), filters, directives, vdom, model, parse, diff, patch, anim
 
 	avalon.fn = avalon.prototype = avalon.init.prototype
 
