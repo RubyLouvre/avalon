@@ -243,10 +243,11 @@ function modifyProps(node, innerHTML, nodes) {
     return node
 }
 
-var rnowhite = /\S+/g
-var rnogutter = /\s*=\s*/g
-var rquote = /&quot;/g
+
 var ramp = /&amp;/g
+var rnowhite = /\S+/g
+var rquote = /&quot;/g
+var rnogutter = /\s*=\s*/g
 function handleProps(str, props) {
     str.replace(rnogutter, '=').replace(rnowhite, function (el) {
         var arr = el.split('='), value = arr[1] || '',
