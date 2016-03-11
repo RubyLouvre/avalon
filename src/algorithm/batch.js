@@ -1,20 +1,23 @@
-var builtin = require("../base/builtin")
-var updateEntity = require("./updateEntity")
 
-var root = builtin.root
-var document = builtin.document
-var diff = require("../parser/diff")
+/**
+ * ------------------------------------------------------------
+ * batch 同时对N个视图进行全量更新
+ * ------------------------------------------------------------
+ */
+
+var diff = require('./diff')
+var patch = require('./patch')
 
 //如果正在更新一个子树,那么将它放到
 var dirtyTrees = {}
 var isBatchingUpdates = false
-function batchUpdateEntity(id, immediate) {
+function batchUpdate(id, immediate) {
     var vm = avalon.vmodels[id]
     if (!document.nodeName || !vm || !vm.$render)//如果是在mocha等测试环境中立即返回
         return
 
     dirtyTrees[id] = true
-    if (isBatchingUpdates || avalon.repeatCount) {
+    if (isBatchingUpdates) {
         return
     }
 
@@ -25,16 +28,15 @@ function batchUpdateEntity(id, immediate) {
         flushUpdate(function () {
             isBatchingUpdates = true
             var neo = vm.$render(vm)
-            diff(neo, dom.vnode|| [])
-           
-            updateEntity([dom], neo)
+            diff(neo, dom.vnode || [])
+            patch([dom], neo)
             dom.vnode = neo
-            avalon.log("rerender", new Date - avalon.rerenderStart)
-            
+            avalon.log('rerender', new Date - avalon.rerenderStart)
+
             isBatchingUpdates = false
             delete dirtyTrees[id]
             for (var i in dirtyTrees) {//更新其他子树
-                batchUpdateEntity(i, true)
+                batchUpdate(i, true)
                 break
             }
         }, immediate)
@@ -50,4 +52,4 @@ function flushUpdate(callback, immediate ) {
     }
 }
 
-module.exports = batchUpdateEntity
+module.exports = avalon.batch = batchUpdate
