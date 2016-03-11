@@ -1,9 +1,8 @@
-/**
- * ------------------------------------------------------------
- * render 根据某一视图生成一个模板函数
- * ------------------------------------------------------------
- */
 
+avalon.lexer = require('./lexer')
+avalon.diff = require('./diff')
+avalon.batch = require('./batch')
+// dispatch与patch 为内置模块
 
 var parseView = require('./parser/parseView')
 
@@ -13,6 +12,6 @@ function render(vtree) {
     var fn = Function('__vmodel__', body)
     return fn
 }
+avalon.render = render
 
-module.exports = avalon.render = render
-
+module.exports = avalon

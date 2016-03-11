@@ -271,4 +271,4 @@ function trimHTML(v) {
 }
 
 
-module.exports = avalon.lexer = lexer
+module.exports = lexer

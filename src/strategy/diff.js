@@ -62,4 +62,4 @@ function diffProps(current, previous) {
 
 }
 
-module.exports = avalon.diff = diff
+module.exports = diff

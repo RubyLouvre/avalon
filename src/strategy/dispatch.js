@@ -3,11 +3,6 @@
  **********************************************************************/
 
 
-var builtin = require("../base/builtin")
-var rtopsub = require("./builtin").rtopsub
-
-var noop = builtin.noop
-var getUid = builtin.getUid
 
 function adjustVm(vm, expr) {
     var toppath = expr.split(".")[0], other
@@ -40,13 +35,6 @@ function $watch(expr, callback) {
         avalon.Array.remove(list, callback)
     }
 }
-
-
-function shouldDispose() {
-    var el = this.element
-    return !el || el.disposed
-}
-
 
 /**
  * $fire 方法的内部实现

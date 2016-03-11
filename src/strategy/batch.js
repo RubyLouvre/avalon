@@ -5,7 +5,6 @@
  * ------------------------------------------------------------
  */
 
-var diff = require('./diff')
 var patch = require('./patch')
 
 //如果正在更新一个子树,那么将它放到
@@ -28,9 +27,12 @@ function batchUpdate(id, immediate) {
         flushUpdate(function () {
             isBatchingUpdates = true
             var neo = vm.$render(vm)
-            diff(neo, dom.vnode || [])
+            
+            avalon.diff(neo, dom.vnode || [])
             patch([dom], neo)
+            
             dom.vnode = neo
+            
             avalon.log('rerender', new Date - avalon.rerenderStart)
 
             isBatchingUpdates = false
