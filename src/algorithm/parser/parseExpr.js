@@ -1,17 +1,9 @@
 
 
-
-function quoteError(str) {
-    return avalon.quote('parse "' + str + '" fail')
-}
-
-
-
 //缓存求值函数，以便多次利用
 var evaluatorPool = require('./evaluatorPool')
 var ifStatement = 'if(!__elem__ || __elem__.nodeType !== 1){\n\treturn __value__\n}\n'
 var rexpr = avalon.config.rexpr
-
 
 var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
 var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
@@ -151,6 +143,10 @@ function parseExpr(str, category) {
     evaluatorPool.put(category + ':' + input, cacheStr)
     return cacheStr
 
+}
+
+function quoteError(str) {
+    return avalon.quote('parse "' + str + '" fail')
 }
 
 module.exports = parseExpr
