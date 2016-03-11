@@ -1,23 +1,37 @@
-var $$skipArray = require("./skipArray.modern")
+var $$skipArray = require("./skipArray")
+var canHideProperty = require("./canHideProperty")
+var defineProperties = require("./defineProperties")
 
 
-var builtin = require("../base/builtin")
-var oneObject = builtin.oneObject
-var makeHashCode = builtin.makeHashCode
-var ap = builtin.ap
-var W3C = builtin.ap
-var rword = builtin.rword
-var batchUpdateEntity = require("../strategy/batchUpdateEntity")
-var innerBuiltin = require("./builtin")
-var isSkip = innerBuiltin.isSkip
-var getComputed = innerBuiltin.getComputed
-var makeComputed = innerBuiltin.makeComputed
-var Observer = innerBuiltin.Observer
-var rtopsub = innerBuiltin.rtopsub
-
-var dispatch = require("./dispatch")
+var dispatch = require("./strategy/dispatch")
 var $watch = dispatch.$watch
 var $emit = dispatch.$emit
+
+var rtopsub = /([^.]+)\.(.+)/
+var ap = Array.prototype
+var W3C = avalon.modern
+var rword = avalon.rword
+var oneObject = avalon.oneObject
+var makeHashCode = avalon.makeHashCode
+
+//一个vm总是为Observer的实例
+function Observer() {
+}
+
+/**
+ * 判定此属性能否转换访问器
+ * 
+ * @param {type} key
+ * @param {type} value
+ * @param {type} skipArray
+ * @returns {Boolean}
+ */
+function isSkip(key, value, skipArray) {
+    return key.charAt(0) === "$" ||
+            skipArray[key] ||
+            (typeof value === "function") ||
+            (value && value.nodeName && value.nodeType > 0)
+}
 
 //所有vmodel都储存在这
 avalon.vmodels = {}
@@ -57,10 +71,10 @@ function define(definition) {
         var elem = document.getElementById($id)
         vm.$element = elem
         var now = new Date - 0
-        var vnode = avalon.createVirtual(elem.outerHTML)
+        var vnode = avalon.lexer(elem.outerHTML)
         avalon.log("create primitive vtree", new Date - now)
         now = new Date
-        vm.$render = avalon.createRender(vnode)
+        vm.$render = avalon.render(vnode)
         avalon.log("create template Function ", new Date - now)
         batchUpdateEntity($id)
     })
@@ -95,7 +109,6 @@ function observeObject(definition, heirloom, options) {
     var $accessors = {}
     var $vmodel = new Observer()
     var $pathname = options.pathname || ""
-    var $computed = getComputed(definition)
     var $idname = options.idname || makeHashCode("$")
 
     var key, sid, spath
@@ -111,12 +124,6 @@ function observeObject(definition, heirloom, options) {
         }
     }
 
-    for (key in $computed) {
-        keys[key] = definition[key]
-        sid = $idname + "." + key
-        spath = $pathname ? $pathname + "." + key : key
-        $accessors[key] = makeComputed(sid, spath, heirloom, key, $computed[key])
-    }
 
     $accessors.$model = $modelAccessor
 
@@ -124,9 +131,9 @@ function observeObject(definition, heirloom, options) {
 
     for (key in keys) {
         //对普通监控属性或访问器属性进行赋值
-        if (!(key in $computed)) {
+       
             $vmodel[key] = keys[key]
-        }
+       
         //删除系统属性
         if (key in $skipArray) {
             delete keys[key]
@@ -147,9 +154,6 @@ function observeObject(definition, heirloom, options) {
         makeFire($vmodel, heirloom)
     }
 
-    for (key in $computed) {
-        val = $vmodel[key]
-    }
 
     hideProperty($vmodel, "$hashcode", makeHashCode("$"))
 
@@ -212,17 +216,12 @@ function makeObservable(sid, spath, heirloom) {
                 return
             }
             if (val && typeof val === "object") {
-                if (old && old.$id && val.$id && !Array.isArray(old)) {
-                    for (var ii in val) {
-                        old[ii] = val[ii]
-                    }
-
-                } else {
+             
                     val = observe(val, old, heirloom, {
                         pathname: spath,
                         idname: sid
                     })
-                }
+                
             }
 
             var older = old
@@ -245,7 +244,7 @@ function makeObservable(sid, spath, heirloom) {
                 }
                 
                 avalon.rerenderStart = new Date
-                batchUpdateEntity(vm.$id.split(".")[0])
+                avalon.batch(vm.$id.split(".")[0])
             }
         },
         enumerable: true,
@@ -475,7 +474,7 @@ function observeArray(array, old, heirloom, options) {
                 vm.$fire(path, b, c)
                 if (!d) {
                     avalon.rerenderStart = new Date
-                    batchUpdateEntity(vm.$id, true)
+                    avalon.batch(vm.$id, true)
                 }
             }
         }

@@ -1,15 +1,11 @@
-var buildin = global.buildin = require("./base/builtin")
-var avalon = global.avalon = require("./core/modern").avalon //这个版本兼容IE10+
+var avalon = require('./seed/modern').avalon 
 
-require("./core/static")
-require("./dom/modern")
-require("./filters/index")
-require("./directives/compact")
+require('./filters/index')
+require('./vdom/index')
+require('./dom/modern')
+require('./directives/modern')
+require('./strategy/index')
+require('./model/modern')
 
 
-avalon.define = require("./model/modern").define
-avalon.mediatorFactory = require("./model/modern").mediatorFactory
-
-require("./strategy/createVirtual")
-require("./directives/modern")
 module.exports = avalon
