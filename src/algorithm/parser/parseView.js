@@ -1,26 +1,16 @@
 
-var parse = require('./parse')
-var parseBindings = require('./parseBindings')
-var parseInterpolate = require('./parseInterpolate')
-
-
+var parseExpr = require('./parseExpr')
+var parseText = require('./parseText')
+var parseBindings = require('./parseBinding')
 var rexpr = avalon.config.rexpr
-var quote = require('../base/builtin').quote
-var makeHashCode = require('../base/builtin').makeHashCode
+var quote = avalon.quote
+var getHashCode = avalon.getHashCode
 
 function wrap(a, num) {
     return '(function(){\n\n' + a + '\n\nreturn nodes' + num + '\n})();\n'
 }
-//av-for: a in @array
 
-function createRender(arr) {
-    var num = num || String(new Date - 0).slice(0, 6)
-    var body = toTemplate(arr, num) + '\n\nreturn nodes' + num
-    var fn = Function('__vmodel__', body)
-   
-    return fn
-}
-function toTemplate(arr, num) {
+function parseView(arr, num) {
     num = num || String(new Date - 0).slice(0, 5)
 
     var forstack = []
@@ -35,12 +25,12 @@ function toTemplate(arr, num) {
             var hasExpr = rexpr.test(el.nodeValue)
 
             if (hasExpr) {
-                var array = parseInterpolate(el.nodeValue, false)
+                var array = parseText(el.nodeValue, false)
                 if (array.length === 1) {
-                    var a = parse(array[0].expr)
+                    var a = parseExpr(array[0].expr)
                 } else {
                     a = array.map(function (el) {
-                        return el.type ? 'String(' + parse(el.expr) + ')' : quote(el.expr)
+                        return el.type ? 'String(' + parseExpr(el.expr) + ')' : quote(el.expr)
                     }).join(' + ')
 
                 }
@@ -88,7 +78,7 @@ function toTemplate(arr, num) {
                     forstack.pop()
                 }
             } else if (nodeValue.indexOf('av-js:') === 0) {
-                str += parse(nodeValue.replace('av-js:', ''), 'js') + '\n'
+                str += parseExpr(nodeValue.replace('av-js:', ''), 'js') + '\n'
             } else {
                 str += children + '.push(' + quote(el) + ');;;;\n'
             }
@@ -96,7 +86,7 @@ function toTemplate(arr, num) {
         } else { //处理元素节点
             var hasIf = el.props['av-if']
             if (hasIf) { // 优化处理av-if指令
-                str += 'if(!(' + parse(hasIf, 'if') + ')){\n'
+                str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'
                 str += children + '.push({' +
                         '\n\ttype: "#comment",' +
                         '\n\tdirective: "if",' +
@@ -118,7 +108,7 @@ function toTemplate(arr, num) {
 
             if (el.children.length) {
                 str += 'if(!' + vnode + '.props.wid){\n'
-                str += '\t' + vnode + '.children = ' + wrap(toTemplate(el.children, num), num) + '\n'
+                str += '\t' + vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
                 str += '}\n'
             } else {
                 str += vnode + '.template= ' + quote(el.template) + '\n'
@@ -135,4 +125,4 @@ function toTemplate(arr, num) {
     return str
 }
 
-module.exports = avalon.createRender = createRender
+module.exports = parseView

@@ -4,7 +4,7 @@ var directives = avalon.directives
 var rbinding = /^(?:ms|av)-(\w+)-?(.*)/
 var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
 
-function parseBinding(props, num, elem) {
+function parseBindings(props, num, elem) {
     var bindings = []
     var skip = 'ms-skip' in props || 'av-skip' in props
     var ret = ''
@@ -61,4 +61,4 @@ function bindingSorter(a, b) {
     return a.priority - b.priority
 }
 
-module.exports = parseBinding
+module.exports = parseBindings
