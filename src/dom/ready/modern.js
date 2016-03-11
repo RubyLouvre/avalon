@@ -1,9 +1,5 @@
-/*********************************************************************
- *                           DOMReady                               *
- **********************************************************************/
-var builtin = require("../base/builtin")
-var document = builtin.document
-var window = builtin.window
+var document = avalon.document
+var window = avalon.window
 
 var readyList = [], isReady
 var fireReady = function (fn) {
@@ -14,13 +10,13 @@ var fireReady = function (fn) {
     }
 }
 
-if (document.readyState === "complete") {
+if (document.readyState === 'complete') {
     setTimeout(fireReady) //如果在domReady之外加载
 } else {
-    document.addEventListener("DOMContentLoaded", fireReady)
+    document.addEventListener('DOMContentLoaded', fireReady)
 }
 
-avalon.bind(window, "load", fireReady)
+avalon.bind(window, 'load', fireReady)
 
 avalon.ready = function (fn) {
     if (!isReady) {

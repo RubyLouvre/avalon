@@ -1,5 +1,5 @@
 var parse = require("../parser/parse")
-var Cache = require("../core/cache")
+var Cache = require("../shim/cache")
 
 var textCache = new Cache(128)
 var rexpr = avalon.config.rexpr

@@ -17,11 +17,8 @@ avalon.directive("controller", {
                 "}\n\n\n"
         return str
     },
-    diff: function () {
-    },
-    update:function(){
-        
-    }
+    diff: avalon.noop,
+    update:avalon.noop
 })
 
 //avalon.scan = function (el) {

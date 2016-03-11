@@ -1,10 +1,6 @@
-var builtin = require("../base/builtin")
-var rmsAttr = builtin.rmsAttr
-var quote = builtin.quote
-var pushArray = builtin.pushArray
 
 function VElement(type, props, children) {
-    if (typeof type === "object") {
+    if (typeof type === 'object') {
         for (var i in type) {
             this[i] = type[i]
         }
@@ -12,44 +8,32 @@ function VElement(type, props, children) {
         this.type = type
         this.props = props
         this.children = children
-        this.template = ""
+        this.template = ''
     }
 }
+function skipFalseAndFunction(a) {
+    return a !== false && typeof a !== 'function'
+}
 VElement.prototype = {
-    clone: function () {
-        var clone = new VElement(this.type,
-                avalon.mix({}, this.props),
-                this.children.map(function (el) {
-                    return el.clone()
-                }))
-        clone.template = this.template
-        if (this.skipContent) {
-            clone.skipContent = this.skipContent
-        }
-        if (this.isVoidTag) {
-            clone.isVoidTag = this.isVoidTag
-        }
-        return clone
-    },
     constructor: VElement,
     toDOM: function () {
         var dom = document.createElement(this.type)
-
         for (var i in this.props) {
-            if (this.props[i] !== false && typeof this.props[i] !== "function") {
-                dom.setAttribute(i, String(this.props[i]))
+            var val = this.props[i]
+            if (skipFalseAndFunction(val)) {
+                dom.setAttribute(i, val + '')
             }
         }
         if (this.skipContent) {
             switch (this.type) {
-                case "script":
+                case 'script':
                     dom.text = this.template
                     break
-                case "style":
-                case "template":
+                case 'style':
+                case 'template':
                     dom.innerHTML = this.template
                     break
-                case "noscript":
+                case 'noscript':
                     dom.textContent = this.template
                     break
                 default:
@@ -75,24 +59,25 @@ VElement.prototype = {
     toHTML: function () {
         var arr = []
         for (var i in this.props) {
-            if (this.props[i] !== false && typeof this.props[i] !== "function") {
-                arr.push(i + "=" + quote(String(this.props[i])))
+            var val = this.props[i]
+            if (skipFalseAndFunction(val)) {
+                arr.push(i + '=' + avalon.quote(this.props[i] + ''))
             }
         }
-        arr = arr.length ? " " + arr.join(" ") : ""
-        var str = "<" + this.type + arr
+        arr = arr.length ? ' ' + arr.join(' ') : ''
+        var str = '<' + this.type + arr
         if (this.isVoidTag) {
-            return str + "/>"
+            return str + '/>'
         }
-        str += ">"
+        str += '>'
         if (this.children.length) {
             str += this.children.map(function (c) {
                 return avalon.vdomAdaptor(c).toHTML()
-            }).join("")
+            }).join('')
         } else {
             str += this.template
         }
-        return str + "</" + this.type + ">"
+        return str + '</' + this.type + '>'
     }
 }
 

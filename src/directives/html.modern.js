@@ -1,5 +1,5 @@
 var parse = require("../parser/parse")
-var Cache = require("../core/cache")
+var Cache = require("../shim/cache")
 
 var textCache = new Cache(512)
 var rexpr = avalon.config.rexpr
@@ -31,32 +31,17 @@ avalon.directive("html", {
         }
     },
     update: function (node, vnode) {
-        if (node.querySelectorAll) {
-            var nodes = node.querySelectorAll("[avalon-events]")
-            avalon.each(nodes, function (el) {
-                avalon.unbind(el)
-            })
-        } else {
-            var nodes = node.getElementsByTagName("*")
-            avalon.each(nodes, function (el) {
-                if (el.getAttribute("avalon-events")) {
-                    avalon.unbind(el)
-                }
-            })
-        }
-        //添加节点
-        if (window.Range) {
-            node.innerHTML = vnode.children.map(function (c) {
-                return avalon.vdomAdaptor(c).toHTML()
-            }).join("")
-        } else {
-            avalon.clearHTML(node)
-            var fragment = document.createDocumentFragment()
-            vnode.children.forEach(function (c) {
-                fragment.appendChild(avalon.vdomAdaptor(c).toDOM())
-            })
 
-            node.appendChild(fragment)
-        }
+        var nodes = node.querySelectorAll("[avalon-events]")
+        avalon.each(nodes, function (el) {
+            avalon.unbind(el)
+        })
+
+        //添加节点
+
+        node.innerHTML = vnode.children.map(function (c) {
+            return avalon.vdomAdaptor(c).toHTML()
+        }).join("")
+
     }
 })

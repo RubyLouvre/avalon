@@ -1,7 +1,6 @@
 var document = avalon.document
 var window = avalon.window
 var root = avalon.root
-var W3C = avalon.modern
 
 var getShortID = require('../../seed/lang.share').getShortID
 //http://www.feiesoft.com/html/events.html
@@ -36,12 +35,10 @@ var canBubbleUp = {
     dragend: true,
     datasetchanged: true
 }
-if (!W3C) {
-    delete canBubbleUp.change
-    delete canBubbleUp.select
-}
+
 
 avalon.eventHandlers = {}
+
 avalon.__eventVM__ = {}
 var eventHooks = avalon.eventHooks
 /*绑定事件*/
@@ -50,7 +47,7 @@ avalon.bind = function (elem, type, fn) {
         var value = elem.getAttribute('avalon-events') || ''
         //如果是使用ms-on-*绑定的回调,其uuid格式为e12122324,
         //如果是使用bind方法绑定的回调,其uuid格式为_12
-        var uuid = getShortID(fn)
+        var uuid = getUid(fn)
         var key = type + ':' + uuid
         var hook = eventHooks[type]
         if (hook) {
@@ -62,6 +59,7 @@ avalon.bind = function (elem, type, fn) {
             key = type + ':' + fn.uuid
         }
         avalon.eventHandlers[fn.uuid] = fn
+
         if (value.indexOf(type + ':') === -1) {//同一种事件只绑定一次
             if (canBubbleUp[type]) {
                 delegateEvent(type)
@@ -124,14 +122,13 @@ var last = +new Date()
 function collectHandlers(elem, type, handlers) {
     var value = elem.getAttribute('avalon-events')
     if (value && (elem.disabled !== true || type !== 'click')) {
-        var uuids = [], isBreak
+        var uuids = []
         var arr = value.match(reventNames) || []
         for (var i = 0, el; el = arr[i++]; ) {
             var v = el.split(':')
             if (v[0] === type) {
                 uuids.push(v[1])
-                isBreak = true
-            } else if (isBreak) {
+            } else {
                 break
             }
         }
@@ -152,10 +149,9 @@ function dispatch(event) {
     event = new avEvent(event)
     var type = event.type
     var elem = event.target
-    
     var handlers = []
-
     collectHandlers(elem, type, handlers)
+    // console.log(handlers)
     var i = 0, j, uuid, handler
     while ((handler = handlers[i++]) && !event.cancelBubble) {
         event.currentTarget = handler.elem
@@ -171,11 +167,11 @@ function dispatch(event) {
                 if (/move|scroll/.test(type)) {
                     var curr = +new Date()
                     if (curr - last > 16) {
-                        fn.call(vm || elem, event)
+                        fn.call(elem, event, vm)
                         last = curr
                     }
                 } else {
-                    fn.call(vm || elem, event)
+                    fn.call(handler.elem, event, vm)
                 }
             }
         }
@@ -183,15 +179,11 @@ function dispatch(event) {
 }
 
 
-var nativeBind = W3C ? function (el, type, fn) {
+var nativeBind = function (el, type, fn) {
     el.addEventListener(type, fn)
-} : function (el, type, fn) {
-    el.attachEvent('on' + type, fn)
 }
-var nativeUnBind = W3C ? function (el, type, fn) {
+var nativeUnBind = function (el, type, fn) {
     el.removeEventListener(type, fn)
-} : function (el, type, fn) {
-    el.detachEvent('on' + type, fn)
 }
 
 function delegateEvent(type) {
@@ -201,20 +193,6 @@ function delegateEvent(type) {
         arr.push(type)
         root.setAttribute('delegate-events', arr.join('??'))
         nativeBind(root, type, dispatch)
-    }
-}
-
-avalon.fireDom = function (elem, type, opts) {
-    if (document.createEvent) {
-        var hackEvent = document.createEvent('Events');
-        hackEvent.initEvent(type, true, true, opts)
-        avalon.mix(hackEvent, opts)
-
-        elem.dispatchEvent(hackEvent)
-    } else if (root.contains(elem)) {//IE6-8触发事件必须保证在DOM树中,否则报'SCRIPT16389: 未指明的错误'
-        hackEvent = document.createEventObject()
-        avalon.mix(hackEvent, opts)
-        elem.fireEvent('on' + type, hackEvent)
     }
 }
 
@@ -229,20 +207,6 @@ function avEvent(event) {
             this[i] = event[i]
         }
     }
-    if(!this.target){
-        this.target = event.srcElement
-    }
-    var target = this.target
-    if (event.type.indexOf('key') === 0) {
-        this.which = event.charCode != null ? event.charCode : event.keyCode
-    } else if (rmouseEvent.test(event.type) && !('pageX' in this)) {
-        var doc = target.ownerDocument || document
-        var box = doc.compatMode === 'BackCompat' ? doc.body : doc.documentElement
-        this.pageX = event.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
-        this.pageY = event.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
-        this.wheelDeltaY = this.wheelDelta
-        this.wheelDeltaX = 0
-    }
     this.timeStamp = new Date() - 0
     this.originalEvent = event
 }
@@ -252,9 +216,9 @@ avEvent.prototype = {
         this.returnValue = false
         if (e) {
             e.returnValue = false
-            if (e.preventDefault) {
-                e.preventDefault()
-            }
+
+            e.preventDefault()
+
         }
     },
     stopPropagation: function () {
@@ -262,9 +226,7 @@ avEvent.prototype = {
         this.cancelBubble = true
         if (e) {
             e.cancelBubble = true
-            if (e.stopPropagation) {
-                e.stopPropagation()
-            }
+            e.stopPropagation()
         }
     },
     stopImmediatePropagation: function () {
@@ -277,7 +239,15 @@ avEvent.prototype = {
     }
 }
 
-//针对firefox, chrome修正mouseenter, mouseleave
+avalon.fireDom = function (elem, type, opts) {
+    var hackEvent = document.createEvent('Events');
+    hackEvent.initEvent(type, true, true)
+    avalon.mix(hackEvent, opts)
+    elem.dispatchEvent(hackEvent)
+}
+
+var eventHooks = avalon.eventHooks
+//针对firefox, chrome修正mouseenter, mouseleave(chrome30+)
 if (!('onmouseenter' in root)) {
     avalon.each({
         mouseenter: 'mouseover',
@@ -285,13 +255,13 @@ if (!('onmouseenter' in root)) {
     }, function (origType, fixType) {
         eventHooks[origType] = {
             type: fixType,
-            fix: function (elem, fn) {
+            fn: function (elem, fn) {
                 return function (e) {
                     var t = e.relatedTarget
                     if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
                         delete e.type
                         e.type = origType
-                        return fn.apply(elem, arguments)
+                        return fn.call(elem, e)
                     }
                 }
             }
@@ -309,40 +279,23 @@ avalon.each({
         }
     }
 })
-//针对IE6-8修正input
-if (!('oninput' in document.createElement('input'))) {
-    eventHooks.input = {
-        type: 'propertychange',
-        fix: function (elem, fn) {
-            return function (e) {
-                if (e.propertyName === 'value') {
-                    e.type = 'input'
-                    return fn.apply(elem, arguments)
-                }
-            }
-        }
-    }
-}
+
 if (document.onmousewheel === void 0) {
     /* IE6-11 chrome mousewheel wheelDetla 下 -120 上 120
      firefox DOMMouseScroll detail 下3 上-3
      firefox wheel detlaY 下3 上-3
      IE9-11 wheel deltaY 下40 上-40
      chrome wheel deltaY 下100 上-100 */
-    var fixWheelType = document.onwheel !== void 0 ? 'wheel' : 'DOMMouseScroll'
-    var fixWheelDelta = fixWheelType === 'wheel' ? 'deltaY' : 'detail'
     eventHooks.mousewheel = {
-        type: fixWheelType,
-        fix: function (elem, fn) {
+        type: 'wheel',
+        fn: function (elem, fn) {
             return function (e) {
-                e.wheelDeltaY = e.wheelDelta = e[fixWheelDelta] > 0 ? -120 : 120
+                e.wheelDeltaY = e.wheelDelta = e.deltaY > 0 ? -120 : 120
                 e.wheelDeltaX = 0
-                if (Object.defineProperty) {
-                    Object.defineProperty(e, 'type', {
-                        value: 'mousewheel'
-                    })
-                }
-                return fn.apply(elem, arguments)
+                Object.defineProperty(e, 'type', {
+                    value: 'mousewheel'
+                })
+                fn.call(elem, e)
             }
         }
     }

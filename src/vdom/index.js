@@ -14,7 +14,6 @@ avalon.vdomAdaptor = function (obj) {
         case "#component":
             return new VComponent(obj)
         default:
-
             return new VElement(obj)
     }
 }

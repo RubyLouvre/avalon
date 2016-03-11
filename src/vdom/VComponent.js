@@ -1,4 +1,3 @@
-var pushArray = require("../base/builtin").pushArray
 
 function VComponent(config) {
     for (var i in config) {
@@ -6,7 +5,7 @@ function VComponent(config) {
     }
     var type = this.__type__ = this.type 
     
-    this.type = "#component"
+    this.type = '#component'
     var me = avalon.components[type]
     if (me && me.init && arguments.length) {
         me.init.apply(this, arguments)
@@ -14,21 +13,6 @@ function VComponent(config) {
 }
 
 VComponent.prototype = {
-    clone: function () {
-        var me = avalon.components[this.__type__]
-        if (me && me.clone) {
-            return me.clone.call(this)
-        } else {
-            var clone = new VComponent()
-            clone.props = avalon.mix(clone.props, this.props)
-            clone.children = this.children.map(function (el) {
-                return el.clone()
-            })
-            clone.__type__ = this.__type__
-            clone.template = this.template
-            return this
-        }
-    },
     toDOM: function () {
         var me = avalon.components[this.__type__]
         if (me && me.toDOM) {
@@ -45,7 +29,7 @@ VComponent.prototype = {
         if (me && me.toHTML) {
             return me.toHTML.call(this)
         }
-        var ret = ""
+        var ret = ''
         for (var i = 0; i < this.children.length; i++) {
             ret += this.children[i].toHTML()
         }

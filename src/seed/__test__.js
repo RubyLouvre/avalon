@@ -1,207 +1,350 @@
+
+var file = process.env.modern === true ? 'modern' : 'compact'
+
+var avalon = require("./" + file)
+var isArrayLike = require('./lang.' + file).isArrayLike
+var share = require('./lang.share')
 var expect = require('chai').expect
-var avalon = require("../avalon")
-var builtin = require("./index")
-describe('filters', function () {
 
-    describe('uppercase', function () {
-        var fn = avalon.filters.uppercase
-        it("test", function () {
-            expect(fn("aaa")).to.equal("AAA")
+describe('测试core文件的API', function () {
+
+    describe('init', function () {
+        it('test', function () {
+            expect(avalon.init).to.be.a('function')
         })
     })
 
-    describe('lowercase', function () {
-        var fn = avalon.filters.lowercase
-        it("test", function () {
-            expect(fn("AAA")).to.equal("aaa")
+    describe('fn', function () {
+        it('test', function () {
+            expect(avalon.fn).to.equal(avalon.prototype)
         })
     })
 
-    describe('escape', function () {
-        var fn = avalon.filters.escape
-        it("test", function () {
-            expect(fn("<s>a</s>")).to.equal("&lt;s&gt;a&lt;/s&gt;")
+    describe('mix', function () {
+        it('test', function () {
+            var obj = {}
+            avalon.mix(obj, {
+                a: 1,
+                b: 2
+            })
+            expect(obj).to.eql({a: 1, b: 2})
         })
     })
 
-    describe('sanitize', function () {
-        it("test", function () {
-            var str = "<a href='javascript:fix'>SSS</a><img onclick=333 src=http://tp2.sinaimg.cn/1823438905/180/40054009869/1/><p onfocus='aaa' ontap=\"ddd\" title=eee onkeypress=eee>onmousewheel=eee<span onmouseup='ddd'>DDD</span></p><script>alert(1)<\/script>222222"
-            var ret = avalon.filters.sanitize(str)
-            expect(ret.indexOf("fix")).to.equal(-1)
-            expect(ret.indexOf("onclick")).to.equal(-1)
-            expect(ret.indexOf("ontap")).to.equal(-1)
-            expect(ret.indexOf("onkeypress")).to.equal(-1)
-            expect(ret.indexOf("onfocus")).to.equal(-1)
-            expect(ret.indexOf("onmouseup")).to.equal(-1)
-            expect(ret.indexOf("<script")).to.equal(-1)
-            expect(ret.indexOf("onmousewheel")).not.to.equal(-1)
+    describe('noop', function () {
+        it('test', function () {
+            expect(avalon.noop).to.be.a('function')
         })
     })
-    describe('camelize', function () {
-        var fn = avalon.filters.camelize
-        it("test", function () {
-            expect(fn("aa-bb")).to.equal("aaBb")
-            expect(fn("aa_cb")).to.equal("aaCb")
+    describe('rword', function () {
+        it('test', function () {
+            expect(avalon.rword).to.be.a('regexp')
         })
     })
 
-    describe("number", function () {
-        var fn = avalon.filters.number
-        it("test", function () {
-            expect(fn(1111111111)).to.equal("1,111,111,111.000")
-            expect(fn(1111111111, 2, '.', '-')).to.equal("1-111-111-111.00")
+    describe('inspect', function () {
+        it('test', function () {
+            var a = avalon.inspect
+            expect(a).to.equal(Object.prototype.toString)
+
+            expect(a.call('')).to.equal('[object String]')
+            expect(a.call([])).to.equal('[object Array]')
+            expect(a.call(1)).to.equal('[object Number]')
+            expect(a.call(new Date())).to.equal('[object Date]')
+            expect(a.call(/test/)).to.equal('[object RegExp]')
         })
     })
 
-    describe("truncate", function () {
-        var fn = avalon.filters.truncate
-        it("test", function () {
-            expect(fn("大跃进大发展", 5, "***")).to.equal("大跃***")
+    describe('ohasOwn', function () {
+        it('test', function () {
+            expect(avalon.ohasOwn).to.equal(Object.prototype.hasOwnProperty)
         })
     })
 
-    describe("filterBy", function () {
-        var fn = avalon.filters.filterBy
-        it("test", function () {
-            var array = fn(["aaa", "bbaa", "ccc", "daad"], "aa")
-            delete array.$id
-            delete array.$hashcode
-
-            expect(array).to.eql(["aaa", "bbaa", "daad"])
+    describe('log', function () {
+        it('test', function () {
+            expect(avalon.log).to.be.a('function')
         })
     })
-    describe("limitBy", function () {
-        var items = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'],
-                str = "tuvwxyz",
-                number = 100.045;
-        var fn = avalon.filters.limitBy
-        var limitTo = fn
-        it("test", function () {
-            expect(fn(items, 3)).to.eql(['a', 'b', 'c']);
-            expect(fn(items, '3')).to.eql(['a', 'b', 'c']);
-            expect(fn(str, 3)).to.eql("tuv");
-            expect(fn(str, '3')).to.eql("tuv");
-            expect(fn(number, 3)).to.eql("100");
-            expect(fn(number, '3')).to.eql("100");
-        })
-
-
-        it('should return the first X items beginning from index Y when X and Y are positive', function () {
-            expect(limitTo(items, 3, '3')).to.eql(['d', 'e', 'f']);
-            expect(limitTo(items, '3', 3)).to.eql(['d', 'e', 'f']);
-            expect(limitTo(str, 3, 3)).to.eql("wxy");
-            expect(limitTo(str, '3', '3')).to.eql("wxy");
-        });
-
-        it('should return the first X items beginning from index Y when X is positive and Y is negative', function () {
-            expect(limitTo(items, 3, '-3')).to.eql(['f', 'g', 'h']);
-            expect(limitTo(items, '3', -3)).to.eql(['f', 'g', 'h']);
-            expect(limitTo(str, 3, -3)).to.eql("xyz");
-            expect(limitTo(str, '3', '-3')).to.eql("xyz");
-        });
-
-        it('should return the last X items when X is negative', function () {
-            expect(limitTo(items, -3)).to.eql(['f', 'g', 'h']);
-            expect(limitTo(items, '-3')).to.eql(['f', 'g', 'h']);
-            expect(limitTo(str, -3)).to.eql("xyz");
-            expect(limitTo(str, '-3')).to.eql("xyz");
-            expect(limitTo(number, -3)).to.eql("045");
-            expect(limitTo(number, '-3')).to.eql("045");
-        });
-
-        it('should return the last X items until index Y when X and Y are negative', function () {
-            expect(limitTo(items, -3, '-3')).to.eql(['c', 'd', 'e']);
-            expect(limitTo(items, '-3', -3)).to.eql(['c', 'd', 'e']);
-            expect(limitTo(str, -3, -3)).to.eql("uvw");
-            expect(limitTo(str, '-3', '-3')).to.eql("uvw");
-        });
-
-        it('should return the last X items until index Y when X is negative and Y is positive', function () {
-            expect(limitTo(items, -3, '4')).to.eql(['b', 'c', 'd']);
-            expect(limitTo(items, '-3', 4)).to.eql(['b', 'c', 'd']);
-            expect(limitTo(str, -3, 4)).to.eql("uvw");
-            expect(limitTo(str, '-3', '4')).to.eql("uvw");
-        });
-
-        it('should return an empty array when X = 0', function () {
-            expect(limitTo(items, 0)).to.eql([]);
-            expect(limitTo(items, '0')).to.eql([]);
-        });
-
-        it('should return entire array when X cannot be parsed', function () {
-            expect(limitTo(items, 'bogus')).to.eql(items);
-            expect(limitTo(items, 'null')).to.eql(items);
-            expect(limitTo(items, 'undefined')).to.eql(items);
-            expect(limitTo(items, null)).to.eql(items);
-            expect(limitTo(items, undefined)).to.eql(items);
-        });
-
-        it('should return an empty string when X = 0', function () {
-            expect(limitTo(str, 0)).to.eql("");
-            expect(limitTo(str, '0')).to.eql("");
-        });
-
-        it('should return entire string when X cannot be parsed', function () {
-            expect(limitTo(str, 'bogus')).to.eql(str);
-            expect(limitTo(str, 'null')).to.eql(str);
-            expect(limitTo(str, 'undefined')).to.eql(str);
-            expect(limitTo(str, null)).to.eql(str);
-            expect(limitTo(str, undefined)).to.eql(str);
-        });
-
-        it('should take 0 as beginning index value when Y cannot be parsed', function () {
-            expect(limitTo(items, 3, 'bogus')).to.eql(limitTo(items, 3, 0));
-            expect(limitTo(items, -3, 'null')).to.eql(limitTo(items, -3));
-            expect(limitTo(items, '3', 'undefined')).to.eql(limitTo(items, '3', 0));
-            expect(limitTo(items, '-3', null)).to.eql(limitTo(items, '-3'));
-            expect(limitTo(items, 3, undefined)).to.eql(limitTo(items, 3, 0));
-            expect(limitTo(str, 3, 'bogus')).to.eql(limitTo(str, 3));
-            expect(limitTo(str, -3, 'null')).to.eql(limitTo(str, -3, 0));
-            expect(limitTo(str, '3', 'undefined')).to.eql(limitTo(str, '3'));
-            expect(limitTo(str, '-3', null)).to.eql(limitTo(str, '-3', 0));
-            expect(limitTo(str, 3, undefined)).to.eql(limitTo(str, 3));
-        });
-
-        it('should return input if not String or Array or Number', function () {
-            expect(limitTo(null, 1)).to.eql(null);
-            expect(limitTo(undefined, 1)).to.eql(undefined);
-            expect(limitTo({}, 1)).to.eql({});
-        });
-    })
-
-
-    describe("date", function () {
-        var fn = avalon.filters.date
-
-        it("test", function () {
-            var format = "yyyy MM dd:HH:mm:ss"
-            expect(fn(new Date("2014/4/1"), format)).to.equal("2014 04 01:00:00:00")
-            expect(fn("2011/07/08", format)).to.equal("2011 07 08:00:00:00")
-            expect(fn("2011-07-08", format)).to.equal("2011 07 08:00:00:00")
-            expect(fn("01-10-2000", format)).to.equal("2000 01 10:00:00:00")
-            expect(fn("07 04,2000", format)).to.equal("2000 07 04:00:00:00")
-            expect(fn("3 14,2000", format)).to.equal("2000 03 14:00:00:00")
-            expect(fn("1373021259229", format)).to.equal("2013 07 05:18:47:39")
-            expect(fn("2014-06-10T15:21:2", format)).to.equal("2014 06 10:15:21:02")
-            expect(fn("2014-12-07T22:50:58+08:00", format)).to.equal("2014 12 07:22:50:58")
-            expect(fn("2015-01-31 00:00:00", "yyyy-MM-dd")).to.equal("2015-01-31")
-            expect(fn("\/Date(1216796600500)\/", "yyyy-MM-dd")).to.equal("2008-07-23")
-            expect(fn(1373021259229, format)).to.equal("2013 07 05:18:47:39")
-        })
-
-        it("test2", function () {
-
-            expect(fn(new Date("2014/4/1"), "yyyy MM dd:HH:mm:ss")).to.equal("2014 04 01:00:00:00")
-            expect(fn("1373021259229", "yyyy MM dd:HH:mm:ss")).to.equal("2013 07 05:18:47:39")
-            expect(fn(1373021259229, "yyyy MM dd:HH:mm:ss")).to.equal("2013 07 05:18:47:39")
-            expect(fn("2014-12-07T22:50:58+08:00", "yyyy MM dd:HH:mm:ss")).to.equal("2014 12 07:22:50:58")
-            expect(fn("\/Date(1373021259229)\/", "yyyy MM dd:HH:mm:ss")).to.equal("2013 07 05:18:47:39")
-
+    describe('error', function () {
+        it('test', function () {
+            expect(avalon.error).to.be.a('function')
         })
     })
 
-
+    describe('oneObject', function () {
+        it('test', function () {
+            expect(avalon.oneObject('aa,bb,cc')).to.eql({
+                aa: 1,
+                bb: 1,
+                cc: 1
+            })
+            expect(avalon.oneObject([1, 2, 3], false)).to.eql({
+                1: false,
+                2: false,
+                3: false
+            })
+        })
+    })
 
 })
 
+describe('测试browser文件的API', function () {
+
+    describe('document', function () {
+        it('test', function () {
+            expect(avalon.document).to.be.a('object')
+        })
+    })
+
+    describe('window', function () {
+        it('test', function () {
+            expect(avalon).have.property('window')
+        })
+    })
+
+    describe('root', function () {
+        it('test', function () {
+            expect(avalon).to.have.property('root')
+        })
+    })
+
+    describe('avalonDiv', function () {
+        it('test', function () {
+            expect(avalon).to.have.property('avalonDiv')
+        })
+    })
+
+    describe('avalonFragment', function () {
+        it('test', function () {
+            expect(avalon).to.have.property('avalonFragment')
+        })
+    })
+
+    describe('msie', function () {
+        it('test', function () {
+            expect(avalon.msie).to.be.a('number')
+        })
+    })
+
+    describe('modern', function () {
+        it('test', function () {
+            expect(avalon.modern).to.be.a('boolean')
+        })
+    })
+
+    describe('nextTick', function () {
+        it('test', function () {
+            expect(avalon.nextTick).to.be.a('function')
+        })
+    })
+
+})
+
+describe('测试lang.compact/modern文件的API', function () {
+    describe('quote', function () {
+        it('test', function () {
+            expect(avalon.quote).to.be.a('function')
+        })
+    })
+
+    describe('type', function () {
+        it('test', function () {
+            var fn = avalon.type
+            expect(fn(/e\d+/)).to.equal('regexp')
+            expect(fn('sss')).to.equal('string')
+            expect(fn(111)).to.equal('number')
+            expect(fn(new Error)).to.equal('error')
+            expect(fn(Date)).to.equal('function')
+            expect(fn(new Date)).to.equal('date')
+            expect(fn({})).to.equal('object')
+            expect(fn(null)).to.equal('null')
+            expect(fn(void 0)).to.equal('undefined')
+        })
+    })
+
+    describe('isFunction', function () {
+        it('test', function () {
+            expect(avalon.isFunction(avalon.noop)).to.equal(true)
+        })
+    })
+
+    describe('isWindow', function () {
+        it('test', function () {
+            expect(avalon.isWindow(avalon.document)).to.equal(false)
+        })
+    })
+
+    describe('isPlainObject', function () {
+        it('test', function () {
+            expect(avalon.isPlainObject({})).to.be.true
+            expect(avalon.isPlainObject(new Object)).to.be.true
+        })
+    })
+
+    describe('slice', function () {
+        it('test', function () {
+            expect(avalon.slice([1, 2, 3, 4], 1, 2)).to.eql([2])
+        })
+    })
+
+    describe('mix', function () {
+        it('test', function () {
+            expect(avalon.mix).to.be.a('function')
+
+        })
+    })
+
+    describe('each', function () {
+        it('test', function () {
+            expect(avalon.each).to.be.a('function')
+
+        })
+    })
+
+    describe('isArrayLike', function () {
+        it('test', function () {
+            expect(avalon.isArrayLike).to.be.a('undefined')
+            expect(isArrayLike).to.be.a('function')
+        })
+    })
+})
+
+describe('测试lang.share文件的API', function () {
+    describe('caches', function () {
+        it('test', function () {
+            expect(avalon.caches).to.be.a('object')
+        })
+    })
+    describe('components', function () {
+        it('test', function () {
+            expect(avalon.components).to.be.a('object')
+        })
+    })
+    describe('directives', function () {
+        it('test', function () {
+            expect(avalon.directives).to.be.a('object')
+        })
+    })
+    describe('filters', function () {
+        it('test', function () {
+            expect(avalon.filters).to.be.a('object')
+        })
+    })
+    describe('eventHooks', function () {
+        it('test', function () {
+            expect(avalon.eventHooks).to.be.a('object')
+        })
+    })
+    describe('cssHooks', function () {
+        it('test', function () {
+            expect(avalon.cssHooks).to.be.a('object')
+        })
+    })
+    describe('version', function () {
+        it('test', function () {
+            expect(avalon.version).to.be.a('number')
+        })
+    })
+    describe('css', function () {
+        it('test', function () {
+            expect(avalon.css).to.be.a('function')
+        })
+    })
+    describe('directive', function () {
+        it('test', function () {
+            expect(avalon.directive).to.be.a('function')
+        })
+    })
+
+    describe('isObject', function () {
+        it('test', function () {
+            expect(avalon.isObject({})).to.be.true
+            expect(avalon.isObject(avalon.noop)).to.be.false
+        })
+    })
+
+    describe('range', function () {
+        it('test', function () {
+            expect(avalon.range).to.be.a('function')
+        })
+    })
+
+    describe('hyphen', function () {
+        it('test', function () {
+            expect(avalon.hyphen).to.be.a('function')
+        })
+    })
+
+    describe('camelize', function () {
+        it('test', function () {
+            expect(avalon.camelize).to.be.a('function')
+        })
+    })
+
+    describe('getHashCode', function () {
+        it('test', function () {
+            expect(avalon.getHashCode).to.be.a('function')
+        })
+    })
+
+    describe('escapeRegExp', function () {
+        it('test', function () {
+            expect(avalon.escapeRegExp).to.be.a('function')
+        })
+    })
+
+    describe('Array', function () {
+        it('test', function () {
+            expect(avalon.Array).to.be.a('object')
+            expect(avalon.Array).to.have.all.keys(['merge', 'ensure', 'remove', 'removeAt'])
+
+        })
+    })
+
+    describe('getLongID', function () {
+        it('test', function () {
+            var obj = {}
+            share.getLongID(obj)
+            expect(obj.uuid).to.match(/e\d{8,11}/)
+        })
+    })
+
+    describe('getShortID', function () {
+        it('test', function () {
+            var obj = {}
+            share.getShortID(obj)
+            expect(obj.uuid).to.match(/_\d{1,2}/)
+        })
+    })
+
+})
+
+describe('测试config文件的API', function () {
+    describe('config', function () {
+        it('test', function () {
+            expect(avalon.config).to.be.a('function')
+            expect(avalon.config).to.have.all.keys(
+                    [
+                        'openTag', 'closeTag', 'rbind', 'rexpr', 'rexprg', 'plugins', 'debug'
+                    ])
+            expect(avalon.config.openTag).to.equal('{{')
+            expect(avalon.config.closeTag).to.equal('}}')
+            expect(avalon.config.plugins.interpolate).to.be.a('function')
+        })
+    })
+})
+
+describe('测试cache文件的API', function () {
+    describe('LRU', function () {
+        var Cache = require('./cache')
+        var cache = new Cache(125)
+        it('test', function () {
+
+            expect(cache.get).to.be.a('function')
+            expect(cache.put).to.be.a('function')
+            expect(cache.shift).to.be.a('function')
+
+        })
+    })
+})

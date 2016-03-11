@@ -143,11 +143,11 @@ avalon.component = function (node, vm) {
 
             var strTemplate = String(widget.template).trim()
             var virTemplate = createVirtual(strTemplate)
-            
+
             insertSlots(virTemplate, node)
             var renderFn = avalon.createRender(virTemplate)
             var createVm = widget.createVm || avalon.directives.widget.createVm
-            var vmodel = createVm(vm, widget.defaults, options) 
+            var vmodel = createVm(vm, widget.defaults, options)
             vmodel.$id = options.$id = makeHashCode(name)
             avalon.vmodels[vmodel.$id] = vmodel
 
@@ -179,13 +179,30 @@ avalon.component = function (node, vm) {
 }
 
 function afterChange(dom, vnode, parent) {
-    if (componentQueue.length == 0) {
-
-        vnode.vmodel.$fire("$ready", vnode.type)
-
-    } else {
-
+    var isReady = true
+    if (componentQueue.length !== 0) {
+      //  vnode.vmodel.$fire("$ready", vnode.type)
+        try {
+            hasUnresolvedComponent(vnode)
+        } catch (e) {
+            isReady = false
+        }
     }
+    if (isReady) {
+        vnode.vmodel.$fire("$ready", vnode.type)
+    }
+}
+//如果组件没有resolved,元素会是这样子:
+//<av-button wid="w453156877309" av-widget="undefined">xxx</av-button>
+function hasUnresolvedComponent(vnode) {
+    vnode.children.forEach(function (el) {
+        if (el.type.charAt(0) !== '#') {
+            if ("av-widget" in el.props) {
+                throw "unresolved"
+            }
+            hasUnresolvedComponent(el)
+        }
+    })
 }
 
 function mergeTempale(main, slots) {

@@ -1,18 +1,16 @@
-var escapeRegExp = require("../core/config").escapeRegExp
 
 function orderBy(array, criteria, reverse) {
     var type = avalon.type(array)
-    if (type !== "array" || type !== "object")
-        throw "orderBy只能处理对象或数组"
+    if (type !== 'array' || type !== 'object')
+        throw 'orderBy只能处理对象或数组'
     var order = (reverse && reverse < 0) ? -1 : 1
 
-    if (typeof criteria === "string") {
+    if (typeof criteria === 'string') {
         var key = criteria
         criteria = function (a) {
             return a && a[key]
         }
     }
-    var oldData = array
     array = convertArray(array)
     array.forEach(function (el) {
         el.order = criteria(el.value, el.key)
@@ -22,9 +20,9 @@ function orderBy(array, criteria, reverse) {
         var b = right.order
         return a === b ? 0 : a > b ? order : -order
     })
-    var isArray = type === "array"
+    var isArray = type === 'array'
     var target = isArray ? [] : {}
-    return makeData(target, array, oldData, function (el) {
+    return makeData(target, array, function (el) {
         if (isArray) {
             target.push(el.value)
         } else {
@@ -36,25 +34,24 @@ function filterBy(array, search) {
 
     var type = avalon.type(array)
 
-    if (type !== "array" && type !== "object")
-        throw "filterBy只能处理对象或数组"
-    var oldData = array
+    if (type !== 'array' && type !== 'object')
+        throw 'filterBy只能处理对象或数组'
     var args = avalon.slice(arguments, 2)
-    if (typeof search === "function") {
+    if (typeof search === 'function') {
         var criteria = search
-    } else if (typeof search === "string") {
-        args.unshift(new RegExp(escapeRegExp(search), "i"))
+    } else if (typeof search === 'string') {
+        args.unshift(new RegExp(avalon.escapeRegExp(search), 'i'))
         criteria = containKey
     } else {
-        throw search + "必须是字符串或函数"
+        throw search + '必须是字符串或函数'
     }
 
     array = convertArray(array).filter(function (el) {
          return !!criteria.apply(el, [el.value].concat(args))
     })
-    var isArray = type === "array"
+    var isArray = type === 'array'
     var target = isArray ? [] : {}
-    return makeData(target, array, oldData, function (el) {
+    return makeData(target, array, function (el) {
         if (isArray) {
             target.push(el.value)
         } else {
@@ -66,11 +63,11 @@ function filterBy(array, search) {
 function selectBy(data, array) {
     if (avalon.isObject(data) && !Array.isArray(data)) {
         var target = []
-        return makeData(target, array, data, function (name) {
-            target.push(data.hasOwnProperty(name) ? data[name] : "")
+        return makeData(target, array, function (name) {
+            target.push(data.hasOwnProperty(name) ? data[name] : '')
         })
     } else {
-        throw "selectBy只支持对象"
+        throw 'selectBy只支持对象'
     }
 }
 Number.isNaN = Number.isNaN || function(a){
@@ -83,13 +80,12 @@ function limitBy(input, limit, begin) {
     } else {
         limit = parseInt(limit,10)
     }
-    var data = input
     if (Number.isNaN(limit))
         return input
 
-    if (typeof input === "number")
-        input = input + ""
-    if ((!Array.isArray(input)) && (typeof input !== "string"))
+    if (typeof input === 'number')
+        input = input + ''
+    if ((!Array.isArray(input)) && (typeof input !== 'string'))
         return input
 
     begin = (!begin || Number.isNaN(begin)) ? 0 : ~~begin
@@ -106,16 +102,12 @@ function limitBy(input, limit, begin) {
         }
     }
 
-    return makeData(input, [], data)
+    return makeData(input, [])
 }
 
-function makeData(ret, array, data, callback) {
+function makeData(ret, array, callback) {
     for (var i = 0, n = array.length; i < n; i++) {
         callback(array[i])
-    }
-    if (data && data.$hashcode) {
-        ret.$id = data.$id
-        ret.$hashcode = data.$hashcode
     }
     return ret
 }

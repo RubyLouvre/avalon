@@ -1,4 +1,3 @@
-var camelize = require("../base/builtin").camelize
 
 var number = require("./number")
 var escape = require("./escape")
@@ -24,8 +23,7 @@ avalon.mix(filters, {
                 str.slice(0, length - truncation.length) + truncation :
                 String(str)
     },
-    camelize: camelize,
-    number: number,
+    camelize: avalon.camelize,
     date: date,
     escape: escape,
     sanitize: sanitize,
@@ -41,7 +39,8 @@ avalon.mix(filters, {
 function fixNull(val) {
     return val == null ? "" : val
 }
-avalon.mix(avalon.filters, {
+
+avalon.mix(filters, {
     checked: {
         get: function (val, elem) {
             return !elem.oldValue
@@ -74,3 +73,4 @@ avalon.mix(avalon.filters, {
     }
 })
 
+module.exports = avalon
