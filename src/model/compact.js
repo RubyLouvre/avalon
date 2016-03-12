@@ -2,43 +2,27 @@
 var $$skipArray = require("./skipArray")
 var canHideProperty = require("./canHideProperty")
 var defineProperties = require("./defineProperties")
+var masterFactory = require("./masterFactory/compact")
+var slaveFactory = require("./slaveFactory/compact")
+var mediatorFactory = require("./mediatorFactory/compact")
+//var arrayFactory = require("./arrayFactory/compact")
 
+avalon.mediatorFactory = mediatorFactory
+//一个vm总是为Observer的实例
+function Observer() {
+}
 
 var dispatch = require("./strategy/dispatch")
 var $watch = dispatch.$watch
 var $emit = dispatch.$emit
 
 var rtopsub = /([^.]+)\.(.+)/
-var ap = Array.prototype
 var W3C = avalon.modern
 var rword = avalon.rword
 var oneObject = avalon.oneObject
 var makeHashCode = avalon.makeHashCode
 
-//一个vm总是为Observer的实例
-function Observer() {
-}
 
-/**
- * 判定此属性能否转换访问器
- * 
- * @param {type} key
- * @param {type} value
- * @param {type} skipArray
- * @returns {Boolean}
- */
-function isSkip(key, value, skipArray) {
-    return key.charAt(0) === "$" ||
-            skipArray[key] ||
-            (typeof value === "function") ||
-            (value && value.nodeName && value.nodeType > 0)
-}
-
-
-
-
-//所有vmodel都储存在这
-avalon.vmodels = {}
 
 /**
  * avalon最核心的方法的方法，返回一个vm
@@ -61,10 +45,10 @@ function define(definition) {
     if (!$id) {
         avalon.log("warning: vm.$id must be specified")
     }
-    var vm = observeObject(definition, {}, {
+    var vm = masterFactory(definition, {}, {
         pathname: "",
-        idname: $id,
-        top: true
+        id: $id,
+        master: true
     })
 
     if (avalon.vmodels[$id]) {
@@ -91,100 +75,25 @@ function define(definition) {
     return vm
 }
 
-
-/**
- * 生成一个vm
- *
- * @param {Object} definition 用户的原始数据
- * @param {Object} heirloom   用来保存顶层vm的引用
- * @param {Object} options
- *        top      {Boolean} 是否顶层vm
- *        idname   {String}  $id
- *        pathname {String}  当前路径
- * @returns {Observer}
- */
-
-function observeObject(definition, heirloom, options) {
-    options = options || {}
-    var $skipArray = {}
-
-    if (definition.$skipArray) {//收集所有不可监听属性
-        $skipArray = avalon.oneObject(definition.$skipArray)
-        delete definition.$skipArray
-    }
-
-    var keys = {}
-    var $accessors = {}
-    var $vmodel = new Observer()
-    var $pathname = options.pathname || ""
-
-    var $idname = options.idname || makeHashCode("$")
-
-    var key, sid, spath
-
-    for (key in definition) {
-        if ($$skipArray[key])
-            continue
-        var val = keys[key] = definition[key]
-        if (!isSkip(key, val, $skipArray)) {
-            sid = $idname + "." + key
-            spath = $pathname ? $pathname + "." + key : key
-            $accessors[key] = makeObservable(sid, spath, heirloom)
-        }
-    }
-
-
-    $accessors.$model = $modelAccessor
-
-    $vmodel = defineProperties($vmodel, $accessors, definition)
-
-    for (key in keys) {
-        //对普通监控属性或访问器属性进行赋值
-
-        $vmodel[key] = keys[key]
-
-        //删除系统属性
-        if (key in $skipArray) {
-            delete keys[key]
-        } else {
-            keys[key] = true
-        }
-    }
-
-    function hasOwnKey(key) {
-        return keys[key] === true
-    }
-
-    hideProperty($vmodel, "$id", $idname)
-    hideProperty($vmodel, "$accessors", $accessors)
-    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-
-    if (options.top === true) {
-        makeFire($vmodel, heirloom)
-    }
-
-    hideProperty($vmodel, "$hashcode", makeHashCode("$"))
-
-    return $vmodel
-}
+avalon.define = define
 
 
 /**
- * observeArray及observeObject的包装函数
+ * 各种vm的调配器
  * @param {type} definition
  * @param {type} old
  * @param {type} heirloom
  * @param {type} options
  * @returns {Observer|Any}
  */
-function observe(definition, old, heirloom, options) {
+function modelAdaptor(definition, old, heirloom, options) {
     //如果数组转换为监控数组
     if (Array.isArray(definition)) {
-        return observeArray(definition, old, heirloom, options)
+        return arrayFactory(definition, old, heirloom, options)
     } else if (avalon.isPlainObject(definition)) {
         //如果此属性原来就是一个VM,拆分里面的访问器属性
         if (Object(old) === old) {
-            var vm = subModelFactory(old, definition, heirloom, options)
+            var vm = slaveFactory(old, definition, heirloom, options)
             for (var i in definition) {
                 if ($$skipArray[i])
                     continue
@@ -192,8 +101,7 @@ function observe(definition, old, heirloom, options) {
             }
             return vm
         } else {
-            //否则新建一个VM
-            vm = observeObject(definition, heirloom, options)
+            vm = masterFactory(definition, heirloom, options)
             return vm
         }
     } else {
@@ -201,9 +109,18 @@ function observe(definition, old, heirloom, options) {
     }
 }
 
-
-
-
+function makeObserve($vmodel, options, heirloom, keys, accessors) {
+    function hasOwnKey(key) {
+        return keys[key] === true
+    }
+    hideProperty($vmodel, "$id", options.id)
+    hideProperty($vmodel, "$accessors", accessors)
+    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
+    hideProperty($vmodel, "$hashcode", options.hashcode)
+    if (options.master === true) {
+        makeFire($vmodel, heirloom)
+    }
+}
 /**
  * 生成普通访问器属性
  * 
@@ -212,7 +129,7 @@ function observe(definition, old, heirloom, options) {
  * @param {type} heirloom
  * @returns {PropertyDescriptor}
  */
-function makeObservable(sid, spath, heirloom) {
+function makeAccessor(sid, spath, heirloom) {
     var old = NaN
     function get() {
         return old
@@ -225,14 +142,11 @@ function makeObservable(sid, spath, heirloom) {
                 return
             }
             if (val && typeof val === "object") {
-               
-                val = observe(val, old, heirloom, {
+                val = modelAdaptor(val, old, heirloom, {
                     pathname: spath,
-                    idname: sid
+                    id: sid
                 })
-               
             }
-
             var older = old
             old = val
             var vm = heirloom.__vmodel__
@@ -268,7 +182,7 @@ function makeObservable(sid, spath, heirloom) {
 function makeFire($vmodel, heirloom) {
     heirloom.__vmodel__ = $vmodel
     hideProperty($vmodel, "$events", heirloom)
-    hideProperty($vmodel, "$watch", function (expr, fn) {
+    hideProperty($vmodel, "$watch", function () {
         if (arguments.length === 2) {
             return $watch.apply($vmodel, arguments)
         } else {
@@ -276,16 +190,8 @@ function makeFire($vmodel, heirloom) {
         }
     })
     hideProperty($vmodel, "$fire", function (expr, a, b) {
-        if (expr.indexOf("all!") === 0) {
-            var p = expr.slice(4)
-            for (var i in avalon.vmodels) {
-                var v = avalon.vmodels[i]
-                v.$fire && v.$fire(p, a, b)
-            }
-        } else {
-            var list = $vmodel.$events[expr]
-            $emit(list, $vmodel, expr, a, b)
-        }
+        var list = $vmodel.$events[expr]
+        $emit(list, $vmodel, expr, a, b)
     })
 }
 
@@ -349,314 +255,25 @@ function hideProperty(host, name, value) {
     }
 }
 
-/**************************************
- * *************************************
- ***************************************/
+
+
+
 /**
- * 回收已有子vm构建新的子vm
- * 用于vm.obj = newObj 的场合
+ * 判定此属性能否转换访问器
  * 
- * @param {Observer} before
- * @param {Observer} after
- * @param {Object} heirloom
- * @param {Object} options
- * @returns {Observer}
+ * @param {type} key
+ * @param {type} value
+ * @param {type} skipArray
+ * @returns {Boolean}
  */
-
-function subModelFactory(before, after, heirloom, options) {
-    var keys = {}
-    var $accessors = {}
-    var $idname = options.idname
-    var $pathname = options.pathname
-    var resue = before.$accessors || {}
-
-    var key, sid, spath
-    var skips = {}
-    for (key in after) {
-        if ($$skipArray[key])
-            continue
-        keys[key] = true
-        if (!isSkip(key, after[key], {})) {
-            if (resue[key]) {
-                $accessors[key] = resue[key]
-            } else {
-                sid = $idname + "." + key
-                spath = $pathname ? $pathname + "." + key : key
-                $accessors[key] = makeObservable(sid, spath, heirloom)
-            }
-        } else {
-            skips[key] = after[key]
-        }
-    }
-    var hashcode = before.$hashcode
-    $accessors.$model = $modelAccessor
-    var $vmodel = new Observer()
-    $vmodel = defineProperties($vmodel, $accessors, skips)
-
-    for (key in skips) {
-        $vmodel[key] = skips[key]
-        delete after[key]
-    }
-    function hasOwnKey(key) {
-        return keys[key] === true
-    }
-    if (options.top === true) {
-        makeFire($vmodel, heirloom)
-    }
-    before.$hashcode = false
-    hideProperty($vmodel, "$id", $idname)
-    hideProperty($vmodel, "$accessors", $accessors)
-    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-    hideProperty($vmodel, "$hashcode", hashcode || makeHashCode("$"))
-
-    return $vmodel
-}
-/**************************************
- ***************************************
- ***************************************/
-/**
- * 合并两个vm为一个vm,方便依赖收集
- *
- * @param {Component} before
- * @param {Component} after
- * @param {Object} heirloom
- * @returns {Component}
- */
-function mediatorFactory(before, after, heirloom, callback) {
-    heirloom = heirloom || {}
-    var b = before.$accessors || {}
-    var a = after.$accessors || {}
-    var $accessors = {}
-    var keys = {}, key
-    //收集所有键值对及访问器属性
-    for (key in before) {
-        keys[key] = before[key]
-        if (b[key]) {
-            $accessors[key] = b[key]
-        }
-    }
-
-    for (key in after) {
-        keys[key] = after[key]
-        if (a[key]) {
-            $accessors[key] = a[key]
-        }
-    }
-    callback && callback(keys, $accessors)
-
-    var $vmodel = new Observer()
-    $vmodel = defineProperties($vmodel, $accessors, keys)
-
-    for (key in keys) {
-        if (!$accessors[key]) {//添加不可监控的属性
-            $vmodel[key] = keys[key]
-        }
-        if (key in $$skipArray) {
-            delete keys[key]
-        } else {
-            keys[key] = true
-        }
-    }
-
-    function hasOwnKey(key) {
-        return keys[key] === true
-    }
-
-    makeFire($vmodel, heirloom)
-    hideProperty($vmodel, "$id", before.$id)
-    hideProperty($vmodel, "$accessors", $accessors)
-    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-    hideProperty($vmodel, "$hashcode", makeHashCode("$"))
-
-    return $vmodel
+function isSkip(key, value, skipArray) {
+    return key.charAt(0) === "$" ||
+            skipArray[key] ||
+            (typeof value === "function") ||
+            (value && value.nodeName && value.nodeType > 0)
 }
 
-
-
-/*********************************************************************
- *          监控数组（与ms-each, ms-repeat配合使用）                     *
- **********************************************************************/
-function observeArray(array, old, heirloom, options) {
-    if (old && old.splice) {
-        var args = [0, old.length].concat(array)
-        old.splice.apply(old, args)
-        return old
-    } else {
-        for (var i in newProto) {
-            array[i] = newProto[i]
-        }
-
-        var hashcode = makeHashCode("$")
-        hideProperty(array, "$hashcode", hashcode)
-        hideProperty(array, "$id", options.idname || hashcode)
-        if (options.top) {
-            makeFire(array, heirloom)
-        }
-        array.notify = function (a, b, c, d) {
-            var vm = heirloom.__vmodel__
-            if (vm) {
-                var path = a === null || a === void 0 ?
-                        options.pathname :
-                        options.pathname + "." + a
-                vm.$fire(path, b, c)
-                if (!d) {
-                    avalon.rerenderStart = new Date
-                    avalon.batch(vm.$id, true)
-                }
-            }
-        }
-
-        if (W3C) {
-            hideProperty(array, "$model", $modelAccessor)
-        } else {
-            array.$model = toJson(array)
-        }
-
-        var arrayOptions = {
-            idname: array.$id + ".*",
-            top: true
-        }
-        for (var j = 0, n = array.length; j < n; j++) {
-            array[j] = observeItem(array[j], {}, arrayOptions)
-        }
-
-        return array
-    }
-}
-
-
-function observeItem(item, a, b) {
-    if (avalon.isObject(item)) {
-        return observe(item, 0, a, b)
-    } else {
-        return item
-    }
-}
-
-var arrayMethods = ['push', 'pop', 'shift', 'unshift', 'splice']
-var newProto = {
-    set: function (index, val) {
-        if (((index >>> 0) === index) && this[index] !== val) {
-            if (index > this.length) {
-                throw Error(index + "set方法的第一个参数不能大于原数组长度")
-            }
-            this.notify("*", val, this[index], true)
-            this.splice(index, 1, val)
-        }
-    },
-    contains: function (el) { //判定是否包含
-        return this.indexOf(el) !== -1
-    },
-    ensure: function (el) {
-        if (!this.contains(el)) { //只有不存在才push
-            this.push(el)
-        }
-        return this
-    },
-    pushArray: function (arr) {
-        return this.push.apply(this, arr)
-    },
-    remove: function (el) { //移除第一个等于给定值的元素
-        return this.removeAt(this.indexOf(el))
-    },
-    removeAt: function (index) { //移除指定索引上的元素
-        if ((index >>> 0) === index) {
-            return this.splice(index, 1)
-        }
-        return []
-    },
-    removeAll: function (all) { //移除N个元素
-        var size = this.length
-        if (Array.isArray(all)) {
-            for (var i = this.length - 1; i >= 0; i--) {
-                if (all.indexOf(this[i]) !== -1) {
-                    _splice.call(this, i, 1)
-                }
-            }
-        } else if (typeof all === "function") {
-            for (i = this.length - 1; i >= 0; i--) {
-                var el = this[i]
-                if (all(el, i)) {
-                    _splice.call(this, i, 1)
-                }
-            }
-        } else {
-            _splice.call(this, 0, this.length)
-
-        }
-        if (!W3C) {
-            this.$model = toJson(this)
-        }
-        notifySize(this, size)
-        this.notify()
-
-    },
-    clear: function () {
-        this.removeAll()
-        return this
-    }
-}
-
-function notifySize(array, size) {
-    if (array.length !== size) {
-        array.notify("length", array.length, size, true)
-    }
-}
-
-var _splice = ap.splice
-
-arrayMethods.forEach(function (method) {
-    var original = ap[method]
-    newProto[method] = function (a, b) {
-        // 继续尝试劫持数组元素的属性
-        var args = [], size = this.length
-        var options = {
-            idname: this.$id + ".*",
-            top: true
-        }
-        if (method === "splice" && this[0] && typeof this[0] === "object") {
-            var old = this.slice(a, b)
-            var neo = ap.slice.call(arguments, 2)
-            var args = [a, b]
-            for (var j = 0, jn = neo.length; j < jn; j++) {
-                args[j + 2] = observe(neo[j], old[j], old[j] && old[j].$events, options)
-            }
-        } else {
-            for (var i = 0, n = arguments.length; i < n; i++) {
-                args[i] = observeItem(arguments[i], {}, options)
-            }
-        }
-
-
-        var result = original.apply(this, args)
-        if (!W3C) {
-            this.$model = toJson(this)
-        }
-        notifySize(this, size)
-        this.notify()
-
-        return result
-    }
-})
-
-"sort,reverse".replace(rword, function (method) {
-    newProto[method] = function () {
-        ap[method].apply(this, arguments)
-        if (!W3C) {
-            this.$model = toJson(this)
-        }
-        this.notify()
-        return this
-    }
-})
-
-module.exports = {
-    observeArray: observeArray,
-    observeObject: observeObject,
-    makeObservable: makeObservable,
-    mediatorFactory: mediatorFactory,
-    define: define
-}
+module.exports = avalon
 //使用这个来扁平化数据  https://github.com/gaearon/normalizr
 //使用Promise  https://github.com/stefanpenner/es6-promise
 //使用这个AJAX库 https://github.com/matthew-andrews/isomorphic-fetch
