@@ -149,5 +149,5 @@ function quoteError(str) {
     return avalon.quote('parse "' + str + '" fail')
 }
 
-module.exports = parseExpr
+module.exports = avalon.parseExpr = parseExpr
 

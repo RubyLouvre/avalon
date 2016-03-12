@@ -5,7 +5,7 @@
  * ------------------------------------------------------------
  */
 
-var getHashCode = avalon.getHashCOde
+var makeHashCode = avalon.makeHashCode
 var vdom = require('../vdom/index')
 var VText = vdom.VText
 var VComment = vdom.VComment
@@ -134,7 +134,7 @@ function lexer(text, recursive) {
             nodes.push(node)
             text = text.slice(outerHTML.length)
             if (node.type === '#comment' && rspAfterForStart.test(node.nodeValue)) {
-                node.signature = getHashCode('for')
+                node.signature = makeHashCode('for')
                 //移除紧挨着<!--av-for:xxxx-->后的空白节点
                 text = text.replace(rleftTrim, '')
             }
@@ -229,7 +229,7 @@ function modifyProps(node, innerHTML, nodes) {
             nodes.push({
                 type: '#comment',
                 nodeValue: 'av-for:' + forExpr,
-                signature: getHashCode('for')
+                signature: makeHashCode('for')
             })
             delete node.props['ms-for']
             delete node.props['av-for']

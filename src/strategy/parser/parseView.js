@@ -4,7 +4,7 @@ var parseText = require('./parseText')
 var parseBindings = require('./parseBinding')
 var rexpr = avalon.config.rexpr
 var quote = avalon.quote
-var getHashCode = avalon.getHashCode
+var makeHashCode = avalon.makeHashCode
 
 function wrap(a, num) {
     return '(function(){\n\n' + a + '\n\nreturn nodes' + num + '\n})();\n'
