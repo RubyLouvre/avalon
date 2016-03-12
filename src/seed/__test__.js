@@ -231,6 +231,12 @@ describe('测试lang.share文件的API', function () {
             expect(avalon.filters).to.be.a('object')
         })
     })
+    describe('vmodels', function () {
+        it('test', function () {
+            expect(avalon.vmodels).to.be.a('object')
+        })
+    })
+    
     describe('eventHooks', function () {
         it('test', function () {
             expect(avalon.eventHooks).to.be.a('object')
@@ -282,9 +288,9 @@ describe('测试lang.share文件的API', function () {
         })
     })
 
-    describe('getHashCode', function () {
+    describe('makeHashCode', function () {
         it('test', function () {
-            expect(avalon.getHashCode).to.be.a('function')
+            expect(avalon.makeHashCode).to.be.a('function')
         })
     })
 

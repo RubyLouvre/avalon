@@ -1,26 +1,25 @@
 var cssHooks = {}
 var rhyphen = /([a-z\d])([A-Z]+)/g
 var rcamelize = /[-_][^-_]/g
-var rNeedCamelize = /[_-]/
 var rhashcode = /\d\.\d{4}/
 var rescape = /[-.*+?^${}()|[\]\/\\]/g
 
 
 avalon.mix({
     caches: {}, //avalon2.0 新增
-    version: 2.0,
+    vmodels: {},
+    filters: {},
     components: {},
     directives: {},
     eventHooks: {},
     cssHooks: cssHooks,
-    filters: {},
-    css: function (node, name, value) {
+    version: 2.0,
+    css: function (node, name, value, fn) {
         //读写删除元素节点的样式
         if (node instanceof avalon) {
             node = node[0]
         }
-        var prop = rNeedCamelize.test(name) ? avalon.camelize(name) : name,
-                fn
+        var prop = avalon.camelize(name) 
         name = avalon.cssName(prop) || prop
         if (value === void 0 || typeof value === 'boolean') { //获取样式
             fn = cssHooks[prop + ':get'] || cssHooks['@:get']
@@ -43,8 +42,6 @@ avalon.mix({
         }
     },
     directive: function (name, definition) {
-        definition.init = (definition.init || this.noop)
-        definition.update = (definition.update || this.noop)
         return this.directives[name] = definition
     },
     isObject: function (a) {//1.6新增
@@ -90,7 +87,7 @@ avalon.mix({
         })
     },
     //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-    getHashCode: function (prefix) {
+    makeHashCode: function (prefix) {
         prefix = prefix || 'avalon'
         return String(Math.random() + Math.random()).replace(rhashcode, prefix)
     },
@@ -129,7 +126,7 @@ module.exports = {
     //生成事件回调的UUID(用户通过ms-on指令)
     avalon: avalon,
     getLongID: function (fn) {
-        return fn.uuid || (fn.uuid = avalon.getHashCode('e'))
+        return fn.uuid || (fn.uuid = avalon.makeHashCode('e'))
     },
     //生成事件回调的UUID(用户通过avalon.bind)
     getShortID: function (fn) {
