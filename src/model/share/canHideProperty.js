@@ -2,8 +2,8 @@
 //标准浏览器使用__defineGetter__, __defineSetter__实现
 var flag = true
 try {
-    Object.defineProperty({}, "_", {
-        value: "x"
+    Object.defineProperty({}, '_', {
+        value: 'x'
     })
 } catch (e) {
     flag = false

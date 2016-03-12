@@ -7,4 +7,5 @@ $skipArray: 是当前对象特有的不可监听属性
  $$skipArray被hasOwnProperty后返回false
  $skipArray被hasOwnProperty后返回true
  */
-module.exports = avalon.oneObject("$id,$render,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode")
+
+module.exports = avalon.oneObject('$id,$render,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode')
