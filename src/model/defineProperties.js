@@ -1,10 +1,6 @@
-var builtin = require("../base/builtin")
-var makeHashCode = builtin.makeHashCode
-var msie = builtin.msie
-var window = builtin.window
 
 var canHideProperty = require("./canHideProperty")
-var $$skipArray = require("./skipArray.compact")
+var $$skipArray = require("./skipArray")
 
 
 var defineProperties = Object.defineProperties
@@ -35,7 +31,7 @@ if (!canHideProperty) {
             return obj
         }
     }
-    if (msie) {
+    if (avalon.msie) {
         var VBClassPool = {}
         window.execScript([// jshint ignore:line
             "Function parseVB(code)",
@@ -100,7 +96,7 @@ if (!canHideProperty) {
             var body = buffer.join("\r\n")
             var className = VBClassPool[body]
             if (!className) {
-                className = makeHashCode("VBClass")
+                className = avalon.makeHashCode("VBClass")
                 window.parseVB("Class " + className + body)
                 window.parseVB([
                     "Function " + className + "Factory(a, b)", //创建实例并传入两个关键的参数

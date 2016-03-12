@@ -6,49 +6,44 @@
  * @param {Object} heirloom
  * @returns {Component}
  */
-
 function mediatorFactory(before, after, heirloom) {
-    var b = before.$accessors || {}
-    var a = after.$accessors || {}
+    var keys = {}
     var accessors = {}
-    var keys = {}, key
+
     //收集所有键值对及访问器属性
-    for (key in before) {
+    for (var key in before) {
         keys[key] = before[key]
-        if (b[key]) {
-            accessors[key] = b[key]
+        var accessor = Object.getOwnPropertyDescriptor(before, key)
+        if (accessor.set) {
+            accessors[key] = accessor
         }
     }
-
-    for (key in after) {
+    for (var key in after) {
         keys[key] = after[key]
-        if (a[key]) {
-            accessors[key] = a[key]
+        var accessor = Object.getOwnPropertyDescriptor(after, key)
+        if (accessor.set) {
+            accessors[key] = accessor
         }
     }
 
     var $vmodel = new Observer()
-    $vmodel = defineProperties($vmodel, accessors, keys)
+    Object.defineProperties($vmodel, accessors)
 
     for (key in keys) {
         if (!accessors[key]) {//添加不可监控的属性
             $vmodel[key] = keys[key]
         }
-        if (key in $$skipArray) {
-            delete keys[key]
-        } else {
-            keys[key] = true
-        }
+        keys[key] = true
     }
-
+    
     makeObserve($vmodel, heirloom || {}, keys, accessors, {
         id: before.$id,
         hashcode: makeHashCode("$"),
         master: true
     })
 
+
     return $vmodel
 }
-
 
 module.exports = mediatorFactory

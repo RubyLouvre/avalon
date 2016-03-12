@@ -5,14 +5,14 @@ var defineProperties = require("./defineProperties")
 var masterFactory = require("./masterFactory/compact")
 var slaveFactory = require("./slaveFactory/compact")
 var mediatorFactory = require("./mediatorFactory/compact")
-//var arrayFactory = require("./arrayFactory/compact")
+var arrayFactory = avalon.noop//require("./arrayFactory/compact")
 
 avalon.mediatorFactory = mediatorFactory
 //一个vm总是为Observer的实例
 function Observer() {
 }
 
-var dispatch = require("./strategy/dispatch")
+var dispatch = require("../strategy/dispatch")
 var $watch = dispatch.$watch
 var $emit = dispatch.$emit
 
@@ -57,6 +57,8 @@ function define(definition) {
     avalon.vmodels[$id] = vm
     avalon.ready(function () {
         var elem = document.getElementById($id)
+        if(!elem)
+            return
         vm.$element = elem
         var now = new Date - 0
         var vnode = avalon.lexer(elem.outerHTML)

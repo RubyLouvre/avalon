@@ -1,15 +1,12 @@
 var $$skipArray = require("./skipArray")
-var canHideProperty = require("./canHideProperty")
-var defineProperties = require("./defineProperties")
 
 
-var dispatch = require("./strategy/dispatch")
+var dispatch = require("../strategy/dispatch")
 var $watch = dispatch.$watch
 var $emit = dispatch.$emit
 
 var rtopsub = /([^.]+)\.(.+)/
 var ap = Array.prototype
-var W3C = avalon.modern
 var rword = avalon.rword
 var oneObject = avalon.oneObject
 var makeHashCode = avalon.makeHashCode
@@ -333,117 +330,11 @@ function hideProperty(host, name, value) {
 /**************************************
  * *************************************
  ***************************************/
-/**
- * 回收已有子vm构建新的子vm
- * 用于vm.obj = newObj 的场合
- * 
- * @param {Observer} before
- * @param {Observer} after
- * @param {Object} heirloom
- * @param {Object} options
- * @returns {Observer}
- */
-function subModelFactory(before, after, heirloom, options) {
-    var keys = {}
-    var $accessors = {}
-    var $idname = options.idname
-    var $pathname = options.pathname
-    var hashcode = before.$hashcode
-    var key, sid, spath
-    for (key in after) {
-        if ($$skipArray[key])
-            continue
-        keys[key] = after[key]
-        if (!isSkip(key, after[key], {})) {
-            var accessor = Object.getOwnPropertyDescriptor(before, key)
-            if (accessor && accessor.get) {
-                $accessors[key] = accessor
-            } else {
-                sid = $idname + "." + key
-                spath = $pathname ? $pathname + "." + key : key
-                $accessors[key] = makeObservable(sid, spath, heirloom)
-            }
-        }
-    }
-    for (key in before) {
-        delete before[key]
-    }
 
-    $accessors.$model = $modelAccessor
-    var $vmodel = before
-    Object.defineProperties($vmodel, $accessors)
-
-    for (key in keys) {
-        if (!$accessors[key]) {//添加不可监控的属性
-            $vmodel[key] = keys[key]
-        }
-        keys[key] = true
-    }
-
-    function hasOwnKey(key) {
-        return keys[key] === true
-    }
-
-    hideProperty($vmodel, "$id", $idname)
-    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-    hideProperty($vmodel, "$hashcode", hashcode || makeHashCode("$"))
-
-    return $vmodel
-}
 /**************************************
  ***************************************
  ***************************************/
-/**
- * 合并两个vm为一个vm,方便依赖收集
- *
- * @param {Component} before
- * @param {Component} after
- * @param {Object} heirloom
- * @returns {Component}
- */
-function mediatorFactory(before, after, heirloom, callback) {
-    heirloom = heirloom || {}
-    var $accessors = {}
-    var keys = {}
-    //收集所有键值对及访问器属性
-    for (var key in before) {
-        keys[key] = before[key]
-        var accessor = Object.getOwnPropertyDescriptor(before, key)
-        if (accessor.set) {
-            $accessors[key] = accessor
-        }
-    }
-    for (var key in after) {
-        keys[key] = after[key]
-        var accessor = Object.getOwnPropertyDescriptor(after, key)
-        if (accessor.set) {
-            $accessors[key] = accessor
-        }
-    }
-    callback && callback(keys, $accessors)
 
-    var $vmodel = new Observer()
-    Object.defineProperties($vmodel, $accessors)
-
-    for (key in keys) {
-        if (!$accessors[key]) {//添加不可监控的属性
-            $vmodel[key] = keys[key]
-        }
-        keys[key] = true
-    }
-
-    function hasOwnKey(key) {
-        return keys[key] === true
-    }
-
-    makeFire($vmodel, heirloom)
-
-    hideProperty($vmodel, "$id", before.$id)
-    hideProperty($vmodel, "hasOwnProperty", hasOwnKey)
-    hideProperty($vmodel, "$hashcode", makeHashCode("$"))
-
-    return $vmodel
-}
 
 
 /*********************************************************************
