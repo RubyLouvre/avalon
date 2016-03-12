@@ -1,7 +1,7 @@
 
 var parseExpr = require('./parseExpr')
 var parseText = require('./parseText')
-var parseBindings = require('./parseBinding')
+var parseBindings = require('./parseBindings')
 var rexpr = avalon.config.rexpr
 var quote = avalon.quote
 var makeHashCode = avalon.makeHashCode

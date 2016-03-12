@@ -1,5 +1,5 @@
 
-avalon.directive("expr", {
+avalon.directive('expr', {
     parse: function () {
     },
     diff: function (cur, pre) {//curNode, preNode

@@ -1,6 +1,6 @@
 var Cache = require('../../seed/cache')
 var fixScript = require('./fixScript')
-var fixTBodyVML = require('./fixTBodyVML')
+var fixTbodyVML = require('./fixTbodyVML')
 var fixCloneNode = require('./fixCloneNode')
 
 var tagHooks = {

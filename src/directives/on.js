@@ -1,4 +1,5 @@
 var markID = require("../seed/lang.share").getLongID
+
 var quote = avalon.quote
 
 //基于事件代理的高性能事件绑定

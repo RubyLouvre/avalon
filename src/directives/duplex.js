@@ -7,6 +7,7 @@ var quote = avalon.quote
 var markID = require("../seed/lang.share").getLongID
 var document = avalon.document
 var pushArray = avalon.Array.merge
+var evaluatorPool = require("../strategy/parser/evaluatorPool")
 
 
 var rchangeFilter = /\|\s*change\b/
@@ -244,7 +245,7 @@ function initDuplexData(elem) {
         return this.getter(this.vmodel, val, this.elem)
     }
 
-    var evaluatorPool = parse.caches
+   
     var expr = elem.props["av-duplex"]
     duplexData.getter = evaluatorPool.get("duplex:" + expr)
     duplexData.setter = evaluatorPool.get("duplex:" + expr + ":setter")

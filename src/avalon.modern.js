@@ -5,7 +5,6 @@ require('./vdom/index')
 require('./dom/modern')
 require('./directives/modern')
 require('./strategy/index')
-require('./model/modern')
 
 
 module.exports = avalon
