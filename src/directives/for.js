@@ -1,6 +1,5 @@
-var parse = require("../parser/parse")
 
-var updateEntity = require("../strategy/updateEntity")
+var updateEntity = require("../strategy/patch")
 
 avalon._each = function (obj, fn) {
     if (Array.isArray(obj)) {
@@ -25,7 +24,7 @@ var rforSplit = /\s*,\s*/
 avalon.directive("for", {
     parse: function (str, num) {
         var arr = str.replace(rforPrefix, "").split(" in ")
-        var def = "var loop" + num + " = " + parse(arr[1]) + "\n"
+        var def = "var loop" + num + " = " + avalon.parseExpr(arr[1]) + "\n"
         var kv = arr[0].replace(rforLeft, "").replace(rforRight, "").split(rforSplit)
         if (kv.length === 1) {
             kv.unshift("$key")

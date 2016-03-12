@@ -1,9 +1,8 @@
 
-var parse = require("../parser/parse")
 
 avalon.directive("style", {
     parse: function (binding, num) {
-        return "vnode" + num + ".props['av-style'] = " + parse(binding.expr) + ";\n"
+        return "vnode" + num + ".props['av-style'] = " + avalon.parseExpr(binding) + ";\n"
     },
     diff: function (cur, pre) {
         var a = cur.props["av-style"]

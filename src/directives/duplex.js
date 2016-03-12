@@ -1,15 +1,12 @@
 //双工绑定
 
-var parse = require("../parser/parse")
-var builtin = require("../base/builtin")
-var createVirtual = require("../strategy/createVirtual")
 
-var W3C = builtin.W3C
-var msie = builtin.msie
-var quote = builtin.quote
-var markID = builtin.markID
-var document = builtin.document
-var pushArray = builtin.pushArray
+var W3C = avalon.modern
+var msie = avalon.msie
+var quote = avalon.quote
+var markID = require("../seed/lang.share").getLongID
+var document = avalon.document
+var pushArray = avalon.Array.merge
 
 
 var rchangeFilter = /\|\s*change\b/
@@ -60,7 +57,7 @@ avalon.directive("duplex", {
                     "input"
         }
         binding.expr = expr
-        parse(binding, "duplex")
+        avalon.parseExpr(binding, "duplex")
         return "vnode" + num + ".duplexVm = __vmodel__;\n" +
                 "vnode" + num + ".props.itype = " + quote(itype) + ";\n" +
                 "vnode" + num + ".props['av-duplex'] = " + quote(binding.expr) + ";\n"
@@ -184,7 +181,7 @@ function initDuplexData(elem) {
             break
         case "select":
             if (!elem.children.length) {
-                pushArray(elem.children, createVirtual(elem.template))
+                pushArray(elem.children, avalon.lexer(elem.template))
             }
             duplexData.change = duplexSelect
             break

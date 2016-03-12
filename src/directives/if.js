@@ -1,10 +1,9 @@
-var makeHashCode = require("../base/builtin").makeHashCode
-var quote = require("../base/builtin").quote
+
 
 avalon.directive("if", {
     priority: 5,
     parse: function (binding, num) {
-        return "vnode" + num + ".props['av-if'] = " + quote(binding) + ";\n"
+        return "vnode" + num + ".props['av-if'] = " + avalon.quote(binding) + ";\n"
     },
     diff: function (cur, pre) {
         if (cur.type !== pre.type) {
@@ -17,7 +16,7 @@ avalon.directive("if", {
         var vtype = vnode.type
         if (dtype !== vtype) {
             if (dom.nodeType === 1) {
-                var a = makeHashCode("if")
+                var a = avalon.makeHashCode("if")
                 avalon.caches[a] = dom
                 parent.replaceChild(document.createComment(a), dom)
             } else {

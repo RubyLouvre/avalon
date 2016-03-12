@@ -1,9 +1,6 @@
 
-var parse = require("../parser/parse")
-var makeHashCode = require("../base/builtin").makeHashCode
-var createVirtual = require("../strategy/createVirtual")
-var batchUpdateEntity = require("../strategy/batchUpdateEntity")
-var updateEntity = require("../strategy/updateEntity")
+var makeHashCode = avalon.makeHashCode
+
 
 
 //插入点机制,组件的模板中有一些av-slot元素,用于等待被外面的元素替代
@@ -26,7 +23,7 @@ avalon.directive("widget", {
         var component = "config" + num
         return  "vnode" + num + ".props.wid = '" + uuid + "'\n" +
                 "vnode" + num + ".children = avalon.caches[vnode" + num + ".props.wid] \n" +
-                "var " + component + " = vnode" + num + ".props['av-widget'] = " + wrap(parse(binding), "widget") + ";\n" +
+                "var " + component + " = vnode" + num + ".props['av-widget'] = " + wrap(avalon.parseExpr(binding), "widget") + ";\n" +
                 "if(" + component + "){\n" +
                 "\tvnode" + num + " = avalon.component(vnode" + num + ", __vmodel__)\n" +
                 "}\n"

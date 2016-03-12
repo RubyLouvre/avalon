@@ -1,4 +1,3 @@
-var parse = require("../parser/parse")
 var Cache = require("../shim/cache")
 
 var textCache = new Cache(128)
@@ -7,7 +6,7 @@ avalon.directive("html", {
     parse: function (binding, num) {
         return "vnode" + num + ".htmlVm = __vmodel__\n" +
                 "vnode" + num + ".props.wid = 2;\n" +
-                "vnode" + num + ".props['av-html'] =" + parse(binding.expr) + ";\n"
+                "vnode" + num + ".props['av-html'] =" + avalon.parseExpr(binding.expr) + ";\n"
     },
     diff: function (cur, pre) {
         var curValue = cur.props["av-html"]

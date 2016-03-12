@@ -1,7 +1,5 @@
-var markID = require("../base/builtin").markID
-var quote = require("../base/builtin").quote
-var parse = require("../parser/parse")
-
+var markID = require("../seed/lang.share").getLongID
+var quote = avalon.quote
 
 //基于事件代理的高性能事件绑定
 var revent = /^av-on-(\w+)/
@@ -18,14 +16,14 @@ avalon.directive("on", {
         var vmDefine = "vnode" + num + ".onVm = __vmodel__\n"
         var pid = quote(binding.name)
         if (canCache) {
-            var fn = Function("return " + parse(binding, "on"))()
+            var fn = Function("return " + avalon.parseExpr(binding, "on"))()
             var key = "on:" + binding.expr
             avalon.caches[key] = fn
             return vmDefine + "vnode" + num + ".props[" + pid +
                     "] = avalon.caches[" + quote(key) + "]\n"
         } else {
             return vmDefine + "vnode" + num + ".props[" + pid +
-                    "] = " + parse(binding, "on") + "\n"
+                    "] = " + avalon.parseExpr(binding, "on") + "\n"
         }
     },
     diff: function (cur, pre, type, name) {

@@ -1,5 +1,4 @@
-var parse = require("../parser/parse")
-var Cache = require("../core/cache")
+var Cache = require("../shim/cache")
 
 var textCache = new Cache(256)
 var rexpr = avalon.config.rexpr
@@ -7,7 +6,7 @@ avalon.directive("text", {
     parse: function (binding, num) {
         return "vnode" + num + ".textVm = __vmodel__\n" +
                 "vnode" + num + ".props.wid = 2;\n" +
-                "vnode" + num + ".props['av-text'] =" + parse(binding.expr) + ";\n"
+                "vnode" + num + ".props['av-text'] =" + avalon.parseExpr(binding) + ";\n"
     },
     diff: function (cur, pre) {
         var curValue = cur.props["av-text"]

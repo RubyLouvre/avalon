@@ -1,11 +1,9 @@
 
-var attrUpdate = require("../dom/attr")
-var parse = require("../parser/parse")
-
+var attrUpdate = require("../dom/attr/compact")
 
 var attrDir = avalon.directive("attr", {
     parse: function (binding, num) {
-        return "vnode" + num + ".props['av-attr'] = " + parse(binding) + ";\n"
+        return "vnode" + num + ".props['av-attr'] = " + avalon.parseExpr(binding) + ";\n"
     },
     diff: function (cur, pre) {
         var a = cur.props["av-attr"]

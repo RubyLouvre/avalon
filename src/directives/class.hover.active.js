@@ -1,13 +1,12 @@
 //根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag"
 //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
-var markID = require("../base/builtin").markID
-var parse = require("../parser/parse")
+var markID = require("../seed/lang.share").getLongID
 
 var directives = avalon.directives
 avalon.directive("class", {
     parse: function (binding, num) {
         //必须是布尔对象或字符串数组
-        return "vnode" + num + ".props['" + binding.name + "'] = " + parse(binding) + ";\n"
+        return "vnode" + num + ".props['" + binding.name + "'] = " + avalon.parseExpr(binding) + ";\n"
     },
     diff: function (cur, pre, type) {
         var curValue = cur.props["av-" + type]
