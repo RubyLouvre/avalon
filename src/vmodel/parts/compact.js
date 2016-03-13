@@ -36,7 +36,7 @@ function hideProperty(host, name, value) {
     }
 }
 
-var $modelAccessor = {
+var modelAccessor = {
     get: function () {
         return toJson(this)
     },
@@ -45,11 +45,11 @@ var $modelAccessor = {
     configurable: true
 }
 
-function makeObserver($vmodel, options, heirloom, keys, accessors) {
+function makeObserver($vmodel, heirloom, keys, accessors, options) {
 
     if (options.array) {
         if (avalon.modern) {
-            hideProperty($vmodel, '$model', $modelAccessor)
+            hideProperty($vmodel, '$model', modelAccessor)
         } else {
             $vmodel.$model = toJson($vmodel)
         }
@@ -63,6 +63,8 @@ function makeObserver($vmodel, options, heirloom, keys, accessors) {
     hideProperty($vmodel, '$id', options.id)
     hideProperty($vmodel, '$hashcode', options.hashcode)
     if (options.master === true) {
+        hideProperty($vmodel, '$element', null)
+        hideProperty($vmodel, '$render', avalon.noop)
         makeFire($vmodel, heirloom)
     }
 }
@@ -74,10 +76,10 @@ share.$$midway.hideProperty = hideProperty
 var mixin = {
     toJson: toJson,
     makeObserver: makeObserver,
-    $modelAccessor: $modelAccessor
+    modelAccessor: modelAccessor
 }
 for (var i in share) {
     mixin[i] = share[i]
 }
 
-module.exports = share
+module.exports = mixin

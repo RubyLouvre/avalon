@@ -1,4 +1,5 @@
 var share = require('./share')
+var makeFire = share.makeFire
 
 function toJson(val) {
     var xtype = avalon.type(val)
@@ -43,7 +44,7 @@ var modelAccessor = {
 
 share.$$midway.hideProperty = hideProperty
 
-function makeObserver($vmodel, options, heirloom, keys, accessors) {
+function makeObserver($vmodel, heirloom, keys, accessors, options) {
 
     if (options.array) {
         hideProperty($vmodel, '$model', modelAccessor)
@@ -51,12 +52,13 @@ function makeObserver($vmodel, options, heirloom, keys, accessors) {
         function hasOwnKey(key) {
             return keys[key] === true
         }
-        hideProperty($vmodel, '$accessors', accessors)
         hideProperty($vmodel, 'hasOwnProperty', hasOwnKey)
     }
     hideProperty($vmodel, '$id', options.id)
     hideProperty($vmodel, '$hashcode', options.hashcode)
     if (options.master === true) {
+        hideProperty($vmodel, '$element', null)
+        hideProperty($vmodel, '$render', avalon.noop)
         makeFire($vmodel, heirloom)
     }
 }

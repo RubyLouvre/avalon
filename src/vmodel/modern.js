@@ -4,7 +4,7 @@ var isSkip = share.isSkip
 var toJson = share.toJson
 var $$midway = share.$$midway
 var $$skipArray = share.$$skipArray
-
+delete $$skipArray
 var makeAccessor = share.makeAccessor
 var makeObserver = share.makeObserver
 var modelAccessor = share.modelAccessor
@@ -56,7 +56,6 @@ function masterFactory(definition, heirloom, options) {
             keys[key] = true
         }
     }
-
     makeObserver($vmodel, heirloom, keys, accessors, options)
 
     return $vmodel

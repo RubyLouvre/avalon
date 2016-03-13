@@ -3417,9 +3417,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var Cache = __webpack_require__(27)
-
 	var textCache = new Cache(256)
 	var rexpr = avalon.config.rexpr
+
 	avalon.directive('text', {
 	    parse: function (binding, num) {
 	        return 'vnode' + num + '.textVm = __vmodel__\n' +
@@ -3435,7 +3435,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var hasExpr = rexpr.test(curValue)
 	                if (hasExpr) {
 	                    var child = [{type: '#text', nodeValue: curValue}]
-	                    var render = avalon.createRender(child)
+	                    var render = avalon.render(child)
 	                    nodes = render(cur.textVm)
 	                    cur.props['av-text'] = nodes[0].nodeValue
 	                }
@@ -3463,14 +3463,13 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var Cache = __webpack_require__(27)
-
 	var textCache = new Cache(128)
-	var rexpr = avalon.config.rexpr
+
 	avalon.directive('html', {
 	    parse: function (binding, num) {
 	        return 'vnode' + num + '.htmlVm = __vmodel__\n' +
 	                'vnode' + num + '.props.wid = 2;\n' +
-	                'vnode' + num + '.props["av-html"] =' + avalon.parseExpr(binding.expr) + ';\n'
+	                'vnode' + num + '.props["av-html"] =' + avalon.parseExpr(binding) + ';\n'
 	    },
 	    diff: function (cur, pre) {
 	        var curValue = cur.props['av-html']
@@ -3478,8 +3477,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (curValue !== preValue) {
 	            var nodes = textCache.get(curValue)
 	            if (!Array.isArray(nodes)) {
-	                var child = avalon.createVirtual(curValue)
-	                var render = avalon.createRender(child)
+	                var child = avalon.lexer(curValue)
+	                var render = avalon.render(child)
 	                nodes = render(cur.htmlVm)
 	                cur.props['av-html'] = nodes.map(function (el) {
 	                    return 'template' in el ? el.template : el.nodeValue
@@ -3494,15 +3493,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    update: function (node, vnode) {
-	        var nodes = node.querySelectorAll('[avalon-events]')
-	        avalon.each(nodes, function (el) {
-	            avalon.unbind(el)
-	        })
-	        
+	        if (node.querySelectorAll) {
+	            var nodes = node.querySelectorAll("[avalon-events]")
+	            avalon.each(nodes, function (el) {
+	                avalon.unbind(el)
+	            })
+	        } else {
+	            var nodes = node.getElementsByTagName("*")
+	            avalon.each(nodes, function (el) {
+	                if (el.getAttribute("avalon-events")) {
+	                    avalon.unbind(el)
+	                }
+	            })
+	        }
 	        //添加节点
-	        node.innerHTML = vnode.children.map(function (c) {
-	            return avalon.vdomAdaptor(c).toHTML()
-	        }).join('')
+	        if (window.Range) {
+	            node.innerHTML = vnode.children.map(function (c) {
+	                return avalon.vdomAdaptor(c).toHTML()
+	            }).join("")
+	        } else {
+	            avalon.clearHTML(node)
+	            var fragment = document.createDocumentFragment()
+	            vnode.children.forEach(function (c) {
+	                fragment.appendChild(avalon.vdomAdaptor(c).toDOM())
+	            })
+
+	            node.appendChild(fragment)
+	        }
 	    }
 	})
 
@@ -5715,20 +5732,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 
 	var share = __webpack_require__(62)
-	var $watch = share.$watch
-	var $emit = share.$emit
+
 	var isSkip = share.isSkip
-	var $$skipArray = share.$$skipArray
+	var toJson = share.toJson
 	var $$midway = share.$$midway
+	var $$skipArray = share.$$skipArray
+
 	var makeAccessor = share.makeAccessor
 	var makeObserver = share.makeObserver
-	var $modelAccessor = share.$modelAccessor
+	var modelAccessor = share.modelAccessor
 	var modelAdaptor = share.modelAdaptor
-	var toJson = share.toJson
 	var makeHashCode = avalon.makeHashCode
 
-	var defineProperties = __webpack_require__(67)
-
+	var addAccessors = __webpack_require__(67)
 
 	//一个vm总是为Observer的实例
 	function Observer() {
@@ -5760,9 +5776,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 
-	    accessors.$model = $modelAccessor
+	    accessors.$model = modelAccessor
 	    var $vmodel = new Observer()
-	    $vmodel = defineProperties($vmodel, accessors, definition)
+	    $vmodel = addAccessors($vmodel, accessors, definition)
 
 	    for (key in keys) {
 	        //对普通监控属性或访问器属性进行赋值
@@ -5808,9 +5824,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    options = before.hashcode || makeHashCode("$")
-	    accessors.$model = $modelAccessor
+	    accessors.$model = modelAccessor
 	    var $vmodel = new Observer()
-	    $vmodel = defineProperties($vmodel, accessors, skips)
+	    $vmodel = addAccessors($vmodel, accessors, skips)
 
 	    for (key in skips) {
 	        $vmodel[key] = skips[key]
@@ -5845,7 +5861,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    var $vmodel = new Observer()
-	    $vmodel = defineProperties($vmodel, accessors, keys)
+	    $vmodel = addAccessors($vmodel, accessors, keys)
 
 	    for (key in keys) {
 	        if (!accessors[key]) {//添加不可监控的属性
@@ -5907,18 +5923,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	            master: true
 	        }
 	        for (var j = 0, n = array.length; j < n; j++) {
-	            array[j] = observeItem(array[j], {}, arrayOptions)
+	            array[j] = convertItem(array[j], {}, arrayOptions)
 	        }
 	        return array
 	    }
 	}
 
 	$$midway.arrayFactory = arrayFactory
+
 	var ap = Array.prototype
 	var _splice = ap.splice
 	function notifySize(array, size) {
 	    if (array.length !== size) {
 	        array.notify('length', array.length, size, true)
+	    }
+	}
+	function convertItem(item, a, b) {
+	    if (Object(item) === item) {
+	        return modelAdaptor(item, 0, a, b)
+	    } else {
+	        return item
 	    }
 	}
 	__array__.removeAll = function (all) { //移除N个元素
@@ -5946,13 +5970,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    notifySize(this, size)
 	    this.notify()
 	}
-	function observeItem(item, a, b) {
-	    if (Object(item) === item) {
-	        return modelAdaptor(item, 0, a, b)
-	    } else {
-	        return item
-	    }
-	}
+
 
 	var __method__ = ['push', 'pop', 'shift', 'unshift', 'splice']
 
@@ -5963,7 +5981,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var args = [], size = this.length
 	        var options = {
 	            idname: this.$id + '.*',
-	            top: true
+	            master: true
 	        }
 	        if (method === 'splice' && Object(this[0]) === this[0]) {
 	            var old = this.slice(a, b)
@@ -5975,7 +5993,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        } else {
 	            for (var i = 0, n = arguments.length; i < n; i++) {
-	                args[i] = observeItem(arguments[i], {}, options)
+	                args[i] = convertItem(arguments[i], {}, options)
 	            }
 	        }
 
@@ -6049,7 +6067,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-	var $modelAccessor = {
+	var modelAccessor = {
 	    get: function () {
 	        return toJson(this)
 	    },
@@ -6058,11 +6076,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    configurable: true
 	}
 
-	function makeObserver($vmodel, options, heirloom, keys, accessors) {
+	function makeObserver($vmodel, heirloom, keys, accessors, options) {
 
 	    if (options.array) {
 	        if (avalon.modern) {
-	            hideProperty($vmodel, '$model', $modelAccessor)
+	            hideProperty($vmodel, '$model', modelAccessor)
 	        } else {
 	            $vmodel.$model = toJson($vmodel)
 	        }
@@ -6076,6 +6094,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    hideProperty($vmodel, '$id', options.id)
 	    hideProperty($vmodel, '$hashcode', options.hashcode)
 	    if (options.master === true) {
+	        hideProperty($vmodel, '$element', null)
+	        hideProperty($vmodel, '$render', avalon.noop)
 	        makeFire($vmodel, heirloom)
 	    }
 	}
@@ -6087,13 +6107,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	var mixin = {
 	    toJson: toJson,
 	    makeObserver: makeObserver,
-	    $modelAccessor: $modelAccessor
+	    modelAccessor: modelAccessor
 	}
 	for (var i in share) {
 	    mixin[i] = share[i]
 	}
 
-	module.exports = share
+	module.exports = mixin
 
 
 /***/ },
@@ -6279,8 +6299,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.define = define
 
 	module.exports = {
-	    $emit: $emit,
-	    $watch: $watch,
 	    $$midway: $$midway,
 	    $$skipArray: $$skipArray,
 	    __array__: __array__,

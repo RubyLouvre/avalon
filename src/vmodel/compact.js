@@ -13,8 +13,7 @@ var modelAccessor = share.modelAccessor
 var modelAdaptor = share.modelAdaptor
 var makeHashCode = avalon.makeHashCode
 
-var addAccessors = require("./share/addAccessors")
-
+var addAccessors = require("./parts/addAccessors")
 
 //一个vm总是为Observer的实例
 function Observer() {
