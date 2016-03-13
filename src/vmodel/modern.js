@@ -4,7 +4,7 @@ var isSkip = share.isSkip
 var toJson = share.toJson
 var $$midway = share.$$midway
 var $$skipArray = share.$$skipArray
-delete $$skipArray
+delete $$skipArray.$accessors
 var makeAccessor = share.makeAccessor
 var makeObserver = share.makeObserver
 var modelAccessor = share.modelAccessor
@@ -13,7 +13,7 @@ var makeHashCode = avalon.makeHashCode
 
 
 //一个vm总是为Observer的实例
-function Observer() {
+function Observer() { 
 }
 function masterFactory(definition, heirloom, options) {
 
