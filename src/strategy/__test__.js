@@ -113,7 +113,6 @@ describe('strategy', function () {
             var nodes = avalon.lexer(str)
             expect(nodes[0].type).to.equal("table")
             var children = nodes[0].children
-            console.log(children)
             expect(children[0].type).to.equal("#text")
             expect(children[1].type).to.equal("thead")
             expect(children[2].type).to.equal("#text")

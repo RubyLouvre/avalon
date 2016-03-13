@@ -5959,18 +5959,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 
-	        var hashcode = avalon.makeHashCode('$')
+	        var hashcode = makeHashCode('$')
 	        options.array = true
 	        options.hashcode = hashcode
 	        options.id = options.id || hashcode
 	        makeObserver(array, options, heirloom)
 
-	        var arrayOptions = {
+	        var itemOptions = {
 	            id: array.$id + '.*',
 	            master: true
 	        }
 	        for (var j = 0, n = array.length; j < n; j++) {
-	            array[j] = convertItem(array[j], {}, arrayOptions)
+	            array[j] = convertItem(array[j], {}, itemOptions)
 	        }
 	        return array
 	    }
