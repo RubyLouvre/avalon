@@ -1,5 +1,8 @@
 var expect = require('chai').expect
 var avalon = require("../avalon")
+function heredoc(fn) {
+    return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').replace(/\*\/[^\/]+$/, '')
+}
 describe('strategy', function () {
     describe('lexer', function () {
 
@@ -90,11 +93,50 @@ describe('strategy', function () {
             expect(nodes[2].type).to.equal("div")
             expect(nodes[3].type).to.equal("#comment")
         })
+        it('tbody', function () {
+            var str = heredoc(function () {
+                /*<table>
+                 <thead>
+                 <tr><td>{{a}}</td></tr>
+                 </thead>
+                 <tfoot><tr><td>{{a}}</td></tr></tfoot>
+                 <tr><td>{{a}}</td></tr>
+                 <tr><td>{{b}}</td></tr>
+                 <tr><td>{{c}}</td></tr>
+                 <tfoot><tr><td>{{a}}</td></tr></tfoot>
+                 <tr><td>{{a}}</td></tr>
+                 <tr><td>{{b}}</td></tr>
+                 <tr><td>{{c}}</td></tr>
+                 </table>
+                 */
+            })
+            var nodes = avalon.lexer(str)
+            expect(nodes[0].type).to.equal("table")
+            var children = nodes[0].children
+            console.log(children)
+            expect(children[0].type).to.equal("#text")
+            expect(children[1].type).to.equal("thead")
+            expect(children[2].type).to.equal("#text")
+            expect(children[3].type).to.equal("tfoot")
+            expect(children[4].type).to.equal("#text")
+            expect(children[5].type).to.equal("tbody")
+            expect(children[6].type).to.equal("tfoot")
+            expect(children[7].type).to.equal("#text")
+            expect(children[8].type).to.equal("tbody")
+            var c = children[5].children
+            expect(c.length).to.equal(6)
+
+            expect(c[0].type).to.equal("tr")
+            expect(c[1].type).to.equal("#text")
+            expect(c[2].type).to.equal("tr")
+            expect(c[3].type).to.equal("#text")
+            expect(c[4].type).to.equal("tr")
+            expect(c[5].type).to.equal("#text")
+        })
+
 
         it("先处理闭标签再处理开标签,否则解决不了下面的标签", function () {
-            function heredoc(fn) {
-                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').replace(/\*\/[^\/]+$/, '')
-            }
+
             var str = heredoc(function () {
                 /*
                  <body ms-controller="test3">

@@ -22,7 +22,7 @@ var rvoidTag = /^<([^\s>\/=.$<]+)\s*([^>]*?)\/?>/
 
 var rtext = /^[^<]+/
 var rcomment = /^<!--([\w\W]*?)-->/
-var rstring =/(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
+var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
 var rfill = /\?\?\d+/g
 
 var rnumber = /\d+/g
@@ -123,10 +123,7 @@ function lexer(text, recursive) {
                     children: [],
                     isVoidTag: true
                 }
-                if (type === 'input' && !node.props.type) {
-                    node.props.type = 'text'
-                }
-
+                modifyProps(node, '', nodes)
             }
         }
 
@@ -211,6 +208,10 @@ function modifyProps(node, innerHTML, nodes) {
                     node.props.type = 'textarea'
                 }
                 break
+            case 'input':
+                if (!node.props.type) {
+                    node.props.type = 'text'
+                }
             case 'xmp':
                 node.children.push(new VText(node.template))
                 break
@@ -218,9 +219,12 @@ function modifyProps(node, innerHTML, nodes) {
                 node.children.push(new VText(trimHTML(node.template)))
                 break
             default:
-                var childs = lexer(innerHTML, true)
-                if (childs.length) {
-                    avalon.Array.merge(node.children, childs)
+                if (!node.isVoidTag) {
+                    var childs = lexer(innerHTML, true)
+                    node.children = childs
+                    if (type === 'table') {
+                        addTbody(node.children)
+                    }
                 }
                 break
         }
@@ -241,6 +245,49 @@ function modifyProps(node, innerHTML, nodes) {
         }
     }
     return node
+}
+//如果直接将tr元素写table下面,那么浏览器将将它们(相邻的那几个),放到一个动态创建的tbody底下
+function addTbody(nodes) {
+    var tbody, needAddTbody = false, count = 0, start = 0, n = nodes.length
+    for (var i = 0; i < n; i++) {
+        var node = nodes[i]
+        if (!tbody) {
+            if (node.type === 'tr') {
+                tbody = {
+                    type: 'tbody',
+                    template: '',
+                    children: [],
+                    props: {}
+                }
+                tbody.children.push(node)
+                needAddTbody = true
+                if (start === 0)
+                    start = i
+                nodes[i] = tbody
+            }
+        } else {
+            if (node.type !== 'tr' && node.type.charAt(0) !== "#") {
+                tbody = false
+            } else {
+                tbody.children.push(node)
+                count++
+                nodes[i] = 0
+            }
+        }
+    }
+
+    if (needAddTbody) {
+        for (i = start; i < n; i++) {
+            if (nodes[i] === 0) {
+                nodes.splice(i, 1)
+                i--
+                count--
+                if (count === 0) {
+                    break
+                }
+            }
+        }
+    }
 }
 
 
