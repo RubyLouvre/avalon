@@ -1,12 +1,11 @@
-var Cache = require('../shim/cache')
-
+var Cache = require('../seed/cache')
 var textCache = new Cache(512)
-var rexpr = avalon.config.rexpr
+
 avalon.directive('html', {
     parse: function (binding, num) {
         return 'vnode' + num + '.htmlVm = __vmodel__\n' +
                 'vnode' + num + '.props.wid = 2;\n' +
-                'vnode' + num + '.props["av-html"] =' + avalon.parseExpr(binding.expr) + ';\n'
+                'vnode' + num + '.props["av-html"] =' + avalon.parseExpr(binding) + ';\n'
     },
     diff: function (cur, pre) {
         var curValue = cur.props['av-html']
@@ -14,8 +13,8 @@ avalon.directive('html', {
         if (curValue !== preValue) {
             var nodes = textCache.get(curValue)
             if (!Array.isArray(nodes)) {
-                var child = avalon.createVirtual(curValue)
-                var render = avalon.createRender(child)
+                var child = avalon.lexer(curValue)
+                var render = avalon.render(child)
                 nodes = render(cur.htmlVm)
                 cur.props['av-html'] = nodes.map(function (el) {
                     return 'template' in el ? el.template : el.nodeValue

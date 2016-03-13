@@ -1,7 +1,7 @@
 var Cache = require('../seed/cache')
-
 var textCache = new Cache(256)
 var rexpr = avalon.config.rexpr
+
 avalon.directive('text', {
     parse: function (binding, num) {
         return 'vnode' + num + '.textVm = __vmodel__\n' +
@@ -17,7 +17,7 @@ avalon.directive('text', {
                 var hasExpr = rexpr.test(curValue)
                 if (hasExpr) {
                     var child = [{type: '#text', nodeValue: curValue}]
-                    var render = avalon.createRender(child)
+                    var render = avalon.render(child)
                     nodes = render(cur.textVm)
                     cur.props['av-text'] = nodes[0].nodeValue
                 }
