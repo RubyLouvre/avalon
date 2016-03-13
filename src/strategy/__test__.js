@@ -1,10 +1,10 @@
 var expect = require('chai').expect
 var avalon = require("../avalon")
 describe('strategy', function () {
-    describe('createVirtual', function () {
+    describe('lexer', function () {
 
         it("div", function () {
-            var nodes = avalon.createVirtual("<div>aaa</div>")
+            var nodes = avalon.lexer("<div>aaa</div>")
             expect(nodes.length).to.equal(1)
             var div = nodes[0]
             expect(div.type).to.equal("div")
@@ -13,7 +13,7 @@ describe('strategy', function () {
             expect(div.children).to.eql([])
         })
         it("br", function () {
-            var nodes = avalon.createVirtual("<br title=aaa/>")
+            var nodes = avalon.lexer("<br title=aaa/>")
 
             expect(nodes.length).to.equal(1)
             var div = nodes[0]
@@ -25,7 +25,7 @@ describe('strategy', function () {
             expect(div.children).to.eql([])
         })
         it("多个div", function () {
-            var nodes = avalon.createVirtual("<div>111</div><div>222</div><div>333</div>")
+            var nodes = avalon.lexer("<div>111</div><div>222</div><div>333</div>")
 
             expect(nodes.length).to.equal(3)
 
@@ -35,7 +35,7 @@ describe('strategy', function () {
         })
         it("多个div,div套div", function () {
             var str = "<div><div>01</div><div>02</div></div><div>222</div><div>333</div>"
-            var nodes = avalon.createVirtual(str)
+            var nodes = avalon.lexer(str)
             expect(nodes.length).to.equal(3)
             expect(nodes[0].type).to.equal("div")
             expect(nodes[0].template).to.equal("<div>01</div><div>02</div>")
@@ -44,7 +44,7 @@ describe('strategy', function () {
         })
         it("多个div,div套div2", function () {
             var str = "<div><div><div></div><div></div></div><div>02</div></div><div>222</div><div>333</div>"
-            var nodes = avalon.createVirtual(str)
+            var nodes = avalon.lexer(str)
             expect(nodes.length).to.equal(3)
             expect(nodes[0].type).to.equal("div")
             expect(nodes[0].template).to.equal("<div><div></div><div></div></div><div>02</div>")
@@ -53,7 +53,7 @@ describe('strategy', function () {
         })
         it("多个div,div套div3", function () {
             var str = "<div id='<div></div><div></div>'><div><div></div><div></div></div><div>02</div></div><div>222</div>"
-            var nodes = avalon.createVirtual(str)
+            var nodes = avalon.lexer(str)
             expect(nodes.length).to.equal(2)
             expect(nodes[0].type).to.equal("div")
             expect(nodes[0].props.id).to.equal('<div></div><div></div>')
@@ -63,7 +63,7 @@ describe('strategy', function () {
         })
         it("ms-repeat", function () {
             var str = "<hr/><ul ms-controller=aa><li ms-repeat=array>{{el}}</li></ul>"
-            var nodes = avalon.createVirtual(str)
+            var nodes = avalon.lexer(str)
             expect(nodes.length).to.equal(2)
             expect(nodes[0].type).to.equal("hr")
             expect(nodes[1].type).to.equal("ul")
@@ -73,7 +73,7 @@ describe('strategy', function () {
         })
         it("voidTag", function () {
             var str = "<br><hr><img><input><link><meta><area><base><col><command><embed><keygen><param><source><track><wbr>"
-            var nodes = avalon.createVirtual(str)
+            var nodes = avalon.lexer(str)
             var types = ["br", "hr", "img", "input", "link", "meta", "area", "base",
                 "col", "command", "embed", "keygen", "param", "source", "track", "wbr"
             ]
@@ -83,7 +83,7 @@ describe('strategy', function () {
         })
         it("comment", function () {
             var str = "<!--<br><div></div>-->xxx<div>yyy</div><!--aaa-->"
-            var nodes = avalon.createVirtual(str)
+            var nodes = avalon.lexer(str)
             expect(nodes.length).to.equal(4)
             expect(nodes[0].type).to.equal("#comment")
             expect(nodes[1].type).to.equal("#text")
@@ -112,7 +112,7 @@ describe('strategy', function () {
                  </body>
                  */
             }).trim()
-            var nodes = avalon.createVirtual(str)
+            var nodes = avalon.lexer(str)
             expect(nodes[0].type).to.equal("body")
             var c = nodes[0].children
             expect(c[0].type).to.equal("#text")
