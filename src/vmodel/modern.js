@@ -7,7 +7,7 @@ var $$skipArray = share.$$skipArray
 
 var makeAccessor = share.makeAccessor
 var makeObserver = share.makeObserver
-var $modelAccessor = share.$modelAccessor
+var modelAccessor = share.modelAccessor
 var modelAdaptor = share.modelAdaptor
 var makeHashCode = avalon.makeHashCode
 
@@ -42,7 +42,7 @@ function masterFactory(definition, heirloom, options) {
         }
     }
 
-    accessors.$model = $modelAccessor
+    accessors.$model = modelAccessor
     var $vmodel = new Observer()
     Object.defineProperties($vmodel, accessors)
 
@@ -87,7 +87,7 @@ function slaveFactory(before, after, heirloom, options) {
         delete before[key]
     }
 
-    accessors.$model = $modelAccessor
+    accessors.$model = modelAccessor
     var $vmodel = before
     Object.defineProperties($vmodel, accessors)
 
@@ -181,7 +181,7 @@ function arrayFactory(array, old, heirloom, options) {
             master: true
         }
         for (var j = 0, n = array.length; j < n; j++) {
-            array[j] = observeItem(array[j], {}, arrayOptions)
+            array[j] = convertItem(array[j], {}, arrayOptions)
         }
         return array
     }
@@ -195,7 +195,7 @@ function notifySize(array, size) {
         array.notify('length', array.length, size, true)
     }
 }
-function observeItem(item, a, b) {
+function convertItem(item, a, b) {
     if (Object(item) === item) {
         return modelAdaptor(item, 0, a, b)
     } else {
@@ -248,7 +248,7 @@ __method__.forEach(function (method) {
             }
         } else {
             for (var i = 0, n = arguments.length; i < n; i++) {
-                args[i] = observeItem(arguments[i], {}, options)
+                args[i] = convertItem(arguments[i], {}, options)
             }
         }
 

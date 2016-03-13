@@ -32,7 +32,7 @@ function hideProperty(host, name, value) {
     })
 }
 
-var $modelAccessor = {
+var modelAccessor = {
     get: function () {
         return toJson(this)
     },
@@ -46,7 +46,7 @@ share.$$midway.hideProperty = hideProperty
 function makeObserver($vmodel, options, heirloom, keys, accessors) {
 
     if (options.array) {
-        hideProperty($vmodel, '$model', $modelAccessor)
+        hideProperty($vmodel, '$model', modelAccessor)
     } else {
         function hasOwnKey(key) {
             return keys[key] === true
@@ -65,7 +65,7 @@ function makeObserver($vmodel, options, heirloom, keys, accessors) {
 var mixin = {
     toJson: toJson,
     makeObserver: makeObserver,
-    $modelAccessor: $modelAccessor
+    modelAccessor: modelAccessor
 }
 for (var i in share) {
     mixin[i] = share[i]

@@ -9,7 +9,7 @@ var $$skipArray = share.$$skipArray
 
 var makeAccessor = share.makeAccessor
 var makeObserver = share.makeObserver
-var $modelAccessor = share.$modelAccessor
+var modelAccessor = share.modelAccessor
 var modelAdaptor = share.modelAdaptor
 var makeHashCode = avalon.makeHashCode
 
@@ -46,7 +46,7 @@ function masterFactory(definition, heirloom, options) {
         }
     }
 
-    accessors.$model = $modelAccessor
+    accessors.$model = modelAccessor
     var $vmodel = new Observer()
     $vmodel = defineProperties($vmodel, accessors, definition)
 
@@ -94,7 +94,7 @@ function slaveFactory(before, after, heirloom, options) {
     }
 
     options = before.hashcode || makeHashCode("$")
-    accessors.$model = $modelAccessor
+    accessors.$model = modelAccessor
     var $vmodel = new Observer()
     $vmodel = defineProperties($vmodel, accessors, skips)
 
@@ -193,7 +193,7 @@ function arrayFactory(array, old, heirloom, options) {
             master: true
         }
         for (var j = 0, n = array.length; j < n; j++) {
-            array[j] = observeItem(array[j], {}, arrayOptions)
+            array[j] = convertItem(array[j], {}, arrayOptions)
         }
         return array
     }
@@ -205,6 +205,13 @@ var _splice = ap.splice
 function notifySize(array, size) {
     if (array.length !== size) {
         array.notify('length', array.length, size, true)
+    }
+}
+function convertItem(item, a, b) {
+    if (Object(item) === item) {
+        return modelAdaptor(item, 0, a, b)
+    } else {
+        return item
     }
 }
 __array__.removeAll = function (all) { //移除N个元素
@@ -232,13 +239,7 @@ __array__.removeAll = function (all) { //移除N个元素
     notifySize(this, size)
     this.notify()
 }
-function observeItem(item, a, b) {
-    if (Object(item) === item) {
-        return modelAdaptor(item, 0, a, b)
-    } else {
-        return item
-    }
-}
+
 
 var __method__ = ['push', 'pop', 'shift', 'unshift', 'splice']
 
@@ -261,7 +262,7 @@ __method__.forEach(function (method) {
             }
         } else {
             for (var i = 0, n = arguments.length; i < n; i++) {
-                args[i] = observeItem(arguments[i], {}, options)
+                args[i] = convertItem(arguments[i], {}, options)
             }
         }
 
