@@ -13,7 +13,7 @@ var modelAccessor = share.modelAccessor
 var modelAdaptor = share.modelAdaptor
 var makeHashCode = avalon.makeHashCode
 
-var defineProperties = require("./share/defineProperties")
+var addAccessors = require("./share/addAccessors")
 
 
 //一个vm总是为Observer的实例
@@ -48,7 +48,7 @@ function masterFactory(definition, heirloom, options) {
 
     accessors.$model = modelAccessor
     var $vmodel = new Observer()
-    $vmodel = defineProperties($vmodel, accessors, definition)
+    $vmodel = addAccessors($vmodel, accessors, definition)
 
     for (key in keys) {
         //对普通监控属性或访问器属性进行赋值
@@ -96,7 +96,7 @@ function slaveFactory(before, after, heirloom, options) {
     options = before.hashcode || makeHashCode("$")
     accessors.$model = modelAccessor
     var $vmodel = new Observer()
-    $vmodel = defineProperties($vmodel, accessors, skips)
+    $vmodel = addAccessors($vmodel, accessors, skips)
 
     for (key in skips) {
         $vmodel[key] = skips[key]
@@ -131,7 +131,7 @@ function mediatorFactory(before, after, heirloom) {
     }
 
     var $vmodel = new Observer()
-    $vmodel = defineProperties($vmodel, accessors, keys)
+    $vmodel = addAccessors($vmodel, accessors, keys)
 
     for (key in keys) {
         if (!accessors[key]) {//添加不可监控的属性
@@ -200,6 +200,7 @@ function arrayFactory(array, old, heirloom, options) {
 }
 
 $$midway.arrayFactory = arrayFactory
+
 var ap = Array.prototype
 var _splice = ap.splice
 function notifySize(array, size) {
