@@ -5,19 +5,6 @@ var $emit = dispatch.$emit
 var $$midway = {}
 var $$skipArray = require('./skipArray')
 
-function makeObserver($vmodel, options, heirloom, keys, accessors) {
-    function hasOwnKey(key) {
-        return keys[key] === true
-    }
-    var hide = $$midway.hideProperty
-    hide($vmodel, '$id', options.id)
-    hide($vmodel, '$accessors', accessors)
-    hide($vmodel, 'hasOwnProperty', hasOwnKey)
-    hide($vmodel, '$hashcode', options.hashcode)
-    if (options.master === true) {
-        makeFire($vmodel, heirloom)
-    }
-}
 
 function makeFire($vmodel, heirloom) {
     heirloom.__vmodel__ = $vmodel
@@ -151,17 +138,50 @@ function define(definition) {
 
     return vm
 }
-
+var __array__ = {
+    set: function (index, val) {
+        if (((index >>> 0) === index) && this[index] !== val) {
+            if (index > this.length) {
+                throw Error(index + 'set方法的第一个参数不能大于原数组长度')
+            }
+            this.notify('*', val, this[index], true)
+            this.splice(index, 1, val)
+        }
+    },
+    contains: function (el) { //判定是否包含
+        return this.indexOf(el) !== -1
+    },
+    ensure: function (el) {
+        if (!this.contains(el)) { //只有不存在才push
+            this.push(el)
+        }
+        return this
+    },
+    pushArray: function (arr) {
+        return this.push.apply(this, arr)
+    },
+    remove: function (el) { //移除第一个等于给定值的元素
+        return this.removeAt(this.indexOf(el))
+    },
+    removeAt: function (index) { //移除指定索引上的元素
+        if ((index >>> 0) === index) {
+            return this.splice(index, 1)
+        }
+        return []
+    },
+    clear: function () {
+        this.removeAll()
+        return this
+    }
+}
 avalon.define = define
 
 module.exports = {
-    $emit: $emit,
-    $watch: $watch,
     $$midway: $$midway,
     $$skipArray: $$skipArray,
+    __array__: __array__,
     isSkip: isSkip,
     makeFire: makeFire,
-    makeObserver: makeObserver,
     makeAccessor: makeAccessor,
     modelAdaptor: modelAdaptor
 }

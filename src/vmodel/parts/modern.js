@@ -1,5 +1,4 @@
 var share = require('./share')
-var canHideProperty = require('./canHideProperty')
 
 function toJson(val) {
     var xtype = avalon.type(val)
@@ -12,6 +11,8 @@ function toJson(val) {
     } else if (xtype === 'object') {
         var obj = {}
         for (i in val) {
+            if (i === '__proxy__' || i === '__data__' || i === '__const__')
+                continue
             if (val.hasOwnProperty(i)) {
                 var value = val[i]
                 obj[i] = value && value.nodeType ? value : toJson(value)
@@ -23,16 +24,12 @@ function toJson(val) {
 }
 
 function hideProperty(host, name, value) {
-    if (canHideProperty) {
-        Object.defineProperty(host, name, {
-            value: value,
-            writable: true,
-            enumerable: false,
-            configurable: true
-        })
-    } else {
-        host[name] = value
-    }
+    Object.defineProperty(host, name, {
+        value: value,
+        writable: true,
+        enumerable: false,
+        configurable: true
+    })
 }
 
 var $modelAccessor = {
@@ -46,12 +43,32 @@ var $modelAccessor = {
 
 share.$$midway.hideProperty = hideProperty
 
+function makeObserver($vmodel, options, heirloom, keys, accessors) {
+
+    if (options.array) {
+        hideProperty($vmodel, '$model', $modelAccessor)
+    } else {
+        function hasOwnKey(key) {
+            return keys[key] === true
+        }
+        hideProperty($vmodel, '$accessors', accessors)
+        hideProperty($vmodel, 'hasOwnProperty', hasOwnKey)
+    }
+    hideProperty($vmodel, '$id', options.id)
+    hideProperty($vmodel, '$hashcode', options.hashcode)
+    if (options.master === true) {
+        makeFire($vmodel, heirloom)
+    }
+}
+
+
 var mixin = {
     toJson: toJson,
+    makeObserver: makeObserver,
     $modelAccessor: $modelAccessor
 }
 for (var i in share) {
     mixin[i] = share[i]
 }
 
-module.exports = share
+module.exports = mixin
