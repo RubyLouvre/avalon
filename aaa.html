@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="./dist/avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                a: 1
+            })
+            console.log(vm)
+
+            var str = "<table>\
+            <thead>\
+            <tr><td>{{a}}</td></tr>\
+            </thead>\
+            <tfoot><tr><td>{{a}}</td></tr></tfoot>\
+            <tr><td>{{a}}</td></tr>\
+            <tr><td>{{b}}</td></tr>\
+            <tr><td>{{c}}</td></tr>\
+            <tfoot><tr><td>{{a}}</td></tr></tfoot>\
+            <tr><td>{{a}}</td></tr>\
+            <tr><td>{{b}}</td></tr>\
+            <tr><td>{{c}}</td></tr>\
+        </table>"
+            var nodes = avalon.lexer(str)
+            console.log(nodes)
+        </script>
+    </head>
+    <body id="test">
+         <div>{{@a}}</div>
+         <table>
+            <thead>
+            <tr><td>{{a}}</td></tr>
+            </thead>
+            <tfoot><tr><td>{{a}}</td></tr></tfoot>
+            <tr><td>{{a}}</td></tr>
+            <tr><td>{{b}}</td></tr>
+            <tr><td>{{c}}</td></tr>
+            <tfoot><tr><td>{{a}}</td></tr></tfoot>
+            <tr><td>{{a}}</td></tr>
+            <tr><td>{{b}}</td></tr>
+            <tr><td>{{c}}</td></tr>
+        </table>
+    </body>
+</html>
