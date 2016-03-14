@@ -55,6 +55,7 @@ function modelAdaptor(definition, old, heirloom, options) {
         return definition
     }
 }
+$$midway.modelAdaptor = modelAdaptor
 
 var rtopsub = /([^.]+)\.(.+)/
 function makeAccessor(sid, spath, heirloom) {

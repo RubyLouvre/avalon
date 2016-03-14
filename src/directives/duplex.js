@@ -1,7 +1,5 @@
 //双工绑定
 
-
-var W3C = avalon.modern
 var msie = avalon.msie
 var quote = avalon.quote
 var markID = require("../seed/lang.share").getLongID
