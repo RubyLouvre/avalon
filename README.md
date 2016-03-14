@@ -1,3 +1,19 @@
+Avalon 1.5
+=======================
+avalon 1.4的升级版，添加了大量特性
+
+添加avalon.directive方法，方便自定义指令
+添加avalon.component方法，方便自定义组件
+添加avalon.effect与ms-effect，实现对动画的支持
+实现对子属性及数组元素的深层监控
+去除对旧风格的支持，直接导致无法支持oinui,启用新的UI库,avalon.bootstrap
+默认开启异步刷新视图，当然也可以使用avalon.config({async: false})，保证与1.4的行为一致
+计算属性被集中到$computed对象中定义
+其具体使用详见avalon官网
+
+以下为更新日志
+
+
 #avalon1.5.6
 1. 添加扫描后的回调
    在目标DIV加上ms-controller="test", $id为test的VM监听一个"ms-scan-end"回调
@@ -58,7 +74,7 @@ vm.$watch("ms-scan-end", function(div){
 5. 公开openTag, closeTag到avalon.config
 
 
-# avalon1.5
+# avalon1.5.0
 
 1. 添加动画指令 ms-effect avalon.effect http://avalonjs.github.io/#zh/bindings/effect.html
 2. 添加基于自定义标签的组件指令 http://avalonjs.github.io/#zh/bindings/component.html
@@ -70,3 +86,5 @@ vm.$watch("ms-scan-end", function(div){
 8. 废掉ms-widget 详看component/pager/avalon.pager.js 是怎么将原来组件改成新组件的
 
 现在的VM只有第一层上拥有$events, $fire, $watch, $model属性与方法, 它的子对象没有这些属性
+
+
