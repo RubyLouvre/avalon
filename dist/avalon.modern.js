@@ -54,14 +54,14 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var avalon = __webpack_require__(69) 
+	var avalon = __webpack_require__(68) 
 
 	__webpack_require__(8)
 	__webpack_require__(15)
-	__webpack_require__(71)
-	__webpack_require__(80)
-	__webpack_require__(54)
-	__webpack_require__(82)
+	__webpack_require__(70)
+	__webpack_require__(79)
+	__webpack_require__(53)
+	__webpack_require__(81)
 
 
 	module.exports = avalon
@@ -1419,7 +1419,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var vm = avalon.vmodels[$id]
 	            if (vm && !vm.$element) {
 	                var str = elem.outerHTML
-	            
 	                avalon(elem).removeClass('ms-controller av-controller')
 	               
 	                vm.$element = elem
@@ -1606,28 +1605,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	
-	avalon.directive("cloak", {
-	    parse: function (binding, num) {
-	        return "vnode" + num + ".props['av-cloak'] = false\n"
-	    },
-	    diff: function (cur, pre, type, name) {//curNode, preNode
-	        if (cur.props[name] !== pre.props[name]) {
-	            var list = cur.change || (cur.change = [])
-	            avalon.Array.ensure(list, this.update)
-	        }
-	    },
-	    update: function (node) {
-	        node.removeAttribute("av-cloak")
-	        node.removeAttribute("ms-cloak")
-	        avalon(node).removeClass("av-cloak ms-cloak")
-	    }
-	})
-
-/***/ },
-/* 40 */
-/***/ function(module, exports) {
-
-	
 
 	avalon.directive("style", {
 	    parse: function (binding, num) {
@@ -1675,7 +1652,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 41 */
+/* 40 */
 /***/ function(module, exports) {
 
 	
@@ -1703,7 +1680,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 42 */
+/* 41 */
 /***/ function(module, exports) {
 
 	
@@ -1726,7 +1703,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 43 */
+/* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Cache = __webpack_require__(27)
@@ -1751,8 +1728,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    var render = avalon.render(child)
 	                    nodes = render(cur.textVm)
 	                    cur.props['av-text'] = nodes[0].nodeValue
+	                    textCache.put(curValue, nodes)
+	                } else {
+	                    nodes = [{type: '#text', nodeValue: curValue}]
 	                }
-	                textCache.put(curValue, nodes)
 	            }
 	            cur.children = nodes
 	            if (cur.props['av-text'] !== preValue) {
@@ -1772,7 +1751,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 44 */
+/* 43 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Cache = __webpack_require__(27)
@@ -1837,7 +1816,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 45 */
+/* 44 */
 /***/ function(module, exports) {
 
 	
@@ -1894,7 +1873,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 46 */
+/* 45 */
 /***/ function(module, exports, __webpack_require__) {
 
 	//根据VM的属性值或表达式的值切换类名，ms-class="xxx yyy zzz:flag"
@@ -2020,7 +1999,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 47 */
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var markID = __webpack_require__(6).getLongID
@@ -2100,8 +2079,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 48 */,
-/* 49 */
+/* 47 */,
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -2111,7 +2090,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 50 */
+/* 49 */
 /***/ function(module, exports) {
 
 	
@@ -2152,11 +2131,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 51 */
+/* 50 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var updateEntity = __webpack_require__(52)
+	var updateEntity = __webpack_require__(51)
 
 	avalon._each = function (obj, fn) {
 	    if (Array.isArray(obj)) {
@@ -2416,7 +2395,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 52 */
+/* 51 */
 /***/ function(module, exports) {
 
 	/**
@@ -2485,17 +2464,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = patch
 
 /***/ },
-/* 53 */,
-/* 54 */
+/* 52 */,
+/* 53 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	avalon.lexer = __webpack_require__(55)
-	avalon.diff = __webpack_require__(56)
-	avalon.batch = __webpack_require__(57)
+	avalon.lexer = __webpack_require__(54)
+	avalon.diff = __webpack_require__(55)
+	avalon.batch = __webpack_require__(56)
 	// dispatch与patch 为内置模块
 
-	var parseView = __webpack_require__(58)
+	var parseView = __webpack_require__(57)
 
 	function render(vtree) {
 	    var num = num || String(new Date - 0).slice(0, 6)
@@ -2509,7 +2488,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 55 */
+/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2835,7 +2814,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = lexer
 
 /***/ },
-/* 56 */
+/* 55 */
 /***/ function(module, exports) {
 
 	/**
@@ -2905,7 +2884,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = diff
 
 /***/ },
-/* 57 */
+/* 56 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -2915,7 +2894,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * ------------------------------------------------------------
 	 */
 
-	var patch = __webpack_require__(52)
+	var patch = __webpack_require__(51)
 
 	//如果正在更新一个子树,那么将它放到
 	var dirtyTrees = {}
@@ -2937,7 +2916,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        flushUpdate(function () {
 	            isBatchingUpdates = true
 	            var neo = vm.$render()
-	            
 	            avalon.diff(neo, dom.vnode || [])
 	            patch([dom], neo)
 	            
@@ -2968,13 +2946,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 58 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var parseExpr = __webpack_require__(59)
-	var parseText = __webpack_require__(60)
-	var parseBindings = __webpack_require__(61)
+	var parseExpr = __webpack_require__(58)
+	var parseText = __webpack_require__(59)
+	var parseBindings = __webpack_require__(60)
 	var rexpr = avalon.config.rexpr
 	var quote = avalon.quote
 	var makeHashCode = avalon.makeHashCode
@@ -3101,13 +3079,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = parseView
 
 /***/ },
-/* 59 */
+/* 58 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 
 	//缓存求值函数，以便多次利用
-	var evaluatorPool = __webpack_require__(49)
+	var evaluatorPool = __webpack_require__(48)
 	var ifStatement = 'if(!__elem__ || __elem__.nodeType !== 1){\n\treturn __value__\n}\n'
 	var rexpr = avalon.config.rexpr
 
@@ -3260,7 +3238,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 60 */
+/* 59 */
 /***/ function(module, exports) {
 
 	var rline = /\r?\n/g
@@ -3311,7 +3289,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 61 */
+/* 60 */
 /***/ function(module, exports) {
 
 	var rneedQuote = /[W-]/
@@ -3380,17 +3358,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = parseBindings
 
 /***/ },
+/* 61 */,
 /* 62 */,
-/* 63 */,
-/* 64 */
+/* 63 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var dispatch = __webpack_require__(65)
+	var dispatch = __webpack_require__(64)
 	var $watch = dispatch.$watch
 	var $emit = dispatch.$emit
 	var $$midway = {}
-	var $$skipArray = __webpack_require__(66)
+	var $$skipArray = __webpack_require__(65)
 
 
 	function makeFire($vmodel, heirloom) {
@@ -3556,7 +3534,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 65 */
+/* 64 */
 /***/ function(module, exports) {
 
 	/*********************************************************************
@@ -3633,7 +3611,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 66 */
+/* 65 */
 /***/ function(module, exports) {
 
 	/**
@@ -3649,9 +3627,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = avalon.oneObject('$id,$render,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode')
 
 /***/ },
+/* 66 */,
 /* 67 */,
-/* 68 */,
-/* 69 */
+/* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -3660,14 +3638,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.mix(avalon, browser)
 
-	__webpack_require__(70)
+	__webpack_require__(69)
 	__webpack_require__(6)
 	__webpack_require__(7)
 
 	module.exports = avalon
 
 /***/ },
-/* 70 */
+/* 69 */
 /***/ function(module, exports) {
 
 	//这里放置存在异议的方法
@@ -3827,7 +3805,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 71 */
+/* 70 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -3836,6 +3814,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *           shim,class,data,css,val,html,event,ready               *
 	 **********************************************************************/
 
+	__webpack_require__(71)
 	__webpack_require__(72)
 	__webpack_require__(73)
 	__webpack_require__(74)
@@ -3843,13 +3822,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(76)
 	__webpack_require__(77)
 	__webpack_require__(78)
-	__webpack_require__(79)
 
 	module.exports = avalon
 
 
 /***/ },
-/* 72 */
+/* 71 */
 /***/ function(module, exports) {
 
 	//safari5+是把contains方法放在Element.prototype上而不是Node.prototype
@@ -3943,7 +3921,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 73 */
+/* 72 */
 /***/ function(module, exports) {
 
 	var rnowhite = /\S+/g
@@ -3982,7 +3960,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 74 */
+/* 73 */
 /***/ function(module, exports) {
 
 	
@@ -4060,7 +4038,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 75 */
+/* 74 */
 /***/ function(module, exports) {
 
 	var root = avalon.root
@@ -4312,7 +4290,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 76 */
+/* 75 */
 /***/ function(module, exports) {
 
 	function getValType(elem) {
@@ -4381,7 +4359,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 77 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Cache = __webpack_require__(27)
@@ -4477,7 +4455,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 78 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var document = avalon.document
@@ -4796,7 +4774,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 79 */
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var scan = __webpack_require__(34)
@@ -4834,26 +4812,25 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 80 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	__webpack_require__(36)
-	__webpack_require__(40)
 	__webpack_require__(39)
+	__webpack_require__(40)
 	__webpack_require__(41)
 	__webpack_require__(42)
 	__webpack_require__(43)
-	__webpack_require__(44)
 
+	__webpack_require__(44)
 	__webpack_require__(45)
 	__webpack_require__(46)
-	__webpack_require__(47)
-	__webpack_require__(81)
+	__webpack_require__(80)
+	__webpack_require__(49)
 	__webpack_require__(50)
-	__webpack_require__(51)
 
 /***/ },
-/* 81 */
+/* 80 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -4865,7 +4842,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var markID = __webpack_require__(6).getLongID
 	var document = avalon.document
 	var pushArray = avalon.Array.merge
-	var evaluatorPool = __webpack_require__(49)
+	var evaluatorPool = __webpack_require__(48)
 
 	var rchangeFilter = /\|\s*change\b/
 	var rcheckedFilter = /\|\s*checked\b/
@@ -5264,11 +5241,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 82 */
+/* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var share = __webpack_require__(83)
+	var share = __webpack_require__(82)
 	var isSkip = share.isSkip
 	var toJson = share.toJson
 	var $$midway = share.$$midway
@@ -5542,10 +5519,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 83 */
+/* 82 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var share = __webpack_require__(64)
+	var share = __webpack_require__(63)
 	var makeFire = share.makeFire
 
 	function toJson(val) {

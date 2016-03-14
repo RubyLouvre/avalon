@@ -5,7 +5,8 @@ module.exports = function (config) {
         files: [
             {pattern: 'node_modules/chai/chai.js', include: true},
             'dist/avalon.js',
-            'karma/expr.js'
+            'karma/directives/expr.js',
+            'karma/directives/text.js'
            // 'karma/directives.js',
           //  'karma/duplex.js',
           //  'karma/repeat.js'

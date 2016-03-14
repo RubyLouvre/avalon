@@ -14,7 +14,7 @@ function fireClick(el) {
         !el.dispatchEvent(evt);
     }
 }
-describe('expr', function () {
+describe('text', function () {
     var body = document.body, div, vm
     beforeEach(function () {
         div = document.createElement("div")
@@ -27,16 +27,17 @@ describe('expr', function () {
     it("test", function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <div ms-controller="expr1">{{@aa_bb}}</div>
+             <div ms-controller="text1" ms-text='@aa'>{{@bb}}</div>
              */
         })
         vm = avalon.define({
-            $id: "expr1",
-            "aa_bb": "司徒正美"
+            $id: "text1",
+            aa: "清风炎羽",
+            bb: "司徒正美"
         })
         avalon.scan([div])
-        expect(div.children[0].innerHTML).to.equal("司徒正美")
-        vm.aa_bb = "新的内容"
+        expect(div.children[0].innerHTML).to.equal("清风炎羽")
+        vm.aa = "新的内容"
         setTimeout(function () {
             expect(div.children[0].innerHTML).to.equal("新的内容")
             done()
