@@ -27,7 +27,6 @@ function batchUpdate(id, immediate) {
         flushUpdate(function () {
             isBatchingUpdates = true
             var neo = vm.$render()
-            
             avalon.diff(neo, dom.vnode || [])
             patch([dom], neo)
             

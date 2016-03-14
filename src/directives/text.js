@@ -20,8 +20,10 @@ avalon.directive('text', {
                     var render = avalon.render(child)
                     nodes = render(cur.textVm)
                     cur.props['av-text'] = nodes[0].nodeValue
+                    textCache.put(curValue, nodes)
+                } else {
+                    nodes = [{type: '#text', nodeValue: curValue}]
                 }
-                textCache.put(curValue, nodes)
             }
             cur.children = nodes
             if (cur.props['av-text'] !== preValue) {

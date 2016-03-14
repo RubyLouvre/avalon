@@ -9,7 +9,6 @@ function scan(nodes, recursive) {
             var vm = avalon.vmodels[$id]
             if (vm && !vm.$element) {
                 var str = elem.outerHTML
-            
                 avalon(elem).removeClass('ms-controller av-controller')
                
                 vm.$element = elem
