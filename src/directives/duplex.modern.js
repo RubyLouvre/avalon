@@ -25,14 +25,14 @@ avalon.directive("duplex", {
             if (rcheckedType.test(etype)) {
                 xtype = "checked"
             } else {
-                avalon.log("只有radio与checkbox才能用checked过滤器")
+                avalon.warn("只有radio与checkbox才能用checked过滤器")
                 expr = expr.replace(rcheckedFilter, "")
             }
         }
 
         if (rchangeFilter.test(expr)) {
             if (rnoduplexInput.test(etype)) {
-                avalon.log(etype + "不支持change过滤器")
+                avalon.warn(etype + "不支持change过滤器")
                 expr = expr.replace(rchangeFilter, "")
             } else {
                 xtype = "change"
@@ -207,7 +207,7 @@ function initDuplexData(elem) {
         if (vnode.props.xtype === "checkbox") {
             var array = vnode.props.value
             if (!Array.isArray(array)) {
-                log("ms-duplex应用于checkbox上要对应一个数组")
+                avalon.warn("ms-duplex应用于checkbox上要对应一个数组")
                 array = [array]
             }
             var method = checked ? "ensure" : "remove"
@@ -286,7 +286,7 @@ function duplexValue() { //原来的updateVModel
                 fixCaret = true
             }
         } catch (e) {
-            avalon.log("fixCaret", e)
+            avalon.warn("fixCaret error", e)
         }
     }
     var lastValue = elem.duplexData.get(val)
@@ -316,7 +316,7 @@ function duplexSelect() {
         try {
             elem.duplexData.set(val)
         } catch (ex) {
-            log(ex)
+            avalon.warn(ex)
         }
     }
 }

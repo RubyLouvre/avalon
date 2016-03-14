@@ -275,7 +275,6 @@ function testCase(current, version) {
             expect(vm2.$events).to.have.all.keys('bb', '__vmodel__')
             vm3.$fire("aa", 1111)
             vm3.$fire("bb", 2222)
-            // console.log(Object.keys(vm3.$events))
         })
     })
 

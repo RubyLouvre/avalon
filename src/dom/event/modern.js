@@ -151,7 +151,6 @@ function dispatch(event) {
     var elem = event.target
     var handlers = []
     collectHandlers(elem, type, handlers)
-    // console.log(handlers)
     var i = 0, j, uuid, handler
     while ((handler = handlers[i++]) && !event.cancelBubble) {
         event.currentTarget = handler.elem

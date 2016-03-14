@@ -1,6 +1,6 @@
 function scan(nodes, recursive) {
-    if(!recursive && window.console && window.console.warn){
-        window.console.warn('[avalon.scan] is inner method that only invokes once!')
+    if(!recursive){
+        avalon.warn('[avalon.scan] is inner method that only invokes once!')
     }
     recursive = true
     for (var i = 0, elem; elem = nodes[i++]; ) {
@@ -21,7 +21,7 @@ function scan(nodes, recursive) {
                 avalon.log('create template Function ', new Date - now)
                 avalon.rerenderStart = new Date
                 elem.vnode = vnode
-                avalon.batch($id)
+                avalon.batch($id, true)
 
             } else if (!$id) {
                 scan(elem.childNodes, recursive)

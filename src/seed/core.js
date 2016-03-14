@@ -21,24 +21,31 @@ avalon.mix = function (destination, source) {
 
 var rword = /[^, ]+/g
 
+var hasConsole = window.console
 
 avalon.mix(avalon, {
-    noop: function(){},
+    noop: function () {
+    },
     //切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach
     rword: rword,
     inspect: ({}).toString,
     ohasOwn: ({}).hasOwnProperty,
     log: function () {
-        if (window.console && avalon.config.debug) {
+        if (hasConsole && avalon.config.debug) {
             // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
             Function.apply.call(console.log, console, arguments)
+        }
+    },
+    warn: function () {
+        if (hasConsole && avalon.config.debug) {
+            var method = console.warn || console.log
+            // http://qiang106.iteye.com/blog/1721425
+            Function.apply.call(method, console, arguments)
         }
     },
     error: function (str, e) {
         throw (e || Error)(str)
     },
-
-
     //将一个以空格或逗号隔开的字符串或数组,转换成一个键值都为1的对象
     oneObject: function (array, val) {
         if (typeof array === 'string') {
@@ -51,7 +58,7 @@ avalon.mix(avalon, {
         }
         return result
     }
-    
+
 })
 
 module.exports = avalon

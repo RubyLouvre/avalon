@@ -66,6 +66,11 @@ describe('测试core文件的API', function () {
             expect(avalon.log).to.be.a('function')
         })
     })
+    describe('warn', function () {
+        it('test', function () {
+            expect(avalon.warn).to.be.a('function')
+        })
+    })
     describe('error', function () {
         it('test', function () {
             expect(avalon.error).to.be.a('function')

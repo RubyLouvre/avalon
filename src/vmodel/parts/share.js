@@ -105,8 +105,8 @@ function makeAccessor(sid, spath, heirloom) {
 
 function define(definition) {
     var $id = definition.$id
-    if (!$id) {
-        avalon.log('warning: vm.$id must be specified')
+    if (!$id && avalon.config.debug) {
+        avalon.warn('vm.$id must be specified')
     }
     var vm = $$midway.masterFactory(definition, {}, {
         pathname: '',
@@ -115,7 +115,7 @@ function define(definition) {
     })
 
     if (avalon.vmodels[$id]) {
-        throw Error('warning:[', $id, '] had defined!')
+        throw Error('error:[', $id, '] had defined!')
     }
     return avalon.vmodels[$id] = vm
 

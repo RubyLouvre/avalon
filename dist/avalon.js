@@ -253,24 +253,31 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var rword = /[^, ]+/g
 
+	var hasConsole = window.console
 
 	avalon.mix(avalon, {
-	    noop: function(){},
+	    noop: function () {
+	    },
 	    //切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach
 	    rword: rword,
 	    inspect: ({}).toString,
 	    ohasOwn: ({}).hasOwnProperty,
 	    log: function () {
-	        if (window.console && avalon.config.debug) {
+	        if (hasConsole && avalon.config.debug) {
 	            // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
 	            Function.apply.call(console.log, console, arguments)
+	        }
+	    },
+	    warn: function () {
+	        if (hasConsole && avalon.config.debug) {
+	            var method = console.warn || console.log
+	            // http://qiang106.iteye.com/blog/1721425
+	            Function.apply.call(method, console, arguments)
 	        }
 	    },
 	    error: function (str, e) {
 	        throw (e || Error)(str)
 	    },
-
-
 	    //将一个以空格或逗号隔开的字符串或数组,转换成一个键值都为1的对象
 	    oneObject: function (array, val) {
 	        if (typeof array === 'string') {
@@ -283,7 +290,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        return result
 	    }
-	    
+
 	})
 
 	module.exports = avalon
@@ -3098,8 +3105,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	function scan(nodes, recursive) {
-	    if(!recursive && window.console && window.console.warn){
-	        window.console.warn('[avalon.scan] is inner method that only invokes once!')
+	    if(!recursive){
+	        avalon.warn('[avalon.scan] is inner method that only invokes once!')
 	    }
 	    recursive = true
 	    for (var i = 0, elem; elem = nodes[i++]; ) {
@@ -3120,7 +3127,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                avalon.log('create template Function ', new Date - now)
 	                avalon.rerenderStart = new Date
 	                elem.vnode = vnode
-	                avalon.batch($id)
+	                avalon.batch($id, true)
 
 	            } else if (!$id) {
 	                scan(elem.childNodes, recursive)
@@ -3849,14 +3856,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (rcheckedType.test(etype)) {
 	                itype = "checked"
 	            } else {
-	                avalon.log("只有radio与checkbox才能用checked过滤器")
+	                avalon.warn("只有radio与checkbox才能用checked过滤器")
 	                expr = expr.replace(rcheckedFilter, "")
 	            }
 	        }
 
 	        if (rchangeFilter.test(expr)) {
 	            if (rnoduplexInput.test(etype)) {
-	                avalon.log(etype + "不支持change过滤器")
+	                avalon.warn(etype + "不支持change过滤器")
 	                expr = expr.replace(rchangeFilter, "")
 	            } else {
 	                itype = "change"
@@ -4041,7 +4048,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (vnode.props.itype === "checkbox") {
 	            var array = vnode.props.value
 	            if (!Array.isArray(array)) {
-	                log("ms-duplex应用于checkbox上要对应一个数组")
+	                avalon.warn("ms-duplex应用于checkbox上要对应一个数组")
 	                array = [array]
 	            }
 	            var method = checked ? "ensure" : "remove"
@@ -4126,7 +4133,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                fixCaret = true
 	            }
 	        } catch (e) {
-	            avalon.log("fixCaret", e)
+	            avalon.warn("fixCaret error", e)
 	        }
 	    }
 	    var lastValue = elem.duplexData.get(val)
@@ -4137,7 +4144,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        elem.duplexData.set(lastValue)
 	    } catch (ex) {
-	        avalon.log(ex)
+	        avalon.warn(ex)
 	    }
 	}
 
@@ -6294,8 +6301,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function define(definition) {
 	    var $id = definition.$id
-	    if (!$id) {
-	        avalon.log('warning: vm.$id must be specified')
+	    if (!$id && avalon.config.debug) {
+	        avalon.warn('vm.$id must be specified')
 	    }
 	    var vm = $$midway.masterFactory(definition, {}, {
 	        pathname: '',
@@ -6304,7 +6311,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 
 	    if (avalon.vmodels[$id]) {
-	        throw Error('warning:[', $id, '] had defined!')
+	        throw Error('error:[', $id, '] had defined!')
 	    }
 	    return avalon.vmodels[$id] = vm
 

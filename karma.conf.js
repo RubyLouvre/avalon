@@ -5,9 +5,10 @@ module.exports = function (config) {
         files: [
             {pattern: 'node_modules/chai/chai.js', include: true},
             'dist/avalon.js',
-            'karma/directives.js',
-            'karma/duplex.js',
-            'karma/repeat.js'
+            'karma/expr.js'
+           // 'karma/directives.js',
+          //  'karma/duplex.js',
+          //  'karma/repeat.js'
         ],
         exclude: [],
         reporters: ['mocha'],
@@ -38,3 +39,5 @@ module.exports = function (config) {
         ]
     })
 }
+
+//使用 karma start
