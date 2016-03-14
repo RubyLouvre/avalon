@@ -1,4 +1,4 @@
-var rnovar = /W/
+var rneedQuote = /[W-]/
 var quote = avalon.quote
 var directives = avalon.directives
 var rbinding = /^(?:ms|av)-(\w+)-?(.*)/
@@ -38,7 +38,7 @@ function parseBindings(props, num, elem) {
                 bindings.push(binding)
             }
         } else {
-            if (rnovar.test(i)) {//收集非绑定属性
+            if (rneedQuote.test(i)) {//收集非绑定属性
                 ret += 'vnode' + num + '.props[' + quote(i) + '] = ' + quote(value) + '\n'
             } else {
                 ret += 'vnode' + num + '.props.' + i + ' = ' + quote(value) + '\n'
