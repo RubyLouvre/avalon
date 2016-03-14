@@ -117,26 +117,8 @@ function define(definition) {
     if (avalon.vmodels[$id]) {
         throw Error('warning:[', $id, '] had defined!')
     }
-    avalon.vmodels[$id] = vm
+    return avalon.vmodels[$id] = vm
 
-    avalon.ready(function () {
-        var elem = document.getElementById($id)
-        if (!elem)
-            return
-        vm.$element = elem
-        var now = new Date - 0
-        var vnode = avalon.lexer(elem.outerHTML)
-        avalon.log('create primitive vtree', new Date - now)
-        now = new Date
-        vm.$render = avalon.render(vnode)
-        avalon.log('create template Function ', new Date - now)
-        avalon.rerenderStart = new Date
-        elem.vnode = vnode
-        avalon.batch($id)
-
-    })
-
-    return vm
 }
 var __array__ = {
     set: function (index, val) {

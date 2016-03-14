@@ -20,13 +20,13 @@ function batchUpdate(id, immediate) {
         return
     }
 
-    var dom = vm.$element || document.getElementById(id)
+    var dom = vm.$element 
     //document.all http://www.w3help.org/zh-cn/causes/BX9002
 
     if (dom) {
         flushUpdate(function () {
             isBatchingUpdates = true
-            var neo = vm.$render(vm)
+            var neo = vm.$render()
             
             avalon.diff(neo, dom.vnode || [])
             patch([dom], neo)
