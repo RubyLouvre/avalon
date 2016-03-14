@@ -19,7 +19,7 @@
 4. ms-duplex的拦截器改成rivetsjs的那种双向过滤器
 
 	+ string  原来的string拦截器
-	+ numeric 原来的number拦截器
+	+ number  原来的number拦截器
 	+ boolean 原来的boolean拦截器
 	+ checked 原来的checked拦截器
 	+ change  原来的data-duplex-event="change"辅助指令
