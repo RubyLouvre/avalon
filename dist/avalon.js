@@ -801,33 +801,16 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
+	var camelize = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"../base/builtin\""); e.code = 'MODULE_NOT_FOUND'; throw e; }())).camelize
+
 	var number = __webpack_require__(9)
 	var escape = __webpack_require__(10)
 	var sanitize = __webpack_require__(11)
 	var date = __webpack_require__(12)
 	var arrayFilters = __webpack_require__(13)
 	var eventFilters = __webpack_require__(14)
+
 	var filters = avalon.filters
-
-	function K(a) {
-	    return a
-	}
-
-	avalon.mix({
-	    __read__: function (name) {
-	        var fn = filters[name]
-	        if (fn) {
-	            return fn.get ? fn.get : fn
-	        }
-	        return K
-	    },
-	    __write__: function (name) {
-	        var fn = filters[name]
-	        return fn && fn.set || K
-	    }
-	})
-
 
 	avalon.mix(filters, {
 	    uppercase: function (str) {
@@ -844,7 +827,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                str.slice(0, length - truncation.length) + truncation :
 	                String(str)
 	    },
-	    camelize: avalon.camelize,
+	    camelize: camelize,
+	    number: number,
 	    date: date,
 	    escape: escape,
 	    sanitize: sanitize,
@@ -860,8 +844,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function fixNull(val) {
 	    return val == null ? "" : val
 	}
-
-	avalon.mix(filters, {
+	avalon.mix(avalon.filters, {
 	    checked: {
 	        get: function (val, elem) {
 	            return !elem.oldValue
@@ -879,22 +862,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	        },
 	        set: fixNull
 	    },
-	    number: {
-	        get: function (val) {
-	            if (arguments.length === 2) {
-	                var last = arguments[1]
-	                if (last && last.nodeType === 1) {
-	                    var a = parseFloat(val)
-	                    return  a === "" ? "" : a !== a ? 0 : a
+	    numeric: {
+	        get: function (val, elem) {
+	            var number = parseFloat(val + "")
+	            if (number !== number) {
+	                var arr = /strong|medium|weak/.exec(elem.getAttribute("data-duplex-number")) || ["medium"]
+	                switch (arr[0]) {
+	                    case "strong":
+	                        return 0
+	                    case "medium":
+	                        return val === "" ? "" : 0
+	                    case "weak":
+	                        return val
 	                }
+	            } else {
+	                return number
 	            }
-	            return number.apply(0, arguments)
 	        },
 	        set: fixNull
 	    }
 	})
 
-	module.exports = avalon
+
 
 /***/ },
 /* 9 */
@@ -934,8 +923,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	module.exports = numberFormat
-
-	//处理 货币 http://openexchangerates.github.io/accounting.js/
 
 /***/ },
 /* 10 */
@@ -1244,21 +1231,23 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 13 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	
+	var escapeRegExp = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"../core/config\""); e.code = 'MODULE_NOT_FOUND'; throw e; }())).escapeRegExp
+
 	function orderBy(array, criteria, reverse) {
 	    var type = avalon.type(array)
-	    if (type !== 'array' || type !== 'object')
-	        throw 'orderBy只能处理对象或数组'
+	    if (type !== "array" || type !== "object")
+	        throw "orderBy只能处理对象或数组"
 	    var order = (reverse && reverse < 0) ? -1 : 1
 
-	    if (typeof criteria === 'string') {
+	    if (typeof criteria === "string") {
 	        var key = criteria
 	        criteria = function (a) {
 	            return a && a[key]
 	        }
 	    }
+	    var oldData = array
 	    array = convertArray(array)
 	    array.forEach(function (el) {
 	        el.order = criteria(el.value, el.key)
@@ -1268,9 +1257,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var b = right.order
 	        return a === b ? 0 : a > b ? order : -order
 	    })
-	    var isArray = type === 'array'
+	    var isArray = type === "array"
 	    var target = isArray ? [] : {}
-	    return makeData(target, array, function (el) {
+	    return makeData(target, array, oldData, function (el) {
 	        if (isArray) {
 	            target.push(el.value)
 	        } else {
@@ -1282,24 +1271,25 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var type = avalon.type(array)
 
-	    if (type !== 'array' && type !== 'object')
-	        throw 'filterBy只能处理对象或数组'
+	    if (type !== "array" && type !== "object")
+	        throw "filterBy只能处理对象或数组"
+	    var oldData = array
 	    var args = avalon.slice(arguments, 2)
-	    if (typeof search === 'function') {
+	    if (typeof search === "function") {
 	        var criteria = search
-	    } else if (typeof search === 'string') {
-	        args.unshift(new RegExp(avalon.escapeRegExp(search), 'i'))
+	    } else if (typeof search === "string") {
+	        args.unshift(new RegExp(escapeRegExp(search), "i"))
 	        criteria = containKey
 	    } else {
-	        throw search + '必须是字符串或函数'
+	        throw search + "必须是字符串或函数"
 	    }
 
 	    array = convertArray(array).filter(function (el) {
 	         return !!criteria.apply(el, [el.value].concat(args))
 	    })
-	    var isArray = type === 'array'
+	    var isArray = type === "array"
 	    var target = isArray ? [] : {}
-	    return makeData(target, array, function (el) {
+	    return makeData(target, array, oldData, function (el) {
 	        if (isArray) {
 	            target.push(el.value)
 	        } else {
@@ -1311,11 +1301,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	function selectBy(data, array) {
 	    if (avalon.isObject(data) && !Array.isArray(data)) {
 	        var target = []
-	        return makeData(target, array, function (name) {
-	            target.push(data.hasOwnProperty(name) ? data[name] : '')
+	        return makeData(target, array, data, function (name) {
+	            target.push(data.hasOwnProperty(name) ? data[name] : "")
 	        })
 	    } else {
-	        throw 'selectBy只支持对象'
+	        throw "selectBy只支持对象"
 	    }
 	}
 	Number.isNaN = Number.isNaN || function(a){
@@ -1328,12 +1318,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } else {
 	        limit = parseInt(limit,10)
 	    }
+	    var data = input
 	    if (Number.isNaN(limit))
 	        return input
 
-	    if (typeof input === 'number')
-	        input = input + ''
-	    if ((!Array.isArray(input)) && (typeof input !== 'string'))
+	    if (typeof input === "number")
+	        input = input + ""
+	    if ((!Array.isArray(input)) && (typeof input !== "string"))
 	        return input
 
 	    begin = (!begin || Number.isNaN(begin)) ? 0 : ~~begin
@@ -1350,12 +1341,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 
-	    return makeData(input, [])
+	    return makeData(input, [], data)
 	}
 
-	function makeData(ret, array, callback) {
+	function makeData(ret, array, data, callback) {
 	    for (var i = 0, n = array.length; i < n; i++) {
 	        callback(array[i])
+	    }
+	    if (data && data.$hashcode) {
+	        ret.$id = data.$id
+	        ret.$hashcode = data.$hashcode
 	    }
 	    return ret
 	}
@@ -1439,28 +1434,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	/**
 	 * 虚拟DOM的4大构造器
 	 */
-	var VText = __webpack_require__(16)
-	var VElement = __webpack_require__(17)
-	var VComment = __webpack_require__(18)
-	var VComponent = __webpack_require__(19)
-	avalon.vdomAdaptor = function (obj) {
-	    switch (obj.type) {
-	        case "#text":
-	            return new VText(obj)
-	        case "#comment":
-	            return new VComment(obj)
-	        case "#component":
-	            return new VComponent(obj)
-	        default:
-	            return new VElement(obj)
-	    }
-	}
-
 	module.exports = {
-	    VText: VText,
-	    VComment: VComment,
-	    VElement: VElement,
-	    VComponent: VComponent
+	    VText: __webpack_require__(16),
+	    VComment: __webpack_require__(18),
+	    VElement: __webpack_require__(17),
+	    VComponent: __webpack_require__(19)
 	}
 
 
@@ -1469,21 +1447,19 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	var rexpr = avalon.config.rexpr
+	var rexpr = avalon.config.rexpr
 
 	function VText(text) {
-	    if (typeof text === 'string') {
-	        this.type = '#text'
-	        this.nodeValue = text
-	        this.skipContent = !rexpr.test(text)
-	    } else {
-	        for (var i in text) {
-	            this[i] = text[i]
-	        }
-	    }
+	    this.type = "#text"
+	    this.nodeValue = text
+	    this.skipContent = !rexpr.test(text)
 	}
 
 	VText.prototype = {
 	    constructor: VText,
+	    clone: function () {
+	        return new VText(this.nodeValue)
+	    },
 	    toDOM: function () {
 	        return document.createTextNode(this.nodeValue)
 	    },
@@ -1496,11 +1472,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 17 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	
+	var builtin = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"../base/builtin\""); e.code = 'MODULE_NOT_FOUND'; throw e; }()))
+	var rmsAttr = builtin.rmsAttr
+	var quote = builtin.quote
+	var pushArray = builtin.pushArray
+
 	function VElement(type, props, children) {
-	    if (typeof type === 'object') {
+	    if (typeof type === "object") {
 	        for (var i in type) {
 	            this[i] = type[i]
 	        }
@@ -1508,32 +1488,44 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.type = type
 	        this.props = props
 	        this.children = children
-	        this.template = ''
+	        this.template = ""
 	    }
 	}
-	function skipFalseAndFunction(a) {
-	    return a !== false && typeof a !== 'function'
-	}
 	VElement.prototype = {
+	    clone: function () {
+	        var clone = new VElement(this.type,
+	                avalon.mix({}, this.props),
+	                this.children.map(function (el) {
+	                    return el.clone()
+	                }))
+	        clone.template = this.template
+	        if (this.skipContent) {
+	            clone.skipContent = this.skipContent
+	        }
+	        if (this.isVoidTag) {
+	            clone.isVoidTag = this.isVoidTag
+	        }
+	        return clone
+	    },
 	    constructor: VElement,
 	    toDOM: function () {
 	        var dom = document.createElement(this.type)
 	        for (var i in this.props) {
-	            var val = this.props[i]
-	            if (skipFalseAndFunction(val)) {
-	                dom.setAttribute(i, val + '')
+	            if (this.props[i] !== false) {
+	                dom.setAttribute(i, String(this.props[i]))
 	            }
 	        }
 	        if (this.skipContent) {
 	            switch (this.type) {
-	                case 'script':
+	                case "script":
 	                    dom.text = this.template
 	                    break
-	                case 'style':
-	                case 'template':
+	                    break
+	                case "style":
+	                case "template":
 	                    dom.innerHTML = this.template
 	                    break
-	                case 'noscript':
+	                case "noscript":
 	                    dom.textContent = this.template
 	                    break
 	                default:
@@ -1545,7 +1537,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else if (!this.isVoidTag) {
 	            if (this.children.length) {
 	                this.children.forEach(function (c) {
-	                    dom.appendChild(avalon.vdomAdaptor(c).toDOM())
+	                    dom.appendChild(c.toDOM())
 	                })
 	            } else if (window.Range) {
 	                dom.innerHTML = this.template
@@ -1559,25 +1551,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	    toHTML: function () {
 	        var arr = []
 	        for (var i in this.props) {
-	            var val = this.props[i]
-	            if (skipFalseAndFunction(val)) {
-	                arr.push(i + '=' + avalon.quote(this.props[i] + ''))
-	            }
+	            arr.push(i + "=" + quote(String(this.props[i])))
 	        }
-	        arr = arr.length ? ' ' + arr.join(' ') : ''
-	        var str = '<' + this.type + arr
+	        arr = arr.length ? " " + arr.join(" ") : ""
+	        var str = "<" + this.type + arr
 	        if (this.isVoidTag) {
-	            return str + '/>'
+	            return str + "/>"
 	        }
-	        str += '>'
+	        str += ">"
 	        if (this.children.length) {
-	            str += this.children.map(function (c) {
-	                return avalon.vdomAdaptor(c).toHTML()
-	            }).join('')
+	            str += this.children.map(function (el) {
+	                return el.toHTML()
+	            }).join("")
 	        } else {
 	            str += this.template
 	        }
-	        return str + '</' + this.type + '>'
+	        return str + "</" + this.type + ">"
 	    }
 	}
 
@@ -1589,20 +1578,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	function VComment(text) {
-	    if (typeof text === "string") {
-	        this.type = "#comment"
-	        this.nodeValue = text
-	        this.skipContent = true
-	    } else {
-	        for (var i in text) {
-	            this[i] = text[i]
-	        }
-	    }
+	    this.type = "#comment"
+	    this.nodeValue = text
+	    this.skipContent = true
 	}
 	VComment.prototype = {
 	    constructor: VComment,
 	    clone: function () {
-	        return new VComment(this)
+	        return new VComment(this.nodeValue)
 	    },
 	    toDOM: function () {
 	        return document.createComment(this.nodeValue)
@@ -1616,16 +1599,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 19 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	
+	var pushArray = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"../base/builtin\""); e.code = 'MODULE_NOT_FOUND'; throw e; }())).pushArray
+
 	function VComponent(config) {
 	    for (var i in config) {
 	        this[i] = config[i]
 	    }
 	    var type = this.__type__ = this.type 
 	    
-	    this.type = '#component'
+	    this.type = "#component"
 	    var me = avalon.components[type]
 	    if (me && me.init && arguments.length) {
 	        me.init.apply(this, arguments)
@@ -1633,6 +1617,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	VComponent.prototype = {
+	    clone: function () {
+	        var me = avalon.components[this.__type__]
+	        if (me && me.clone) {
+	            return me.clone.call(this)
+	        } else {
+	            var clone = new VComponent()
+	            clone.props = avalon.mix(clone.props, this.props)
+	            clone.children = this.children.map(function (el) {
+	                return el.clone()
+	            })
+	            clone.__type__ = this.__type__
+	            clone.template = this.template
+	            return this
+	        }
+	    },
 	    toDOM: function () {
 	        var me = avalon.components[this.__type__]
 	        if (me && me.toDOM) {
@@ -1649,7 +1648,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (me && me.toHTML) {
 	            return me.toHTML.call(this)
 	        }
-	        var ret = ''
+	        var ret = ""
 	        for (var i = 0; i < this.children.length; i++) {
 	            ret += this.children[i].toHTML()
 	        }
