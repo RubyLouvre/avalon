@@ -1,5 +1,5 @@
 require('./attr')
-require('./style')
+require('./css')
 require('./controller')
 require('./expr')
 require('./text')

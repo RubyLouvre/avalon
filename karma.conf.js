@@ -7,7 +7,8 @@ module.exports = function (config) {
             'dist/avalon.js',
             'karma/directives/expr.js',
             'karma/directives/text.js',
-            'karma/directives/class.js'
+            'karma/directives/class.js',
+            'karma/directives/css.js'
            // 'karma/directives.js',
           //  'karma/duplex.js',
           //  'karma/repeat.js'
