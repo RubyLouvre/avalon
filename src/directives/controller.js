@@ -20,27 +20,3 @@ avalon.directive("controller", {
     update:avalon.noop
 })
 
-//avalon.scan = function (el) {
-//    var v = el.getAttribute("ms-controller") || el.getAttribute("av-controller")
-//    if (v) {
-//        el.removeAttribute("ms-controller")
-//        el.removeAttribute("av-controller")
-//        el.setAttribute("data-controller", v)
-//        avalon(el).removeClass("ms-controller av-controller")
-//    }
-//    if (!v) {
-//        v = el.getAttribute("data-controller")
-//    }
-//    if (v) {
-//        if (typeof el.getAttribute(":template") !== "string") {
-//            el.setAttribute(":template", el.outerHTML)
-//        } else {
-//
-//        }
-//    }
-//    for (var i = 0, child; child = el.childNodes[i++]; ) {
-//        if (child.nodeType === 1) {
-//            avalon.scan(child)
-//        }
-//    }
-//}
