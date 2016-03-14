@@ -1,5 +1,8 @@
-function scan(nodes) {
-
+function scan(nodes, recursive) {
+    if(!recursive && window.console && window.console.warn){
+        window.console.warn('[avalon.scan] is inner method that only invokes once!')
+    }
+    recursive = true
     for (var i = 0, elem; elem = nodes[i++]; ) {
         if (elem.nodeType === 1) {
             var $id = elem.getAttribute('av-controller') || elem.getAttribute('ms-controller')
@@ -21,7 +24,7 @@ function scan(nodes) {
                 avalon.batch($id)
 
             } else if (!$id) {
-                scan(elem.childNodes)
+                scan(elem.childNodes, recursive)
             }
         }
     }

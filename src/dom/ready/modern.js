@@ -1,3 +1,4 @@
+var scan = require('./scan')
 var document = avalon.document
 var window = avalon.window
 
@@ -26,3 +27,6 @@ avalon.ready = function (fn) {
     }
 }
 
+avalon.ready(function(){
+    scan([document.body])
+})
