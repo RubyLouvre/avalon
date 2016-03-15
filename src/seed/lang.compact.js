@@ -82,15 +82,16 @@ enumerateBUG = enu !== '0' //IE6下为true, 其他为false
 /*判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例*/
 avalon.isPlainObject = function (obj, key) {
     if (!obj || avalon.type(obj) !== 'object' || obj.nodeType || avalon.isWindow(obj)) {
-        return false;
+        return false
     }
     try { //IE内置对象没有constructor
-        if (obj.constructor && !ohasOwn.call(obj, 'constructor') &&
-                !ohasOwn.call(obj.constructor.prototype, 'isPrototypeOf')) {
-            return false;
+        if (obj.constructor && 
+                !ohasOwn.call(obj, 'constructor') &&
+                !ohasOwn.call(obj.constructor.prototype || {}, 'isPrototypeOf')) {
+            return false
         }
     } catch (e) { //IE8 9会在这里抛错
-        return false;
+        return false
     }
     if (enumerateBUG) {
         for (key in obj) {
