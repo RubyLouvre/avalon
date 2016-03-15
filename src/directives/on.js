@@ -1,4 +1,4 @@
-var markID = require("../seed/lang.share").getLongID
+var markID = require('../seed/lang.share').getLongID
 
 var quote = avalon.quote
 
@@ -7,24 +7,24 @@ var revent = /^av-on-(\w+)/
 var rfilters = /\|.+/g
 var rvar = /([@$]?\w+)/g
 var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
-avalon.directive("on", {
+avalon.directive('on', {
     priority: 3000,
     parse: function (binding, num) {
-        var vars = binding.expr.replace(rstring," ").replace(rfilters, "").match(rvar)
+        var vars = binding.expr.replace(rstring, ' ').replace(rfilters, '').match(rvar)
         var canCache = vars.every(function (el) {
-            return el.charAt(0) === "@" || el === "$event"
+            return el.charAt(0) === '@' || el === '$event'
         })
-        var vmDefine = "vnode" + num + ".onVm = __vmodel__\n"
+        var vmDefine = 'vnode' + num + '.onVm = __vmodel__\n'
         var pid = quote(binding.name)
         if (canCache) {
-            var fn = Function("return " + avalon.parseExpr(binding, "on"))()
-            var key = "on:" + binding.expr
+            var fn = Function('return ' + avalon.parseExpr(binding, 'on'))()
+            var key = 'on:' + binding.expr
             avalon.caches[key] = fn
-            return vmDefine + "vnode" + num + ".props[" + pid +
-                    "] = avalon.caches[" + quote(key) + "]\n"
+            return vmDefine + 'vnode' + num + '.props[' + pid +
+                    '] = avalon.caches[' + quote(key) + ']\n'
         } else {
-            return vmDefine + "vnode" + num + ".props[" + pid +
-                    "] = " + avalon.parseExpr(binding, "on") + "\n"
+            return vmDefine + 'vnode' + num + '.props[' + pid +
+                    '] = ' + avalon.parseExpr(binding, 'on') + '\n'
         }
     },
     diff: function (cur, pre, type, name) {
@@ -34,19 +34,14 @@ avalon.directive("on", {
             var match = name.match(revent)
             type = match[1]
 
-            var search = type + ":" + markID(fn0)
+            var search = type + ':' + markID(fn0)
             cur.addEvents = cur.addEvents || {}
             cur.addEvents[search] = fn0
 
-            if (typeof fn1 === "function") {
+            if (typeof fn1 === 'function') {
                 cur.removeEvents = cur.removeEvents || {}
-                cur.removeEvents[type + ":" + fn1.uuid] = fn1
+                cur.removeEvents[type + ':' + fn1.uuid] = fn1
             }
-
-            if (!avalon.__eventVM__[search]) {//注册事件回调
-                avalon.__eventVM__[search] = cur.onVm
-            }
-            delete cur.onVm
 
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
@@ -54,14 +49,16 @@ avalon.directive("on", {
     },
     update: function (node, vnode) {
         var key, type, listener
+        node.__av_context__ = vnode.onVm
+        delete vnode.onVm
         for (key in vnode.removeEvents) {
-            type = key.split(":").shift()
+            type = key.split(':').shift()
             listener = vnode.removeEvents[key]
             avalon.unbind(node, type, listener)
         }
         delete vnode.removeEvents
         for (key in vnode.addEvents) {
-            type = key.split(":").shift()
+            type = key.split(':').shift()
             listener = vnode.addEvents[key]
             avalon.bind(node, type, listener)
         }

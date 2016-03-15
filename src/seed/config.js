@@ -17,7 +17,6 @@ function kernel(settings) {
 
 avalon.config = kernel
 
-
 var plugins = {
     interpolate: function (array) {
         var openTag = array[0]

@@ -21,7 +21,7 @@ avalon.parseDisplay = parseDisplay
 
 avalon.directive('visible', {
     parse: function (binding, num) {
-        return 'vnode' + num + '.props["av-visible"] = ' + avalon.parseExpr(binding.expr) + ';\n'
+        return 'vnode' + num + '.props["av-visible"] = ' + avalon.parseExpr(binding) + ';\n'
     },
     diff: function (cur, pre) {
         var c = cur.props['av-visible'] = !!cur.props['av-visible']
@@ -34,17 +34,11 @@ avalon.directive('visible', {
     update: function (node, vnode) {
         if (vnode.props['av-visible']) {
             var cur = avalon(node).css('display')
-            if (!vnode.displayValue && cur !== 'none') {
-                vnode.displayValue = cur
+            if (!vnode.displayValue) {
+                vnode.displayValue = cur !== 'none' ? cur :
+                        parseDisplay(node.nodeName)
             }
-            if (cur === 'none') {
-                if (!vnode.displayValue) {
-                    vnode.displayValue = parseDisplay(node.nodeName)
-                }
-                node.style.display = vnode.displayValue
-            } else {
-                node.style.display = vnode.displayValue
-            }
+            node.style.display = vnode.displayValue
         } else {
             node.style.display = 'none'
         }

@@ -5,6 +5,7 @@ var rhashcode = /\d\.\d{4}/
 var rescape = /[-.*+?^${}()|[\]\/\\]/g
 
 
+
 avalon.mix({
     caches: {}, //avalon2.0 新增
     vmodels: {},
@@ -12,6 +13,7 @@ avalon.mix({
     components: {},
     directives: {},
     eventHooks: {},
+    eventListeners: {},
     cssHooks: cssHooks,
     version: 2.0,
     css: function (node, name, value, fn) {
@@ -19,7 +21,7 @@ avalon.mix({
         if (node instanceof avalon) {
             node = node[0]
         }
-        var prop = avalon.camelize(name) 
+        var prop = avalon.camelize(name)
         name = avalon.cssName(prop) || prop
         if (value === void 0 || typeof value === 'boolean') { //获取样式
             fn = cssHooks[prop + ':get'] || cssHooks['@:get']

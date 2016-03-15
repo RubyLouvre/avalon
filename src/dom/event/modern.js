@@ -37,9 +37,6 @@ var canBubbleUp = {
 }
 
 
-avalon.eventHandlers = {}
-
-avalon.__eventVM__ = {}
 var eventHooks = avalon.eventHooks
 /*绑定事件*/
 avalon.bind = function (elem, type, fn) {
@@ -58,7 +55,7 @@ avalon.bind = function (elem, type, fn) {
             }
             key = type + ':' + fn.uuid
         }
-        avalon.eventHandlers[fn.uuid] = fn
+        avalon.eventListeners[fn.uuid] = fn
 
         if (value.indexOf(type + ':') === -1) {//同一种事件只绑定一次
             if (canBubbleUp[type]) {
@@ -105,11 +102,7 @@ avalon.unbind = function (elem, type, fn) {
                     return str !== search
                 }).join('??')
                 elem.setAttribute('avalon-events', value)
-                if (search.length > 10) {
-                    delete avalon.__eventVM__[search]
-                } else {
-                    delete avalon.eventHandlers[fn.uuid]
-                }
+                delete avalon.eventListeners[fn.uuid]
                 break
         }
     } else {
@@ -157,9 +150,9 @@ function dispatch(event) {
         j = 0
         while ((uuid = handler.uuids[ j++ ]) &&
                 !event.isImmediatePropagationStopped) {
-            var fn = avalon.eventHandlers[uuid]
+            var fn = avalon.eventListeners[uuid]
             if (fn) {
-                var vm = avalon.__eventVM__[type + ':' + uuid ]
+                var vm = elem.__av_context__
                 if (vm && vm.$hashcode === false) {
                     return avalon.unbind(elem, type, fn)
                 }
@@ -196,13 +189,13 @@ function delegateEvent(type) {
 }
 
 var rmouseEvent = /^(?:mouse|contextmenu|drag)|click/
-var rsponsor = /^(ms|webkit|moz)/
+var rvendor = /^(?:ms|webkit|moz)/
 function avEvent(event) {
     if (event.originalEvent) {
         return this
     }
     for (var i in event) {
-        if (!rsponsor.test(i) && typeof event[i] !== 'function') {
+        if (!rvendor.test(i) && typeof event[i] !== 'function') {
             this[i] = event[i]
         }
     }
