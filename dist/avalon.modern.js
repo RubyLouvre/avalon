@@ -1391,28 +1391,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 29 */,
-/* 30 */
-/***/ function(module, exports) {
-
-	function isVML(src) {
-	    var nodeName = src.nodeName
-	    return nodeName.toLowerCase() === nodeName && src.scopeName && src.outerText === ''
-	}
-
-	module.exports = isVML
-
-/***/ },
+/* 30 */,
 /* 31 */,
 /* 32 */,
 /* 33 */,
 /* 34 */
 /***/ function(module, exports) {
 
-	function scan(nodes, recursive) {
-	    if(!recursive){
-	        avalon.warn('[avalon.scan] is inner method that only invokes once!')
-	    }
-	    recursive = true
+	function scan(nodes) {
 	    for (var i = 0, elem; elem = nodes[i++]; ) {
 	        if (elem.nodeType === 1) {
 	            var $id = elem.getAttribute('av-controller') || elem.getAttribute('ms-controller')
@@ -1420,7 +1406,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (vm && !vm.$element) {
 	                var str = elem.outerHTML
 	                avalon(elem).removeClass('ms-controller av-controller')
-	               
+
 	                vm.$element = elem
 	                var now = new Date - 0
 	                var vnode = avalon.lexer(str)
@@ -1433,130 +1419,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	                avalon.batch($id, true)
 
 	            } else if (!$id) {
-	                scan(elem.childNodes, recursive)
+	                scan(elem.childNodes)
 	            }
 	        }
 	    }
 	}
 
-	module.exports = avalon.scan = scan
+	module.exports = avalon.scan = function (a) {
+
+	    avalon.warn('[avalon.scan] is inner method that only invokes once!')
+
+	    a && a.nodeType && scan([a])
+	}
 
 /***/ },
 /* 35 */,
-/* 36 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	var attrUpdate = __webpack_require__(37)
-
-	var attrDir = avalon.directive("attr", {
-	    parse: function (binding, num) {
-	        return "vnode" + num + ".props['av-attr'] = " + avalon.parseExpr(binding) + ";\n"
-	    },
-	    diff: function (cur, pre) {
-	        var a = cur.props["av-attr"]
-	        var p = pre.props["av-attr"]
-	        if (a && typeof a === "object") {
-	            if (Array.isArray(a)) {
-	                a = cur.props["av-attr"] = avalon.mix.apply({}, a)
-	            }
-	            if (typeof p !== "object") {
-	                cur.changeAttr = a
-	            } else {
-	                var patch = {}
-	                var hasChange = false
-	                for (var i in a) {
-	                    if (a[i] !== p[i]) {
-	                        hasChange = true
-	                        patch = a[i]
-	                    }
-	                }
-	                if (hasChange) {
-	                    cur.changeAttr = patch
-	                }
-	            }
-	            if (cur.changeAttr) {
-	                var list = cur.change || (cur.change = [])
-	                avalon.Array.ensure(list, this.update)
-	            }
-	        }else {
-	            cur.props["av-attr"] = pre.props["av-attr"]
-	        }
-	    },
-	    //dom, vnode
-	    update: attrUpdate
-	})
-
-
-
-/***/ },
-/* 37 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	var propMap = __webpack_require__(38)
-	var isVML = __webpack_require__(30)
-	var rsvg =/^\[object SVG\w*Element\]$/
-	var ramp = /&amp;/g
-
-	function attrUpdate(node, vnode) {
-	    var attrs = vnode.changeAttr
-	    if (!node || node.nodeType !== 1 || vnode.disposed) {
-	        return
-	    }
-	    if (attrs) {
-	        for (var attrName in attrs) {
-	            var val = attrs[attrName]
-	            // switch
-	            if (attrName === 'href' || attrName === 'src') {
-	                if (!node.hasAttribute) {
-	                    val = String(val).replace(ramp, '&') //处理IE67自动转义的问题
-	                }
-	                node[attrName] = val
-	                if (window.chrome && node.tagName === 'EMBED') {
-	                    var parent = node.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
-	                    var comment = document.createComment('ms-src')
-	                    parent.replaceChild(comment, node)
-	                    parent.replaceChild(node, comment)
-	                }
-	            } else if (attrName.indexOf('data-') === 0) {
-	                node.setAttribute(attrName, val)
-
-	            } else {
-	                var propName = propMap[attrName] || attrName
-	                if (typeof node[propName] === 'boolean') {
-	                    node[propName] = !!val
-	                  
-	                    //布尔属性必须使用el.xxx = true|false方式设值
-	                    //如果为false, IE全系列下相当于setAttribute(xxx,''),
-	                    //会影响到样式,需要进一步处理
-	                }
-
-	                if (val === false ) {
-	                    node.removeAttribute(propName)
-	                    continue
-	                }
-	                //SVG只能使用setAttribute(xxx, yyy), VML只能使用node.xxx = yyy ,
-	                //HTML的固有属性必须node.xxx = yyy
-	                var isInnate = rsvg.test(node) ? false :
-	                        (document.namespaces && isVML(node)) ? true :
-	                        attrName in node.cloneNode(false)
-	                if (isInnate) {
-	                    node[propName] = val + ''
-	                } else {
-	                    node.setAttribute(attrName, val)
-	                }
-
-	            }
-
-	        }
-	        delete vnode.changeAttr
-	    }
-	}
-
-	module.exports = attrUpdate
-
-/***/ },
+/* 36 */,
+/* 37 */,
 /* 38 */
 /***/ function(module, exports) {
 
@@ -1601,7 +1480,58 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 39 */,
+/* 39 */
+/***/ function(module, exports) {
+
+	
+
+	avalon.directive('css', {
+	    parse: function (binding, num) {
+	        return 'vnode' + num + '.props["av-css"] = ' + avalon.parseExpr(binding) + ';\n'
+	    },
+	    diff: function (cur, pre) {
+	        var a = cur.props['av-css']
+	        var p = pre.props['av-css']
+	        if ( Object(a) === a) {
+	            if (Array.isArray(a)) {
+	                a = cur.props['av-css'] = avalon.mix.apply({}, a)
+	            }
+	            if (typeof p !== 'object') {
+	                cur.changeStyle = a
+	                
+	            } else {
+	                var patch = {}
+	                var hasChange = false
+	                for (var i in a) {
+	                    if (a[i] !== p[i]) {
+	                        hasChange = true
+	                        patch[i] = a[i]
+	                    }
+	                }
+	                if (hasChange) {
+	                    cur.changeStyle = patch
+	                }
+	            }
+	            if (cur.changeStyle) {
+	                var list = cur.change || (cur.change = [])
+	                avalon.Array.ensure(list, this.update)
+	            }
+	        } else {
+	            cur.props['av-css'] = p
+	        }
+	    },
+	    update: function (node, vnode) {
+	        var change = vnode.changeStyle
+	        var wrap = avalon(node)
+	        for (var name in change) {
+	            wrap.css(name, change[name])
+	        }
+	        delete vnode.changeStyle
+	    }
+	})
+
+
+/***/ },
 /* 40 */
 /***/ function(module, exports) {
 
@@ -3254,6 +3184,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var bindings = []
 	    var skip = 'ms-skip' in props || 'av-skip' in props
 	    var ret = ''
+	    //var attrBinding = ''
 	    for (var i in props) {
 	        var value = props[i], match
 
@@ -3281,7 +3212,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    priority: directives[type].priority ||
 	                            type.charCodeAt(0) * 100 + (Number(param.replace(/\D/g, '')) || 0)
 	                }
-	                bindings.push(binding)
+	//                if (type === 'attr') {
+	//                    attrBindings += 'attrs[' + quote(param) + '] = ' + avalon.parseExpr(binding) + '\n'
+	//                } else {
+	                    bindings.push(binding)
+	//                }
+
 	            }
 	        } else {
 	            if (rneedQuote.test(i)) {//收集非绑定属性
@@ -3291,10 +3227,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	    }
+	// 考虑是不是外面分散定义ms-attr,然后在内部集中处理
+	//    if (attrBindings) {
+	//        bindings.push({
+	//            type: 'attr',
+	//            priority: 11600,
+	//            expr: attrBindings
+	//        })
+	//    }
 
 	    if (!bindings.length) {
 	        ret += 'vnode' + num + '.skipAttrs = true\n'
 	    } else {
+	        avalon.parseExpr(binding)
+
 	        bindings.sort(bindingSorter).forEach(function (binding) {
 	            ret += directives[binding.type].parse(binding, num, elem)
 	        })
@@ -4768,8 +4714,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(36)
 	__webpack_require__(83)
+	__webpack_require__(39)
 	__webpack_require__(40)
 	__webpack_require__(41)
 	__webpack_require__(42)
@@ -5553,24 +5499,24 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 83 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	
+	var attrUpdate = __webpack_require__(84)
 
-	avalon.directive('css', {
+	var attrDir = avalon.directive('attr', {
 	    parse: function (binding, num) {
-	        return 'vnode' + num + '.props["av-css"] = ' + avalon.parseExpr(binding) + ';\n'
+	        return 'vnode' + num + '.props["av-attr"] = ' + avalon.parseExpr(binding) + ';\n'
 	    },
 	    diff: function (cur, pre) {
-	        var a = cur.props['av-css']
-	        var p = pre.props['av-css']
-	        if ( Object(a) === a) {
+	        var a = cur.props['av-attr']
+	        var p = pre.props['av-attr']
+	        if (Object(a) === a) {
 	            if (Array.isArray(a)) {
-	                a = cur.props['av-css'] = avalon.mix.apply({}, a)
+	                a = cur.props['av-attr'] = avalon.mix.apply({}, a)
 	            }
 	            if (typeof p !== 'object') {
-	                cur.changeStyle = a
-	                
+	                cur.changeAttr = a
 	            } else {
 	                var patch = {}
 	                var hasChange = false
@@ -5581,27 +5527,73 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                }
 	                if (hasChange) {
-	                    cur.changeStyle = patch
+	                    cur.changeAttr = patch
 	                }
 	            }
-	            if (cur.changeStyle) {
+	            if (cur.changeAttr) {
 	                var list = cur.change || (cur.change = [])
 	                avalon.Array.ensure(list, this.update)
 	            }
 	        } else {
-	            cur.props['av-css'] = p
+	            cur.props['av-attr'] = p
 	        }
 	    },
-	    update: function (node, vnode) {
-	        var change = vnode.changeStyle
-	        var wrap = avalon(node)
-	        for (var name in change) {
-	            wrap.css(name, change[name])
-	        }
-	        delete vnode.changeStyle
-	    }
+	    //dom, vnode
+	    update: attrUpdate
 	})
 
+
+
+/***/ },
+/* 84 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var propMap = __webpack_require__(38)
+	var rsvg = /^\[object SVG\w*Element\]$/
+	var ramp = /&amp;/g
+
+	function attrUpdate(node, vnode) {
+	    var attrs = vnode.changeAttr
+	    if (attrs) {
+	        for (var attrName in attrs) {
+	            var val = attrs[attrName]
+	            // switch
+	            if (attrName === 'src' && window.chrome && node.tagName === 'EMBED') {
+	                node[attrName] = val
+	                var parent = node.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
+	                var comment = document.createComment('ms-src')
+	                parent.replaceChild(comment, node)
+	                parent.replaceChild(node, comment)
+	            } else if (attrName.indexOf('data-') == 0) {
+	                node.setAttribute(attrName, val)
+	            } else {
+	                var propName = propMap[attrName] || attrName
+	                if (typeof node[propName] === 'boolean') {
+	                    //布尔属性必须使用el.xxx = true|false方式设值
+	                    //如果为false, IE全系列下相当于setAttribute(xxx,''),
+	                    //会影响到样式,需要进一步处理
+	                    node[propName] = !!val
+	                }
+	                if (val === false) {
+	                    node.removeAttribute(attrName)
+	                    continue
+	                }
+
+	                //SVG只能使用setAttribute(xxx, yyy), VML只能使用node.xxx = yyy ,
+	                //HTML的固有属性必须node.xxx = yyy
+	                var isInnate = rsvg.test(node) ? false : attrName in node.cloneNode(false)
+	                if (isInnate) {
+	                    node[propName] = val + ''
+	                } else {
+	                    node.setAttribute(attrName, val)
+	                }
+	            }
+	        }
+	    }
+	    delete vnode.changeAttr
+	}
+
+	module.exports = attrUpdate
 
 /***/ }
 /******/ ])

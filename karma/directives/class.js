@@ -40,7 +40,7 @@ describe('class', function () {
             bb: 'd',
             cc: 'a b c'
         })
-        avalon.scan([div])
+        avalon.scan(div)
         var lis = div.getElementsByTagName('li')
         expect(lis.length).to.equal(3)
         expect(lis[0].className).to.equal('a b')

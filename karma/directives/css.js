@@ -26,7 +26,7 @@ describe('css', function () {
             $id: 'css1',
             a: 'red'
         })
-        avalon.scan([div])
+        avalon.scan(div)
         var css = div.children[0].style
         expect(css.backgroundColor).to.equal('red')
 
@@ -54,7 +54,7 @@ describe('css', function () {
             a: 'right'
         })
 
-        avalon.scan([div])
+        avalon.scan(div)
         var css = div.children[0].style
         expect(css['float']).to.equal('right')
 
@@ -79,7 +79,7 @@ describe('css', function () {
             a: 100
         })
 
-        avalon.scan([div])
+        avalon.scan(div)
 
         expect(avalon(div.children[0]).width()).to.equal(100)
         expect(div.children[0].style.width).to.equal('100px')
@@ -102,7 +102,7 @@ describe('css', function () {
             $id: 'css4',
             a: 0.6
         })
-        avalon.scan([div])
+        avalon.scan(div)
         var el = avalon(div.children[0])
         expect(Number(el.css('opacity')).toFixed(2)).to.equal('0.60')
 

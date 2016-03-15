@@ -8,7 +8,8 @@ module.exports = function (config) {
             'karma/directives/expr.js',
             'karma/directives/text.js',
             'karma/directives/class.js',
-            'karma/directives/css.js'
+            'karma/directives/css.js',
+            'karma/directives/attr.js'
            // 'karma/directives.js',
           //  'karma/duplex.js',
           //  'karma/repeat.js'

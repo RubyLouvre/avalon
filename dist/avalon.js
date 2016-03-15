@@ -3104,11 +3104,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 34 */
 /***/ function(module, exports) {
 
-	function scan(nodes, recursive) {
-	    if(!recursive){
-	        avalon.warn('[avalon.scan] is inner method that only invokes once!')
-	    }
-	    recursive = true
+	function scan(nodes) {
 	    for (var i = 0, elem; elem = nodes[i++]; ) {
 	        if (elem.nodeType === 1) {
 	            var $id = elem.getAttribute('av-controller') || elem.getAttribute('ms-controller')
@@ -3116,7 +3112,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (vm && !vm.$element) {
 	                var str = elem.outerHTML
 	                avalon(elem).removeClass('ms-controller av-controller')
-	               
+
 	                vm.$element = elem
 	                var now = new Date - 0
 	                var vnode = avalon.lexer(str)
@@ -3129,20 +3125,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	                avalon.batch($id, true)
 
 	            } else if (!$id) {
-	                scan(elem.childNodes, recursive)
+	                scan(elem.childNodes)
 	            }
 	        }
 	    }
 	}
 
-	module.exports = avalon.scan = scan
+	module.exports = avalon.scan = function (a) {
+
+	    avalon.warn('[avalon.scan] is inner method that only invokes once!')
+
+	    a && a.nodeType && scan([a])
+	}
 
 /***/ },
 /* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	__webpack_require__(36)
-	__webpack_require__(83)
+	__webpack_require__(39)
 	__webpack_require__(40)
 	__webpack_require__(41)
 	__webpack_require__(42)
@@ -3162,18 +3163,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var attrUpdate = __webpack_require__(37)
 
-	var attrDir = avalon.directive("attr", {
+	var attrDir = avalon.directive('attr', {
 	    parse: function (binding, num) {
-	        return "vnode" + num + ".props['av-attr'] = " + avalon.parseExpr(binding) + ";\n"
+	//        return 'var $$attrs = {};\n' + binding.expr +
+	//                '\n+ vnode' + num + '.props["av-attr"] = $$attrs;\n'
+	        return 'vnode' + num + '.props["av-attr"] = ' + avalon.parseExpr(binding) + ';\n'
+
 	    },
 	    diff: function (cur, pre) {
-	        var a = cur.props["av-attr"]
-	        var p = pre.props["av-attr"]
-	        if (a && typeof a === "object") {
+	        var a = cur.props['av-attr']
+	        var p = pre.props['av-attr']
+	        if (a && typeof a === 'object') {
 	            if (Array.isArray(a)) {
-	                a = cur.props["av-attr"] = avalon.mix.apply({}, a)
+	                a = cur.props['av-attr'] = avalon.mix.apply({}, a)
 	            }
-	            if (typeof p !== "object") {
+	            if (typeof p !== 'object') {
 	                cur.changeAttr = a
 	            } else {
 	                var patch = {}
@@ -3181,7 +3185,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                for (var i in a) {
 	                    if (a[i] !== p[i]) {
 	                        hasChange = true
-	                        patch = a[i]
+	                        patch[i] = a[i]
 	                    }
 	                }
 	                if (hasChange) {
@@ -3192,8 +3196,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var list = cur.change || (cur.change = [])
 	                avalon.Array.ensure(list, this.update)
 	            }
-	        }else {
-	            cur.props["av-attr"] = pre.props["av-attr"]
+	        } else {
+	            cur.props['av-attr'] = pre.props['av-attr']
 	        }
 	    },
 	    //dom, vnode
@@ -3214,7 +3218,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function attrUpdate(node, vnode) {
 	    var attrs = vnode.changeAttr
-	    if (!node || node.nodeType !== 1 || vnode.disposed) {
+	    if (!node || node.nodeType !== 1 ) {
 	        return
 	    }
 	    if (attrs) {
@@ -3314,7 +3318,58 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 39 */,
+/* 39 */
+/***/ function(module, exports) {
+
+	
+
+	avalon.directive('css', {
+	    parse: function (binding, num) {
+	        return 'vnode' + num + '.props["av-css"] = ' + avalon.parseExpr(binding) + ';\n'
+	    },
+	    diff: function (cur, pre) {
+	        var a = cur.props['av-css']
+	        var p = pre.props['av-css']
+	        if ( Object(a) === a) {
+	            if (Array.isArray(a)) {
+	                a = cur.props['av-css'] = avalon.mix.apply({}, a)
+	            }
+	            if (typeof p !== 'object') {
+	                cur.changeStyle = a
+	                
+	            } else {
+	                var patch = {}
+	                var hasChange = false
+	                for (var i in a) {
+	                    if (a[i] !== p[i]) {
+	                        hasChange = true
+	                        patch[i] = a[i]
+	                    }
+	                }
+	                if (hasChange) {
+	                    cur.changeStyle = patch
+	                }
+	            }
+	            if (cur.changeStyle) {
+	                var list = cur.change || (cur.change = [])
+	                avalon.Array.ensure(list, this.update)
+	            }
+	        } else {
+	            cur.props['av-css'] = p
+	        }
+	    },
+	    update: function (node, vnode) {
+	        var change = vnode.changeStyle
+	        var wrap = avalon(node)
+	        for (var name in change) {
+	            wrap.css(name, change[name])
+	        }
+	        delete vnode.changeStyle
+	    }
+	})
+
+
+/***/ },
 /* 40 */
 /***/ function(module, exports) {
 
@@ -5671,6 +5726,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var bindings = []
 	    var skip = 'ms-skip' in props || 'av-skip' in props
 	    var ret = ''
+	    //var attrBinding = ''
 	    for (var i in props) {
 	        var value = props[i], match
 
@@ -5698,7 +5754,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    priority: directives[type].priority ||
 	                            type.charCodeAt(0) * 100 + (Number(param.replace(/\D/g, '')) || 0)
 	                }
-	                bindings.push(binding)
+	//                if (type === 'attr') {
+	//                    attrBindings += 'attrs[' + quote(param) + '] = ' + avalon.parseExpr(binding) + '\n'
+	//                } else {
+	                    bindings.push(binding)
+	//                }
+
 	            }
 	        } else {
 	            if (rneedQuote.test(i)) {//收集非绑定属性
@@ -5708,10 +5769,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	    }
+	// 考虑是不是外面分散定义ms-attr,然后在内部集中处理
+	//    if (attrBindings) {
+	//        bindings.push({
+	//            type: 'attr',
+	//            priority: 11600,
+	//            expr: attrBindings
+	//        })
+	//    }
 
 	    if (!bindings.length) {
 	        ret += 'vnode' + num + '.skipAttrs = true\n'
 	    } else {
+	        avalon.parseExpr(binding)
+
 	        bindings.sort(bindingSorter).forEach(function (binding) {
 	            ret += directives[binding.type].parse(binding, num, elem)
 	        })
@@ -6522,73 +6593,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	module.exports = defineProperties
-
-/***/ },
-/* 68 */,
-/* 69 */,
-/* 70 */,
-/* 71 */,
-/* 72 */,
-/* 73 */,
-/* 74 */,
-/* 75 */,
-/* 76 */,
-/* 77 */,
-/* 78 */,
-/* 79 */,
-/* 80 */,
-/* 81 */,
-/* 82 */,
-/* 83 */
-/***/ function(module, exports) {
-
-	
-
-	avalon.directive('css', {
-	    parse: function (binding, num) {
-	        return 'vnode' + num + '.props["av-css"] = ' + avalon.parseExpr(binding) + ';\n'
-	    },
-	    diff: function (cur, pre) {
-	        var a = cur.props['av-css']
-	        var p = pre.props['av-css']
-	        if ( Object(a) === a) {
-	            if (Array.isArray(a)) {
-	                a = cur.props['av-css'] = avalon.mix.apply({}, a)
-	            }
-	            if (typeof p !== 'object') {
-	                cur.changeStyle = a
-	                
-	            } else {
-	                var patch = {}
-	                var hasChange = false
-	                for (var i in a) {
-	                    if (a[i] !== p[i]) {
-	                        hasChange = true
-	                        patch[i] = a[i]
-	                    }
-	                }
-	                if (hasChange) {
-	                    cur.changeStyle = patch
-	                }
-	            }
-	            if (cur.changeStyle) {
-	                var list = cur.change || (cur.change = [])
-	                avalon.Array.ensure(list, this.update)
-	            }
-	        } else {
-	            cur.props['av-css'] = p
-	        }
-	    },
-	    update: function (node, vnode) {
-	        var change = vnode.changeStyle
-	        var wrap = avalon(node)
-	        for (var name in change) {
-	            wrap.css(name, change[name])
-	        }
-	        delete vnode.changeStyle
-	    }
-	})
-
 
 /***/ }
 /******/ ])

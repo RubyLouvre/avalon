@@ -6,7 +6,7 @@ var ramp = /&amp;/g
 
 function attrUpdate(node, vnode) {
     var attrs = vnode.changeAttr
-    if (!node || node.nodeType !== 1 || vnode.disposed) {
+    if (!node || node.nodeType !== 1 ) {
         return
     }
     if (attrs) {

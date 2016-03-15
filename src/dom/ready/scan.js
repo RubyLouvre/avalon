@@ -1,8 +1,4 @@
-function scan(nodes, recursive) {
-    if(!recursive){
-        avalon.warn('[avalon.scan] is inner method that only invokes once!')
-    }
-    recursive = true
+function scan(nodes) {
     for (var i = 0, elem; elem = nodes[i++]; ) {
         if (elem.nodeType === 1) {
             var $id = elem.getAttribute('av-controller') || elem.getAttribute('ms-controller')
@@ -10,7 +6,7 @@ function scan(nodes, recursive) {
             if (vm && !vm.$element) {
                 var str = elem.outerHTML
                 avalon(elem).removeClass('ms-controller av-controller')
-               
+
                 vm.$element = elem
                 var now = new Date - 0
                 var vnode = avalon.lexer(str)
@@ -23,10 +19,15 @@ function scan(nodes, recursive) {
                 avalon.batch($id, true)
 
             } else if (!$id) {
-                scan(elem.childNodes, recursive)
+                scan(elem.childNodes)
             }
         }
     }
 }
 
-module.exports = avalon.scan = scan
+module.exports = avalon.scan = function (a) {
+
+    avalon.warn('[avalon.scan] is inner method that only invokes once!')
+
+    a && a.nodeType && scan([a])
+}

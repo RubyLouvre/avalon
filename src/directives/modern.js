@@ -1,4 +1,4 @@
-require('./attr')
+require('./attr.modern')
 require('./css')
 require('./controller')
 require('./expr')
