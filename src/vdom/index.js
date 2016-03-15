@@ -1,17 +1,17 @@
 /**
  * 虚拟DOM的4大构造器
  */
-var VText = require("./VText")
-var VElement = require("./VElement")
-var VComment = require("./VComment")
-var VComponent = require("./VComponent")
+var VText = require('./VText')
+var VElement = require('./VElement')
+var VComment = require('./VComment')
+var VComponent = require('./VComponent')
 avalon.vdomAdaptor = function (obj) {
     switch (obj.type) {
-        case "#text":
+        case '#text':
             return new VText(obj)
-        case "#comment":
+        case '#comment':
             return new VComment(obj)
-        case "#component":
+        case '#component':
             return new VComponent(obj)
         default:
             return new VElement(obj)

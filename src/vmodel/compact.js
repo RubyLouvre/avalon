@@ -1,6 +1,6 @@
 
 
-var share = require("./parts/compact")
+var share = require('./parts/compact')
 
 var isSkip = share.isSkip
 var toJson = share.toJson
@@ -13,7 +13,7 @@ var modelAccessor = share.modelAccessor
 var modelAdaptor = share.modelAdaptor
 var makeHashCode = avalon.makeHashCode
 
-var addAccessors = require("./parts/addAccessors")
+var addAccessors = require('./parts/addAccessors')
 
 //一个vm总是为Observer的实例
 function Observer() {
@@ -29,8 +29,8 @@ function masterFactory(definition, heirloom, options) {
     var keys = {}
     options = options || {}
     var accessors = {}
-    var hashcode = makeHashCode("$")
-    var pathname = options.pathname || ""
+    var hashcode = makeHashCode('$')
+    var pathname = options.pathname || ''
     options.id = options.id || hashcode
     options.hashcode = hashcode
     var key, sid, spath
@@ -39,8 +39,8 @@ function masterFactory(definition, heirloom, options) {
             continue
         var val = keys[key] = definition[key]
         if (!isSkip(key, val, $skipArray)) {
-            sid = options.id + "." + key
-            spath = pathname ? pathname + "." + key : key
+            sid = options.id + '.' + key
+            spath = pathname ? pathname + '.' + key : key
             accessors[key] = makeAccessor(sid, spath, heirloom)
         }
     }
@@ -83,8 +83,8 @@ function slaveFactory(before, after, heirloom, options) {
             if (resue[key]) {
                 accessors[key] = resue[key]
             } else {
-                sid = options.id + "." + key
-                spath = pathname ? pathname + "." + key : key
+                sid = options.id + '.' + key
+                spath = pathname ? pathname + '.' + key : key
                 accessors[key] = makeAccessor(sid, spath, heirloom)
             }
         } else {
@@ -92,7 +92,7 @@ function slaveFactory(before, after, heirloom, options) {
         }
     }
 
-    options = before.hashcode || makeHashCode("$")
+    options = before.hashcode || makeHashCode('$')
     accessors.$model = modelAccessor
     var $vmodel = new Observer()
     $vmodel = addAccessors($vmodel, accessors, skips)
@@ -146,7 +146,7 @@ function mediatorFactory(before, after, heirloom) {
 
     makeObserver($vmodel, heirloom || {}, keys, accessors, {
         id: before.$id,
-        hashcode: makeHashCode("$"),
+        hashcode: makeHashCode('$'),
         master: true
     })
 

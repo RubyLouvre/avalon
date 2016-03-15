@@ -1,24 +1,25 @@
 var Cache = require('../seed/cache')
 var textCache = new Cache(128)
-
+avalon.textCache = textCache
 avalon.directive('html', {
     parse: function (binding, num) {
         return 'vnode' + num + '.htmlVm = __vmodel__\n' +
-                'vnode' + num + '.props.wid = 2;\n' +
+                'vnode' + num + '.props.wid = 1;\n' +
                 'vnode' + num + '.props["av-html"] =' + avalon.parseExpr(binding) + ';\n'
     },
     diff: function (cur, pre) {
         var curValue = cur.props['av-html']
         var preValue = pre.props['av-html']
         if (curValue !== preValue) {
+
             var nodes = textCache.get(curValue)
             if (!Array.isArray(nodes)) {
                 var child = avalon.lexer(curValue)
                 var render = avalon.render(child)
                 nodes = render(cur.htmlVm)
-                cur.props['av-html'] = nodes.map(function (el) {
+                curValue = cur.props['av-html'] = nodes.map(function (el) {
                     return 'template' in el ? el.template : el.nodeValue
-                })
+                }).join('-')
                 textCache.put(curValue, nodes)
             }
             cur.children = nodes
@@ -30,14 +31,14 @@ avalon.directive('html', {
     },
     update: function (node, vnode) {
         if (node.querySelectorAll) {
-            var nodes = node.querySelectorAll("[avalon-events]")
+            var nodes = node.querySelectorAll('[avalon-events]')
             avalon.each(nodes, function (el) {
                 avalon.unbind(el)
             })
         } else {
-            var nodes = node.getElementsByTagName("*")
+            var nodes = node.getElementsByTagName('*')
             avalon.each(nodes, function (el) {
-                if (el.getAttribute("avalon-events")) {
+                if (el.getAttribute('avalon-events')) {
                     avalon.unbind(el)
                 }
             })
@@ -46,7 +47,7 @@ avalon.directive('html', {
         if (window.Range) {
             node.innerHTML = vnode.children.map(function (c) {
                 return avalon.vdomAdaptor(c).toHTML()
-            }).join("")
+            }).join('')
         } else {
             avalon.clearHTML(node)
             var fragment = document.createDocumentFragment()

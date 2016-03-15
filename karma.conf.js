@@ -9,10 +9,11 @@ module.exports = function (config) {
             'karma/directives/text.js',
             'karma/directives/class.js',
             'karma/directives/css.js',
-            'karma/directives/attr.js'
-           // 'karma/directives.js',
-          //  'karma/duplex.js',
-          //  'karma/repeat.js'
+            'karma/directives/attr.js',
+            'karma/directives/html.js',
+            'karma/directives/visible.js'
+                    //  'karma/duplex.js',
+                    //  'karma/repeat.js'
         ],
         exclude: [],
         reporters: ['mocha'],

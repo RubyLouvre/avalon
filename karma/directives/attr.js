@@ -122,4 +122,28 @@ describe('attr', function () {
         }, 100)
     })
 
+    it("value", function (done) {
+
+        div.innerHTML = heredoc(function () {
+            /*
+             <input ms-controller='attr5' ms-attr='{value:@a}'>
+             */
+        })
+
+        vm = avalon.define({
+            $id: "attr5",
+            a: "司徒正美"
+        })
+
+        avalon.scan(div)
+        expect(div.children[0].value).to.equal("司徒正美")
+        vm.a = "新的值"
+        setTimeout(function () {
+            expect(div.children[0].value).to.equal("新的值")
+            done()
+        })
+
+
+    })
+
 })

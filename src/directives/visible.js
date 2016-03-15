@@ -2,7 +2,7 @@
 
 function parseDisplay(nodeName, val) {
     //用于取得此类标签的默认display值
-    var key = "_" + nodeName
+    var key = '_' + nodeName
     if (!parseDisplay[key]) {
         var node = document.createElement(nodeName)
         avalon.root.appendChild(node)
@@ -11,7 +11,7 @@ function parseDisplay(nodeName, val) {
         } else {
             val = node.currentStyle.display
         }
-        root.removeChild(node)
+        avalon.root.removeChild(node)
         parseDisplay[key] = val
     }
     return parseDisplay[key]
@@ -19,25 +19,25 @@ function parseDisplay(nodeName, val) {
 
 avalon.parseDisplay = parseDisplay
 
-avalon.directive("visible", {
+avalon.directive('visible', {
     parse: function (binding, num) {
-        return "vnode" + num + ".props['av-visible'] = " + avalon.parseExpr(binding) + ";\n"
+        return 'vnode' + num + '.props["av-visible"] = ' + avalon.parseExpr(binding) + ';\n'
     },
     diff: function (cur, pre) {
-        var curValue = !!cur.props['av-visible']
-        if (curValue !== Boolean(pre.props['av-visible'])) {
-            cur.isShow = curValue
+        var c = cur.props['av-visible'] = !!cur.props['av-visible']
+        cur.displayValue = pre.displayValue
+        if (c !== pre.props['av-visible']) {
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
         }
     },
     update: function (node, vnode) {
-        if (vnode.isShow) {
-            var cur = avalon(node).css("display")
-            if (!vnode.displayValue && cur !== "none") {
+        if (vnode.props['av-visible']) {
+            var cur = avalon(node).css('display')
+            if (!vnode.displayValue && cur !== 'none') {
                 vnode.displayValue = cur
             }
-            if (cur === "none") {
+            if (cur === 'none') {
                 if (!vnode.displayValue) {
                     vnode.displayValue = parseDisplay(node.nodeName)
                 }
@@ -46,7 +46,7 @@ avalon.directive("visible", {
                 node.style.display = vnode.displayValue
             }
         } else {
-            node.style.display = "none"
+            node.style.display = 'none'
         }
     }
 })

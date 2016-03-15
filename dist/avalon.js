@@ -526,8 +526,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //只处理非空参数
 	        if ((options = arguments[i]) != null) {
 	            for (name in options) {
-	                src = target[name]
 	                try {
+	                    src = target[name]
 	                    copy = options[name] //当options为VBS对象时报错
 	                } catch (e) {
 	                    continue
@@ -1452,11 +1452,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	var VComponent = __webpack_require__(19)
 	avalon.vdomAdaptor = function (obj) {
 	    switch (obj.type) {
-	        case "#text":
+	        case '#text':
 	            return new VText(obj)
-	        case "#comment":
+	        case '#comment':
 	            return new VComment(obj)
-	        case "#component":
+	        case '#component':
 	            return new VComponent(obj)
 	        default:
 	            return new VElement(obj)
@@ -1596,8 +1596,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	function VComment(text) {
-	    if (typeof text === "string") {
-	        this.type = "#comment"
+	    if (typeof text === 'string') {
+	        this.type = '#comment'
 	        this.nodeValue = text
 	        this.skipContent = true
 	    } else {
@@ -1615,7 +1615,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return document.createComment(this.nodeValue)
 	    },
 	    toHTML: function () {
-	        return "<!--" + this.nodeValue + "-->"
+	        return '<!--' + this.nodeValue + '-->'
 	    }
 	}
 
@@ -3095,7 +3095,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	avalon.ready(function(){
-	    scan([document.body])
+	    scan(document.body)
 	})
 
 
@@ -3413,7 +3413,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    update: function (node, vnode, parent) {
 	        if (node.nodeType !== 3) {
-	            parent.replaceChild(vnode.toDOM(), node)
+	            parent.replaceChild(avalon.vdomAdaptor(vnode).toDOM(), node)
 	        } else {
 	            node.nodeValue = vnode.nodeValue
 	        }
@@ -3474,25 +3474,26 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var Cache = __webpack_require__(27)
 	var textCache = new Cache(128)
-
+	avalon.textCache = textCache
 	avalon.directive('html', {
 	    parse: function (binding, num) {
 	        return 'vnode' + num + '.htmlVm = __vmodel__\n' +
-	                'vnode' + num + '.props.wid = 2;\n' +
+	                'vnode' + num + '.props.wid = 1;\n' +
 	                'vnode' + num + '.props["av-html"] =' + avalon.parseExpr(binding) + ';\n'
 	    },
 	    diff: function (cur, pre) {
 	        var curValue = cur.props['av-html']
 	        var preValue = pre.props['av-html']
 	        if (curValue !== preValue) {
+
 	            var nodes = textCache.get(curValue)
 	            if (!Array.isArray(nodes)) {
 	                var child = avalon.lexer(curValue)
 	                var render = avalon.render(child)
 	                nodes = render(cur.htmlVm)
-	                cur.props['av-html'] = nodes.map(function (el) {
+	                curValue = cur.props['av-html'] = nodes.map(function (el) {
 	                    return 'template' in el ? el.template : el.nodeValue
-	                })
+	                }).join('-')
 	                textCache.put(curValue, nodes)
 	            }
 	            cur.children = nodes
@@ -3504,14 +3505,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    update: function (node, vnode) {
 	        if (node.querySelectorAll) {
-	            var nodes = node.querySelectorAll("[avalon-events]")
+	            var nodes = node.querySelectorAll('[avalon-events]')
 	            avalon.each(nodes, function (el) {
 	                avalon.unbind(el)
 	            })
 	        } else {
-	            var nodes = node.getElementsByTagName("*")
+	            var nodes = node.getElementsByTagName('*')
 	            avalon.each(nodes, function (el) {
-	                if (el.getAttribute("avalon-events")) {
+	                if (el.getAttribute('avalon-events')) {
 	                    avalon.unbind(el)
 	                }
 	            })
@@ -3520,7 +3521,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (window.Range) {
 	            node.innerHTML = vnode.children.map(function (c) {
 	                return avalon.vdomAdaptor(c).toHTML()
-	            }).join("")
+	            }).join('')
 	        } else {
 	            avalon.clearHTML(node)
 	            var fragment = document.createDocumentFragment()
@@ -3541,7 +3542,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function parseDisplay(nodeName, val) {
 	    //用于取得此类标签的默认display值
-	    var key = "_" + nodeName
+	    var key = '_' + nodeName
 	    if (!parseDisplay[key]) {
 	        var node = document.createElement(nodeName)
 	        avalon.root.appendChild(node)
@@ -3550,7 +3551,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else {
 	            val = node.currentStyle.display
 	        }
-	        root.removeChild(node)
+	        avalon.root.removeChild(node)
 	        parseDisplay[key] = val
 	    }
 	    return parseDisplay[key]
@@ -3558,25 +3559,25 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.parseDisplay = parseDisplay
 
-	avalon.directive("visible", {
+	avalon.directive('visible', {
 	    parse: function (binding, num) {
-	        return "vnode" + num + ".props['av-visible'] = " + avalon.parseExpr(binding) + ";\n"
+	        return 'vnode' + num + '.props["av-visible"] = ' + avalon.parseExpr(binding) + ';\n'
 	    },
 	    diff: function (cur, pre) {
-	        var curValue = !!cur.props['av-visible']
-	        if (curValue !== Boolean(pre.props['av-visible'])) {
-	            cur.isShow = curValue
+	        var c = cur.props['av-visible'] = !!cur.props['av-visible']
+	        cur.displayValue = pre.displayValue
+	        if (c !== pre.props['av-visible']) {
 	            var list = cur.change || (cur.change = [])
 	            avalon.Array.ensure(list, this.update)
 	        }
 	    },
 	    update: function (node, vnode) {
-	        if (vnode.isShow) {
-	            var cur = avalon(node).css("display")
-	            if (!vnode.displayValue && cur !== "none") {
+	        if (vnode.props['av-visible']) {
+	            var cur = avalon(node).css('display')
+	            if (!vnode.displayValue && cur !== 'none') {
 	                vnode.displayValue = cur
 	            }
-	            if (cur === "none") {
+	            if (cur === 'none') {
 	                if (!vnode.displayValue) {
 	                    vnode.displayValue = parseDisplay(node.nodeName)
 	                }
@@ -3585,7 +3586,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                node.style.display = vnode.displayValue
 	            }
 	        } else {
-	            node.style.display = "none"
+	            node.style.display = 'none'
 	        }
 	    }
 	})
@@ -5832,8 +5833,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var keys = {}
 	    options = options || {}
 	    var accessors = {}
-	    var hashcode = makeHashCode("$")
-	    var pathname = options.pathname || ""
+	    var hashcode = makeHashCode('$')
+	    var pathname = options.pathname || ''
 	    options.id = options.id || hashcode
 	    options.hashcode = hashcode
 	    var key, sid, spath
@@ -5842,8 +5843,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            continue
 	        var val = keys[key] = definition[key]
 	        if (!isSkip(key, val, $skipArray)) {
-	            sid = options.id + "." + key
-	            spath = pathname ? pathname + "." + key : key
+	            sid = options.id + '.' + key
+	            spath = pathname ? pathname + '.' + key : key
 	            accessors[key] = makeAccessor(sid, spath, heirloom)
 	        }
 	    }
@@ -5886,8 +5887,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (resue[key]) {
 	                accessors[key] = resue[key]
 	            } else {
-	                sid = options.id + "." + key
-	                spath = pathname ? pathname + "." + key : key
+	                sid = options.id + '.' + key
+	                spath = pathname ? pathname + '.' + key : key
 	                accessors[key] = makeAccessor(sid, spath, heirloom)
 	            }
 	        } else {
@@ -5895,7 +5896,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 
-	    options = before.hashcode || makeHashCode("$")
+	    options = before.hashcode || makeHashCode('$')
 	    accessors.$model = modelAccessor
 	    var $vmodel = new Observer()
 	    $vmodel = addAccessors($vmodel, accessors, skips)
@@ -5949,7 +5950,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    makeObserver($vmodel, heirloom || {}, keys, accessors, {
 	        id: before.$id,
-	        hashcode: makeHashCode("$"),
+	        hashcode: makeHashCode('$'),
 	        master: true
 	    })
 

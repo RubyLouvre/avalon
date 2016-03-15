@@ -316,41 +316,7 @@ describe('if', function () {
     })
 })
 
-describe('html', function () {
-    var body = document.body, div, vm
-    beforeEach(function () {
-        div = document.createElement("div")
-        body.appendChild(div)
-    })
-    afterEach(function () {
-        body.removeChild(div)
-        delete avalon.vmodels[vm.$id]
-    })
-    it("test", function (done) {
-        div.innerHTML = heredoc(function () {
-            /*
-             <div ms-controller='html' ms-html='a' >111
-             </div>
-             */
-        })
-        vm = avalon.define({
-            $id: "html",
-            a: "<p ms-html='b'>xxx</p>",
-            b: "<b title='yyyy'>zzzzz</b><a>xx</a>",
-            d: "<i>司徒正美</i>"
-        })
-        avalon.scan(div, vm)
-        expect(div.children[0].innerHTML).to.equal('<p ms-html="b"><b title="yyyy">zzzzz</b><a>xx</a></p>')
-        vm.b = '<span>{{d}}</span>'
-        setTimeout(function () {
-            expect(div.children[0].innerHTML).to.equal(
-                    '<p ms-html="b"><span>&lt;i&gt;司徒正美&lt;/i&gt;</span></p>'
-                    )
-            done()
-        })
 
-    })
-})
 describe('on', function () {
     var body = document.body, div, vm
     beforeEach(function () {

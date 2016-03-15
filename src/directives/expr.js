@@ -10,7 +10,7 @@ avalon.directive('expr', {
     },
     update: function (node, vnode, parent) {
         if (node.nodeType !== 3) {
-            parent.replaceChild(vnode.toDOM(), node)
+            parent.replaceChild(avalon.vdomAdaptor(vnode).toDOM(), node)
         } else {
             node.nodeValue = vnode.nodeValue
         }

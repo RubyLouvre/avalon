@@ -18,7 +18,7 @@ avalon.directive('html', {
                 nodes = render(cur.htmlVm)
                 cur.props['av-html'] = nodes.map(function (el) {
                     return 'template' in el ? el.template : el.nodeValue
-                })
+                }),join('-')
                 textCache.put(curValue, nodes)
             }
             cur.children = nodes

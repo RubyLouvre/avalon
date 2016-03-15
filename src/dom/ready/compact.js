@@ -52,6 +52,6 @@ avalon.ready = function (fn) {
 }
 
 avalon.ready(function(){
-    scan([document.body])
+    scan(document.body)
 })
 

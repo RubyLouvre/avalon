@@ -153,8 +153,8 @@ avalon.mix = avalon.fn.mix = function () {
         //只处理非空参数
         if ((options = arguments[i]) != null) {
             for (name in options) {
-                src = target[name]
                 try {
+                    src = target[name]
                     copy = options[name] //当options为VBS对象时报错
                 } catch (e) {
                     continue

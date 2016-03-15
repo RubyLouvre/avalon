@@ -1,7 +1,7 @@
 
 function VComment(text) {
-    if (typeof text === "string") {
-        this.type = "#comment"
+    if (typeof text === 'string') {
+        this.type = '#comment'
         this.nodeValue = text
         this.skipContent = true
     } else {
@@ -19,7 +19,7 @@ VComment.prototype = {
         return document.createComment(this.nodeValue)
     },
     toHTML: function () {
-        return "<!--" + this.nodeValue + "-->"
+        return '<!--' + this.nodeValue + '-->'
     }
 }
 
