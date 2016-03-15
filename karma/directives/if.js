@@ -18,8 +18,8 @@ describe('if', function () {
         div.innerHTML = heredoc(function () {
             /*
              <div ms-controller='if'>
-             <p ms-if='@a' >{{aa}}</p>
-             <p ms-if='!@a' >{{bb}}</p>
+             <p ms-if='@a' >{{@aa}}</p>
+             <p ms-if='!@a' >{{@bb}}</p>
              </div>
              */
         })
@@ -38,7 +38,7 @@ describe('if', function () {
             ps = div.getElementsByTagName("p")
             expect(ps[0].innerHTML).to.equal('第二页面')
             vm.a = true
-
+           
             setTimeout(function () {
                 ps = div.getElementsByTagName("p")
                 expect(ps[0].innerHTML).to.equal('第一页面')
