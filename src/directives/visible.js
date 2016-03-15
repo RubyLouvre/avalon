@@ -21,7 +21,7 @@ avalon.parseDisplay = parseDisplay
 
 avalon.directive('visible', {
     parse: function (binding, num) {
-        return 'vnode' + num + '.props["av-visible"] = ' + avalon.parseExpr(binding) + ';\n'
+        return 'vnode' + num + '.props["av-visible"] = ' + quote(binding.expr) + ';\n'
     },
     diff: function (cur, pre) {
         var c = cur.props['av-visible'] = !!cur.props['av-visible']

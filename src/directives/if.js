@@ -1,9 +1,10 @@
-
+var patch = require("../strategy/patch")
+var VElement = require("../vdom/VElement")
 
 avalon.directive("if", {
     priority: 5,
     parse: function (binding, num) {
-        return "vnode" + num + ".props['av-if'] = " + avalon.quote(binding) + ";\n"
+        return "vnode" + num + ".props['av-if'] = " + avalon.quote(binding.expr) + ";\n"
     },
     diff: function (cur, pre) {
         if (cur.type !== pre.type) {
@@ -15,19 +16,20 @@ avalon.directive("if", {
         var dtype = dom.nodeName.toLowerCase()
         var vtype = vnode.type
         if (dtype !== vtype) {
+            var s = vnode.signature
             if (dom.nodeType === 1) {
-                var a = avalon.makeHashCode("if")
-                avalon.caches[a] = dom
-                parent.replaceChild(document.createComment(a), dom)
+                avalon.caches[s] = dom
+                parent.replaceChild(avalon.vdomAdaptor(vnode).toDOM(), dom)
             } else {
-                a = dom.nodeValue
-                var keep = avalon.caches[a]
+                s = dom.nodeValue || s
+                var keep = avalon.caches[s]
                 if (keep) {
                     parent.replaceChild(keep, dom)
-                    delete avalon.caches[a]
+                    patch([keep], vnode.children)
+                    delete avalon.caches[s]
                 } else {
-                    var el = new VElement(vnode)
-                    parent.replaceChild(el.toDOM(), dom)
+                    var el = avalon.vdomAdaptor(vnode).toDOM()
+                    parent.replaceChild(el, dom)
                 }
             }
         }

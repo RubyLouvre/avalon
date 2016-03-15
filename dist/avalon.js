@@ -3561,7 +3561,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.directive('visible', {
 	    parse: function (binding, num) {
-	        return 'vnode' + num + '.props["av-visible"] = ' + avalon.parseExpr(binding) + ';\n'
+	        return 'vnode' + num + '.props["av-visible"] = ' + quote(binding.expr) + ';\n'
 	    },
 	    diff: function (cur, pre) {
 	        var c = cur.props['av-visible'] = !!cur.props['av-visible']
@@ -4277,14 +4277,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 49 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	
+	var patch = __webpack_require__(51)
+	var VElement = __webpack_require__(17)
 
 	avalon.directive("if", {
 	    priority: 5,
 	    parse: function (binding, num) {
-	        return "vnode" + num + ".props['av-if'] = " + avalon.quote(binding) + ";\n"
+	        return "vnode" + num + ".props['av-if'] = " + avalon.quote(binding.expr) + ";\n"
 	    },
 	    diff: function (cur, pre) {
 	        if (cur.type !== pre.type) {
@@ -4296,19 +4297,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var dtype = dom.nodeName.toLowerCase()
 	        var vtype = vnode.type
 	        if (dtype !== vtype) {
+	            var s = vnode.signature
 	            if (dom.nodeType === 1) {
-	                var a = avalon.makeHashCode("if")
-	                avalon.caches[a] = dom
-	                parent.replaceChild(document.createComment(a), dom)
+	                avalon.caches[s] = dom
+	                parent.replaceChild(avalon.vdomAdaptor(vnode).toDOM(), dom)
 	            } else {
-	                a = dom.nodeValue
-	                var keep = avalon.caches[a]
+	                s = dom.nodeValue || s
+	                var keep = avalon.caches[s]
 	                if (keep) {
 	                    parent.replaceChild(keep, dom)
-	                    delete avalon.caches[a]
+	                    patch([keep], vnode.children)
+	                    delete avalon.caches[s]
 	                } else {
-	                    var el = new VElement(vnode)
-	                    parent.replaceChild(el.toDOM(), dom)
+	                    var el = avalon.vdomAdaptor(vnode).toDOM()
+	                    parent.replaceChild(el, dom)
 	                }
 	            }
 	        }
@@ -5460,13 +5462,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            continue
 	        } else { //处理元素节点
-	            var hasIf = el.props['av-if']
+	            var hasIf = el.props['av-if'] || el.props['ms-if']
+	            
 	            if (hasIf) { // 优化处理av-if指令
+	                el.props['av-if'] = hasIf
+	                el.signature = makeHashCode('av-if') 
+	                delete el.props['ms-if']
 	                str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'
 	                str += children + '.push({' +
 	                        '\n\ttype: "#comment",' +
 	                        '\n\tdirective: "if",' +
-	                        '\n\tnodeValue: "<!--av-if:-->",' +
+	                        '\n\tnodeValue:'+ quote(el.signature)+',\n'+
+	                        '\n\tsignature:'+ quote(el.signature)+',\n'+
 	                        '\n\tprops: {"av-if":true} })\n'
 	                str += '\n}else{\n\n'
 

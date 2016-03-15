@@ -84,13 +84,18 @@ function parseView(arr, num) {
             }
             continue
         } else { //处理元素节点
-            var hasIf = el.props['av-if']
+            var hasIf = el.props['av-if'] || el.props['ms-if']
+            
             if (hasIf) { // 优化处理av-if指令
+                el.props['av-if'] = hasIf
+                el.signature = makeHashCode('av-if') 
+                delete el.props['ms-if']
                 str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'
                 str += children + '.push({' +
                         '\n\ttype: "#comment",' +
                         '\n\tdirective: "if",' +
-                        '\n\tnodeValue: "<!--av-if:-->",' +
+                        '\n\tnodeValue:'+ quote(el.signature)+',\n'+
+                        '\n\tsignature:'+ quote(el.signature)+',\n'+
                         '\n\tprops: {"av-if":true} })\n'
                 str += '\n}else{\n\n'
 
