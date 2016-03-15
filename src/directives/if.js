@@ -16,20 +16,19 @@ avalon.directive("if", {
         var dtype = dom.nodeName.toLowerCase()
         var vtype = vnode.type
         if (dtype !== vtype) {
-            var s = vnode.signature
             if (dom.nodeType === 1) {
-                avalon.caches[s] = dom
+                avalon.caches[vnode.nodeValue] = dom
                 parent.replaceChild(avalon.vdomAdaptor(vnode).toDOM(), dom)
             } else {
-                s = dom.nodeValue || s
+                var s = dom.signature || dom.nodeValue
                 var keep = avalon.caches[s]
                 if (keep) {
                     parent.replaceChild(keep, dom)
-                    patch([keep], vnode.children)
-                    delete avalon.caches[s]
+                    patch([keep], [vnode])
                 } else {
                     var el = avalon.vdomAdaptor(vnode).toDOM()
                     parent.replaceChild(el, dom)
+                    avalon.caches[s] = el
                 }
             }
         }
