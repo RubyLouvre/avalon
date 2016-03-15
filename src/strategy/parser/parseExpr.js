@@ -11,11 +11,13 @@ var brackets = /\(([^)]*)\)/
 var rAt = /(^|[^\w\u00c0-\uFFFF_])(@)(?=\w)/g
 function parseExpr(str, category) {
     var binding = {}
+    category = category || 'other'
     if (typeof str === 'object') {
+        category = str.type
         binding = str
         str = binding.expr
     }
-    category = category || 'other'
+
     var input = str.trim()
 
     var cacheStr = evaluatorPool.get(category + ':' + input)
@@ -79,7 +81,7 @@ function parseExpr(str, category) {
             '\tvar __vmodel__ = this;',
             '\t' + body,
             '}catch(e){',
-            '\tavalon.log(e, ' + quoteError(str) + ')',
+            '\tavalon.log(e, ' + quoteError(str,category) + ')',
             '}',
             '}']
         filters.unshift(2, 0)
@@ -96,7 +98,7 @@ function parseExpr(str, category) {
             'try{',
             '\t' + body + ' = __value__',
             '}catch(e){',
-            '\tavalon.log(e, ' + quoteError(str) + ')',
+            '\tavalon.log(e, ' + quoteError(str, category) + ')',
             '}',
             '}']
 
@@ -114,7 +116,7 @@ function parseExpr(str, category) {
             'if(!__elem__ || __elem__.nodeType !== 1) return ',
             'return __value__',
             '}catch(e){',
-            '\tavalon.log(e, ' + quoteError(str) + ')',
+            '\tavalon.log(e, ' + quoteError(str, category) + ')',
             '}',
             '}']
         getterBody.splice(5, 0, getterFilters.join('\n'))
@@ -128,7 +130,7 @@ function parseExpr(str, category) {
             'var __value__ = ' + body,
             'return __value__',
             '}catch(e){',
-            '\tavalon.log(e, ' + quoteError(str) + ')',
+            '\tavalon.log(e, ' + quoteError(str, category) + ')',
             '\treturn ""',
             '}',
             '})()'
@@ -143,8 +145,8 @@ function parseExpr(str, category) {
 
 }
 
-function quoteError(str) {
-    return avalon.quote('parse "' + str + '" fail')
+function quoteError(str, type) {
+    return avalon.quote('parse '+ type+' binding【 ' + str + ' 】fail')
 }
 
 module.exports = avalon.parseExpr = parseExpr

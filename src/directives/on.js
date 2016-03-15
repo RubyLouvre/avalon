@@ -18,11 +18,11 @@ avalon.directive('on', {
         var pid = quote(binding.name)
         if (canCache) {
             var fn = Function('return ' + avalon.parseExpr(binding, 'on'))()
-            var key = 'on:' + binding.expr
-            avalon.caches[key] = fn
+            var uuid = markID(fn)
+            avalon.eventListeners[uuid] = fn
             return vmDefine + 'vnode' + num + '.props[' + pid +
-                    '] = avalon.caches[' + quote(key) + ']\n'
-        } else {
+                    '] = avalon.eventListeners.' + uuid + '\n'
+        } else {//如果闭包引用其他变量
             return vmDefine + 'vnode' + num + '.props[' + pid +
                     '] = ' + avalon.parseExpr(binding, 'on') + '\n'
         }
