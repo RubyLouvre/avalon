@@ -41,14 +41,7 @@
 ### av-skip
 只要存在此属性，不管其值为何，都立即对此元素及其子孙停止扫描
 
-### av-cloak
-用于掩盖首屏上的`{{ }}`，当avalon引擎扫描到此元素时，会移除av-cloak属性及同名类名
 
-```css
-[av-cloak],  .ng-cloak {
-  display: none !important;
-}
-```
 ### av-if
 
 
@@ -79,10 +72,10 @@
 
 类似于av-class，但在用户点击此元素时添加这些类名，鼠标弹出时离开时移除类名
 
-### av-style
+### av-css
 ```
-av-style="@styleObject"
-av-style="[@styleObject,@styleObject2]"
+av-css="@styleObject"
+av-css="[@styleObject,@styleObject2]"
 ```
 可使用过滤器，功能类似于之前的ms-css，用于设置元素的样式
 
@@ -135,17 +128,16 @@ av-on     --> 检测DOM的update
 | 指令           | 语法               | 进度  |
 | ------------- |:-----------------:| -----:|
 | av-attr       | 对象或对象数组       | yes |
-| av-style      | 对象或对象数组       | yes |
+| av-css      | 对象或对象数组       | yes |
 | av-controller | 字符串              | yes |
-| av-cloak      | 任意                | yes |
 | text          | 字符串              | yes |
 | av-class      | 布尔对象或字符串数组  | yes |
 | av-hover      | 布尔对象或字符串数组  | yes |
 | av-active     | 布尔对象或字符串数组  | yes |
 | av-on         | 函数                | yes |
 | av-effect     | 对象或对象数组        | no |
-| av-widget     | 对象或对象数组        | no |
-| if指令        |     合法JS代码      | half |
-| for指令       | 类PHP的特殊语法      | half |
+| av-widget     | 对象或对象数组        | half |
+| if指令        |     合法JS代码      | yes |
+| for指令       | 类PHP的特殊语法      | yes |
 | forEnd指令    | 空指令（仅表示结束）   | yes|
 | js指令        |  合法JS代码          | yes|
