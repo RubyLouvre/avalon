@@ -2,7 +2,6 @@
 
 //缓存求值函数，以便多次利用
 var evaluatorPool = require('./evaluatorPool')
-var ifStatement = 'if(!__elem__ || __elem__.nodeType !== 1){\n\treturn __value__\n}\n'
 var rexpr = avalon.config.rexpr
 
 var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
@@ -70,7 +69,7 @@ function parseExpr(str, category) {
     var ret = []
     if (category === 'on') {
         filters = filters.map(function (el) {
-            return el.replace('__value__', '$event')
+            return el.replace(/__value__/g, '$event')
         })
         if (filters.length) {
             filters.push('if($event.$return){\n\treturn;\n}')
@@ -86,7 +85,7 @@ function parseExpr(str, category) {
         filters.unshift(2, 0)
     } else if (category === 'duplex') {
         var setterFilters = filters.map(function (str) {
-            str = str.replace('__read__', '__write__')
+            str = str.replace(/__read__/g, '__write__')
             return str.replace(');', ',__elem__);')
         })
         //setter
@@ -104,7 +103,6 @@ function parseExpr(str, category) {
         setterBody.splice(3, 0, setterFilters.join('\n'))
         var fn = Function('return ' + setterBody.join('\n'))()
         evaluatorPool.put('duplex:' + str.trim() + ':setter', fn)
-
         var getterFilters = filters.map(function (str) {
             return str.replace(');', ',__elem__);')
         })
