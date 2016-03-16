@@ -74,7 +74,6 @@ avalon.bind = function (elem, type, fn) {
         }
         if (keys.indexOf(key) === -1) {
             keys.push(key)
-            keys.sort()
             elem.setAttribute('avalon-events', keys.join('??'))
             //将令牌放进avalon-events属性中
         }
@@ -203,7 +202,7 @@ function delegateEvent(type) {
 
 avalon.fireDom = function (elem, type, opts) {
     if (document.createEvent) {
-        var hackEvent = document.createEvent('Events');
+        var hackEvent = document.createEvent('Events')
         hackEvent.initEvent(type, true, true, opts)
         avalon.mix(hackEvent, opts)
 

@@ -16,9 +16,11 @@ avalon.directive('on', {
         })
         var vmDefine = 'vnode' + num + '.onVm = __vmodel__\n'
         var pid = quote(binding.name)
+       
         if (canCache) {
             var fn = Function('return ' + avalon.parseExpr(binding, 'on'))()
             var uuid = markID(fn)
+             console.log(pid, "-----", uuid)
             avalon.eventListeners[uuid] = fn
             return vmDefine + 'vnode' + num + '.props[' + pid +
                     '] = avalon.eventListeners.' + uuid + '\n'
@@ -60,6 +62,7 @@ avalon.directive('on', {
         for (key in vnode.addEvents) {
             type = key.split(':').shift()
             listener = vnode.addEvents[key]
+         
             avalon.bind(node, type, listener)
         }
         delete vnode.addEvents

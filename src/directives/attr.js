@@ -3,8 +3,6 @@ var attrUpdate = require('../dom/attr/compact')
 
 var attrDir = avalon.directive('attr', {
     parse: function (binding, num) {
-//        return 'var $$attrs = {};\n' + binding.expr +
-//                '\n+ vnode' + num + '.props["av-attr"] = $$attrs;\n'
         return 'vnode' + num + '.props["av-attr"] = ' + avalon.parseExpr(binding) + ';\n'
 
     },

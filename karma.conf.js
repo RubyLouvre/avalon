@@ -12,7 +12,8 @@ module.exports = function (config) {
             'karma/directives/attr.js',
             'karma/directives/html.js',
             'karma/directives/visible.js',
-            'karma/directives/if.js'
+            'karma/directives/if.js',
+            'karma/directives/on.js'
                     //  'karma/duplex.js',
                     //  'karma/repeat.js'
         ],

@@ -9,6 +9,10 @@ var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
 var rfill = /\?\?\d+/g
 var brackets = /\(([^)]*)\)/
 var rAt = /(^|[^\w\u00c0-\uFFFF_])(@)(?=\w)/g
+var rhandleName = /^\@[$\w]+$/
+var rshortCircuit = /\|\|/g
+var rpipeline = /\|(?=\w)/
+var ruselessSp =/\s*(\.|\|)\s*/g
 function parseExpr(str, category) {
     var binding = {}
     category = category || 'other'
@@ -41,12 +45,17 @@ function parseExpr(str, category) {
 
     input = input.replace(rregexp, dig).//移除所有正则
             replace(rstring, dig).//移除所有字符串
-            replace(/\|\|/g, dig).//移除所有短路与
-            replace(/\s*(\.|\|)\s*/g, '$1').//移除. |两端空白
-            split(/\|(?=\w)/) //分离过滤器
+            replace(rshortCircuit, dig).//移除所有短路或
+            replace(ruselessSp, '$1').//移除. |两端空白
+            split(rpipeline) //使用管道符分离所有过滤器及表达式的正体
 
 //还原body
-    var body = input.shift().replace(rfill, fill).trim().replace(rAt, '$1__vmodel__.')
+    var body = input.shift().replace(rfill, fill).trim()
+    if (category === 'on' && rhandleName.test(body)) {
+        body = body + '($event)'
+    }
+
+    body = body.replace(rAt, '$1__vmodel__.')
     if (category === 'js') {
         return evaluatorPool.put(category + ':' + input, body)
     }
@@ -81,7 +90,7 @@ function parseExpr(str, category) {
             '\tvar __vmodel__ = this;',
             '\t' + body,
             '}catch(e){',
-            '\tavalon.log(e, ' + quoteError(str,category) + ')',
+            '\tavalon.log(e, ' + quoteError(str, category) + ')',
             '}',
             '}']
         filters.unshift(2, 0)
@@ -146,7 +155,7 @@ function parseExpr(str, category) {
 }
 
 function quoteError(str, type) {
-    return avalon.quote('parse '+ type+' binding【 ' + str + ' 】fail')
+    return avalon.quote('parse ' + type + ' binding【 ' + str + ' 】fail')
 }
 
 module.exports = avalon.parseExpr = parseExpr

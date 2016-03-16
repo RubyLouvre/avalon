@@ -119,5 +119,37 @@ describe('on', function () {
             done()
         })
     })
+    
+     it('multi-click-bind', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='on3' ms-click='@a()' ms-click-1='@a()' ms-click-2='@a()' >111
+             <div ms-click='@b($event,33) |stop' id='a222'>
+             
+             </div>
+             </div>
+             */
+        })
+        var index = 1
+        vm = avalon.define({
+            $id: 'on3',
+            a: function (e) {
+                index++
+            },
+            b: function (e, b) {
+                index++
+                expect(e.type).to.equal('click')
+                expect(b).to.equal(33)
+            }
+        })
+        avalon.scan(div, vm)
+        var elem = document.getElementById('a222')
+        fireClick(elem)
+        setTimeout(function () {
+            expect(index).to.equal(2)
+            done()
+        })
+    })
+    
 })
 

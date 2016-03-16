@@ -1898,9 +1898,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        })
 	        var vmDefine = 'vnode' + num + '.onVm = __vmodel__\n'
 	        var pid = quote(binding.name)
+	       
 	        if (canCache) {
 	            var fn = Function('return ' + avalon.parseExpr(binding, 'on'))()
 	            var uuid = markID(fn)
+	             console.log(pid, "-----", uuid)
 	            avalon.eventListeners[uuid] = fn
 	            return vmDefine + 'vnode' + num + '.props[' + pid +
 	                    '] = avalon.eventListeners.' + uuid + '\n'
@@ -1942,6 +1944,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (key in vnode.addEvents) {
 	            type = key.split(':').shift()
 	            listener = vnode.addEvents[key]
+	         
 	            avalon.bind(node, type, listener)
 	        }
 	        delete vnode.addEvents
@@ -2974,6 +2977,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rfill = /\?\?\d+/g
 	var brackets = /\(([^)]*)\)/
 	var rAt = /(^|[^\w\u00c0-\uFFFF_])(@)(?=\w)/g
+	var rhandleName = /^\@[$\w]+$/
+	var rshortCircuit = /\|\|/g
+	var rpipeline = /\|(?=\w)/
+	var ruselessSp =/\s*(\.|\|)\s*/g
 	function parseExpr(str, category) {
 	    var binding = {}
 	    category = category || 'other'
@@ -3006,12 +3013,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    input = input.replace(rregexp, dig).//移除所有正则
 	            replace(rstring, dig).//移除所有字符串
-	            replace(/\|\|/g, dig).//移除所有短路与
-	            replace(/\s*(\.|\|)\s*/g, '$1').//移除. |两端空白
-	            split(/\|(?=\w)/) //分离过滤器
+	            replace(rshortCircuit, dig).//移除所有短路或
+	            replace(ruselessSp, '$1').//移除. |两端空白
+	            split(rpipeline) //使用管道符分离所有过滤器及表达式的正体
 
 	//还原body
-	    var body = input.shift().replace(rfill, fill).trim().replace(rAt, '$1__vmodel__.')
+	    var body = input.shift().replace(rfill, fill).trim()
+	    if (category === 'on' && rhandleName.test(body)) {
+	        body = body + '($event)'
+	    }
+
+	    body = body.replace(rAt, '$1__vmodel__.')
 	    if (category === 'js') {
 	        return evaluatorPool.put(category + ':' + input, body)
 	    }
@@ -3046,7 +3058,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            '\tvar __vmodel__ = this;',
 	            '\t' + body,
 	            '}catch(e){',
-	            '\tavalon.log(e, ' + quoteError(str,category) + ')',
+	            '\tavalon.log(e, ' + quoteError(str, category) + ')',
 	            '}',
 	            '}']
 	        filters.unshift(2, 0)
@@ -3111,7 +3123,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function quoteError(str, type) {
-	    return avalon.quote('parse '+ type+' binding【 ' + str + ' 】fail')
+	    return avalon.quote('parse ' + type + ' binding【 ' + str + ' 】fail')
 	}
 
 	module.exports = avalon.parseExpr = parseExpr
@@ -3183,17 +3195,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var bindings = []
 	    var skip = 'ms-skip' in props || 'av-skip' in props
 	    var ret = ''
-	    //var attrBinding = ''
 	    for (var i in props) {
 	        var value = props[i], match
 
 	        if (!skip && value && (match = i.match(rbinding))) {
-
 	            var type = match[1]
 	            var param = match[2] || ''
 	            var name = i
 
 	            if (eventMap[type]) {
+	                var order = parseFloat(param) || 0
 	                param = type
 	                type = 'on'
 	            }
@@ -3208,14 +3219,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    param: param,
 	                    name: name,
 	                    expr: value,
-	                    priority: directives[type].priority ||
-	                            type.charCodeAt(0) * 100 + (Number(param.replace(/\D/g, '')) || 0)
+	                    priority: directives[type].priority || type.charCodeAt(0) * 100
 	                }
-	//                if (type === 'attr') {
-	//                    attrBindings += 'attrs[' + quote(param) + '] = ' + avalon.parseExpr(binding) + '\n'
-	//                } else {
-	                    bindings.push(binding)
-	//                }
+	                if (type === 'on') {
+	                    binding.name += '-' + order
+	                    binding.priority += param.charCodeAt(0) * 100 + order
+	                }
+
+	                bindings.push(binding)
 
 	            }
 	        } else {
@@ -3226,14 +3237,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	    }
-	// 考虑是不是外面分散定义ms-attr,然后在内部集中处理
-	//    if (attrBindings) {
-	//        bindings.push({
-	//            type: 'attr',
-	//            priority: 11600,
-	//            expr: attrBindings
-	//        })
-	//    }
 
 	    if (!bindings.length) {
 	        ret += 'vnode' + num + '.skipAttrs = true\n'
@@ -4428,7 +4431,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        if (keys.indexOf(key) === -1) {
 	            keys.push(key)
-	            keys.sort()
 	            elem.setAttribute('avalon-events', keys.join('??'))
 	            //将令牌放进avalon-events属性中
 	        }

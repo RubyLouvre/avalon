@@ -8,17 +8,16 @@ function parseBindings(props, num, elem) {
     var bindings = []
     var skip = 'ms-skip' in props || 'av-skip' in props
     var ret = ''
-    //var attrBinding = ''
     for (var i in props) {
         var value = props[i], match
 
         if (!skip && value && (match = i.match(rbinding))) {
-
             var type = match[1]
             var param = match[2] || ''
             var name = i
 
             if (eventMap[type]) {
+                var order = parseFloat(param) || 0
                 param = type
                 type = 'on'
             }
@@ -33,14 +32,14 @@ function parseBindings(props, num, elem) {
                     param: param,
                     name: name,
                     expr: value,
-                    priority: directives[type].priority ||
-                            type.charCodeAt(0) * 100 + (Number(param.replace(/\D/g, '')) || 0)
+                    priority: directives[type].priority || type.charCodeAt(0) * 100
                 }
-//                if (type === 'attr') {
-//                    attrBindings += 'attrs[' + quote(param) + '] = ' + avalon.parseExpr(binding) + '\n'
-//                } else {
-                    bindings.push(binding)
-//                }
+                if (type === 'on') {
+                    binding.name += '-' + order
+                    binding.priority += param.charCodeAt(0) * 100 + order
+                }
+
+                bindings.push(binding)
 
             }
         } else {
@@ -51,14 +50,6 @@ function parseBindings(props, num, elem) {
             }
         }
     }
-// 考虑是不是外面分散定义ms-attr,然后在内部集中处理
-//    if (attrBindings) {
-//        bindings.push({
-//            type: 'attr',
-//            priority: 11600,
-//            expr: attrBindings
-//        })
-//    }
 
     if (!bindings.length) {
         ret += 'vnode' + num + '.skipAttrs = true\n'

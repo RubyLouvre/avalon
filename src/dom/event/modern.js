@@ -70,7 +70,6 @@ avalon.bind = function (elem, type, fn) {
         }
         if (keys.indexOf(key) === -1) {
             keys.push(key)
-            keys.sort()
             elem.setAttribute('avalon-events', keys.join('??'))
             //将令牌放进avalon-events属性中
         }
