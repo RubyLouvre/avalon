@@ -28,7 +28,14 @@ module.exports = {
     module: {
         loaders: [
             {test: /\.jade$/, loader: 'text-loader'}
+
+        ],
+        preLoaders: [
+          //  {test: /\.js$/, loader: 'eslint-loader', exclude: /node_modules|__test__/}
         ]
+    },
+    eslint: {
+        configFile: './eslintrc.json'
     },
     resolve: {
         extensions: ['.js', '', '.css'],
