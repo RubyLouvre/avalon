@@ -3735,7 +3735,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (canCache) {
 	            var fn = Function('return ' + avalon.parseExpr(binding, 'on'))()
 	            var uuid = markID(fn)
-	             console.log(pid, "-----", uuid)
 	            avalon.eventListeners[uuid] = fn
 	            return vmDefine + 'vnode' + num + '.props[' + pid +
 	                    '] = avalon.eventListeners.' + uuid + '\n'

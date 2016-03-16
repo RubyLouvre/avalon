@@ -54,7 +54,7 @@ describe('on', function () {
         setTimeout(function () {
             expect(index).to.equal(3)
             done()
-        },100)
+        }, 100)
     })
 
     it('stopPropagation', function (done) {
@@ -119,37 +119,45 @@ describe('on', function () {
             done()
         })
     })
-    
-     it('multi-click-bind', function (done) {
+
+    it('multi-click-bind', function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <div ms-controller='on3' ms-click='@a()' ms-click-1='@a()' ms-click-2='@a()' >111
-             <div ms-click='@b($event,33) |stop' id='a222'>
+             <div ms-controller='on4' 
+             id='a33'
+             ms-click='@a' 
+             ms-click-2='@c' 
+             ms-click-4='@b' 
+             ms-click-1='@d'  >TEST
              
-             </div>
              </div>
              */
         })
-        var index = 1
-        vm = avalon.define({
-            $id: 'on3',
+        var str = ""
+        var vm = avalon.define({
+            $id: 'on4',
             a: function (e) {
-                index++
+                str += "a"
             },
-            b: function (e, b) {
-                index++
-                expect(e.type).to.equal('click')
-                expect(b).to.equal(33)
+            b: function (e) {
+                str += "b"
+            },
+            c: function (e) {
+                str += "c"
+            },
+            d: function (e) {
+                str += "d"
             }
         })
+
         avalon.scan(div, vm)
-        var elem = document.getElementById('a222')
+        var elem = document.getElementById('a33')
         fireClick(elem)
         setTimeout(function () {
-            expect(index).to.equal(2)
+            expect(str).to.equal("adcb")
             done()
         })
     })
-    
+
 })
 
