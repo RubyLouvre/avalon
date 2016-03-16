@@ -53,7 +53,7 @@ function parseView(arr, num) {
                         '\n\tdirective:"for",' +
                         '\n\tskipContent:false,' +
                         '\n\tsignature:' + quote(signature) + ',' +
-                        '\n\tnodeValue:' + quote(nodeValue)  +
+                        '\n\tnodeValue:' + quote(nodeValue) +
                         '\n})\n'
                 str += avalon.directives['for'].parse(nodeValue, num)
 
@@ -85,17 +85,17 @@ function parseView(arr, num) {
             continue
         } else { //处理元素节点
             var hasIf = el.props['a-if'] || el.props['ms-if']
-            
+
             if (hasIf) { // 优化处理a-if指令
                 el.props['a-if'] = hasIf
-                el.signature = makeHashCode('a-if') 
+                el.signature = makeHashCode('a-if')
                 delete el.props['ms-if']
                 str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'
                 str += children + '.push({' +
                         '\n\ttype: "#comment",' +
                         '\n\tdirective: "if",' +
-                        '\n\tnodeValue:'+ quote(el.signature)+',\n'+
-                        '\n\tsignature:'+ quote(el.signature)+',\n'+
+                        '\n\tnodeValue:' + quote(el.signature) + ',\n' +
+                        '\n\tsignature:' + quote(el.signature) + ',\n' +
                         '\n\tprops: {"a-if":true} })\n'
                 str += '\n}else{\n\n'
 
@@ -111,10 +111,16 @@ function parseView(arr, num) {
                 str += hasBindings
             }
 
-            if (el.children.length) {
-                str += 'if(!' + vnode + '.props.wid){\n'
+            if (!el.isVoidTag && el.children.length) {
+                var isWidget = el.props['a-widget'] || el.props['ms-widget']
+                if (isWidget) {
+                    str += 'if(!' + vnode + '.props.wid){\n'
+                }
                 str += '\t' + vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
-                str += '}\n'
+                if (isWidget) {
+                    str += '}\n'
+                    isWidget = false
+                }
             } else {
                 str += vnode + '.template= ' + quote(el.template) + '\n'
             }

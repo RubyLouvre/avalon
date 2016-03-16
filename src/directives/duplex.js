@@ -31,7 +31,6 @@ avalon.directive('duplex', {
         var expr = binding.expr
         var etype = elem.props.type
         var itype
-console.log(elem)
         if (rcheckedFilter.test(expr)) {
             if (rcheckedType.test(etype)) {
                 itype = 'checked'
