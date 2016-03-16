@@ -1,5 +1,4 @@
 var patch = require("../strategy/patch")
-var VElement = require("../vdom/VElement")
 
 avalon.directive("if", {
     priority: 5,

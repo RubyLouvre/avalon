@@ -1,6 +1,5 @@
 var propMap = require('./propMap')
 var rsvg = /^\[object SVG\w*Element\]$/
-var ramp = /&amp;/g
 
 function attrUpdate(node, vnode) {
     var attrs = vnode.changeAttr

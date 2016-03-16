@@ -54,10 +54,10 @@ avalon.parseHTML = function (html) {
     wrapper.innerHTML = wrap[1] + html + wrap[2]
 
     //使用innerHTML生成的script节点不会发出请求与执行text属性
-    replaceScript(wrapper)
+    fixScript(wrapper)
 
     if (!avalon.modern) { //fix IE
-        replaceTbodyVML(wrapper, wrap, tag)
+        fixTbodyVML(wrapper, wrap, tag)
     }
     
     //移除我们为了符合套嵌关系而添加的标签

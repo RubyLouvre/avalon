@@ -31,6 +31,7 @@ module.exports = {
 
         ],
         preLoaders: [
+            //https://segmentfault.com/a/1190000004468428
           //  {test: /\.js$/, loader: 'eslint-loader', exclude: /node_modules|__test__/}
         ]
     },

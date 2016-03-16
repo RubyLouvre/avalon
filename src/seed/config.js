@@ -21,17 +21,18 @@ var plugins = {
     interpolate: function (array) {
         var openTag = array[0]
         var closeTag = array[1]
+        /*eslint-disable */
         if (openTag === closeTag) {
             throw new SyntaxError('openTag!==closeTag')
-            var test = openTag + 'test' + closeTag
-            var div = avalon.avalonDiv
-            div.innerHTML = test
-
-            if (div.innerHTML !== test && div.innerHTML.indexOf('&lt;') > -1) {
-                throw new SyntaxError('此定界符不合法')
-            }
-            div.innerHTML = ''
         }
+        var test = openTag + 'test' + closeTag
+        var div = avalon.avalonDiv
+        div.innerHTML = test
+        if (div.innerHTML !== test && div.innerHTML.indexOf('&lt;') > -1) {
+            throw new SyntaxError('此定界符不合法')
+        }
+        div.innerHTML = ''
+        /*eslint-enable */
         kernel.openTag = openTag
         kernel.closeTag = closeTag
         var o = avalon.escapeRegExp(openTag)

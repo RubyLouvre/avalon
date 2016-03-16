@@ -2,7 +2,6 @@
 
 //缓存求值函数，以便多次利用
 var evaluatorPool = require('./evaluatorPool')
-var rexpr = avalon.config.rexpr
 
 var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
 var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g

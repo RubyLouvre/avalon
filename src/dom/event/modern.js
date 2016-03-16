@@ -3,39 +3,7 @@ var window = avalon.window
 var root = avalon.root
 
 var getShortID = require('../../seed/lang.share').getShortID
-//http://www.feiesoft.com/html/events.html
-//http://segmentfault.com/q/1010000000687977/a-1020000000688757
-var canBubbleUp = {
-    click: true,
-    dblclick: true,
-    keydown: true,
-    keypress: true,
-    keyup: true,
-    mousedown: true,
-    mousemove: true,
-    mouseup: true,
-    mouseover: true,
-    mouseout: true,
-    wheel: true,
-    mousewheel: true,
-    input: true,
-    change: true,
-    beforeinput: true,
-    compositionstart: true,
-    compositionupdate: true,
-    compositionend: true,
-    select: true,
-    cut: true,
-    paste: true,
-    focusin: true,
-    focusout: true,
-    DOMFocusIn: true,
-    DOMFocusOut: true,
-    DOMActivate: true,
-    dragend: true,
-    datasetchanged: true
-}
-
+var canBubbleUp = require('./canBubbleUp')
 
 var eventHooks = avalon.eventHooks
 /*绑定事件*/
@@ -44,7 +12,7 @@ avalon.bind = function (elem, type, fn) {
         var value = elem.getAttribute('avalon-events') || ''
         //如果是使用ms-on-*绑定的回调,其uuid格式为e12122324,
         //如果是使用bind方法绑定的回调,其uuid格式为_12
-        var uuid = getUid(fn)
+        var uuid = getShortID(fn)
         var key = type + ':' + uuid
         var hook = eventHooks[type]
         if (hook) {
@@ -187,7 +155,6 @@ function delegateEvent(type) {
     }
 }
 
-var rmouseEvent = /^(?:mouse|contextmenu|drag)|click/
 var rvendor = /^(?:ms|webkit|moz)/
 function avEvent(event) {
     if (event.originalEvent) {
@@ -207,9 +174,7 @@ avEvent.prototype = {
         this.returnValue = false
         if (e) {
             e.returnValue = false
-
             e.preventDefault()
-
         }
     },
     stopPropagation: function () {

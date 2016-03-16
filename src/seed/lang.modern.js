@@ -2,15 +2,9 @@
 
 var serialize = avalon.inspect
 var rwindow = /^\[object (?:Window|DOMWindow|global)\]$/
-var rnative = /\[native code\]/ //判定是否原生函数
 var rarraylike = /(Array|List|Collection|Map|Arguments)\]$/
-var ohasOwn = avalon.ohasOwn
-// avalon.quote
-
 
 avalon.quote = JSON.stringify
-
-
 
 // avalon.type
 var class2type = {}
@@ -28,7 +22,6 @@ avalon.type = function (obj) { //取得目标的类型
             typeof obj
 }
 
-var rfunction = /^\s*\bfunction\b/
 
 avalon.isFunction = function (fn) {
     return typeof fn === 'function'

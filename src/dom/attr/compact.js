@@ -17,6 +17,7 @@ function attrUpdate(node, vnode) {
                 if (!node.hasAttribute) {
                     val = String(val).replace(ramp, '&') //处理IE67自动转义的问题
                 }
+                console.log(attrName,"!!")
                 node[attrName] = val
                 if (window.chrome && node.tagName === 'EMBED') {
                     var parent = node.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求

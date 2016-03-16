@@ -1,7 +1,6 @@
 
 var share = require("./parts/modern")
 var isSkip = share.isSkip
-var toJson = share.toJson
 var $$midway = share.$$midway
 var $$skipArray = share.$$skipArray
 delete $$skipArray.$accessors

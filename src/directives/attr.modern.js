@@ -1,7 +1,7 @@
 
 var attrUpdate = require('../dom/attr/modern')
 
-var attrDir = avalon.directive('attr', {
+avalon.directive('attr', {
     parse: function (binding, num) {
         return 'vnode' + num + '.props["av-attr"] = ' + avalon.parseExpr(binding) + ';\n'
     },

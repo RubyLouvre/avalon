@@ -58,14 +58,14 @@ avalon.parseHTML = function (html) {
     if (wrapper) {
         wrapper.innerHTML = html
         //使用innerHTML生成的script节点不会发出请求与执行text属性
-        replaceScript(wrapper)
+        fixScript(wrapper)
     } else if (htmlHook) {
         htmlHook.innerHTML = html
         wrapper = htmlHook.content
     } else {
         wrapper = tagHooks[tag] || tagHooks._default
         wrapper.innerHTML = html
-        replaceScript(wrapper)
+        fixScript(wrapper)
     }
     while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
         fragment.appendChild(firstChild)

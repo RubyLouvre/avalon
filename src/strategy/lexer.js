@@ -9,7 +9,6 @@ var makeHashCode = avalon.makeHashCode
 var vdom = require('../vdom/index')
 var VText = vdom.VText
 var VComment = vdom.VComment
-var VElement = vdom.VElement
 
 
 //匹配只有开标签的无内容元素（Void elements 或 self-contained tags）

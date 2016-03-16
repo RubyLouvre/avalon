@@ -1,6 +1,5 @@
 var root = avalon.root
 var window = avalon.window
-var document = avalon.document
 var camelize = avalon.camelize
 var cssHooks = avalon.cssHooks
 

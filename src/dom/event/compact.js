@@ -6,36 +6,8 @@ var W3C = avalon.modern
 var getShortID = require('../../seed/lang.share').getShortID
 //http://www.feiesoft.com/html/events.html
 //http://segmentfault.com/q/1010000000687977/a-1020000000688757
-var canBubbleUp = {
-    click: true,
-    dblclick: true,
-    keydown: true,
-    keypress: true,
-    keyup: true,
-    mousedown: true,
-    mousemove: true,
-    mouseup: true,
-    mouseover: true,
-    mouseout: true,
-    wheel: true,
-    mousewheel: true,
-    input: true,
-    change: true,
-    beforeinput: true,
-    compositionstart: true,
-    compositionupdate: true,
-    compositionend: true,
-    select: true,
-    cut: true,
-    paste: true,
-    focusin: true,
-    focusout: true,
-    DOMFocusIn: true,
-    DOMFocusOut: true,
-    DOMActivate: true,
-    dragend: true,
-    datasetchanged: true
-}
+var canBubbleUp = require('./canBubbleUp')
+
 if (!W3C) {
     delete canBubbleUp.change
     delete canBubbleUp.select
