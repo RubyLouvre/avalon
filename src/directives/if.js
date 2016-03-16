@@ -3,7 +3,7 @@ var patch = require("../strategy/patch")
 avalon.directive("if", {
     priority: 5,
     parse: function (binding, num) {
-        return "vnode" + num + ".props['av-if'] = " + avalon.quote(binding.expr) + ";\n"
+        return "vnode" + num + ".props['a-if'] = " + avalon.quote(binding.expr) + ";\n"
     },
     diff: function (cur, pre) {
         if (cur.type !== pre.type) {

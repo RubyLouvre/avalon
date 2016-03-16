@@ -5,7 +5,7 @@
  * ------------------------------------------------------------
  */
 
-var rbinding = /^(?:ms|av)-(\w+)-?(.*)/
+var rbinding = /^(?:ms|a)-(\w+)-?(.*)/
 var directives = avalon.directives
 
 var emptyArr = []

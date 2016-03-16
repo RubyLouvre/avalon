@@ -5,24 +5,24 @@ avalon.directive('html', {
     parse: function (binding, num) {
         return 'vnode' + num + '.htmlVm = __vmodel__\n' +
                 'vnode' + num + '.props.wid = 2;\n' +
-                'vnode' + num + '.props["av-html"] =' + avalon.parseExpr(binding) + ';\n'
+                'vnode' + num + '.props["a-html"] =' + avalon.parseExpr(binding) + ';\n'
     },
     diff: function (cur, pre) {
-        var curValue = cur.props['av-html']
-        var preValue = pre.props['av-html']
+        var curValue = cur.props['a-html']
+        var preValue = pre.props['a-html']
         if (curValue !== preValue) {
             var nodes = textCache.get(curValue)
             if (!Array.isArray(nodes)) {
                 var child = avalon.lexer(curValue)
                 var render = avalon.render(child)
                 nodes = render(cur.htmlVm)
-                cur.props['av-html'] = nodes.map(function (el) {
+                cur.props['a-html'] = nodes.map(function (el) {
                     return 'template' in el ? el.template : el.nodeValue
                 }),join('-')
                 textCache.put(curValue, nodes)
             }
             cur.children = nodes
-            if (cur.props['av-html'] !== preValue) {
+            if (cur.props['a-html'] !== preValue) {
                 var list = cur.change || (cur.change = [])
                 avalon.Array.ensure(list, this.update)
             }

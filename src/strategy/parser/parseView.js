@@ -45,7 +45,7 @@ function parseView(arr, num) {
 
         } else if (el.type === '#comment') {
             var nodeValue = el.nodeValue
-            if (nodeValue.indexOf('av-for:') === 0) {
+            if (nodeValue.indexOf('a-for:') === 0) {
                 var signature = el.signature
                 forstack.push(signature)
                 str += children + '.push({' +
@@ -57,7 +57,7 @@ function parseView(arr, num) {
                         '\n})\n'
                 str += avalon.directives['for'].parse(nodeValue, num)
 
-            } else if (nodeValue.indexOf('av-for-end:') === 0) {
+            } else if (nodeValue.indexOf('a-for-end:') === 0) {
                 var signature = forstack[forstack.length - 1]
 
                 str += children + '.push({' +
@@ -77,18 +77,18 @@ function parseView(arr, num) {
 
                     forstack.pop()
                 }
-            } else if (nodeValue.indexOf('av-js:') === 0) {
-                str += parseExpr(nodeValue.replace('av-js:', ''), 'js') + '\n'
+            } else if (nodeValue.indexOf('a-js:') === 0) {
+                str += parseExpr(nodeValue.replace('a-js:', ''), 'js') + '\n'
             } else {
                 str += children + '.push(' + quote(el) + ');;;;\n'
             }
             continue
         } else { //处理元素节点
-            var hasIf = el.props['av-if'] || el.props['ms-if']
+            var hasIf = el.props['a-if'] || el.props['ms-if']
             
-            if (hasIf) { // 优化处理av-if指令
-                el.props['av-if'] = hasIf
-                el.signature = makeHashCode('av-if') 
+            if (hasIf) { // 优化处理a-if指令
+                el.props['a-if'] = hasIf
+                el.signature = makeHashCode('a-if') 
                 delete el.props['ms-if']
                 str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'
                 str += children + '.push({' +
@@ -96,7 +96,7 @@ function parseView(arr, num) {
                         '\n\tdirective: "if",' +
                         '\n\tnodeValue:'+ quote(el.signature)+',\n'+
                         '\n\tsignature:'+ quote(el.signature)+',\n'+
-                        '\n\tprops: {"av-if":true} })\n'
+                        '\n\tprops: {"a-if":true} })\n'
                 str += '\n}else{\n\n'
 
             }

@@ -19,14 +19,14 @@ function patch(nodes, vnodes, parent) {
             if (node.nodeType === 1) {
                 var startRepeat = document.createComment(vnode.nodeValue)
                 parent.insertBefore(startRepeat, node)
-                parent.insertBefore(document.createComment("av-for-end:"), node.nextSibling)
+                parent.insertBefore(document.createComment("a-for-end:"), node.nextSibling)
                 node = startRepeat
             }
             var repeatNodes = [node], cur = node
             innerLoop:
                     while (cur && (cur = cur.nextSibling)) {
                 repeatNodes.push(cur)
-                if ((cur.nodeValue || "").indexOf("av-for-end:") === 0) {
+                if ((cur.nodeValue || "").indexOf("a-for-end:") === 0) {
                     next = cur.nextSibling
                     break innerLoop
                 }

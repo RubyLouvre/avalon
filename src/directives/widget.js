@@ -3,7 +3,7 @@ var makeHashCode = avalon.makeHashCode
 
 
 
-//插入点机制,组件的模板中有一些av-slot元素,用于等待被外面的元素替代
+//插入点机制,组件的模板中有一些a-slot元素,用于等待被外面的元素替代
 function wrap(str) {
     return str.replace("return __value__", function (a) {
         var prefix = "if(Array.isArray(__value__)){\n" +
@@ -23,7 +23,7 @@ avalon.directive("widget", {
         var component = "config" + num
         return  "vnode" + num + ".props.wid = '" + uuid + "'\n" +
                 "vnode" + num + ".children = avalon.caches[vnode" + num + ".props.wid] \n" +
-                "var " + component + " = vnode" + num + ".props['av-widget'] = " + wrap(avalon.parseExpr(binding), "widget") + ";\n" +
+                "var " + component + " = vnode" + num + ".props['a-widget'] = " + wrap(avalon.parseExpr(binding), "widget") + ";\n" +
                 "if(" + component + "){\n" +
                 "\tvnode" + num + " = avalon.component(vnode" + num + ", __vmodel__)\n" +
                 "}\n"
@@ -50,7 +50,7 @@ avalon.directive("widget", {
         if (a && typeof a === "object") {
 
         } else {
-            cur.props["av-widget"] = p
+            cur.props["a-widget"] = p
         }
 
     },
@@ -116,7 +116,7 @@ avalon.component = function (node, vm) {
 
     } else {
         //这里是用在组件实例化时
-        var options = node.props['av-widget']
+        var options = node.props['a-widget']
         var wid = node.props.wid
         var name = options.$type
         if (/(\:|-)/.test(node.type)) {
@@ -190,11 +190,11 @@ function afterChange(dom, vnode, parent) {
     }
 }
 //如果组件没有resolved,元素会是这样子:
-//<av-button wid="w453156877309" av-widget="undefined">xxx</av-button>
+//<a-button wid="w453156877309" a-widget="undefined">xxx</a-button>
 function hasUnresolvedComponent(vnode) {
     vnode.children.forEach(function (el) {
         if (el.type.charAt(0) !== '#') {
-            if ("av-widget" in el.props) {
+            if ("a-widget" in el.props) {
                 throw "unresolved"
             }
             hasUnresolvedComponent(el)
@@ -205,7 +205,7 @@ function hasUnresolvedComponent(vnode) {
 function mergeTempale(main, slots) {
     for (var i = 0, el; el = main[i++]; ) {
         if (el.type.charAt(0) !== "#") {
-            if (el.type === "av-slot") {
+            if (el.type === "a-slot") {
                 var name = el.props.name || ""
                 if (slots[name]) {
                     main.splice.apply(main, [i - 1, 1].concat(slots[name]))

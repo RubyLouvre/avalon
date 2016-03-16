@@ -1,12 +1,12 @@
 var rneedQuote = /[W-]/
 var quote = avalon.quote
 var directives = avalon.directives
-var rbinding = /^(?:ms|av)-(\w+)-?(.*)/
+var rbinding = /^(?:ms|a)-(\w+)-?(.*)/
 var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
 
 function parseBindings(props, num, elem) {
     var bindings = []
-    var skip = 'ms-skip' in props || 'av-skip' in props
+    var skip = 'ms-skip' in props || 'a-skip' in props
     var ret = ''
     for (var i in props) {
         var value = props[i], match
@@ -21,7 +21,7 @@ function parseBindings(props, num, elem) {
                 param = type
                 type = 'on'
             }
-            name = 'av-' + type + (param ? '-' + param : '')
+            name = 'a-' + type + (param ? '-' + param : '')
             if (i !== name) {
                 delete props[i]
                 props[name] = value

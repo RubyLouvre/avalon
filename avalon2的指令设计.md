@@ -38,72 +38,73 @@
 
 ## 元素节点上的绑定属性
 
-### av-skip
+### a-skip
 只要存在此属性，不管其值为何，都立即对此元素及其子孙停止扫描
 
 
-### av-if
+### a-if
 
 
-### av-attr
+### a-attr
 ```
- av-attr="{ title:@title, align:@bb+1 }"
- av-attr="[ @obj1, @obj2 ]"
- av-attr="@obj"
- av-attr="[ @obj1, isB ? @objB : {}]"
+ a-attr="{ title:@title, align:@bb+1 }"
+ a-attr="[ @obj1, @obj2 ]"
+ a-attr="@obj"
+ a-attr="[ @obj1, isB ? @objB : {}]"
 ```
 指定一个属性，可使用过滤器， 但其值为false，null, undefined，会移除真实DOM的对应属性
 
-#### av-visible="@toggle"
+#### a-visible="@toggle"
 可使用过滤器， 对元素的style.display进行处理
 
-### av-class
+### a-class
 ```
- av-class="{ 'class-a': @isA, 'class-b': @isB }"
- av-class="[ @a, @b ]"
- av-class="[ @classA, @isB ? @classB : '']"
+ a-class="{ 'class-a': @isA, 'class-b': @isB }"
+ a-class="[ @aObject, @bObject ]"
+ a-class="[ @aString, @isB ? @bString : '']"
+ a-class="@classString"
 ```
 可使用过滤器，为元素添加一组类名，当类名发生变动时，以前添加的类名会被移除。 有对象及数组两种形式。数组应该为一个字符串数组，且元素不能为空字符串。
 
-### av-hover
-类似于*av-class*，但在用户滑过此元素表面时会添加这些类名，离开时移除类名
+### a-hover
+类似于*a-class*，但在用户滑过此元素表面时会添加这些类名，离开时移除类名
 
-### av-active
+### a-active
 
-类似于av-class，但在用户点击此元素时添加这些类名，鼠标弹出时离开时移除类名
+类似于a-class，但在用户点击此元素时添加这些类名，鼠标弹出时离开时移除类名
 
-### av-css
+### a-css
 ```
-av-css="@styleObject"
-av-css="[@styleObject,@styleObject2]"
+a-css="@styleObject"
+a-css="[@styleObject,@styleObject2]"
 ```
 可使用过滤器，功能类似于之前的ms-css，用于设置元素的样式
 
-### av-on
+### a-on
 ```
-av-on-click="@fn"
-av-on-keydown="@xxx |enter"
-av-click="@fn"
+a-on-click="@fn"
+a-on-keydown="@xxx |enter"
+a-click="@fn"
 ```
 可使用特定的过滤器(stop, prevent, up,down,right, left, esc,tab, enter,space,del),绑事事件回调
 
 ```
 可使用过滤器，将vm中的某个字任串属性转换成HTML节点，插入到目标元素底下，
 
-### av-duplex
+### a-duplex
 可使用过滤器，双工绑定
 
 
-### av-effect
+### a-effect
 可使用过滤器，结合其他指令使用动画效果
 
-### av-widget
+### a-widget
 ```
-av-wiget="@obj"
-av-wiget="{title: @ddd, $id: "sss"}"
-av-wiget="[@obj1, @obj2 ,{$id: 'item' + i }]"
+a-wiget="@obj"
+a-wiget="{title: @ddd, $id: "sss"}"
+a-wiget="[@obj1, @obj2 ,{$id: 'item' + i }]"
 ```
-av-widget的值可以为页面上一个临时对象,也可以是一个数组,或者指向vm中的一个对象属性
+a-widget的值可以为页面上一个临时对象,也可以是一个数组,或者指向vm中的一个对象属性
 在内部发现是一个数组,会进行合并,保证只有一个对象(下称配置对象)
 此配置对象应有$id, type这两个固定配置项
 $id为组件vm的$id, type为组件的类型 
@@ -117,27 +118,27 @@ $id为组件vm的$id, type为组件的类型
 ```
 
 ```
-av-attr="{xxx:yyy}"--> props[av-attr] = fn
-av-text   --> 检测template children 与 update
-av-html   --> 检测template children 与 update
-av-duplex --> 检测DOM的update
-av-on     --> 检测DOM的update
+a-attr="{xxx:yyy}"--> props[a-attr] = fn
+a-text   --> 检测template children 与 update
+a-html   --> 检测template children 与 update
+a-duplex --> 检测DOM的update
+a-on     --> 检测DOM的update
 ```
 
 
 | 指令           | 语法               | 进度  |
 | ------------- |:-----------------:| -----:|
-| av-attr       | 对象或对象数组       | yes |
-| av-css      | 对象或对象数组       | yes |
-| av-controller | 字符串              | yes |
+| a-attr       | 对象或对象数组        | yes |
+| a-css      | 对象或对象数组          | yes |
+| a-controller | 字符串               | yes |
 | text          | 字符串              | yes |
-| av-class      | 布尔对象或字符串数组  | yes |
-| av-hover      | 布尔对象或字符串数组  | yes |
-| av-active     | 布尔对象或字符串数组  | yes |
-| av-on         | 函数                | yes |
-| av-effect     | 对象或对象数组        | no |
-| av-widget     | 对象或对象数组        | half |
-| if指令        |     合法JS代码      | yes |
-| for指令       | 类PHP的特殊语法      | yes |
-| forEnd指令    | 空指令（仅表示结束）   | yes|
-| js指令        |  合法JS代码          | yes|
+| a-class      | 布尔对象或字符串数组    | yes |
+| a-hover      | 布尔对象或字符串数组    | yes |
+| a-active     | 布尔对象或字符串数组    | yes |
+| a-on         | 函数                | yes |
+| a-effect     | 对象或对象数组        | no |
+| a-widget     | 对象或对象数组        | half |
+| if指令        |     合法JS代码        | yes |
+| for指令       | 类PHP的特殊语法        | yes |
+| forEnd指令    | 空指令（仅表示结束）     | yes|
+| js指令        |  合法JS代码            | yes|

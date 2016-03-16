@@ -2,10 +2,10 @@
 
 var msie = avalon.msie
 var quote = avalon.quote
-var markID = require("../seed/lang.share").getLongID
+var markID = require('../seed/lang.share').getLongID
 var document = avalon.document
 var pushArray = avalon.Array.merge
-var evaluatorPool = require("../strategy/parser/evaluatorPool")
+var evaluatorPool = require('../strategy/parser/evaluatorPool')
 
 
 var rchangeFilter = /\|\s*change\b/
@@ -24,42 +24,43 @@ var getset = {
     watchValueInTimer: 1
 }
 
-avalon.directive("duplex", {
+
+avalon.directive('duplex', {
     priority: 2000,
     parse: function (binding, num, elem) {
         var expr = binding.expr
         var etype = elem.props.type
         var itype
-
+console.log(elem)
         if (rcheckedFilter.test(expr)) {
             if (rcheckedType.test(etype)) {
-                itype = "checked"
+                itype = 'checked'
             } else {
-                avalon.warn("只有radio与checkbox才能用checked过滤器")
-                expr = expr.replace(rcheckedFilter, "")
+                avalon.warn('只有radio与checkbox才能用checked过滤器')
+                expr = expr.replace(rcheckedFilter, '')
             }
         }
 
         if (rchangeFilter.test(expr)) {
             if (rnoduplexInput.test(etype)) {
-                avalon.warn(etype + "不支持change过滤器")
-                expr = expr.replace(rchangeFilter, "")
+                avalon.warn(etype + '不支持change过滤器')
+                expr = expr.replace(rchangeFilter, '')
             } else {
-                itype = "change"
+                itype = 'change'
             }
         }
 
         if (!itype) {
-            itype = etype === "select" ? "select" :
-                    etype === "checkbox" ? "checkbox" :
-                    etype === "radio" ? "radio" :
-                    "input"
+            itype = etype === 'select' ? 'select' :
+                    etype === 'checkbox' ? 'checkbox' :
+                    etype === 'radio' ? 'radio' :
+                    'input'
         }
         binding.expr = expr
-        avalon.parseExpr(binding, "duplex")
-        return "vnode" + num + ".duplexVm = __vmodel__;\n" +
-                "vnode" + num + ".props.itype = " + quote(itype) + ";\n" +
-                "vnode" + num + ".props['av-duplex'] = " + quote(binding.expr) + ";\n"
+        avalon.parseExpr(binding, 'duplex')
+        return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
+                'vnode' + num + '.props.itype = ' + quote(itype) + ';\n' +
+                'vnode' + num + '.props["a-duplex"] = ' + quote(binding.expr) + ';\n'
     },
     diff: function (cur, pre) {
         if (pre.duplexData && pre.duplexData.set) {
@@ -78,7 +79,7 @@ avalon.directive("duplex", {
 
             var preValue = pre.props.value
             if (Array.isArray(value)) {
-                isEqual = value + "" === preValue + ""
+                isEqual = value + '' === preValue + ''
             } else {
                 isEqual = value === preValue
             }
@@ -86,7 +87,7 @@ avalon.directive("duplex", {
 
         if (!isEqual) {
             var afterChange = cur.afterChange || (cur.afterChange = [])
-            if (cur.type === "select") {
+            if (cur.type === 'select') {
                 avalon.Array.ensure(afterChange, duplexSelectAfter)
             }
             var list = cur.change || (cur.change = [])
@@ -102,7 +103,7 @@ avalon.directive("duplex", {
             binding.elem = node //方便进行垃圾回收
             for (var eventName in binding) {
                 var callback = binding[eventName]
-                if (!getset[eventName] && typeof callback === "function") {
+                if (!getset[eventName] && typeof callback === 'function') {
                     avalon.bind(node, eventName, binding[eventName])
                     delete binding[eventName]
                 }
@@ -125,16 +126,16 @@ avalon.directive("duplex", {
         var curValue = vnode.props.value
 
         switch (vnode.props.itype) {
-            case "input":
-            case "change":
+            case 'input':
+            case 'change':
                 if (curValue !== node.oldValue) {
                     node.value = curValue
                 }
                 break
-            case "checked":
-            case "radio":
-                curValue = vnode.props.itype === "checked" ? !!curValue :
-                        curValue + "" === node.value
+            case 'checked':
+            case 'radio':
+                curValue = vnode.props.itype === 'checked' ? !!curValue :
+                        curValue + '' === node.value
                 node.oldValue = curValue
                 if (msie === 6) {
                     setTimeout(function () {
@@ -148,12 +149,12 @@ avalon.directive("duplex", {
                     node.checked = curValue
                 }
                 break
-            case "checkbox":
+            case 'checkbox':
                 var array = [].concat(curValue) //强制转换为数组
                 curValue = node.duplexData.get(node.value)
                 node.checked = array.indexOf(curValue) > -1
                 break
-            case "select":
+            case 'select':
                 //在afterChange中处理
                 break
         }
@@ -166,25 +167,25 @@ function initDuplexData(elem) {
     var itype = elem.props.itype
     var duplexData = {}
     switch (itype) {
-        case "checked"://当用户指定了checked过滤器
+        case 'checked'://当用户指定了checked过滤器
             duplexData.click = duplexChecked
             break
-        case "radio":
+        case 'radio':
             duplexData.click = duplexValue
             break
-        case "checkbox":
-            duplexData[msie < 9 ? "click" : "change"] = duplexCheckBox
+        case 'checkbox':
+            duplexData[msie < 9 ? 'click' : 'change'] = duplexCheckBox
             break
-        case "change":
+        case 'change':
             duplexData.change = duplexValue
             break
-        case "select":
+        case 'select':
             if (!elem.children.length) {
                 pushArray(elem.children, avalon.lexer(elem.template))
             }
             duplexData.change = duplexSelect
             break
-        case "input":
+        case 'input':
             if (!msie) { // W3C
                 duplexData.input = duplexValue
                 duplexData.compositionstart = compositionStart
@@ -212,8 +213,8 @@ function initDuplexData(elem) {
 
     }
 
-    if (itype === "input" && !rnoduplexInput.test(etype)) {
-        if (etype !== "hidden") {
+    if (itype === 'input' && !rnoduplexInput.test(etype)) {
+        if (etype !== 'hidden') {
             duplexData.focus = duplexFocus
             duplexData.blur = duplexBlur
         }
@@ -224,13 +225,13 @@ function initDuplexData(elem) {
     duplexData.vnode = elem
     duplexData.set = function (val, checked) {
         var vnode = this.vnode
-        if (vnode.props.itype === "checkbox") {
+        if (vnode.props.itype === 'checkbox') {
             var array = vnode.props.value
             if (!Array.isArray(array)) {
-                avalon.warn("ms-duplex应用于checkbox上要对应一个数组")
+                avalon.warn('ms-duplex应用于checkbox上要对应一个数组')
                 array = [array]
             }
-            var method = checked ? "ensure" : "remove"
+            var method = checked ? 'ensure' : 'remove'
             if (array[method]) {
                 array[method](val)
             }
@@ -243,10 +244,9 @@ function initDuplexData(elem) {
         return this.getter(this.vmodel, val, this.elem)
     }
 
-   
-    var expr = elem.props["av-duplex"]
-    duplexData.getter = evaluatorPool.get("duplex:" + expr)
-    duplexData.setter = evaluatorPool.get("duplex:" + expr + ":setter")
+    var expr = elem.props['a-duplex']
+    duplexData.getter = evaluatorPool.get('duplex:' + expr)
+    duplexData.setter = evaluatorPool.get('duplex:' + expr + ':setter')
     elem.duplexData = duplexData
     elem.dispose = disposeDuplex
 }
@@ -286,7 +286,7 @@ function duplexCheckBox() {
 }
 
 function duplexValueHack(e) {
-    if (e.propertyName === "value") {
+    if (e.propertyName === 'value') {
         duplexValue.call(this, e)
     }
 }
@@ -312,12 +312,12 @@ function duplexValue(e) { //原来的updateVModel
                 fixCaret = true
             }
         } catch (e) {
-            avalon.warn("fixCaret error", e)
+            avalon.warn('fixCaret error', e)
         }
     }
     var lastValue = elem.duplexData.get(val)
     try {
-        elem.value = elem.oldValue = lastValue + ""
+        elem.value = elem.oldValue = lastValue + ''
         if (fixCaret) {
             setCaret(elem, pos, pos)
         }
@@ -338,7 +338,7 @@ function duplexSelect() {
     } else {
         val = elem.duplexData.get(val)
     }
-    if (val + "" !== elem.oldValue) {
+    if (val + '' !== elem.oldValue) {
         try {
             elem.duplexData.set(val)
         } catch (ex) {
@@ -365,7 +365,7 @@ markID(duplexCheckBox)
 markID(duplexSelect)
 
 if (msie) {
-    avalon.bind(document, "selectionchange", function (e) {
+    avalon.bind(document, 'selectionchange', function (e) {
         var el = document.activeElement || {}
         if (!el.msFocus && el.valueSet) {
             el.valueSet()
@@ -410,13 +410,13 @@ var watchValueInTimer = avalon.noop
         }
         var inputProto = HTMLInputElement.prototype
         Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
-        setters["INPUT"] = Object.getOwnPropertyDescriptor(aproto, "value").set
+        setters['INPUT'] = Object.getOwnPropertyDescriptor(aproto, 'value').set
 
-        Object.defineProperty(aproto, "value", {
+        Object.defineProperty(aproto, 'value', {
             set: newSetter
         })
-        setters["TEXTAREA"] = Object.getOwnPropertyDescriptor(bproto, "value").set
-        Object.defineProperty(bproto, "value", {
+        setters['TEXTAREA'] = Object.getOwnPropertyDescriptor(bproto, 'value').set
+        Object.defineProperty(bproto, 'value', {
             set: newSetter
         })
     } catch (e) {
@@ -450,7 +450,7 @@ function setCaret(ctrl, begin, end) {
     if (ctrl.createTextRange) {//IE6-8
         var range = ctrl.createTextRange()
         range.collapse(true)
-        range.moveStart("character", begin)
+        range.moveStart('character', begin)
         range.select()
     } else {
         ctrl.selectionStart = begin
@@ -458,3 +458,10 @@ function setCaret(ctrl, begin, end) {
     }
 }
 
+//  vm.property --> 
+//  formated = setters(vm.xxx)  -->
+//  input.value =  formated -->  
+//  commited = getter(vm.viewValue) --> 
+//  
+//  validate(commited)
+//  vm.property = commited

@@ -47,7 +47,7 @@ avalon.directive("duplex", {
         avalon.parseExpr(binding, "duplex")
         return "vnode" + num + ".duplexVm = __vmodel__;\n" +
                 "vnode" + num + ".props.xtype = " + quote(xtype) + ";\n" +
-                "vnode" + num + ".props['av-duplex'] = " + quote(binding.expr) + ";\n"
+                "vnode" + num + ".props['a-duplex'] = " + quote(binding.expr) + ";\n"
     },
     diff: function (cur, pre) {
         if (pre.duplexData && pre.duplexData.set) {
@@ -221,7 +221,7 @@ function initDuplexData(elem) {
         return this.getter(this.vmodel, val, this.elem)
     }
 
-    var expr = elem.props["av-duplex"]
+    var expr = elem.props["a-duplex"]
     duplexData.getter = evaluatorPool.get("duplex:" + expr)
     duplexData.setter = evaluatorPool.get("duplex:" + expr + ":setter")
     elem.duplexData = duplexData

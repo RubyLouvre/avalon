@@ -82,7 +82,7 @@ avalon.mix(filters, {
                 var last = arguments[1]
                 if (last && last.nodeType === 1) {
                     var a = parseFloat(val)
-                    return  a === "" ? "" : a !== a ? 0 : a
+                    return  val === "" ? "" : a !== a ? 0 : a
                 }
             }
             return number.apply(0, arguments)

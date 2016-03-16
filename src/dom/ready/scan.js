@@ -1,11 +1,11 @@
 function scan(nodes) {
     for (var i = 0, elem; elem = nodes[i++]; ) {
         if (elem.nodeType === 1) {
-            var $id = elem.getAttribute('av-controller') || elem.getAttribute('ms-controller')
+            var $id = elem.getAttribute('a-controller') || elem.getAttribute('ms-controller')
             var vm = avalon.vmodels[$id]
             if (vm && !vm.$element) {
                 var str = elem.outerHTML
-                avalon(elem).removeClass('ms-controller av-controller')
+                avalon(elem).removeClass('ms-controller a-controller')
 
                 vm.$element = elem
                 var now = new Date - 0

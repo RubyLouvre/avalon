@@ -3,15 +3,15 @@ var attrUpdate = require('../dom/attr/compact')
 
 avalon.directive('attr', {
     parse: function (binding, num) {
-        return 'vnode' + num + '.props["av-attr"] = ' + avalon.parseExpr(binding) + ';\n'
+        return 'vnode' + num + '.props["a-attr"] = ' + avalon.parseExpr(binding) + ';\n'
 
     },
     diff: function (cur, pre) {
-        var a = cur.props['av-attr']
-        var p = pre.props['av-attr']
+        var a = cur.props['a-attr']
+        var p = pre.props['a-attr']
         if (a && typeof a === 'object') {
             if (Array.isArray(a)) {
-                a = cur.props['av-attr'] = avalon.mix.apply({}, a)
+                a = cur.props['a-attr'] = avalon.mix.apply({}, a)
             }
             if (typeof p !== 'object') {
                 cur.changeAttr = a
@@ -33,7 +33,7 @@ avalon.directive('attr', {
                 avalon.Array.ensure(list, this.update)
             }
         } else {
-            cur.props['av-attr'] = pre.props['av-attr']
+            cur.props['a-attr'] = pre.props['a-attr']
         }
     },
     //dom, vnode

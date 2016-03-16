@@ -3,7 +3,7 @@ var markID = require('../seed/lang.share').getLongID
 var quote = avalon.quote
 
 //基于事件代理的高性能事件绑定
-var revent = /^av-on-(\w+)/
+var revent = /^a-on-(\w+)/
 var rfilters = /\|.+/g
 var rvar = /([@$]?\w+)/g
 var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g

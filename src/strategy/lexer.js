@@ -26,8 +26,8 @@ var rfill = /\?\?\d+/g
 
 var rnumber = /\d+/g
 var rsp = /^\s+$/
-var rspAfterForStart = /^(ms|av)-for\:/
-var rspBeforeForEnd = /^(ms|av)-for-end\:/
+var rspAfterForStart = /^(ms|a)-for\:/
+var rspBeforeForEnd = /^(ms|a)-for-end\:/
 var rleftTrim = /^\s+/
 var rbind = avalon.config.rbind
 
@@ -69,7 +69,7 @@ function lexer(text, recursive) {
                 node = new VComment(match[1].replace(rfill, fill))
                 if (rspBeforeForEnd.test(node.nodeValue)) {
                     var sp = nodes[nodes.length - 1]
-                    //移除紧挨着<!--av-for-end:xxxx-->前的空白节点
+                    //移除紧挨着<!--a-for-end:xxxx-->前的空白节点
                     if (sp && sp.type === '#text' && rsp.test(sp.nodeValue)) {
                         nodes.pop()
                     }
@@ -131,7 +131,7 @@ function lexer(text, recursive) {
             text = text.slice(outerHTML.length)
             if (node.type === '#comment' && rspAfterForStart.test(node.nodeValue)) {
                 node.signature = makeHashCode('for')
-                //移除紧挨着<!--av-for:xxxx-->后的空白节点
+                //移除紧挨着<!--a-for:xxxx-->后的空白节点
                 text = text.replace(rleftTrim, '')
             }
         } else {
@@ -193,7 +193,7 @@ function clipOuterHTML(matchText, type) {
 
 function modifyProps(node, innerHTML, nodes) {
     var type = node.type
-    if (node.props['av-skip']) {
+    if (node.props['a-skip']) {
         node.skipContent = true
     } else {
         switch (type) {
@@ -227,19 +227,19 @@ function modifyProps(node, innerHTML, nodes) {
                 }
                 break
         }
-        var forExpr = node.props['ms-for'] || node.props['av-for']
+        var forExpr = node.props['ms-for'] || node.props['a-for']
         if (forExpr) {
             nodes.push({
                 type: '#comment',
-                nodeValue: 'av-for:' + forExpr,
+                nodeValue: 'a-for:' + forExpr,
                 signature: makeHashCode('for')
             })
             delete node.props['ms-for']
-            delete node.props['av-for']
+            delete node.props['a-for']
             nodes.push(node)
             node = {
                 type: '#comment',
-                nodeValue: 'av-for-end:'
+                nodeValue: 'a-for-end:'
             }
         }
     }

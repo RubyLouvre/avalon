@@ -17,7 +17,7 @@ avalon._each = function (obj, fn) {
         }
     }
 }
-var rforPrefix = /av-for\:\s*/
+var rforPrefix = /a-for\:\s*/
 var rforLeft = /^\s*\(\s*/
 var rforRight = /\s*\)\s*$/
 var rforSplit = /\s*,\s*/
@@ -205,9 +205,9 @@ function getForByNodeValue(nodes, i) {
     var isBreak = 0, ret = [], node
     while (node = nodes[i++]) {
         if (node.type === "#comment") {
-            if (node.nodeValue.indexOf("av-for:") === 0) {
+            if (node.nodeValue.indexOf("a-for:") === 0) {
                 isBreak++
-            } else if (node.nodeValue.indexOf("av-for-end:") === 0) {
+            } else if (node.nodeValue.indexOf("a-for-end:") === 0) {
                 isBreak--
             }
         }

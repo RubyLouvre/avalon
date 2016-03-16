@@ -1,5 +1,5 @@
 var template = require("text!./panel.html")
-avalon.component("av-panel", {
+avalon.component("a-panel", {
     template: template,
     defaults: {
         title: "标题"
