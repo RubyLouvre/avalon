@@ -81,7 +81,7 @@ avalon.fn.mix({
     },
     toggleClass: function (value, stateVal) {
         var className, i = 0
-        var classNames = String(value).split(/\S+/g) || []
+        var classNames = String(value).match(/\S+/g) || []
         var isBool = typeof stateVal === "boolean"
         while ((className = classNames[i++])) {
             var state = isBool ? stateVal : !this.hasClass(className)
