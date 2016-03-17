@@ -45,6 +45,7 @@ avalon.mix(filters, {
     date: date,
     escape: escape,
     sanitize: sanitize,
+    number: number,
     currency: function (amount, symbol, fractionSize) {
         return (symbol || "\uFFE5") +
                 number(amount,
@@ -54,41 +55,8 @@ avalon.mix(filters, {
 
 
 
-function fixNull(val) {
-    return val == null ? "" : val
-}
 
-avalon.mix(filters, {
-    checked: {
-        get: function (val, elem) {
-            return !elem.oldValue
-        }
-    },
-    string: {//转换为字符串或,字符串数组
-        get: function (val) { //同步到VM
-            return val == null ? "" : val + ""
-        },
-        set: fixNull
-    },
-    boolean: {
-        get: function (val) {
-            return val === "true"
-        },
-        set: fixNull
-    },
-    number: {
-        get: function (val) {
-            if (arguments.length === 2) {
-                var last = arguments[1]
-                if (last && last.nodeType === 1) {
-                    var a = parseFloat(val)
-                    return  val === "" ? "" : a !== a ? 0 : a
-                }
-            }
-            return number.apply(0, arguments)
-        },
-        set: fixNull
-    }
-})
+
+
 
 module.exports = avalon

@@ -60,8 +60,7 @@ function parseExpr(str, category) {
     }
 
 //处理表达式的过滤器部分
-    var filtersStr = ""
-
+  
 
     var filters = input.map(function (str) {
 
@@ -110,7 +109,7 @@ function parseExpr(str, category) {
             '}',
             '}']
         fn = Function('return ' + getterBody.join('\n'))()
-        evaluatorPool.put('duplex:' + str.trim(), fn)
+        evaluatorPool.put('duplex:getter' + str.trim(), fn)
         //给vm同步某个属性
         var setterBody = [
             'function (__vmodel__,__value__){',
@@ -124,8 +123,7 @@ function parseExpr(str, category) {
         evaluatorPool.put('duplex:setter:' + str.trim(), fn)
         //对某个值进行格式化
 
-
-        var formatorBody = [
+        var formatBody = [
             'function (__vmodel__, __value__){',
             'try{',
             filters.join('\n'),
@@ -134,10 +132,8 @@ function parseExpr(str, category) {
             '\tavalon.log(e, ' + quoteError(str, category) + ')',
             '}',
             '}']
-        fn = Function('return ' + getterBody.join('\n'))()
+        fn = Function('return ' + formatBody.join('\n'))()
         evaluatorPool.put('duplex:format:' + str.trim(), fn)
-
-
 
         return
     } else {
@@ -167,62 +163,3 @@ function quoteError(str, type) {
 }
 
 module.exports = avalon.parseExpr = parseExpr
-var rtype = /^(v|p|e)-/
-function applyFilter(input, matchType) {
-    input.map(function (str) {
-        var type = str.match(rtype) || ["f"]
-        if (matchType === type) {
-            str = str.slice(2)
-            if (type === "v") {
-
-            } else {
-                str = str.replace(rfill, fill).replace(rAt, '$1__vmodel__.') //还原
-                var hasBracket = false
-                str = str.replace(brackets, function (a, b) {
-                    hasBracket = true
-                    return /\S/.test(b) ?
-                            '(__value__,' + b + ');' :
-                            '(__value__);'
-                })
-                if (!hasBracket) {
-                    str += '(__value__);'
-                }
-            }
-
-            if (type === "v") {
-                str = str.replace(/__value__/g, "__value,__formated__")
-            }
-        }
-
-        str = str.replace(rfill, fill).replace(rAt, '$1__vmodel__.') //还原
-        var hasBracket = false
-        str = str.replace(brackets, function (a, b) {
-            hasBracket = true
-            return /\S/.test(b) ?
-                    '(__value__,' + b + ');' :
-                    '(__value__);'
-        })
-        if (!hasBracket) {
-            str += '(__value__);'
-        }
-        str = str.replace(/(\w+)/, 'avalon.__read__("$1")')
-        return '__value__ = ' + str
-    })
-}
-
-var filters = input.map(function (str) {
-
-    str = str.replace(rfill, fill).replace(rAt, '$1__vmodel__.') //还原
-    var hasBracket = false
-    str = str.replace(brackets, function (a, b) {
-        hasBracket = true
-        return /\S/.test(b) ?
-                '(__value__,' + b + ');' :
-                '(__value__);'
-    })
-    if (!hasBracket) {
-        str += '(__value__);'
-    }
-    str = str.replace(/(\w+)/, 'avalon.__read__("$1")')
-    return '__value__ = ' + str
-})

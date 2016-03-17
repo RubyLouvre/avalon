@@ -15,6 +15,17 @@ avalon.mix({
     eventHooks: {},
     eventListeners: {},
     cssHooks: cssHooks,
+    parsers: {
+        number: function (a) {
+            return a === '' ? '' : parseFloat(a) || 0
+        },
+        string: function (a) {
+            return a === null || a === void 0 ? '' : a + ''
+        },
+        boolean: function (a) {
+            return a === 'true'
+        }
+    },
     version: 2.0,
     css: function (node, name, value, fn) {
         //读写删除元素节点的样式
