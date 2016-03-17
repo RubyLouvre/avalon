@@ -23,7 +23,10 @@ var getset = {
     set: 1,
     watchValueInTimer: 1
 }
-
+//duplex-number
+//duplex-string
+//duplex-boolean
+//duplex-checked
 
 avalon.directive('duplex', {
     priority: 2000,
@@ -464,3 +467,9 @@ function setCaret(ctrl, begin, end) {
 //  
 //  validate(commited)
 //  vm.property = commited
+
+// 在diff里面发现不一样, change 
+// change进行格式化 设置viewValue
+// 在事件(包括用户手动改value)对value进行数据转换(数据验证以后实现), 变成modelValue,同步到model
+// 
+// # $
