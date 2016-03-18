@@ -54,14 +54,14 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var avalon = __webpack_require__(73) 
+	var avalon = __webpack_require__(74) 
 
 	__webpack_require__(8)
 	__webpack_require__(15)
-	__webpack_require__(75)
-	__webpack_require__(84)
-	__webpack_require__(58)
-	__webpack_require__(90)
+	__webpack_require__(76)
+	__webpack_require__(85)
+	__webpack_require__(59)
+	__webpack_require__(91)
 
 
 	module.exports = avalon
@@ -2013,7 +2013,96 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = valueHijack
 
 /***/ },
-/* 50 */,
+/* 50 */
+/***/ function(module, exports) {
+
+	var rchangeFilter = /\|\s*change\b/
+	var rcheckedType = /^(?:checkbox|radio)$/
+	var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/
+	var rnoduplexInput = /^(file|button|reset|submit|checkbox|radio|range)$/
+
+	function newControl(binding, vnode) {
+	    var expr = binding.expr
+	    var etype = vnode.props.type
+	    //处理数据转换器
+	    var ptype = binding.param
+	    var isChecked = ptype === 'checked'
+
+	    var ctrl = vnode.ctrl = {
+	        parsers: [],
+	        formatters: [],
+	        modelValue: NaN,
+	        viewValue: NaN,
+	        type: 'input',
+	        parse: parse,
+	        format: format
+	    }
+	    if (isChecked) {
+	        if (rcheckedType.test(etype)) {
+	            ctrl.isChecked = true
+	            ctrl.type = 'radio'
+	        } else {
+	            ptype = null
+	        }
+	    }
+
+	    var parser = avalon.parsers[ptype]
+
+	    if (parser) {
+	        ctrl.parsers.push(parser)
+	    }
+
+	    if (rchangeFilter.test(expr)) {
+	        expr = expr.replace(rchangeFilter, '')
+	        if (rnoduplexInput.test(etype)) {
+	            avalon.warn(etype + '不支持change过滤器')
+	        } else {
+	            ctrl.isChanged = true
+	        }
+	    }
+
+	    var match = expr.match(rdebounceFilter)
+	    if (match) {
+	        expr = expr.replace(rdebounceFilter, '')
+	        if (!ctrl.isChanged) {
+	            ctrl.debounceTime = parseInt(match[1], 10) || 300
+	        }
+	    }
+	    binding.expr = ctrl.expr = expr.trim()
+	    
+	    if (!/input|textarea|select/.test(etype)) {
+	        if ('contenteditable' in vnode.props) {
+	            ctrl.type = 'contenteditable'
+	        }
+	    } else if (ctrl.type) {
+	        ctrl.type = etype === 'select' ? 'select' :
+	                etype === 'checkbox' ? 'checkbox' :
+	                etype === 'radio' ? 'radio' :
+	                'input'
+	    }
+	    avalon.parseExpr(binding, 'duplex')
+	}
+
+	function parse(val) {
+	    for (var i = 0, fn; fn = this.parsers[i++]; ) {
+	        val = fn.call(this, val)
+	    }
+	    return val
+	}
+
+	function format(val) {
+	    var formatters = this.formatters
+	    var index = formatters.length
+	    while (index--) {
+	        val = formatters[index](val)
+	    }
+	    return val
+	}
+
+	module.exports = newControl
+
+
+/***/ },
 /* 51 */,
 /* 52 */
 /***/ function(module, exports) {
@@ -2021,11 +2110,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	/**
 	 * ------------------------------------------------------------
-	 * refreshData
+	 * refreshModel
 	 * 在事件回调与value的setter中调用这些方法,来同步vm
 	 * ------------------------------------------------------------
 	 */
-	var refreshData = {
+	var refreshModel = {
 	    input: function () {//处理单个value值处理
 	        var ctrl = this
 	        var viewValue = ctrl.elem.value
@@ -2050,7 +2139,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var val = ctrl.modelValue = !ctrl.modelValue
 	            ctrl.set(ctrl.vmodel, val)
 	        } else {
-	            refreshData.input.call(ctrl)
+	            refreshModel.input.call(ctrl)
 	        }
 	    },
 	    checkbox: function () {
@@ -2091,7 +2180,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	}
-	module.exports = refreshData
+	module.exports = refreshModel
 
 /***/ },
 /* 53 */
@@ -2104,10 +2193,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 54 */
+/* 54 */,
+/* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var patch = __webpack_require__(55)
+	var patch = __webpack_require__(56)
 
 	avalon.directive("if", {
 	    priority: 5,
@@ -2145,7 +2235,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 55 */
+/* 56 */
 /***/ function(module, exports) {
 
 	/**
@@ -2214,11 +2304,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = patch
 
 /***/ },
-/* 56 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var updateEntity = __webpack_require__(55)
+	var updateEntity = __webpack_require__(56)
 
 	avalon._each = function (obj, fn) {
 	    if (Array.isArray(obj)) {
@@ -2478,17 +2568,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 57 */,
-/* 58 */
+/* 58 */,
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	avalon.lexer = __webpack_require__(59)
-	avalon.diff = __webpack_require__(60)
-	avalon.batch = __webpack_require__(61)
+	avalon.lexer = __webpack_require__(60)
+	avalon.diff = __webpack_require__(61)
+	avalon.batch = __webpack_require__(62)
 	// dispatch与patch 为内置模块
 
-	var parseView = __webpack_require__(62)
+	var parseView = __webpack_require__(63)
 
 	function render(vtree) {
 	    var num = num || String(new Date - 0).slice(0, 6)
@@ -2502,7 +2592,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 59 */
+/* 60 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2827,7 +2917,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = lexer
 
 /***/ },
-/* 60 */
+/* 61 */
 /***/ function(module, exports) {
 
 	/**
@@ -2897,7 +2987,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = diff
 
 /***/ },
-/* 61 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -2907,7 +2997,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * ------------------------------------------------------------
 	 */
 
-	var patch = __webpack_require__(55)
+	var patch = __webpack_require__(56)
 
 	//如果正在更新一个子树,那么将它放到
 	var dirtyTrees = {}
@@ -2959,13 +3049,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 62 */
+/* 63 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var parseExpr = __webpack_require__(63)
-	var parseText = __webpack_require__(64)
-	var parseBindings = __webpack_require__(65)
+	var parseExpr = __webpack_require__(64)
+	var parseText = __webpack_require__(65)
+	var parseBindings = __webpack_require__(66)
 	var rexpr = avalon.config.rexpr
 	var quote = avalon.quote
 	var makeHashCode = avalon.makeHashCode
@@ -3103,7 +3193,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = parseView
 
 /***/ },
-/* 63 */
+/* 64 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -3217,7 +3307,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            '}',
 	            '}']
 	        fn = Function('return ' + getterBody.join('\n'))()
-	        evaluatorPool.put('duplex:' + str.trim(), fn)
+	        evaluatorPool.put('duplex:' + str, fn)
 	        //给vm同步某个属性
 	        var setterBody = [
 	            'function (__vmodel__,__value__){',
@@ -3228,7 +3318,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            '}',
 	            '}']
 	        fn = Function('return ' + setterBody.join('\n'))()
-	        evaluatorPool.put('duplex:set:' + str.trim(), fn)
+	        evaluatorPool.put('duplex:set:' + str, fn)
 	        //对某个值进行格式化
 	        if(input.length){
 	            var formatBody = [
@@ -3241,7 +3331,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                '}',
 	                '}']
 	            fn = Function('return ' + formatBody.join('\n'))()
-	            evaluatorPool.put('duplex:format:' + str.trim(), fn)
+	            evaluatorPool.put('duplex:format:' + str, fn)
 	        }
 	        return
 	    } else {
@@ -3274,7 +3364,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 64 */
+/* 65 */
 /***/ function(module, exports) {
 
 	var rline = /\r?\n/g
@@ -3325,7 +3415,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 65 */
+/* 66 */
 /***/ function(module, exports) {
 
 	var rneedQuote = /[W-]/
@@ -3401,17 +3491,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = parseBindings
 
 /***/ },
-/* 66 */,
 /* 67 */,
-/* 68 */
+/* 68 */,
+/* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var dispatch = __webpack_require__(69)
+	var dispatch = __webpack_require__(70)
 	var $watch = dispatch.$watch
 	var $emit = dispatch.$emit
 	var $$midway = {}
-	var $$skipArray = __webpack_require__(70)
+	var $$skipArray = __webpack_require__(71)
 
 
 	function makeFire($vmodel, heirloom) {
@@ -3578,7 +3668,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 69 */
+/* 70 */
 /***/ function(module, exports) {
 
 	
@@ -3656,7 +3746,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 70 */
+/* 71 */
 /***/ function(module, exports) {
 
 	/**
@@ -3672,9 +3762,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = avalon.oneObject('$id,$render,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode')
 
 /***/ },
-/* 71 */,
 /* 72 */,
-/* 73 */
+/* 73 */,
+/* 74 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -3683,14 +3773,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.mix(avalon, browser)
 
-	__webpack_require__(74)
+	__webpack_require__(75)
 	__webpack_require__(6)
 	__webpack_require__(7)
 
 	module.exports = avalon
 
 /***/ },
-/* 74 */
+/* 75 */
 /***/ function(module, exports) {
 
 	//这里放置存在异议的方法
@@ -3843,7 +3933,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 75 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -3852,7 +3942,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *           shim,class,data,css,val,html,event,ready               *
 	 **********************************************************************/
 
-	__webpack_require__(76)
 	__webpack_require__(77)
 	__webpack_require__(78)
 	__webpack_require__(79)
@@ -3860,12 +3949,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(81)
 	__webpack_require__(82)
 	__webpack_require__(83)
+	__webpack_require__(84)
 
 	module.exports = avalon
 
 
 /***/ },
-/* 76 */
+/* 77 */
 /***/ function(module, exports) {
 
 	//safari5+是把contains方法放在Element.prototype上而不是Node.prototype
@@ -3959,7 +4049,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 77 */
+/* 78 */
 /***/ function(module, exports) {
 
 	var rnowhite = /\S+/g
@@ -3998,7 +4088,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 78 */
+/* 79 */
 /***/ function(module, exports) {
 
 	
@@ -4076,7 +4166,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 79 */
+/* 80 */
 /***/ function(module, exports) {
 
 	var root = avalon.root
@@ -4326,7 +4416,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 80 */
+/* 81 */
 /***/ function(module, exports) {
 
 	function getValType(elem) {
@@ -4395,7 +4485,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 81 */
+/* 82 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Cache = __webpack_require__(27)
@@ -4491,7 +4581,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 82 */
+/* 83 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var document = avalon.document
@@ -4767,7 +4857,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 83 */
+/* 84 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var scan = __webpack_require__(35)
@@ -4805,10 +4895,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 84 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(85)
+	__webpack_require__(86)
 	__webpack_require__(40)
 	__webpack_require__(41)
 	__webpack_require__(42)
@@ -4818,16 +4908,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(45)
 	__webpack_require__(46)
 	__webpack_require__(47)
-	__webpack_require__(87)
-	__webpack_require__(54)
-	__webpack_require__(56)
+	__webpack_require__(88)
+	__webpack_require__(55)
+	__webpack_require__(57)
 
 /***/ },
-/* 85 */
+/* 86 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var attrUpdate = __webpack_require__(86)
+	var attrUpdate = __webpack_require__(87)
 
 	avalon.directive('attr', {
 	    parse: function (binding, num) {
@@ -4870,7 +4960,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 86 */
+/* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var propMap = __webpack_require__(39)
@@ -4920,77 +5010,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = attrUpdate
 
 /***/ },
-/* 87 */
+/* 88 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var msie = avalon.msie
-	var quote = avalon.quote
+	
 	var valueHijack = __webpack_require__(49)
-	var refreshView = __webpack_require__(88)
-	var initMonitor = __webpack_require__(89)
 
-	var rchangeFilter = /\|\s*change\b/
-	var rcheckedType = /^(?:checkbox|radio)$/
-	var rnoduplexInput = /^(file|button|reset|submit|checkbox|radio|range)$/
+	var newControl = __webpack_require__(50)
+	var initControl = __webpack_require__(89)
+	var refreshControl = __webpack_require__(90)
+
 
 	avalon.directive('duplex', {
 	    priority: 2000,
-	    parse: function (binding, num, elem) {
-	        var expr = binding.expr
-	        var etype = elem.props.type
-	        //处理数据转换器
-	        var ptype = binding.param
-	        var isChecked = ptype === 'checked'
+	    parse: function (binding, num, vnode) {
+	        newControl(binding, vnode)
 
-	        var ctrl = elem.ctrl = {
-	            parsers: [],
-	            formatters: [],
-	            modelValue: NaN,
-	            viewValue: NaN,
-	            type: 'input',
-	            expr: expr,
-	            parse: parse,
-	            format: format,
-	        }
-	        if (isChecked) {
-	            if (rcheckedType.test(etype)) {
-	                ctrl.isChecked = true
-	                ctrl.type = 'radio'
-	            } else {
-	                ptype = null
-	            }
-	        }
-
-	        var parser = avalon.parsers[ptype]
-
-	        if (parser) {
-	            ctrl.parsers.push(parser)
-	        }
-
-	        if (rchangeFilter.test(expr)) {
-	            expr = expr.replace(rchangeFilter, '')
-	            if (rnoduplexInput.test(etype)) {
-	                avalon.warn(etype + '不支持change过滤器')
-	            } else {
-	                ctrl.isChanged = true
-	            }
-
-	        }
-
-	        if (!/input|textarea|select/.test(etype)) {
-	            if ('contenteditable' in elem.props) {
-	                ctrl.type = 'contenteditable'
-	            }
-	        } else if (ctrl.type) {
-	            ctrl.type = etype === 'select' ? 'select' :
-	                    etype === 'checkbox' ? 'checkbox' :
-	                    etype === 'radio' ? 'radio' :
-	                    'input'
-	        }
-
-	        avalon.parseExpr(ctrl, 'duplex')
 	        return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
-	                'vnode' + num + '.props["a-duplex"] = ' + quote(ctrl.expr) + ';\n'
+	                'vnode' + num + '.props["a-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
 	    },
 	    diff: function (cur, pre) {
 	        if (pre.ctrl && pre.ctrl.set) {
@@ -5035,7 +5072,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 
-	        if (!msie && valueHijack === false && !node.valueHijack) {
+	        if (!avalon.msie && valueHijack === false && !node.valueHijack) {
 	            //chrome 42及以下版本需要这个hack
 	            node.valueHijack = ctrl.update
 	            var intervalID = setInterval(function () {
@@ -5047,11 +5084,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }, 30)
 	        }
 
-	        var viewValue = ctrl.format(ctrl.modelValue)
+	        var viewValue = ctrl.modelValue
 
 	        if (ctrl.viewValue !== viewValue) {
 	            ctrl.viewValue = viewValue
-	            refreshView[ctrl.type].call(ctrl)
+	            refreshControl[ctrl.type].call(ctrl)
 	            if (node.caret) {
 	                ctrl.updateCaret(node, ctrl.caretPos, ctrl.caretPos)
 	            }
@@ -5060,65 +5097,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 
-	function parse(val) {
-	    for (var i = 0, fn; fn = this.parsers[i++]; ) {
-	        val = fn.call(this, val)
-	    }
-	    return val
-	}
 
-	function format(val) {
-	    //当数据转换器为checked时,一切格式化过滤器都失效
-	    if (this.isChecked)
-	        return val
-	    var formatters = this.formatters
-	    var index = formatters.length
-	    while (index--) {
-	        val = formatters[index](val)
-	    }
-	    return val
-	}
-
-
-
-/***/ },
-/* 88 */
-/***/ function(module, exports) {
-
-	var refreshView = {
-	    input: function () {//处理单个value值处理
-	        this.elem.value = this.viewValue
-	    },
-	    radio: function () {//处理单个checked属性
-	        var checked
-	        if (this.isChecked) {
-	            checked = !!this.viewValue
-	        } else {
-	            checked = this.viewValue + '' === this.elem.value
-	        }
-	        this.elem.checked = checked
-	    },
-	    checkbox: function () {//处理多个checked属性
-	        var checked = false
-	        var elem = this.elem
-	        var value = elem.value
-	        for (var i = 0; i < this.modelValue.length; i++) {
-	            var el = this.modelValue[i]
-	            if (el + '' === value) {
-	                checked = true
-	            }
-	        }
-	        elem.checked = checked
-	    },
-	    select: function () {//处理子级的selected属性
-	        avalon(this.elem).val(this.viewValue)
-	    },
-	    contenteditable: function () {//处理单个innerHTML
-	        this.elem.innerHTML = this.viewValue
-	    }
-	}
-
-	module.exports = refreshView
 
 /***/ },
 /* 89 */
@@ -5126,11 +5105,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	var document = avalon.document
-	var refreshData = __webpack_require__(52)
+	var refreshModel = __webpack_require__(52)
 	var markID = __webpack_require__(6).getLongID
 	var evaluatorPool = __webpack_require__(53)
 
-	function initMonitor(cur, pre) {
+	function initControl(cur, pre) {
 	    var ctrl = cur.ctrl = pre.ctrl
 
 	    ctrl.update = updateModel
@@ -5209,7 +5188,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	            avalon.warn('fixCaret error', e)
 	        }
 	    }
-	    refreshData[ctrl.type].call(ctrl)
+	    if (ctrl.debounceTime > 4) {
+	        var timestamp = new Date()
+	        var left = timestamp - ctrl.time || 0
+	        ctrl.time = timestamp
+	        if (left >= ctrl.debounceTime) {
+	            refreshModel[ctrl.type].call(ctrl)
+	        } else {
+	            clearTimeout(ctrl.debounceID)
+	            ctrl.debounceID = setTimeout(function () {
+	                refreshModel[ctrl.type].call(ctrl)
+	            }, left)
+	        }
+	    } else {
+	        refreshModel[ctrl.type].call(ctrl)
+	    }
 	}
 
 
@@ -5258,14 +5251,53 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ctrl.selectionEnd = end
 	}
 
-	module.exports = initMonitor
+	module.exports = initControl
 
 /***/ },
 /* 90 */
+/***/ function(module, exports) {
+
+	var refreshControl = {
+	    input: function () {//处理单个value值处理
+	        this.elem.value = this.viewValue
+	    },
+	    radio: function () {//处理单个checked属性
+	        var checked
+	        if (this.isChecked) {
+	            checked = !!this.viewValue
+	        } else {
+	            checked = this.viewValue + '' === this.elem.value
+	        }
+	        this.elem.checked = checked
+	    },
+	    checkbox: function () {//处理多个checked属性
+	        var checked = false
+	        var elem = this.elem
+	        var value = elem.value
+	        for (var i = 0; i < this.modelValue.length; i++) {
+	            var el = this.modelValue[i]
+	            if (el + '' === value) {
+	                checked = true
+	            }
+	        }
+	        elem.checked = checked
+	    },
+	    select: function () {//处理子级的selected属性
+	        avalon(this.elem).val(this.viewValue)
+	    },
+	    contenteditable: function () {//处理单个innerHTML
+	        this.elem.innerHTML = this.viewValue
+	    }
+	}
+
+	module.exports = refreshControl
+
+/***/ },
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var share = __webpack_require__(91)
+	var share = __webpack_require__(92)
 	var isSkip = share.isSkip
 	var $$midway = share.$$midway
 	var $$skipArray = share.$$skipArray
@@ -5538,10 +5570,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 91 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var share = __webpack_require__(68)
+	var share = __webpack_require__(69)
 	var makeFire = share.makeFire
 
 	function toJson(val) {

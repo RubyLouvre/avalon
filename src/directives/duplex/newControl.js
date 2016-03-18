@@ -47,7 +47,6 @@ function newControl(binding, vnode) {
     if (match) {
         expr = expr.replace(rdebounceFilter, '')
         if (!ctrl.isChanged) {
-            ctrl.isDebounced = true
             ctrl.debounceTime = parseInt(match[1], 10) || 300
         }
     }

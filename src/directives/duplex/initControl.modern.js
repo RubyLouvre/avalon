@@ -83,7 +83,21 @@ function updateModel() {
             avalon.warn('fixCaret error', e)
         }
     }
-    refreshModel[ctrl.type].call(ctrl)
+    if (ctrl.debounceTime > 4) {
+        var timestamp = new Date()
+        var left = timestamp - ctrl.time || 0
+        ctrl.time = timestamp
+        if (left >= ctrl.debounceTime) {
+            refreshModel[ctrl.type].call(ctrl)
+        } else {
+            clearTimeout(ctrl.debounceID)
+            ctrl.debounceID = setTimeout(function () {
+                refreshModel[ctrl.type].call(ctrl)
+            }, left)
+        }
+    } else {
+        refreshModel[ctrl.type].call(ctrl)
+    }
 }
 
 
