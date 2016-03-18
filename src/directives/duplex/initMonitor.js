@@ -31,7 +31,26 @@ function initMonitor(cur, pre) {
             if (ctrl.isChanged) {
                 events.blur = updateModel
             } else {
-                events.change = updateModel
+                if (avalon.modern) {
+                    if ("MutationEvent" in window) {
+                        events.DOMCharacterDataModified = updateModel
+                    }
+                    if ('webkitHidden' in document || window.webkitURL || window.chrome) {
+                        // http://code.metager.de/source/xref/WebKit/LayoutTests/fast/events/
+                        // https://bugs.webkit.org/show_bug.cgi?id=110742
+                        events.webkitEditableContentChanged = updateModel
+                    }
+                    events.input = updateModel
+                } else {
+                  
+                    events.keydown = updateModelKeyDown
+                    events.paste = updateModelDelay
+                    events.cut = updateModelDelay
+                    events.focus = closeComposition
+                    events.blur = openComposition
+
+                }
+
             }
             break
         case 'input':
@@ -132,7 +151,6 @@ function openComposition() {
 
 function closeComposition(e) {
     this.composing = false
-    updateModel.call(this, e)
 }
 function updateModelKeyDown(e) {
     var key = e.keyCode;

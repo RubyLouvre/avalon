@@ -2,7 +2,7 @@ var markID = require('../../seed/lang.share').getLongID
 var document = avalon.document
 var refreshData = require('./refreshData')
 var msie = avalon.msie
-
+var rootStyle = avalon.root.style || {}
 function initMonitor(cur, pre) {
     var ctrl = cur.ctrl = pre.ctrl
 
@@ -31,13 +31,13 @@ function initMonitor(cur, pre) {
             if (ctrl.isChanged) {
                 events.blur = updateModel
             } else {
-                if("MutationEvent" in window){
+                if ('MutationEvent' in window) {
                     events.DOMCharacterDataModified = updateModel
                 }
-                if ("WebkitAppearance" in root.style) {
-                     // http://code.metager.de/source/xref/WebKit/LayoutTests/fast/events/
-                   // https://bugs.webkit.org/show_bug.cgi?id=110742
-                   events.webkitEditableContentChanged = updateModel
+                if ('webkitHidden' in document || window.webkitURL || window.chrome) {
+                    // http://code.metager.de/source/xref/WebKit/LayoutTests/fast/events/
+                    // https://bugs.webkit.org/show_bug.cgi?id=110742
+                    events.webkitEditableContentChanged = updateModel
                 }
                 events.input = updateModel
             }

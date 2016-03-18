@@ -1,9 +1,9 @@
 var msie = avalon.msie
 var quote = avalon.quote
-
-var refreshView = require('./refreshView')
 var valueHijack = require('./valueHijack')
-var initMonitor = require('./initMonitor')
+
+var refreshView = require('./refreshView.modern')
+var initMonitor = require('./initMonitor.modern')
 
 var rchangeFilter = /\|\s*change\b/
 var rcheckedType = /^(?:checkbox|radio)$/
@@ -17,7 +17,6 @@ avalon.directive('duplex', {
         //处理数据转换器
         var ptype = binding.param
         var isChecked = ptype === 'checked'
-
 
         var ctrl = elem.ctrl = {
             parsers: [],
