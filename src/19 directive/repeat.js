@@ -86,22 +86,20 @@ avalon.directive("repeat", {
         
         //检查新元素数量
         var newCount = 0
-        for (i = 0; i < length; i++)
-        {
+        for (i = 0; i < length; i++) {
             var keyOrId = track[i]
             if (!retain[keyOrId])
                 newCount++
         }
         var oldCount = 0
-        for (key in retain)
+        for (i in retain){
             oldCount++
-
-        var clear = (length == 0 || newCount == length) && oldCount > 10   //当全部是新元素,且移除元素较多(10)时使用clear
-        if (clear)
-        {
+        }
+        var clear = (!length || newCount === length) && oldCount > 10   //当全部是新元素,且移除元素较多(10)时使用clear
+        if (clear){
             var kill = elem.previousSibling
             var start = binding.start
-            while(kill != start)
+            while(kill !== start)
             {
                 parent.removeChild(kill)
                 kill = elem.previousSibling
@@ -110,7 +108,7 @@ avalon.directive("repeat", {
         
         for (i = 0; i < length; i++) {
 
-            var keyOrId = track[i] //array为随机数, object 为keyName
+            keyOrId = track[i] //array为随机数, object 为keyName
             var proxy = retain[keyOrId]
             if (!proxy) {
 

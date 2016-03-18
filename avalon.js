@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.5.6 built in 2016.2.24
+ avalon.js 1.5.6 built in 2016.3.18
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1798,7 +1798,11 @@ avalon.injectBinding = function (binding) {
                 if (binding.type === "on") {
                     a = binding.getter + ""
                 } else {
-                    a = binding.getter.apply(0, binding.args)
+                    try {
+                        a = binding.getter.apply(0, binding.args)
+                    } catch(e) {
+                        a = null
+                    }
                 }
             } else {
                 a = args[0]
@@ -1827,7 +1831,7 @@ avalon.injectBinding = function (binding) {
                 binding.oldValue = a.concat()
             } else if (!("oldValue" in binding) || a !== b) {
                 binding.handler(a, b)
-                binding.oldValue = a
+                binding.oldValue = Array.isArray(a) ? a.concat() : a
             }
         } catch (e) {
             delete binding.getter
@@ -2167,7 +2171,7 @@ avalon.fn.mix({
     },
     toggleClass: function (value, stateVal) {
         var className, i = 0
-        var classNames = String(value).split(/\s+/)
+        var classNames = String(value).match(/\S+/g) || []
         var isBool = typeof stateVal === "boolean"
         while ((className = classNames[i++])) {
             var state = isBool ? stateVal : !this.hasClass(className)
@@ -5014,9 +5018,32 @@ avalon.directive("repeat", {
         var length = track.length
 
         var parent = elem.parentNode
+        
+        //检查新元素数量
+        var newCount = 0
+        for (i = 0; i < length; i++) {
+            var keyOrId = track[i]
+            if (!retain[keyOrId])
+                newCount++
+        }
+        var oldCount = 0
+        for (i in retain){
+            oldCount++
+        }
+        var clear = (!length || newCount === length) && oldCount > 10   //当全部是新元素,且移除元素较多(10)时使用clear
+        if (clear){
+            var kill = elem.previousSibling
+            var start = binding.start
+            while(kill !== start)
+            {
+                parent.removeChild(kill)
+                kill = elem.previousSibling
+            }
+        }
+        
         for (i = 0; i < length; i++) {
 
-            var keyOrId = track[i] //array为随机数, object 为keyName
+            keyOrId = track[i] //array为随机数, object 为keyName
             var proxy = retain[keyOrId]
             if (!proxy) {
 
@@ -5036,6 +5063,7 @@ avalon.directive("repeat", {
                     action = "append"
                     proxy.$key = keyOrId
                     proxy.$val = value[keyOrId] //key
+                    proxy[param] = { $key: proxy.$key, $val: proxy.$val }
                 }
                 this.cache[keyOrId] = proxy
                 var node = proxy.$anchor || (proxy.$anchor = elem.cloneNode(false))
@@ -5083,7 +5111,7 @@ avalon.directive("repeat", {
                 if (retain[keyOrId] !== true) {
 
                     action = "del"
-                    removeItem(retain[keyOrId].$anchor, binding,true)
+                    !clear && removeItem(retain[keyOrId].$anchor, binding,true)
                     // 相当于delete binding.cache[key]
                     proxyRecycler(this.cache, keyOrId, param)
                     retain[keyOrId] = null
@@ -5104,7 +5132,7 @@ avalon.directive("repeat", {
                             staggerIndex = mayStaggerAnimate(binding.effectEnterStagger, function () {
                                 parent.insertBefore(fragment.content, preElement.nextSibling)
                                 scanNodeArray(nodes, vmodels)
-                                animateRepeat(nodes, 1, binding)
+                                !init && animateRepeat(nodes, 1, binding)
                             }, staggerIndex)
                         }
                         fragment.nodes = fragment.vmodels = null
@@ -5212,7 +5240,7 @@ function shimController(data, transation, proxy, fragments, init) {
     var itemName = data.param || "el"
     var valueItem = proxy[itemName], nv
     if (Object(valueItem) === valueItem) {
-        nv = [proxy, valueItem].concat(data.vmodels)
+        nv = [proxy].concat(data.vmodels)
     } else {
         nv = [proxy].concat(data.vmodels)
     }
@@ -5300,24 +5328,29 @@ function eachProxyFactory(itemName) {
 
 var withProxyPool = []
 
-function withProxyAgent() {
-    return withProxyPool.pop() || withProxyFactory()
+function withProxyAgent(data) {
+    var itemName = data.param || "el"
+    return withProxyPool.pop() || withProxyFactory(itemName)
 }
 
-function withProxyFactory() {
-    var proxy = modelFactory({
+function withProxyFactory(itemName) {
+    var source = {
         $key: "",
         $val: NaN,
         $index: 0,
         $oldIndex: 0,
         $outer: {},
         $anchor: null
-    }, {
-        force: {
+    }
+    source[itemName] = NaN
+    var force = {
             $key: 1,
             $val: 1,
             $index: 1
-        }
+    }
+    force[itemName] = 1
+    var proxy = modelFactory(source, {
+        force: force
     })
     proxy.$id = generateID("$proxy$with")
     return proxy

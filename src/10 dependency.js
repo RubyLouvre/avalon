@@ -58,7 +58,7 @@ avalon.injectBinding = function (binding) {
                 } else {
                     try {
                         a = binding.getter.apply(0, binding.args)
-                    } catch {
+                    } catch(e) {
                         a = null
                     }
                 }
