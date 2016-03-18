@@ -1,10 +1,10 @@
 
 var document = avalon.document
-var refreshData = require('./refreshData')
+var refreshModel = require('./refreshModel')
 var markID = require('../../seed/lang.share').getLongID
 var evaluatorPool = require('../../strategy/parser/evaluatorPool')
 
-function initMonitor(cur, pre) {
+function initControl(cur, pre) {
     var ctrl = cur.ctrl = pre.ctrl
 
     ctrl.update = updateModel
@@ -83,7 +83,7 @@ function updateModel() {
             avalon.warn('fixCaret error', e)
         }
     }
-    refreshData[ctrl.type].call(ctrl)
+    refreshModel[ctrl.type].call(ctrl)
 }
 
 
@@ -132,4 +132,4 @@ function setCaret(ctrl, begin, end) {
     ctrl.selectionEnd = end
 }
 
-module.exports = initMonitor
+module.exports = initControl

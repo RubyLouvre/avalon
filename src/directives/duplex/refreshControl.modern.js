@@ -1,4 +1,4 @@
-var refreshView = {
+var refreshControl = {
     input: function () {//处理单个value值处理
         this.elem.value = this.viewValue
     },
@@ -31,4 +31,4 @@ var refreshView = {
     }
 }
 
-module.exports = refreshView
+module.exports = refreshControl

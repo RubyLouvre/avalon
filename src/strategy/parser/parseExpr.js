@@ -109,7 +109,7 @@ function parseExpr(str, category) {
             '}',
             '}']
         fn = Function('return ' + getterBody.join('\n'))()
-        evaluatorPool.put('duplex:' + str.trim(), fn)
+        evaluatorPool.put('duplex:' + str, fn)
         //给vm同步某个属性
         var setterBody = [
             'function (__vmodel__,__value__){',
@@ -120,7 +120,7 @@ function parseExpr(str, category) {
             '}',
             '}']
         fn = Function('return ' + setterBody.join('\n'))()
-        evaluatorPool.put('duplex:set:' + str.trim(), fn)
+        evaluatorPool.put('duplex:set:' + str, fn)
         //对某个值进行格式化
         if(input.length){
             var formatBody = [
@@ -133,7 +133,7 @@ function parseExpr(str, category) {
                 '}',
                 '}']
             fn = Function('return ' + formatBody.join('\n'))()
-            evaluatorPool.put('duplex:format:' + str.trim(), fn)
+            evaluatorPool.put('duplex:format:' + str, fn)
         }
         return
     } else {

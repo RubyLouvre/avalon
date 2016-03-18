@@ -1,11 +1,11 @@
 
 /**
  * ------------------------------------------------------------
- * refreshData
+ * refreshModel
  * 在事件回调与value的setter中调用这些方法,来同步vm
  * ------------------------------------------------------------
  */
-var refreshData = {
+var refreshModel = {
     input: function () {//处理单个value值处理
         var ctrl = this
         var viewValue = ctrl.elem.value
@@ -30,7 +30,7 @@ var refreshData = {
             var val = ctrl.modelValue = !ctrl.modelValue
             ctrl.set(ctrl.vmodel, val)
         } else {
-            refreshData.input.call(ctrl)
+            refreshModel.input.call(ctrl)
         }
     },
     checkbox: function () {
@@ -71,4 +71,4 @@ var refreshData = {
         }
     }
 }
-module.exports = refreshData
+module.exports = refreshModel

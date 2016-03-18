@@ -1,4 +1,4 @@
-var refreshView = {
+var refreshControl = {
     input: function () {//处理单个value值处理
         this.elem.value = this.viewValue
     },
@@ -10,7 +10,7 @@ var refreshView = {
             checked = this.viewValue + '' === this.elem.value
         }
         var elem = this.elem
-        if (msie === 6) {
+        if (avalon.msie === 6) {
             setTimeout(function () {
                 //IE8 checkbox, radio是使用defaultChecked控制选中状态，
                 //并且要先设置defaultChecked后设置checked
@@ -42,4 +42,4 @@ var refreshView = {
     }
 }
 
-module.exports = refreshView
+module.exports = refreshControl

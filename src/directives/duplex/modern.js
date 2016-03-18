@@ -1,71 +1,18 @@
-var msie = avalon.msie
-var quote = avalon.quote
-var valueHijack = require('./valueHijack')
-var refreshView = require('./refreshView.modern')
-var initMonitor = require('./initMonitor.modern')
 
-var rchangeFilter = /\|\s*change\b/
-var rcheckedType = /^(?:checkbox|radio)$/
-var rnoduplexInput = /^(file|button|reset|submit|checkbox|radio|range)$/
+var valueHijack = require('./valueHijack')
+
+var newControl = require('./newControl')
+var initControl = require('./initControl.modern')
+var refreshControl = require('./refreshControl.modern')
+
 
 avalon.directive('duplex', {
     priority: 2000,
-    parse: function (binding, num, elem) {
-        var expr = binding.expr
-        var etype = elem.props.type
-        //处理数据转换器
-        var ptype = binding.param
-        var isChecked = ptype === 'checked'
+    parse: function (binding, num, vnode) {
+        newControl(binding, vnode)
 
-        var ctrl = elem.ctrl = {
-            parsers: [],
-            formatters: [],
-            modelValue: NaN,
-            viewValue: NaN,
-            type: 'input',
-            expr: expr,
-            parse: parse,
-            format: format,
-        }
-        if (isChecked) {
-            if (rcheckedType.test(etype)) {
-                ctrl.isChecked = true
-                ctrl.type = 'radio'
-            } else {
-                ptype = null
-            }
-        }
-
-        var parser = avalon.parsers[ptype]
-
-        if (parser) {
-            ctrl.parsers.push(parser)
-        }
-
-        if (rchangeFilter.test(expr)) {
-            expr = expr.replace(rchangeFilter, '')
-            if (rnoduplexInput.test(etype)) {
-                avalon.warn(etype + '不支持change过滤器')
-            } else {
-                ctrl.isChanged = true
-            }
-
-        }
-
-        if (!/input|textarea|select/.test(etype)) {
-            if ('contenteditable' in elem.props) {
-                ctrl.type = 'contenteditable'
-            }
-        } else if (ctrl.type) {
-            ctrl.type = etype === 'select' ? 'select' :
-                    etype === 'checkbox' ? 'checkbox' :
-                    etype === 'radio' ? 'radio' :
-                    'input'
-        }
-
-        avalon.parseExpr(ctrl, 'duplex')
         return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
-                'vnode' + num + '.props["a-duplex"] = ' + quote(ctrl.expr) + ';\n'
+                'vnode' + num + '.props["a-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
     },
     diff: function (cur, pre) {
         if (pre.ctrl && pre.ctrl.set) {
@@ -110,7 +57,7 @@ avalon.directive('duplex', {
             }
         }
 
-        if (!msie && valueHijack === false && !node.valueHijack) {
+        if (!avalon.msie && valueHijack === false && !node.valueHijack) {
             //chrome 42及以下版本需要这个hack
             node.valueHijack = ctrl.update
             var intervalID = setInterval(function () {
@@ -122,11 +69,11 @@ avalon.directive('duplex', {
             }, 30)
         }
 
-        var viewValue = ctrl.format(ctrl.modelValue)
+        var viewValue = ctrl.modelValue
 
         if (ctrl.viewValue !== viewValue) {
             ctrl.viewValue = viewValue
-            refreshView[ctrl.type].call(ctrl)
+            refreshControl[ctrl.type].call(ctrl)
             if (node.caret) {
                 ctrl.updateCaret(node, ctrl.caretPos, ctrl.caretPos)
             }
@@ -134,23 +81,4 @@ avalon.directive('duplex', {
     }
 })
 
-
-function parse(val) {
-    for (var i = 0, fn; fn = this.parsers[i++]; ) {
-        val = fn.call(this, val)
-    }
-    return val
-}
-
-function format(val) {
-    //当数据转换器为checked时,一切格式化过滤器都失效
-    if (this.isChecked)
-        return val
-    var formatters = this.formatters
-    var index = formatters.length
-    while (index--) {
-        val = formatters[index](val)
-    }
-    return val
-}
 
