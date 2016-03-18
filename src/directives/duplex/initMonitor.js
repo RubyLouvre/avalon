@@ -1,7 +1,8 @@
-var markID = require('../../seed/lang.share').getLongID
+var msie = avalon.msie
 var document = avalon.document
 var refreshData = require('./refreshData')
-var msie = avalon.msie
+var markID = require('../../seed/lang.share').getLongID
+
 
 function initMonitor(cur, pre) {
     var ctrl = cur.ctrl = pre.ctrl
@@ -65,7 +66,7 @@ function initMonitor(cur, pre) {
                     // but that's an acceptable compromise for this binding. IE 9 does support 'input', but since it doesn't fire it
                     // when using autocomplete, we'll use 'propertychange' for it also.
                     events.propertychange = updateModelHack
-                    if (msie == 8) {
+                    if (msie === 8) {
                         // IE 8 has a bug where it fails to fire 'propertychange' on the first update following a value change from
                         // JavaScript code. It also doesn't fire if you clear the entire value. To fix this, we bind to the following
                         // events too.
@@ -78,7 +79,7 @@ function initMonitor(cur, pre) {
                         // out of the field, and cutting or deleting text using the context menu. 'selectionchange'
                         // can detect all of those except dragging text out of the field, for which we use 'dragend'.
                         // These are also needed in IE8 because of the bug described above.
-                        ctrl.elem.valueSet = updateModel  // 'selectionchange' covers cut, paste, drop, delete, etc.
+                        cur.valueHijack = updateModel  // 'selectionchange' covers cut, paste, drop, delete, etc.
                         events.dragend = updateModelDelay
                     }
                 } else {

@@ -1,8 +1,8 @@
-var markID = require('../../seed/lang.share').getLongID
+
 var document = avalon.document
 var refreshData = require('./refreshData')
-var msie = avalon.msie
-var rootStyle = avalon.root.style || {}
+var markID = require('../../seed/lang.share').getLongID
+
 function initMonitor(cur, pre) {
     var ctrl = cur.ctrl = pre.ctrl
 
