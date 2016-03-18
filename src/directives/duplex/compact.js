@@ -2,8 +2,8 @@ var msie = avalon.msie
 var quote = avalon.quote
 
 var valueHijack = require('./valueHijack')
-var refreshView = require('./refreshView')
-var initMonitor = require('./initMonitor')
+var refreshView = require('./refreshView.compact')
+var initMonitor = require('./initMonitor.compact')
 
 var rchangeFilter = /\|\s*change\b/
 var rcheckedType = /^(?:checkbox|radio)$/
@@ -87,7 +87,7 @@ avalon.directive('duplex', {
         delete cur.duplexVm
 
         var value = cur.props.value = ctrl.get(ctrl.vmodel)
-
+console.log(value,"!")
         if (!ctrl.elem) {
             var isEqual = false
         } else {
@@ -129,6 +129,7 @@ avalon.directive('duplex', {
         }
 
         var viewValue = ctrl.modelValue
+          console.log("viewValue ",viewValue)
         //当数据转换器为checked时,一切格式化过滤器都失效
         if (!ctrl.isChecked) {
             var formatters = ctrl.formatters
@@ -137,6 +138,7 @@ avalon.directive('duplex', {
                 viewValue = formatters[index](viewValue)
             }
         }
+      
         if (ctrl.viewValue !== viewValue) {
             ctrl.viewValue = viewValue
             refreshView[ctrl.type].call(ctrl)

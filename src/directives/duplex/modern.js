@@ -1,7 +1,6 @@
 var msie = avalon.msie
 var quote = avalon.quote
 var valueHijack = require('./valueHijack')
-
 var refreshView = require('./refreshView.modern')
 var initMonitor = require('./initMonitor.modern')
 

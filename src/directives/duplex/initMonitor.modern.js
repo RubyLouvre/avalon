@@ -2,6 +2,7 @@
 var document = avalon.document
 var refreshData = require('./refreshData')
 var markID = require('../../seed/lang.share').getLongID
+var evaluatorPool = require('../../strategy/parser/evaluatorPool')
 
 function initMonitor(cur, pre) {
     var ctrl = cur.ctrl = pre.ctrl
@@ -12,6 +13,7 @@ function initMonitor(cur, pre) {
     ctrl.set = evaluatorPool.get('duplex:set:' + ctrl.expr)
     var format = evaluatorPool.get('duplex:format:' + ctrl.expr)
     ctrl.formatters.push(format)
+    ctrl.vmodel = cur.duplexVm
 
     var events = ctrl.events = {}
 //添加需要监听的事件
@@ -31,13 +33,12 @@ function initMonitor(cur, pre) {
             if (ctrl.isChanged) {
                 events.blur = updateModel
             } else {
-                if ('MutationEvent' in window) {
-                    events.DOMCharacterDataModified = updateModel
-                }
-                if ('webkitHidden' in document || window.webkitURL || window.chrome) {
+                if (window.webkitURL) {
                     // http://code.metager.de/source/xref/WebKit/LayoutTests/fast/events/
                     // https://bugs.webkit.org/show_bug.cgi?id=110742
                     events.webkitEditableContentChanged = updateModel
+                } else if ('MutationEvent' in window) {
+                    events.DOMCharacterDataModified = updateModel
                 }
                 events.input = updateModel
             }
@@ -48,7 +49,6 @@ function initMonitor(cur, pre) {
             } else {
 
                 events.input = updateModel
-                events.change = updateModel
 
                 events.compositionstart = openComposition
                 events.compositionend = closeComposition
@@ -56,7 +56,7 @@ function initMonitor(cur, pre) {
             break
     }
 
-    if (/password|text/.test(ctrl.props.type)) {
+    if (/password|text/.test(cur.props.type)) {
         events.focus = openCaret
         events.blur = closeCaret
     }
@@ -128,4 +128,4 @@ function setCaret(ctrl, begin, end) {
     ctrl.selectionEnd = end
 }
 
-module.export = initMonitor
+module.exports = initMonitor
