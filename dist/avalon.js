@@ -3814,12 +3814,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            viewValue: NaN,
 	            type: 'input',
 	            expr: expr,
-	            parse: function (val) {
-	                for (var i = 0, fn; fn = this.parsers[i++]; ) {
-	                    val = fn.call(this, val)
-	                }
-	                return val
-	            }
+	            parse: parse,
+	            format: format
 	        }
 	        if (isChecked) {
 	            if (rcheckedType.test(etype)) {
@@ -3875,7 +3871,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        delete cur.duplexVm
 
 	        var value = cur.props.value = ctrl.get(ctrl.vmodel)
-	console.log(value,"!")
 	        if (!ctrl.elem) {
 	            var isEqual = false
 	        } else {
@@ -3916,17 +3911,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }, 30)
 	        }
 
-	        var viewValue = ctrl.modelValue
-	          console.log("viewValue ",viewValue)
-	        //当数据转换器为checked时,一切格式化过滤器都失效
-	        if (!ctrl.isChecked) {
-	            var formatters = ctrl.formatters
-	            var index = formatters.length
-	            while (index--) {
-	                viewValue = formatters[index](viewValue)
-	            }
-	        }
-	      
+	        var viewValue = ctrl.format(ctrl.modelValue)
+
 	        if (ctrl.viewValue !== viewValue) {
 	            ctrl.viewValue = viewValue
 	            refreshView[ctrl.type].call(ctrl)
@@ -3937,7 +3923,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	})
 
+	function parse(val) {
+	    for (var i = 0, fn; fn = this.parsers[i++]; ) {
+	        val = fn.call(this, val)
+	    }
+	    return val
+	}
 
+	function format(val) {
+	    //当数据转换器为checked时,一切格式化过滤器都失效
+	    if (this.isChecked)
+	        return val
+	    var formatters = this.formatters
+	    var index = formatters.length
+	    while (index--) {
+	        val = formatters[index](val)
+	    }
+	    return val
+	}
 
 
 
@@ -4046,7 +4049,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ctrl.get = evaluatorPool.get('duplex:' + ctrl.expr)
 	    ctrl.set = evaluatorPool.get('duplex:set:' + ctrl.expr)
 	    var format = evaluatorPool.get('duplex:format:' + ctrl.expr)
-	    ctrl.formatters.push(format)
+	    if (format) {
+	        ctrl.formatters.push(function (v) {
+	            return format(ctrl.vmodel, v)
+	        })
+	    }
+
 	    ctrl.vmodel = cur.duplexVm
 
 
@@ -4119,11 +4127,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                } else {
 	                    events.input = updateModel
-	                    if (!/\[native code\]/.test(Int8Array)) {
+	                    //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
+	                    //如果当前浏览器支持Int8Array,那么我们就不需要以下这些事件来打补丁了
+	                    if (!/\[native code\]/.test(window.Int8Array)) {
 	                        events.keydown = updateModelKeyDown //safari < 5 opera < 11
 	                        events.paste = updateModelDelay//safari < 5
 	                        events.cut = updateModelDelay//safari < 5 
-	                        //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
 	                        if (avalon.window.netscape) {
 	                            // Firefox <= 3.6 doesn't fire the 'input' event when text is filled in through autocomplete
 	                            events.DOMAutoComplete = updateModel
@@ -4147,8 +4156,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	function updateModel() {
 	    var elem = this
 	    var ctrl = this.__duplex__
+	   
 	    if (elem.composing || elem.value === ctrl.viewValue)
 	        return
+
 	    if (elem.caret) {
 	        try {
 	            var pos = getCaret(elem)
@@ -4264,10 +4275,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	var refreshData = {
 	    input: function () {//处理单个value值处理
 	        var ctrl = this
-	        var val = ctrl.parse(ctrl.elem.value)
+	        var viewValue = ctrl.elem.value
+	        var rawValue = viewValue
+
+	        viewValue = ctrl.format(viewValue)
+	        //vm.aaa = '1234567890'
+	        //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
+	        
+	        if (rawValue !== viewValue) {
+	            ctrl.elem.value = viewValue
+	        }
+	        var val = ctrl.parse(viewValue)
 	        if (val !== ctrl.modelValue) {
 	            ctrl.set(ctrl.vmodel, val)
 	        }
+	       
 	    },
 	    radio: function () {
 	        var ctrl = this
@@ -5694,19 +5716,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	        fn = Function('return ' + setterBody.join('\n'))()
 	        evaluatorPool.put('duplex:set:' + str.trim(), fn)
 	        //对某个值进行格式化
-	console.log(input, "!")
-	        var formatBody = [
-	            'function (__vmodel__, __value__){',
-	            'try{',
-	            filters.join('\n'),
-	            'return __value__\n',
-	            '}catch(e){',
-	            '\tavalon.log(e, ' + quoteError(str, category) + ')',
-	            '}',
-	            '}']
-	        fn = Function('return ' + formatBody.join('\n'))()
-	        evaluatorPool.put('duplex:format:' + str.trim(), fn)
-	console.log(fn+"")
+	        if(input.length){
+	            var formatBody = [
+	                'function (__vmodel__, __value__){',
+	                'try{',
+	                filters.join('\n'),
+	                'return __value__\n',
+	                '}catch(e){',
+	                '\tavalon.log(e, ' + quoteError(str, category) + ')',
+	                '}',
+	                '}']
+	            fn = Function('return ' + formatBody.join('\n'))()
+	            evaluatorPool.put('duplex:format:' + str.trim(), fn)
+	        }
 	        return
 	    } else {
 	        ret = [

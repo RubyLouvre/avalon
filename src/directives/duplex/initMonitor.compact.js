@@ -13,7 +13,12 @@ function initMonitor(cur, pre) {
     ctrl.get = evaluatorPool.get('duplex:' + ctrl.expr)
     ctrl.set = evaluatorPool.get('duplex:set:' + ctrl.expr)
     var format = evaluatorPool.get('duplex:format:' + ctrl.expr)
-    ctrl.formatters.push(format)
+    if (format) {
+        ctrl.formatters.push(function (v) {
+            return format(ctrl.vmodel, v)
+        })
+    }
+
     ctrl.vmodel = cur.duplexVm
 
 
@@ -86,11 +91,12 @@ function initMonitor(cur, pre) {
                     }
                 } else {
                     events.input = updateModel
-                    if (!/\[native code\]/.test(Int8Array)) {
+                    //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
+                    //如果当前浏览器支持Int8Array,那么我们就不需要以下这些事件来打补丁了
+                    if (!/\[native code\]/.test(window.Int8Array)) {
                         events.keydown = updateModelKeyDown //safari < 5 opera < 11
                         events.paste = updateModelDelay//safari < 5
                         events.cut = updateModelDelay//safari < 5 
-                        //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
                         if (avalon.window.netscape) {
                             // Firefox <= 3.6 doesn't fire the 'input' event when text is filled in through autocomplete
                             events.DOMAutoComplete = updateModel
@@ -114,8 +120,10 @@ function initMonitor(cur, pre) {
 function updateModel() {
     var elem = this
     var ctrl = this.__duplex__
+   
     if (elem.composing || elem.value === ctrl.viewValue)
         return
+
     if (elem.caret) {
         try {
             var pos = getCaret(elem)

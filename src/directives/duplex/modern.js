@@ -24,12 +24,8 @@ avalon.directive('duplex', {
             viewValue: NaN,
             type: 'input',
             expr: expr,
-            parse: function (val) {
-                for (var i = 0, fn; fn = this.parsers[i++]; ) {
-                    val = fn.call(this, val)
-                }
-                return val
-            }
+            parse: parse,
+            format: format,
         }
         if (isChecked) {
             if (rcheckedType.test(etype)) {
@@ -126,15 +122,8 @@ avalon.directive('duplex', {
             }, 30)
         }
 
-        var viewValue = ctrl.modelValue
-        //当数据转换器为checked时,一切格式化过滤器都失效
-        if (!ctrl.isChecked) {
-            var formatters = ctrl.formatters
-            var index = formatters.length
-            while (index--) {
-                viewValue = formatters[index](viewValue)
-            }
-        }
+        var viewValue = ctrl.format(ctrl.modelValue)
+
         if (ctrl.viewValue !== viewValue) {
             ctrl.viewValue = viewValue
             refreshView[ctrl.type].call(ctrl)
@@ -146,6 +135,22 @@ avalon.directive('duplex', {
 })
 
 
+function parse(val) {
+    for (var i = 0, fn; fn = this.parsers[i++]; ) {
+        val = fn.call(this, val)
+    }
+    return val
+}
 
-
+function format(val) {
+    //当数据转换器为checked时,一切格式化过滤器都失效
+    if (this.isChecked)
+        return val
+    var formatters = this.formatters
+    var index = formatters.length
+    while (index--) {
+        val = formatters[index](val)
+    }
+    return val
+}
 

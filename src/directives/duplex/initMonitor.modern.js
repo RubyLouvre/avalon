@@ -12,7 +12,11 @@ function initMonitor(cur, pre) {
     ctrl.get = evaluatorPool.get('duplex:' + ctrl.expr)
     ctrl.set = evaluatorPool.get('duplex:set:' + ctrl.expr)
     var format = evaluatorPool.get('duplex:format:' + ctrl.expr)
-    ctrl.formatters.push(format)
+    if (format) {
+        ctrl.formatters.push(function (v) {
+            return format(ctrl.vmodel, v)
+        })
+    }
     ctrl.vmodel = cur.duplexVm
 
     var events = ctrl.events = {}

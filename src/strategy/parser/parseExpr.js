@@ -122,19 +122,19 @@ function parseExpr(str, category) {
         fn = Function('return ' + setterBody.join('\n'))()
         evaluatorPool.put('duplex:set:' + str.trim(), fn)
         //对某个值进行格式化
-console.log(input, "!")
-        var formatBody = [
-            'function (__vmodel__, __value__){',
-            'try{',
-            filters.join('\n'),
-            'return __value__\n',
-            '}catch(e){',
-            '\tavalon.log(e, ' + quoteError(str, category) + ')',
-            '}',
-            '}']
-        fn = Function('return ' + formatBody.join('\n'))()
-        evaluatorPool.put('duplex:format:' + str.trim(), fn)
-console.log(fn+"")
+        if(input.length){
+            var formatBody = [
+                'function (__vmodel__, __value__){',
+                'try{',
+                filters.join('\n'),
+                'return __value__\n',
+                '}catch(e){',
+                '\tavalon.log(e, ' + quoteError(str, category) + ')',
+                '}',
+                '}']
+            fn = Function('return ' + formatBody.join('\n'))()
+            evaluatorPool.put('duplex:format:' + str.trim(), fn)
+        }
         return
     } else {
         ret = [
