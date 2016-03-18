@@ -5103,8 +5103,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 89 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
+	var window = avalon.window
 	var document = avalon.document
+
 	var refreshModel = __webpack_require__(52)
 	var markID = __webpack_require__(6).getLongID
 	var evaluatorPool = __webpack_require__(53)
@@ -5146,7 +5147,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    // http://code.metager.de/source/xref/WebKit/LayoutTests/fast/events/
 	                    // https://bugs.webkit.org/show_bug.cgi?id=110742
 	                    events.webkitEditableContentChanged = updateModel
-	                } else if ('MutationEvent' in window) {
+	                } else if (window.MutationEvent) {
 	                    events.DOMCharacterDataModified = updateModel
 	                }
 	                events.input = updateModel

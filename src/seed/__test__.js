@@ -241,7 +241,11 @@ describe('测试lang.share文件的API', function () {
             expect(avalon.vmodels).to.be.a('object')
         })
     })
-    
+     describe('parsers', function () {
+        it('test', function () {
+            expect(avalon.vmodels).to.be.a('object')
+        })
+    })
     describe('eventHooks', function () {
         it('test', function () {
             expect(avalon.eventHooks).to.be.a('object')

@@ -1,4 +1,5 @@
 var msie = avalon.msie
+var window = avalon.window
 var document = avalon.document
 var refreshModel = require('./refreshModel')
 var markID = require('../../seed/lang.share').getLongID
@@ -45,7 +46,7 @@ function initControl(cur, pre) {
                         // http://code.metager.de/source/xref/WebKit/LayoutTests/fast/events/
                         // https://bugs.webkit.org/show_bug.cgi?id=110742
                         events.webkitEditableContentChanged = updateModel
-                    } else if ('MutationEvent' in window) {
+                    } else if (window.MutationEvent) {
                         events.DOMCharacterDataModified = updateModel
                     }
                     events.input = updateModel
@@ -97,7 +98,7 @@ function initControl(cur, pre) {
                         events.keydown = updateModelKeyDown //safari < 5 opera < 11
                         events.paste = updateModelDelay//safari < 5
                         events.cut = updateModelDelay//safari < 5 
-                        if (avalon.window.netscape) {
+                        if (window.netscape) {
                             // Firefox <= 3.6 doesn't fire the 'input' event when text is filled in through autocomplete
                             events.DOMAutoComplete = updateModel
                         }

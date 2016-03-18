@@ -1,5 +1,6 @@
-
+var window = avalon.window
 var document = avalon.document
+
 var refreshModel = require('./refreshModel')
 var markID = require('../../seed/lang.share').getLongID
 var evaluatorPool = require('../../strategy/parser/evaluatorPool')
@@ -41,7 +42,7 @@ function initControl(cur, pre) {
                     // http://code.metager.de/source/xref/WebKit/LayoutTests/fast/events/
                     // https://bugs.webkit.org/show_bug.cgi?id=110742
                     events.webkitEditableContentChanged = updateModel
-                } else if ('MutationEvent' in window) {
+                } else if (window.MutationEvent) {
                     events.DOMCharacterDataModified = updateModel
                 }
                 events.input = updateModel
