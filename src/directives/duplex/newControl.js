@@ -27,13 +27,10 @@ function newControl(binding, vnode) {
             ptype = null
         }
     }
-
     var parser = avalon.parsers[ptype]
-
     if (parser) {
         ctrl.parsers.push(parser)
     }
-
     if (rchangeFilter.test(expr)) {
         expr = expr.replace(rchangeFilter, '')
         if (rnoduplexInput.test(etype)) {
@@ -56,7 +53,7 @@ function newControl(binding, vnode) {
         if ('contenteditable' in vnode.props) {
             ctrl.type = 'contenteditable'
         }
-    } else if (ctrl.type) {
+    } else if (!ctrl.type) {
         ctrl.type = etype === 'select' ? 'select' :
                 etype === 'checkbox' ? 'checkbox' :
                 etype === 'radio' ? 'radio' :

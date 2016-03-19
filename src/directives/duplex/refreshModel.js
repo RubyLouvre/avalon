@@ -6,18 +6,20 @@
  * ------------------------------------------------------------
  */
 var refreshModel = {
-    input: function () {//处理单个value值处理
+    input: function (prop) {//处理单个value值处理
         var ctrl = this
-        var viewValue = ctrl.elem.value
+        prop = prop || 'value'
+        var viewValue = ctrl.elem[prop]
         var rawValue = viewValue
 
         viewValue = ctrl.format(viewValue)
         //vm.aaa = '1234567890'
         //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
-        
-        if (rawValue !== viewValue) {
-            ctrl.elem.value = viewValue
+
+        if (rawValue !== viewValue+"") {
+            ctrl.elem[prop] = viewValue
         }
+        ctrl.lastViewValue = viewValue
         var val = ctrl.parse(viewValue)
         if (val !== ctrl.modelValue) {
             ctrl.set(ctrl.vmodel, val)
@@ -63,12 +65,7 @@ var refreshModel = {
         }
     },
     contenteditable: function () {
-        var ctrl = this
-        var val = ctrl.parse(ctrl.elem.innerHTML)
-        if (val !== ctrl.modelValue) {
-            ctrl.modelValue = val
-            ctrl.set(ctrl.vmodel, val)
-        }
+        refreshModel.input('innerHTML')
     }
 }
 module.exports = refreshModel

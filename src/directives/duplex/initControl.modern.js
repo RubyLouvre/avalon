@@ -24,7 +24,7 @@ function initControl(cur, pre) {
 //添加需要监听的事件
     switch (ctrl.type) {
         case 'radio':
-            if (cur.type === 'radio') {
+            if (cur.props.type === 'radio') {
                 events.click = updateModel
             } else {
                 events.change = updateModel
@@ -72,7 +72,7 @@ function initControl(cur, pre) {
 function updateModel() {
     var elem = this
     var ctrl = this.__duplex__
-    if (elem.composing || elem.value === ctrl.viewValue)
+    if (elem.composing || elem.value === ctrl.lastViewValue)
         return
     if (elem.caret) {
         try {

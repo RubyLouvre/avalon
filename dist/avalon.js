@@ -3799,7 +3799,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    priority: 2000,
 	    parse: function (binding, num, vnode) {
 	        newControl(binding, vnode)
-
 	        return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
 	                'vnode' + num + '.props["a-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
 	    },
@@ -3884,8 +3883,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var bproto = HTMLTextAreaElement.prototype
 	    function newSetter(value) { // jshint ignore:line
 	        setters[this.tagName].call(this, value)
-	        if (!this.msFocus && this.valueHijack) {
-	            this.valueHijack()
+	        if (!this.caret && this.__duplex__) {
+	            this.__duplex__.update.call(this)
 	        }
 	    }
 	    var inputProto = HTMLInputElement.prototype
@@ -3940,13 +3939,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            ptype = null
 	        }
 	    }
-
 	    var parser = avalon.parsers[ptype]
-
 	    if (parser) {
 	        ctrl.parsers.push(parser)
 	    }
-
 	    if (rchangeFilter.test(expr)) {
 	        expr = expr.replace(rchangeFilter, '')
 	        if (rnoduplexInput.test(etype)) {
@@ -3969,7 +3965,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if ('contenteditable' in vnode.props) {
 	            ctrl.type = 'contenteditable'
 	        }
-	    } else if (ctrl.type) {
+	    } else if (!ctrl.type) {
 	        ctrl.type = etype === 'select' ? 'select' :
 	                etype === 'checkbox' ? 'checkbox' :
 	                etype === 'radio' ? 'radio' :
@@ -4030,7 +4026,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	//添加需要监听的事件
 	    switch (ctrl.type) {
 	        case 'radio':
-	            if (cur.type === 'radio') {
+	            if (cur.props.type === 'radio') {
 	                events.click = updateModel
 	            } else {
 	                events[msie < 9 ? 'click' : 'change'] = updateModel
@@ -4124,10 +4120,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	function updateModel() {
 	    var elem = this
 	    var ctrl = this.__duplex__
-
-	    if (elem.composing || elem.value === ctrl.viewValue)
+	    if (elem.composing )
 	        return
-
 	    if (elem.caret) {
 	        try {
 	            var pos = getCaret(elem)
@@ -4255,18 +4249,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * ------------------------------------------------------------
 	 */
 	var refreshModel = {
-	    input: function () {//处理单个value值处理
+	    input: function (prop) {//处理单个value值处理
 	        var ctrl = this
-	        var viewValue = ctrl.elem.value
+	        prop = prop || 'value'
+	        var viewValue = ctrl.elem[prop]
 	        var rawValue = viewValue
 
 	        viewValue = ctrl.format(viewValue)
 	        //vm.aaa = '1234567890'
 	        //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
-	        
-	        if (rawValue !== viewValue) {
-	            ctrl.elem.value = viewValue
+
+	        if (rawValue !== viewValue+"") {
+	            ctrl.elem[prop] = viewValue
 	        }
+	        ctrl.lastViewValue = viewValue
 	        var val = ctrl.parse(viewValue)
 	        if (val !== ctrl.modelValue) {
 	            ctrl.set(ctrl.vmodel, val)
@@ -4312,12 +4308,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    contenteditable: function () {
-	        var ctrl = this
-	        var val = ctrl.parse(ctrl.elem.innerHTML)
-	        if (val !== ctrl.modelValue) {
-	            ctrl.modelValue = val
-	            ctrl.set(ctrl.vmodel, val)
-	        }
+	        refreshModel.input('innerHTML')
 	    }
 	}
 	module.exports = refreshModel
@@ -4497,7 +4488,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var updateEntity = __webpack_require__(56)
+	var refreshView = __webpack_require__(56)
 
 	avalon._each = function (obj, fn) {
 	    if (Array.isArray(obj)) {
@@ -4610,7 +4601,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var entity = avalon.slice(fragment.childNodes)
 	            avalon.diff(vnodes, [])
 	            parent.insertBefore(fragment, endRepeat)
-	            updateEntity(entity, vnodes, parent)
+	            refreshView(entity, vnodes, parent)
 	        } else {
 	            var groupText = vnode.signature
 	            var indexes = vnode.indexes
@@ -4649,7 +4640,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            var entity = avalon.slice(emptyFragment.childNodes)
 	            parent.insertBefore(emptyFragment, endRepeat)
-	            updateEntity(entity, vnodes, parent)
+	            refreshView(entity, vnodes, parent)
 	        }
 
 	    }

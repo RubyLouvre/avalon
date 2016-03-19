@@ -1,5 +1,5 @@
 
-var updateEntity = require("../strategy/patch")
+var refreshView = require("../strategy/patch")
 
 avalon._each = function (obj, fn) {
     if (Array.isArray(obj)) {
@@ -112,7 +112,7 @@ avalon.directive("for", {
             var entity = avalon.slice(fragment.childNodes)
             avalon.diff(vnodes, [])
             parent.insertBefore(fragment, endRepeat)
-            updateEntity(entity, vnodes, parent)
+            refreshView(entity, vnodes, parent)
         } else {
             var groupText = vnode.signature
             var indexes = vnode.indexes
@@ -151,7 +151,7 @@ avalon.directive("for", {
 
             var entity = avalon.slice(emptyFragment.childNodes)
             parent.insertBefore(emptyFragment, endRepeat)
-            updateEntity(entity, vnodes, parent)
+            refreshView(entity, vnodes, parent)
         }
 
     }
