@@ -2033,7 +2033,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        formatters: [],
 	        modelValue: NaN,
 	        viewValue: NaN,
-	        type: 'input',
 	        parse: parse,
 	        format: format
 	    }
@@ -2066,13 +2065,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	    binding.expr = ctrl.expr = expr.trim()
-	    
-	    if (!/input|textarea|select/.test(etype)) {
+	    if (!/input|textarea|select/.test(vnode.type)) {
 	        if ('contenteditable' in vnode.props) {
 	            ctrl.type = 'contenteditable'
 	        }
 	    } else if (!ctrl.type) {
-	        ctrl.type = etype === 'select' ? 'select' :
+	        ctrl.type = vnode.type === 'select' ? 'select' :
 	                etype === 'checkbox' ? 'checkbox' :
 	                etype === 'radio' ? 'radio' :
 	                'input'
@@ -5038,13 +5036,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                'vnode' + num + '.props["a-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
 	    },
 	    diff: function (cur, pre) {
+	        if (cur.type === 'select' && !cur.children.length) {
+	            avalon.Array.merge(cur.children, avalon.lexer(cur.template))
+	        }
 	        if (pre.ctrl && pre.ctrl.set) {
 	            cur.ctrl = pre.ctrl
 	        } else {
-	            if (!cur.type === 'select' && cur.children.length) {
-	                avalon.Array.merge(cur.children, avalon.lexer(cur.template))
-	            }
-	            initMonitor(cur, pre)
+	            initControl(cur, pre)
 	        }
 
 	        var ctrl = cur.ctrl
@@ -5292,7 +5290,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        elem.checked = checked
 	    },
 	    select: function () {//处理子级的selected属性
-	        avalon(this.elem).val(this.viewValue)
+	       var a = Array.isArray(this.viewValue) ? this.viewValue.map(String): this.viewValue+''
+	       avalon(this.elem).val(a)
 	    },
 	    contenteditable: function () {//处理单个innerHTML
 	        this.elem.innerHTML = this.viewValue
@@ -5402,7 +5401,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        keys[key] = true
 	    }
-	    makeObserver($vmodel, options, heirloom, keys, accessors)
+	    makeObserver($vmodel, heirloom, keys, accessors, options)
 
 	    return $vmodel
 	}
@@ -5479,7 +5478,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        options.array = true
 	        options.hashcode = hashcode
 	        options.id = options.id || hashcode
-	        makeObserver(array, options, heirloom)
+	        makeObserver(array, heirloom, {}, {}, options)
 
 	        var itemOptions = {
 	            id: array.$id + '.*',

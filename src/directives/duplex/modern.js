@@ -15,12 +15,12 @@ avalon.directive('duplex', {
                 'vnode' + num + '.props["a-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
     },
     diff: function (cur, pre) {
+        if (cur.type === 'select' && !cur.children.length) {
+            avalon.Array.merge(cur.children, avalon.lexer(cur.template))
+        }
         if (pre.ctrl && pre.ctrl.set) {
             cur.ctrl = pre.ctrl
         } else {
-            if (!cur.type === 'select' && cur.children.length) {
-                avalon.Array.merge(cur.children, avalon.lexer(cur.template))
-            }
             initControl(cur, pre)
         }
 

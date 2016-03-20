@@ -52,7 +52,7 @@ function newControl(binding, vnode) {
             ctrl.type = 'contenteditable'
         }
     } else if (!ctrl.type) {
-        ctrl.type = etype === 'select' ? 'select' :
+        ctrl.type = vnode.type === 'select' ? 'select' :
                 etype === 'checkbox' ? 'checkbox' :
                 etype === 'radio' ? 'radio' :
                 'input'
