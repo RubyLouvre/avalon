@@ -104,28 +104,28 @@ describe('duplex', function () {
             fireClick(inputs[1])
             fireClick(inputs[2])
             setTimeout(function () {
-                expect(vm.aaa.concat()).to.eql([111,222])
+                expect(vm.aaa.concat()).to.eql([111, 222])
                 done()
-            },100)
+            }, 100)
         })
     })
-    
+
     it('select', function (done) {
         div.innerHTML = heredoc(function () {
             /*
-            <div ms-controller='duplex3' >
-                <select ms-duplex-number='@aaa' multiple="true">
-                    <option>111</option>
-                    <option>222</option>
-                    <option>333</option>
-                    <option>444</option>
-                </select>
-            </div>
+             <div ms-controller='duplex3' >
+             <select ms-duplex-number='@aaa' multiple="true">
+             <option>111</option>
+             <option>222</option>
+             <option>333</option>
+             <option>444</option>
+             </select>
+             </div>
              */
         })
         vm = avalon.define({
             $id: 'duplex3',
-            aaa: [111,444]
+            aaa: [111, 444]
 
         })
         avalon.scan(div, vm)
@@ -133,10 +133,39 @@ describe('duplex', function () {
             var options = div.getElementsByTagName('option')
             expect(options[0].selected).to.equal(true)
             expect(options[1].selected).to.equal(false)
-            expect(options[2].selected).to.equal(true)
+            expect(options[3].selected).to.equal(true)
 
             done()
-          
+
+        })
+    })
+    it('textarea & contenteditable', function () {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='duplex4' >
+             <textarea ms-duplex='@aaa | uppercase'></textarea>
+             <blockquote ms-duplex='@bbb | lowercase' contenteditable='true'><div>2222</div></blockquote>
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'duplex4',
+            aaa: "aaa",
+            bbb: "BBB"
+        })
+        avalon.scan(div, vm)
+        setTimeout(function () {
+            var textarea = div.getElementsByTagName('textarea')
+            var blockquote = div.getElementsByTagName('blockquote')
+            expect(textarea[0].innerHTML).to.equal('AAA')
+            expect(blockquote[0].innerHTML).to.equal('bbb')
+            vm.aaa = "aaa_bbb"
+            vm.bbb = 'fff_AAA'
+            setTimeout(function () {
+                expect(textarea[0].innerHTML).to.equal('AAA_BBB')
+                expect(blockquote[0].innerHTML).to.equal('fff_aaa')
+                done()
+            })
         })
     })
 })

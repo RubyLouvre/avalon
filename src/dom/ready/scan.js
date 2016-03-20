@@ -26,8 +26,28 @@ function scan(nodes) {
 }
 
 module.exports = avalon.scan = function (a) {
-
-    avalon.warn('[avalon.scan] is inner method that only invokes once!')
-
-    a && a.nodeType && scan([a])
+    if (!a || !a.nodeType) {
+        avalon.warn('[avalon.scan] first argument must be element , documentFragment, or document')
+        return
+    }
+    if (getController(a)) {
+        avalon.warn('[avalon.scan] first argument must has "ms-controller" or "a-controller" attribute')
+        return
+    }
+    scan([a])
+}
+function hasController(a) {
+    return a.getAttribute('a-controller') || a.getAttribute('ms-controller')
+}
+function getController(a) {
+    if (a.getAttribute && hasController(a)) {
+        return true
+    }
+    var all = a.getElementsByTagName ? a.getElementsByTagName('*') : a.querySelectorAll('*')
+    for (var i = 0, node; node = all[i++]; ) {
+        if (hasController(a)) {
+            return true
+        }
+    }
+    return false
 }
