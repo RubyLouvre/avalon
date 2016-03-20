@@ -28,10 +28,12 @@ avalon.directive('duplex', {
         delete cur.duplexVm
 
         var value = cur.props.value = ctrl.get(ctrl.vmodel)
+        
         if (!ctrl.elem) {
             var isEqual = false
         } else {
             var preValue = pre.props.value
+          
             if (Array.isArray(value)) {
                 isEqual = value + '' === preValue + ''
             } else {
@@ -69,7 +71,6 @@ avalon.directive('duplex', {
         }
 
         var viewValue = ctrl.modelValue
-
         if (ctrl.viewValue !== viewValue) {
             ctrl.viewValue = viewValue
             refreshControl[ctrl.type].call(ctrl)

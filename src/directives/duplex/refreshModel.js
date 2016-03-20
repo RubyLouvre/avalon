@@ -15,16 +15,16 @@ var refreshModel = {
         viewValue = ctrl.format(viewValue)
         //vm.aaa = '1234567890'
         //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
-
-        if (rawValue !== viewValue+"") {
+        var val = ctrl.parse(viewValue)
+        viewValue = val+''
+        if (rawValue !== viewValue) {
+           // ctrl.viewValue = viewValue
             ctrl.elem[prop] = viewValue
         }
-        ctrl.lastViewValue = viewValue
-        var val = ctrl.parse(viewValue)
         if (val !== ctrl.modelValue) {
             ctrl.set(ctrl.vmodel, val)
         }
-       
+
     },
     radio: function () {
         var ctrl = this
