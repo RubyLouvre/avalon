@@ -5043,9 +5043,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                'vnode' + num + '.props["a-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
 	    },
 	    diff: function (cur, pre) {
-	        if (cur.type === 'select' && !cur.children.length) {
-	            avalon.Array.merge(cur.children, avalon.lexer(cur.template))
-	        }
+
 	        if (pre.ctrl && pre.ctrl.set) {
 	            cur.ctrl = pre.ctrl
 	        } else {
@@ -5056,6 +5054,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        delete cur.duplexVm
 
 	        var value = cur.props.value = ctrl.get(ctrl.vmodel)
+	        if (cur.type === 'select' && !cur.children.length) {
+	            avalon.Array.merge(cur.children, avalon.lexer(cur.template))
+	            fixVirtualOptionSelected(cur, value)
+	        }
 
 	        if (!ctrl.elem) {
 	            var isEqual = false
@@ -5110,7 +5112,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 
-
+	function fixVirtualOptionSelected(cur, curValue) {
+	    var options = []
+	    cur.children.forEach(function (a) {
+	        if (a.type === 'option') {
+	            options.push(a)
+	        } else if (a.type === 'optgroup') {
+	            a.children.forEach(function (c) {
+	                if (c.type === 'option') {
+	                    options.push(c)
+	                }
+	            })
+	        }
+	    })
+	    var multi = cur.props.multiple
+	    var map = {}
+	    var one = multi === null || multi === void 0 || multi === false
+	    if (Array.isArray(curValue)) {
+	        curValue.forEach(function (a) {
+	            map[a] = 1
+	        })
+	    } else {
+	        map[curValue] = 1
+	    }
+	    for (var i = 0, option; option = options[i++]; ) {
+	        var v = 'value' in option.props ? option.props.value : (option.children[0] || {nodeValue: ''}).nodeValue.trim()
+	        option.props.selected = !!map[v]
+	        if (map[v] && one) {
+	            break
+	        }
+	    }
+	}
 
 /***/ },
 /* 89 */
