@@ -29,7 +29,7 @@ describe('duplex', function () {
         div.innerHTML = heredoc(function () {
             /*
              <div ms-controller='duplex1' >
-             <input ms-duplex-string='@aaa|limitBy(2)'><span>{{@aaa}}</span>
+             <input ms-duplex-string='@aaa|limitBy(4)'><span>{{@aaa}}</span>
              <input ms-duplex-number='@bbb' ><span>{{@bbb}}</span>
              <input ms-duplex-boolean='@ccc' ><span>{{@ccc}}</span>
              <input ms-duplex-checked='@ddd' type='radio' ><span>{{@ddd}}</span>
@@ -49,9 +49,9 @@ describe('duplex', function () {
             var inputs = div.getElementsByTagName('input')
             var spans = div.getElementsByTagName('span')
 
-            expect(inputs[0].value).to.equal('12')
-            expect(vm.aaa).to.equal('12')
-            expect(spans[0].innerHTML).to.equal('12')
+            expect(inputs[0].value).to.equal('1234')
+            expect(vm.aaa).to.equal('1234')
+            expect(spans[0].innerHTML).to.equal('1234')
             expect(inputs[1].value).to.equal('123')
             expect(vm.bbb).to.equal(123)
             expect(spans[1].innerHTML).to.equal('123')
@@ -61,21 +61,21 @@ describe('duplex', function () {
             expect(vm.ddd).to.equal(true)
             expect(spans[3].innerHTML).to.equal('true')
             expect(inputs[3].checked).to.equal(true)
-//            vm.bbb = '333b'
-//            vm.ccc = 'NaN'
-//            vm.ddd = false
-//            setTimeout(function () {
-//                expect(inputs[1].value).to.equal('333')
-//                expect(vm.bbb).to.equal(333)
-//                expect(spans[1].innerHTML).to.equal('333')
-//                expect(inputs[2].value).to.equal('false')
-//                expect(vm.ccc).to.equal(false)
-//                expect(spans[2].innerHTML).to.equal('false')
-//                expect(spans[3].innerHTML).to.equal('false')
-//                expect(inputs[3].checked).to.equal(false)
-//                done()
-//            }, 100)//chrome 37还是使用定时器，需要延迟足够的时间
-done()
+            vm.bbb = '333b'
+            vm.ccc = 'NaN'
+            vm.ddd = false
+            setTimeout(function () {
+                expect(inputs[1].value).to.equal('333')
+                expect(vm.bbb).to.equal(333)
+                expect(spans[1].innerHTML).to.equal('333')
+                expect(inputs[2].value).to.equal('false')
+                expect(vm.ccc).to.equal(false)
+                expect(spans[2].innerHTML).to.equal('false')
+                expect(spans[3].innerHTML).to.equal('false')
+                expect(inputs[3].checked).to.equal(false)
+                done()
+            }, 100)//chrome 37还是使用定时器，需要延迟足够的时间
+
         }, 100)
 
     })
@@ -83,9 +83,9 @@ done()
         div.innerHTML = heredoc(function () {
             /*
              <div ms-controller='duplex2' >
-             <input ms-duplex-number='@aaa' value='111'>
-             <input ms-duplex-number='@aaa' value='222'>
-             <input ms-duplex-number='@aaa' value='333'>
+             <input ms-duplex-number='@aaa' value='111' type='checkbox'>
+             <input ms-duplex-number='@aaa' value='222' type='checkbox'>
+             <input ms-duplex-number='@aaa' value='333' type='checkbox'>
              </div>
              */
         })
@@ -104,9 +104,9 @@ done()
             fireClick(inputs[1])
             fireClick(inputs[2])
             setTimeout(function () {
-                expect(vm.aaa).to.eql([111,222])
+                expect(vm.aaa.concat()).to.eql([111,222])
                 done()
-            })
+            },100)
         })
     })
 })

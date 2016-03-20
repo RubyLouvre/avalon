@@ -21,7 +21,7 @@ avalon.directive('duplex', {
             if (!cur.type === 'select' && cur.children.length) {
                 avalon.Array.merge(cur.children, avalon.lexer(cur.template))
             }
-            initMonitor(cur, pre)
+            initControl(cur, pre)
         }
 
         var ctrl = cur.ctrl

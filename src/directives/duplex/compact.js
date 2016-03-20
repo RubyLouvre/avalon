@@ -69,7 +69,6 @@ avalon.directive('duplex', {
                 }
             }, 30)
         }
-
         var viewValue = ctrl.modelValue
         if (ctrl.viewValue !== viewValue) {
             ctrl.viewValue = viewValue

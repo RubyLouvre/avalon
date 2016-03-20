@@ -15,7 +15,6 @@ function newControl(binding, vnode) {
         formatters: [],
         modelValue: NaN,
         viewValue: NaN,
-        type: 'input',
         parse: parse,
         format: format
     }
@@ -48,8 +47,7 @@ function newControl(binding, vnode) {
         }
     }
     binding.expr = ctrl.expr = expr.trim()
-    
-    if (!/input|textarea|select/.test(etype)) {
+    if (!/input|textarea|select/.test(vnode.type)) {
         if ('contenteditable' in vnode.props) {
             ctrl.type = 'contenteditable'
         }

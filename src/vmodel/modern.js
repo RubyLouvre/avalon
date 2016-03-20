@@ -95,7 +95,7 @@ function slaveFactory(before, after, heirloom, options) {
         }
         keys[key] = true
     }
-    makeObserver($vmodel, options, heirloom, keys, accessors)
+    makeObserver($vmodel, heirloom, keys, accessors, options)
 
     return $vmodel
 }
@@ -172,7 +172,7 @@ function arrayFactory(array, old, heirloom, options) {
         options.array = true
         options.hashcode = hashcode
         options.id = options.id || hashcode
-        makeObserver(array, options, heirloom)
+        makeObserver(array, heirloom, {}, {}, options)
 
         var itemOptions = {
             id: array.$id + '.*',
