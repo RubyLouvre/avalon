@@ -109,4 +109,34 @@ describe('duplex', function () {
             },100)
         })
     })
+    
+    it('select', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+            <div ms-controller='duplex3' >
+                <select ms-duplex-number='@aaa' multiple="true">
+                    <option>111</option>
+                    <option>222</option>
+                    <option>333</option>
+                    <option>444</option>
+                </select>
+            </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'duplex3',
+            aaa: [111,444]
+
+        })
+        avalon.scan(div, vm)
+        setTimeout(function () {
+            var options = div.getElementsByTagName('option')
+            expect(options[0].selected).to.equal(true)
+            expect(options[1].selected).to.equal(false)
+            expect(options[2].selected).to.equal(true)
+
+            done()
+          
+        })
+    })
 })
