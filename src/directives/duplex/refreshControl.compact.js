@@ -1,3 +1,4 @@
+
 var refreshControl = {
     input: function () {//处理单个value值处理
         this.elem.value = this.viewValue
@@ -40,6 +41,7 @@ var refreshControl = {
     },
     contenteditable: function () {//处理单个innerHTML
         this.elem.innerHTML = this.viewValue
+        this.update.call(this.elem)
     }
 }
 

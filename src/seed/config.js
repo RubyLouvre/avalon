@@ -46,6 +46,3 @@ kernel.plugins = plugins
 kernel.plugins['interpolate'](['{{', '}}'])
 
 kernel.debug = true
-
-
-

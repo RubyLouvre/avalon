@@ -25,52 +25,8 @@ describe('duplex', function() {
         body.removeChild(div)
         delete avalon.vmodels[vm.$id]
     })
-    it("test", function(done) {
-        div.innerHTML = heredoc(function() {
-            /*
-             <div ms-controller='duplex1' >
-             <input ms-duplex="aaa|string|limitBy(2)"><span>{{aaa}}</span>
-             <input ms-duplex="bbb|numeric" data-duplex-number='strong'><span>{{bbb}}</span>
-             <input ms-duplex="ccc|boolean" ><span>{{ccc}}</span>
-             
-             </div>
-             */
-        })
-        vm = avalon.define({
-            $id: 'duplex1',
-            aaa: 12345,
-            bbb: "123a",
-            ccc: "true"
+   
 
-        })
-        avalon.scan(div, vm)
-        setTimeout(function() {
-            var inputs = div.getElementsByTagName("input")
-            var spans = div.getElementsByTagName("span")
-
-            expect(inputs[0].value).to.equal("12")
-            expect(vm.aaa).to.equal("12")
-            expect(spans[0].innerHTML).to.equal("12")
-            expect(inputs[1].value).to.equal("123")
-            expect(vm.bbb).to.equal(123)
-            expect(spans[1].innerHTML).to.equal("123")
-            expect(inputs[2].value).to.equal("true")
-            expect(vm.ccc).to.equal(true)
-            expect(spans[2].innerHTML).to.equal("true")
-            vm.bbb = "333b"
-            vm.ccc = "NaN"
-            setTimeout(function() {
-                expect(inputs[1].value).to.equal("333")
-                expect(vm.bbb).to.equal(333)
-                expect(spans[1].innerHTML).to.equal("333")
-                expect(inputs[2].value).to.equal("false")
-                expect(vm.ccc).to.equal(false)
-                expect(spans[2].innerHTML).to.equal("false")
-                done()
-            }, 100)//chrome 37还是使用定时器，需要延迟足够的时间
-        }, 100)
-
-    })
 
     it("test", function(done) {
         div.innerHTML = heredoc(function() {

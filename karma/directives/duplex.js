@@ -139,11 +139,12 @@ describe('duplex', function () {
 
         })
     })
+    
     it('textarea & contenteditable', function () {
         div.innerHTML = heredoc(function () {
             /*
-             <div ms-controller='duplex4' >
-             <textarea ms-duplex='@aaa | uppercase'></textarea>
+             <div ms-controller='duplex4'>
+             <textarea ms-duplex='@aaa|uppercase'></textarea>
              <blockquote ms-duplex='@bbb | lowercase' contenteditable='true'><div>2222</div></blockquote>
              </div>
              */
@@ -157,15 +158,18 @@ describe('duplex', function () {
         setTimeout(function () {
             var textarea = div.getElementsByTagName('textarea')
             var blockquote = div.getElementsByTagName('blockquote')
-            expect(textarea[0].innerHTML).to.equal('AAA')
+         
+            expect(textarea[0].value).to.equal('AAA')
             expect(blockquote[0].innerHTML).to.equal('bbb')
             vm.aaa = "aaa_bbb"
             vm.bbb = 'fff_AAA'
             setTimeout(function () {
-                expect(textarea[0].innerHTML).to.equal('AAA_BBB')
+                expect(textarea[0].value).to.equal('AAA_BBB')
                 expect(blockquote[0].innerHTML).to.equal('fff_aaa')
                 done()
             })
         })
     })
+
+
 })

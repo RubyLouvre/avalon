@@ -815,9 +815,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	kernel.debug = true
 
 
-
-
-
 /***/ },
 /* 8 */
 /***/ function(module, exports, __webpack_require__) {
@@ -3098,7 +3095,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function scan(nodes) {
 	    for (var i = 0, elem; elem = nodes[i++]; ) {
 	        if (elem.nodeType === 1) {
-	            var $id = elem.getAttribute('a-controller') || elem.getAttribute('ms-controller')
+	            var $id = hasController(elem)
 	            var vm = avalon.vmodels[$id]
 	            if (vm && !vm.$element) {
 	                var str = elem.outerHTML
@@ -4299,7 +4296,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var val = ctrl.parse(viewValue)
 	        viewValue = val+''
 	        if (rawValue !== viewValue) {
-	           // ctrl.viewValue = viewValue
 	            ctrl.elem[prop] = viewValue
 	        }
 	        if (val !== ctrl.modelValue) {
@@ -4346,7 +4342,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    contenteditable: function () {
-	        refreshModel.input('innerHTML')
+	        refreshModel.input.call(this,'innerHTML')
 	    }
 	}
 	module.exports = refreshModel
@@ -4365,6 +4361,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 54 */
 /***/ function(module, exports) {
 
+	
 	var refreshControl = {
 	    input: function () {//处理单个value值处理
 	        this.elem.value = this.viewValue
@@ -4407,6 +4404,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    contenteditable: function () {//处理单个innerHTML
 	        this.elem.innerHTML = this.viewValue
+	        this.update.call(this.elem)
 	    }
 	}
 

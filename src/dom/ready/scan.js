@@ -1,7 +1,7 @@
 function scan(nodes) {
     for (var i = 0, elem; elem = nodes[i++]; ) {
         if (elem.nodeType === 1) {
-            var $id = elem.getAttribute('a-controller') || elem.getAttribute('ms-controller')
+            var $id = hasController(elem)
             var vm = avalon.vmodels[$id]
             if (vm && !vm.$element) {
                 var str = elem.outerHTML

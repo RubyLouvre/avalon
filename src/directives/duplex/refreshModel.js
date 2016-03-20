@@ -18,7 +18,6 @@ var refreshModel = {
         var val = ctrl.parse(viewValue)
         viewValue = val+''
         if (rawValue !== viewValue) {
-           // ctrl.viewValue = viewValue
             ctrl.elem[prop] = viewValue
         }
         if (val !== ctrl.modelValue) {
@@ -65,7 +64,7 @@ var refreshModel = {
         }
     },
     contenteditable: function () {
-        refreshModel.input('innerHTML')
+        refreshModel.input.call(this,'innerHTML')
     }
 }
 module.exports = refreshModel

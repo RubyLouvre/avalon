@@ -419,9 +419,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	kernel.debug = true
 
 
-
-
-
 /***/ },
 /* 8 */
 /***/ function(module, exports, __webpack_require__) {
@@ -1424,7 +1421,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function scan(nodes) {
 	    for (var i = 0, elem; elem = nodes[i++]; ) {
 	        if (elem.nodeType === 1) {
-	            var $id = elem.getAttribute('a-controller') || elem.getAttribute('ms-controller')
+	            var $id = hasController(elem)
 	            var vm = avalon.vmodels[$id]
 	            if (vm && !vm.$element) {
 	                var str = elem.outerHTML
@@ -2129,7 +2126,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var val = ctrl.parse(viewValue)
 	        viewValue = val+''
 	        if (rawValue !== viewValue) {
-	           // ctrl.viewValue = viewValue
 	            ctrl.elem[prop] = viewValue
 	        }
 	        if (val !== ctrl.modelValue) {
@@ -2176,7 +2172,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    contenteditable: function () {
-	        refreshModel.input('innerHTML')
+	        refreshModel.input.call(this,'innerHTML')
 	    }
 	}
 	module.exports = refreshModel
@@ -5329,11 +5325,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        elem.checked = checked
 	    },
 	    select: function () {//处理子级的selected属性
-	       var a = Array.isArray(this.viewValue) ? this.viewValue.map(String): this.viewValue+''
-	       avalon(this.elem).val(a)
+	        var a = Array.isArray(this.viewValue) ? this.viewValue.map(String) : this.viewValue + ''
+	        avalon(this.elem).val(a)
 	    },
 	    contenteditable: function () {//处理单个innerHTML
 	        this.elem.innerHTML = this.viewValue
+	        this.update.call(this.elem)
 	    }
 	}
 

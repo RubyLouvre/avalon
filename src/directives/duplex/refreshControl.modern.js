@@ -24,11 +24,12 @@ var refreshControl = {
         elem.checked = checked
     },
     select: function () {//处理子级的selected属性
-       var a = Array.isArray(this.viewValue) ? this.viewValue.map(String): this.viewValue+''
-       avalon(this.elem).val(a)
+        var a = Array.isArray(this.viewValue) ? this.viewValue.map(String) : this.viewValue + ''
+        avalon(this.elem).val(a)
     },
     contenteditable: function () {//处理单个innerHTML
         this.elem.innerHTML = this.viewValue
+        this.update.call(this.elem)
     }
 }
 
