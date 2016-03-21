@@ -4547,15 +4547,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rforLeft = /^\s*\(\s*/
 	var rforRight = /\s*\)\s*$/
 	var rforSplit = /\s*,\s*/
+	var rforAs = /\s+as\s+([$\w]+)/
+	var ridentifier = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
+	var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
 	avalon.directive('for', {
 	    parse: function (str, num) {
+	        var aliasAs
+	        str = str.replace(rforAs, function (a, b) {
+	            if (!ridentifier.test(b) || rinvalid.test(b)) {
+	                avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.')
+	            } else {
+	                aliasAs = b
+	            }
+	            return ''
+	        })
 	        var arr = str.replace(rforPrefix, '').split(' in ')
-	        var def = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
+	        var assign = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
+	        var alias = aliasAs ? 'var ' + aliasAs + ' = loop' + num + '\n' : ''
 	        var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
 	        if (kv.length === 1) {
 	            kv.unshift('$key')
 	        }
-	        return def + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
+	        return assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
 	    },
 	    diff: function (current, previous, i) {
 	        var cur = current[i]
