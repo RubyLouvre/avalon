@@ -22,8 +22,11 @@ describe('duplex', function () {
         body.appendChild(div)
     })
     afterEach(function () {
-        body.removeChild(div)
-        delete avalon.vmodels[vm.$id]
+        if (div.parentNode === body) {
+            body.removeChild(div)
+            delete avalon.vmodels[vm.$id]
+        }
+
     })
     it('数据转换', function (done) {
         div.innerHTML = heredoc(function () {
@@ -139,12 +142,12 @@ describe('duplex', function () {
 
         })
     })
-    
-    it('textarea & contenteditable', function () {
+
+    it('textarea & contenteditable', function (done) {
         div.innerHTML = heredoc(function () {
             /*
              <div ms-controller='duplex4'>
-             <textarea ms-duplex='@aaa|uppercase'></textarea>
+             <textarea ms-duplex='@aaa | uppercase'></textarea>
              <blockquote ms-duplex='@bbb | lowercase' contenteditable='true'><div>2222</div></blockquote>
              </div>
              */
@@ -156,20 +159,89 @@ describe('duplex', function () {
         })
         avalon.scan(div, vm)
         setTimeout(function () {
-            var textarea = div.getElementsByTagName('textarea')
+            var textareas = div.getElementsByTagName('textarea')
             var blockquote = div.getElementsByTagName('blockquote')
-         
-            expect(textarea[0].value).to.equal('AAA')
+
+            expect(textareas[0].value).to.equal('AAA')
             expect(blockquote[0].innerHTML).to.equal('bbb')
             vm.aaa = "aaa_bbb"
             vm.bbb = 'fff_AAA'
             setTimeout(function () {
-                expect(textarea[0].value).to.equal('AAA_BBB')
+                expect(textareas[0].value).to.equal('AAA_BBB')
                 expect(blockquote[0].innerHTML).to.equal('fff_aaa')
                 done()
-            })
-        })
+            }, 80)
+        }, 100)
     })
 
+    it('select2', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='duplex5' >
+             <select ms-duplex='@aaa'>
+             <option>
+             aaa
+             </option>
+             <option>
+             bbb
+             </option>
+             <option>
+             ccc
+             </option>
+             <option>
+             ddd
+             </option>
+             </select><input ms-duplex='@aaa'><span>{{@aaa}}</span> 
+             <select ms-duplex-number='@bbb' multiple='true'>
+             <option>
+             111
+             </option>
+             <option>
+             222
+             </option>
+             <option>
+             333
+             </option>
+             <option>
+             444
+             </option>
+             </select>
+             </div>
+             */
+        })
+        var vm = avalon.define({
+            $id: 'duplex5',
+            aaa: "ccc",
+            bbb: [111, 444]
+        })
+        avalon.scan(div, vm)
+        setTimeout(function () {
+            var options = div.getElementsByTagName('option')
+            var inputs = div.getElementsByTagName('input')
+            var spans = div.getElementsByTagName('span')
+            expect(options[2].selected).to.equal(true)
+            expect(options[4].selected).to.equal(true)
+            expect(options[5].selected).to.equal(false)
+            expect(options[6].selected).to.equal(false)
+            expect(options[7].selected).to.equal(true)
+            expect(spans[0].innerHTML).to.equal('ccc')
+            expect(inputs[0].value).to.equal('ccc')
+            inputs[0].value = 'bbb'
+            options[4].selected = false
+            options[5].selected = true
+            options[6].selected = true
+            options[7].selected = false
+            avalon.fireDom(div.getElementsByTagName('select')[1],'change')
+            setTimeout(function () {
+                expect(options[2].selected).to.equal(false)
+                expect(options[1].selected).to.equal(true)
+                expect(spans[0].innerHTML).to.equal('bbb')
+                expect(vm.bbb.concat()).to.eql([222,333])
+                done()
+            })
 
+
+
+        }, 80)
+    })
 })

@@ -82,8 +82,9 @@ a-css="[@styleObject,@styleObject2]"
 
 ### a-on
 ```
-a-on-click="@fn"
-a-on-keydown="@xxx |enter"
+a-click="@fn"
+a-on-click-0=" @toggle = !@toggle"
+a-on-keydown="@xxx |stop"
 a-click="@fn"
 ```
 可使用特定的过滤器(stop, prevent, up,down,right, left, esc,tab, enter,space,del),绑事事件回调
