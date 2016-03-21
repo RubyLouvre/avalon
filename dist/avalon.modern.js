@@ -410,7 +410,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var c = avalon.escapeRegExp(closeTag)
 	        kernel.rexpr = new RegExp(o + '([\\ss\\S]*)' + c)
 	        kernel.rexprg = new RegExp(o + '([\\ss\\S]*)' + c, 'g')
-	        kernel.rbind = new RegExp(o + '[\\ss\\S]*' + c + '|\\b(?:ms|a)-')
+	        kernel.rbind = new RegExp(o + '[\\ss\\S]*' + c + '|\\bms-')
 	    }
 	}
 	kernel.plugins = plugins
@@ -1425,7 +1425,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var vm = avalon.vmodels[$id]
 	            if (vm && !vm.$element) {
 	                var str = elem.outerHTML
-	                avalon(elem).removeClass('ms-controller a-controller')
+	                avalon(elem).removeClass('ms-controller')
 
 	                vm.$element = elem
 	                var now = new Date - 0
@@ -1451,13 +1451,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return
 	    }
 	    if (getController(a)) {
-	        avalon.warn('[avalon.scan] first argument must has "ms-controller" or "a-controller" attribute')
+	        avalon.warn('[avalon.scan] first argument must has "ms-controller" attribute')
 	        return
 	    }
 	    scan([a])
 	}
 	function hasController(a) {
-	    return a.getAttribute('a-controller') || a.getAttribute('ms-controller')
+	    return a.getAttribute('ms-controller')
 	}
 	function getController(a) {
 	    if (a.getAttribute && hasController(a)) {
@@ -1527,14 +1527,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.directive('css', {
 	    parse: function (binding, num) {
-	        return 'vnode' + num + '.props["a-css"] = ' + avalon.parseExpr(binding) + ';\n'
+	        return 'vnode' + num + '.props["ms-css"] = ' + avalon.parseExpr(binding) + ';\n'
 	    },
 	    diff: function (cur, pre) {
-	        var a = cur.props['a-css']
-	        var p = pre.props['a-css']
+	        var a = cur.props['ms-css']
+	        var p = pre.props['ms-css']
 	        if ( Object(a) === a) {
 	            if (Array.isArray(a)) {
-	                a = cur.props['a-css'] = avalon.mix.apply({}, a)
+	                a = cur.props['ms-css'] = avalon.mix.apply({}, a)
 	            }
 	            if (typeof p !== 'object') {
 	                cur.changeStyle = a
@@ -1557,7 +1557,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                avalon.Array.ensure(list, this.update)
 	            }
 	        } else {
-	            cur.props['a-css'] = p
+	            cur.props['ms-css'] = p
 	        }
 	    },
 	    update: function (node, vnode) {
@@ -1633,11 +1633,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.directive('text', {
 	    parse: function (binding, num, vnode) {
 	        vnode.children = [{type: '#text', nodeValue: ''}]
-	        return 'vnode' + num + '.props["a-text"] =' + avalon.parseExpr(binding) + ';\n'
+	        return 'vnode' + num + '.props["ms-text"] =' + avalon.parseExpr(binding) + ';\n'
 	    },
 	    diff: function (cur, pre) {
-	        var curValue = cur.props['a-text']
-	        var preValue = pre.props['a-text']
+	        var curValue = cur.props['ms-text']
+	        var preValue = pre.props['ms-text']
 	        cur.children = pre.children
 	        cur.skipContent = true
 	        if (curValue !== preValue) {
@@ -1648,7 +1648,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return false
 	    },
 	    update: function (node, vnode) {
-	        var nodeValue = vnode.props['a-text']
+	        var nodeValue = vnode.props['ms-text']
 	        if ('textContent' in node) {
 	            node.textContent = nodeValue + ''
 	        } else {
@@ -1668,11 +1668,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parse: function (binding, num) {
 	        return 'vnode' + num + '.htmlVm = __vmodel__\n' +
 	                'vnode' + num + '.props.wid = 1;\n' +
-	                'vnode' + num + '.props["a-html"] =' + avalon.parseExpr(binding) + ';\n'
+	                'vnode' + num + '.props["ms-html"] =' + avalon.parseExpr(binding) + ';\n'
 	    },
 	    diff: function (cur, pre) {
-	        var curValue = cur.props['a-html']
-	        var preValue = pre.props['a-html']
+	        var curValue = cur.props['ms-html']
+	        var preValue = pre.props['ms-html']
 	        if (curValue !== preValue) {
 
 	            var nodes = textCache.get(curValue)
@@ -1680,13 +1680,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var child = avalon.lexer(curValue)
 	                var render = avalon.render(child)
 	                nodes = render(cur.htmlVm)
-	                curValue = cur.props['a-html'] = nodes.map(function (el) {
+	                curValue = cur.props['ms-html'] = nodes.map(function (el) {
 	                    return 'template' in el ? el.template : el.nodeValue
 	                }).join('-')
 	                textCache.put(curValue, nodes)
 	            }
 	            cur.children = nodes
-	            if (cur.props['a-html'] !== preValue) {
+	            if (cur.props['ms-html'] !== preValue) {
 	                var list = cur.change || (cur.change = [])
 	                avalon.Array.ensure(list, this.update)
 	            }
@@ -1750,18 +1750,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.directive('visible', {
 	    parse: function (binding, num) {
-	        return 'vnode' + num + '.props["a-visible"] = ' + avalon.parseExpr(binding) + ';\n'
+	        return 'vnode' + num + '.props["ms-visible"] = ' + avalon.parseExpr(binding) + ';\n'
 	    },
 	    diff: function (cur, pre) {
-	        var c = cur.props['a-visible'] = !!cur.props['a-visible']
+	        var c = cur.props['ms-visible'] = !!cur.props['ms-visible']
 	        cur.displayValue = pre.displayValue
-	        if (c !== pre.props['a-visible']) {
+	        if (c !== pre.props['ms-visible']) {
 	            var list = cur.change || (cur.change = [])
 	            avalon.Array.ensure(list, this.update)
 	        }
 	    },
 	    update: function (node, vnode) {
-	        if (vnode.props['a-visible']) {
+	        if (vnode.props['ms-visible']) {
 	            var cur = avalon(node).css('display')
 	            if (!vnode.displayValue) {
 	                vnode.displayValue = cur !== 'none' ? cur :
@@ -1789,8 +1789,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return 'vnode' + num + '.props["' + binding.name + '"] = ' + avalon.parseExpr(binding) + ';\n'
 	    },
 	    diff: function (cur, pre, type) {
-	        var curValue = cur.props['a-' + type]
-	        var preValue = pre.props['a-' + type]
+	        var curValue = cur.props['ms-' + type]
+	        var preValue = pre.props['ms-' + type]
 	        if (!pre.classEvent) {
 	            var classEvent = {}
 	            if (type === 'hover') {//在移出移入时切换类名
@@ -1822,7 +1822,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } 
 	        
 	        if (typeof className !== 'string') {
-	            cur.props['a-' + type] = preValue
+	            cur.props['ms-' + type] = preValue
 	            
 	            return
 	        }
@@ -1911,7 +1911,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var quote = avalon.quote
 
 	//基于事件代理的高性能事件绑定
-	var revent = /^a-on-(\w+)/
+	var revent = /^ms-on-(\w+)/
 	var rfilters = /\|.+/g
 	var rvar = /([@$]?\w+)/g
 	var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
@@ -2194,10 +2194,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var patch = __webpack_require__(56)
 
-	avalon.directive("if", {
+	avalon.directive('if', {
 	    priority: 5,
 	    parse: function (binding, num) {
-	        return "vnode" + num + ".props['a-if'] = " + avalon.quote(binding.expr) + ";\n"
+	        return 'vnode' + num + '.props["ms-if"] = ' + avalon.quote(binding.expr) + ';\n'
 	    },
 	    diff: function (cur, pre) {
 	        if (cur.type !== pre.type) {
@@ -2250,18 +2250,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (node)
 	            next = node.nextSibling
 
-	        if (vnode.directive === "for" && vnode.change) {
+	        if (vnode.directive === 'for' && vnode.change) {
 	            if (node.nodeType === 1) {
 	                var startRepeat = document.createComment(vnode.nodeValue)
 	                parent.insertBefore(startRepeat, node)
-	                parent.insertBefore(document.createComment("a-for-end:"), node.nextSibling)
+	                parent.insertBefore(document.createComment('ms-for-end:'), node.nextSibling)
 	                node = startRepeat
 	            }
 	            var repeatNodes = [node], cur = node
 	            innerLoop:
 	                    while (cur && (cur = cur.nextSibling)) {
 	                repeatNodes.push(cur)
-	                if ((cur.nodeValue || "").indexOf("a-for-end:") === 0) {
+	                if ((cur.nodeValue || '').indexOf('ms-for-end:') === 0) {
 	                    next = cur.nextSibling
 	                    break innerLoop
 	                }
@@ -2270,8 +2270,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        //ms-repeat,ms-if, ms-widget会返回false
-	        if (false === execHooks(node, vnode, parent, "change")) {
-	            execHooks(node, vnode, parent, "afterChange")
+	        if (false === execHooks(node, vnode, parent, 'change')) {
+	            execHooks(node, vnode, parent, 'afterChange')
 	            continue
 	        }
 
@@ -2280,7 +2280,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            patch(avalon.slice(node.childNodes), vnode.children, node)
 	        }
 	        //ms-duplex
-	        execHooks(node, vnode, parent, "afterChange")
+	        execHooks(node, vnode, parent, 'afterChange')
 	    }
 	}
 
@@ -2310,7 +2310,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (var i = 0; i < obj.length; i++) {
 	            var value = obj[i]
 	            var type = typeof value
-	            var key = value && type === "object" ? obj.$hashcode : type + value
+	            var key = value && type === 'object' ? obj.$hashcode : type + value
 	            fn(i, obj[i], key)
 	        }
 	    } else {
@@ -2321,25 +2321,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	}
-	var rforPrefix = /a-for\:\s*/
+	var rforPrefix = /ms-for\:\s*/
 	var rforLeft = /^\s*\(\s*/
 	var rforRight = /\s*\)\s*$/
 	var rforSplit = /\s*,\s*/
-	avalon.directive("for", {
+	avalon.directive('for', {
 	    parse: function (str, num) {
-	        var arr = str.replace(rforPrefix, "").split(" in ")
-	        var def = "var loop" + num + " = " + avalon.parseExpr(arr[1]) + "\n"
-	        var kv = arr[0].replace(rforLeft, "").replace(rforRight, "").split(rforSplit)
+	        var arr = str.replace(rforPrefix, '').split(' in ')
+	        var def = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
+	        var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
 	        if (kv.length === 1) {
-	            kv.unshift("$key")
+	            kv.unshift('$key')
 	        }
-	        return def + "avalon._each(loop" + num + ", function(" + kv + ",traceKey){\n\n"
+	        return def + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
 	    },
 	    diff: function (current, previous, i) {
 	        var cur = current[i]
 	        var pre = previous[i] || {}
-	        var hasSign1 = "directive" in cur
-	        var hasSign2 = "directive" in pre
+	        var hasSign1 = 'directive' in cur
+	        var hasSign2 = 'directive' in pre
 
 	        var curLoop = hasSign1 ? getForBySignature(current, i) :
 	                getForByNodeValue(current, i)
@@ -2360,12 +2360,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else {
 	            previous.splice.apply(previous, [i, Math.abs(n)])
 	        }
-	        cur.action = !hasSign2 ? "replace" : "reorder"
+	        cur.action = !hasSign2 ? 'replace' : 'reorder'
 
 	        cur.repeatVnodes = curLoop
 	        var ccom = cur.components = getForByKey(curLoop.slice(1, -1), cur.signature)
 
-	        if (cur.action === "reorder") {
+	        if (cur.action === 'reorder') {
 	            var cache = {}
 	            var indexes = {}
 	            for (var i = 0, c; c = ccom[i++]; ) {
@@ -2383,7 +2383,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            //这是新添加的元素
 	            for (var i in cache) {
 	                p = cache[i]
-	                indexes[p.index + "_"] = p
+	                indexes[p.index + '_'] = p
 	                avalon.diff(p.children, [])
 	            }
 	            cur.indexes = indexes
@@ -2402,7 +2402,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var endRepeat = nodes[nodes.length - 1]
 	        var vnodes = repeatVnodes.slice(1, -1)
 
-	        if (action === "replace") {
+	        if (action === 'replace') {
 	            var node = startRepeat.nextSibling
 	            while (node !== endRepeat) {
 	                parent.removeChild(node)
@@ -2475,7 +2475,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        children: []
 	    }
 	    for (var i = 0, el; el = nodes[i]; i++) {
-	        if (el.type === "#comment" && el.nodeValue === signature) {
+	        if (el.type === '#comment' && el.nodeValue === signature) {
 	            com.children.push(el)
 	            com.key = el.key
 	            com.index = components.length
@@ -2493,7 +2493,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	//从一组节点,取得要循环的部分(第二次生成的虚拟DOM树会走这分支)
 	function getForBySignature(nodes, i) {
 	    var start = nodes[i], node
-	    var endText = start.signature + ":end"
+	    var endText = start.signature + ':end'
 	    var ret = []
 	    while (node = nodes[i++]) {
 	        ret.push(node)
@@ -2508,10 +2508,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	function getForByNodeValue(nodes, i) {
 	    var isBreak = 0, ret = [], node
 	    while (node = nodes[i++]) {
-	        if (node.type === "#comment") {
-	            if (node.nodeValue.indexOf("a-for:") === 0) {
+	        if (node.type === '#comment') {
+	            if (node.nodeValue.indexOf('ms-for:') === 0) {
 	                isBreak++
-	            } else if (node.nodeValue.indexOf("a-for-end:") === 0) {
+	            } else if (node.nodeValue.indexOf('ms-for-end:') === 0) {
 	                isBreak--
 	            }
 	        }
@@ -2529,7 +2529,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (c) {
 	        var stack = [{id: id, c: c}]
 	        while (1) {
-	            id += "_"
+	            id += '_'
 	            if (cache[id]) {
 	                stack.push({
 	                    id: id,
@@ -2552,7 +2552,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        cache[trackId] = component
 	    } else {
 	        while (1) {
-	            trackId += "_"
+	            trackId += '_'
 	            if (!cache[trackId]) {
 	                cache[trackId] = component
 	                break
@@ -2610,7 +2610,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rfullTag = /^<([^\s>\/=.$<]+)(?:\s+[^=\s]+(?:=[^>\s]+)?)*\s*>(?:[\s\S]*)<\/\1>/
 	var rvoidTag = /^<([^\s>\/=.$<]+)\s*([^>]*?)\/?>/
 
-
 	var rtext = /^[^<]+/
 	var rcomment = /^<!--([\w\W]*?)-->/
 	var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
@@ -2618,11 +2617,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var rnumber = /\d+/g
 	var rsp = /^\s+$/
-	var rspAfterForStart = /^(ms|a)-for\:/
-	var rspBeforeForEnd = /^(ms|a)-for-end\:/
+	var rspAfterForStart = /^ms-for\:/
+	var rspBeforeForEnd = /^ms-for-end\:/
 	var rleftTrim = /^\s+/
 	var rbind = avalon.config.rbind
-	var rjsCode = /^\s*(?:ms|a)-js\:/
 
 
 	var maps = {}
@@ -2663,12 +2661,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var nodeValue = node.nodeValue
 	                if (rspBeforeForEnd.test(nodeValue)) {
 	                    var sp = nodes[nodes.length - 1]
-	                    //移除紧挨着<!--a-for-end:xxxx-->前的空白节点
+	                    //移除紧挨着<!--ms-for-end:xxxx-->前的空白节点
 	                    if (sp && sp.type === '#text' && rsp.test(sp.nodeValue)) {
 	                        nodes.pop()
 	                    }
-	                }else if(rjsCode.test(nodeValue)){//处理ms-js:
-	                    node.nodeValue = nodeValue.replace(rjsCode,'a-js:')
 	                }
 	            }
 	        }
@@ -2727,7 +2723,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            text = text.slice(outerHTML.length)
 	            if (node.type === '#comment' && rspAfterForStart.test(node.nodeValue)) {
 	                node.signature = makeHashCode('for')
-	                //移除紧挨着<!--a-for:xxxx-->后的空白节点
+	                //移除紧挨着<!--ms-for:xxxx-->后的空白节点
 	                text = text.replace(rleftTrim, '')
 	            }
 	        } else {
@@ -2789,7 +2785,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function modifyProps(node, innerHTML, nodes) {
 	    var type = node.type
-	    if (node.props['a-skip']) {
+	    if (node.props['ms-skip']) {
 	        node.skipContent = true
 	    } else {
 	        switch (type) {
@@ -2823,19 +2819,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	                break
 	        }
-	        var forExpr = node.props['ms-for'] || node.props['a-for']
+	        var forExpr = node.props['ms-for'] 
 	        if (forExpr) {
 	            nodes.push({
 	                type: '#comment',
-	                nodeValue: 'a-for:' + forExpr,
+	                nodeValue: 'ms-for:' + forExpr,
 	                signature: makeHashCode('for')
 	            })
 	            delete node.props['ms-for']
-	            delete node.props['a-for']
 	            nodes.push(node)
 	            node = {
 	                type: '#comment',
-	                nodeValue: 'a-for-end:'
+	                nodeValue: 'ms-for-end:'
 	            }
 	        }
 	    }
@@ -3112,7 +3107,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        } else if (el.type === '#comment') {
 	            var nodeValue = el.nodeValue
-	            if (nodeValue.indexOf('a-for:') === 0) {
+	            if (nodeValue.indexOf('ms-for:') === 0) {
 	                var signature = el.signature
 	                forstack.push(signature)
 	                str += children + '.push({' +
@@ -3124,7 +3119,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        '\n})\n'
 	                str += avalon.directives['for'].parse(nodeValue, num)
 
-	            } else if (nodeValue.indexOf('a-for-end:') === 0) {
+	            } else if (nodeValue.indexOf('ms-for-end:') === 0) {
 	                var signature = forstack[forstack.length - 1]
 
 	                str += children + '.push({' +
@@ -3144,26 +3139,25 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	                    forstack.pop()
 	                }
-	            } else if (nodeValue.indexOf('a-js:') === 0) {
-	                str += parseExpr(nodeValue.replace('a-js:', ''), 'js') + '\n'
+	            } else if (nodeValue.indexOf('ms-js:') === 0) {
+	                str += parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
 	            } else {
-	                str += children + '.push(' + quote(el) + ');;;;\n'
+	                str += children + '.push(' + quote(el) + ')\n\n\n'
 	            }
 	            continue
 	        } else { //处理元素节点
-	            var hasIf = el.props['a-if'] || el.props['ms-if']
+	            var hasIf = el.props['ms-if'] 
 
-	            if (hasIf) { // 优化处理a-if指令
-	                el.props['a-if'] = hasIf
-	                el.signature = makeHashCode('a-if')
-	                delete el.props['ms-if']
+	            if (hasIf) { // 优化处理ms-if指令
+	                el.signature = makeHashCode('ms-if')
+	               
 	                str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'
 	                str += children + '.push({' +
 	                        '\n\ttype: "#comment",' +
 	                        '\n\tdirective: "if",' +
 	                        '\n\tnodeValue:' + quote(el.signature) + ',\n' +
 	                        '\n\tsignature:' + quote(el.signature) + ',\n' +
-	                        '\n\tprops: {"a-if":true} })\n'
+	                        '\n\tprops: {"ms-if":true} })\n'
 	                str += '\n}else{\n\n'
 
 	            }
@@ -3179,7 +3173,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 
 	            if (!el.isVoidTag && el.children.length) {
-	                var isWidget = el.props['a-widget'] || el.props['ms-widget']
+	                var isWidget = el.props['ms-widget'] 
 	                if (isWidget) {
 	                    str += 'if(!' + vnode + '.props.wid){\n'
 	                }
@@ -3434,12 +3428,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rneedQuote = /[W-]/
 	var quote = avalon.quote
 	var directives = avalon.directives
-	var rbinding = /^(?:ms|a)-(\w+)-?(.*)/
+	var rbinding = /^ms-(\w+)-?(.*)/
 	var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
 
 	function parseBindings(props, num, elem) {
 	    var bindings = []
-	    var skip = 'ms-skip' in props || 'a-skip' in props
+	    var skip = 'ms-skip' in props 
 	    var ret = ''
 	    for (var i in props) {
 	        var value = props[i], match
@@ -3454,7 +3448,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                param = type
 	                type = 'on'
 	            }
-	            name = 'a-' + type + (param ? '-' + param : '')
+	            name = 'ms-' + type + (param ? '-' + param : '')
 	            if (i !== name) {
 	                delete props[i]
 	                props[name] = value
@@ -4934,14 +4928,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.directive('attr', {
 	    parse: function (binding, num) {
-	        return 'vnode' + num + '.props["a-attr"] = ' + avalon.parseExpr(binding) + ';\n'
+	        return 'vnode' + num + '.props["ms-attr"] = ' + avalon.parseExpr(binding) + ';\n'
 	    },
 	    diff: function (cur, pre) {
-	        var a = cur.props['a-attr']
-	        var p = pre.props['a-attr']
+	        var a = cur.props['ms-attr']
+	        var p = pre.props['ms-attr']
 	        if (Object(a) === a) {
 	            if (Array.isArray(a)) {
-	                a = cur.props['a-attr'] = avalon.mix.apply({}, a)
+	                a = cur.props['ms-attr'] = avalon.mix.apply({}, a)
 	            }
 	            if (typeof p !== 'object') {
 	                cur.changeAttr = a
@@ -4963,7 +4957,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                avalon.Array.ensure(list, this.update)
 	            }
 	        } else {
-	            cur.props['a-attr'] = p
+	            cur.props['ms-attr'] = p
 	        }
 	    },
 	    //dom, vnode
@@ -5040,7 +5034,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        newControl(binding, vnode)
 
 	        return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
-	                'vnode' + num + '.props["a-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
+	                'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
 	    },
 	    diff: function (cur, pre) {
 

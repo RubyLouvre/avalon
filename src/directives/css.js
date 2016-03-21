@@ -2,14 +2,14 @@
 
 avalon.directive('css', {
     parse: function (binding, num) {
-        return 'vnode' + num + '.props["a-css"] = ' + avalon.parseExpr(binding) + ';\n'
+        return 'vnode' + num + '.props["ms-css"] = ' + avalon.parseExpr(binding) + ';\n'
     },
     diff: function (cur, pre) {
-        var a = cur.props['a-css']
-        var p = pre.props['a-css']
+        var a = cur.props['ms-css']
+        var p = pre.props['ms-css']
         if ( Object(a) === a) {
             if (Array.isArray(a)) {
-                a = cur.props['a-css'] = avalon.mix.apply({}, a)
+                a = cur.props['ms-css'] = avalon.mix.apply({}, a)
             }
             if (typeof p !== 'object') {
                 cur.changeStyle = a
@@ -32,7 +32,7 @@ avalon.directive('css', {
                 avalon.Array.ensure(list, this.update)
             }
         } else {
-            cur.props['a-css'] = p
+            cur.props['ms-css'] = p
         }
     },
     update: function (node, vnode) {

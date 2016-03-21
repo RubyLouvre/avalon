@@ -5,7 +5,7 @@ function scan(nodes) {
             var vm = avalon.vmodels[$id]
             if (vm && !vm.$element) {
                 var str = elem.outerHTML
-                avalon(elem).removeClass('ms-controller a-controller')
+                avalon(elem).removeClass('ms-controller')
 
                 vm.$element = elem
                 var now = new Date - 0
@@ -31,13 +31,13 @@ module.exports = avalon.scan = function (a) {
         return
     }
     if (getController(a)) {
-        avalon.warn('[avalon.scan] first argument must has "ms-controller" or "a-controller" attribute')
+        avalon.warn('[avalon.scan] first argument must has "ms-controller" attribute')
         return
     }
     scan([a])
 }
 function hasController(a) {
-    return a.getAttribute('a-controller') || a.getAttribute('ms-controller')
+    return a.getAttribute('ms-controller')
 }
 function getController(a) {
     if (a.getAttribute && hasController(a)) {

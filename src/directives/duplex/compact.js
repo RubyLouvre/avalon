@@ -12,7 +12,7 @@ avalon.directive('duplex', {
     parse: function (binding, num, vnode) {
         newControl(binding, vnode)
         return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
-                'vnode' + num + '.props["a-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
+                'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
     },
     diff: function (cur, pre) {
 

@@ -9,8 +9,8 @@ avalon.directive('class', {
         return 'vnode' + num + '.props["' + binding.name + '"] = ' + avalon.parseExpr(binding) + ';\n'
     },
     diff: function (cur, pre, type) {
-        var curValue = cur.props['a-' + type]
-        var preValue = pre.props['a-' + type]
+        var curValue = cur.props['ms-' + type]
+        var preValue = pre.props['ms-' + type]
         if (!pre.classEvent) {
             var classEvent = {}
             if (type === 'hover') {//在移出移入时切换类名
@@ -42,7 +42,7 @@ avalon.directive('class', {
         } 
         
         if (typeof className !== 'string') {
-            cur.props['a-' + type] = preValue
+            cur.props['ms-' + type] = preValue
             
             return
         }

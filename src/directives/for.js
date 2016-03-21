@@ -1,12 +1,12 @@
 
-var refreshView = require("../strategy/patch")
+var refreshView = require('../strategy/patch')
 
 avalon._each = function (obj, fn) {
     if (Array.isArray(obj)) {
         for (var i = 0; i < obj.length; i++) {
             var value = obj[i]
             var type = typeof value
-            var key = value && type === "object" ? obj.$hashcode : type + value
+            var key = value && type === 'object' ? obj.$hashcode : type + value
             fn(i, obj[i], key)
         }
     } else {
@@ -17,25 +17,25 @@ avalon._each = function (obj, fn) {
         }
     }
 }
-var rforPrefix = /a-for\:\s*/
+var rforPrefix = /ms-for\:\s*/
 var rforLeft = /^\s*\(\s*/
 var rforRight = /\s*\)\s*$/
 var rforSplit = /\s*,\s*/
-avalon.directive("for", {
+avalon.directive('for', {
     parse: function (str, num) {
-        var arr = str.replace(rforPrefix, "").split(" in ")
-        var def = "var loop" + num + " = " + avalon.parseExpr(arr[1]) + "\n"
-        var kv = arr[0].replace(rforLeft, "").replace(rforRight, "").split(rforSplit)
+        var arr = str.replace(rforPrefix, '').split(' in ')
+        var def = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
+        var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
         if (kv.length === 1) {
-            kv.unshift("$key")
+            kv.unshift('$key')
         }
-        return def + "avalon._each(loop" + num + ", function(" + kv + ",traceKey){\n\n"
+        return def + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
     },
     diff: function (current, previous, i) {
         var cur = current[i]
         var pre = previous[i] || {}
-        var hasSign1 = "directive" in cur
-        var hasSign2 = "directive" in pre
+        var hasSign1 = 'directive' in cur
+        var hasSign2 = 'directive' in pre
 
         var curLoop = hasSign1 ? getForBySignature(current, i) :
                 getForByNodeValue(current, i)
@@ -56,12 +56,12 @@ avalon.directive("for", {
         } else {
             previous.splice.apply(previous, [i, Math.abs(n)])
         }
-        cur.action = !hasSign2 ? "replace" : "reorder"
+        cur.action = !hasSign2 ? 'replace' : 'reorder'
 
         cur.repeatVnodes = curLoop
         var ccom = cur.components = getForByKey(curLoop.slice(1, -1), cur.signature)
 
-        if (cur.action === "reorder") {
+        if (cur.action === 'reorder') {
             var cache = {}
             var indexes = {}
             for (var i = 0, c; c = ccom[i++]; ) {
@@ -79,7 +79,7 @@ avalon.directive("for", {
             //这是新添加的元素
             for (var i in cache) {
                 p = cache[i]
-                indexes[p.index + "_"] = p
+                indexes[p.index + '_'] = p
                 avalon.diff(p.children, [])
             }
             cur.indexes = indexes
@@ -98,7 +98,7 @@ avalon.directive("for", {
         var endRepeat = nodes[nodes.length - 1]
         var vnodes = repeatVnodes.slice(1, -1)
 
-        if (action === "replace") {
+        if (action === 'replace') {
             var node = startRepeat.nextSibling
             while (node !== endRepeat) {
                 parent.removeChild(node)
@@ -171,7 +171,7 @@ function getForByKey(nodes, signature) {
         children: []
     }
     for (var i = 0, el; el = nodes[i]; i++) {
-        if (el.type === "#comment" && el.nodeValue === signature) {
+        if (el.type === '#comment' && el.nodeValue === signature) {
             com.children.push(el)
             com.key = el.key
             com.index = components.length
@@ -189,7 +189,7 @@ function getForByKey(nodes, signature) {
 //从一组节点,取得要循环的部分(第二次生成的虚拟DOM树会走这分支)
 function getForBySignature(nodes, i) {
     var start = nodes[i], node
-    var endText = start.signature + ":end"
+    var endText = start.signature + ':end'
     var ret = []
     while (node = nodes[i++]) {
         ret.push(node)
@@ -204,10 +204,10 @@ function getForBySignature(nodes, i) {
 function getForByNodeValue(nodes, i) {
     var isBreak = 0, ret = [], node
     while (node = nodes[i++]) {
-        if (node.type === "#comment") {
-            if (node.nodeValue.indexOf("a-for:") === 0) {
+        if (node.type === '#comment') {
+            if (node.nodeValue.indexOf('ms-for:') === 0) {
                 isBreak++
-            } else if (node.nodeValue.indexOf("a-for-end:") === 0) {
+            } else if (node.nodeValue.indexOf('ms-for-end:') === 0) {
                 isBreak--
             }
         }
@@ -225,7 +225,7 @@ function isInCache(cache, id) {
     if (c) {
         var stack = [{id: id, c: c}]
         while (1) {
-            id += "_"
+            id += '_'
             if (cache[id]) {
                 stack.push({
                     id: id,
@@ -248,7 +248,7 @@ function saveInCache(cache, component) {
         cache[trackId] = component
     } else {
         while (1) {
-            trackId += "_"
+            trackId += '_'
             if (!cache[trackId]) {
                 cache[trackId] = component
                 break

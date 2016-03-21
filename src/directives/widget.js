@@ -1,40 +1,39 @@
 
 var makeHashCode = avalon.makeHashCode
 
-
-
-//插入点机制,组件的模板中有一些a-slot元素,用于等待被外面的元素替代
+//插入点机制,组件的模板中有一些ms-slot元素,用于等待被外面的元素替代
 function wrap(str) {
-    return str.replace("return __value__", function (a) {
-        var prefix = "if(Array.isArray(__value__)){\n" +
-                "    __value__ = avalon.mix.apply({},__value__)\n" +
-                "}\n"
+    return str.replace('return __value__', function (a) {
+        var prefix = 'if(Array.isArray(__value__)){\n' +
+                '    __value__ = avalon.mix.apply({},__value__)\n' +
+                '}\n'
         return prefix + a
     })
 }
 
-avalon.directive("widget", {
+avalon.directive('widget', {
     parse: function (binding, num, elem) {
         if (elem.skipContent || !elem.children.length) {
             elem.children = createVirtual(elem.template)
         }
-        var uuid = makeHashCode("w")
+        var uuid = makeHashCode('w')
         avalon.caches[uuid] = elem.children
-        var component = "config" + num
-        return  "vnode" + num + ".props.wid = '" + uuid + "'\n" +
-                "vnode" + num + ".children = avalon.caches[vnode" + num + ".props.wid] \n" +
-                "var " + component + " = vnode" + num + ".props['a-widget'] = " + wrap(avalon.parseExpr(binding), "widget") + ";\n" +
-                "if(" + component + "){\n" +
-                "\tvnode" + num + " = avalon.component(vnode" + num + ", __vmodel__)\n" +
-                "}\n"
+        var component = 'config' + num
+        return  'vnode' + num + '.props.wid = "' + uuid + '"\n' +
+                'vnode' + num + '.children = avalon.caches[vnode' + num + '.props.wid] \n' +
+                'var ' + component + ' = vnode' + num + '.props["ms-widget"] = ' + 
+                wrap(avalon.parseExpr(binding), 'widget') + ';\n' +
+                'if(' + component + '){\n' +
+                '\tvnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n' +
+                '}\n'
 
     },
     createVm: function (topVm, defaults, options) {
         var after = avalon.mix({}, defaults, options)
         var events = {}
         //绑定生命周期的回调
-        "$init $ready $dispose".replace(/\S+/g, function (a) {
-            if (typeof after[a] === "function")
+        '$init $ready $dispose'.replace(/\S+/g, function (a) {
+            if (typeof after[a] === 'function')
                 events[a] = after[a]
             delete after[a]
         })
@@ -47,10 +46,10 @@ avalon.directive("widget", {
     diff: function (cur, pre) {
         var a = cur.props.resolved
         var p = pre.props.resolved
-        if (a && typeof a === "object") {
+        if (a && typeof a === 'object') {
 
         } else {
-            cur.props["a-widget"] = p
+            cur.props['ms-widget'] = p
         }
 
     },
@@ -90,14 +89,14 @@ var resolvedComponents = {}
  * 4 组件本身不产生元素,只是为子元素绑定事件,添加某种功能(draggable)
  */
 var updateTypes = {
-    0: "replaceElement",
-    1: "replaceContent",
-    2: "switchContent",
-    3: "update",
-    4: "update"
+    0: 'replaceElement',
+    1: 'replaceContent',
+    2: 'switchContent',
+    3: 'update',
+    4: 'update'
 }
 avalon.component = function (node, vm) {
-    var isDefine = typeof (node) === "string"
+    var isDefine = typeof (node) === 'string'
     if (isDefine) {//这里用在组件定义时
         var name = node, definition = vm
         avalon.components[name] = definition
@@ -106,7 +105,7 @@ avalon.component = function (node, vm) {
             if (name === obj.name) {
                 componentQueue.splice(i, 1)
                 i--
-                var vid = obj.vm.$id.split(".")[0]
+                var vid = obj.vm.$id.split('.')[0]
                 vms[vid] = true
             }
         }
@@ -116,13 +115,13 @@ avalon.component = function (node, vm) {
 
     } else {
         //这里是用在组件实例化时
-        var options = node.props['a-widget']
+        var options = node.props['ms-widget']
         var wid = node.props.wid
         var name = options.$type
         if (/(\:|-)/.test(node.type)) {
             name = node.type
         }
-        name = name.replace(":", "-")
+        name = name.replace(':', '-')
         //如果组件模板已经定
         if (resolvedComponents[id]) {
             return resolvedComponents[id].$render()//让widget虚拟DOM重新渲染自己并进行diff, patch
@@ -152,7 +151,7 @@ avalon.component = function (node, vm) {
             if (widgetNode.length === 1) {
                 widgetNode = widgetNode[0]
             } else {
-                throw "组件要用一个元素包起来"
+                throw '组件要用一个元素包起来'
             }
 
             resolvedComponents[wid] = widgetNode
@@ -178,7 +177,7 @@ avalon.component = function (node, vm) {
 function afterChange(dom, vnode, parent) {
     var isReady = true
     if (componentQueue.length !== 0) {
-      //  vnode.vmodel.$fire("$ready", vnode.type)
+      //  vnode.vmodel.$fire('$ready', vnode.type)
         try {
             hasUnresolvedComponent(vnode)
         } catch (e) {
@@ -186,16 +185,16 @@ function afterChange(dom, vnode, parent) {
         }
     }
     if (isReady) {
-        vnode.vmodel.$fire("$ready", vnode.type)
+        vnode.vmodel.$fire('$ready', vnode.type)
     }
 }
 //如果组件没有resolved,元素会是这样子:
-//<a-button wid="w453156877309" a-widget="undefined">xxx</a-button>
+//<a-button wid='w453156877309' a-widget='undefined'>xxx</a-button>
 function hasUnresolvedComponent(vnode) {
     vnode.children.forEach(function (el) {
         if (el.type.charAt(0) !== '#') {
-            if ("a-widget" in el.props) {
-                throw "unresolved"
+            if ('ms-widget' in el.props) {
+                throw 'unresolved'
             }
             hasUnresolvedComponent(el)
         }
@@ -204,9 +203,9 @@ function hasUnresolvedComponent(vnode) {
 
 function mergeTempale(main, slots) {
     for (var i = 0, el; el = main[i++]; ) {
-        if (el.type.charAt(0) !== "#") {
-            if (el.type === "a-slot") {
-                var name = el.props.name || ""
+        if (el.type.charAt(0) !== '#') {
+            if (el.type === 'ms-slot') {
+                var name = el.props.name || ''
                 if (slots[name]) {
                     main.splice.apply(main, [i - 1, 1].concat(slots[name]))
                 }
@@ -221,8 +220,8 @@ function mergeTempale(main, slots) {
 function insertSlots(main, node) {
     var slots = {}
     node.children.forEach(function (el) {
-        if (el.type.charAt(0) !== "#") {
-            var name = el.props.slot || ""
+        if (el.type.charAt(0) !== '#') {
+            var name = el.props.slot || ''
             if (slots[name]) {
                 slots[name].push(el)
             } else {

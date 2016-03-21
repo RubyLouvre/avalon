@@ -45,7 +45,7 @@ function parseView(arr, num) {
 
         } else if (el.type === '#comment') {
             var nodeValue = el.nodeValue
-            if (nodeValue.indexOf('a-for:') === 0) {
+            if (nodeValue.indexOf('ms-for:') === 0) {
                 var signature = el.signature
                 forstack.push(signature)
                 str += children + '.push({' +
@@ -57,7 +57,7 @@ function parseView(arr, num) {
                         '\n})\n'
                 str += avalon.directives['for'].parse(nodeValue, num)
 
-            } else if (nodeValue.indexOf('a-for-end:') === 0) {
+            } else if (nodeValue.indexOf('ms-for-end:') === 0) {
                 var signature = forstack[forstack.length - 1]
 
                 str += children + '.push({' +
@@ -77,26 +77,25 @@ function parseView(arr, num) {
 
                     forstack.pop()
                 }
-            } else if (nodeValue.indexOf('a-js:') === 0) {
-                str += parseExpr(nodeValue.replace('a-js:', ''), 'js') + '\n'
+            } else if (nodeValue.indexOf('ms-js:') === 0) {
+                str += parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
             } else {
-                str += children + '.push(' + quote(el) + ');;;;\n'
+                str += children + '.push(' + quote(el) + ')\n\n\n'
             }
             continue
         } else { //处理元素节点
-            var hasIf = el.props['a-if'] || el.props['ms-if']
+            var hasIf = el.props['ms-if'] 
 
-            if (hasIf) { // 优化处理a-if指令
-                el.props['a-if'] = hasIf
-                el.signature = makeHashCode('a-if')
-                delete el.props['ms-if']
+            if (hasIf) { // 优化处理ms-if指令
+                el.signature = makeHashCode('ms-if')
+               
                 str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'
                 str += children + '.push({' +
                         '\n\ttype: "#comment",' +
                         '\n\tdirective: "if",' +
                         '\n\tnodeValue:' + quote(el.signature) + ',\n' +
                         '\n\tsignature:' + quote(el.signature) + ',\n' +
-                        '\n\tprops: {"a-if":true} })\n'
+                        '\n\tprops: {"ms-if":true} })\n'
                 str += '\n}else{\n\n'
 
             }
@@ -112,7 +111,7 @@ function parseView(arr, num) {
             }
 
             if (!el.isVoidTag && el.children.length) {
-                var isWidget = el.props['a-widget'] || el.props['ms-widget']
+                var isWidget = el.props['ms-widget'] 
                 if (isWidget) {
                     str += 'if(!' + vnode + '.props.wid){\n'
                 }

@@ -18,7 +18,6 @@ var VComment = vdom.VComment
 var rfullTag = /^<([^\s>\/=.$<]+)(?:\s+[^=\s]+(?:=[^>\s]+)?)*\s*>(?:[\s\S]*)<\/\1>/
 var rvoidTag = /^<([^\s>\/=.$<]+)\s*([^>]*?)\/?>/
 
-
 var rtext = /^[^<]+/
 var rcomment = /^<!--([\w\W]*?)-->/
 var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
@@ -26,11 +25,10 @@ var rfill = /\?\?\d+/g
 
 var rnumber = /\d+/g
 var rsp = /^\s+$/
-var rspAfterForStart = /^(ms|a)-for\:/
-var rspBeforeForEnd = /^(ms|a)-for-end\:/
+var rspAfterForStart = /^ms-for\:/
+var rspBeforeForEnd = /^ms-for-end\:/
 var rleftTrim = /^\s+/
 var rbind = avalon.config.rbind
-var rjsCode = /^\s*(?:ms|a)-js\:/
 
 
 var maps = {}
@@ -71,12 +69,10 @@ function lexer(text, recursive) {
                 var nodeValue = node.nodeValue
                 if (rspBeforeForEnd.test(nodeValue)) {
                     var sp = nodes[nodes.length - 1]
-                    //移除紧挨着<!--a-for-end:xxxx-->前的空白节点
+                    //移除紧挨着<!--ms-for-end:xxxx-->前的空白节点
                     if (sp && sp.type === '#text' && rsp.test(sp.nodeValue)) {
                         nodes.pop()
                     }
-                }else if(rjsCode.test(nodeValue)){//处理ms-js:
-                    node.nodeValue = nodeValue.replace(rjsCode,'a-js:')
                 }
             }
         }
@@ -135,7 +131,7 @@ function lexer(text, recursive) {
             text = text.slice(outerHTML.length)
             if (node.type === '#comment' && rspAfterForStart.test(node.nodeValue)) {
                 node.signature = makeHashCode('for')
-                //移除紧挨着<!--a-for:xxxx-->后的空白节点
+                //移除紧挨着<!--ms-for:xxxx-->后的空白节点
                 text = text.replace(rleftTrim, '')
             }
         } else {
@@ -197,7 +193,7 @@ function clipOuterHTML(matchText, type) {
 
 function modifyProps(node, innerHTML, nodes) {
     var type = node.type
-    if (node.props['a-skip']) {
+    if (node.props['ms-skip']) {
         node.skipContent = true
     } else {
         switch (type) {
@@ -231,19 +227,18 @@ function modifyProps(node, innerHTML, nodes) {
                 }
                 break
         }
-        var forExpr = node.props['ms-for'] || node.props['a-for']
+        var forExpr = node.props['ms-for'] 
         if (forExpr) {
             nodes.push({
                 type: '#comment',
-                nodeValue: 'a-for:' + forExpr,
+                nodeValue: 'ms-for:' + forExpr,
                 signature: makeHashCode('for')
             })
             delete node.props['ms-for']
-            delete node.props['a-for']
             nodes.push(node)
             node = {
                 type: '#comment',
-                nodeValue: 'a-for-end:'
+                nodeValue: 'ms-for-end:'
             }
         }
     }

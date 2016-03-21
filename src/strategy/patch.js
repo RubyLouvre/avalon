@@ -15,18 +15,18 @@ function patch(nodes, vnodes, parent) {
         if (node)
             next = node.nextSibling
 
-        if (vnode.directive === "for" && vnode.change) {
+        if (vnode.directive === 'for' && vnode.change) {
             if (node.nodeType === 1) {
                 var startRepeat = document.createComment(vnode.nodeValue)
                 parent.insertBefore(startRepeat, node)
-                parent.insertBefore(document.createComment("a-for-end:"), node.nextSibling)
+                parent.insertBefore(document.createComment('ms-for-end:'), node.nextSibling)
                 node = startRepeat
             }
             var repeatNodes = [node], cur = node
             innerLoop:
                     while (cur && (cur = cur.nextSibling)) {
                 repeatNodes.push(cur)
-                if ((cur.nodeValue || "").indexOf("a-for-end:") === 0) {
+                if ((cur.nodeValue || '').indexOf('ms-for-end:') === 0) {
                     next = cur.nextSibling
                     break innerLoop
                 }
@@ -35,8 +35,8 @@ function patch(nodes, vnodes, parent) {
         }
 
         //ms-repeat,ms-if, ms-widget会返回false
-        if (false === execHooks(node, vnode, parent, "change")) {
-            execHooks(node, vnode, parent, "afterChange")
+        if (false === execHooks(node, vnode, parent, 'change')) {
+            execHooks(node, vnode, parent, 'afterChange')
             continue
         }
 
@@ -45,7 +45,7 @@ function patch(nodes, vnodes, parent) {
             patch(avalon.slice(node.childNodes), vnode.children, node)
         }
         //ms-duplex
-        execHooks(node, vnode, parent, "afterChange")
+        execHooks(node, vnode, parent, 'afterChange')
     }
 }
 
