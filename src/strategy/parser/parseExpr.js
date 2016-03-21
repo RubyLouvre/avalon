@@ -97,8 +97,6 @@ function parseExpr(str, category) {
         filters.unshift(2, 0)
     } else if (category === 'duplex') {
 
-
-
         //从vm中得到当前属性的值
         var getterBody = [
             'function (__vmodel__){',

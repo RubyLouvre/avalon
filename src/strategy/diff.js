@@ -5,13 +5,13 @@
  * ------------------------------------------------------------
  */
 
-var rbinding = /^(?:ms|a)-(\w+)-?(.*)/
-var directives = avalon.directives
 
 var emptyArr = []
 var emptyObj = {
     children: [], props: {}
 }
+var directives = avalon.directives
+var rbinding = require('./parser/regexp').binding
 
 function diff(current, previous) {
     for (var i = 0; i < current.length; i++) {

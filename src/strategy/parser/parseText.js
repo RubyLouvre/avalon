@@ -1,4 +1,5 @@
 var rline = /\r?\n/g
+var regexp = require('./regexp')
 
 function parseText(str) {
     var tokens = [],
@@ -11,7 +12,7 @@ function parseText(str) {
         }
         value = str.slice(start, stop)
         if (start === 0) {
-            value = value.replace(/^\s+/,'')
+            value = value.replace(regexp.leftSp, '')
         }
         if (value) { // {{ 左边的文本
             tokens.push({
@@ -34,9 +35,10 @@ function parseText(str) {
     } while (1)
     value = str.slice(start)
 
-    if (value.replace(/\s+$/,'')) { //}} 右边的文本
+    var lastText = value.replace(regexp.rightSp, '')
+    if (lastText) { //}} 右边的文本
         tokens.push({
-            expr: value.replace(/\s+$/,'')
+            expr: lastText
         })
     }
     return tokens

@@ -1,7 +1,7 @@
 var rneedQuote = /[W-]/
 var quote = avalon.quote
 var directives = avalon.directives
-var rbinding = /^ms-(\w+)-?(.*)/
+var rbinding = require('./regexp').binding
 var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
 
 function parseBindings(props, num, elem) {

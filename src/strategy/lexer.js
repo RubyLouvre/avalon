@@ -21,13 +21,17 @@ var rvoidTag = /^<([^\s>\/=.$<]+)\s*([^>]*?)\/?>/
 var rtext = /^[^<]+/
 var rcomment = /^<!--([\w\W]*?)-->/
 var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
-var rfill = /\?\?\d+/g
 
 var rnumber = /\d+/g
-var rsp = /^\s+$/
 var rspAfterForStart = /^\s*ms-for\:/
 var rspBeforeForEnd = /^\s*ms-for-end\:/
-var rleftTrim = /^\s+/
+var regexp = require('./parser/regexp')
+
+var rsp = r.sp
+var rfill = /\?\?\d+/g
+var rleftSp = r.leftSp
+
+
 var rbind = avalon.config.rbind
 
 
@@ -132,7 +136,7 @@ function lexer(text, recursive) {
             if (node.type === '#comment' && rspAfterForStart.test(node.nodeValue)) {
                 node.signature = makeHashCode('for')
                 //移除紧挨着<!--ms-for:xxxx-->后的空白节点
-                text = text.replace(rleftTrim, '')
+                text = text.replace(rleftSp, '')
             }
         } else {
             break
