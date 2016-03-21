@@ -2622,6 +2622,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rspBeforeForEnd = /^(ms|a)-for-end\:/
 	var rleftTrim = /^\s+/
 	var rbind = avalon.config.rbind
+	var rjsCode = /^\s*(?:ms|a)-js\:/
 
 
 	var maps = {}
@@ -2659,12 +2660,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (match) {
 	                outerHTML = match[0]
 	                node = new VComment(match[1].replace(rfill, fill))
-	                if (rspBeforeForEnd.test(node.nodeValue)) {
+	                var nodeValue = node.nodeValue
+	                if (rspBeforeForEnd.test(nodeValue)) {
 	                    var sp = nodes[nodes.length - 1]
 	                    //移除紧挨着<!--a-for-end:xxxx-->前的空白节点
 	                    if (sp && sp.type === '#text' && rsp.test(sp.nodeValue)) {
 	                        nodes.pop()
 	                    }
+	                }else if(rjsCode.test(nodeValue)){//处理ms-js:
+	                    node.nodeValue = nodeValue.replace(rjsCode,'a-js:')
 	                }
 	            }
 	        }

@@ -14,9 +14,8 @@ module.exports = function (config) {
             'karma/directives/visible.js',
             'karma/directives/if.js',
             'karma/directives/on.js',
-            'karma/directives/duplex.js'
-                    //  'karma/duplex.js',
-                    //  'karma/repeat.js'
+            'karma/directives/duplex.js',
+            'karma/directives/for.js'
         ],
         exclude: [],
         reporters: ['mocha'],
