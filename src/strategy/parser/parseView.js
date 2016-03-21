@@ -5,6 +5,11 @@ var parseBindings = require('./parseBindings')
 var rexpr = avalon.config.rexpr
 var quote = avalon.quote
 var makeHashCode = avalon.makeHashCode
+var ridentifier = require('./ridentifier')
+function wrapParseText(expr) {
+    return ridentifier.test(expr) ? expr : parseExpr(expr)
+}
+
 
 function wrap(a, num) {
     return '(function(){\n\n' + a + '\n\nreturn nodes' + num + '\n})();\n'
@@ -25,21 +30,24 @@ function parseView(arr, num) {
             var hasExpr = rexpr.test(el.nodeValue)
 
             if (hasExpr) {
-                var array = parseText(el.nodeValue, false)
+                var array = parseText(el.nodeValue)
                 if (array.length === 1) {
                     var a = parseExpr(array[0].expr)
+                    str += vnode + '.nodeValue = ' + wrapParseText(array[0].expr) + '\n'
                 } else {
                     a = array.map(function (el) {
-                        return el.type ? 'String(' + parseExpr(el.expr) + ')' : quote(el.expr)
+                        return el.type ? wrapParseText(el.expr) : quote(el.expr)
                     }).join(' + ')
-
+                    str += vnode + '.nodeValue = String(' + a + ')\n'
                 }
                 /* jshint ignore:start */
-
-                str += vnode + '.nodeValue = String(' + a + ')\n'
                 str += vnode + '.skipContent = false\n'
             } else {
-                str += vnode + '.nodeValue = ' + quote(el.nodeValue) + '\n'
+                if (!el.nodeValue.trim()) {
+                    str += vnode + '.nodeValue = "\\n"\n'
+                } else {
+                    str += vnode + '.nodeValue = ' + quote(el.nodeValue) + '\n'
+                }
             }
             str += children + '.push(' + vnode + ')\n'
 
@@ -84,11 +92,11 @@ function parseView(arr, num) {
             }
             continue
         } else { //处理元素节点
-            var hasIf = el.props['ms-if'] 
+            var hasIf = el.props['ms-if']
 
             if (hasIf) { // 优化处理ms-if指令
                 el.signature = makeHashCode('ms-if')
-               
+
                 str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'
                 str += children + '.push({' +
                         '\n\ttype: "#comment",' +
@@ -111,11 +119,11 @@ function parseView(arr, num) {
             }
 
             if (!el.isVoidTag && el.children.length) {
-                var isWidget = el.props['ms-widget'] 
+                var isWidget = el.props['ms-widget']
                 if (isWidget) {
                     str += 'if(!' + vnode + '.props.wid){\n'
                 }
-                str += '\t' + vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
+                str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
                 if (isWidget) {
                     str += '}\n'
                     isWidget = false

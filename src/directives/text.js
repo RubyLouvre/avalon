@@ -1,11 +1,12 @@
 var Cache = require('../seed/cache')
 var textCache = new Cache(256)
 var rexpr = avalon.config.rexpr
-
+var ridentifier = require('../strategy/parser/ridentifier')
 avalon.directive('text', {
     parse: function (binding, num, vnode) {
         vnode.children = [{type: '#text', nodeValue: ''}]
-        return 'vnode' + num + '.props["ms-text"] =' + avalon.parseExpr(binding) + ';\n'
+        var val = ridentifier.test(binding.expr) ? binding.expr : avalon.parseExpr(binding)
+        return 'vnode' + num + '.props["ms-text"] =' + val + '\n'
     },
     diff: function (cur, pre) {
         var curValue = cur.props['ms-text']

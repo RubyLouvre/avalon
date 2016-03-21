@@ -22,7 +22,7 @@ var rforLeft = /^\s*\(\s*/
 var rforRight = /\s*\)\s*$/
 var rforSplit = /\s*,\s*/
 var rforAs = /\s+as\s+([$\w]+)/
-var ridentifier = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
+var ridentifier = require('../strategy/parser/ridentifier')
 var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
 avalon.directive('for', {
     parse: function (str, num) {

@@ -3434,11 +3434,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	var Cache = __webpack_require__(27)
 	var textCache = new Cache(256)
 	var rexpr = avalon.config.rexpr
-
+	var ridentifier = __webpack_require__(93)
 	avalon.directive('text', {
 	    parse: function (binding, num, vnode) {
 	        vnode.children = [{type: '#text', nodeValue: ''}]
-	        return 'vnode' + num + '.props["ms-text"] =' + avalon.parseExpr(binding) + ';\n'
+	        var val = ridentifier.test(binding.expr) ? binding.expr : avalon.parseExpr(binding)
+	        return 'vnode' + num + '.props["ms-text"] =' + val + '\n'
 	    },
 	    diff: function (cur, pre) {
 	        var curValue = cur.props['ms-text']
@@ -4548,7 +4549,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rforRight = /\s*\)\s*$/
 	var rforSplit = /\s*,\s*/
 	var rforAs = /\s+as\s+([$\w]+)/
-	var ridentifier = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
+	var ridentifier = __webpack_require__(93)
 	var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
 	avalon.directive('for', {
 	    parse: function (str, num) {
@@ -5540,6 +5541,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rexpr = avalon.config.rexpr
 	var quote = avalon.quote
 	var makeHashCode = avalon.makeHashCode
+	var ridentifier = __webpack_require__(93)
+	function wrapParseText(expr) {
+	    return ridentifier.test(expr) ? expr : parseExpr(expr)
+	}
+
 
 	function wrap(a, num) {
 	    return '(function(){\n\n' + a + '\n\nreturn nodes' + num + '\n})();\n'
@@ -5560,21 +5566,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var hasExpr = rexpr.test(el.nodeValue)
 
 	            if (hasExpr) {
-	                var array = parseText(el.nodeValue, false)
+	                var array = parseText(el.nodeValue)
 	                if (array.length === 1) {
 	                    var a = parseExpr(array[0].expr)
+	                    str += vnode + '.nodeValue = ' + wrapParseText(array[0].expr) + '\n'
 	                } else {
 	                    a = array.map(function (el) {
-	                        return el.type ? 'String(' + parseExpr(el.expr) + ')' : quote(el.expr)
+	                        return el.type ? wrapParseText(el.expr) : quote(el.expr)
 	                    }).join(' + ')
-
+	                    str += vnode + '.nodeValue = String(' + a + ')\n'
 	                }
 	                /* jshint ignore:start */
-
-	                str += vnode + '.nodeValue = String(' + a + ')\n'
 	                str += vnode + '.skipContent = false\n'
 	            } else {
-	                str += vnode + '.nodeValue = ' + quote(el.nodeValue) + '\n'
+	                if (!el.nodeValue.trim()) {
+	                    str += vnode + '.nodeValue = "\\n"\n'
+	                } else {
+	                    str += vnode + '.nodeValue = ' + quote(el.nodeValue) + '\n'
+	                }
 	            }
 	            str += children + '.push(' + vnode + ')\n'
 
@@ -5619,11 +5628,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            continue
 	        } else { //处理元素节点
-	            var hasIf = el.props['ms-if'] 
+	            var hasIf = el.props['ms-if']
 
 	            if (hasIf) { // 优化处理ms-if指令
 	                el.signature = makeHashCode('ms-if')
-	               
+
 	                str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'
 	                str += children + '.push({' +
 	                        '\n\ttype: "#comment",' +
@@ -5646,11 +5655,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 
 	            if (!el.isVoidTag && el.children.length) {
-	                var isWidget = el.props['ms-widget'] 
+	                var isWidget = el.props['ms-widget']
 	                if (isWidget) {
 	                    str += 'if(!' + vnode + '.props.wid){\n'
 	                }
-	                str += '\t' + vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
+	                str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
 	                if (isWidget) {
 	                    str += '}\n'
 	                    isWidget = false
@@ -5952,7 +5961,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    if (!bindings.length) {
-	        ret += 'vnode' + num + '.skipAttrs = true\n'
+	        ret += '\tvnode' + num + '.skipAttrs = true\n'
 	    } else {
 	        avalon.parseExpr(binding)
 
@@ -6767,6 +6776,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	module.exports = defineProperties
+
+/***/ },
+/* 74 */,
+/* 75 */,
+/* 76 */,
+/* 77 */,
+/* 78 */,
+/* 79 */,
+/* 80 */,
+/* 81 */,
+/* 82 */,
+/* 83 */,
+/* 84 */,
+/* 85 */,
+/* 86 */,
+/* 87 */,
+/* 88 */,
+/* 89 */,
+/* 90 */,
+/* 91 */,
+/* 92 */,
+/* 93 */
+/***/ function(module, exports) {
+
+	module.exports = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
+
+
 
 /***/ }
 /******/ ])

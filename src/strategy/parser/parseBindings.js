@@ -52,7 +52,7 @@ function parseBindings(props, num, elem) {
     }
 
     if (!bindings.length) {
-        ret += 'vnode' + num + '.skipAttrs = true\n'
+        ret += '\tvnode' + num + '.skipAttrs = true\n'
     } else {
         avalon.parseExpr(binding)
 
