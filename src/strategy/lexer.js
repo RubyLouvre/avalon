@@ -25,8 +25,8 @@ var rfill = /\?\?\d+/g
 
 var rnumber = /\d+/g
 var rsp = /^\s+$/
-var rspAfterForStart = /^ms-for\:/
-var rspBeforeForEnd = /^ms-for-end\:/
+var rspAfterForStart = /^\s*ms-for\:/
+var rspBeforeForEnd = /^\s*ms-for-end\:/
 var rleftTrim = /^\s+/
 var rbind = avalon.config.rbind
 
