@@ -61,7 +61,6 @@ function parseExpr(str, category) {
     }
 
 //处理表达式的过滤器部分
-  
 
     var filters = input.map(function (str) {
 
@@ -92,7 +91,7 @@ function parseExpr(str, category) {
             '\tvar __vmodel__ = this;',
             '\t' + body,
             '}catch(e){',
-            '\tavalon.log(e, ' + quoteError(str, category) + ')',
+            quoteError(str, category),
             '}',
             '}']
         filters.unshift(2, 0)
@@ -104,7 +103,7 @@ function parseExpr(str, category) {
             'try{',
             'return ' + body + '\n',
             '}catch(e){',
-            '\tavalon.log(e, ' + quoteError(str, category) + ')',
+            quoteError(str, category),
             '}',
             '}']
         fn = Function('return ' + getterBody.join('\n'))()
@@ -115,20 +114,20 @@ function parseExpr(str, category) {
             'try{',
             '\t' + body + ' = __value__',
             '}catch(e){',
-            '\tavalon.log(e, ' + quoteError(str, category) + ')',
+            quoteError(str, category),
             '}',
             '}']
         fn = Function('return ' + setterBody.join('\n'))()
         evaluatorPool.put('duplex:set:' + str, fn)
         //对某个值进行格式化
-        if(input.length){
+        if (input.length) {
             var formatBody = [
                 'function (__vmodel__, __value__){',
                 'try{',
                 filters.join('\n'),
                 'return __value__\n',
                 '}catch(e){',
-                '\tavalon.log(e, ' + quoteError(str, category) + ')',
+                quoteError(str, category),
                 '}',
                 '}']
             fn = Function('return ' + formatBody.join('\n'))()
@@ -142,7 +141,7 @@ function parseExpr(str, category) {
             'var __value__ = ' + body,
             'return __value__',
             '}catch(e){',
-            '\tavalon.log(e, ' + quoteError(str, category) + ')',
+            quoteError(str, category),
             '\treturn ""',
             '}',
             '})()'
@@ -158,7 +157,9 @@ function parseExpr(str, category) {
 }
 
 function quoteError(str, type) {
-    return avalon.quote('parse ' + type + ' binding【 ' + str + ' 】fail')
+    return '\tavalon.warn(e, ' +
+            avalon.quote('parse ' + type + ' binding【 ' + str + ' 】fail')
+            + ')'
 }
 
 module.exports = avalon.parseExpr = parseExpr

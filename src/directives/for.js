@@ -28,7 +28,7 @@ avalon.directive('for', {
     parse: function (str, num) {
         var aliasAs
         str = str.replace(rforAs, function (a, b) {
-            if (!ridentifier.test(b) || rinvalid.test(b)) {
+            if (!rident.test(b) || rinvalid.test(b)) {
                 avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.')
             } else {
                 aliasAs = b
