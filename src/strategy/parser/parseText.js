@@ -1,5 +1,5 @@
 var rline = /\r?\n/g
-var regexp = require('./regexp')
+var r = require('../../seed/regexp')
 
 function parseText(str) {
     var tokens = [],
@@ -12,7 +12,7 @@ function parseText(str) {
         }
         value = str.slice(start, stop)
         if (start === 0) {
-            value = value.replace(regexp.leftSp, '')
+            value = value.replace(r.leftSp, '')
         }
         if (value) { // {{ 左边的文本
             tokens.push({
@@ -35,7 +35,7 @@ function parseText(str) {
     } while (1)
     value = str.slice(start)
 
-    var lastText = value.replace(regexp.rightSp, '')
+    var lastText = value.replace(r.rightSp, '')
     if (lastText) { //}} 右边的文本
         tokens.push({
             expr: lastText

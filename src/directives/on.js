@@ -6,7 +6,8 @@ var quote = avalon.quote
 var revent = /^ms-on-(\w+)/
 var rfilters = /\|.+/g
 var rvar = /([@$]?\w+)/g
-var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
+var rstring = require('../seed/regexp').string
+
 avalon.directive('on', {
     priority: 3000,
     parse: function (binding, num) {

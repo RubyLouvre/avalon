@@ -4,7 +4,7 @@
 var evaluatorPool = require('./evaluatorPool')
 
 var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
-var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
+var rstring = require('../../seed/regexp').string
 var rfill = /\?\?\d+/g
 var brackets = /\(([^)]*)\)/
 var rAt = /(^|[^\w\u00c0-\uFFFF_])(@)(?=\w)/g
@@ -12,6 +12,7 @@ var rhandleName = /^\@[$\w]+$/
 var rshortCircuit = /\|\|/g
 var rpipeline = /\|(?=\w)/
 var ruselessSp = /\s*(\.|\|)\s*/g
+
 function parseExpr(str, category) {
     var binding = {}
     category = category || 'other'

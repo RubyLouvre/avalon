@@ -20,16 +20,15 @@ var rvoidTag = /^<([^\s>\/=.$<]+)\s*([^>]*?)\/?>/
 
 var rtext = /^[^<]+/
 var rcomment = /^<!--([\w\W]*?)-->/
-var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
 
 var rnumber = /\d+/g
 var rspAfterForStart = /^\s*ms-for\:/
 var rspBeforeForEnd = /^\s*ms-for-end\:/
-var regexp = require('./parser/regexp')
-
+var r = require('../seed/regexp')
 var rsp = r.sp
 var rfill = /\?\?\d+/g
 var rleftSp = r.leftSp
+var rstring = r.string
 
 
 var rbind = avalon.config.rbind

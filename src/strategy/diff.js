@@ -4,14 +4,12 @@
  * 添加change, afterChange更新钩子
  * ------------------------------------------------------------
  */
-
-
 var emptyArr = []
 var emptyObj = {
     children: [], props: {}
 }
 var directives = avalon.directives
-var rbinding = require('./parser/regexp').binding
+var rbinding = require('../seed/regexp').binding
 
 function diff(current, previous) {
     for (var i = 0; i < current.length; i++) {

@@ -5,10 +5,11 @@ var parseBindings = require('./parseBindings')
 var rexpr = avalon.config.rexpr
 var quote = avalon.quote
 var makeHashCode = avalon.makeHashCode
-var regexp = require('./regexp')
-
+var r = require('../../seed/regexp')
+var rident = r.ident
+var rsp = r.sp
 function wrapParseText(expr) {
-    return regexp.ident.test(expr) ? expr : parseExpr(expr)
+    return rident.test(expr) ? expr : parseExpr(expr)
 }
 
 
@@ -44,7 +45,7 @@ function parseView(arr, num) {
                 /* jshint ignore:start */
                 str += vnode + '.skipContent = false\n'
             } else {
-                if (regexp.sp.test(el.nodeValue)) {
+                if (rsp.test(el.nodeValue)) {
                     str += vnode + '.nodeValue = "\\n"\n'
                 } else {
                     str += vnode + '.nodeValue = ' + quote(el.nodeValue) + '\n'
