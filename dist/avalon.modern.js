@@ -2387,16 +2387,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var isChange = false, i, c, p
 	        if (isInit) {
 	            pre.components = []
-	            pre.componentCount = 0
+	            pre.repeatCount = 0
 	        }
-
+	        var nodes = current.slice(cur.start, cur.end)
 	        cur.endRepeat = pre.endRepeat
-	        var repeatNodes = 'directive' in cur ? getForBySignature(current, __index__) :
-	                getForByNodeValue(current, __index__)
-
-	        cur.components = getComponents(repeatNodes.slice(1, -1), cur.signature)
-
-	        var n = repeatNodes.length - pre.componentCount
+	        cur.components = getComponents(nodes.slice(1, -1), cur.signature)
+	        var n = nodes.length - pre.repeatCount
 
 	        if (n > 0) {
 	            var spliceArgs = [__index__, 0]
@@ -2434,9 +2430,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                c = cache[i]
 	                avalon.diff(c.children, [])
 	            }
-	          
-	        }else{
-	              for (i = 0; c = cur.components[i++]; ) {
+
+	        } else {
+	            for (i = 0; c = cur.components[i++]; ) {
 	                avalon.diff(c.children, [])
 	            }
 	            isChange = true
@@ -2446,7 +2442,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            avalon.Array.ensure(list, this.update)
 	        }
 
-	        return __index__ + repeatNodes.length - 1
+	        return __index__ + nodes.length - 1
 
 	    },
 	    update: function (startRepeat, vnode, parent) {
@@ -2501,7 +2497,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            entity.push.apply(entity, c.nodes)
 	            vnodes.push.apply(vnodes, c.children)
 	        })
-	        vnode.componentCount = vnodes.length
+	        vnode.repeatCount = vnodes.length
 	        patch(entity, vnodes, parent)
 	        return false
 	    }
@@ -2552,40 +2548,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return components
 	}
 
-	//从一组节点,取得要循环的部分(第二次生成的虚拟DOM树会走这分支)
-	function getForBySignature(nodes, i) {
-	    var start = nodes[i], node
-	    var endText = start.signature + ':end'
-	    var ret = []
-	    while (node = nodes[i++]) {
-	        ret.push(node)
-	        if (node.nodeValue === endText) {
-	            break
-	        }
-	    }
-	    return ret
-	}
-
-	//从一组节点,取得要循环的部分(初次生成的虚拟DOM树及真实DOM树会走这分支)
-	function getForByNodeValue(nodes, i) {
-	    var isBreak = 0, ret = [], node
-	    while (node = nodes[i++]) {
-	        if (node.type === '#comment') {
-	            if (node.nodeValue.indexOf('ms-for:') === 0) {
-	                isBreak++
-	            } else if (node.nodeValue.indexOf('ms-for-end:') === 0) {
-	                isBreak--
-	            }
-	        }
-	        ret.push(node)
-	        if (isBreak === 0) {
-	            break
-	        }
-	    }
-	    return ret
-	}
-
-	// 新 位置: 旧位置
+	// 新位置: 旧位置
 	function isInCache(cache, id) {
 	    var c = cache[id]
 	    if (c) {
@@ -2607,7 +2570,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    return c
 	}
-	//{number1:xxx, _number1: yyy}
+
 	function saveInCache(cache, component) {
 	    var trackId = component.key
 	    if (!cache[trackId]) {
@@ -3181,13 +3144,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (nodeValue.indexOf('ms-for:') === 0) {
 	                var signature = el.signature
 	                forstack.push(signature)
-	                str += children + '.push({' +
+	                str += '\nvar ' + signature + '= {' +
 	                        '\n\ttype:"#comment",' +
 	                        '\n\tdirective:"for",' +
 	                        '\n\tskipContent:false,' +
 	                        '\n\tsignature:' + quote(signature) + ',' +
+	                        '\n\tstart:' + children + '.length,' +
 	                        '\n\tnodeValue:' + quote(nodeValue) +
-	                        '\n})\n'
+	                        '\n}\n'
+	                str += children + '.push(' + signature + ')\n'
 	                str += avalon.directives['for'].parse(nodeValue, num)
 
 	            } else if (nodeValue.indexOf('ms-for-end:') === 0) {
@@ -3201,13 +3166,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                str += '\n})\n' //结束循环
 	                if (forstack.length) {
 	                    var signature = forstack[forstack.length - 1]
-	                    str += children + '.push({' +
+	                    str += signature + '.end ='+ children + '.push({' +
 	                            '\n\ttype:"#comment",' +
 	                            '\n\tskipContent:true,' +
 	                            '\n\tsignature:' + quote(signature) + ',' +
 	                            '\n\tnodeValue:' + quote(signature + ':end') + ',' +
 	                            '\n})\n'
-
+	                   // str += signature + '.end = ' + children.length + '\n'
 	                    forstack.pop()
 	                }
 	            } else if (nodeValue.indexOf('ms-js:') === 0) {
@@ -5561,7 +5526,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	function arrayFactory(array, old, heirloom, options) {
 	    if (old && old.splice) {
 	        var args = [0, old.length].concat(array)
+	        old._lock = true
 	        old.splice.apply(old, args)
+	        delete old._lock
 	        return old
 	    } else {
 	        for (var i in __array__) {
@@ -5575,7 +5542,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        options.pathname :
 	                        options.pathname + '.' + a
 	                vm.$fire(path, b, c)
-	                if (!d) {
+	                if (!d && !array._lock) {
 	                    avalon.rerenderStart = new Date
 	                    avalon.batch(vm.$id, true)
 	                }
