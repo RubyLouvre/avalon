@@ -10,8 +10,9 @@ var emptyObj = {
 }
 var directives = avalon.directives
 var rbinding = require('../seed/regexp').binding
-
 function diff(current, previous) {
+    if (!current)
+        return
     for (var i = 0; i < current.length; i++) {
         var cur = current[i]
         var pre = previous[i] || emptyObj
@@ -22,7 +23,7 @@ function diff(current, previous) {
                 }
                 break
             case '#comment':
-                if (cur.directive === 'for') {
+                if (cur.directive === 'for' && current) {
                     i = directives['for'].diff(current, previous, i)
                 } else if (cur.directive === 'if') {
                     directives['if'].diff(cur, pre)
@@ -36,14 +37,11 @@ function diff(current, previous) {
                     diff(cur.children, pre.children || emptyArr)
                 }
                 break
-
         }
-
     }
 }
 
 function diffProps(current, previous) {
-    current.change = current.change || []
     for (var name in current.props) {
         var match = name.match(rbinding)
         if (match) {

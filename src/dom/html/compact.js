@@ -9,7 +9,7 @@ var tagHooks = {
     col: [2, '<table><colgroup>', '</colgroup></table>'],
     legend: [1, '<fieldset>', '</fieldset>'],
     option: [1, '<select multiple="multiple">', '</select>'],
-            thead: [1, '<table>', '</table>'],
+    thead: [1, '<table>', '</table>'],
     tr: [2, '<table>', '</table>'],
     td: [3, '<table><tr>', '</tr></table>'],
     g: [1, '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">', '</svg>'],
@@ -59,15 +59,16 @@ avalon.parseHTML = function (html) {
     if (!avalon.modern) { //fix IE
         fixTbodyVML(wrapper, wrap, tag)
     }
-    
+
     //移除我们为了符合套嵌关系而添加的标签
     for (var i = wrap[0]; i--; wrapper = wrapper.lastChild) {
     }
     while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
         fragment.appendChild(firstChild)
     }
-
-    hasCache.put(html, fixCloneNode(fragment))
+    if (html.length < 1024) {
+        htmlCache.put(html, fixCloneNode(fragment))
+    }
     return fragment
 }
 

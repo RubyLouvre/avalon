@@ -70,7 +70,9 @@ avalon.parseHTML = function (html) {
     while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
         fragment.appendChild(firstChild)
     }
-    hasCache.put(html, fragment.cloneNode(true))
+    if (html.length < 1024) {
+        htmlCache.put(html, fragment.cloneNode(true))
+    }
     return fragment
 }
 
@@ -80,7 +82,7 @@ avalon.innerHTML = function (node, html) {
 }
 
 avalon.clearHTML = function (node) {
-    avalon.each( node.getElementsByTagName('*'), function(i, el){
+    avalon.each(node.getElementsByTagName('*'), function (i, el) {
         avalon.unbind(el)
     })
     node.textContent = ''

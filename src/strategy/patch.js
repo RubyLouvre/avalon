@@ -16,22 +16,19 @@ function patch(nodes, vnodes, parent) {
             next = node.nextSibling
 
         if (vnode.directive === 'for' && vnode.change) {
+
             if (node.nodeType === 1) {
                 var startRepeat = document.createComment(vnode.nodeValue)
                 parent.insertBefore(startRepeat, node)
-                parent.insertBefore(document.createComment('ms-for-end:'), node.nextSibling)
+                vnode.endRepeat = document.createComment('ms-for-end:')
+                parent.insertBefore(vnode.endRepeat, node.nextSibling)
                 node = startRepeat
-            }
-            var repeatNodes = [node], cur = node
-            innerLoop:
-                    while (cur && (cur = cur.nextSibling)) {
-                repeatNodes.push(cur)
-                if ((cur.nodeValue || '').indexOf('ms-for-end:') === 0) {
-                    next = cur.nextSibling
-                    break innerLoop
+            } else {//如果是注释节点
+                if (!vnode.endRepeat) {
+                    vnode.endRepeat = getEndRepeat(node)
                 }
             }
-            vnode.repeatNodes = repeatNodes
+            next = vnode.endRepeat.nextSibling
         }
 
         //ms-repeat,ms-if, ms-widget会返回false
@@ -47,6 +44,24 @@ function patch(nodes, vnodes, parent) {
         //ms-duplex
         execHooks(node, vnode, parent, 'afterChange')
     }
+}
+function getEndRepeat(node) {
+    var isBreak = 0, ret = [], node
+    while (node) {
+        if (node.type === '#comment') {
+            if (node.nodeValue.indexOf('ms-for:') === 0) {
+                isBreak++
+            } else if (node.nodeValue.indexOf('ms-for-end:') === 0) {
+                isBreak--
+            }
+        }
+        ret.push(node)
+        node = node.nextSibling
+        if (isBreak === 0) {
+            break
+        }
+    }
+    return ret.pop()
 }
 
 function execHooks(node, vnode, parent, hookName) {

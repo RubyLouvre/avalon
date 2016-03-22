@@ -2351,7 +2351,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    col: [2, '<table><colgroup>', '</colgroup></table>'],
 	    legend: [1, '<fieldset>', '</fieldset>'],
 	    option: [1, '<select multiple="multiple">', '</select>'],
-	            thead: [1, '<table>', '</table>'],
+	    thead: [1, '<table>', '</table>'],
 	    tr: [2, '<table>', '</table>'],
 	    td: [3, '<table><tr>', '</tr></table>'],
 	    g: [1, '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">', '</svg>'],
@@ -2401,15 +2401,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!avalon.modern) { //fix IE
 	        fixTbodyVML(wrapper, wrap, tag)
 	    }
-	    
+
 	    //移除我们为了符合套嵌关系而添加的标签
 	    for (var i = wrap[0]; i--; wrapper = wrapper.lastChild) {
 	    }
 	    while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
 	        fragment.appendChild(firstChild)
 	    }
-
-	    hasCache.put(html, fixCloneNode(fragment))
+	    if (html.length < 1024) {
+	        htmlCache.put(html, fixCloneNode(fragment))
+	    }
 	    return fragment
 	}
 
@@ -4488,22 +4489,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	            next = node.nextSibling
 
 	        if (vnode.directive === 'for' && vnode.change) {
+
 	            if (node.nodeType === 1) {
 	                var startRepeat = document.createComment(vnode.nodeValue)
 	                parent.insertBefore(startRepeat, node)
-	                parent.insertBefore(document.createComment('ms-for-end:'), node.nextSibling)
+	                vnode.endRepeat = document.createComment('ms-for-end:')
+	                parent.insertBefore(vnode.endRepeat, node.nextSibling)
 	                node = startRepeat
-	            }
-	            var repeatNodes = [node], cur = node
-	            innerLoop:
-	                    while (cur && (cur = cur.nextSibling)) {
-	                repeatNodes.push(cur)
-	                if ((cur.nodeValue || '').indexOf('ms-for-end:') === 0) {
-	                    next = cur.nextSibling
-	                    break innerLoop
+	            } else {//如果是注释节点
+	                if (!vnode.endRepeat) {
+	                    vnode.endRepeat = getEndRepeat(node)
 	                }
 	            }
-	            vnode.repeatNodes = repeatNodes
+	            next = vnode.endRepeat.nextSibling
 	        }
 
 	        //ms-repeat,ms-if, ms-widget会返回false
@@ -4519,6 +4517,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //ms-duplex
 	        execHooks(node, vnode, parent, 'afterChange')
 	    }
+	}
+	function getEndRepeat(node) {
+	    var isBreak = 0, ret = [], node
+	    while (node) {
+	        if (node.type === '#comment') {
+	            if (node.nodeValue.indexOf('ms-for:') === 0) {
+	                isBreak++
+	            } else if (node.nodeValue.indexOf('ms-for-end:') === 0) {
+	                isBreak--
+	            }
+	        }
+	        ret.push(node)
+	        node = node.nextSibling
+	        if (isBreak === 0) {
+	            break
+	        }
+	    }
+	    return ret.pop()
 	}
 
 	function execHooks(node, vnode, parent, hookName) {
@@ -4541,6 +4557,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	var refreshView = __webpack_require__(57)
+	var Cache = __webpack_require__(27)
 
 	avalon._each = function (obj, fn) {
 	    if (Array.isArray(obj)) {
@@ -4569,7 +4586,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parse: function (str, num) {
 	        var aliasAs
 	        str = str.replace(rforAs, function (a, b) {
-	            if (!ridentifier.test(b) || rinvalid.test(b)) {
+	            if (!rident.test(b) || rinvalid.test(b)) {
 	                avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.')
 	            } else {
 	                aliasAs = b
@@ -4579,147 +4596,171 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var arr = str.replace(rforPrefix, '').split(' in ')
 	        var assign = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
 	        var alias = aliasAs ? 'var ' + aliasAs + ' = loop' + num + '\n' : ''
+	        //  var forValue = 'vnode' + num + '.forValue = loop' + num + '\n'
 	        var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
 	        if (kv.length === 1) {
 	            kv.unshift('$key')
 	        }
+
 	        return assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
 	    },
-	    diff: function (current, previous, i) {
-	        var cur = current[i]
-	        var pre = previous[i] || {}
-	        var hasSign1 = 'directive' in cur
-	        var hasSign2 = 'directive' in pre
+	    diff: function (current, previous, __index__) {
 
-	        var curLoop = hasSign1 ? getForBySignature(current, i) :
-	                getForByNodeValue(current, i)
+	        var cur = current[__index__]
+	        var pre = previous[__index__] || {}
 
-	        var preLoop = pre.repeatVnodes
-	        if (!preLoop) {
-	            preLoop = hasSign2 ? getForBySignature(previous, i) :
-	                    getForByNodeValue(previous, i)
+
+
+	        var isInit = !('directive' in pre)
+	        if (isInit) {
+	            pre.components = []
+	            pre.componentCount = 0
 	        }
+	       
+	        cur.endRepeat = pre.endRepeat
 
-	        var n = curLoop.length - preLoop.length
+	        var repeatNodes = 'directive' in cur ? getForBySignature(current, __index__) :
+	                getForByNodeValue(current, __index__)
+
+	        cur.components = getComponents(repeatNodes.slice(1, -1), cur.signature)
+
+	        var n = repeatNodes.length - pre.componentCount
+	        var isChange = false
 	        if (n > 0) {
-	            var spliceArgs = [i, 0]
+	            var spliceArgs = [__index__, 0]
 	            for (var j = 0; j < n; j++) {
 	                spliceArgs.push(null)
 	            }
 	            previous.splice.apply(previous, spliceArgs)
 	        } else {
-	            previous.splice.apply(previous, [i, Math.abs(n)])
+	            previous.splice.apply(previous, [__index__, Math.abs(n)])
 	        }
-	        cur.action = !hasSign2 ? 'replace' : 'reorder'
+	        cur.action = isInit ? 'init' : 'update'
 
-	        cur.repeatVnodes = curLoop
-	        var ccom = cur.components = getForByKey(curLoop.slice(1, -1), cur.signature)
-
-	        if (cur.action === 'reorder') {
+	        if (!isInit) {
 	            var cache = {}
-	            var indexes = {}
-	            for (var i = 0, c; c = ccom[i++]; ) {
+	            cur.removedComponents = {}
+	            for (var i = 0, c; c = cur.components[i++]; ) {
 	                saveInCache(cache, c)
 	            }
-	            var pcom = pre.components
-
-	            for (var i = 0, c; c = pcom[i++]; ) {
-	                var p = isInCache(cache, c.key)
-	                if (p) {
-	                    indexes[c.index] = p.index
-	                    avalon.diff(p.children, c.children)
+	            for (var i = 0, p; p = pre.components[i++]; ) {
+	                var c = isInCache(cache, p.key)
+	                if (c) {
+	                    if (!isChange) {//如果位置发生了变化
+	                        isChange = c.index !== p.index
+	                    }
+	                    c.nodes = p.nodes
+	                    avalon.diff(c.children, p.children)
+	                } else {
+	                    cur.removedComponents[p.index] = p
 	                }
 	            }
 	            //这是新添加的元素
-	            for (var i in cache) {
-	                p = cache[i]
-	                indexes[p.index + '_'] = p
-	                avalon.diff(p.children, [])
+	            for (i in cache) {
+	                isChange = true
+	                c = cache[i]
+	                avalon.diff(c.children, [])
 	            }
-	            cur.indexes = indexes
+	        } else {
+	            cur.components.forEach(function (c) {
+	                avalon.diff(c.children, [])
+	            })
+	            isChange = true
+	        }
+	        if (isChange) {
+	            var list = cur.change || (cur.change = [])
+	            avalon.Array.ensure(list, this.update)
 	        }
 
-	        var list = cur.change || (cur.change = [])
-	        avalon.Array.ensure(list, this.update)
-	        return i + curLoop.length - 1
+	        return __index__ + repeatNodes.length - 1
 
 	    },
 	    update: function (startRepeat, vnode, parent) {
 
-	        var repeatVnodes = vnode.repeatVnodes
-	        var nodes = vnode.repeatNodes
 	        var action = vnode.action
-	        var endRepeat = nodes[nodes.length - 1]
-	        var vnodes = repeatVnodes.slice(1, -1)
-
-	        if (action === 'replace') {
+	        var endRepeat = vnode.endRepeat
+	        var fragment = document.createDocumentFragment()
+	        if (action === 'init') {
 	            var node = startRepeat.nextSibling
 	            while (node !== endRepeat) {
 	                parent.removeChild(node)
 	                node = startRepeat.nextSibling
 	            }
-	            var fragment = document.createDocumentFragment()
-	            vnodes.forEach(function (c) {
-	                fragment.appendChild(avalon.vdomAdaptor(c).toDOM())
-	            })
-
-	            var entity = avalon.slice(fragment.childNodes)
-	            avalon.diff(vnodes, [])
-	            parent.insertBefore(fragment, endRepeat)
-	            refreshView(entity, vnodes, parent)
-	        } else {
-	            var groupText = vnode.signature
-	            var indexes = vnode.indexes
-	            var emptyFragment = document.createDocumentFragment()
-	            var fragment = emptyFragment.cloneNode(false)
-
-	            var next, sortedFragments = {}, fragments = [],
-	                    i = 0, el
-	            while (next = startRepeat.nextSibling) {
-	                if (next === endRepeat) {
-	                    break
-	                } else if (next.nodeValue === groupText) {
-	                    fragment.appendChild(next)
-	                    if (indexes[i] !== void 0) {
-	                        sortedFragments[indexes[i]] = fragment
-	                        delete indexes[i]
-	                    } else {
-	                        fragments.push(fragment)//?
-	                    }
-	                    i++
-	                    fragment = emptyFragment.cloneNode(false)
-	                } else {
-	                    fragment.appendChild(next)
-	                }
-	            }
-
-	            for (i in indexes) {
-	                var com = indexes[i]
-	                i = parseFloat(i)
-	                sortedFragments[ i ] = componentToDom(com, emptyFragment.cloneNode(false))
-	            }
-
-	            for (i = 0, el; el = sortedFragments[i++]; ) {
-	                emptyFragment.appendChild(el)
-	            }
-
-	            var entity = avalon.slice(emptyFragment.childNodes)
-	            parent.insertBefore(emptyFragment, endRepeat)
-	            refreshView(entity, vnodes, parent)
 	        }
 
+	        for (var i in vnode.removedComponents) {
+	            var el = vnode.removedComponents[i]
+	            if (el.nodes) {
+	                el.nodes.forEach(function (n) {
+	                    if (n.parentNode) {
+	                        n.parentNode.removeChild(n)
+	                    }
+	                })
+	                el.nodes.length = el.children.length = 0
+	            }
+
+	        }
+	        delete vnode.removedComponents
+	        var insertPoint = startRepeat
+	        for (var i = 0; i < vnode.components.length; i++) {
+	            var com = vnode.components[i]
+	            var cnodes = com.nodes
+	            if (cnodes) {
+	                if (insertPoint.nextSibling !== cnodes[0]) {
+	                    var moveFragment = fragment.cloneNode(false)
+	                    cnodes.forEach(function (node) {
+	                        moveFragment.appendChild(node)
+	                    })
+	                    parent.insertBefore(moveFragment, insertPoint.nextSibling)
+	                }
+
+	            } else {
+	                var newFragment = fragment.cloneNode(false)
+	                componentToDom(com, newFragment)
+	                cnodes = com.nodes
+	                parent.insertBefore(newFragment, insertPoint.nextSibling)
+	            }
+	            insertPoint = cnodes[cnodes.length - 1]
+	        }
+
+	        var entity = [], vnodes = []
+	        vnode.components.forEach(function (c) {
+	            Array.prototype.push.apply(entity, c.nodes)
+	            Array.prototype.push.apply(vnodes, c.nodes)
+	        })
+	        vnode.componentCount = vnodes.length
+	        var now = new Date
+	        refreshView(entity, vnodes, parent)
+	        console.log(new Date - now, "patch")
+	        return false
 	    }
+
 	})
 
-	function componentToDom(com, fragment) {
+
+	var forCache = new Cache(128)
+	function componentToDom(com, fragment, cur) {
+	    com.nodes = []
 	    com.children.forEach(function (c) {
-	        fragment.appendChild(avalon.vdomAdaptor(c).toDOM())
+	        if (c.type.charAt(0) === '#') {
+	            var expr = c.type + '#' + c.nodeValue
+	            var node = forCache.get(expr)
+	            if (!node) {
+	                node = avalon.vdomAdaptor(c).toDOM()
+	                forCache.put(expr, node)
+	            }
+	            cur = node.cloneNode(true)
+	        } else {
+	            cur = avalon.vdomAdaptor(c).toDOM()
+	        }
+	        com.nodes.push(cur)
+	        fragment.appendChild(cur)
 	    })
 	    return fragment
 	}
 
 	//将要循环的节点根据锚点元素再分成一个个更大的单元,用于diff
-	function getForByKey(nodes, signature) {
+	function getComponents(nodes, signature) {
 	    var components = []
 	    var com = {
 	        children: []
@@ -4795,7 +4836,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    return c
 	}
-
+	//{number1:xxx, _number1: yyy}
 	function saveInCache(cache, component) {
 	    var trackId = component.key
 	    if (!cache[trackId]) {
@@ -5417,8 +5458,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	var directives = avalon.directives
 	var rbinding = __webpack_require__(44).binding
-
 	function diff(current, previous) {
+	    if (!current)
+	        return
 	    for (var i = 0; i < current.length; i++) {
 	        var cur = current[i]
 	        var pre = previous[i] || emptyObj
@@ -5429,7 +5471,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	                break
 	            case '#comment':
-	                if (cur.directive === 'for') {
+	                if (cur.directive === 'for' && current) {
 	                    i = directives['for'].diff(current, previous, i)
 	                } else if (cur.directive === 'if') {
 	                    directives['if'].diff(cur, pre)
@@ -5443,14 +5485,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    diff(cur.children, pre.children || emptyArr)
 	                }
 	                break
-
 	        }
-
 	    }
 	}
 
 	function diffProps(current, previous) {
-	    current.change = current.change || []
 	    for (var name in current.props) {
 	        var match = name.match(rbinding)
 	        if (match) {
@@ -5765,7 +5804,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	//处理表达式的过滤器部分
-	  
 
 	    var filters = input.map(function (str) {
 
@@ -5796,7 +5834,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            '\tvar __vmodel__ = this;',
 	            '\t' + body,
 	            '}catch(e){',
-	            '\tavalon.log(e, ' + quoteError(str, category) + ')',
+	            quoteError(str, category),
 	            '}',
 	            '}']
 	        filters.unshift(2, 0)
@@ -5808,7 +5846,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            'try{',
 	            'return ' + body + '\n',
 	            '}catch(e){',
-	            '\tavalon.log(e, ' + quoteError(str, category) + ')',
+	            quoteError(str, category),
 	            '}',
 	            '}']
 	        fn = Function('return ' + getterBody.join('\n'))()
@@ -5819,20 +5857,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	            'try{',
 	            '\t' + body + ' = __value__',
 	            '}catch(e){',
-	            '\tavalon.log(e, ' + quoteError(str, category) + ')',
+	            quoteError(str, category),
 	            '}',
 	            '}']
 	        fn = Function('return ' + setterBody.join('\n'))()
 	        evaluatorPool.put('duplex:set:' + str, fn)
 	        //对某个值进行格式化
-	        if(input.length){
+	        if (input.length) {
 	            var formatBody = [
 	                'function (__vmodel__, __value__){',
 	                'try{',
 	                filters.join('\n'),
 	                'return __value__\n',
 	                '}catch(e){',
-	                '\tavalon.log(e, ' + quoteError(str, category) + ')',
+	                quoteError(str, category),
 	                '}',
 	                '}']
 	            fn = Function('return ' + formatBody.join('\n'))()
@@ -5846,7 +5884,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            'var __value__ = ' + body,
 	            'return __value__',
 	            '}catch(e){',
-	            '\tavalon.log(e, ' + quoteError(str, category) + ')',
+	            quoteError(str, category),
 	            '\treturn ""',
 	            '}',
 	            '})()'
@@ -5862,7 +5900,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function quoteError(str, type) {
-	    return avalon.quote('parse ' + type + ' binding【 ' + str + ' 】fail')
+	    return '\tavalon.warn(e, ' +
+	            avalon.quote('parse ' + type + ' binding【 ' + str + ' 】fail')
+	            + ')'
 	}
 
 	module.exports = avalon.parseExpr = parseExpr
