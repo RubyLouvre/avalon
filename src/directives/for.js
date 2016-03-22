@@ -1,5 +1,6 @@
 
 var refreshView = require('../strategy/patch')
+var Cache = require('../seed/cache')
 
 avalon._each = function (obj, fn) {
     if (Array.isArray(obj)) {
@@ -110,30 +111,27 @@ avalon.directive('for', {
         var action = vnode.action
         var endRepeat = nodes[nodes.length - 1]
         var vnodes = repeatVnodes.slice(1, -1)
-
+        var bigFragment = document.createDocumentFragment()
         if (action === 'replace') {
             var node = startRepeat.nextSibling
             while (node !== endRepeat) {
                 parent.removeChild(node)
                 node = startRepeat.nextSibling
             }
-            var fragment = document.createDocumentFragment()
-            vnodes.forEach(function (c) {
-                fragment.appendChild(avalon.vdomAdaptor(c).toDOM())
-            })
 
-            var entity = avalon.slice(fragment.childNodes)
+            vnode.components.forEach(function (com) {
+                componentToDom(com, bigFragment)
+            })
             avalon.diff(vnodes, [])
-            parent.insertBefore(fragment, endRepeat)
-            refreshView(entity, vnodes, parent)
+           
         } else {
             var groupText = vnode.signature
             var indexes = vnode.indexes
-            var emptyFragment = document.createDocumentFragment()
-            var fragment = emptyFragment.cloneNode(false)
+            var fragment = bigFragment.cloneNode(false)
 
             var next, sortedFragments = {}, fragments = [],
                     i = 0, el
+            //收集已有的节点并排序
             while (next = startRepeat.nextSibling) {
                 if (next === endRepeat) {
                     break
@@ -143,35 +141,43 @@ avalon.directive('for', {
                         sortedFragments[indexes[i]] = fragment
                         delete indexes[i]
                     } else {
-                        fragments.push(fragment)//?
+                        fragments.push(fragment)
                     }
                     i++
-                    fragment = emptyFragment.cloneNode(false)
+                    fragment = bigFragment.cloneNode(false)
                 } else {
                     fragment.appendChild(next)
                 }
             }
-
+            //如果数量不足,创建
             for (i in indexes) {
                 var com = indexes[i]
                 i = parseFloat(i)
-                sortedFragments[ i ] = componentToDom(com, emptyFragment.cloneNode(false))
+                sortedFragments[ i ] = componentToDom(com, bigFragment.cloneNode(false))
             }
-
+            //按次序放进临时的文档碎片中
             for (i = 0, el; el = sortedFragments[i++]; ) {
-                emptyFragment.appendChild(el)
+                bigFragment.appendChild(el)
             }
-
-            var entity = avalon.slice(emptyFragment.childNodes)
-            parent.insertBefore(emptyFragment, endRepeat)
-            refreshView(entity, vnodes, parent)
         }
-
+        var entity = avalon.slice(bigFragment.childNodes)
+        parent.insertBefore(bigFragment, endRepeat)
+        refreshView(entity, vnodes, parent)
     }
 })
-
+//使用
+var forCache = new Cache(128)
 function componentToDom(com, fragment) {
     com.children.forEach(function (c) {
+        if (c.type.charAt(0) === '#') {
+            var expr = c.type + '#' + c.nodeValue
+            var node = forCache.get(expr)
+            if (!node) {
+                node = avalon.vdomAdaptor(c).toDOM()
+                forCache.put(expr, node)
+            }
+            return fragment.appendChild(node.cloneNode(true))
+        }
         fragment.appendChild(avalon.vdomAdaptor(c).toDOM())
     })
     return fragment
