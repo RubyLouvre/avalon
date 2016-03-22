@@ -1,5 +1,4 @@
 var window = avalon.window
-var document = avalon.document
 
 var refreshModel = require('./refreshModel')
 var markID = require('../../seed/lang.share').getLongID
