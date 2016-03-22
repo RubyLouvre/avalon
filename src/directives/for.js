@@ -5,9 +5,9 @@ var Cache = require('../seed/cache')
 avalon._each = function (obj, fn) {
     if (Array.isArray(obj)) {
         for (var i = 0; i < obj.length; i++) {
-            var value = obj[i]
-            var type = typeof value
-            var key = value && type === 'object' ? obj.$hashcode : type + value
+            var item = obj[i]
+            var type = typeof item
+            var key = item && type === 'object' ? item.$hashcode : type + item
             fn(i, obj[i], key)
         }
     } else {
@@ -59,19 +59,18 @@ avalon.directive('for', {
             pre.components = []
             pre.componentCount = 0
         }
-       
-        cur.endRepeat = pre.endRepeat
 
+        cur.endRepeat = pre.endRepeat
         var repeatNodes = 'directive' in cur ? getForBySignature(current, __index__) :
                 getForByNodeValue(current, __index__)
 
         cur.components = getComponents(repeatNodes.slice(1, -1), cur.signature)
 
         var n = repeatNodes.length - pre.componentCount
-        var isChange = false
+        var isChange = false, i, c, p
         if (n > 0) {
             var spliceArgs = [__index__, 0]
-            for (var j = 0; j < n; j++) {
+            for (var i = 0; i < n; i++) {
                 spliceArgs.push(null)
             }
             previous.splice.apply(previous, spliceArgs)
@@ -79,15 +78,17 @@ avalon.directive('for', {
             previous.splice.apply(previous, [__index__, Math.abs(n)])
         }
         cur.action = isInit ? 'init' : 'update'
-
         if (!isInit) {
+            var now = new Date
+
             var cache = {}
             cur.removedComponents = {}
-            for (var i = 0, c; c = cur.components[i++]; ) {
+            for (i = 0; c = cur.components[i++]; ) {
                 saveInCache(cache, c)
             }
-            for (var i = 0, p; p = pre.components[i++]; ) {
-                var c = isInCache(cache, p.key)
+            console.log("cache", new Date - now)
+            for (i = 0; p = pre.components[i++]; ) {
+                c = isInCache(cache, p.key)
                 if (c) {
                     if (!isChange) {//如果位置发生了变化
                         isChange = c.index !== p.index
@@ -104,12 +105,12 @@ avalon.directive('for', {
                 c = cache[i]
                 avalon.diff(c.children, [])
             }
-        } else {
-            cur.components.forEach(function (c) {
+            for (i = 0; c = cur.components[i++]; ) {
                 avalon.diff(c.children, [])
-            })
+            }
             isChange = true
         }
+
         if (isChange) {
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
@@ -165,16 +166,13 @@ avalon.directive('for', {
             }
             insertPoint = cnodes[cnodes.length - 1]
         }
-
         var entity = [], vnodes = []
         vnode.components.forEach(function (c) {
             Array.prototype.push.apply(entity, c.nodes)
             Array.prototype.push.apply(vnodes, c.nodes)
         })
         vnode.componentCount = vnodes.length
-        var now = new Date
         refreshView(entity, vnodes, parent)
-        console.log(new Date - now, "patch")
         return false
     }
 

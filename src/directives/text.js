@@ -1,6 +1,3 @@
-var Cache = require('../seed/cache')
-var textCache = new Cache(256)
-var rexpr = avalon.config.rexpr
 var rident = require('../seed/regexp').ident
 avalon.directive('text', {
     parse: function (binding, num, vnode) {
