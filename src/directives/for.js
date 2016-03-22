@@ -1,5 +1,5 @@
 
-var refreshView = require('../strategy/patch')
+var patch = require('../strategy/patch')
 var Cache = require('../seed/cache')
 
 avalon._each = function (obj, fn) {
@@ -52,9 +52,8 @@ avalon.directive('for', {
         var cur = current[__index__]
         var pre = previous[__index__] || {}
 
-
-
         var isInit = !('directive' in pre)
+        var isChange = false, i, c, p
         if (isInit) {
             pre.components = []
             pre.componentCount = 0
@@ -67,7 +66,7 @@ avalon.directive('for', {
         cur.components = getComponents(repeatNodes.slice(1, -1), cur.signature)
 
         var n = repeatNodes.length - pre.componentCount
-        var isChange = false, i, c, p
+
         if (n > 0) {
             var spliceArgs = [__index__, 0]
             for (var i = 0; i < n; i++) {
@@ -79,14 +78,12 @@ avalon.directive('for', {
         }
         cur.action = isInit ? 'init' : 'update'
         if (!isInit) {
-            var now = new Date
-
             var cache = {}
             cur.removedComponents = {}
             for (i = 0; c = cur.components[i++]; ) {
                 saveInCache(cache, c)
             }
-            console.log("cache", new Date - now)
+
             for (i = 0; p = pre.components[i++]; ) {
                 c = isInCache(cache, p.key)
                 if (c) {
@@ -96,6 +93,7 @@ avalon.directive('for', {
                     c.nodes = p.nodes
                     avalon.diff(c.children, p.children)
                 } else {
+                    isChange = true
                     cur.removedComponents[p.index] = p
                 }
             }
@@ -105,12 +103,13 @@ avalon.directive('for', {
                 c = cache[i]
                 avalon.diff(c.children, [])
             }
-            for (i = 0; c = cur.components[i++]; ) {
+          
+        }else{
+              for (i = 0; c = cur.components[i++]; ) {
                 avalon.diff(c.children, [])
             }
             isChange = true
         }
-
         if (isChange) {
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
@@ -168,11 +167,11 @@ avalon.directive('for', {
         }
         var entity = [], vnodes = []
         vnode.components.forEach(function (c) {
-            Array.prototype.push.apply(entity, c.nodes)
-            Array.prototype.push.apply(vnodes, c.nodes)
+            entity.push.apply(entity, c.nodes)
+            vnodes.push.apply(vnodes, c.children)
         })
         vnode.componentCount = vnodes.length
-        refreshView(entity, vnodes, parent)
+        patch(entity, vnodes, parent)
         return false
     }
 

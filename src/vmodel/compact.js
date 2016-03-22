@@ -174,6 +174,11 @@ function arrayFactory(array, old, heirloom, options) {
                         options.pathname :
                         options.pathname + '.' + a
                 vm.$fire(path, b, c)
+                if (!d) {
+	            avalon.rerenderStart = new Date
+	            avalon.batch(vm.$id, true)
+	        }
+
             }
         }
 
