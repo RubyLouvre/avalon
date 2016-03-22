@@ -58,13 +58,15 @@ function parseView(arr, num) {
             if (nodeValue.indexOf('ms-for:') === 0) {
                 var signature = el.signature
                 forstack.push(signature)
-                str += children + '.push({' +
+                str += '\nvar ' + signature + '= {' +
                         '\n\ttype:"#comment",' +
                         '\n\tdirective:"for",' +
                         '\n\tskipContent:false,' +
                         '\n\tsignature:' + quote(signature) + ',' +
+                        '\n\tstart:' + children + '.length,' +
                         '\n\tnodeValue:' + quote(nodeValue) +
-                        '\n})\n'
+                        '\n}\n'
+                str += children + '.push(' + signature + ')\n'
                 str += avalon.directives['for'].parse(nodeValue, num)
 
             } else if (nodeValue.indexOf('ms-for-end:') === 0) {
@@ -78,13 +80,13 @@ function parseView(arr, num) {
                 str += '\n})\n' //结束循环
                 if (forstack.length) {
                     var signature = forstack[forstack.length - 1]
-                    str += children + '.push({' +
+                    str += signature + '.end ='+ children + '.push({' +
                             '\n\ttype:"#comment",' +
                             '\n\tskipContent:true,' +
                             '\n\tsignature:' + quote(signature) + ',' +
                             '\n\tnodeValue:' + quote(signature + ':end') + ',' +
                             '\n})\n'
-
+                   // str += signature + '.end = ' + children.length + '\n'
                     forstack.pop()
                 }
             } else if (nodeValue.indexOf('ms-js:') === 0) {

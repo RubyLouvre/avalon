@@ -56,16 +56,12 @@ avalon.directive('for', {
         var isChange = false, i, c, p
         if (isInit) {
             pre.components = []
-            pre.componentCount = 0
+            pre.repeatCount = 0
         }
-
+        var nodes = current.slice(cur.start, cur.end)
         cur.endRepeat = pre.endRepeat
-        var repeatNodes = 'directive' in cur ? getForBySignature(current, __index__) :
-                getForByNodeValue(current, __index__)
-
-        cur.components = getComponents(repeatNodes.slice(1, -1), cur.signature)
-
-        var n = repeatNodes.length - pre.componentCount
+        cur.components = getComponents(nodes.slice(1, -1), cur.signature)
+        var n = nodes.length - pre.repeatCount
 
         if (n > 0) {
             var spliceArgs = [__index__, 0]
@@ -103,9 +99,9 @@ avalon.directive('for', {
                 c = cache[i]
                 avalon.diff(c.children, [])
             }
-          
-        }else{
-              for (i = 0; c = cur.components[i++]; ) {
+
+        } else {
+            for (i = 0; c = cur.components[i++]; ) {
                 avalon.diff(c.children, [])
             }
             isChange = true
@@ -115,7 +111,7 @@ avalon.directive('for', {
             avalon.Array.ensure(list, this.update)
         }
 
-        return __index__ + repeatNodes.length - 1
+        return __index__ + nodes.length - 1
 
     },
     update: function (startRepeat, vnode, parent) {
@@ -170,7 +166,7 @@ avalon.directive('for', {
             entity.push.apply(entity, c.nodes)
             vnodes.push.apply(vnodes, c.children)
         })
-        vnode.componentCount = vnodes.length
+        vnode.repeatCount = vnodes.length
         patch(entity, vnodes, parent)
         return false
     }
@@ -221,40 +217,7 @@ function getComponents(nodes, signature) {
     return components
 }
 
-//从一组节点,取得要循环的部分(第二次生成的虚拟DOM树会走这分支)
-function getForBySignature(nodes, i) {
-    var start = nodes[i], node
-    var endText = start.signature + ':end'
-    var ret = []
-    while (node = nodes[i++]) {
-        ret.push(node)
-        if (node.nodeValue === endText) {
-            break
-        }
-    }
-    return ret
-}
-
-//从一组节点,取得要循环的部分(初次生成的虚拟DOM树及真实DOM树会走这分支)
-function getForByNodeValue(nodes, i) {
-    var isBreak = 0, ret = [], node
-    while (node = nodes[i++]) {
-        if (node.type === '#comment') {
-            if (node.nodeValue.indexOf('ms-for:') === 0) {
-                isBreak++
-            } else if (node.nodeValue.indexOf('ms-for-end:') === 0) {
-                isBreak--
-            }
-        }
-        ret.push(node)
-        if (isBreak === 0) {
-            break
-        }
-    }
-    return ret
-}
-
-// 新 位置: 旧位置
+// 新位置: 旧位置
 function isInCache(cache, id) {
     var c = cache[id]
     if (c) {
@@ -276,7 +239,7 @@ function isInCache(cache, id) {
     }
     return c
 }
-//{number1:xxx, _number1: yyy}
+
 function saveInCache(cache, component) {
     var trackId = component.key
     if (!cache[trackId]) {

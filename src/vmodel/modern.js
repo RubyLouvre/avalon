@@ -147,7 +147,9 @@ var __array__ = share.__array__
 function arrayFactory(array, old, heirloom, options) {
     if (old && old.splice) {
         var args = [0, old.length].concat(array)
+        old._lock = true
         old.splice.apply(old, args)
+        delete old._lock
         return old
     } else {
         for (var i in __array__) {
@@ -161,7 +163,7 @@ function arrayFactory(array, old, heirloom, options) {
                         options.pathname :
                         options.pathname + '.' + a
                 vm.$fire(path, b, c)
-                if (!d) {
+                if (!d && !array._lock) {
                     avalon.rerenderStart = new Date
                     avalon.batch(vm.$id, true)
                 }
