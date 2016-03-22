@@ -174,10 +174,6 @@ function arrayFactory(array, old, heirloom, options) {
                         options.pathname :
                         options.pathname + '.' + a
                 vm.$fire(path, b, c)
-                if (!d) {
-                    avalon.rerenderStart = new Date
-                    avalon.batch(vm.$id, true)
-                }
             }
         }
 
@@ -186,7 +182,6 @@ function arrayFactory(array, old, heirloom, options) {
         options.hashcode = hashcode
         options.id = options.id || hashcode
         makeObserver(array, heirloom, {}, {}, options)
-
         var itemOptions = {
             id: array.$id + '.*',
             master: true
@@ -249,30 +244,30 @@ __method__.forEach(function (method) {
         // 继续尝试劫持数组元素的属性
         var args = [], size = this.length
         var options = {
-            idname: this.$id + '.*',
+            id: this.$id + '.*',
             master: true
         }
         if (method === 'splice' && Object(this[0]) === this[0]) {
             var old = this.slice(a, b)
             var neo = ap.slice.call(arguments, 2)
             var args = [a, b]
+
             for (var j = 0, jn = neo.length; j < jn; j++) {
                 var item = old[j]
                 args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, options)
             }
+
         } else {
             for (var i = 0, n = arguments.length; i < n; i++) {
                 args[i] = convertItem(arguments[i], {}, options)
             }
         }
-
         var result = original.apply(this, args)
         if (!avalon.modern) {
             this.$model = toJson(this)
         }
         notifySize(this, size)
         this.notify()
-
         return result
     }
 })

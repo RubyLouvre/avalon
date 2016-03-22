@@ -12,7 +12,7 @@ var makeHashCode = avalon.makeHashCode
 
 
 //一个vm总是为Observer的实例
-function Observer() { 
+function Observer() {
 }
 function masterFactory(definition, heirloom, options) {
 
@@ -161,10 +161,6 @@ function arrayFactory(array, old, heirloom, options) {
                         options.pathname :
                         options.pathname + '.' + a
                 vm.$fire(path, b, c)
-                if (!d) {
-                    avalon.rerenderStart = new Date
-                    avalon.batch(vm.$id, true)
-                }
             }
         }
 
@@ -233,7 +229,7 @@ __method__.forEach(function (method) {
         // 继续尝试劫持数组元素的属性
         var args = [], size = this.length
         var options = {
-            idname: this.$id + '.*',
+            id: this.$id + '.*',
             master: true
         }
         if (method === 'splice' && Object(this[0]) === this[0]) {
