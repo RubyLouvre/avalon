@@ -62,7 +62,7 @@ avalon.directive('for', {
         cur.endRepeat = pre.endRepeat
         cur.components = getComponents(nodes.slice(1, -1), cur.signature)
         var n = nodes.length - pre.repeatCount
-
+        pre.components.length = 0
         if (n > 0) {
             var spliceArgs = [__index__, 0]
             for (var i = 0; i < n; i++) {
@@ -76,11 +76,14 @@ avalon.directive('for', {
         if (!isInit) {
             var cache = {}
             cur.removedComponents = {}
+            /* eslint-disable no-cond-assign */
             for (i = 0; c = cur.components[i++]; ) {
+                /* eslint-enable no-cond-assign */
                 saveInCache(cache, c)
             }
-
+            /* eslint-disable no-cond-assign */
             for (i = 0; p = pre.components[i++]; ) {
+                /* eslint-enable no-cond-assign */
                 c = isInCache(cache, p.key)
                 if (c) {
                     if (!isChange) {//如果位置发生了变化
@@ -101,7 +104,9 @@ avalon.directive('for', {
             }
 
         } else {
+            /* eslint-disable no-cond-assign */
             for (i = 0; c = cur.components[i++]; ) {
+                /* eslint-enable no-cond-assign */
                 avalon.diff(c.children, [])
             }
             isChange = true

@@ -26,7 +26,7 @@ avalon.bind = function (elem, type, fn) {
         avalon.eventListeners[fn.uuid] = fn
 
         if (value.indexOf(type + ':') === -1) {//同一种事件只绑定一次
-            if (canBubbleUp[type]) {
+            if (canBubbleUp[type] || focusBlur[type]) {
                 delegateEvent(type)
             } else {
                 nativeBind(elem, type, dispatch)
@@ -136,10 +136,13 @@ function dispatch(event) {
         }
     }
 }
+var focusBlur = {
+    focus: true,
+    blur: true
+}
 
-
-var nativeBind = function (el, type, fn) {
-    el.addEventListener(type, fn)
+var nativeBind = function (el, type, fn, capture) {
+    el.addEventListener(type, fn, capture)
 }
 var nativeUnBind = function (el, type, fn) {
     el.removeEventListener(type, fn)
@@ -151,7 +154,7 @@ function delegateEvent(type) {
         var arr = value.match(reventNames) || []
         arr.push(type)
         root.setAttribute('delegate-events', arr.join('??'))
-        nativeBind(root, type, dispatch)
+        nativeBind(root, type, dispatch, !!focusBlur[type])
     }
 }
 

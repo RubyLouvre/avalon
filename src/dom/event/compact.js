@@ -34,7 +34,7 @@ avalon.bind = function (elem, type, fn) {
         }
         avalon.eventListeners[fn.uuid] = fn
         if (value.indexOf(type + ':') === -1) {//同一种事件只绑定一次
-            if (canBubbleUp[type]) {
+            if (canBubbleUp[type] || (avalon.modern && focusBlur[type])) {
                 delegateEvent(type)
             } else {
                 nativeBind(elem, type, dispatch)
@@ -150,9 +150,12 @@ function dispatch(event) {
     }
 }
 
-
-var nativeBind = W3C ? function (el, type, fn) {
-    el.addEventListener(type, fn)
+var focusBlur = {
+    focus: true,
+    blur: true
+}
+var nativeBind = W3C ? function (el, type, fn, capture) {
+    el.addEventListener(type, fn, capture)
 } : function (el, type, fn) {
     el.attachEvent('on' + type, fn)
 }
@@ -168,7 +171,7 @@ function delegateEvent(type) {
         var arr = value.match(reventNames) || []
         arr.push(type)
         root.setAttribute('delegate-events', arr.join('??'))
-        nativeBind(root, type, dispatch)
+        nativeBind(root, type, dispatch, !!focusBlur[type])
     }
 }
 

@@ -86,7 +86,6 @@ function parseView(arr, num) {
                             '\n\tsignature:' + quote(signature) + ',' +
                             '\n\tnodeValue:' + quote(signature + ':end') + ',' +
                             '\n})\n'
-                   // str += signature + '.end = ' + children.length + '\n'
                     forstack.pop()
                 }
             } else if (nodeValue.indexOf('ms-js:') === 0) {
