@@ -4,8 +4,7 @@ var rcamelize = /[-_][^-_]/g
 var rhashcode = /\d\.\d{4}/
 var rescape = /[-.*+?^${}()|[\]\/\\]/g
 
-
-
+var _slice = [].slice
 avalon.mix({
     caches: {}, //avalon2.0 新增
     vmodels: {},
@@ -27,6 +26,9 @@ avalon.mix({
         }
     },
     version: 2.0,
+    slice: function (nodes, start, end) {
+        return _slice.call(nodes, start, end)
+    },
     css: function (node, name, value, fn) {
         //读写删除元素节点的样式
         if (node instanceof avalon) {

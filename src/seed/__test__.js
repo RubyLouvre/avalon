@@ -187,12 +187,6 @@ describe('测试lang.compact/modern文件的API', function () {
         })
     })
 
-    describe('slice', function () {
-        it('test', function () {
-            expect(avalon.slice([1, 2, 3, 4], 1, 2)).to.eql([2])
-        })
-    })
-
     describe('mix', function () {
         it('test', function () {
             expect(avalon.mix).to.be.a('function')
@@ -256,6 +250,13 @@ describe('测试lang.share文件的API', function () {
             expect(avalon.cssHooks).to.be.a('object')
         })
     })
+    
+    describe('slice', function () {
+        it('test', function () {
+            expect(avalon.slice([1, 2, 3, 4], 1, 2)).to.eql([2])
+        })
+    })
+
     describe('version', function () {
         it('test', function () {
             expect(avalon.version).to.be.a('number')

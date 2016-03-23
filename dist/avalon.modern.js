@@ -221,8 +221,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rhashcode = /\d\.\d{4}/
 	var rescape = /[-.*+?^${}()|[\]\/\\]/g
 
-
-
+	var _slice = [].slice
 	avalon.mix({
 	    caches: {}, //avalon2.0 新增
 	    vmodels: {},
@@ -244,6 +243,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    version: 2.0,
+	    slice: function (nodes, start, end) {
+	        return _slice.call(nodes, start, end)
+	    },
 	    css: function (node, name, value, fn) {
 	        //读写删除元素节点的样式
 	        if (node instanceof avalon) {
@@ -3913,12 +3915,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // 简单的 typeof obj === 'object'检测，会致使用isPlainObject(window)在opera下通不过
 	    return serialize.call(obj) === '[object Object]' &&
 	            Object.getPrototypeOf(obj) === Object.prototype
-	}
-
-	var _slice = [].slice
-
-	avalon.slice = function (nodes, start, end) {
-	    return _slice.call(nodes, start, end)
 	}
 
 	//与jQuery.extend方法，可用于浅拷贝，深拷贝

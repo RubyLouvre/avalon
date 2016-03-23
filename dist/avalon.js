@@ -187,7 +187,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _slice = Array.prototype.slice
 	try {
 	    // Can't be used with DOM elements in IE < 9
-	    _slice.call(document.documentElement);
+	    _slice.call(document.documentElement)
 	} catch (e) { // Fails in IE < 9
 	    // This will work for genuine arrays, array-like objects,
 	    // NamedNodeMap (attributes, entities, notations),
@@ -547,10 +547,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-	var _slice = [].slice
-	avalon.slice =  function (nodes, start, end) {
-	    return _slice.call(nodes, start, end)
-	}
 	//与jQuery.extend方法，可用于浅拷贝，深拷贝
 	avalon.mix = avalon.fn.mix = function () {
 	    var options, name, src, copy, copyIsArray, clone,
@@ -671,8 +667,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rhashcode = /\d\.\d{4}/
 	var rescape = /[-.*+?^${}()|[\]\/\\]/g
 
-
-
+	var _slice = [].slice
 	avalon.mix({
 	    caches: {}, //avalon2.0 新增
 	    vmodels: {},
@@ -694,6 +689,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    version: 2.0,
+	    slice: function (nodes, start, end) {
+	        return _slice.call(nodes, start, end)
+	    },
 	    css: function (node, name, value, fn) {
 	        //读写删除元素节点的样式
 	        if (node instanceof avalon) {

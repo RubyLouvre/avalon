@@ -39,12 +39,6 @@ avalon.isPlainObject = function (obj) {
             Object.getPrototypeOf(obj) === Object.prototype
 }
 
-var _slice = [].slice
-
-avalon.slice = function (nodes, start, end) {
-    return _slice.call(nodes, start, end)
-}
-
 //与jQuery.extend方法，可用于浅拷贝，深拷贝
 avalon.mix = avalon.fn.mix = function () {
     var options, name, src, copy, copyIsArray, clone,

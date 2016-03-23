@@ -93,7 +93,7 @@ if (!Array.isArray.bind) {
 var _slice = Array.prototype.slice
 try {
     // Can't be used with DOM elements in IE < 9
-    _slice.call(document.documentElement);
+    _slice.call(document.documentElement)
 } catch (e) { // Fails in IE < 9
     // This will work for genuine arrays, array-like objects,
     // NamedNodeMap (attributes, entities, notations),
