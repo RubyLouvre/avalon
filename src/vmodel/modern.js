@@ -85,6 +85,7 @@ function slaveFactory(before, after, heirloom, options) {
         delete before[key]
     }
 
+    options.hashcode = before.$hashcode || makeHashCode('$')
     accessors.$model = modelAccessor
     var $vmodel = before
     Object.defineProperties($vmodel, accessors)
@@ -147,9 +148,9 @@ var __array__ = share.__array__
 function arrayFactory(array, old, heirloom, options) {
     if (old && old.splice) {
         var args = [0, old.length].concat(array)
-        old._lock = true
+        old.stopBatch = true
         old.splice.apply(old, args)
-        delete old._lock
+        old.stopBatch = false
         return old
     } else {
         for (var i in __array__) {
@@ -163,7 +164,7 @@ function arrayFactory(array, old, heirloom, options) {
                         options.pathname :
                         options.pathname + '.' + a
                 vm.$fire(path, b, c)
-                if (!d && !array._lock) {
+                if (!d && !array.stopBatch) {
                     avalon.rerenderStart = new Date
                     avalon.batch(vm.$id, true)
                 }
@@ -176,12 +177,11 @@ function arrayFactory(array, old, heirloom, options) {
         options.id = options.id || hashcode
         makeObserver(array, heirloom, {}, {}, options)
 
-        var itemOptions = {
-            id: array.$id + '.*',
-            master: true
-        }
         for (var j = 0, n = array.length; j < n; j++) {
-            array[j] = convertItem(array[j], {}, itemOptions)
+            array[j] = convertItem(array[j], {}, {
+                id: array.$id + '.*',
+                master: true
+            })
         }
         return array
     }
@@ -193,13 +193,6 @@ var _splice = ap.splice
 function notifySize(array, size) {
     if (array.length !== size) {
         array.notify('length', array.length, size, true)
-    }
-}
-function convertItem(item, a, b) {
-    if (Object(item) === item) {
-        return modelAdaptor(item, 0, a, b)
-    } else {
-        return item
     }
 }
 
@@ -234,21 +227,23 @@ __method__.forEach(function (method) {
     __array__[method] = function (a, b) {
         // 继续尝试劫持数组元素的属性
         var args = [], size = this.length
-        var options = {
-            id: this.$id + '.*',
-            master: true
-        }
         if (method === 'splice' && Object(this[0]) === this[0]) {
             var old = this.slice(a, b)
             var neo = ap.slice.call(arguments, 2)
             var args = [a, b]
             for (var j = 0, jn = neo.length; j < jn; j++) {
                 var item = old[j]
-                args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, options)
+                args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, {
+                    id: this.$id + '.*',
+                    master: true
+                })
             }
         } else {
             for (var i = 0, n = arguments.length; i < n; i++) {
-                args[i] = convertItem(arguments[i], {}, options)
+                args[i] = modelAdaptor(arguments[i], 0, {}, {
+                    id: this.$id + '.*',
+                    master: true
+                })
             }
         }
 

@@ -41,11 +41,13 @@ function modelAdaptor(definition, old, heirloom, options) {
         //如果此属性原来就是一个VM,拆分里面的访问器属性
         if (old && old.$id) {
             var vm = $$midway.slaveFactory(old, definition, heirloom, options)
+            avalon.stopBatch = true
             for (var i in definition) {
                 if ($$skipArray[i])
                     continue
                 vm[i] = definition[i]
             }
+            avalon.stopBatch = false
             return vm
         } else {
             vm = $$midway.masterFactory(definition, heirloom, options)
@@ -95,7 +97,9 @@ function makeAccessor(sid, spath, heirloom) {
                 }
                 var vid = vm.$id.split('.')[0]
                 avalon.rerenderStart = new Date
-                avalon.batch(vid, true)
+                if (!avalon.stopBatch) {
+                    avalon.batch(vid, true)
+                }
             }
         },
         enumerable: true,

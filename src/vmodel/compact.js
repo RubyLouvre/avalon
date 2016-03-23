@@ -32,7 +32,7 @@ function masterFactory(definition, heirloom, options) {
     var hashcode = makeHashCode('$')
     var pathname = options.pathname || ''
     options.id = options.id || hashcode
-    options.hashcode = hashcode
+    options.hashcode = options.hashcode || hashcode
     var key, sid, spath
     for (key in definition) {
         if ($$skipArray[key])
@@ -59,7 +59,6 @@ function masterFactory(definition, heirloom, options) {
             keys[key] = true
         }
     }
-
     makeObserver($vmodel, heirloom, keys, accessors, options)
 
     return $vmodel
@@ -74,7 +73,6 @@ function slaveFactory(before, after, heirloom, options) {
     var pathname = options.pathname
     var resue = before.$accessors || {}
     var key, sid, spath
-
     for (key in after) {
         if ($$skipArray[key])
             continue
@@ -92,7 +90,7 @@ function slaveFactory(before, after, heirloom, options) {
         }
     }
 
-    options = before.hashcode || makeHashCode('$')
+    options.hashcode = before.$hashcode || makeHashCode('$')
     accessors.$model = modelAccessor
     var $vmodel = new Observer()
     $vmodel = addAccessors($vmodel, accessors, skips)
@@ -160,9 +158,9 @@ var __array__ = share.__array__
 function arrayFactory(array, old, heirloom, options) {
     if (old && old.splice) {
         var args = [0, old.length].concat(array)
-        old._lock = true
+        old.stopBatch = true
         old.splice.apply(old, args)
-        delete old._lock
+        old.stopBatch = false
         return old
     } else {
         for (var i in __array__) {
@@ -176,10 +174,10 @@ function arrayFactory(array, old, heirloom, options) {
                         options.pathname :
                         options.pathname + '.' + a
                 vm.$fire(path, b, c)
-                if (!d && !array._lock) {
-	            avalon.rerenderStart = new Date
-	            avalon.batch(vm.$id, true)
-	        }
+                if (!d && array.stopBatch) {
+                    avalon.rerenderStart = new Date
+                    avalon.batch(vm.$id, true)
+                }
 
             }
         }
@@ -189,12 +187,11 @@ function arrayFactory(array, old, heirloom, options) {
         options.hashcode = hashcode
         options.id = options.id || hashcode
         makeObserver(array, heirloom, {}, {}, options)
-        var itemOptions = {
-            id: array.$id + '.*',
-            master: true
-        }
         for (var j = 0, n = array.length; j < n; j++) {
-            array[j] = convertItem(array[j], {}, itemOptions)
+            array[j] = modelAdaptor(array[j], 0, {}, {
+                id: array.$id + '.*',
+                master: true
+            })
         }
         return array
     }
@@ -209,13 +206,7 @@ function notifySize(array, size) {
         array.notify('length', array.length, size, true)
     }
 }
-function convertItem(item, a, b) {
-    if (Object(item) === item) {
-        return modelAdaptor(item, 0, a, b)
-    } else {
-        return item
-    }
-}
+
 __array__.removeAll = function (all) { //移除N个元素
     var size = this.length
     if (Array.isArray(all)) {
@@ -250,23 +241,26 @@ __method__.forEach(function (method) {
     __array__[method] = function (a, b) {
         // 继续尝试劫持数组元素的属性
         var args = [], size = this.length
-        var options = {
-            id: this.$id + '.*',
-            master: true
-        }
+
         if (method === 'splice' && Object(this[0]) === this[0]) {
             var old = this.slice(a, b)
             var neo = ap.slice.call(arguments, 2)
             var args = [a, b]
-
             for (var j = 0, jn = neo.length; j < jn; j++) {
                 var item = old[j]
-                args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, options)
+
+                args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, {
+                    id: this.$id + '.*',
+                    master: true
+                })
             }
 
         } else {
             for (var i = 0, n = arguments.length; i < n; i++) {
-                args[i] = convertItem(arguments[i], {}, options)
+                args[i] = modelAdaptor(arguments[i], 0, {}, {
+                    id: this.$id + '.*',
+                    master: true
+                })
             }
         }
         var result = original.apply(this, args)
