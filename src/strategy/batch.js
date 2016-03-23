@@ -13,9 +13,9 @@ var isBatchingUpdates = false
 var needRenderIds = []
 function batchUpdate(id, immediate) {
     var vm = avalon.vmodels[id]
-    if (!document.nodeName || !vm || vm.$render === avalon.noop)//如果是在mocha等测试环境中立即返回
+    
+    if (!document.nodeName || !vm || !vm.$render || vm.$render === avalon.noop)//如果是在mocha等测试环境中立即返回
         return
-
     if (dirtyTrees[id]) {
         avalon.Array.ensure(needRenderIds, id)
     } else {

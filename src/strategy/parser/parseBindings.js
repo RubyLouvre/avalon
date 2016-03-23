@@ -49,6 +49,7 @@ function parseBindings(props, num, elem) {
 
             }
         } else {
+            //IE6-8下关键字不能直接当做对象的键名，需要用引号括起来
             if (rneedQuote.test(i) || keyMap[i]) {//收集非绑定属性
                 ret += 'vnode' + num + '.props[' + quote(i) + '] = ' + quote(value) + '\n'
             } else {

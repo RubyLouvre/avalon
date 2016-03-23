@@ -3,7 +3,7 @@
  * patch 对某一个视图根据对应的虚拟DOM树进行全量更新
  * ------------------------------------------------------------
  */
-
+var sp = /^\s*$/
 function patch(nodes, vnodes, parent) {
     var next = nodes[0]
     if (!next && !parent)
@@ -11,6 +11,10 @@ function patch(nodes, vnodes, parent) {
     parent = parent || next.parentNode
     for (var i = 0, vn = vnodes.length; i < vn; i++) {
         var vnode = vnodes[i]
+        //IE6-8不会生成空白的文本节点，造成虚拟DOM与真实DOM的个数不一致，需要跳过
+        if(avalon.msie < 9 && vnode.type === "#text" && sp.test(vnode.nodeValue)){
+            continue
+        }
         var node = next
         if (node)
             next = node.nextSibling
@@ -36,7 +40,6 @@ function patch(nodes, vnodes, parent) {
             execHooks(node, vnode, parent, 'afterChange')
             continue
         }
-
         if (!vnode.skipContent && vnode.children && node && node.nodeType === 1) {
             //处理子节点
             patch(avalon.slice(node.childNodes), vnode.children, node)
@@ -45,6 +48,7 @@ function patch(nodes, vnodes, parent) {
         execHooks(node, vnode, parent, 'afterChange')
     }
 }
+
 function getEndRepeat(node) {
     var isBreak = 0, ret = [], node
     while (node) {

@@ -176,7 +176,6 @@ function clipOuterHTML(matchText, type) {
     //最后获取正确的>的索引值,这里为<<><>>的最后一个字符,
     var pos = opens.concat(closes).sort()
     var gtlt = pos.join('').replace(rnumber, '')
-    console.log(gtlt, "---")
     var k = 0, last = 0
 
     for (var i = 0, n = gtlt.length; i < n; i++) {
