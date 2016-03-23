@@ -47,8 +47,6 @@ VElement.prototype = {
                 this.children.forEach(function (c) {
                     dom.appendChild(avalon.vdomAdaptor(c).toDOM())
                 })
-            } else if (window.Range) {
-                dom.innerHTML = this.template
             } else {
                 dom.appendChild(avalon.parseHTML(this.template))
             }
