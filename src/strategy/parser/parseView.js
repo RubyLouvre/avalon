@@ -84,7 +84,7 @@ function parseView(arr, num) {
                             '\n\ttype:"#comment",' +
                             '\n\tskipContent:true,' +
                             '\n\tsignature:' + quote(signature) + ',' +
-                            '\n\tnodeValue:' + quote(signature + ':end') + ',' +
+                            '\n\tnodeValue:' + quote(signature + ':end')  +
                             '\n})\n'
                     forstack.pop()
                 }
