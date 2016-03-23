@@ -60,11 +60,11 @@ function filterBy(array, search) {
     })
 }
 
-function selectBy(data, array) {
+function selectBy(data, array, defaults) {
     if (avalon.isObject(data) && !Array.isArray(data)) {
         var target = []
         return makeData(target, array, function (name) {
-            target.push(data.hasOwnProperty(name) ? data[name] : '')
+            target.push(data.hasOwnProperty(name) ? data[name] : defaults ? defaults[name]: '' )
         })
     } else {
         throw 'selectBy只支持对象'

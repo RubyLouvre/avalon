@@ -898,11 +898,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 	}
 
-	function selectBy(data, array) {
+	function selectBy(data, array, defaults) {
 	    if (avalon.isObject(data) && !Array.isArray(data)) {
 	        var target = []
 	        return makeData(target, array, function (name) {
-	            target.push(data.hasOwnProperty(name) ? data[name] : '')
+	            target.push(data.hasOwnProperty(name) ? data[name] : defaults ? defaults[name]: '' )
 	        })
 	    } else {
 	        throw 'selectBy只支持对象'
@@ -2393,7 +2393,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        cur.endRepeat = pre.endRepeat
 	        cur.components = getComponents(nodes.slice(1, -1), cur.signature)
 	        var n = nodes.length - pre.repeatCount
-
 	        if (n > 0) {
 	            var spliceArgs = [__index__, 0]
 	            for (var i = 0; i < n; i++) {
@@ -2407,11 +2406,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!isInit) {
 	            var cache = {}
 	            cur.removedComponents = {}
+	            /* eslint-disable no-cond-assign */
 	            for (i = 0; c = cur.components[i++]; ) {
+	                /* eslint-enable no-cond-assign */
 	                saveInCache(cache, c)
 	            }
-
+	            /* eslint-disable no-cond-assign */
 	            for (i = 0; p = pre.components[i++]; ) {
+	                /* eslint-enable no-cond-assign */
 	                c = isInCache(cache, p.key)
 	                if (c) {
 	                    if (!isChange) {//如果位置发生了变化
@@ -2432,11 +2434,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 
 	        } else {
+	            /* eslint-disable no-cond-assign */
 	            for (i = 0; c = cur.components[i++]; ) {
+	                /* eslint-enable no-cond-assign */
 	                avalon.diff(c.children, [])
 	            }
 	            isChange = true
 	        }
+	        pre.components.length = 0 //link
 	        if (isChange) {
 	            var list = cur.change || (cur.change = [])
 	            avalon.Array.ensure(list, this.update)
@@ -2449,10 +2454,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var action = vnode.action
 	        var endRepeat = vnode.endRepeat
+
 	        var fragment = document.createDocumentFragment()
 	        if (action === 'init') {
 	            var node = startRepeat.nextSibling
-	            while (node !== endRepeat) {
+	            while (node && node !== endRepeat) {
 	                parent.removeChild(node)
 	                node = startRepeat.nextSibling
 	            }
@@ -3172,7 +3178,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            '\n\tsignature:' + quote(signature) + ',' +
 	                            '\n\tnodeValue:' + quote(signature + ':end') + ',' +
 	                            '\n})\n'
-	                   // str += signature + '.end = ' + children.length + '\n'
 	                    forstack.pop()
 	                }
 	            } else if (nodeValue.indexOf('ms-js:') === 0) {
@@ -4659,7 +4664,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        avalon.eventListeners[fn.uuid] = fn
 
 	        if (value.indexOf(type + ':') === -1) {//同一种事件只绑定一次
-	            if (canBubbleUp[type]) {
+	            if (canBubbleUp[type] || focusBlur[type]) {
 	                delegateEvent(type)
 	            } else {
 	                nativeBind(elem, type, dispatch)
@@ -4769,10 +4774,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	}
+	var focusBlur = {
+	    focus: true,
+	    blur: true
+	}
 
-
-	var nativeBind = function (el, type, fn) {
-	    el.addEventListener(type, fn)
+	var nativeBind = function (el, type, fn, capture) {
+	    el.addEventListener(type, fn, capture)
 	}
 	var nativeUnBind = function (el, type, fn) {
 	    el.removeEventListener(type, fn)
@@ -4784,7 +4792,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var arr = value.match(reventNames) || []
 	        arr.push(type)
 	        root.setAttribute('delegate-events', arr.join('??'))
-	        nativeBind(root, type, dispatch)
+	        nativeBind(root, type, dispatch, !!focusBlur[type])
 	    }
 	}
 

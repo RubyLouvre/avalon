@@ -62,7 +62,6 @@ avalon.directive('for', {
         cur.endRepeat = pre.endRepeat
         cur.components = getComponents(nodes.slice(1, -1), cur.signature)
         var n = nodes.length - pre.repeatCount
-        pre.components.length = 0
         if (n > 0) {
             var spliceArgs = [__index__, 0]
             for (var i = 0; i < n; i++) {
@@ -111,6 +110,7 @@ avalon.directive('for', {
             }
             isChange = true
         }
+        pre.components.length = 0 //link
         if (isChange) {
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
@@ -123,10 +123,11 @@ avalon.directive('for', {
 
         var action = vnode.action
         var endRepeat = vnode.endRepeat
+
         var fragment = document.createDocumentFragment()
         if (action === 'init') {
             var node = startRepeat.nextSibling
-            while (node !== endRepeat) {
+            while (node && node !== endRepeat) {
                 parent.removeChild(node)
                 node = startRepeat.nextSibling
             }
