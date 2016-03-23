@@ -13,11 +13,11 @@ var modelAccessor = share.modelAccessor
 var modelAdaptor = share.modelAdaptor
 var makeHashCode = avalon.makeHashCode
 
-var addAccessors = require('./parts/addAccessors')
 
 //一个vm总是为Observer的实例
 function Observer() {
 }
+
 function masterFactory(definition, heirloom, options) {
 
     var $skipArray = {}
@@ -51,7 +51,11 @@ function masterFactory(definition, heirloom, options) {
 
     for (key in keys) {
         //对普通监控属性或访问器属性进行赋值
+        try{
         $vmodel[key] = keys[key]
+    }catch(e){
+        avalon.log(e+"")
+    }
         //删除系统属性
         if (key in $skipArray) {
             delete keys[key]
@@ -65,6 +69,7 @@ function masterFactory(definition, heirloom, options) {
 }
 
 $$midway.masterFactory = masterFactory
+var addAccessors = require('./parts/addAccessors')
 
 function slaveFactory(before, after, heirloom, options) {
     var keys = {}
@@ -93,6 +98,7 @@ function slaveFactory(before, after, heirloom, options) {
     options.hashcode = before.$hashcode || makeHashCode('$')
     accessors.$model = modelAccessor
     var $vmodel = new Observer()
+    console.log($vmodel, accessors, skips)
     $vmodel = addAccessors($vmodel, accessors, skips)
 
     for (key in skips) {

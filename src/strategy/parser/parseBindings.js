@@ -3,7 +3,13 @@ var quote = avalon.quote
 var directives = avalon.directives
 var rbinding = require('../../seed/regexp').binding
 var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
-
+var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false,"+
+    "finally,for,function,if,in,instanceof,new,null,return,switch,this,"+
+    "throw,true,try,typeof,var,void,while,with,"+ /* 关键字*/
+    "abstract,boolean,byte,char,class,const,double,enum,export,extends,"+
+    "final,float,goto,implements,import,int,interface,long,native,"+
+    "package,private,protected,public,short,static,super,synchronized,"+
+    "throws,transient,volatile")
 function parseBindings(props, num, elem) {
     var bindings = []
     var skip = 'ms-skip' in props 
@@ -43,7 +49,7 @@ function parseBindings(props, num, elem) {
 
             }
         } else {
-            if (rneedQuote.test(i)) {//收集非绑定属性
+            if (rneedQuote.test(i) || keyMap[i]) {//收集非绑定属性
                 ret += 'vnode' + num + '.props[' + quote(i) + '] = ' + quote(value) + '\n'
             } else {
                 ret += 'vnode' + num + '.props.' + i + ' = ' + quote(value) + '\n'
