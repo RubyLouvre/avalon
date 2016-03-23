@@ -1452,8 +1452,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if ((node.nodeType == 3) && (!notWhitespace.test(node.nodeValue))) {
 	            keep = target.removeChild(node)
 	            i--
-	        }
-	        if (node.nodeType === 1) {
+	        }else if (node.nodeType === 1) {
 	            cleanWhitespace(node)
 	        }
 	    }
