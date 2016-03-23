@@ -37,9 +37,9 @@ function modelAdaptor(definition, old, heirloom, options) {
     //如果数组转换为监控数组
     if (Array.isArray(definition)) {
         return $$midway.arrayFactory(definition, old, heirloom, options)
-    } else if (avalon.isPlainObject(definition)) {
+    } else if (Object(definition) === definition && typeof definition !== 'function') {
         //如果此属性原来就是一个VM,拆分里面的访问器属性
-        if (Object(old) === old) {
+        if (old && old.$id) {
             var vm = $$midway.slaveFactory(old, definition, heirloom, options)
             for (var i in definition) {
                 if ($$skipArray[i])
