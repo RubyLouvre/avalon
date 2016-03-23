@@ -178,7 +178,7 @@ function arrayFactory(array, old, heirloom, options) {
         makeObserver(array, heirloom, {}, {}, options)
 
         for (var j = 0, n = array.length; j < n; j++) {
-            array[j] = convertItem(array[j], {}, {
+            array[j] = modelAdaptor(array[j], 0, {}, {
                 id: array.$id + '.*',
                 master: true
             })
