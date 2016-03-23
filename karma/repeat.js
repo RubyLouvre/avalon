@@ -218,49 +218,7 @@ describe('repeat', function () {
 
     })
 
-    it("监控数组元素也是数组的长度变化", function (done) {
-        div.innerHTML = heredoc(function () {
-            /*
-             <ul ms-controller=repeat3>
-             <li ms-repeat="array"> <b>{{el.length}}</b><span ms-repeat="elem in el">{{elem}}</span></li>
-             </ul>
-             */
-        })
-        vm = avalon.define({
-            $id: "repeat3",
-            array: [[1, 2], [3, 4, 5]],
-            onClick: function () {
-                vm.array = [['a', "b", "c", "d"], [3, 4, 6, 7, 8]]
-            }
-        })
-        avalon.scan(div, vm)
-        var bs = div.getElementsByTagName("b")
-        var spans = div.getElementsByTagName("span")
-        expect(bs[0].innerHTML).to.equal("2")
-        expect(bs[1].innerHTML).to.equal("3")
-        expect(spans[0].innerHTML).to.equal("1")
-        expect(spans[1].innerHTML).to.equal("2")
-        expect(spans[2].innerHTML).to.equal("3")
-        expect(spans[3].innerHTML).to.equal("4")
-        expect(spans[4].innerHTML).to.equal("5")
-        vm.onClick()
-        setTimeout(function () {
-            expect(bs[0].innerHTML).to.equal("4")
-            expect(bs[1].innerHTML).to.equal("5")
-            expect(spans[0].innerHTML).to.equal("a")
-            expect(spans[1].innerHTML).to.equal("b")
-            expect(spans[2].innerHTML).to.equal("c")
-            expect(spans[3].innerHTML).to.equal("d")
-            expect(spans[4].innerHTML).to.equal("3")
-            expect(spans[5].innerHTML).to.equal("4")
-            expect(spans[6].innerHTML).to.equal("6")
-            expect(spans[7].innerHTML).to.equal("7")
-            expect(spans[8].innerHTML).to.equal("8")
-            done()
-        })
-
-    })
-
+  
     it("object single repeat", function (done) {
         div.innerHTML = heredoc(function () {
             /*

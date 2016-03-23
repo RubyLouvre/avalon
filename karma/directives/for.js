@@ -75,4 +75,91 @@ describe('for', function () {
             })
         })
     })
+
+    it('双层循环,并且重复利用已有的元素节点', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='for1'>
+             <table>
+             <tr ms-for='tr in @array'>
+             <td ms-for='td in tr'>{{td}}</td>
+             </tr>
+             </table>
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'for1',
+            array: [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            var tds = div.getElementsByTagName('td')
+
+            expect(tds[0].innerHTML).to.equal('1')
+            expect(tds[1].innerHTML).to.equal('2')
+            expect(tds[2].innerHTML).to.equal('3')
+            expect(tds[3].innerHTML).to.equal('4')
+            expect(tds[4].innerHTML).to.equal('5')
+            expect(tds[5].innerHTML).to.equal('6')
+            expect(tds[6].innerHTML).to.equal('7')
+            expect(tds[7].innerHTML).to.equal('8')
+            expect(tds[8].innerHTML).to.equal('9')
+            avalon.each(tds, function (i, el) {
+                el.title = el.innerHTML
+            })
+            vm.array = [[11, 22, 33], [44, 55, 66], [77, 88, 99]]
+            setTimeout(function () {
+
+                expect(tds[0].innerHTML).to.equal('11')
+                expect(tds[1].innerHTML).to.equal('22')
+                expect(tds[2].innerHTML).to.equal('33')
+                expect(tds[3].innerHTML).to.equal('44')
+                expect(tds[4].innerHTML).to.equal('55')
+                expect(tds[5].innerHTML).to.equal('66')
+                expect(tds[6].innerHTML).to.equal('77')
+                expect(tds[7].innerHTML).to.equal('88')
+                expect(tds[8].innerHTML).to.equal('99')
+
+                expect(tds[0].title).to.equal('1')
+                expect(tds[1].title).to.equal('2')
+                expect(tds[2].title).to.equal('3')
+                expect(tds[3].title).to.equal('4')
+                expect(tds[4].title).to.equal('5')
+                expect(tds[5].title).to.equal('6')
+                expect(tds[6].title).to.equal('7')
+                expect(tds[7].title).to.equal('8')
+                expect(tds[8].title).to.equal('9')
+                done()
+            })
+        })
+    })
+    it('监听数组长度变化', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <ul ms-controller='for2'>
+             <li ms-for='el in @array'>{{el.length}}</li>
+             </ul>
+             */
+        })
+        vm = avalon.define({
+            $id: 'for2',
+            array: [[1, 2], [3, 4, 5]]
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            var lis = div.getElementsByTagName('li')
+
+            expect(lis[0].innerHTML).to.equal('2')
+            expect(lis[1].innerHTML).to.equal('3')
+
+            vm.array = [['a', "b", "c", "d"], [3, 4, 6, 7, 8]]
+            setTimeout(function () {
+
+                expect(lis[0].innerHTML).to.equal('4')
+                expect(lis[1].innerHTML).to.equal('5')
+                done()
+            })
+        })
+    })
 })

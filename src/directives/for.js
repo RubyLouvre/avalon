@@ -76,8 +76,10 @@ avalon.directive('for', {
             var cache = {}
             cur.removedComponents = {}
             /* eslint-disable no-cond-assign */
+            var count = 0
             for (i = 0; c = cur.components[i++]; ) {
                 /* eslint-enable no-cond-assign */
+                count++
                 saveInCache(cache, c)
             }
             /* eslint-disable no-cond-assign */
@@ -85,14 +87,24 @@ avalon.directive('for', {
                 /* eslint-enable no-cond-assign */
                 c = isInCache(cache, p.key)
                 if (c) {
+                    count--
                     if (!isChange) {//如果位置发生了变化
                         isChange = c.index !== p.index
                     }
                     c.nodes = p.nodes
                     avalon.diff(c.children, p.children)
                 } else {
-                    isChange = true
-                    cur.removedComponents[p.index] = p
+                    if (count) {
+                        c = fuzzyMatchCache(cache, p.key)
+                        count--
+                        isChange = true //内容发生变化
+                        c.nodes = p.nodes
+                        avalon.diff(c.children, p.children)
+                    } else {
+                        isChange = true
+                        cur.removedComponents[p.index] = p
+                    }
+
                 }
             }
             //这是新添加的元素
@@ -110,7 +122,7 @@ avalon.directive('for', {
             }
             isChange = true
         }
-       // pre.components.length = 0 //link
+        pre.components.length = 0 //release memory
         if (isChange) {
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
@@ -221,6 +233,21 @@ function getComponents(nodes, signature) {
         }
     }
     return components
+}
+
+var rfuzzy = /^(string|number|boolean)/
+var rkfuzzy = /^_*(string|number|boolean)/
+function fuzzyMatchCache(cache, id) {
+    var m = id.match(rfuzzy)
+    if (m) {
+        var fid = m[1]
+        for (var i in cache) {
+            var n = i.match(rkfuzzy)
+            if (n && n[1] === fid) {
+                return isInCache(cache, i)
+            }
+        }
+    }
 }
 
 // 新位置: 旧位置

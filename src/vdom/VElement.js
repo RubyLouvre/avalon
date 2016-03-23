@@ -12,7 +12,7 @@ function VElement(type, props, children) {
     }
 }
 function skipFalseAndFunction(a) {
-    return a !== false && typeof a !== 'function'
+    return a !== false && (Object(a) !== a)
 }
 VElement.prototype = {
     constructor: VElement,
