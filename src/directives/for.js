@@ -110,7 +110,7 @@ avalon.directive('for', {
             }
             isChange = true
         }
-        pre.components.length = 0 //link
+       // pre.components.length = 0 //link
         if (isChange) {
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)

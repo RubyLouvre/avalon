@@ -12,14 +12,19 @@
 
             })
             setTimeout(function () {
-                vm.array = [9, 8, 7, 6, 22]
+                vm.array = [9, 8, 2, 6, 1]
             }, 3000)
         </script>
+        <style>
+            .ms-controller{
+               display:none;
+            }
+        </style>
     </head>
     <body>
 
 
-        <div ms-controller='for0' >
+        <div ms-controller='for0' class='ms-controller'>
             <ul>
                 <li ms-for='($index, el) in @array '>{{$index}}::{{el}}</li>
             </ul>

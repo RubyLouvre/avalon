@@ -8,7 +8,7 @@
         <script>
             var vm = avalon.define({
                 $id: 'for0',
-                array: avalon.range(1,2000)
+                aaa: 111
                
             })
 
@@ -18,9 +18,7 @@
 
 
         <div ms-controller='for0' >
-            <ul>
-                <li ms-for='($index, el) in @array'><strong>{{$index}}</strong>::<span>{{el}}</span></li>
-            </ul>
+            <input ms-duplex='@aaa'>{{@aaa}}
             
         </div>
 

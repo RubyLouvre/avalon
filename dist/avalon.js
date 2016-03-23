@@ -1533,8 +1533,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                this.children.forEach(function (c) {
 	                    dom.appendChild(avalon.vdomAdaptor(c).toDOM())
 	                })
-	            } else if (window.Range) {
-	                dom.innerHTML = this.template
 	            } else {
 	                dom.appendChild(avalon.parseHTML(this.template))
 	            }
@@ -4667,7 +4665,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            isChange = true
 	        }
-	        pre.components.length = 0 //link
+	       // pre.components.length = 0 //link
 	        if (isChange) {
 	            var list = cur.change || (cur.change = [])
 	            avalon.Array.ensure(list, this.update)
@@ -6042,7 +6040,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var hashcode = makeHashCode('$')
 	    var pathname = options.pathname || ''
 	    options.id = options.id || hashcode
-	    options.hashcode = hashcode
+	    options.hashcode = options.hashcode || hashcode
 	    var key, sid, spath
 	    for (key in definition) {
 	        if ($$skipArray[key])
@@ -6069,7 +6067,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            keys[key] = true
 	        }
 	    }
-
 	    makeObserver($vmodel, heirloom, keys, accessors, options)
 
 	    return $vmodel
@@ -6084,7 +6081,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var pathname = options.pathname
 	    var resue = before.$accessors || {}
 	    var key, sid, spath
-
 	    for (key in after) {
 	        if ($$skipArray[key])
 	            continue
@@ -6102,7 +6098,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 
-	    options = before.hashcode || makeHashCode('$')
+	    options.hashcode = before.$hashcode || makeHashCode('$')
 	    accessors.$model = modelAccessor
 	    var $vmodel = new Observer()
 	    $vmodel = addAccessors($vmodel, accessors, skips)
@@ -6170,9 +6166,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	function arrayFactory(array, old, heirloom, options) {
 	    if (old && old.splice) {
 	        var args = [0, old.length].concat(array)
-	        old._lock = true
+	        old.stopBatch = true
 	        old.splice.apply(old, args)
-	        delete old._lock
+	        old.stopBatch = false
 	        return old
 	    } else {
 	        for (var i in __array__) {
@@ -6186,10 +6182,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        options.pathname :
 	                        options.pathname + '.' + a
 	                vm.$fire(path, b, c)
-	                if (!d && !array._lock) {
-		            avalon.rerenderStart = new Date
-		            avalon.batch(vm.$id, true)
-		        }
+	                if (!d && !array.stopBatch) {
+	                    avalon.rerenderStart = new Date
+	                    avalon.batch(vm.$id, true)
+	                }
 
 	            }
 	        }
@@ -6199,12 +6195,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        options.hashcode = hashcode
 	        options.id = options.id || hashcode
 	        makeObserver(array, heirloom, {}, {}, options)
-	        var itemOptions = {
-	            id: array.$id + '.*',
-	            master: true
-	        }
 	        for (var j = 0, n = array.length; j < n; j++) {
-	            array[j] = convertItem(array[j], {}, itemOptions)
+	            array[j] = modelAdaptor(array[j], 0, {}, {
+	                id: array.$id + '.*',
+	                master: true
+	            })
 	        }
 	        return array
 	    }
@@ -6219,13 +6214,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        array.notify('length', array.length, size, true)
 	    }
 	}
-	function convertItem(item, a, b) {
-	    if (Object(item) === item) {
-	        return modelAdaptor(item, 0, a, b)
-	    } else {
-	        return item
-	    }
-	}
+
 	__array__.removeAll = function (all) { //移除N个元素
 	    var size = this.length
 	    if (Array.isArray(all)) {
@@ -6260,23 +6249,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	    __array__[method] = function (a, b) {
 	        // 继续尝试劫持数组元素的属性
 	        var args = [], size = this.length
-	        var options = {
-	            id: this.$id + '.*',
-	            master: true
-	        }
+
 	        if (method === 'splice' && Object(this[0]) === this[0]) {
 	            var old = this.slice(a, b)
 	            var neo = ap.slice.call(arguments, 2)
 	            var args = [a, b]
-
 	            for (var j = 0, jn = neo.length; j < jn; j++) {
 	                var item = old[j]
-	                args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, options)
+
+	                args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, {
+	                    id: this.$id + '.*',
+	                    master: true
+	                })
 	            }
 
 	        } else {
 	            for (var i = 0, n = arguments.length; i < n; i++) {
-	                args[i] = convertItem(arguments[i], {}, options)
+	                args[i] = modelAdaptor(arguments[i], 0, {}, {
+	                    id: this.$id + '.*',
+	                    master: true
+	                })
 	            }
 	        }
 	        var result = original.apply(this, args)
@@ -6440,15 +6432,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //如果数组转换为监控数组
 	    if (Array.isArray(definition)) {
 	        return $$midway.arrayFactory(definition, old, heirloom, options)
-	    } else if (avalon.isPlainObject(definition)) {
+	    } else if (Object(definition) === definition && typeof definition !== 'function') {
 	        //如果此属性原来就是一个VM,拆分里面的访问器属性
-	        if (Object(old) === old) {
+	        if (old && old.$id) {
 	            var vm = $$midway.slaveFactory(old, definition, heirloom, options)
+	            avalon.stopBatch = true
 	            for (var i in definition) {
 	                if ($$skipArray[i])
 	                    continue
 	                vm[i] = definition[i]
 	            }
+	            avalon.stopBatch = false
 	            return vm
 	        } else {
 	            vm = $$midway.masterFactory(definition, heirloom, options)
@@ -6498,7 +6492,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	                var vid = vm.$id.split('.')[0]
 	                avalon.rerenderStart = new Date
-	                avalon.batch(vid, true)
+	                if (!avalon.stopBatch) {
+	                    avalon.batch(vid, true)
+	                }
 	            }
 	        },
 	        enumerable: true,
