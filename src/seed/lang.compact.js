@@ -111,18 +111,27 @@ if (rnative.test(Object.getPrototypeOf)) {
                 Object.getPrototypeOf(obj) === Object.prototype
     }
 }
-
-var _slice = [].slice
-avalon.slice = function (nodes, start, end) {
-    if(nodes && !Array.isArray(nodes) ){
-        var temp = []
-        for(var i = 0, n = nodes.length; i < n; i++){
-            temp[i] = nodes[i]
-        }
-        nodes = temp
-    }
-    return _slice.call(nodes, start, end)
+function _number(a, len) { //用于模拟slice, splice的效果
+    a = Math.floor(a) || 0
+    return a < 0 ? Math.max(len + a, 0) : Math.min(a, len);
 }
+var _slice = [].slice
+avalon.slice = avalon.modern ? function (nodes, start, end) {
+        return _slice.call(nodes, start, end)
+    }: function (nodes, start, end) {
+        var ret = []
+        var len = nodes.length
+        if (end === void 0)
+            end = len
+        if (typeof end === "number" && isFinite(end)) {
+            start = _number(start, len)
+            end = _number(end, len)
+            for (var i = start; i < end; ++i) {
+                ret[i - start] = nodes[i]
+            }
+        }
+        return ret
+ }
 
 //与jQuery.extend方法，可用于浅拷贝，深拷贝
 avalon.mix = avalon.fn.mix = function () {

@@ -8,16 +8,32 @@
         <script>
             var vm = avalon.define({
                 $id: 'for0',
+                a: "司徒正美",
                 array: [1, 2, 3, 4, 5]
 
             })
             setTimeout(function () {
-                vm.array = [9, 8, 2, 6, 1]
+                 function getTag(a){
+                     var ret = {
+                         type: a.nodeName
+                        
+                     }
+                     if(ret.type.charAt(0) !== "#"){
+                         ret. children = []
+                     }
+                     for(var i = 0, el; el = a.childNodes[i++];){
+                        ret.children.push( getTag(el))
+                     }
+                     
+                     return ret
+                 }
+                console.log(getTag(document.body))
+                //  vm.array = [9, 8, 2, 6, 1]
             }, 3000)
         </script>
         <style>
             .ms-controller{
-               display:none;
+                display:none;
             }
         </style>
     </head>
@@ -25,11 +41,13 @@
 
 
         <div ms-controller='for0' class='ms-controller'>
+            <p>{{@a}}</p>
             <ul>
                 <li ms-for='($index, el) in @array '>{{$index}}::{{el}}</li>
             </ul>
-
+            --
         </div>
+
 
     </body>
 </html>

@@ -37,7 +37,8 @@ if (!canHideProperty) {
             'Function parseVB(code)',
             '\tExecuteGlobal(code)',
             'End Function' //转换一段文本为VB代码
-        ].join('\n'), 'VBScript')
+        ].join('\n'), 'VBScript');
+        
         function VBMediator(instance, accessors, name, value) {// jshint ignore:line
             var accessor = accessors[name]
             if (arguments.length === 4) {
@@ -64,16 +65,16 @@ if (!canHideProperty) {
                 buffer.push(
                         //由于不知对方会传入什么,因此set, let都用上
                         '\tPublic Property Let [' + name + '](val' + expose + ')', //setter
-                        '\t\tCall [__proxy__](Me,[__data__], \'' + name + '\', val' + expose + ')',
+                        '\t\tCall [__proxy__](Me,[__data__], "' + name + '", val' + expose + ')',
                         '\tEnd Property',
                         '\tPublic Property Set [' + name + '](val' + expose + ')', //setter
-                        '\t\tCall [__proxy__](Me,[__data__], \'' + name + '\', val' + expose + ')',
+                        '\t\tCall [__proxy__](Me,[__data__], "' + name + '", val' + expose + ')',
                         '\tEnd Property',
                         '\tPublic Property Get [' + name + ']', //getter
                         '\tOn Error Resume Next', //必须优先使用set语句,否则它会误将数组当字符串返回
-                        '\t\tSet[' + name + '] = [__proxy__](Me,[__data__],\'' + name + '\')',
+                        '\t\tSet[' + name + '] = [__proxy__](Me,[__data__],"' + name + '")',
                         '\tIf Err.Number <> 0 Then',
-                        '\t\t[' + name + '] = [__proxy__](Me,[__data__],\'' + name + '\')',
+                        '\t\t[' + name + '] = [__proxy__](Me,[__data__],"' + name + '")',
                         '\tEnd If',
                         '\tOn Error Goto 0',
                         '\tEnd Property')
@@ -97,6 +98,7 @@ if (!canHideProperty) {
             var className = VBClassPool[body]
             if (!className) {
                 className = avalon.makeHashCode('VBClass')
+                
                 window.parseVB('Class ' + className + body)
                 window.parseVB([
                     'Function ' + className + 'Factory(a, b)', //创建实例并传入两个关键的参数
