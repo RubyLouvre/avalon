@@ -88,7 +88,7 @@ function lexer(text, recursive) {
                 var type = match[1].toLowerCase()//nodeName
                 outerHTML = clipOuterHTML(outerHTML, type)
 
-                match = outerHTML.match(rvoidTag)||[] //抽取所有属性
+                match = outerHTML.match(rvoidTag) //抽取所有属性
 
                 var props = {}
                 if (match[2]) {
