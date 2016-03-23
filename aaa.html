@@ -13,23 +13,25 @@
 
             })
             setTimeout(function () {
-                 function getTag(a){
-                     var ret = {
-                         type: a.nodeName
-                        
-                     }
-                     if(ret.type.charAt(0) !== "#"){
-                         ret. children = []
-                     }
-                     for(var i = 0, el; el = a.childNodes[i++];){
-                        ret.children.push( getTag(el))
-                     }
-                     
-                     return ret
-                 }
+                function getTag(a) {
+                    var ret = {
+                        type: a.nodeName
+                    }
+                    if (ret.type.charAt(0) !== "#") {
+                        ret.children = []
+                    }
+                    for (var i = 0, el; el = a.childNodes[i++]; ) {
+                        ret.children.push(getTag(el))
+                    }
+
+                    return ret
+                }
                 console.log(getTag(document.body))
                 //  vm.array = [9, 8, 2, 6, 1]
-            }, 3000)
+            }, 1000)
+
+
+ 
         </script>
         <style>
             .ms-controller{
@@ -47,7 +49,6 @@
             </ul>
             --
         </div>
-
 
     </body>
 </html>
