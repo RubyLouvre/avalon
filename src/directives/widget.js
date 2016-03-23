@@ -28,7 +28,7 @@ avalon.directive('widget', {
                 '}\n'
 
     },
-    createVm: function (topVm, defaults, options) {
+    define: function (topVm, defaults, options) {
         var after = avalon.mix({}, defaults, options)
         var events = {}
         //绑定生命周期的回调
@@ -138,13 +138,13 @@ avalon.component = function (node, vm) {
             delete options.$type
 
             var strTemplate = String(widget.template).trim()
-            var virTemplate = createVirtual(strTemplate)
+            var virTemplate = avalon.lexer(strTemplate)
 
             insertSlots(virTemplate, node)
-            var renderFn = avalon.createRender(virTemplate)
-            var createVm = widget.createVm || avalon.directives.widget.createVm
+            var renderFn = avalon.render(virTemplate)
+            var createVm = widget.define || avalon.directives.widget.define
             var vmodel = createVm(vm, widget.defaults, options)
-            vmodel.$id = options.$id = makeHashCode(name)
+            vmodel.$id = options.$id || makeHashCode(name)
             avalon.vmodels[vmodel.$id] = vmodel
 
             var widgetNode = renderFn(vmodel)
@@ -231,3 +231,11 @@ function insertSlots(main, node) {
     })
     mergeTempale(main, slots)
 }
+
+avalon.enablePrefix = function (name, opts) {
+    if (document.namespaces) {
+        document.namespaces.add(name, 'http://www.w3.org/1999/xhtml');
+    }
+}
+
+avalon.enablePrefix('ms')

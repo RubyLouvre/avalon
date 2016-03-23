@@ -76,10 +76,10 @@ avalon.directive('for', {
             var cache = {}
             cur.removedComponents = {}
             /* eslint-disable no-cond-assign */
-            var count = 0
+            var quota = 0
             for (i = 0; c = cur.components[i++]; ) {
                 /* eslint-enable no-cond-assign */
-                count++
+                quota++
                 saveInCache(cache, c)
             }
             /* eslint-disable no-cond-assign */
@@ -87,16 +87,16 @@ avalon.directive('for', {
                 /* eslint-enable no-cond-assign */
                 c = isInCache(cache, p.key)
                 if (c) {
-                    count--
+                    quota--
                     if (!isChange) {//如果位置发生了变化
                         isChange = c.index !== p.index
                     }
                     c.nodes = p.nodes
                     avalon.diff(c.children, p.children)
                 } else {
-                    if (count) {
+                    if (quota) {
                         c = fuzzyMatchCache(cache, p.key)
-                        count--
+                        quota--
                         isChange = true //内容发生变化
                         c.nodes = p.nodes
                         avalon.diff(c.children, p.children)
