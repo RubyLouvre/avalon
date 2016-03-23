@@ -86,10 +86,9 @@ function lexer(text, recursive) {
             if (match) {
                 outerHTML = match[0]//贪婪匹配 outerHTML,可能匹配过多
                 var type = match[1].toLowerCase()//nodeName
-
                 outerHTML = clipOuterHTML(outerHTML, type)
 
-                match = outerHTML.match(rvoidTag) //抽取所有属性
+                match = outerHTML.match(rvoidTag)||[] //抽取所有属性
 
                 var props = {}
                 if (match[2]) {
@@ -151,13 +150,15 @@ function lexer(text, recursive) {
 var openStr = '(?:\\s+[^>=]*?(?:=[^>]+?)?)*>'
 var tagCache = {}// 缓存所有匹配开标签闭标签的正则
 var rchar = /./g
+var regArgs = avalon.msie < 9 ? 'ig' : 'g'//IE6-8，标签名都是大写
 function clipOuterHTML(matchText, type) {
     var opens = []
     var closes = []
     var ropen = tagCache[type + 'open'] ||
-            (tagCache[type + 'open'] = new RegExp('<' + type + openStr, 'g'))
+            (tagCache[type + 'open'] = new RegExp('<' + type + openStr, regArgs))
     var rclose = tagCache[type + 'close'] ||
-            (tagCache[type + 'close'] = new RegExp('<\/' + type + '>', 'g'))
+            (tagCache[type + 'close'] = new RegExp('<\/' + type + '>', regArgs))
+    
     /* jshint ignore:start */
     matchText.replace(ropen, function (_, b) {
         //注意,页面有时很长,b的数值就很大,如
@@ -175,6 +176,7 @@ function clipOuterHTML(matchText, type) {
     //最后获取正确的>的索引值,这里为<<><>>的最后一个字符,
     var pos = opens.concat(closes).sort()
     var gtlt = pos.join('').replace(rnumber, '')
+    console.log(gtlt, "---")
     var k = 0, last = 0
 
     for (var i = 0, n = gtlt.length; i < n; i++) {
