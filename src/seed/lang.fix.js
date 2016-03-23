@@ -58,7 +58,7 @@ if (!Object.keys) {
 }
 if (!Array.isArray) {
     Array.isArray = function (a) {
-        return String.prototype.toString.call(a) === '[object Array]'
+        return Object.prototype.toString.call(a) === '[object Array]'
     }
 }
 
