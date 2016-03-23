@@ -2261,7 +2261,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (var i = 0, vn = vnodes.length; i < vn; i++) {
 	        var vnode = vnodes[i]
 	        //IE6-8不会生成空白的文本节点，造成虚拟DOM与真实DOM的个数不一致，需要跳过
-	        if(avalon.msie < 9 && vnode.type === "#text" && sp.test(vnode.nodeValue)){
+	        if(avalon.msie < 9 && vnode.type === '#text' && sp.test(vnode.nodeValue)){
 	            continue
 	        }
 	        var node = next
