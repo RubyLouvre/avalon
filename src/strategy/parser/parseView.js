@@ -1,14 +1,14 @@
 
 var parseExpr = require('./parseExpr')
-var parseText = require('./parseText')
 var parseBindings = require('./parseBindings')
+var parseDelimiter = require('./parseDelimiter')
 var rexpr = avalon.config.rexpr
 var quote = avalon.quote
 var makeHashCode = avalon.makeHashCode
 var r = require('../../seed/regexp')
 var rident = r.ident
 var rsp = r.sp
-function wrapParseText(expr) {
+function wrapDelimiter(expr) {
     return rident.test(expr) ? expr : parseExpr(expr)
 }
 
@@ -29,16 +29,16 @@ function parseView(arr, num) {
         var el = arr[i]
         if (el.type === '#text') {
             str += 'var ' + vnode + ' = {type:"#text", skipContent:true}\n'
-            var hasExpr = rexpr.test(el.nodeValue)
+            var hasDelimiter = rexpr.test(el.nodeValue)
 
-            if (hasExpr) {
-                var array = parseText(el.nodeValue)
+            if (hasDelimiter) {
+                var array = parseDelimiter(el.nodeValue)
                 if (array.length === 1) {
                     var a = parseExpr(array[0].expr)
-                    str += vnode + '.nodeValue = ' + wrapParseText(array[0].expr) + '\n'
+                    str += vnode + '.nodeValue = ' + wrapDelimiter(array[0].expr) + '\n'
                 } else {
                     a = array.map(function (el) {
-                        return el.type ? wrapParseText(el.expr) : quote(el.expr)
+                        return el.type ? wrapDelimiter(el.expr) : quote(el.expr)
                     }).join(' + ')
                     str += vnode + '.nodeValue = String(' + a + ')\n'
                 }
@@ -88,7 +88,7 @@ function parseView(arr, num) {
                             '\n})\n'
                     forstack.pop()
                 }
-            } else if (nodeValue.indexOf('ms-js:') === 0) {
+            } else if (nodeValue.indexOf('ms-js:') === 0) {//插入普通JS代码
                 str += parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
             } else {
                 str += children + '.push(' + quote(el) + ')\n\n\n'
@@ -122,14 +122,14 @@ function parseView(arr, num) {
             }
 
             if (!el.isVoidTag && el.children.length) {
-                var isWidget = el.props['ms-widget']
-                if (isWidget) {
+                var hasWidget = el.props['ms-widget']
+                if (hasWidget) {
                     str += 'if(!' + vnode + '.props.wid){\n'
                 }
                 str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
-                if (isWidget) {
+                if (hasWidget) {
                     str += '}\n'
-                    isWidget = false
+                    hasWidget = false
                 }
             } else {
                 str += vnode + '.template= ' + quote(el.template) + '\n'

@@ -1,7 +1,7 @@
 var rline = /\r?\n/g
 var r = require('../../seed/regexp')
 
-function parseText(str) {
+function parseDelimiter(str) {
     var tokens = [],
             value, start = 0,
             stop
@@ -44,4 +44,4 @@ function parseText(str) {
     return tokens
 }
 
-module.exports = parseText
+module.exports = parseDelimiter
