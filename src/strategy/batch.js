@@ -27,28 +27,21 @@ function batchUpdate(id, immediate) {
     }
 
     var dom = vm.$element
-    //document.all http://www.w3help.org/zh-cn/causes/BX9002
-
     if (dom) {
         flushUpdate(function () {
             isBatchingUpdates = true
-            var neo = vm.$render()
-            avalon.diff(neo, dom.vnode || [])
-            patch([dom], neo)
-
-            dom.vnode = neo
+            var vtree = vm.$render()
+            avalon.diff(vtree, dom.vtree || [])
+            patch([dom], vtree)
+            dom.vtree = vtree
 
             avalon.log('rerender', new Date - avalon.rerenderStart)
-
             isBatchingUpdates = false
             delete dirtyTrees[id]
-
-
             for (var i in dirtyTrees) {//更新其他子树
                 batchUpdate(i, true)
                 break
             }
-
 
         }, immediate)
     }

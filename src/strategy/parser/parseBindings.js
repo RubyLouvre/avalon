@@ -56,7 +56,7 @@ function parseBindings(props, num, elem) {
     } else {
         avalon.parseExpr(binding)
 
-        bindings.sort(bindingSorter).forEach(function (binding) {
+        bindings.sort(byPriority).forEach(function (binding) {
             ret += directives[binding.type].parse(binding, num, elem)
         })
     }
@@ -64,7 +64,7 @@ function parseBindings(props, num, elem) {
 
 }
 
-function bindingSorter(a, b) {
+function byPriority(a, b) {
     return a.priority - b.priority
 }
 

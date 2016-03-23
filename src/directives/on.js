@@ -2,12 +2,15 @@ var markID = require('../seed/lang.share').getLongID
 
 var quote = avalon.quote
 
-//基于事件代理的高性能事件绑定
-var revent = /^ms-on-(\w+)/
+
+//Ref: http://developers.whatwg.org/webappapis.html#event-handler-idl-attributes
+// The assumption is that future DOM event attribute names will begin with
+// 'on' and be composed of only English letters.
+var revent = /^ms-on-([a-z]+)/ 
 var rfilters = /\|.+/g
 var rvar = /([@$]?\w+)/g
 var rstring = require('../seed/regexp').string
-
+//基于事件代理的高性能事件绑定
 avalon.directive('on', {
     priority: 3000,
     parse: function (binding, num) {
@@ -17,7 +20,6 @@ avalon.directive('on', {
         })
         var vmDefine = 'vnode' + num + '.onVm = __vmodel__\n'
         var pid = quote(binding.name)
-       
         if (canCache) {
             var fn = Function('return ' + avalon.parseExpr(binding, 'on'))()
             var uuid = markID(fn)
@@ -35,7 +37,6 @@ avalon.directive('on', {
         if (fn0 !== fn1) {
             var match = name.match(revent)
             type = match[1]
-
             var search = type + ':' + markID(fn0)
             cur.addEvents = cur.addEvents || {}
             cur.addEvents[search] = fn0
@@ -62,7 +63,7 @@ avalon.directive('on', {
         for (key in vnode.addEvents) {
             type = key.split(':').shift()
             listener = vnode.addEvents[key]
-         
+
             avalon.bind(node, type, listener)
         }
         delete vnode.addEvents

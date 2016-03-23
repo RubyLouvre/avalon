@@ -8,14 +8,14 @@ function scan(nodes) {
                 avalon(elem).removeClass('ms-controller')
 
                 vm.$element = elem
-                var now = new Date - 0
-                var vnode = avalon.lexer(str)
+                var now = new Date() - 0
+                var vtree = avalon.lexer(str)
                 avalon.log('create primitive vtree', new Date - now)
-                now = new Date
-                vm.$render = avalon.render(vnode)
+                now = new Date()
+                vm.$render = avalon.render(vtree)
                 avalon.log('create template Function ', new Date - now)
                 avalon.rerenderStart = new Date
-                elem.vnode = vnode
+                elem.vtree = vtree
                 avalon.batch($id, true)
 
             } else if (!$id) {
@@ -43,6 +43,7 @@ function getController(a) {
     if (a.getAttribute && hasController(a)) {
         return true
     }
+    //document.all http://www.w3help.org/zh-cn/causes/BX9002
     var all = a.getElementsByTagName ? a.getElementsByTagName('*') : a.querySelectorAll('*')
     for (var i = 0, node; node = all[i++]; ) {
         if (hasController(a)) {
