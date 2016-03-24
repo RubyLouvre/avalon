@@ -80,19 +80,19 @@ avalon.component = function (name, definition) {
             var vmodel = define(vm, definition.defaults, options)
             avalon.vmodels[vmodel.$id] = vmodel
 
-            var widgetRender = avalon.render(vtree)
+            var render = avalon.render(vtree)
            
-            vtree = widgetRender(vmodel)
-            widgetNode = vtree[0]
+            vtree = render(vmodel)
+            var widgetNode = vtree[0]
             widgetNode.props['ms-widget'] = options
             widgetNode.vmodel = vmodel
-            vmodel.$render = widgetRender
+            vmodel.$render = render
             vmodel.$fire("$init", widgetNode)
 
             if (!resolvedComponents[wid]) {
 
                 resolvedComponents[wid] = {
-                    render: widgetRender,
+                    render: render,
                     vmodel: vmodel,
                     comment: {
                         type: '#comment',

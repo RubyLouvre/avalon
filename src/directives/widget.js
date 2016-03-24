@@ -10,7 +10,7 @@ function wrap(str) {
     })
 }
 
-avalon.directive('com', {
+avalon.directive('widget', {
     parse: function (binding, num, elem) {
         return  'vnode' + num + '.props.wid = ' + avalon.quote(avalon.makeHashCode('w')) + '\n' +
                 'vnode' + num + '.props["ms-widget"] = ' + wrap(avalon.parseExpr(binding), 'widget') + ';\n' +
