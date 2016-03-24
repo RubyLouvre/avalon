@@ -31,15 +31,25 @@ avalon.component = function (name, definition) {
         //如果组件模板已经定
         var hasResolved = resolvedComponents[wid]
         if (hasResolved) {
+
+            widgetNode = hasResolved.render(hasResolved.vmodel)
+            if (!isComponentReady(widgetNode)) {
+                return hasResolved.comment
+            }
+            avalon.mix(widgetNode.props, hasResolved.comment.props)
             //重新渲染自己  
-            return hasResolved.render(hasResolved.vmodel)
+            return widgetNode
         } else if (!avalon.components[tagName]) {
             componentQueue.push({
                 node: node,
                 vm: vm,
                 type: tagName
             })
-            return {type: '#comment', nodeValue: name + " component is undefined!"}
+            return {
+                type: '#comment',
+                props: {'ms-widget': options, wid: wid},
+                nodeValue: 'ms-widget placeholder'
+            }
         } else {
             //页面上的节点是用于传参的
             //通过插件的template字符串生成的节点，是来授参执行的
@@ -70,24 +80,35 @@ avalon.component = function (name, definition) {
             avalon.vmodels[vmodel.$id] = vmodel
 
             var widgetRender = avalon.render(vtree)
+            widgetNode.vmodel = vmodel
+
             var widgetNode = widgetRender(vmodel)
             widgetNode.props['ms-widget'] = options
-            resolvedComponents[wid] = {
-                render: render,
-                vmodel: vmodel
-            }
-            widgetNode.vmodel = vmodel
             vmodel.$fire("$init", widgetNode)
 
-            widgetNode.afterChange = widgetNode.afterChange || []
-            widgetNode.afterChange.push(afterChange)
+            if (!resolvedComponents[wid]) {
+
+                resolvedComponents[wid] = {
+                    render: render,
+                    vmodel: vmodel,
+                    comment: {
+                        type: '#comment',
+                        props: {'ms-widget': options, wid: wid},
+                        nodeValue: 'ms-widget placeholder'
+                    }
+                }
+            }
+            if (!isComponentReady(widgetNode)) {
+                return resolvedComponents[wid].comment
+            }
+
             return widgetNode
 
         }
     }
 }
 
-function afterChange(node, vnode, parent) {
+function isComponentReady(vnode) {
     var isReady = true
     if (componentQueue.length !== 0) {
         try {
@@ -96,15 +117,13 @@ function afterChange(node, vnode, parent) {
             isReady = false
         }
     }
-    if (isReady) {
-        vnode.vmodel.$fire('$ready', node)
-    }
+    return isReady
 }
 //如果组件没有resolved,元素会是这样子:
 //<ms-button wid='w453156877309' ms-widget='undefined'>xxx</ms-button>
 function hasUnresolvedComponent(vnode) {
     vnode.children.forEach(function (el) {
-        if (el.type.charAt(0) !== '#') {
+        if (el.type !== '#comment') {
             if ('ms-widget' in el.props) {
                 throw 'unresolved'
             }
@@ -145,10 +164,11 @@ function mergeTempale(vtree, slots) {
     }
     return vtree
 }
-avalon.enablePrefix = function (name, opts) {
-    if (document.namespaces) {
-        document.namespaces.add(name, 'http://www.w3.org/1999/xhtml');
-    }
-}
 
-avalon.enablePrefix('ms')
+//avalon.enablePrefix = function (name, opts) {
+//    if (document.namespaces) {
+//        document.namespaces.add(name, 'http://www.w3.org/1999/xhtml');
+//    }
+//}
+//
+//avalon.enablePrefix('ms')
