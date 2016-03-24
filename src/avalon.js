@@ -6,6 +6,7 @@ require('./vdom/index')
 require('./dom/compact')
 require('./directives/compact')
 require('./strategy/index')
+require('./component/index')
 require('./vmodel/compact')
 
 //require('./directives/panel/index')

@@ -25,8 +25,8 @@ function diff(current, previous) {
             case '#comment':
                 if (cur.directive === 'for') {
                     i = directives['for'].diff(current, previous, i)
-                } else if (cur.directive === 'if') {
-                    directives['if'].diff(cur, pre)
+                } else if (cur.directive ) {//if widget
+                    directives[cur.directive].diff(cur, pre)
                 }
                 break
             default:
