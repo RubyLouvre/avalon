@@ -37,6 +37,7 @@ avalon.component = function (name, definition) {
                 return hasResolved.comment
             }
             avalon.mix(widgetNode.props, hasResolved.comment.props)
+            delete widgetNode.skipAttrs
             //重新渲染自己  
             return widgetNode
         } else if (!avalon.components[tagName]) {
@@ -66,30 +67,32 @@ avalon.component = function (name, definition) {
                 avalon.error("组件必须用一个元素包起来")
             }
             if (vtree[0].type !== tagName) {
-                avalon.error("模板容器标签必须为" + tagName)
+                avalon.warn("模板容器标签必须为" + tagName)
             }
             if (!node.isVoidTag) {//如果不是半闭合标签，那么其里面可能存在
                 insertSlots(vtree, node)
             }
             //生成组件的render
 
-            var define = options.define || definition.define
-            options.$id = options.$id || makeHashCode(tagName)
+            var define = options.define || avalon.directives.widget.define
+            options.$id = options.$id || avalon.makeHashCode(tagName)
             delete options.$type
             var vmodel = define(vm, definition.defaults, options)
             avalon.vmodels[vmodel.$id] = vmodel
 
             var widgetRender = avalon.render(vtree)
-            widgetNode.vmodel = vmodel
-
-            var widgetNode = widgetRender(vmodel)
+           
+            vtree = widgetRender(vmodel)
+            widgetNode = vtree[0]
             widgetNode.props['ms-widget'] = options
+            widgetNode.vmodel = vmodel
+            vmodel.$render = widgetRender
             vmodel.$fire("$init", widgetNode)
 
             if (!resolvedComponents[wid]) {
 
                 resolvedComponents[wid] = {
-                    render: render,
+                    render: widgetRender,
                     vmodel: vmodel,
                     comment: {
                         type: '#comment',
@@ -101,9 +104,10 @@ avalon.component = function (name, definition) {
             if (!isComponentReady(widgetNode)) {
                 return resolvedComponents[wid].comment
             }
-
+            //移除skipAttrs,以便进行diff
+            delete widgetNode.skipAttrs
+            
             return widgetNode
-
         }
     }
 }
