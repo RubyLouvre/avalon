@@ -14,7 +14,7 @@ function wrapDelimiter(expr) {
 
 
 function wrap(a, num) {
-    return '(function(){\n\n' + a + '\n\nreturn nodes' + num + '\n})();\n'
+    return '(function(){\n\n' + a + '\n\nreturn vnodes' + num + '\n})();\n'
 }
 
 function parseView(arr, num) {
@@ -22,7 +22,7 @@ function parseView(arr, num) {
 
     var forstack = []
     var hasIf = false
-    var children = 'nodes' + num
+    var children = 'vnodes' + num
     var vnode = 'vnode' + num
     var str = 'var ' + children + ' = []\n'
     for (var i = 0; i < arr.length; i++) {
@@ -80,11 +80,11 @@ function parseView(arr, num) {
                 str += '\n})\n' //结束循环
                 if (forstack.length) {
                     var signature = forstack[forstack.length - 1]
-                    str += signature + '.end ='+ children + '.push({' +
+                    str += signature + '.end =' + children + '.push({' +
                             '\n\ttype:"#comment",' +
                             '\n\tskipContent:true,' +
                             '\n\tsignature:' + quote(signature) + ',' +
-                            '\n\tnodeValue:' + quote(signature + ':end')  +
+                            '\n\tnodeValue:' + quote(signature + ':end') +
                             '\n})\n'
                     forstack.pop()
                 }
@@ -99,7 +99,6 @@ function parseView(arr, num) {
 
             if (hasIf) { // 优化处理ms-if指令
                 el.signature = makeHashCode('ms-if')
-
                 str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'
                 str += children + '.push({' +
                         '\n\ttype: "#comment",' +
@@ -108,40 +107,34 @@ function parseView(arr, num) {
                         '\n\tsignature:' + quote(el.signature) + ',\n' +
                         '\n\tprops: {"ms-if":true} })\n'
                 str += '\n}else{\n\n'
-
             }
-            str += 'var ' + vnode + ' = {' +
-                    '\n\ttype: ' + quote(el.type) + ',' +
-                    '\n\tprops: {},' +
-                    '\n\tchildren: [],' +
-                    '\n\tisVoidTag: ' + !!el.isVoidTag + ',' +
-                    '\n\ttemplate: ""}\n'
-            var hasBindings = parseBindings(el.props, num, el)
-            if (hasBindings) {
-                str += hasBindings
-            }
+            var hasWidget = el.props['ms-widget']
+            if (hasWidget) {
+                str += avalon.directives.widget.parse({
+                    expr: hasWidget,
+                    type: 'widget'
+                }, num, el)
+                hasWidget = false
+            } else {
+                str += 'var ' + vnode + ' = {' +
+                        '\n\ttype: ' + quote(el.type) + ',' +
+                        '\n\tprops: {},' +
+                        '\n\tchildren: [],' +
+                        '\n\tisVoidTag: ' + !!el.isVoidTag + ',' +
+                        '\n\ttemplate: ""}\n'
 
-            if (!el.isVoidTag && el.children.length) {
-                var hasWidget = el.props['ms-widget']
-                if (hasWidget) {
-                    str += 'if(!' + vnode + '.props.wid){\n'
+                var hasBindings = parseBindings(el.props, num, el)
+                if (hasBindings) {
+                    str += hasBindings
                 }
                 str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
-                if (hasWidget) {
-                    str += '}\n'
-                    hasWidget = false
-                }
-            } else {
-                str += vnode + '.template= ' + quote(el.template) + '\n'
             }
             str += children + '.push(' + vnode + ')\n'
-
             if (hasIf) {
                 str += '}\n'
                 hasIf = false
             }
         }
-
     }
     return str
 }
