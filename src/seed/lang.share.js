@@ -9,7 +9,8 @@ avalon.mix({
     caches: {}, //avalon2.0 新增
     vmodels: {},
     filters: {},
-    components: {},
+    components: {},//放置组件的类
+    resolvedComponents:{},//放置组件的实例
     directives: {},
     eventHooks: {},
     eventListeners: {},

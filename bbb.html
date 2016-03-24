@@ -8,7 +8,7 @@
         <script>
             var vm = avalon.define({
                 $id: 'for0',
-                aaa: 111
+                aaa: false
                
             })
 
@@ -18,8 +18,8 @@
 
 
         <div ms-controller='for0' >
-            <input ms-duplex='@aaa'>{{@aaa}}
-            
+            <input ms-duplex-checked='@aaa' type="radio">{{@aaa}}
+            <div ms-if="@aaa">111</div>
         </div>
 
     </body>

@@ -11,24 +11,7 @@
                 a: "司徒正美",
                 array: [1, 2, 3, 4, 5]
             })
-            setTimeout(function () {
-                function getTag(a) {
-                    var ret = {
-                        type: a.nodeName
-                    }
-                    if (ret.type.charAt(0) !== "#") {
-                        ret.children = []
-                    }
-                    for (var i = 0, el; el = a.childNodes[i++]; ) {
-                        ret.children.push(getTag(el))
-                    }
-
-                    return ret
-                }
-                console.log(getTag(document.body))
-              alert(document.body.outerHTML)
-            }, 1000)
-
+       
 
 
         </script>
