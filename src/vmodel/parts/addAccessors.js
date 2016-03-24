@@ -4,7 +4,7 @@ var $$skipArray = require('./skipArray')
 
 
 var defineProperties = Object.defineProperties
-var defineProperty = Object.defineProperty
+var defineProperty
 
 var expose = new Date() - 0
 

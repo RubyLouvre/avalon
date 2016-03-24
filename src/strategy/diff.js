@@ -23,7 +23,7 @@ function diff(current, previous) {
                 }
                 break
             case '#comment':
-                if (cur.directive === 'for' && current) {
+                if (cur.directive === 'for') {
                     i = directives['for'].diff(current, previous, i)
                 } else if (cur.directive === 'if') {
                     directives['if'].diff(cur, pre)
