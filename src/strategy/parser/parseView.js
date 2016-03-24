@@ -55,7 +55,7 @@ function parseView(arr, num) {
 
         } else if (el.type === '#comment') {
             var nodeValue = el.nodeValue
-            if (nodeValue.indexOf('ms-for:') === 0) {
+            if (nodeValue.indexOf('ms-for:') === 0) {// 处理ms-for指令
                 var signature = el.signature
                 forstack.push(signature)
                 str += '\nvar ' + signature + '= {' +
@@ -97,7 +97,7 @@ function parseView(arr, num) {
         } else { //处理元素节点
             var hasIf = el.props['ms-if']
 
-            if (hasIf) { // 优化处理ms-if指令
+            if (hasIf) { // 处理ms-if指令
                 el.signature = makeHashCode('ms-if')
                 str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'
                 str += children + '.push({' +
@@ -109,7 +109,7 @@ function parseView(arr, num) {
                 str += '\n}else{\n\n'
             }
             var hasWidget = el.props['ms-widget']
-            if (hasWidget) {
+            if (hasWidget) {// 处理ms-widget指令
                 str += avalon.directives.widget.parse({
                     expr: hasWidget,
                     type: 'widget'
