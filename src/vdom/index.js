@@ -4,15 +4,12 @@
 var VText = require('./VText')
 var VElement = require('./VElement')
 var VComment = require('./VComment')
-var VComponent = require('./VComponent')
 avalon.vdomAdaptor = function (obj) {
     switch (obj.type) {
         case '#text':
             return new VText(obj)
         case '#comment':
             return new VComment(obj)
-        case '#component':
-            return new VComponent(obj)
         default:
             return new VElement(obj)
     }
@@ -21,6 +18,5 @@ avalon.vdomAdaptor = function (obj) {
 module.exports = {
     VText: VText,
     VComment: VComment,
-    VElement: VElement,
-    VComponent: VComponent
+    VElement: VElement
 }
