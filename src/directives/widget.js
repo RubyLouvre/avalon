@@ -12,16 +12,23 @@ function wrap(str) {
 
 avalon.directive('widget', {
     parse: function (binding, num, elem) {
-        return  'vnode' + num + '.props.wid = ' + avalon.quote(avalon.makeHashCode('w')) + '\n' +
+        var str = ''
+        for(var i in elem.props){
+            if(i !== 'ms-widget'){
+              str+= 'vnode' + num + '.props['+avalon.quote(i)+'] = ' +
+                      avalon.quote(elem.props[i]) + ';\n' 
+            }
+        }
+        return  str + 'vnode' + num + '.props.wid = ' + avalon.quote(avalon.makeHashCode('w')) + '\n' +
                 'vnode' + num + '.props["ms-widget"] = ' + wrap(avalon.parseExpr(binding), 'widget') + ';\n' +
-                //  'vnode' + num + '.props["widget"] = ' + avalon.quote(binding.expr) + ';\n' +
+              //  'vnode' + num + '.props.widget = ' + avalon.quote(binding.expr) + ';\n' +
                 '\tvnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
     },
     define: function (topVm, defaults, options) {
         var after = avalon.mix({}, defaults, options)
         var events = {}
         //绑定生命周期的回调
-        '$init $ready $dispose'.replace(/\S+/g, function (a) {
+        '$init $ready $dispose $change'.replace(/\S+/g, function (a) {
             if (typeof after[a] === 'function')
                 events[a] = after[a]
             delete after[a]
@@ -32,23 +39,32 @@ avalon.directive('widget', {
         }
         return vm
     },
-    diff: function (cur, pre) {
-        if (cur.type !== pre.type) {
-            //如果组件没有定义或ready,会返回注释节点
-            if (cur.type === "#comment") {
-                cur.change = [this.replaceByComment]
-            } else {
-                avalon.diff([cur], [])
-                cur.change = [this.replaceByComponent]
-            }
+    diff: function (cur) {
+        var renderCount = cur.renderCount
+        if (!renderCount) {
+            cur.change = [this.replaceByComment]
+        } else if (renderCount === 1) {
+            avalon.diff(cur.children, [])
+            cur.change = [this.replaceByComponent]
+            cur.afterChange = [
+                function (dom) {
+                    cur.vmodel.$fire('$ready', dom)
+                }
+            ]
         } else {
-            if (!pre.props.wid) {
-                avalon.diff([cur], [])
-                cur.change = [this.replaceByComponent]
-            } else {
-                cur.change = [this.update]
-            }
+            cur.change = cur.change || []
+            var isChange = false
+            cur.change.push(function (dom, vnode) {
+                if (checkChildrenChange(vnode)) {
+                    isChange = true
+                }
+            })
+            cur.afterChange = [function (dom) {
+                    isChange && cur.vmodel.$fire('$change', dom)
+                }]
         }
+
+
     },
     replaceByComment: function (dom, node, parent) {
         var comment = document.createComment(node.nodeValue)
@@ -66,11 +82,24 @@ avalon.directive('widget', {
         } else {
             parent.appendChild(com)
         }
-    },
-    update: function (dom, node, parent) {
-       console.log("=====")
     }
 })
 
+function checkChange(){
+    
+}
+function checkChildrenChange(elem) {
+    for (var i = 0, el; el = elem.children[i++]; ) {
+        if (el.change && el.change.length || el.afterChange && el.afterChange) {
+            return true
+        }
+        if (el.children) {
+            if (checkChildrenChange(el)) {
+                return true
+            }
+        }
+    }
+    return false
+}
 
 // http://www.besteric.com/2014/11/16/build-blog-mirror-site-on-gitcafe/
