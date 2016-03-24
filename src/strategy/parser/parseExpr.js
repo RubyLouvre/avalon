@@ -14,6 +14,7 @@ var rpipeline = /\|(?=\w)/
 var ruselessSp = /\s*(\.|\|)\s*/g
 
 function parseExpr(str, category) {
+
     var binding = {}
     category = category || 'other'
     if (typeof str === 'object') {
@@ -21,9 +22,9 @@ function parseExpr(str, category) {
         binding = str
         str = binding.expr
     }
-
+    if (typeof str !== 'string')
+        return ''
     var input = str.trim()
-
     var cacheStr = evaluatorPool.get(category + ':' + input)
 
     if (cacheStr) {

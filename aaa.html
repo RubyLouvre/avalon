@@ -9,7 +9,11 @@
             var vm = avalon.define({
                 $id: 'for0',
                 a: "司徒正美",
-                array: [1, 2, 3, 4, 5]
+                text:"333",
+                array: [1, 2, 3, 4, 5],
+                fn: function(a){
+                    console.log(a)
+                }
             })
       
         </script>
@@ -24,7 +28,9 @@
 
         <div ms-controller='for0' class='ms-controller'>
             <p>{{@a}}</p>
-            <wbr ms-widget="{$type:'ms-button'}">
+            <wbr class='444' ms-widget="{$type:'ms-button',$id:'www',$change:@fn}">
+                        <wbr class='444' ms-widget="{$type:'ms-tab',$id:'ee',$change:@fn}">
+
         </div>
    
 </body>

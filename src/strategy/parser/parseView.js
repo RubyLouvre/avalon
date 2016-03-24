@@ -108,20 +108,21 @@ function parseView(arr, num) {
                         '\n\tprops: {"ms-if":true} })\n'
                 str += '\n}else{\n\n'
             }
+            str += 'var ' + vnode + ' = {' +
+                        '\n\ttype: ' + quote(el.type) + ',' +
+                        '\n\tprops: {},' +
+                        '\n\tchildren: [],' +
+                        '\n\tisVoidTag: ' + !!el.isVoidTag + ',' +
+                        '\n\ttemplate: ""}\n'
             var hasWidget = el.props['ms-widget']
             if (hasWidget) {// 处理ms-widget指令
+                
                 str += avalon.directives.widget.parse({
                     expr: hasWidget,
                     type: 'widget'
                 }, num, el)
                 hasWidget = false
             } else {
-                str += 'var ' + vnode + ' = {' +
-                        '\n\ttype: ' + quote(el.type) + ',' +
-                        '\n\tprops: {},' +
-                        '\n\tchildren: [],' +
-                        '\n\tisVoidTag: ' + !!el.isVoidTag + ',' +
-                        '\n\ttemplate: ""}\n'
 
                 var hasBindings = parseBindings(el.props, num, el)
                 if (hasBindings) {
