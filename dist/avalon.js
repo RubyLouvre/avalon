@@ -62,10 +62,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(20)
 	__webpack_require__(36)
 	__webpack_require__(60)
-	__webpack_require__(94)
 	__webpack_require__(68)
+	__webpack_require__(69)
 
-	//require('./directives/panel/index')
+	__webpack_require__(95)
 	//require('./directives/button/index')
 	module.exports = avalon
 
@@ -4929,7 +4929,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	
-	var makeHashCode = avalon.makeHashCode
 
 	//插入点机制,组件的模板中有一些ms-slot元素,用于等待被外面的元素替代
 	function wrap(str) {
@@ -4941,9 +4940,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 	}
 
-	avalon.directive('com', {
+	avalon.directive('widget', {
 	    parse: function (binding, num, elem) {
-	        return  'vnode' + num + '.props.wid = ' + avalon.quote(makeHashCode('w')) + '\n' +
+	        return  'vnode' + num + '.props.wid = ' + avalon.quote(avalon.makeHashCode('w')) + '\n' +
 	                'vnode' + num + '.props["ms-widget"] = ' + wrap(avalon.parseExpr(binding), 'widget') + ';\n' +
 	                //  'vnode' + num + '.props["widget"] = ' + avalon.quote(binding.expr) + ';\n' +
 	                '\tvnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
@@ -4964,9 +4963,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return vm
 	    },
 	    diff: function (cur, pre) {
-	        if (cur.type !== pre.type) {//将
+	        if (cur.type !== pre.type) {
+	            //如果组件没有定义或ready,会返回注释节点
 	            if (cur.type === "#comment") {
 	                cur.change = [this.replaceByComment]
+	            } else {
+	                avalon.diff([cur], [])
+	                cur.change = [this.replaceByComponent]
+	            }
+	        } else {
+	            if (!pre.props.wid) {
+	                avalon.diff([cur], [])
+	                cur.change = [this.replaceByComponent]
+	            } else {
+	                cur.change = [this.update]
 	            }
 	        }
 	    },
@@ -4978,16 +4988,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	            parent.appendChild(comment)
 	        }
 	    },
-	    update: function (dom, node, parent) {
-	        var el = avalon.vdomAdaptor(node).toDOM()
+	    replaceByComponent: function (dom, node, parent) {
+	        document.createElement(node.type)
+	        var com = avalon.vdomAdaptor(node).toDOM()
 	        if (dom) {
-	            parent.replaceChild(el, dom)
+	            parent.replaceChild(com, dom)
 	        } else {
-	            parent.appendChild(el)
+	            parent.appendChild(com)
 	        }
-	        if (el.children.length) {
-	            updateEntity(el.childNodes, node.children, el)
-	        }
+	    },
+	    update: function (dom, node, parent) {
+	       console.log("=====")
 	    }
 	})
 
@@ -5937,11 +5948,195 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 68 */
+/***/ function(module, exports) {
+
+	
+	var componentQueue = []
+	var resolvedComponents = avalon.resolvedComponents
+	var rcomponentTag = /^(\w+\-w+|wbr|xmp|template)$/
+	avalon.component = function (name, definition) {
+	    if (typeof name === 'string') {
+	        //这里是定义组件的分支
+	        avalon.components[name] = definition
+	        var vms = {}
+	        for (var i = 0, obj; obj = componentQueue[i]; i++) {
+	            if (name === obj.name) {
+	                componentQueue.splice(i, 1)
+	                i--
+	                var vid = obj.vm.$id.split('.')[0]
+	                vms[vid] = true
+	            }
+	        }
+
+	        for (var id in vms) {
+	            avalon.batch(id, true)
+	        }
+	        //这里没有例回值
+	    } else {
+
+	        //判定这个组件是否用了插槽,如果用了插槽,
+	        var node = name //node为页面上节点对应的虚拟DOM
+	        var vm = definition
+	        var wid = node.props.wid
+	        var options = node.props['ms-widget']
+	        var tagName = node.type.indexOf('-') > 0 ? node.type : options.$type
+	        //如果组件模板已经定
+	        var hasResolved = resolvedComponents[wid]
+	        if (hasResolved) {
+
+	            widgetNode = hasResolved.render(hasResolved.vmodel)
+	            if (!isComponentReady(widgetNode)) {
+	                return hasResolved.comment
+	            }
+	            avalon.mix(widgetNode.props, hasResolved.comment.props)
+	            delete widgetNode.skipAttrs
+	            //重新渲染自己  
+	            return widgetNode
+	        } else if (!avalon.components[tagName]) {
+	            componentQueue.push({
+	                node: node,
+	                vm: vm,
+	                type: tagName
+	            })
+	            return {
+	                type: '#comment',
+	                props: {'ms-widget': options, wid: wid},
+	                nodeValue: 'ms-widget placeholder'
+	            }
+	        } else {
+	            //页面上的节点是用于传参的
+	            //通过插件的template字符串生成的节点，是来授参执行的
+	            var type = node.type
+	            if (rcomponentTag.test(type)) {
+	                avalon.warn(type + "不合适做组件的标签")
+	            }
+	            if (type === 'xmp' || type === 'template' || node.children.length === 0) {
+	                node.children = avalon.lexer(node.template)
+	            }
+	            definition = avalon.components[tagName]
+	            var vtree = avalon.lexer(definition.template.trim())
+	            if (vtree.length > 1) {
+	                avalon.error("组件必须用一个元素包起来")
+	            }
+	            if (vtree[0].type !== tagName) {
+	                avalon.warn("模板容器标签必须为" + tagName)
+	            }
+	            if (!node.isVoidTag) {//如果不是半闭合标签，那么其里面可能存在
+	                insertSlots(vtree, node)
+	            }
+	            //生成组件的render
+
+	            var define = options.define || avalon.directives.widget.define
+	            options.$id = options.$id || avalon.makeHashCode(tagName)
+	            delete options.$type
+	            var vmodel = define(vm, definition.defaults, options)
+	            avalon.vmodels[vmodel.$id] = vmodel
+
+	            var render = avalon.render(vtree)
+	           
+	            vtree = render(vmodel)
+	            var widgetNode = vtree[0]
+	            widgetNode.props['ms-widget'] = options
+	            widgetNode.vmodel = vmodel
+	            vmodel.$render = render
+	            vmodel.$fire("$init", widgetNode)
+
+	            if (!resolvedComponents[wid]) {
+
+	                resolvedComponents[wid] = {
+	                    render: render,
+	                    vmodel: vmodel,
+	                    comment: {
+	                        type: '#comment',
+	                        props: {'ms-widget': options, wid: wid},
+	                        nodeValue: 'ms-widget placeholder'
+	                    }
+	                }
+	            }
+	            if (!isComponentReady(widgetNode)) {
+	                return resolvedComponents[wid].comment
+	            }
+	            //移除skipAttrs,以便进行diff
+	            delete widgetNode.skipAttrs
+	            
+	            return widgetNode
+	        }
+	    }
+	}
+
+	function isComponentReady(vnode) {
+	    var isReady = true
+	    if (componentQueue.length !== 0) {
+	        try {
+	            hasUnresolvedComponent(vnode)
+	        } catch (e) {
+	            isReady = false
+	        }
+	    }
+	    return isReady
+	}
+	//如果组件没有resolved,元素会是这样子:
+	//<ms-button wid='w453156877309' ms-widget='undefined'>xxx</ms-button>
+	function hasUnresolvedComponent(vnode) {
+	    vnode.children.forEach(function (el) {
+	        if (el.type !== '#comment') {
+	            if ('ms-widget' in el.props) {
+	                throw 'unresolved'
+	            }
+	            hasUnresolvedComponent(el)
+	        }
+	    })
+	}
+
+
+
+	function insertSlots(vtree, node) {
+	    var slots = {}
+	    node.children.forEach(function (el) {
+	        if (el.type.charAt(0) !== '#') {
+	            var name = el.props.slot || ''
+	            if (slots[name]) {
+	                slots[name].push(el)
+	            } else {
+	                slots[name] = [el]
+	            }
+	        }
+	    })
+	    mergeTempale(vtree, slots)
+	}
+
+	function mergeTempale(vtree, slots) {
+	    for (var i = 0, node; node = vtree[i++]; ) {
+	        if (node.type.charAt(0) !== '#') {
+	            if (node.type === 'slot') {
+	                var name = node.props.name || ''
+	                if (slots[name]) {
+	                    vtree.splice.apply(vtree, [i - 1, 1].concat(slots[name]))
+	                }
+	            } else {
+	                mergeTempale(node.children, slots)
+	            }
+	        }
+	    }
+	    return vtree
+	}
+
+	//avalon.enablePrefix = function (name, opts) {
+	//    if (document.namespaces) {
+	//        document.namespaces.add(name, 'http://www.w3.org/1999/xhtml');
+	//    }
+	//}
+	//
+	//avalon.enablePrefix('ms')
+
+
+/***/ },
+/* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 
-	var share = __webpack_require__(69)
+	var share = __webpack_require__(70)
 
 	var isSkip = share.isSkip
 	var toJson = share.toJson
@@ -6010,7 +6205,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	$$midway.masterFactory = masterFactory
-	var addAccessors = __webpack_require__(74)
+	var addAccessors = __webpack_require__(75)
 
 	function slaveFactory(before, after, heirloom, options) {
 	    var keys = {}
@@ -6238,11 +6433,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	//使用这个AJAX库 https://github.com/matthew-andrews/isomorphic-fetch
 
 /***/ },
-/* 69 */
+/* 70 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var share = __webpack_require__(70)
-	var canHideProperty = __webpack_require__(73)
+	var share = __webpack_require__(71)
+	var canHideProperty = __webpack_require__(74)
 	var makeFire = share.makeFire
 
 	function toJson(val) {
@@ -6329,15 +6524,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 70 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var dispatch = __webpack_require__(71)
+	var dispatch = __webpack_require__(72)
 	var $watch = dispatch.$watch
 	var $emit = dispatch.$emit
 	var $$midway = {}
-	var $$skipArray = __webpack_require__(72)
+	var $$skipArray = __webpack_require__(73)
 
 
 	function makeFire($vmodel, heirloom) {
@@ -6508,7 +6703,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 71 */
+/* 72 */
 /***/ function(module, exports) {
 
 	
@@ -6586,7 +6781,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 72 */
+/* 73 */
 /***/ function(module, exports) {
 
 	/**
@@ -6602,7 +6797,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = avalon.oneObject('$id,$render,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode')
 
 /***/ },
-/* 73 */
+/* 74 */
 /***/ function(module, exports) {
 
 	//如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
@@ -6619,12 +6814,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = flag
 
 /***/ },
-/* 74 */
+/* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var canHideProperty = __webpack_require__(73)
-	var $$skipArray = __webpack_require__(72)
+	var canHideProperty = __webpack_require__(74)
+	var $$skipArray = __webpack_require__(73)
 
 
 	var defineProperties = Object.defineProperties
@@ -6743,7 +6938,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 75 */,
 /* 76 */,
 /* 77 */,
 /* 78 */,
@@ -6762,164 +6956,17 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 91 */,
 /* 92 */,
 /* 93 */,
-/* 94 */
+/* 94 */,
+/* 95 */
 /***/ function(module, exports) {
 
 	
-	var componentQueue = []
-	var resolvedComponents = avalon.resolvedComponents
-	var rcomponentTag = /^(\w+\-w+|wbr|xmp|template)$/
-	avalon.component = function (name, definition) {
-	    if (typeof name === 'string') {
-	        //这里是定义组件的分支
-	        avalon.components[name] = definition
-	        var vms = {}
-	        for (var i = 0, obj; obj = componentQueue[i]; i++) {
-	            if (name === obj.name) {
-	                componentQueue.splice(i, 1)
-	                i--
-	                var vid = obj.vm.$id.split('.')[0]
-	                vms[vid] = true
-	            }
-	        }
-
-	        for (var id in vms) {
-	            avalon.batch(id, true)
-	        }
-	        //这里没有例回值
-	    } else {
-
-	        //判定这个组件是否用了插槽,如果用了插槽,
-	        var node = name //node为页面上节点对应的虚拟DOM
-	        var vm = definition
-	        var wid = node.props.wid
-	        var options = node.props['ms-widget']
-	        var tagName = node.type.indexOf('-') > 0 ? node.type : options.$type
-	        //如果组件模板已经定
-	        var hasResolved = resolvedComponents[wid]
-	        if (hasResolved) {
-	            //重新渲染自己  
-	            return hasResolved.render(hasResolved.vmodel)
-	        } else if (!avalon.components[tagName]) {
-	            componentQueue.push({
-	                node: node,
-	                vm: vm,
-	                type: tagName
-	            })
-	            return {type: '#comment', nodeValue: name + " component is undefined!"}
-	        } else {
-	            //页面上的节点是用于传参的
-	            //通过插件的template字符串生成的节点，是来授参执行的
-	            var type = node.type
-	            if (rcomponentTag.test(type)) {
-	                avalon.warn(type + "不合适做组件的标签")
-	            }
-	            if (type === 'xmp' || type === 'template' || node.children.length === 0) {
-	                node.children = avalon.lexer(node.template)
-	            }
-	            definition = avalon.components[tagName]
-	            var vtree = avalon.lexer(definition.template.trim())
-	            if (vtree.length > 1) {
-	                avalon.error("组件必须用一个元素包起来")
-	            }
-	            if (vtree[0].type !== tagName) {
-	                avalon.error("模板容器标签必须为" + tagName)
-	            }
-	            if (!node.isVoidTag) {//如果不是半闭合标签，那么其里面可能存在
-	                insertSlots(vtree, node)
-	            }
-	            //生成组件的render
-
-	            var define = options.define || definition.define
-	            options.$id = options.$id || makeHashCode(tagName)
-	            delete options.$type
-	            var vmodel = define(vm, definition.defaults, options)
-	            avalon.vmodels[vmodel.$id] = vmodel
-
-	            var widgetRender = avalon.render(vtree)
-	            var widgetNode = widgetRender(vmodel)
-	            widgetNode.props['ms-widget'] = options
-	            resolvedComponents[wid] = {
-	                render: render,
-	                vmodel: vmodel
-	            }
-	            widgetNode.vmodel = vmodel
-	            vmodel.$fire("$init", widgetNode)
-
-	            widgetNode.afterChange = widgetNode.afterChange || []
-	            widgetNode.afterChange.push(afterChange)
-	            return widgetNode
-
-	        }
+	avalon.component("ms-button", {
+	    template: "<button type='button'><span>{{@text}}</span></button>",
+	    defaults: {
+	        text: "按钮"
 	    }
-	}
-
-	function afterChange(node, vnode, parent) {
-	    var isReady = true
-	    if (componentQueue.length !== 0) {
-	        try {
-	            hasUnresolvedComponent(vnode)
-	        } catch (e) {
-	            isReady = false
-	        }
-	    }
-	    if (isReady) {
-	        vnode.vmodel.$fire('$ready', node)
-	    }
-	}
-	//如果组件没有resolved,元素会是这样子:
-	//<ms-button wid='w453156877309' ms-widget='undefined'>xxx</ms-button>
-	function hasUnresolvedComponent(vnode) {
-	    vnode.children.forEach(function (el) {
-	        if (el.type.charAt(0) !== '#') {
-	            if ('ms-widget' in el.props) {
-	                throw 'unresolved'
-	            }
-	            hasUnresolvedComponent(el)
-	        }
-	    })
-	}
-
-
-
-	function insertSlots(vtree, node) {
-	    var slots = {}
-	    node.children.forEach(function (el) {
-	        if (el.type.charAt(0) !== '#') {
-	            var name = el.props.slot || ''
-	            if (slots[name]) {
-	                slots[name].push(el)
-	            } else {
-	                slots[name] = [el]
-	            }
-	        }
-	    })
-	    mergeTempale(vtree, slots)
-	}
-
-	function mergeTempale(vtree, slots) {
-	    for (var i = 0, node; node = vtree[i++]; ) {
-	        if (node.type.charAt(0) !== '#') {
-	            if (node.type === 'slot') {
-	                var name = node.props.name || ''
-	                if (slots[name]) {
-	                    vtree.splice.apply(vtree, [i - 1, 1].concat(slots[name]))
-	                }
-	            } else {
-	                mergeTempale(node.children, slots)
-	            }
-	        }
-	    }
-	    return vtree
-	}
-	avalon.enablePrefix = function (name, opts) {
-	    if (document.namespaces) {
-	        document.namespaces.add(name, 'http://www.w3.org/1999/xhtml');
-	    }
-	}
-
-	avalon.enablePrefix('ms')
-
+	})
 
 /***/ }
 /******/ ])
