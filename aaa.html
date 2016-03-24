@@ -10,7 +10,6 @@
                 $id: 'for0',
                 a: "司徒正美",
                 array: [1, 2, 3, 4, 5]
-
             })
             setTimeout(function () {
                 function getTag(a) {
@@ -27,11 +26,11 @@
                     return ret
                 }
                 console.log(getTag(document.body))
-                //  vm.array = [9, 8, 2, 6, 1]
+              alert(document.body.outerHTML)
             }, 1000)
 
 
- 
+
         </script>
         <style>
             .ms-controller{
@@ -44,11 +43,15 @@
 
         <div ms-controller='for0' class='ms-controller'>
             <p>{{@a}}</p>
-            <ul>
-                <li ms-for='($index, el) in @array '>{{$index}}::{{el}}</li>
-            </ul>
-            --
-        </div>
 
-    </body>
+        </div>
+    <xmp>
+        <div>333</div>
+        <slot>222</slot>
+    </xmp>
+    <pre>
+        <div>333</div>
+        <slot>222</slot>
+    </pre>
+</body>
 </html>
