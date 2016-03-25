@@ -159,14 +159,14 @@ function mediatorFactory(before, after, heirloom) {
 
 
 $$midway.mediatorFactory = avalon.mediatorFactory = mediatorFactory
-
+avalon.__stop = 0
 var __array__ = share.__array__
 function arrayFactory(array, old, heirloom, options) {
     if (old && old.splice) {
         var args = [0, old.length].concat(array)
-        old.stopBatch = true
+        ++avalon.__stop 
         old.splice.apply(old, args)
-        old.stopBatch = false
+        --avalon.__stop 
         return old
     } else {
         for (var i in __array__) {
@@ -180,7 +180,7 @@ function arrayFactory(array, old, heirloom, options) {
                         options.pathname :
                         options.pathname + '.' + a
                 vm.$fire(path, b, c)
-                if (!d && !array.stopBatch) {
+                if (!d && !avalon.__stop ) {
                     avalon.rerenderStart = new Date
                     avalon.batch(vm.$id, true)
                 }
