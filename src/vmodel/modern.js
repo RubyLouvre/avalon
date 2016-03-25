@@ -4,6 +4,10 @@ var isSkip = share.isSkip
 var $$midway = share.$$midway
 var $$skipArray = share.$$skipArray
 delete $$skipArray.$accessors
+delete $$skipArray.__data__
+delete $$skipArray.__proxy__
+delete $$skipArray.__const__
+
 var makeAccessor = share.makeAccessor
 var makeObserver = share.makeObserver
 var modelAccessor = share.modelAccessor

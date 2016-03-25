@@ -4100,7 +4100,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 $skipArray被hasOwnProperty后返回true
 	 */
 
-	module.exports = avalon.oneObject('$id,$render,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode')
+	module.exports = avalon.oneObject('$id,$render,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,__proxy__,__data__,__const__')
 
 /***/ },
 /* 73 */,
@@ -5682,6 +5682,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var $$midway = share.$$midway
 	var $$skipArray = share.$$skipArray
 	delete $$skipArray.$accessors
+	delete $$skipArray.__data__
+	delete $$skipArray.__proxy__
+	delete $$skipArray.__const__
+
 	var makeAccessor = share.makeAccessor
 	var makeObserver = share.makeObserver
 	var modelAccessor = share.modelAccessor
@@ -5964,8 +5968,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } else if (xtype === 'object') {
 	        var obj = {}
 	        for (i in val) {
-	            if (i === '__proxy__' || i === '__data__' || i === '__const__')
-	                continue
 	            if (val.hasOwnProperty(i)) {
 	                var value = val[i]
 	                obj[i] = value && value.nodeType ? value : toJson(value)

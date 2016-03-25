@@ -57,7 +57,11 @@ if (!canHideProperty) {
                     '\t\tSet [__const__] = Me', //链式调用
                     '\tEnd Function')
             //添加普通属性,因为VBScript对象不能像JS那样随意增删属性，必须在这里预先定义好
-            var uniq = {}
+            var uniq = {
+               __proxy__: true,
+               __data__: true,
+               __const__: true
+            }
 
             //添加访问器属性 
             for (name in accessors) {

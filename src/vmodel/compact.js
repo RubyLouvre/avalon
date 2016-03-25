@@ -51,11 +51,9 @@ function masterFactory(definition, heirloom, options) {
 
     for (key in keys) {
         //对普通监控属性或访问器属性进行赋值
-        try{
+     
         $vmodel[key] = keys[key]
-    }catch(e){
-        avalon.log(e+"")
-    }
+    
         //删除系统属性
         if (key in $skipArray) {
             delete keys[key]
@@ -98,7 +96,6 @@ function slaveFactory(before, after, heirloom, options) {
     options.hashcode = before.$hashcode || makeHashCode('$')
     accessors.$model = modelAccessor
     var $vmodel = new Observer()
-    console.log($vmodel, accessors, skips)
     $vmodel = addAccessors($vmodel, accessors, skips)
 
     for (key in skips) {
@@ -120,6 +117,8 @@ function mediatorFactory(before, after, heirloom) {
     var keys = {}, key
     //收集所有键值对及访问器属性
     for (key in before) {
+        if ($$skipArray[key])
+             continue
         keys[key] = before[key]
         if (b[key]) {
             accessors[key] = b[key]
@@ -132,7 +131,6 @@ function mediatorFactory(before, after, heirloom) {
             accessors[key] = a[key]
         }
     }
-
     var $vmodel = new Observer()
     $vmodel = addAccessors($vmodel, accessors, keys)
 

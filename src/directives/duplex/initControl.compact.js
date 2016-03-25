@@ -152,7 +152,8 @@ function updateModel() {
 
 
 function updateModelHack(e) {
-    if (e.propertyName === 'value') {
+    if (e.propertyName === 'value' &&this.value != this.oldValue ) { 
+        this.oldValue = this.value
         updateModel.call(this, e)
     }
 }

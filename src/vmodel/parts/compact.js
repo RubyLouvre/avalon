@@ -1,7 +1,6 @@
 var share = require('./share')
 var canHideProperty = require('./canHideProperty')
 var makeFire = share.makeFire
-
 function toJson(val) {
     var xtype = avalon.type(val)
     if (xtype === 'array') {
@@ -13,6 +12,8 @@ function toJson(val) {
     } else if (xtype === 'object') {
         var obj = {}
         for (i in val) {
+            if (i === '__proxy__' || i === '__data__' || i === '__const__')
+                continue
             if (val.hasOwnProperty(i)) {
                 var value = val[i]
                 obj[i] = value && value.nodeType ? value : toJson(value)

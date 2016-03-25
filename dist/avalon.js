@@ -2779,7 +2779,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var elem = event.target
 
 	    var handlers = []
-
 	    collectHandlers(elem, type, handlers)
 	    var i = 0, j, uuid, handler
 	    while ((handler = handlers[i++]) && !event.cancelBubble) {
@@ -4226,7 +4225,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	function updateModelHack(e) {
-	    if (e.propertyName === 'value') {
+	    if (e.propertyName === 'value' &&this.value != this.oldValue ) { 
+	        this.oldValue = this.value
 	        updateModel.call(this, e)
 	    }
 	}
@@ -6165,11 +6165,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    for (key in keys) {
 	        //对普通监控属性或访问器属性进行赋值
-	        try{
+	     
 	        $vmodel[key] = keys[key]
-	    }catch(e){
-	        avalon.log(e+"")
-	    }
+	    
 	        //删除系统属性
 	        if (key in $skipArray) {
 	            delete keys[key]
@@ -6212,7 +6210,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    options.hashcode = before.$hashcode || makeHashCode('$')
 	    accessors.$model = modelAccessor
 	    var $vmodel = new Observer()
-	    console.log($vmodel, accessors, skips)
 	    $vmodel = addAccessors($vmodel, accessors, skips)
 
 	    for (key in skips) {
@@ -6234,6 +6231,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var keys = {}, key
 	    //收集所有键值对及访问器属性
 	    for (key in before) {
+	        if ($$skipArray[key])
+	             continue
 	        keys[key] = before[key]
 	        if (b[key]) {
 	            accessors[key] = b[key]
@@ -6246,7 +6245,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            accessors[key] = a[key]
 	        }
 	    }
-
 	    var $vmodel = new Observer()
 	    $vmodel = addAccessors($vmodel, accessors, keys)
 
@@ -6417,7 +6415,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var share = __webpack_require__(70)
 	var canHideProperty = __webpack_require__(73)
 	var makeFire = share.makeFire
-
 	function toJson(val) {
 	    var xtype = avalon.type(val)
 	    if (xtype === 'array') {
@@ -6429,6 +6426,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } else if (xtype === 'object') {
 	        var obj = {}
 	        for (i in val) {
+	            if (i === '__proxy__' || i === '__data__' || i === '__const__')
+	                continue
 	            if (val.hasOwnProperty(i)) {
 	                var value = val[i]
 	                obj[i] = value && value.nodeType ? value : toJson(value)
@@ -6772,7 +6771,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 $skipArray被hasOwnProperty后返回true
 	 */
 
-	module.exports = avalon.oneObject('$id,$render,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode')
+	module.exports = avalon.oneObject('$id,$render,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,__proxy__,__data__,__const__')
 
 /***/ },
 /* 73 */
@@ -6854,7 +6853,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    '\t\tSet [__const__] = Me', //链式调用
 	                    '\tEnd Function')
 	            //添加普通属性,因为VBScript对象不能像JS那样随意增删属性，必须在这里预先定义好
-	            var uniq = {}
+	            var uniq = {
+	               __proxy__: true,
+	               __data__: true,
+	               __const__: true
+	            }
 
 	            //添加访问器属性 
 	            for (name in accessors) {
