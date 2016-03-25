@@ -4,7 +4,7 @@ avalon.textCache = textCache
 avalon.directive('html', {
     parse: function (binding, num) {
         return 'vnode' + num + '.htmlVm = __vmodel__\n' +
-                'vnode' + num + '.skipContent = true;\n' +
+                'vnode' + num + '.skipContent = true\n' +
                 'vnode' + num + '.props["ms-html"] =' + avalon.parseExpr(binding) + ';\n'
     },
     diff: function (cur, pre) {

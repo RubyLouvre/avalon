@@ -3509,7 +3509,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            node.nodeValue = vnode.nodeValue
 	            textNode = node
 	        }
-	        vnode.dom = node
+	        vnode.dom = textNode
 	    }
 	})
 
@@ -3575,7 +3575,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.directive('html', {
 	    parse: function (binding, num) {
 	        return 'vnode' + num + '.htmlVm = __vmodel__\n' +
-	                'vnode' + num + '.skipContent = true;\n' +
+	                'vnode' + num + '.skipContent = true\n' +
 	                'vnode' + num + '.props["ms-html"] =' + avalon.parseExpr(binding) + ';\n'
 	    },
 	    diff: function (cur, pre) {

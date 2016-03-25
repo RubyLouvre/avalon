@@ -23,6 +23,6 @@ avalon.directive('expr', {
             node.nodeValue = vnode.nodeValue
             textNode = node
         }
-        vnode.dom = node
+        vnode.dom = textNode
     }
 })
