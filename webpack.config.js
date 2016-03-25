@@ -8,7 +8,7 @@ var version = json.version.split('.')
 var v = version.shift() + '.' + version.join('')
 var text = fs.readFileSync('./src/seed/lang.share.js', 'utf8')
 text = text.replace(/version\s*\:\s*([^,]+)/, function (a, b) {
-    return 'version: ' + v
+    return 'version: ' +JSON.stringify( v +' alpha')
 })
 
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')
