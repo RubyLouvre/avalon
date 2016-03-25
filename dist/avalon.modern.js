@@ -1,3 +1,6065 @@
-!function(e,t){"object"==typeof exports&&"object"==typeof module?module.exports=t():"function"==typeof define&&define.amd?define([],t):"object"==typeof exports?exports.avalon=t():e.avalon=t()}(this,function(){return function(e){function t(r){if(n[r])return n[r].exports;var a=n[r]={exports:{},id:r,loaded:!1};return e[r].call(a.exports,a,a.exports,t),a.loaded=!0,a.exports}var n={};return t.m=e,t.c=n,t.p="",t(0)}([function(e,t,n){var r=n(88);n(31),n(6),n(77),n(61),n(40),n(8),n(90),e.exports=r},function(e,t){e.exports={ident:/^[$a-zA-Z_][$a-zA-Z0-9_]*$/,sp:/^\s+$/,leftSp:/^\s+/,rightSp:/s+$/,binding:/^ms-(\w+)-?(.*)/,string:/(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g}},function(e,t){var n={},r=/([a-z\d])([A-Z]+)/g,a=/[-_][^-_]/g,o=/\d\.\d{4}/,i=/[-.*+?^${}()|[\]\/\\]/g,s=[].slice;avalon.mix({caches:{},vmodels:{},filters:{},components:{},resolvedComponents:{},directives:{},eventHooks:{},eventListeners:{},cssHooks:n,parsers:{number:function(e){return""===e?"":parseFloat(e)||0},string:function(e){return null===e||void 0===e?"":e+""},"boolean":function(e){return"true"===e}},version:"2.0 alpha",slice:function(e,t,n){return s.call(e,t,n)},css:function(e,t,r,a){e instanceof avalon&&(e=e[0]);var o=avalon.camelize(t);if(t=avalon.cssName(o)||o,void 0===r||"boolean"==typeof r){a=n[o+":get"]||n["@:get"],"background"===t&&(t="backgroundColor");var i=a(e,t);return r===!0?parseFloat(i)||0:i}if(""===r)e.style[t]="";else{if(null==r||r!==r)return;isFinite(r)&&!avalon.cssNumber[o]&&(r+="px"),a=n[o+":set"]||n["@:set"],a(e,t,r)}},directive:function(e,t){return this.directives[e]=t},isObject:function(e){return null!==e&&"object"==typeof e},range:function(e,t,n){n||(n=1),null==t&&(t=e||0,e=0);for(var r=-1,a=Math.max(0,Math.ceil((t-e)/n)),o=new Array(a);++r<a;)o[r]=e,e+=n;return o},hyphen:function(e){return e.replace(r,"$1-$2").toLowerCase()},camelize:function(e){return!e||e.indexOf("-")<0&&e.indexOf("_")<0?e:e.replace(a,function(e){return e.charAt(1).toUpperCase()})},makeHashCode:function(e){return e=e||"avalon",String(Math.random()+Math.random()).replace(o,e)},escapeRegExp:function(e){return(e+"").replace(i,"\\$&")},Array:{merge:function(e,t){e.push.apply(e,t)},ensure:function(e,t){return-1===e.indexOf(t)?e.push(t):void 0},removeAt:function(e,t){return!!e.splice(t,1).length},remove:function(e,t){var n=e.indexOf(t);return~n?avalon.Array.removeAt(e,n):!1}}});var l=1;e.exports={avalon:avalon,getLongID:function(e){return e.uuid||(e.uuid=avalon.makeHashCode("e"))},getShortID:function(e){return e.uuid||(e.uuid="_"+ ++l)}}},function(e,t){function n(e){this.size=0,this.limit=e,this.head=this.tail=void 0,this._keymap={}}var r=n.prototype;r.put=function(e,t){var n={key:e,value:t};return this._keymap[e]=n,this.tail?(this.tail.newer=n,n.older=this.tail):this.head=n,this.tail=n,this.size===this.limit?this.shift():this.size++,t},r.shift=function(){var e=this.head;e&&(this.head=this.head.newer,this.head.older=e.newer=e.older=this._keymap[e.key]=void 0,delete this._keymap[e.key])},r.get=function(e){var t=this._keymap[e];if(void 0!==t)return t===this.tail?t.value:(t.newer&&(t===this.head&&(this.head=t.newer),t.newer.older=t.older),t.older&&(t.older.newer=t.newer),t.newer=void 0,t.older=this.tail,this.tail&&(this.tail.newer=t),this.tail=t,t.value)},e.exports=n},function(e,t){function n(e,t,i){var s=e[0];if(s||i){i=i||s.parentNode;for(var l=0,c=t.length;c>l;l++){var u=t[l];if(!(avalon.msie<9&&"#text"===u.type&&!o.fixIESkip&&o.test(u.nodeValue))){var p=s;if(p&&(s=p.nextSibling),"for"===u.directive&&u.change){if(1===p.nodeType){var v=document.createComment(u.nodeValue);i.insertBefore(v,p),u.endRepeat=document.createComment("ms-for-end:"),i.insertBefore(u.endRepeat,p.nextSibling),p=v}else u.endRepeat||(u.endRepeat=r(p));s=u.endRepeat.nextSibling}!1!==a(p,u,i,"change")?(!u.skipContent&&u.children&&p&&1===p.nodeType&&n(avalon.slice(p.childNodes),u.children,p),a(p,u,i,"afterChange")):a(p,u,i,"afterChange")}}}}function r(e){for(var e,t=0,n=[];e&&("#comment"===e.type&&(0===e.nodeValue.indexOf("ms-for:")?t++:0===e.nodeValue.indexOf("ms-for-end:")&&t--),n.push(e),e=e.nextSibling,0!==t););return n.pop()}function a(e,t,n,r){var a=t[r];if(a){for(var o;o=a.shift();)if(!1===o(e,t,n))return!1;delete t[r]}}var o=/^\s*$/;e.exports=n},function(e,t,n){var r=n(3);e.exports=new r(512)},function(e,t,n){var r=n(48),a=n(47),o=n(46);avalon.vdomAdaptor=function(e){switch(e.type){case"#text":return new r(e);case"#comment":return new o(e);default:return new a(e)}},e.exports={VText:r,VComment:o,VElement:a}},function(e,t){e.exports=avalon.oneObject("$id,$render,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,__proxy__,__data__,__const__")},function(e,t){function n(e){var t=e.render(e.vmodel),n=t[0];return r(n)?(e.renderCount?e.renderCount++:e.renderCount=1,n.props["ms-widget"]=e.props["ms-widget"],n.vmodel=e.vmodel,n.diff=e.diff,delete n.skipAttrs,n.renderCount=e.renderCount,n):e.placeholder}function r(e){var t=!0;if(0!==s.length)try{a(e)}catch(n){t=!1}return t}function a(e){e.children.forEach(function(e){if("#comment"===e.type){if("ms-widget"in e.props)throw"unresolved"}else e.children&&a(e)})}function o(e,t){var n={};t.children.forEach(function(e){if("#"!==e.type.charAt(0)){var t=e.props.slot||"";n[t]?n[t].push(e):n[t]=[e]}}),i(e,n)}function i(e,t){for(var n,r=0;n=e[r++];)if("#"!==n.type.charAt(0))if("slot"===n.type){var a=n.props.name||"";t[a]&&e.splice.apply(e,[r-1,1].concat(t[a]))}else i(n.children,t);return e}var s=[],l=avalon.resolvedComponents,c=/^(\w+\-w+|wbr|xmp|template)$/,u={"ms-widget":1,widget:1,wid:1};avalon.document.createElement("slot"),avalon.component=function(e,t){if("string"!=typeof e){var r=e,a=t,i=r.props.wid,p=r.props["ms-widget"],v=r.type.indexOf("-")>0?r.type:p.$type,f={type:"#comment",directive:"widget",props:{"ms-widget":i},nodeValue:"ms-widget placeholder"},d=l[i];if(d.render)return n(d);if(avalon.components[v]){var h=r.type;c.test(h)||avalon.warn(h+"不合适做组件的标签"),("xmp"===h||"template"===h||0===r.children.length)&&(r.children=avalon.lexer(d.template)),t=avalon.components[v],avalon.modern||t.fixTag||(avalon.document.createElement(v),t.fixTag=1);var m=avalon.lexer(t.template.trim());m.length>1&&avalon.error("组件必须用一个元素包起来");var g=m[0];g.type!==v&&avalon.warn("模板容器标签最好为"+v);for(var y in d.props)u[y]||(g.props[y]=d.props[y]);r.isVoidTag||o(m,r),delete p.$type,delete p.$define;var b=p;delete p.$diff;var x=p.$define||avalon.directives.widget.define,w=p.$id||avalon.makeHashCode(v.replace(/-/g,"_")),_=x(a,t.defaults,p);_.$id=w,avalon.vmodels[w]=_;var C=avalon.render(m);return _.$render=C,_.$fire("onInit",_),avalon.mix(d,{render:C,vmodel:_,diff:b,placeholder:f}),n(d)}return s.push({type:v}),f}avalon.components[e]=t;for(var A,y=0;A=s[y];y++)e===A.type&&(s.splice(y,1),y--)}},function(e,t,n){function r(e){var t=e.target;avalon(t).addClass(t.getAttribute(l[e.type])||"")}function a(e){var t=e.target,n=l[e.type];avalon(t).removeClass(t.getAttribute(n)||""),"change-active"!==n&&avalon(t).removeClass(t.getAttribute("change-active")||"")}function o(e,t){var n=e.getAttribute("old-change-class")||"",r=t["change-class"];avalon(e).removeClass(n).addClass(r),e.setAttribute("old-change-class",r),delete t["change-class"]}var i=n(2).getLongID,s=avalon.directives;avalon.directive("class",{parse:function(e,t){return"vnode"+t+'.props["'+e.name+'"] = '+avalon.parseExpr(e)+";\n"},diff:function(e,t,n){var o=e.props["ms-"+n],i=t.props["ms-"+n];if(t.classEvent)e.classEvent=t.classEvent;else{var s={};"hover"===n?(s.mouseenter=r,s.mouseleave=a):"active"===n&&(e.props.tabindex=e.props.tabindex||-1,s.tabIndex=e.props.tabindex,s.mousedown=r,s.mouseup=a,s.mouseleave=a),e.classEvent=s}var l;if(Array.isArray(o)?l=o.join(" ").trim().replace(/\s+/," "):"object"==typeof o?l=Object.keys(o).filter(function(e){return o[e]}).join(" "):"string"==typeof o&&(l=o.trim().replace(/\s+/," ")),"string"!=typeof l)return void(e.props["ms-"+n]=i);if(!i||i!==l){e["change-"+n]=l;var c=e.change||(e.change=[]);avalon.Array.ensure(c,this.update)}},update:function(e,t){var n=t.classEvent;if(n){for(var r in n)"tabIndex"===r?e[r]=n[r]:avalon.bind(e,r,n[r]);t.classEvent={}}var a=["class","hover","active"];a.forEach(function(n){var r="change-"+n,a=t[r];if(a)if("class"===n)o(e,t);else{var i=e.getAttribute(r);i&&avalon(e).removeClass(i),e.setAttribute(r,a)}})}}),s.active=s.hover=s["class"];var l={mouseenter:"change-hover",mouseleave:"change-hover",mousedown:"change-active",mouseup:"change-active"};i(r),i(a)},function(e,t){avalon.directive("controller",{priority:1,parse:function(e,t){var n="vm"+t,r=/\{.+\}/.test(e.expr),a="\n\n\nvar "+n+" =  avalon.vmodels["+avalon.quote(e.expr)+"]\n",o="\n\n\nvar "+n+" = "+e.expr+"\n",i=(r?o:a)+"if("+n+"){\n	if(__vmodel__){\n		__vmodel__ = avalon.mediatorFactory(__vmodel__, "+n+")\n	}else{\n		__vmodel__ = "+n+"\n	}\n}\n\n\n";return i},diff:avalon.noop,update:avalon.noop})},function(e,t){avalon.directive("css",{parse:function(e,t){return"vnode"+t+'.props["ms-css"] = '+avalon.parseExpr(e)+";\n"},diff:function(e,t){var n=e.props["ms-css"],r=t.props["ms-css"];if(Object(n)===n){if(Array.isArray(n)&&(n=e.props["ms-css"]=avalon.mix.apply({},n)),"object"!=typeof r)e.changeStyle=n;else{var a={},o=!1;for(var i in n)n[i]!==r[i]&&(o=!0,a[i]=n[i]);o&&(e.changeStyle=a)}if(e.changeStyle){var s=e.change||(e.change=[]);avalon.Array.ensure(s,this.update)}}else e.props["ms-css"]=r},update:function(e,t){var n=t.changeStyle,r=avalon(e);for(var a in n)r.css(a,n[a]);delete t.changeStyle}})},function(e,t){function n(e,t){var n=e.expr,c=t.props.type,u=e.param,p="checked"===u,v=t.ctrl={parsers:[],formatters:[],modelValue:NaN,viewValue:NaN,parse:r,format:a};p&&(i.test(c)?(v.isChecked=!0,v.type="radio"):u=null);var f=avalon.parsers[u];f&&v.parsers.push(f),o.test(n)&&(n=n.replace(o,""),l.test(c)?avalon.warn(c+"不支持change过滤器"):v.isChanged=!0);var d=n.match(s);d&&(n=n.replace(s,""),v.isChanged||(v.debounceTime=parseInt(d[1],10)||300)),e.expr=v.expr=n.trim(),/input|textarea|select/.test(t.type)?v.type||(v.type="select"===t.type?"select":"checkbox"===c?"checkbox":"radio"===c?"radio":"input"):"contenteditable"in t.props&&(v.type="contenteditable"),avalon.parseExpr(e,"duplex")}function r(e){for(var t,n=0;t=this.parsers[n++];)e=t.call(this,e);return e}function a(e){for(var t=this.formatters,n=t.length;n--;)e=t[n](e);return e}var o=/\|\s*change\b/,i=/^(?:checkbox|radio)$/,s=/\|\s*debounce(?:\(([^)]+)\))?/,l=/^(file|button|reset|submit|checkbox|radio|range)$/;e.exports=n},function(e,t){var n={input:function(e){var t=this;e=e||"value";var n=t.elem[e];n=t.format(n);var r=t.parse(n);r!==t.modelValue&&t.set(t.vmodel,r)},radio:function(){var e=this;if(e.isChecked){var t=e.modelValue=!e.modelValue;e.set(e.vmodel,t)}else n.input.call(e)},checkbox:function(){var e=this,t=e.modelValue;Array.isArray(t)||(avalon.warn("ms-duplex应用于checkbox上要对应一个数组"),t=[t]);var n=e.elem.checked?"ensure":"remove";if(t[n]){var r=e.parse(e.elem.value);t[n](r)}},select:function(){var e=this,t=avalon(e.elem).val();t+""!=this.modelValue+""&&(t=Array.isArray(t)?t.map(function(t){return e.parse(t)}):e.parse(t),e.modelValue=t,e.set(e.vmodel,t))},contenteditable:function(){n.input.call(this,"innerHTML")}};e.exports=n},function(e,t){function n(e){a[this.tagName].call(this,e),!this.caret&&this.__duplex__&&this.__duplex__.update.call(this)}var r=!1;try{var a={},o=HTMLInputElement.prototype,i=HTMLTextAreaElement.prototype,s=HTMLInputElement.prototype;Object.getOwnPropertyNames(s),a.INPUT=Object.getOwnPropertyDescriptor(o,"value").set,Object.defineProperty(o,"value",{set:n}),a.TEXTAREA=Object.getOwnPropertyDescriptor(i,"value").set,Object.defineProperty(i,"value",{set:n}),r=!0}catch(l){}e.exports=r},function(e,t){avalon.directive("expr",{parse:function(){},diff:function(e,t){if(e.fixIESkip=!0,e.nodeValue!==t.nodeValue)if(t.dom)e.dom=t.dom,e.dom.nodeValue=e.nodeValue;else{var n=e.change||(e.change=[]);avalon.Array.ensure(n,this.update)}},update:function(e,t,n){if(3!==e.nodeType){var r=document.createTextNode(t.nodeValue);n.replaceChild(r,e)}else e.nodeValue=t.nodeValue,r=e;t.dom=e}})},function(e,t,n){function r(e,t,n){return e.nodes=[],e.children.forEach(function(r){if("#"===r.type.charAt(0)){var a=r.type+"#"+r.nodeValue,o=g.get(a);o||(o=avalon.vdomAdaptor(r).toDOM(),g.put(a,o)),n=o.cloneNode(!0)}else n=avalon.vdomAdaptor(r).toDOM();e.nodes.push(n),t.appendChild(n)}),t}function a(e,t){for(var n,r=[],a={children:[]},o=0;n=e[o];o++)"#comment"===n.type&&n.nodeValue===t?(a.children.push(n),a.key=n.key,a.index=r.length,r.push(a),a={children:[]}):a.children.push(n);return r}function o(e,t){var n=t.match(y);if(n){var r=n[1];for(var a in e){var o=a.match(b);if(o&&o[1]===r)return i(e,a)}}}function i(e,t){var n=e[t];if(n){for(var r=[{id:t,c:n}];;){if(t+="_",!e[t])break;r.push({id:t,c:e[t]})}var a=r.pop();return delete e[a.id],a.c}return n}function s(e,t){var n=t.key;if(e[n]){for(;;)if(n+="_",!e[n]){e[n]=t;break}}else e[n]=t}var l=n(4),c=n(3);avalon._each=function(e,t){if(Array.isArray(e))for(var n=0;n<e.length;n++){var r=e[n],a=typeof r,o=r&&"object"===a?r.$hashcode:a+r;t(n,e[n],o)}else for(var n in e)e.hasOwnProperty(n)&&t(n,e[n],n)};var u=/ms-for\:\s*/,p=/^\s*\(\s*/,v=/\s*\)\s*$/,f=/\s*,\s*/,d=/\s+as\s+([$\w]+)/,h=n(1).ident,m=/^(null|undefined|NaN|window|this|\$index|\$id)$/;avalon.directive("for",{parse:function(e,t){var n;e=e.replace(d,function(e,t){return!h.test(t)||m.test(t)?avalon.error("alias "+t+" is invalid --- must be a valid JS identifier which is not a reserved name."):n=t,""});var r=e.replace(u,"").split(" in "),a="var loop"+t+" = "+avalon.parseExpr(r[1])+"\n",o=n?"var "+n+" = loop"+t+"\n":"",i=r[0].replace(p,"").replace(v,"").split(f);return 1===i.length&&i.unshift("$key"),a+o+"avalon._each(loop"+t+", function("+i+", traceKey){\n\n"},diff:function(e,t,n){var r,l,c,u=e[n],p=t[n]||{},v=!("directive"in p),f=!1;v&&(p.components=[],p.repeatCount=0);var d=e.slice(u.start,u.end);u.endRepeat=p.endRepeat,u.components=a(d.slice(1,-1),u.signature);var h=d.length-p.repeatCount;if(h>0){for(var m=[n,0],r=0;h>r;r++)m.push(null);t.splice.apply(t,m)}else t.splice.apply(t,[n,Math.abs(h)]);if(u.action=v?"init":"update",v){for(r=0;l=u.components[r++];)avalon.diff(l.children,[]);f=!0}else{var g={};u.removedComponents={};var y=0;for(r=0;l=u.components[r++];)y++,s(g,l);for(r=0;c=p.components[r++];)l=i(g,c.key),l?(y--,f||(f=l.index!==c.index),l.nodes=c.nodes,avalon.diff(l.children,c.children)):y?(l=o(g,c.key),y--,f=!0,l.nodes=c.nodes,avalon.diff(l.children,c.children)):(f=!0,u.removedComponents[c.index]=c);for(r in g)f=!0,l=g[r],avalon.diff(l.children,[])}if(p.components.length=0,f){var b=u.change||(u.change=[]);avalon.Array.ensure(b,this.update)}return n+d.length-1},update:function(e,t,n){var a=t.action,o=t.endRepeat,i=document.createDocumentFragment();if("init"===a)for(var s=e.nextSibling;s&&s!==o;)n.removeChild(s),s=e.nextSibling;for(var c in t.removedComponents){var u=t.removedComponents[c];u.nodes&&(u.nodes.forEach(function(e){e.parentNode&&e.parentNode.removeChild(e)}),u.nodes.length=u.children.length=0)}delete t.removedComponents;for(var p=e,c=0;c<t.components.length;c++){var v=t.components[c],f=v.nodes;if(f){if(p.nextSibling!==f[0]){var d=i.cloneNode(!1);f.forEach(function(e){d.appendChild(e)}),n.insertBefore(d,p.nextSibling)}}else{var h=i.cloneNode(!1);r(v,h),f=v.nodes,n.insertBefore(h,p.nextSibling)}p=f[f.length-1]}var m=[],g=[];return t.components.forEach(function(e){m.push.apply(m,e.nodes),g.push.apply(g,e.children)}),t.repeatCount=g.length,l(m,g,n),!1}});var g=new c(128),y=/^(string|number|boolean)/,b=/^_*(string|number|boolean)/},function(e,t,n){var r=n(3),a=new r(128);avalon.textCache=a,avalon.directive("html",{parse:function(e,t){return"vnode"+t+".htmlVm = __vmodel__\nvnode"+t+".skipContent = true;\nvnode"+t+'.props["ms-html"] ='+avalon.parseExpr(e)+";\n"},diff:function(e,t){var n=e.props["ms-html"],r=t.props["ms-html"];if(n!==r){var o=a.get(n);if(!Array.isArray(o)){var i=avalon.lexer(n),s=avalon.render(i);o=s(e.htmlVm),n=e.props["ms-html"]=o.map(function(e){return"template"in e?e.template:e.nodeValue}).join("-"),a.put(n,o)}if(e.children=o,e.props["ms-html"]!==r){var l=e.change||(e.change=[]);avalon.Array.ensure(l,this.update)}}},update:function(e,t){if(e.querySelectorAll){var n=e.querySelectorAll("[avalon-events]");avalon.each(n,function(e){avalon.unbind(e)})}else{var n=e.getElementsByTagName("*");avalon.each(n,function(e){e.getAttribute("avalon-events")&&avalon.unbind(e)})}if(window.Range)e.innerHTML=t.children.map(function(e){return avalon.vdomAdaptor(e).toHTML()}).join("");else{avalon.clearHTML(e);var r=document.createDocumentFragment();t.children.forEach(function(e){r.appendChild(avalon.vdomAdaptor(e).toDOM())}),e.appendChild(r)}}})},function(e,t,n){var r=n(4);avalon.directive("if",{priority:5,parse:function(e,t){return"vnode"+t+'.props["ms-if"] = '+avalon.quote(e.expr)+";\n"},diff:function(e,t){if(e.type!==t.type){var n=e.change||(e.change=[]);avalon.Array.ensure(n,this.update)}},update:function(e,t,n){var a=e.nodeName.toLowerCase(),o=t.type;if(a!==o)if(1===e.nodeType)avalon.caches[t.nodeValue]=e,n.replaceChild(avalon.vdomAdaptor(t).toDOM(),e);else{var i=e.signature||e.nodeValue,s=avalon.caches[i];if(s)n.replaceChild(s,e),r([s],[t]);else{var l=avalon.vdomAdaptor(t).toDOM();n.replaceChild(l,e),avalon.caches[i]=l}}}})},function(e,t,n){var r=n(2).getLongID,a=avalon.quote,o=/^ms-on-([a-z]+)/,i=/\|.+/g,s=/([@$]?\w+)/g,l=n(1).string;avalon.directive("on",{priority:3e3,parse:function(e,t){var n=e.expr.replace(l," ").replace(i,"").match(s),o=n.every(function(e){return"@"===e.charAt(0)||"$event"===e}),c="vnode"+t+".onVm = __vmodel__\n",u=a(e.name);if(o){var p=Function("return "+avalon.parseExpr(e,"on"))(),v=r(p);return avalon.eventListeners[v]=p,c+"vnode"+t+".props["+u+"] = avalon.eventListeners."+v+"\n"}return c+"vnode"+t+".props["+u+"] = "+avalon.parseExpr(e,"on")+"\n"},diff:function(e,t,n,a){var i=e.props[a],s=t.props[a];if(i!==s){var l=a.match(o);n=l[1];var c=n+":"+r(i);e.addEvents=e.addEvents||{},e.addEvents[c]=i,"function"==typeof s&&(e.removeEvents=e.removeEvents||{},e.removeEvents[n+":"+s.uuid]=s);var u=e.change||(e.change=[]);avalon.Array.ensure(u,this.update)}},update:function(e,t){var n,r,a;e.__av_context__=t.onVm,delete t.onVm;for(n in t.removeEvents)r=n.split(":").shift(),a=t.removeEvents[n],avalon.unbind(e,r,a);delete t.removeEvents;for(n in t.addEvents)r=n.split(":").shift(),a=t.addEvents[n],avalon.bind(e,r,a);delete t.addEvents}})},function(e,t,n){var r=n(1).ident;avalon.directive("text",{parse:function(e,t,n){n.children=[{type:"#text",nodeValue:""}];var a=r.test(e.expr)?e.expr:avalon.parseExpr(e);return"vnode"+t+'.props["ms-text"] ='+a+"\n"},diff:function(e,t){var n=e.props["ms-text"],r=t.props["ms-text"];if(e.children=t.children,e.skipContent=!0,n!==r)if(e.children[0].nodeValue=n,t.dom)e.dom=t.dom,this.update(e.dom,e);else{var a=e.change||(e.change=[]);avalon.Array.ensure(a,this.update)}return!1},update:function(e,t){var n=t.props["ms-text"];"textContent"in e?e.textContent=n+"":e.innerText=n+"",t.dom=e}})},function(e,t){function n(e,t){var r="_"+e;if(!n[r]){var a=document.createElement(e);avalon.root.appendChild(a),t=avalon.modern?getComputedStyle(a,null).display:a.currentStyle.display,avalon.root.removeChild(a),n[r]=t}return n[r]}avalon.parseDisplay=n,avalon.directive("visible",{parse:function(e,t){return"vnode"+t+'.props["ms-visible"] = '+avalon.parseExpr(e)+";\n"},diff:function(e,t){var n=e.props["ms-visible"]=!!e.props["ms-visible"];if(e.displayValue=t.displayValue,n!==t.props["ms-visible"]){var r=e.change||(e.change=[]);avalon.Array.ensure(r,this.update)}},update:function(e,t){if(t.props["ms-visible"]){var r=avalon(e).css("display");t.displayValue||(t.displayValue="none"!==r?r:n(e.nodeName)),e.style.display=t.displayValue}else e.style.display="none"}})},function(e,t){function n(e){return e.replace("return __value__",function(e){var t="if(Array.isArray(__value__)){\n    __value__ = avalon.mix.apply({},__value__)\n}\n";return t+e})}function r(e){for(var t,n=0;t=e.children[n++];){if(t.change&&t.change.length||t.afterChange&&t.afterChange)return!0;if(t.children&&r(t))return!0}return!1}avalon.directive("widget",{parse:function(e,t,r){var a=avalon.makeHashCode("w");return avalon.resolvedComponents[a]={props:avalon.mix({},r.props),template:r.template},"vnode"+t+'.props.wid = "'+a+'"\nvnode'+t+'.props["ms-widget"] = '+n(avalon.parseExpr(e),"widget")+";\n	vnode"+t+" = avalon.component(vnode"+t+", __vmodel__)\n"},define:function(e,t,n){var r=avalon.mix({},t,n),a={};"onInit onRready onViewChange onDispose".replace(/\S+/g,function(e){"function"==typeof r[e]&&(a[e]=r[e]),delete r[e]});var o=avalon.mediatorFactory(e,r);for(var i in a)o.$watch(i,a[i]);return o},diff:function(e,t){var n=e.renderCount;if(n)if(1===n)avalon.diff(e.children,[]),e.change=[this.replaceByComponent],e.afterChange=[function(t,n){e.vmodel.$fire("onReady",t,n)}];else{var a=!e.$diff||e.$diff(e,t);e.skipContent=!a;var o=e.vmodel.$events.onViewChange;if(o&&o.length){e.change=e.change||[];var i=!1;e.change.push(function(e,t){r(t)&&(i=!0)}),e.afterChange=[function(t){i&&e.vmodel.$fire("onViewChange",t)}]}}else e.change=[this.replaceByComment]},replaceByComment:function(e,t,n){var r=document.createComment(t.nodeValue);e?n.replaceChild(r,e):n.appendChild(r)},replaceByComponent:function(e,t,n){var r=avalon.vdomAdaptor(t).toDOM();e?n.replaceChild(r,e):n.appendChild(r)}})},function(e,t){var n=["autofocus,autoplay,async,allowTransparency,checked,controls","declare,disabled,defer,defaultChecked,defaultSelected,","isMap,loop,multiple,noHref,noResize,noShade","open,readOnly,selected"].join(","),r={"accept-charset":"acceptCharset","char":"ch",charoff:"chOff","class":"className","for":"htmlFor","http-equiv":"httpEquiv"};n.replace(/\w+/g,function(e){r[e.toLowerCase()]=e});var a=["accessKey,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan","dateTime,defaultValue,contentEditable,frameBorder,longDesc,maxLength,marginWidth,marginHeight","rowSpan,tabIndex,useMap,vSpace,valueType,vAlign"].join(",");a.replace(/\w+/g,function(e){r[e.toLowerCase()]=e}),e.exports=r},function(e,t){e.exports={click:!0,dblclick:!0,keydown:!0,keypress:!0,keyup:!0,mousedown:!0,mousemove:!0,mouseup:!0,mouseover:!0,mouseout:!0,wheel:!0,mousewheel:!0,input:!0,change:!0,beforeinput:!0,compositionstart:!0,compositionupdate:!0,compositionend:!0,select:!0,cut:!0,copy:!0,paste:!0,beforecut:!0,beforecopy:!0,beforepaste:!0,focusin:!0,focusout:!0,DOMFocusIn:!0,DOMFocusOut:!0,DOMActivate:!0,dragend:!0,datasetchanged:!0}},function(e,t){function n(e){var t=e.getElementsByTagName("script");if(t.length)for(var n,o=0;n=t[o++];)if(a[n.type]){var i=r.cloneNode(!1);Array.prototype.forEach.call(n.attributes,function(e){e&&e.specified&&(i[e.name]=e.value,i.setAttribute(e.name,e.value))}),i.text=n.text,n.parentNode.replaceChild(i,n)}}var r=avalon.document.createElement("script"),a=avalon.oneObject(["","text/javascript","text/ecmascript","application/ecmascript","application/javascript"]);e.exports=n},function(e,t){function n(e){for(var t,o=0;t=e[o++];)if(1===t.nodeType){var i=a(t),s=avalon.vmodels[i];if(s&&!s.$element){r(t);var l=t.outerHTML;avalon(t).removeClass("ms-controller"),s.$element=t;var c=new Date-0,u=avalon.lexer(l);avalon.log("create primitive vtree",new Date-c),c=new Date,s.$render=avalon.render(u),avalon.log("create template Function ",new Date-c),avalon.rerenderStart=new Date,t.vtree=u,avalon.batch(i,!0)}else i||n(t.childNodes)}}function r(e){for(var t,n=0;n<e.childNodes.length;n++){var a=e.childNodes[n];3!=a.nodeType||i.test(a.nodeValue)?1===a.nodeType&&r(a):(t=e.removeChild(a),n--)}0==e.childNodes.length&&t&&e.appendChild(t)}function a(e){return e.getAttribute("ms-controller")}function o(e){if(e.getAttribute&&a(e))return!0;for(var t,n=e.getElementsByTagName?e.getElementsByTagName("*"):e.querySelectorAll("*"),r=0;t=n[r++];)if(a(e))return!0;return!1}var i=/\S/;e.exports=avalon.scan=function(e){return e&&e.nodeType?o(e)?void avalon.warn('[avalon.scan] first argument must has "ms-controller" attribute'):void n([e]):void avalon.warn("[avalon.scan] first argument must be element , documentFragment, or document")}},function(e,t){function n(e,t,n){var r=avalon.type(e);if("array"!==r||"object"!==r)throw"orderBy只能处理对象或数组";var a=n&&0>n?-1:1;if("string"==typeof t){var o=t;t=function(e){return e&&e[o]}}e=l(e),e.forEach(function(e){e.order=t(e.value,e.key)}),e.sort(function(e,t){var n=e.order,r=t.order;return n===r?0:n>r?a:-a});var s="array"===r,c=s?[]:{};return i(c,e,function(e){s?c.push(e.value):c[e.key]=e.value})}function r(e,t){var n=avalon.type(e);if("array"!==n&&"object"!==n)throw"filterBy只能处理对象或数组";var r=avalon.slice(arguments,2);if("function"==typeof t)var a=t;else{if("string"!=typeof t)throw t+"必须是字符串或函数";r.unshift(new RegExp(avalon.escapeRegExp(t),"i")),a=s}e=l(e).filter(function(e){return!!a.apply(e,[e.value].concat(r))});var o="array"===n,c=o?[]:{};return i(c,e,function(e){o?c.push(e.value):c[e.key]=e.value})}function a(e,t,n){if(avalon.isObject(e)&&!Array.isArray(e)){var r=[];return i(r,t,function(t){r.push(e.hasOwnProperty(t)?e[t]:n?n[t]:"")})}throw"selectBy只支持对象"}function o(e,t,n){return t=Math.abs(Number(t))===1/0?Number(t):parseInt(t,10),Number.isNaN(t)?e:("number"==typeof e&&(e+=""),Array.isArray(e)||"string"==typeof e?(n=!n||Number.isNaN(n)?0:~~n,n=0>n?Math.max(0,e.length+n):n,e=t>=0?e.slice(n,n+t):0===n?e.slice(t,e.length):e.slice(Math.max(0,n+t),n),i(e,[])):e)}function i(e,t,n){for(var r=0,a=t.length;a>r;r++)n(t[r]);return e}function s(e,t){if(avalon.isPlainObject(e)){for(var n in e)if(t.test(e[n]))return!0}else{if(Array.isArray(e))return e.some(function(e){return t.test(e)});if(null!==e)return t.test(e)}return!1}function l(e){var t=[],n=0;return avalon.each(e,function(e,r){t[n++]={value:r,key:e}}),t}Number.isNaN=Number.isNaN||function(e){return e!==e},e.exports={limitBy:o,orderBy:n,selectBy:a,filterBy:r}},function(e,t){function n(e){return parseInt(e,10)||0}function r(e,t,n){var r="";for(0>e&&(r="-",e=-e),e=""+e;e.length<t;)e="0"+e;return n&&(e=e.substr(e.length-t)),r+e}function a(e,t,n,a){return function(o){var i=o["get"+e]();return(n>0||i>-n)&&(i+=n),0===i&&-12===n&&(i=12),r(i,t,a)}}function o(e,t){return function(n,r){var a=n["get"+e](),o=(t?"SHORT"+e:e).toUpperCase();return r[o][a]}}function i(e){var t=-1*e.getTimezoneOffset(),n=t>=0?"+":"";return n+=r(Math[t>0?"floor":"ceil"](t/60),2)+r(Math.abs(t%60),2)}function s(e,t){return e.getHours()<12?t.AMPMS[0]:t.AMPMS[1]}function l(e,t){var r,a,o=l.locate,i="",s=[];if(t=t||"mediumDate",t=o[t]||t,"string"==typeof e)if(/^\d+$/.test(e))e=n(e);else if(p.test(e))e=+RegExp.$1;else{var v=e.trim(),f=[0,0,0,0,0,0,0],d=new Date(0);v=v.replace(/^(\d+)\D(\d+)\D(\d+)/,function(e,t,r,a){var o=4===a.length?[a,t,r]:[t,r,a];return f[0]=n(o[0]),f[1]=n(o[1])-1,f[2]=n(o[2]),""});var h=d.setFullYear,m=d.setHours;v=v.replace(/[T\s](\d+):(\d+):?(\d+)?\.?(\d)?/,function(e,t,r,a,o){return f[3]=n(t),f[4]=n(r),f[5]=n(a),o&&(f[6]=Math.round(1e3*parseFloat("0."+o))),""});var g=0,y=0;v=v.replace(/Z|([+-])(\d\d):?(\d\d)/,function(e,t,r,a){return h=d.setUTCFullYear,m=d.setUTCHours,t&&(g=n(t+r),y=n(t+a)),""}),f[3]-=g,f[4]-=y,h.apply(d,f.slice(0,3)),m.apply(d,f.slice(3)),e=d}if("number"==typeof e&&(e=new Date(e)),"date"===avalon.type(e)){for(;t;)a=u.exec(t),a?(s=s.concat(a.slice(1)),t=s.pop()):(s.push(t),t=null);return s.forEach(function(t){r=c[t],i+=r?r(e,o):t.replace(/(^'|'$)/g,"").replace(/''/g,"'")}),i}}var c={yyyy:a("FullYear",4),yy:a("FullYear",2,0,!0),y:a("FullYear",1),MMMM:o("Month"),MMM:o("Month",!0),MM:a("Month",2,1),M:a("Month",1,1),dd:a("Date",2),d:a("Date",1),HH:a("Hours",2),H:a("Hours",1),hh:a("Hours",2,-12),h:a("Hours",1,-12),mm:a("Minutes",2),m:a("Minutes",1),ss:a("Seconds",2),s:a("Seconds",1),sss:a("Milliseconds",3),EEEE:o("Day"),EEE:o("Day",!0),a:s,Z:i},u=/((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/,p=/^\/Date\((\d+)\)\/$/,v={AMPMS:{0:"上午",1:"下午"},DAY:{0:"星期日",1:"星期一",2:"星期二",3:"星期三",4:"星期四",5:"星期五",6:"星期六"},MONTH:{0:"1月",1:"2月",2:"3月",3:"4月",4:"5月",5:"6月",6:"7月",7:"8月",8:"9月",9:"10月",10:"11月",11:"12月"},SHORTDAY:{0:"周日",1:"周一",2:"周二",3:"周三",4:"周四",5:"周五",6:"周六"},fullDate:"y年M月d日EEEE",longDate:"y年M月d日",medium:"yyyy-M-d H:mm:ss",mediumDate:"yyyy-M-d",mediumTime:"H:mm:ss","short":"yy-M-d ah:mm",shortDate:"yy-M-d",shortTime:"ah:mm"};v.SHORTMONTH=v.MONTH,l.locate=v,e.exports=l},function(e,t){function n(e){return String(e).replace(/&/g,"&amp;").replace(r,function(e){var t=e.charCodeAt(0),n=e.charCodeAt(1);return"&#"+(1024*(t-55296)+(n-56320)+65536)+";"}).replace(a,function(e){return"&#"+e.charCodeAt(0)+";"}).replace(/</g,"&lt;").replace(/>/g,"&gt;")}var r=/[\uD800-\uDBFF][\uDC00-\uDFFF]/g,a=/([^\#-~| |!])/g;e.exports=n},function(e,t){var n={stop:function(e){return e.stopPropagation(),e},prevent:function(e){return e.preventDefault(),e}},r={esc:27,tab:9,enter:13,space:32,del:46,up:38,left:37,right:39,down:40};avalon.each(r,function(e,t){n[e]=function(e){return e.which!==t&&(e.$return=!0),e}}),e.exports=n},function(e,t,n){function r(e){return e}var a=n(32),o=n(29),i=n(33),s=n(28),l=n(27),c=n(30),u=avalon.filters;avalon.mix({__read__:function(e){var t=u[e];return t?t.get?t.get:t:r},__write__:function(e){var t=u[e];return t&&t.set||r}}),avalon.mix(u,{uppercase:function(e){return e.toUpperCase()},lowercase:function(e){return e.toLowerCase()},truncate:function(e,t,n){return t=t||30,n="string"==typeof n?n:"...",e.length>t?e.slice(0,t-n.length)+n:String(e)},camelize:avalon.camelize,date:s,escape:o,sanitize:i,number:a,currency:function(e,t,n){return(t||"￥")+a(e,isFinite(n)?n:2)}},l,c),e.exports=avalon},function(e,t){function n(e,t,n,r){e=(e+"").replace(/[^0-9+\-Ee.]/g,"");var a=isFinite(+e)?+e:0,o=isFinite(+t)?Math.abs(t):3,i=r||",",s=n||".",l="",c=function(e,t){var n=Math.pow(10,t);return""+(Math.round(e*n)/n).toFixed(t)};return l=(o?c(a,o):""+Math.round(a)).split("."),l[0].length>3&&(l[0]=l[0].replace(/\B(?=(?:\d{3})+(?!\d))/g,i)),(l[1]||"").length<o&&(l[1]=l[1]||"",l[1]+=new Array(o-l[1].length+1).join("0")),l.join(s)}e.exports=n},function(e,t){var n=/<script[^>]*>([\S\s]*?)<\/script\s*>/gim,r=/\s+(on[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g,a=/<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/gi,o={a:/\b(href)\=("javascript[^"]*"|'javascript[^']*')/gi,img:/\b(src)\=("javascript[^"]*"|'javascript[^']*')/gi,form:/\b(action)\=("javascript[^"]*"|'javascript[^']*')/gi};e.exports=function(e){return e.replace(n,"").replace(a,function(e,t){var n=e.toLowerCase().match(/<(\w+)\s/);if(n){var a=o[n[1]];a&&(e=e.replace(a,function(e,t,n){var r=n.charAt(0);return t+"="+r+"javascript:void(0)"+r}))}return e.replace(r," ").replace(/\s+/g," ")})}},function(e,t){(function(t){var n=t,r={window:n,document:{createElement:function(){return{}},createElementNS:function(){return{}},contains:Boolean},root:{outerHTML:"x"},msie:NaN,modern:!0,avalonDiv:null,avalonFragment:null};if(n.window===n){var a=n.document;r.document=a,r.modern=n.dispatchEvent,r.root=a.documentElement,r.avalonDiv=a.createElement("div"),r.avalonFragment=a.createDocumentFragment(),n.VBArray&&(r.msie=a.documentMode||(n.XMLHttpRequest?7:6))}r.nextTick=function(){function e(){for(var e=o.length,t=0;e>t;t++)o[t]();o=o.slice(e)}var t=n.setImmediate,r=n.MutationObserver;if(t)return t.bind(n);var o=[];if(r){var i=a.createTextNode("avalon");new r(e).observe(i,{characterData:!0});var s=!1;return function(e){o.push(e),s=!s,i.data=s}}return function(e){setTimeout(e,4)}}(),e.exports=r}).call(t,function(){return this}())},function(e,t){function n(e){for(var t in e)if(avalon.ohasOwn.call(e,t)){var r=e[t];"function"==typeof n.plugins[t]?n.plugins[t](r):"object"==typeof n[t]?avalon.mix(n[t],r):n[t]=r}return this}avalon.config=n;var r={interpolate:function(e){var t=e[0],r=e[1];if(t===r)throw new SyntaxError("openTag!==closeTag");var a=t+"test"+r,o=avalon.avalonDiv;if(o.innerHTML=a,o.innerHTML!==a&&o.innerHTML.indexOf("&lt;")>-1)throw new SyntaxError("此定界符不合法");o.innerHTML="",n.openTag=t,n.closeTag=r;var i=avalon.escapeRegExp(t),s=avalon.escapeRegExp(r);
-n.rexpr=new RegExp(i+"([\\ss\\S]*)"+s),n.rexprg=new RegExp(i+"([\\ss\\S]*)"+s,"g"),n.rbind=new RegExp(i+"[\\ss\\S]*"+s+"|\\bms-|\\bslot\\b")}};n.plugins=r,n.plugins.interpolate(["{{","}}"]),n.debug=!0},function(e,t){(function(t){function n(e){return new n.init(e)}t.avalon=n,n.init=function(e){this[0]=this.element=e},n.fn=n.prototype=n.init.prototype,n.mix=function(e,t){for(var n in t)e[n]=t[n];return e};var r=/[^, ]+/g,a=window.console;n.mix(n,{noop:function(){},rword:r,inspect:{}.toString,ohasOwn:{}.hasOwnProperty,log:function(){a&&n.config.debug&&Function.apply.call(console.log,console,arguments)},warn:function(){if(a&&n.config.debug){var e=console.warn||console.log;Function.apply.call(e,console,arguments)}},error:function(e,t){throw(t||Error)(e)},oneObject:function(e,t){"string"==typeof e&&(e=e.match(r)||[]);for(var n={},a=void 0!==t?t:1,o=0,i=e.length;i>o;o++)n[e[o]]=a;return n}}),e.exports=n}).call(t,function(){return this}())},function(e,t,n){function r(e,t){var n=avalon.vmodels[e];if(document.nodeName&&n&&n.$render&&n.$render!==avalon.noop&&(i[e]?avalon.Array.ensure(l,e):i[e]=!0,!s)){var c=n.$element;c&&a(function(){s=!0;var t=n.$render();avalon.diff(t,c.vtree||[]),o([c],t),c.vtree=t,avalon.log("rerender",new Date-avalon.rerenderStart),s=!1,delete i[e];for(var a in i){r(a,!0);break}},t)}}function a(e,t){if(t){e();var n=l.shift();n&&r(n,!0)}else avalon.nextTick(e)}var o=n(4),i={},s=!1,l=[];e.exports=avalon.batch=r},function(e,t,n){function r(e,t){if(e)for(var n=0;n<e.length;n++){var l=e[n],c=t[n]||i;switch(l.type){case"#text":l.skipContent||s.expr.diff(l,c);break;case"#comment":"for"===l.directive?n=s["for"].diff(e,t,n):l.directive&&s[l.directive].diff(l,c);break;default:l.skipAttrs||a(l,c),l.skipContent||r(l.children,c.children||o)}}}function a(e,t){for(var n in e.props){var r=n.match(l);if(r){var a=r[1];try{s[a]&&s[a].diff(e,t||i,a,n)}catch(o){avalon.log(e,t,o,"diffProps error")}}}}var o=[],i={children:[],props:{}},s=avalon.directives,l=n(1).binding;e.exports=r},function(e,t){function n(e,t){var n,r=t.split(".")[0];try{e.hasOwnProperty(r)&&(n=e.$accessors?e.$accessors[r].get.heirloom.__vmodel__:Object.getOwnPropertyDescriptor(e,r).get.heirloom.__vmodel__)}catch(a){avalon.log("adjustVm "+a)}return n||e}function r(e,t){var r=n(this,e),a=r.$events,o=a[e]||(a[e]=[]);return r!==this&&(this.$events[e]=o),avalon.Array.ensure(o,t),function(){avalon.Array.remove(o,t)}}function a(e,t,n,r,o,i){if(e&&e.length)try{for(i=i||e.length-1;i>=0;i--){var s=e[i];s.call(t,r,o,n)}}catch(l){i-1>0&&a(e,t,n,r,o,i-1),avalon.log(l,n)}}e.exports={$emit:a,$watch:r,adjustVm:n}},function(e,t,n){function r(e){var t=t||String(new Date-0).slice(0,6),n=a(e,t)+"\n\nreturn vnodes"+t,r=Function("__vmodel__",n);return r}avalon.lexer=n(41),avalon.diff=n(38),avalon.batch=n(37);var a=n(45);avalon.render=r,e.exports=avalon},function(e,t,n){function r(e){var t="??"+O++;return T[t]=e,t}function a(e){var t=T[e];return t}function o(e,t){var n=[];if(t&&!$.test(e))return n;for(t||(e=e.replace(k,r));;){var o="",l=!1,u=e.match(g);if(u&&(o=u[0],l=new f(o.replace(A,a))),!l&&(u=e.match(y))){o=u[0],l=new d(u[1].replace(A,a));var v=l.nodeValue;if(w.test(v)){var b=n[n.length-1];b&&"#text"===b.type&&C.test(b.nodeValue)&&n.pop()}}if(!l&&(u=e.match(h))){o=u[0];var _=u[1].toLowerCase();o=i(o,_),u=o.match(m);var O={};u[2]&&c(u[2],O);var M=o.slice(u[0].length,-1*(_.length+3));l={type:_,props:O,template:M.replace(A,a).trim(),children:[]},l=s(l,M,n)}if(l||(u=e.match(m),u&&(o=u[0],_=u[1].toLowerCase(),O={},u[2]&&c(u[2],O),l={type:_,props:O,template:"",children:[],isVoidTag:!0},s(l,"",n))),!l)break;n.push(l),e=e.slice(o.length),"#comment"===l.type&&x.test(l.nodeValue)&&(l.signature=p("for"),e=e.replace(E,""))}return t||(T={}),n}function i(e,t){var n=[],r=[],a=V[t+"open"]||(V[t+"open"]=new RegExp("<"+t+M,S)),o=V[t+"close"]||(V[t+"close"]=new RegExp("</"+t+">",S));e.replace(a,function(e,t){return n.push(("0000000000"+t+"<").slice(-10)),e.replace(j,"1")}).replace(o,function(e,t){r.push(("0000000000"+t+">").slice(-10))});for(var i=n.concat(r).sort(),s=i.join("").replace(b,""),l=0,c=0,u=0,p=s.length;p>u;u++){var v=s.charAt(u);if("<"===v?l+=1:l-=1,0===l){c=u;break}}var f=parseFloat(i[c])+t.length+3;return e.slice(0,f)}function s(e,t,n){var r=e.type;if(e.props["ms-skip"])e.skipContent=!0;else{switch(r){case"style":case"script":case"noscript":case"template":case"textarea":e.skipContent=!0,"textarea"===r&&(e.props.type="textarea");break;case"input":e.props.type||(e.props.type="text");case"xmp":e.children.push(new f(e.template));break;case"option":e.children.push(new f(u(e.template)));break;default:if(!e.isVoidTag){var a=o(t,!0);e.children=a,"table"===r&&l(e.children)}}var i=e.props["ms-for"];i&&(n.push({type:"#comment",nodeValue:"ms-for:"+i,signature:p("for")}),delete e.props["ms-for"],n.push(e),e={type:"#comment",nodeValue:"ms-for-end:"})}return e}function l(e){for(var t,n=!1,r=0,a=0,o=e.length,i=0;o>i;i++){var s=e[i];t?"tr"!==s.type&&"#"!==s.type.charAt(0)?t=!1:(t.children.push(s),r++,e[i]=0):"tr"===s.type&&(t={type:"tbody",template:"",children:[],props:{}},t.children.push(s),n=!0,0===a&&(a=i),e[i]=t)}if(n)for(i=a;o>i&&(0!==e[i]||(e.splice(i,1),i--,r--,0!==r));i++);}function c(e,t){e.replace(H,"=").replace(D,function(e){var n=e.split("="),r=n[1]||"",o=n[0].toLowerCase();2===n.length&&0===r.indexOf("??")&&(r=r.replace(A,a).slice(1,-1).replace(N,"&").replace(L,'"')),t[o]=r})}function u(e){return String(e).replace(F,"").trim()}var p=avalon.makeHashCode,v=n(6),f=v.VText,d=v.VComment,h=/^<([^\s>\/=.$<]+)(?:\s+[^=\s]+(?:=[^>\s]+)?)*\s*>(?:[\s\S]*)<\/\1>/,m=/^<([^\s>\/=.$<]+)\s*([^>]*?)\/?>/,g=/^[^<]+/,y=/^<!--([\w\W]*?)-->/,b=/\d+/g,x=/^\s*ms-for\:/,w=/^\s*ms-for-end\:/,_=n(1),C=_.sp,A=/\?\?\d+/g,E=_.leftSp,k=_.string,$=avalon.config.rbind,T={},O=1,M="(?:\\s+[^>=]*?(?:=[^>]+?)?)*>",V={},j=/./g,S=avalon.msie<9?"ig":"g",N=/&amp;/g,D=/\S+/g,L=/&quot;/g,H=/\s*=\s*/g,F=/<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi;e.exports=o},function(e,t,n){function r(e,t,n){var r=[],p="ms-skip"in e,v="";for(var f in e){var d,h=e[f];if(!p&&h&&(d=f.match(l))){var m=d[1],g=d[2]||"",y=f;if(c[m]){var b=parseFloat(g)||0;g=m,m="on"}if(y="ms-"+m+(g?"-"+g:""),f!==y&&(delete e[f],e[y]=h),s[m]){var x={type:m,param:g,name:y,expr:h,priority:s[m].priority||100*m.charCodeAt(0)};"on"===m&&(x.name+="-"+b,x.priority+=100*g.charCodeAt(0)+b),r.push(x)}}else v+=o.test(f)||u[f]?"vnode"+t+".props["+i(f)+"] = "+i(h)+"\n":"vnode"+t+".props."+f+" = "+i(h)+"\n"}return r.length?(avalon.parseExpr(x),r.sort(a).forEach(function(e){v+=s[e.type].parse(e,t,n)})):v+="	vnode"+t+".skipAttrs = true\n",v}function a(e,t){return e.priority-t.priority}var o=/[W-]/,i=avalon.quote,s=avalon.directives,l=n(1).binding,c=avalon.oneObject("animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit"),u=avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false,finally,for,function,if,in,instanceof,new,null,return,switch,this,throw,true,try,typeof,var,void,while,with,abstract,boolean,byte,char,class,const,double,enum,export,extends,final,float,goto,implements,import,int,interface,long,native,package,private,protected,public,short,static,super,synchronized,throws,transient,volatile");e.exports=r},function(e,t,n){function r(e){for(var t,n,r=[],i=0;;){if(n=e.indexOf(avalon.config.openTag,i),-1===n)break;if(t=e.slice(i,n),0===i&&(t=t.replace(o.leftSp,"")),t&&r.push({expr:t}),i=n+avalon.config.openTag.length,n=e.indexOf(avalon.config.closeTag,i),-1===n)break;t=e.slice(i,n),t&&r.push({expr:t.replace(a,""),type:"{{}}"}),i=n+avalon.config.closeTag.length}t=e.slice(i);var s=t.replace(o.rightSp,"");return s&&r.push({expr:s}),r}var a=/\r?\n/g,o=n(1);e.exports=r},function(e,t,n){function r(e,t){function n(e){var t="??"+y++;return b[t]=e,t}function r(e){return b[e]}var h={};if(t=t||"other","object"==typeof e&&(t=e.type,h=e,e=h.expr),"string"!=typeof e)return"";var m=e.trim(),g=o.get(t+":"+m);if(g)return g;var y=1,b={};m=m.replace(i,n).replace(s,n).replace(v,n).replace(d,"$1").split(f);var x=m.shift().replace(l,r).trim();if("on"===t&&p.test(x)&&(x+="($event)"),x=x.replace(u,"$1__vmodel__."),"js"===t)return o.put(t+":"+m,x);var w=m.map(function(e){e=e.replace(l,r).replace(u,"$1__vmodel__.");var t=!1;return e=e.replace(c,function(e,n){return t=!0,/\S/.test(n)?"(__value__,"+n+");":"(__value__);"}),t||(e+="(__value__);"),e=e.replace(/(\w+)/,'avalon.__read__("$1")'),"__value__ = "+e}),_=[];if("on"===t)w=w.map(function(e){return e.replace(/__value__/g,"$event")}),w.length&&w.push("if($event.$return){\n	return;\n}"),_=["function self($event){","try{","	var __vmodel__ = this;","	"+x,"}catch(e){",a(e,t),"}","}"],w.unshift(2,0);else{if("duplex"===t){var C=["function (__vmodel__){","try{","return "+x+"\n","}catch(e){",a(e,t),"}","}"];fn=Function("return "+C.join("\n"))(),o.put("duplex:"+e,fn);var A=["function (__vmodel__,__value__){","try{","	"+x+" = __value__","}catch(e){",a(e,t),"}","}"];if(fn=Function("return "+A.join("\n"))(),o.put("duplex:set:"+e,fn),m.length){var E=["function (__vmodel__, __value__){","try{",w.join("\n"),"return __value__\n","}catch(e){",a(e,t),"}","}"];fn=Function("return "+E.join("\n"))(),o.put("duplex:format:"+e,fn)}return}_=["(function(){","try{","var __value__ = "+x,"return __value__","}catch(e){",a(e,t),'	return ""',"}","})()"],w.unshift(3,0)}return _.splice.apply(_,w),g=_.join("\n"),o.put(t+":"+m,g),g}function a(e,t){return"	avalon.warn(e, "+avalon.quote("parse "+t+" binding【 "+e+" 】fail")+")"}var o=n(5),i=/(^|[^\/])\/(?!\/)(\[.+?]|\\.|[^\/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g,s=n(1).string,l=/\?\?\d+/g,c=/\(([^)]*)\)/,u=/(^|[^\w\u00c0-\uFFFF_])(@)(?=\w)/g,p=/^\@[$\w]+$/,v=/\|\|/g,f=/\|(?=\w)/,d=/\s*(\.|\|)\s*/g;e.exports=avalon.parseExpr=r},function(e,t,n){function r(e){return f.test(e)?e:i(e)}function a(e,t){return"(function(){\n\n"+e+"\n\nreturn vnodes"+t+"\n})();\n"}function o(e,t){t=t||String(new Date-0).slice(0,5);for(var n=[],v=!1,f="vnodes"+t,h="vnode"+t,m="var "+f+" = []\n",g=0;g<e.length;g++){var y=e[g];if("#text"===y.type){m+="var "+h+' = {type:"#text", skipContent:true}\n';var b=c.test(y.nodeValue);if(b){var x=l(y.nodeValue);if(1===x.length){var w=i(x[0].expr);m+=h+".nodeValue = "+r(x[0].expr)+"\n"}else w=x.map(function(e){return e.type?r(e.expr):u(e.expr)}).join(" + "),m+=h+".nodeValue = String("+w+")\n";m+=h+".fixIESkip = true\n",m+=h+".skipContent = false\n"}else m+=d.test(y.nodeValue)?h+'.nodeValue = "\\n"\n':h+".nodeValue = "+u(y.nodeValue)+"\n";m+=f+".push("+h+")\n"}else{if("#comment"===y.type){var _=y.nodeValue;if(0===_.indexOf("ms-for:")){var C=y.signature;n.push(C),m+="\nvar "+C+'= {\n	type:"#comment",\n	directive:"for",\n	skipContent:false,\n	signature:'+u(C)+",\n	start:"+f+".length,\n	nodeValue:"+u(_)+"\n}\n",m+=f+".push("+C+")\n",m+=avalon.directives["for"].parse(_,t)}else if(0===_.indexOf("ms-for-end:")){var C=n[n.length-1];if(m+=f+'.push({\n	type:"#comment",\n	skipContent:true,\n	nodeValue:'+u(C)+",\n	key:traceKey\n})\n",m+="\n})\n",n.length){var C=n[n.length-1];m+=C+".end ="+f+'.push({\n	type:"#comment",\n	skipContent:true,\n	signature:'+u(C)+",\n	nodeValue:"+u(C+":end")+"\n})\n",n.pop()}}else m+=0===_.indexOf("ms-js:")?i(_.replace("ms-js:",""),"js")+"\n":f+".push("+u(y)+")\n\n\n";continue}var v=y.props["ms-if"];v&&(y.signature=p("ms-if"),m+="if(!("+i(v,"if")+")){\n",m+=f+'.push({\n	type: "#comment",\n	directive: "if",\n	nodeValue:'+u(y.signature)+",\n\n	signature:"+u(y.signature)+',\n\n	props: {"ms-if":true} })\n',m+="\n}else{\n\n"),m+="var "+h+" = {\n	type: "+u(y.type)+",\n	props: {},\n	children: [],\n	isVoidTag: "+!!y.isVoidTag+',\n	template: ""}\n';var A=y.props["ms-widget"];if(A)m+=avalon.directives.widget.parse({expr:A,type:"widget"},t,y),A=!1;else{var E=s(y.props,t,y);E&&(m+=E),m+=y.children.length?h+".children = "+a(o(y.children,t),t)+"\n":h+".template = "+u(y.template)+"\n"}m+=f+".push("+h+")\n",v&&(m+="}\n",v=!1)}}return m}var i=n(44),s=n(42),l=n(43),c=avalon.config.rexpr,u=avalon.quote,p=avalon.makeHashCode,v=n(1),f=v.ident,d=v.sp;e.exports=o},function(e,t){function n(e){if("string"==typeof e)this.type="#comment",this.nodeValue=e,this.skipContent=!0;else for(var t in e)this[t]=e[t]}n.prototype={constructor:n,clone:function(){return new n(this)},toDOM:function(){return document.createComment(this.nodeValue)},toHTML:function(){return"<!--"+this.nodeValue+"-->"}},e.exports=n},function(e,t){function n(e,t,n){if("object"==typeof e)for(var r in e)this[r]=e[r];else this.type=e,this.props=t,this.children=n,this.template=""}function r(e){return e!==!1&&Object(e)!==e}n.prototype={constructor:n,toDOM:function(){var e=document.createElement(this.type);for(var t in this.props){var n=this.props[t];r(n)&&e.setAttribute(t,n+"")}if(this.skipContent)switch(this.type){case"script":e.text=this.template;break;case"style":case"template":e.innerHTML=this.template;break;case"noscript":e.textContent=this.template;break;default:var a=avalon.parseHTML(this.template);e.appendChild(a)}else this.isVoidTag||(this.children.length?this.children.forEach(function(t){e.appendChild(avalon.vdomAdaptor(t).toDOM())}):e.appendChild(avalon.parseHTML(this.template)));return e},toHTML:function(){var e=[];for(var t in this.props){var n=this.props[t];r(n)&&e.push(t+"="+avalon.quote(this.props[t]+""))}e=e.length?" "+e.join(" "):"";var a="<"+this.type+e;return this.isVoidTag?a+"/>":(a+=">",a+=this.children.length?this.children.map(function(e){return avalon.vdomAdaptor(e).toHTML()}).join(""):this.template,a+"</"+this.type+">")}},e.exports=n},function(e,t){function n(e){if("string"==typeof e)this.type="#text",this.nodeValue=e,this.skipContent=!r.test(e);else for(var t in e)this[t]=e[t]}var r=avalon.config.rexpr;n.prototype={constructor:n,toDOM:function(){return document.createTextNode(this.nodeValue)},toHTML:function(){return this.nodeValue}},e.exports=n},function(e,t,n){function r(e,t){t.__vmodel__=e;var n=p.hideProperty;n(e,"$events",t),n(e,"$watch",function(){if(2===arguments.length)return c.apply(e,arguments);throw"$watch方法参数不对"}),n(e,"$fire",function(t,n,r){var a=e.$events[t];u(a,e,t,n,r)})}function a(e,t,n){return"$"===e.charAt(0)||n[e]||"function"==typeof t||t&&t.nodeName&&t.nodeType>0}function o(e,t,n,r){if(Array.isArray(e))return p.arrayFactory(e,t,n,r);if(Object(e)===e&&"function"!=typeof e){if(t&&t.$id){var a=p.slaveFactory(t,e,n,r);avalon.stopBatch=!0;for(var o in e)v[o]||(a[o]=e[o]);return avalon.stopBatch=!1,a}return a=p.masterFactory(e,n,r)}return e}function i(e,t,n){function r(){return a}var a=NaN;return r.heirloom=n,{get:r,set:function(o){if(a!==o){o&&"object"==typeof o&&(o=p.modelAdaptor(o,a,n,{pathname:t,id:e}));var i=a;a=o;var s=n.__vmodel__;if(this.$hashcode&&s){if(s&&n!==s.$events&&(r.heirloom=s.$events),u(r.heirloom[t],s,t,o,i),e.indexOf(".*.")>0){var l=e.match(f),c=avalon.vmodels[l[1]];if(c){var v=l[2];u(c.$events[v],s,v,o,i)}}var d=s.$id.split(".")[0];avalon.rerenderStart=new Date,avalon.stopBatch||avalon.batch(d,!0)}}},enumerable:!0,configurable:!0}}function s(e){var t=e.$id;!t&&avalon.config.debug&&avalon.warn("vm.$id must be specified");var n=p.masterFactory(e,{},{pathname:"",id:t,master:!0});if(avalon.vmodels[t])throw Error("error:[",t,"] had defined!");return avalon.vmodels[t]=n}var l=n(39),c=l.$watch,u=l.$emit,p={},v=n(7);p.modelAdaptor=o;var f=/([^.]+)\.(.+)/,d={set:function(e,t){if(e>>>0===e&&this[e]!==t){if(e>this.length)throw Error(e+"set方法的第一个参数不能大于原数组长度");this.notify("*",t,this[e],!0),this.splice(e,1,t)}},contains:function(e){return-1!==this.indexOf(e)},ensure:function(e){return this.contains(e)||this.push(e),this},pushArray:function(e){return this.push.apply(this,e)},remove:function(e){return this.removeAt(this.indexOf(e))},removeAt:function(e){return e>>>0===e?this.splice(e,1):[]},clear:function(){return this.removeAll(),this}};avalon.define=s,e.exports={$$midway:p,$$skipArray:v,__array__:d,isSkip:a,makeFire:r,makeAccessor:i,modelAdaptor:o}},,,,function(e,t,n){var r=n(63);avalon.directive("attr",{parse:function(e,t){return"vnode"+t+'.props["ms-attr"] = '+avalon.parseExpr(e)+";\n"},diff:function(e,t){var n=e.props["ms-attr"],r=t.props["ms-attr"];if(Object(n)===n){if(Array.isArray(n)&&(n=e.props["ms-attr"]=avalon.mix.apply({},n)),"object"!=typeof r)e.changeAttr=n;else{var a={},o=!1;for(var i in n)n[i]!==r[i]&&(o=!0,a[i]=n[i]);o&&(e.changeAttr=a)}if(e.changeAttr){var s=e.change||(e.change=[]);avalon.Array.ensure(s,this.update)}}else e.props["ms-attr"]=r},update:r})},,,function(e,t,n){function r(e,t){var n=e.ctrl=t.ctrl;n.update=a,n.updateCaret=u,n.get=d.get("duplex:"+n.expr),n.set=d.get("duplex:set:"+n.expr);var r=d.get("duplex:format:"+n.expr);r&&n.formatters.push(function(e){return r(n.vmodel,e)}),n.vmodel=e.duplexVm;var c=n.events={};switch(n.type){case"radio":"radio"===e.props.type?c.click=a:c.change=a;break;case"checkbox":case"select":c.change=a;break;case"contenteditable":n.isChanged?c.blur=a:(p.webkitURL?c.webkitEditableContentChanged=a:p.MutationEvent&&(c.DOMCharacterDataModified=a),c.input=a);break;case"input":n.isChanged?c.change=a:(c.input=a,c.compositionstart=s,c.compositionend=l)}/password|text/.test(e.props.type)&&(c.focus=o,c.blur=i)}function a(){var e=this,t=this.__duplex__;if(!e.composing&&e.value!==t.lastViewValue){if(e.caret)try{var n=c(e);n.start===n.end&&(t.caretPos=n.start)}catch(r){avalon.warn("fixCaret error",r)}if(t.debounceTime>4){var a=new Date,o=a-t.time||0;t.time=a,o>=t.debounceTime?v[t.type].call(t):(clearTimeout(t.debounceID),t.debounceID=setTimeout(function(){v[t.type].call(t)},o))}else v[t.type].call(t)}}function o(){this.caret=!0}function i(){this.caret=!1}function s(){this.composing=!0}function l(e){this.composing=!1,a.call(this,e)}function c(e){var t=NaN,n=NaN;return e.setSelectionRange&&(t=e.selectionStart,n=e.selectionEnd),{start:t,end:n}}function u(e,t,n){e.value&&!e.readOnly&&(e.selectionStart=t,e.selectionEnd=n)}var p=avalon.window,v=n(13),f=n(2).getLongID,d=n(5);f(o),f(i),f(s),f(l),f(a),e.exports=r},,function(e,t,n){function r(e,t){var n=[];e.children.forEach(function(e){"option"===e.type?n.push(e):"optgroup"===e.type&&e.children.forEach(function(e){"option"===e.type&&n.push(e)})});var r=e.props.multiple,a={},o=null===r||void 0===r||r===!1;Array.isArray(t)?t.forEach(function(e){a[e]=1}):a[t]=1;for(var i,s=0;i=n[s++];){var l="value"in i.props?i.props.value:(i.children[0]||{nodeValue:""}).nodeValue.trim();if(i.props.selected=!!a[l],a[l]&&o)break}}var a=n(14),o=n(12),i=n(56),s=n(60);avalon.directive("duplex",{priority:2e3,parse:function(e,t,n){return o(e,n),"vnode"+t+".duplexVm = __vmodel__;\nvnode"+t+'.props["ms-duplex"] = '+avalon.quote(e.expr)+";\n"},diff:function(e,t){t.ctrl&&t.ctrl.set?e.ctrl=t.ctrl:i(e,t);var n=e.ctrl;delete e.duplexVm;var a=e.props.value=n.get(n.vmodel);if("select"!==e.type||e.children.length||(avalon.Array.merge(e.children,avalon.lexer(e.template)),r(e,a)),n.elem){var o=t.props.value;s=Array.isArray(a)?a+""==o+"":a===o}else var s=!1;if(!s){n.modelValue=a;var l=e.afterChange||(e.afterChange=[]);avalon.Array.ensure(l,this.update)}},update:function(e,t){var n=e.__duplex__=t.ctrl;if(!n.elem){n.elem=e;var r=n.events;for(var o in r)avalon.bind(e,o,r[o]),delete r[o]}if(!avalon.msie&&a===!1&&!e.valueHijack){e.valueHijack=n.update;var i=setInterval(function(){avalon.contains(avalon.root,e)?e.valueHijack():clearInterval(i)},30)}var l=n.modelValue;n.viewValue!==l&&(n.viewValue=l,s[n.type].call(n),e.caret&&n.updateCaret(e,n.caretPos,n.caretPos))}})},,function(e,t){var n={input:function(){this.elem.value=this.viewValue},radio:function(){var e;e=this.isChecked?!!this.viewValue:this.viewValue+""===this.elem.value,this.elem.checked=e},checkbox:function(){for(var e=!1,t=this.elem,n=t.value,r=0;r<this.modelValue.length;r++){var a=this.modelValue[r];a+""===n&&(e=!0)}t.checked=e},select:function(){var e=Array.isArray(this.viewValue)?this.viewValue.map(String):this.viewValue+"";avalon(this.elem).val(e)},contenteditable:function(){this.elem.innerHTML=this.viewValue,this.update.call(this.elem)}};e.exports=n},function(e,t,n){n(10),n(53),n(11),n(21),n(15),n(20),n(17),n(9),n(19),n(58),n(18),n(16),n(22)},,function(e,t,n){function r(e,t){var n=t.changeAttr;if(n)for(var r in n){var i=n[r];if("src"===r&&window.chrome&&"EMBED"===e.tagName){e[r]=i;var s=e.parentNode,l=document.createComment("ms-src");s.replaceChild(l,e),s.replaceChild(e,l)}else if(0==r.indexOf("data-"))e.setAttribute(r,i);else{var c=a[r]||r;if("boolean"==typeof e[c]&&(e[c]=!!i),i===!1){e.removeAttribute(r);continue}var u=o.test(e)?!1:r in e.cloneNode(!1);u?e[c]=i+"":e.setAttribute(r,i)}}delete t.changeAttr}var a=n(23),o=/^\[object SVG\w*Element\]$/;e.exports=r},,function(e,t){var n=/\S+/g;"add,remove".replace(avalon.rword,function(e){avalon.fn[e+"Class"]=function(t){var r=this[0]||{};return t&&"string"==typeof t&&1===r.nodeType&&t.replace(n,function(t){r.classList[e](t)}),this}}),avalon.fn.mix({hasClass:function(e){var t=this[0]||{};return 1===t.nodeType&&t.classList.contains(e)},toggleClass:function(e,t){var r="boolean"==typeof t,a=this;return String(e).replace(n,function(e){var n=r?t:!a.hasClass(e);a[n?"addClass":"removeClass"](e)}),this}})},,,function(e,t){function n(e,t){if(e.offsetWidth<=0){var r=getComputedStyle(e,null);if(u.test(r.display)){var a={node:e};for(var o in c)a[o]=r[o],e.style[o]=c[o];t.push(a)}var i=e.parentNode;i&&1===i.nodeType&&n(i,t)}}function r(e){return e.window&&e.document?e:9===e.nodeType?e.defaultView:!1}var a=avalon.root,o=avalon.camelize,i=avalon.cssHooks,s=["","-webkit-","-o-","-moz-","-ms-"],l={"float":"cssFloat"};avalon.cssNumber=avalon.oneObject("animationIterationCount,columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom"),avalon.cssName=function(e,t,n){if(l[e])return l[e];t=t||a.style;for(var r=0,i=s.length;i>r;r++)if(n=o(s[r]+e),n in t)return l[e]=n;return null},avalon.fn.css=function(e,t){if(avalon.isPlainObject(e))for(var n in e)avalon.css(this,n,e[n]);else var r=avalon.css(this,e,t);return void 0!==r?r:this},avalon.fn.position=function(){var e,t,n=this[0],r={top:0,left:0};return n?("fixed"===this.css("position")?t=n.getBoundingClientRect():(e=this.offsetParent(),t=this.offset(),"HTML"!==e[0].tagName&&(r=e.offset()),r.top+=avalon.css(e[0],"borderTopWidth",!0),r.left+=avalon.css(e[0],"borderLeftWidth",!0),r.top-=e.scrollTop(),r.left-=e.scrollLeft()),{top:t.top-r.top-avalon.css(n,"marginTop",!0),left:t.left-r.left-avalon.css(n,"marginLeft",!0)}):r},avalon.fn.offsetParent=function(){for(var e=this[0].offsetParent;e&&"static"===avalon.css(e,"position");)e=e.offsetParent;return avalon(e||a)},i["@:set"]=function(e,t,n){e.style[t]=n},i["@:get"]=function(e,t){if(!e||!e.style)throw new Error("getComputedStyle要求传入一个节点 "+e);var n,r=getComputedStyle(e);return r&&(n="filter"===t?r.getPropertyValue(t):r[t],""===n&&(n=e.style[t])),n},i["opacity:get"]=function(e){var t=i["@:get"](e,"opacity");return""===t?"1":t},"top,left".replace(avalon.rword,function(e){i[e+":get"]=function(t){var n=i["@:get"](t,e);return/px$/.test(n)?n:avalon(t).position()[e]+"px"}});var c={position:"absolute",visibility:"hidden",display:"block"},u=/^(none|table(?!-c[ea]).+)/;avalon.each({Width:"width",Height:"height"},function(e,t){var r="client"+e,a="scroll"+e,o="offset"+e;i[t+":get"]=function(t,n,r){var a=-4;"number"==typeof r&&(a=r),n="Width"===e?["Left","Right"]:["Top","Bottom"];var i=t[o];return 2===a?i+avalon.css(t,"margin"+n[0],!0)+avalon.css(t,"margin"+n[1],!0):(0>a&&(i=i-avalon.css(t,"border"+n[0]+"Width",!0)-avalon.css(t,"border"+n[1]+"Width",!0)),-4===a&&(i=i-avalon.css(t,"padding"+n[0],!0)-avalon.css(t,"padding"+n[1],!0)),i)},i[t+"&get"]=function(e){var r=[];n(e,r);for(var a,o=i[t+":get"](e),s=0;a=r[s++];){e=a.node;for(var l in a)"string"==typeof a[l]&&(e.style[l]=a[l])}return o},avalon.fn[t]=function(n){var s=this[0];if(0===arguments.length){if(s.setTimeout)return s["inner"+e];if(9===s.nodeType){var l=s.documentElement;return Math.max(s.body[a],l[a],s.body[o],l[o],l[r])}return i[t+"&get"](s)}return this.css(t,n)},avalon.fn["inner"+e]=function(){return i[t+":get"](this[0],void 0,-2)},avalon.fn["outer"+e]=function(e){return i[t+":get"](this[0],void 0,e===!0?2:0)}}),avalon.fn.offset=function(){var e=this[0];try{var t=e.getBoundingClientRect();if(t.width||t.height||e.getClientRects().length){var n=e.ownerDocument,r=n.documentElement,a=n.defaultView;return{top:t.top+a.pageYOffset-r.clientTop,left:t.left+a.pageXOffset-r.clientLeft}}}catch(o){return{left:0,top:0}}},avalon.each({scrollLeft:"pageXOffset",scrollTop:"pageYOffset"},function(e,t){avalon.fn[e]=function(n){var a=this[0]||{},o=r(a),i="scrollTop"===e;return arguments.length?void(o?o.scrollTo(i?o[t]:n,i?n:o[t]):a[e]=n):o?o[t]:a[e]}})},,function(e,t){function n(e){try{if("object"==typeof e)return e;e="true"===e?!0:"false"===e?!1:"null"===e?null:+e+""===e?+e:r.test(e)?JSON.parse(e):e}catch(t){}return e}var r=/(?:\{[\s\S]*\}|\[[\s\S]*\])$/;avalon.parseJSON=JSON.parse,avalon.fn.attr=function(e,t){return 2===arguments.length?(this[0].setAttribute(e,t),this):this[0].getAttribute(e)},avalon.fn.data=function(e,t){switch(e="data-"+avalon.hyphen(e||""),arguments.length){case 2:return this.attr(e,t),this;case 1:var r=this.attr(e);return n(r);case 0:var a={};return avalon.each(this[0].attributes,function(t,r){r&&(e=r.name,e.indexOf("data-")||(e=avalon.camelize(e.slice(5)),a[e]=n(r.value)))}),a}},avalon.root.dataset&&(avalon.fn.data=function(e,t){e=e&&avalon.camelize(e);var r=this[0].dataset;switch(arguments.length){case 2:return r[e]=t,this;case 1:return t=r[e],n(t);case 0:var a={};for(e in r)a[e]=n(r[e]);return a}})},,function(e,t,n){function r(e,t,n){var a=e.getAttribute("avalon-events");if(a&&(e.disabled!==!0||"click"!==t)){for(var o,i=[],s=a.match(f)||[],l=0;o=s[l++];){var c=o.split(":");if(c[0]!==t)break;i.push(c[1])}i.length&&n.push({elem:e,uuids:i})}e=e.parentNode,e&&e.getAttribute&&p[t]&&r(e,t,n)}function a(e){e=new i(e);var t=e.type,n=e.target,a=[];r(n,t,a);for(var o,s,l,c=0;(l=a[c++])&&!e.cancelBubble;)for(e.currentTarget=l.elem,o=0;(s=l.uuids[o++])&&!e.isImmediatePropagationStopped;){var u=avalon.eventListeners[s];if(u){var p=n.__av_context__;if(p&&p.$hashcode===!1)return avalon.unbind(n,t,u);if(/move|scroll/.test(t)){var v=+new Date;v-d>16&&(u.call(n,e,p),d=v)}else u.call(l.elem,e,p)}}}function o(e){var t=c.getAttribute("delegate-events")||"";if(-1===t.indexOf(e)){var n=t.match(f)||[];n.push(e),c.setAttribute("delegate-events",n.join("??")),m(c,e,a,!!h[e])}}function i(e){if(e.originalEvent)return this;for(var t in e)y.test(t)||"function"==typeof e[t]||(this[t]=e[t]);this.timeStamp=new Date-0,this.originalEvent=e}var s=avalon.document,l=avalon.window,c=avalon.root,u=n(2).getShortID,p=n(24),v=avalon.eventHooks;avalon.bind=function(e,t,n){if(1===e.nodeType){var r=e.getAttribute("avalon-events")||"",i=u(n),s=t+":"+i,l=v[t];l&&(t=l.type,l.fix&&(n=l.fix(e,n),n.uuid=i+"0"),s=t+":"+n.uuid),avalon.eventListeners[n.uuid]=n,-1===r.indexOf(t+":")&&(p[t]||h[t]?o(t):m(e,t,a));var c=r.split("??");""===c[0]&&c.shift(),-1===c.indexOf(s)&&(c.push(s),e.setAttribute("avalon-events",c.join("??")))}else m(e,t,n);return n},avalon.unbind=function(e,t,n){if(1===e.nodeType){var r=e.getAttribute("avalon-events")||"";switch(arguments.length){case 1:g(e,t,a),e.removeAttribute("avalon-events");break;case 2:r=r.split("??").filter(function(e){return-1===e.indexOf(t+":")}).join("??"),e.setAttribute("avalon-events",r);break;case 3:var o=t+":"+n.uuid;r=r.split("??").filter(function(e){return e!==o}).join("??"),e.setAttribute("avalon-events",r),delete avalon.eventListeners[n.uuid]}}else g(e,t,n)};var f=/[^\s\?]+/g,d=+new Date,h={focus:!0,blur:!0},m=function(e,t,n,r){e.addEventListener(t,n,r)},g=function(e,t,n){e.removeEventListener(t,n)},y=/^(?:ms|webkit|moz)/;i.prototype={preventDefault:function(){var e=this.originalEvent;this.returnValue=!1,e&&(e.returnValue=!1,e.preventDefault())},stopPropagation:function(){var e=this.originalEvent;this.cancelBubble=!0,e&&(e.cancelBubble=!0,e.stopPropagation())},stopImmediatePropagation:function(){var e=this.originalEvent;this.isImmediatePropagationStopped=!0,e.stopImmediatePropagation&&e.stopImmediatePropagation(),this.stopPropagation()}},avalon.fireDom=function(e,t,n){var r=s.createEvent("Events");r.initEvent(t,!0,!0),avalon.mix(r,n),e.dispatchEvent(r)};var v=avalon.eventHooks;"onmouseenter"in c||avalon.each({mouseenter:"mouseover",mouseleave:"mouseout"},function(e,t){v[e]={type:t,fn:function(t,n){return function(r){var a=r.relatedTarget;return a&&(a===t||16&t.compareDocumentPosition(a))?void 0:(delete r.type,r.type=e,n.call(t,r))}}}}),avalon.each({AnimationEvent:"animationend",WebKitAnimationEvent:"webkitAnimationEnd"},function(e,t){l[e]&&!v.animationend&&(v.animationend={type:t})}),void 0===s.onmousewheel&&(v.mousewheel={type:"wheel",fn:function(e,t){return function(n){n.wheelDeltaY=n.wheelDelta=n.deltaY>0?-120:120,n.wheelDeltaX=0,Object.defineProperty(n,"type",{value:"mousewheel"}),t.call(e,n)}}}),avalon.fn.bind=function(e,t,n){return this[0]?avalon.bind(this[0],e,t,n):void 0},avalon.fn.unbind=function(e,t,n){return this[0]&&avalon.unbind(this[0],e,t,n),this}},,,,function(e,t,n){var r=n(3),a=n(25),o=new function(){avalon.mix(this,{option:document.createElement("select"),thead:document.createElement("table"),td:document.createElement("tr"),area:document.createElement("map"),tr:document.createElement("tbody"),col:document.createElement("colgroup"),legend:document.createElement("fieldset"),_default:document.createElement("div"),g:document.createElementNS("http://www.w3.org/2000/svg","svg")}),this.optgroup=this.option,this.tbody=this.tfoot=this.colgroup=this.caption=this.thead,this.th=this.td},i={g:o.g};String("circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use").replace(avalon.rword,function(e){i[e]=o.g});var s,l=/<([\w:]+)/,c=/<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,u=/<|&#?\w+;/,p=new r(128),v=avalon.document.createElement("template");/HTMLTemplateElement/.test(v)?s=v:avalon.mix(o,i),avalon.parseHTML=function(e){var t,n=avalon.avalonFragment.cloneNode(!1);if("string"!=typeof e)return n;if(!u.test(e))return n.appendChild(document.createTextNode(e)),n;e=e.replace(c,"<$1></$2>").trim();var r=p.get(e);if(r)return r.cloneNode(!0);var t,v=(l.exec(e)||["",""])[1].toLowerCase(),f=i[v];for(f?(f.innerHTML=e,a(f)):s?(s.innerHTML=e,f=s.content):(f=o[v]||o._default,f.innerHTML=e,a(f));t=f.firstChild;)n.appendChild(t);return e.length<1024&&p.put(e,n.cloneNode(!0)),n},avalon.innerHTML=function(e,t){var n=this.parseHTML(t);this.clearHTML(e).appendChild(n)},avalon.clearHTML=function(e){for(avalon.each(e.getElementsByTagName("*"),function(e,t){avalon.unbind(t)}),e.textContent="";e.lastChild;)e.removeChild(e.lastChild);return e}},function(e,t,n){n(81),n(65),n(70),n(68),n(83),n(76),n(72),n(79),e.exports=avalon},,function(e,t,n){var r,a=n(26),o=avalon.document,i=avalon.window,s=[],l=function(e){for(r=!0;e=s.shift();)e(avalon)};"complete"===o.readyState?setTimeout(l):o.addEventListener("DOMContentLoaded",l),avalon.bind(i,"load",l),avalon.ready=function(e){r?e(avalon):s.push(e)},avalon.ready(function(){a(o.body)})},,function(e,t){function n(){return(new XMLSerializer).serializeToString(this)}function r(e,t){if(e&&e.childNodes)for(var n,o=e.childNodes,i=0;n=o[i++];)if(1===n.nodeType){var s=document.createElementNS(a,n.nodeName.toLowerCase());avalon.each(n.attributes,function(e,t){s.setAttribute(t.name,t.value)}),r(n,s),t.appendChild(s)}else t.appendChild(n.cloneNode(!0))}avalon.document.contains||(Node.prototype.contains=function(e){return!!(16&this.compareDocumentPosition(e))}),avalon.contains=function(e,t){try{for(;t=t.parentNode;)if(t===e)return!0;return!1}catch(n){return!1}};var a="http://www.w3.org/2000/svg",o=avalon.document.createElementNS(a,"svg");o.innerHTML='<circle fill="red" />',/^\[object SVG\w*Element\]$/.test(o.firstChild)||Object.defineProperties(SVGElement.prototype,{outerHTML:{enumerable:!0,
-configurable:!0,get:n,set:function(e){var t=this.tagName.toLowerCase(),n=this.parent,a=avalon.parseHTML(e);if("svg"===t)n.insertBefore(a,this);else{var o=document.createDocumentFragment();r(a,o),n.insertBefore(o,this)}n.removeChild(this)}},innerHTML:{enumerable:!0,configurable:!0,get:function(){var e=this.outerHTML,t=new RegExp("<"+this.nodeName+'\\b(?:(["\'])[^"]*?(\\1)|[^>])*>',"i"),n=new RegExp("</"+this.nodeName+">$","i");return e.replace(t,"").replace(n,"")},set:function(e){if(avalon.clearHTML){avalon.clearHTML(this);var t=avalon.parseHTML(e);r(t,this)}}}})},,function(e,t){function n(e){var t=e.tagName.toLowerCase();return"input"===t&&/checkbox|radio/.test(e.type)?"checked":t}var r={"select:get":function a(e,t,n,o){var i,s=e.children,l=r["option:get"];n=t?n:e.selectedIndex,o=t?o:"select-one"===e.type||0>n,t=t||[];for(var c,u=0;c=s[u++];)if(!c.disabled)switch(c.nodeName.toLowerCase()){case"option":if(c.selected||c.index===n){if(i=l(c),o)return i;t.push(i)}break;case"optgroup":if(i=a(c,t,n,o),"string"==typeof i)return i}return o?null:t},"select:set":function(e,t,n){t=[].concat(t);for(var r,a=0;r=e.options[a++];)(r.selected=t.indexOf(r.value)>-1)&&(n=!0);n||(e.selectedIndex=-1)}};avalon.fn.val=function(e){var t=this[0];if(t&&1===t.nodeType){var a=0===arguments.length,o=a?":get":":set",i=r[n(t)+o];if(i)var s=i(t,e);else{if(a)return(t.value||"").replace(/\r/g,"");t.value=e}}return a?s:this}},,,,function(e,t){function n(e){if(e&&"object"==typeof e){var t=e.length,n=r.call(e);if(o.test(n))return!0;if("[object Object]"===n&&t===t>>>0)return!0}return!1}var r=avalon.inspect,a=/^\[object (?:Window|DOMWindow|global)\]$/,o=/(Array|List|Collection|Map|Arguments)\]$/;avalon.quote=JSON.stringify;var i={};"Boolean Number String Function Array Date RegExp Object Error".replace(avalon.rword,function(e){i["[object "+e+"]"]=e.toLowerCase()}),avalon.type=function(e){return null==e?String(e):"object"==typeof e||"function"==typeof e?i[r.call(e)]||"object":typeof e},avalon.isFunction=function(e){return"function"==typeof e},avalon.isWindow=function(e){return a.test(r.call(e))},avalon.isPlainObject=function(e){return"[object Object]"===r.call(e)&&Object.getPrototypeOf(e)===Object.prototype},avalon.mix=avalon.fn.mix=function(){var e,t,n,r,a,o,i=arguments[0]||{},s=1,l=arguments.length,c=!1;for("boolean"==typeof i&&(c=i,i=arguments[1]||{},s++),"object"!=typeof i&&"function"!=typeof i&&(i={}),s===l&&(i=this,s--);l>s;s++)if(null!=(e=arguments[s]))for(t in e){n=i[t];try{r=e[t]}catch(u){continue}i!==r&&(c&&r&&(avalon.isPlainObject(r)||(a=Array.isArray(r)))?(a?(a=!1,o=n&&Array.isArray(n)?n:[]):o=n&&avalon.isPlainObject(n)?n:{},i[t]=avalon.mix(c,o,r)):void 0!==r&&(i[t]=r))}return i},avalon.each=function(e,t){if(e){var r=0;if(n(e))for(var a=e.length;a>r&&t(r,e[r])!==!1;r++);else for(r in e)if(e.hasOwnProperty(r)&&t(r,e[r])===!1)break}},e.exports={avalon:avalon,isArrayLike:n}},function(e,t,n){var r=n(36),a=n(34);r.mix(r,a),n(87),n(2),n(35),e.exports=r},,function(e,t,n){function r(){}function a(e,t,n){var a={};e.$skipArray&&(a=avalon.oneObject(e.$skipArray),delete e.$skipArray);var o={};n=n||{},t=t||{};var i={},s=g("$"),l=n.pathname||"";n.id=n.id||s,n.hashcode=s;var c,p,m;for(c in e)if(!v[c]){var y=o[c]=e[c];u(c,y,a)||(p=n.id+"."+c,m=l?l+"."+c:c,i[c]=f(p,m,t))}i.$model=h;var b=new r;Object.defineProperties(b,i);for(c in o)b[c]=o[c],c in a?delete o[c]:o[c]=!0;return d(b,t,o,i,n),b}function o(e,t,n,r){var a={},o={},i=r.pathname;n=n||{};var s,l,c;for(s in t)if(!v[s]&&(a[s]=t[s],!u(s,t[s],{}))){var p=Object.getOwnPropertyDescriptor(e,s);p&&p.get?o[s]=p:(l=r.id+"."+s,c=i?i+"."+s:s,o[s]=makeObservable(l,c,n))}for(s in e)delete e[s];r.hashcode=e.$hashcode||g("$"),o.$model=h;var f=e;Object.defineProperties(f,o);for(s in a)o[s]||(f[s]=a[s]),a[s]=!0;return d(f,n,a,o,r),f}function i(e,t,n){var a={},o={};for(var i in e){a[i]=e[i];var s=Object.getOwnPropertyDescriptor(e,i);s.set&&(o[i]=s)}for(var i in t){a[i]=t[i];var s=Object.getOwnPropertyDescriptor(t,i);s.set&&(o[i]=s)}var l=new r;Object.defineProperties(l,o);for(i in a)o[i]||(l[i]=a[i]),a[i]=!0;return makeObserve(l,n||{},a,o,{id:e.$id,hashcode:g("$"),master:!0}),l}function s(e,t,n,r){if(t&&t.splice){var a=[0,t.length].concat(e);return t.stopBatch=!0,t.splice.apply(t,a),t.stopBatch=!1,t}for(var o in y)e[o]=y[o];e.notify=function(t,a,o,i){var s=n.__vmodel__;if(s){var l=null===t||void 0===t?r.pathname:r.pathname+"."+t;s.$fire(l,a,o),i||e.stopBatch||(avalon.rerenderStart=new Date,avalon.batch(s.$id,!0))}};var i=g("$");r.array=!0,r.hashcode=i,r.id=r.id||i,d(e,n,{},{},r);for(var s=0,l=e.length;l>s;s++)e[s]=m(e[s],0,{},{id:e.$id+".*",master:!0});return e}function l(e,t){e.length!==t&&e.notify("length",e.length,t,!0)}var c=n(93),u=c.isSkip,p=c.$$midway,v=c.$$skipArray;delete v.$accessors,delete v.__data__,delete v.__proxy__,delete v.__const__;var f=c.makeAccessor,d=c.makeObserver,h=c.modelAccessor,m=c.modelAdaptor,g=avalon.makeHashCode;p.masterFactory=a,p.slaveFactory=o,p.mediatorFactory=avalon.mediatorFactory=i;var y=c.__array__;p.arrayFactory=s;var b=Array.prototype,x=b.splice;y.removeAll=function(e){var t=this.length;if(Array.isArray(e))for(var n=this.length-1;n>=0;n--)-1!==e.indexOf(this[n])&&x.call(this,n,1);else if("function"==typeof e)for(n=this.length-1;n>=0;n--){var r=this[n];e(r,n)&&x.call(this,n,1)}else x.call(this,0,this.length);l(this,t),this.notify()};var w=["push","pop","shift","unshift","splice"];w.forEach(function(e){var t=b[e];y[e]=function(n,r){var a=[],o=this.length;if("splice"===e&&Object(this[0])===this[0])for(var i=this.slice(n,r),s=b.slice.call(arguments,2),a=[n,r],c=0,u=s.length;u>c;c++){var p=i[c];a[c+2]=m(s[c],p,p&&p.$events,{id:this.$id+".*",master:!0})}else for(var v=0,f=arguments.length;f>v;v++)a[v]=m(arguments[v],0,{},{id:this.$id+".*",master:!0});var d=t.apply(this,a);return l(this,o),this.notify(),d}}),"sort,reverse".replace(avalon.rword,function(e){y[e]=function(){return b[e].apply(this,arguments),this.notify(),this}}),e.exports=avalon},,,function(e,t,n){function r(e){var t=avalon.type(e);if("array"===t){for(var n=[],a=0;a<e.length;a++)n[a]=r(e[a]);return n}if("object"===t){var o={};for(a in e)if(e.hasOwnProperty(a)){var i=e[a];o[a]=i&&i.nodeType?i:r(i)}return o}return e}function a(e,t,n){Object.defineProperty(e,t,{value:n,writable:!0,enumerable:!1,configurable:!0})}function o(e,t,n,r,o){function i(e){return n[e]===!0}o.array?a(e,"$model",l):a(e,"hasOwnProperty",i),a(e,"$id",o.id),a(e,"$hashcode",o.hashcode),o.master===!0&&(a(e,"$element",null),a(e,"$render",avalon.noop),s(e,t))}var i=n(49),s=i.makeFire,l={get:function(){return r(this)},set:avalon.noop,enumerable:!1,configurable:!0};i.$$midway.hideProperty=a;var c={toJson:r,makeObserver:o,modelAccessor:l};for(var u in i)c[u]=i[u];e.exports=c}])});
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else if(typeof exports === 'object')
+		exports["avalon"] = factory();
+	else
+		root["avalon"] = factory();
+})(this, function() {
+return /******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId])
+/******/ 			return installedModules[moduleId].exports;
+
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			exports: {},
+/******/ 			id: moduleId,
+/******/ 			loaded: false
+/******/ 		};
+
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+
+/******/ 		// Flag the module as loaded
+/******/ 		module.loaded = true;
+
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+
+
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(0);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var avalon = __webpack_require__(75) 
+
+	__webpack_require__(8)
+	__webpack_require__(15)
+	__webpack_require__(77)
+	__webpack_require__(86)
+	__webpack_require__(59)
+	__webpack_require__(67)
+	__webpack_require__(92)
+
+
+	module.exports = avalon
+
+
+/***/ },
+/* 1 */,
+/* 2 */,
+/* 3 */
+/***/ function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {//avalon的核心,这里都是一些不存在异议的*核心*方法与属性
+	function avalon(el) {
+	    return new avalon.init(el)
+	}
+
+	global.avalon = avalon
+
+	avalon.init = function (el) {
+	    this[0] = this.element = el
+	}
+
+	avalon.fn = avalon.prototype = avalon.init.prototype
+
+
+	avalon.mix = function (destination, source) {
+	    for (var property in source) {
+	        destination[property] = source[property]
+	    }
+	    return destination
+	}
+
+	var rword = /[^, ]+/g
+
+	var hasConsole = window.console
+
+	avalon.mix(avalon, {
+	    noop: function () {
+	    },
+	    //切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach
+	    rword: rword,
+	    inspect: ({}).toString,
+	    ohasOwn: ({}).hasOwnProperty,
+	    log: function () {
+	        if (hasConsole && avalon.config.debug) {
+	            // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
+	            Function.apply.call(console.log, console, arguments)
+	        }
+	    },
+	    warn: function () {
+	        if (hasConsole && avalon.config.debug) {
+	            var method = console.warn || console.log
+	            // http://qiang106.iteye.com/blog/1721425
+	            Function.apply.call(method, console, arguments)
+	        }
+	    },
+	    error: function (str, e) {
+	        throw (e || Error)(str)
+	    },
+	    //将一个以空格或逗号隔开的字符串或数组,转换成一个键值都为1的对象
+	    oneObject: function (array, val) {
+	        if (typeof array === 'string') {
+	            array = array.match(rword) || []
+	        }
+	        var result = {},
+	                value = val !== void 0 ? val : 1
+	        for (var i = 0, n = array.length; i < n; i++) {
+	            result[array[i]] = value
+	        }
+	        return result
+	    }
+
+	})
+
+	module.exports = avalon
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {var window = global
+	var browser = {
+	    window: window,
+	    document: {//方便在nodejs环境不会报错
+	        createElement: function () {
+	            return {}
+	        },
+	        createElementNS: function(){
+	            return {}
+	        },
+	        contains: Boolean
+	    },
+	    root: {
+	        outerHTML: 'x'
+	    },
+	    msie: NaN,
+	    modern: true,
+	    avalonDiv: null,
+	    avalonFragment: null
+	}
+
+	if (window.window === window) {
+	    var document = window.document
+	    browser.document = document
+	    browser.modern = window.dispatchEvent
+	    browser.root = document.documentElement
+	    browser.avalonDiv = document.createElement('div')
+	    browser.avalonFragment = document.createDocumentFragment()
+	    if (window.VBArray) {
+	        browser.msie = document.documentMode || (window.XMLHttpRequest ? 7 : 6)
+	    }
+	}
+
+	browser.nextTick = (function () {// jshint ignore:line
+	    var tickImmediate = window.setImmediate
+	    var tickObserver = window.MutationObserver
+	    if (tickImmediate) {
+	        return tickImmediate.bind(window)
+	    }
+
+	    var queue = []
+	    function callback() {
+	        var n = queue.length
+	        for (var i = 0; i < n; i++) {
+	            queue[i]()
+	        }
+	        queue = queue.slice(n)
+	    }
+
+	    if (tickObserver) {
+	        var node = document.createTextNode('avalon')
+	        new tickObserver(callback).observe(node, {characterData: true})// jshint ignore:line
+	        var bool = false
+	        return function (fn) {
+	            queue.push(fn)
+	            bool = !bool
+	            node.data = bool
+	        }
+	    }
+	    return function (fn) {
+	        setTimeout(fn, 4)
+	    }
+	})()
+
+	module.exports = browser
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 5 */,
+/* 6 */
+/***/ function(module, exports) {
+
+	var cssHooks = {}
+	var rhyphen = /([a-z\d])([A-Z]+)/g
+	var rcamelize = /[-_][^-_]/g
+	var rhashcode = /\d\.\d{4}/
+	var rescape = /[-.*+?^${}()|[\]\/\\]/g
+
+	var _slice = [].slice
+	avalon.mix({
+	    caches: {}, //avalon2.0 新增
+	    vmodels: {},
+	    filters: {},
+	    components: {},//放置组件的类
+	    resolvedComponents:{},//放置组件的实例
+	    directives: {},
+	    eventHooks: {},
+	    eventListeners: {},
+	    cssHooks: cssHooks,
+	    parsers: {
+	        number: function (a) {
+	            return a === '' ? '' : parseFloat(a) || 0
+	        },
+	        string: function (a) {
+	            return a === null || a === void 0 ? '' : a + ''
+	        },
+	        boolean: function (a) {
+	            return a === 'true'
+	        }
+	    },
+	    version: "2.0 alpha",
+	    slice: function (nodes, start, end) {
+	        return _slice.call(nodes, start, end)
+	    },
+	    css: function (node, name, value, fn) {
+	        //读写删除元素节点的样式
+	        if (node instanceof avalon) {
+	            node = node[0]
+	        }
+	        var prop = avalon.camelize(name)
+	        name = avalon.cssName(prop) || prop
+	        if (value === void 0 || typeof value === 'boolean') { //获取样式
+	            fn = cssHooks[prop + ':get'] || cssHooks['@:get']
+	            if (name === 'background') {
+	                name = 'backgroundColor'
+	            }
+	            var val = fn(node, name)
+	            return value === true ? parseFloat(val) || 0 : val
+	        } else if (value === '') { //请除样式
+	            node.style[name] = ''
+	        } else { //设置样式
+	            if (value == null || value !== value) {
+	                return
+	            }
+	            if (isFinite(value) && !avalon.cssNumber[prop]) {
+	                value += 'px'
+	            }
+	            fn = cssHooks[prop + ':set'] || cssHooks['@:set']
+	            fn(node, name, value)
+	        }
+	    },
+	    directive: function (name, definition) {
+	        return this.directives[name] = definition
+	    },
+	    isObject: function (a) {//1.6新增
+	        return a !== null && typeof a === 'object'
+	    },
+	    /* avalon.range(10)
+	     => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+	     avalon.range(1, 11)
+	     => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+	     avalon.range(0, 30, 5)
+	     => [0, 5, 10, 15, 20, 25]
+	     avalon.range(0, -10, -1)
+	     => [0, -1, -2, -3, -4, -5, -6, -7, -8, -9]
+	     avalon.range(0)
+	     => []*/
+	    range: function (start, end, step) { // 用于生成整数数组
+	        step || (step = 1)
+	        if (end == null) {
+	            end = start || 0
+	            start = 0
+	        }
+	        var index = -1,
+	                length = Math.max(0, Math.ceil((end - start) / step)),
+	                result = new Array(length)
+	        while (++index < length) {
+	            result[index] = start
+	            start += step
+	        }
+	        return result
+	    },
+	    hyphen: function (target) {
+	        //转换为连字符线风格
+	        return target.replace(rhyphen, '$1-$2').toLowerCase()
+	    },
+	    camelize: function (target) {
+	        //提前判断，提高getStyle等的效率
+	        if (!target || target.indexOf('-') < 0 && target.indexOf('_') < 0) {
+	            return target
+	        }
+	        //转换为驼峰风格
+	        return target.replace(rcamelize, function (match) {
+	            return match.charAt(1).toUpperCase()
+	        })
+	    },
+	    //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
+	    makeHashCode: function (prefix) {
+	        prefix = prefix || 'avalon'
+	        return String(Math.random() + Math.random()).replace(rhashcode, prefix)
+	    },
+	    escapeRegExp: function (target) {
+	        //http://stevenlevithan.com/regex/xregexp/
+	        //将字符串安全格式化为正则表达式的源码
+	        return (target + '').replace(rescape, '\\$&')
+	    },
+	    Array: {
+	        merge: function (target, other) {
+	            //合并两个数组 avalon2新增
+	            target.push.apply(target, other)
+	        },
+	        ensure: function (target, item) {
+	            //只有当前数组不存在此元素时只添加它
+	            if (target.indexOf(item) === -1) {
+	                return target.push(item)
+	            }
+	        },
+	        removeAt: function (target, index) {
+	            //移除数组中指定位置的元素，返回布尔表示成功与否
+	            return !!target.splice(index, 1).length
+	        },
+	        remove: function (target, item) {
+	            //移除数组中第一个匹配传参的那个元素，返回布尔表示成功与否
+	            var index = target.indexOf(item)
+	            if (~index)
+	                return avalon.Array.removeAt(target, index)
+	            return false
+	        }
+	    }
+	})
+
+	var uuid = 1
+	module.exports = {
+	    //生成事件回调的UUID(用户通过ms-on指令)
+	    avalon: avalon,
+	    getLongID: function (fn) {
+	        return fn.uuid || (fn.uuid = avalon.makeHashCode('e'))
+	    },
+	    //生成事件回调的UUID(用户通过avalon.bind)
+	    getShortID: function (fn) {
+	        return fn.uuid || (fn.uuid = '_' + (++uuid))
+	    }
+	}
+
+
+/***/ },
+/* 7 */
+/***/ function(module, exports) {
+
+	
+	function kernel(settings) {
+	    for (var p in settings) {
+	        if (!avalon.ohasOwn.call(settings, p))
+	            continue
+	        var val = settings[p]
+	        if (typeof kernel.plugins[p] === 'function') {
+	            kernel.plugins[p](val)
+	        } else if (typeof kernel[p] === 'object') {
+	            avalon.mix(kernel[p], val)
+	        } else {
+	            kernel[p] = val
+	        }
+	    }
+	    return this
+	}
+
+	avalon.config = kernel
+
+	var plugins = {
+	    interpolate: function (array) {
+	        var openTag = array[0]
+	        var closeTag = array[1]
+	        /*eslint-disable */
+	        if (openTag === closeTag) {
+	            throw new SyntaxError('openTag!==closeTag')
+	        }
+	        var test = openTag + 'test' + closeTag
+	        var div = avalon.avalonDiv
+	        div.innerHTML = test
+	        if (div.innerHTML !== test && div.innerHTML.indexOf('&lt;') > -1) {
+	            throw new SyntaxError('此定界符不合法')
+	        }
+	        div.innerHTML = ''
+	        /*eslint-enable */
+	        kernel.openTag = openTag
+	        kernel.closeTag = closeTag
+	        var o = avalon.escapeRegExp(openTag)
+	        var c = avalon.escapeRegExp(closeTag)
+	        kernel.rexpr = new RegExp(o + '([\\ss\\S]*)' + c)
+	        kernel.rexprg = new RegExp(o + '([\\ss\\S]*)' + c, 'g')
+	        kernel.rbind = new RegExp(o + '[\\ss\\S]*' + c + '|\\bms-|\\bslot\\b')
+	    }
+	}
+	kernel.plugins = plugins
+	kernel.plugins['interpolate'](['{{', '}}'])
+
+	kernel.debug = true
+
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var number = __webpack_require__(9)
+	var escape = __webpack_require__(10)
+	var sanitize = __webpack_require__(11)
+	var date = __webpack_require__(12)
+	var arrayFilters = __webpack_require__(13)
+	var eventFilters = __webpack_require__(14)
+	var filters = avalon.filters
+
+	function K(a) {
+	    return a
+	}
+
+	avalon.mix({
+	    __read__: function (name) {
+	        var fn = filters[name]
+	        if (fn) {
+	            return fn.get ? fn.get : fn
+	        }
+	        return K
+	    },
+	    __write__: function (name) {
+	        var fn = filters[name]
+	        return fn && fn.set || K
+	    }
+	})
+
+
+	avalon.mix(filters, {
+	    uppercase: function (str) {
+	        return str.toUpperCase()
+	    },
+	    lowercase: function (str) {
+	        return str.toLowerCase()
+	    },
+	    truncate: function (str, length, truncation) {
+	        //length，新字符串长度，truncation，新字符串的结尾的字段,返回新字符串
+	        length = length || 30
+	        truncation = typeof truncation === "string" ? truncation : "..."
+	        return str.length > length ?
+	                str.slice(0, length - truncation.length) + truncation :
+	                String(str)
+	    },
+	    camelize: avalon.camelize,
+	    date: date,
+	    escape: escape,
+	    sanitize: sanitize,
+	    number: number,
+	    currency: function (amount, symbol, fractionSize) {
+	        return (symbol || "\uFFE5") +
+	                number(amount,
+	                        isFinite(fractionSize) ? fractionSize : 2)
+	    }
+	}, arrayFilters, eventFilters)
+
+
+
+
+
+
+
+	module.exports = avalon
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	function number(number, decimals, point, thousands) {
+	    //form http://phpjs.org/functions/number_format/
+	    //number 必需，要格式化的数字
+	    //decimals 可选，规定多少个小数位。
+	    //point 可选，规定用作小数点的字符串（默认为 . ）。
+	    //thousands 可选，规定用作千位分隔符的字符串（默认为 , ），如果设置了该参数，那么所有其他参数都是必需的。
+	    number = (number + '')
+	            .replace(/[^0-9+\-Ee.]/g, '')
+	    var n = !isFinite(+number) ? 0 : +number,
+	            prec = !isFinite(+decimals) ? 3 : Math.abs(decimals),
+	            sep = thousands || ",",
+	            dec = point || ".",
+	            s = '',
+	            toFixedFix = function (n, prec) {
+	                var k = Math.pow(10, prec)
+	                return '' + (Math.round(n * k) / k)
+	                        .toFixed(prec)
+	            }
+	    // Fix for IE parseFloat(0.55).toFixed(0) = 0;
+	    s = (prec ? toFixedFix(n, prec) : '' + Math.round(n))
+	            .split('.')
+	    if (s[0].length > 3) {
+	        s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep)
+	    }
+	    if ((s[1] || '')
+	            .length < prec) {
+	        s[1] = s[1] || ''
+	        s[1] += new Array(prec - s[1].length + 1)
+	                .join('0')
+	    }
+	    return s.join(dec)
+	}
+
+	module.exports = number
+
+	//处理 货币 http://openexchangerates.github.io/accounting.js/
+
+/***/ },
+/* 10 */
+/***/ function(module, exports) {
+
+	
+	var rsurrogate = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g
+	var rnoalphanumeric = /([^\#-~| |!])/g
+
+	function escape(str) {
+	    //将字符串经过 str 转义得到适合在页面中显示的内容, 例如替换 < 为 &lt 
+	    return String(str).
+	            replace(/&/g, '&amp;').
+	            replace(rsurrogate, function (value) {
+	                var hi = value.charCodeAt(0)
+	                var low = value.charCodeAt(1)
+	                return '&#' + (((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000) + ';'
+	            }).
+	            replace(rnoalphanumeric, function (value) {
+	                return '&#' + value.charCodeAt(0) + ';'
+	            }).
+	            replace(/</g, '&lt;').
+	            replace(/>/g, '&gt;')
+	}
+
+	module.exports = escape
+
+/***/ },
+/* 11 */
+/***/ function(module, exports) {
+
+	var rscripts = /<script[^>]*>([\S\s]*?)<\/script\s*>/gim
+	var ron = /\s+(on[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
+	var ropen = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/ig
+	var rsanitize = {
+	    a: /\b(href)\=("javascript[^"]*"|'javascript[^']*')/ig,
+	    img: /\b(src)\=("javascript[^"]*"|'javascript[^']*')/ig,
+	    form: /\b(action)\=("javascript[^"]*"|'javascript[^']*')/ig
+	}
+
+
+	//https://www.owasp.org/index.php/XSS_Filter_Evasion_Cheat_Sheet
+	//    <a href="javasc&NewLine;ript&colon;alert('XSS')">chrome</a> 
+	//    <a href="data:text/html;base64, PGltZyBzcmM9eCBvbmVycm9yPWFsZXJ0KDEpPg==">chrome</a>
+	//    <a href="jav	ascript:alert('XSS');">IE67chrome</a>
+	//    <a href="jav&#x09;ascript:alert('XSS');">IE67chrome</a>
+	//    <a href="jav&#x0A;ascript:alert('XSS');">IE67chrome</a>
+	module.exports = function sanitize(str) {
+	    return str.replace(rscripts, "").replace(ropen, function (a, b) {
+	        var match = a.toLowerCase().match(/<(\w+)\s/)
+	        if (match) { //处理a标签的href属性，img标签的src属性，form标签的action属性
+	            var reg = rsanitize[match[1]]
+	            if (reg) {
+	                a = a.replace(reg, function (s, name, value) {
+	                    var quote = value.charAt(0)
+	                    return name + "=" + quote + "javascript:void(0)" + quote// jshint ignore:line
+	                })
+	            }
+	        }
+	        return a.replace(ron, " ").replace(/\s+/g, " ") //移除onXXX事件
+	    })
+	}
+
+
+/***/ },
+/* 12 */
+/***/ function(module, exports) {
+
+	/*
+	 'yyyy': 4 digit representation of year (e.g. AD 1 => 0001, AD 2010 => 2010)
+	 'yy': 2 digit representation of year, padded (00-99). (e.g. AD 2001 => 01, AD 2010 => 10)
+	 'y': 1 digit representation of year, e.g. (AD 1 => 1, AD 199 => 199)
+	 'MMMM': Month in year (January-December)
+	 'MMM': Month in year (Jan-Dec)
+	 'MM': Month in year, padded (01-12)
+	 'M': Month in year (1-12)
+	 'dd': Day in month, padded (01-31)
+	 'd': Day in month (1-31)
+	 'EEEE': Day in Week,(Sunday-Saturday)
+	 'EEE': Day in Week, (Sun-Sat)
+	 'HH': Hour in day, padded (00-23)
+	 'H': Hour in day (0-23)
+	 'hh': Hour in am/pm, padded (01-12)
+	 'h': Hour in am/pm, (1-12)
+	 'mm': Minute in hour, padded (00-59)
+	 'm': Minute in hour (0-59)
+	 'ss': Second in minute, padded (00-59)
+	 's': Second in minute (0-59)
+	 'a': am/pm marker
+	 'Z': 4 digit (+sign) representation of the timezone offset (-1200-+1200)
+	 format string can also be one of the following predefined localizable formats:
+	 
+	 'medium': equivalent to 'MMM d, y h:mm:ss a' for en_US locale (e.g. Sep 3, 2010 12:05:08 pm)
+	 'short': equivalent to 'M/d/yy h:mm a' for en_US locale (e.g. 9/3/10 12:05 pm)
+	 'fullDate': equivalent to 'EEEE, MMMM d,y' for en_US locale (e.g. Friday, September 3, 2010)
+	 'longDate': equivalent to 'MMMM d, y' for en_US locale (e.g. September 3, 2010
+	 'mediumDate': equivalent to 'MMM d, y' for en_US locale (e.g. Sep 3, 2010)
+	 'shortDate': equivalent to 'M/d/yy' for en_US locale (e.g. 9/3/10)
+	 'mediumTime': equivalent to 'h:mm:ss a' for en_US locale (e.g. 12:05:08 pm)
+	 'shortTime': equivalent to 'h:mm a' for en_US locale (e.g. 12:05 pm)
+	 */
+
+	function toInt(str) {
+	    return parseInt(str, 10) || 0
+	}
+
+	function padNumber(num, digits, trim) {
+	    var neg = ""
+	    if (num < 0) {
+	        neg = '-'
+	        num = -num
+	    }
+	    num = "" + num
+	    while (num.length < digits)
+	        num = "0" + num
+	    if (trim)
+	        num = num.substr(num.length - digits)
+	    return neg + num
+	}
+
+	function dateGetter(name, size, offset, trim) {
+	    return function (date) {
+	        var value = date["get" + name]()
+	        if (offset > 0 || value > -offset)
+	            value += offset
+	        if (value === 0 && offset === -12) {
+	            value = 12
+	        }
+	        return padNumber(value, size, trim)
+	    }
+	}
+
+	function dateStrGetter(name, shortForm) {
+	    return function (date, formats) {
+	        var value = date["get" + name]()
+	        var get = (shortForm ? ("SHORT" + name) : name).toUpperCase()
+	        return formats[get][value]
+	    }
+	}
+
+	function timeZoneGetter(date) {
+	    var zone = -1 * date.getTimezoneOffset()
+	    var paddedZone = (zone >= 0) ? "+" : ""
+	    paddedZone += padNumber(Math[zone > 0 ? "floor" : "ceil"](zone / 60), 2) + padNumber(Math.abs(zone % 60), 2)
+	    return paddedZone
+	}
+	//取得上午下午
+
+	function ampmGetter(date, formats) {
+	    return date.getHours() < 12 ? formats.AMPMS[0] : formats.AMPMS[1]
+	}
+	var DATE_FORMATS = {
+	    yyyy: dateGetter("FullYear", 4),
+	    yy: dateGetter("FullYear", 2, 0, true),
+	    y: dateGetter("FullYear", 1),
+	    MMMM: dateStrGetter("Month"),
+	    MMM: dateStrGetter("Month", true),
+	    MM: dateGetter("Month", 2, 1),
+	    M: dateGetter("Month", 1, 1),
+	    dd: dateGetter("Date", 2),
+	    d: dateGetter("Date", 1),
+	    HH: dateGetter("Hours", 2),
+	    H: dateGetter("Hours", 1),
+	    hh: dateGetter("Hours", 2, -12),
+	    h: dateGetter("Hours", 1, -12),
+	    mm: dateGetter("Minutes", 2),
+	    m: dateGetter("Minutes", 1),
+	    ss: dateGetter("Seconds", 2),
+	    s: dateGetter("Seconds", 1),
+	    sss: dateGetter("Milliseconds", 3),
+	    EEEE: dateStrGetter("Day"),
+	    EEE: dateStrGetter("Day", true),
+	    a: ampmGetter,
+	    Z: timeZoneGetter
+	}
+	var rdateFormat = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/
+	var raspnetjson = /^\/Date\((\d+)\)\/$/
+	function dateFilter(date, format) {
+	    var locate = dateFilter.locate,
+	            text = "",
+	            parts = [],
+	            fn, match
+	    format = format || "mediumDate"
+	    format = locate[format] || format
+	    if (typeof date === "string") {
+	        if (/^\d+$/.test(date)) {
+	            date = toInt(date)
+	        } else if (raspnetjson.test(date)) {
+	            date = +RegExp.$1
+	        } else {
+	            var trimDate = date.trim()
+	            var dateArray = [0, 0, 0, 0, 0, 0, 0]
+	            var oDate = new Date(0)
+	            //取得年月日
+	            trimDate = trimDate.replace(/^(\d+)\D(\d+)\D(\d+)/, function (_, a, b, c) {
+	                var array = c.length === 4 ? [c, a, b] : [a, b, c]
+	                dateArray[0] = toInt(array[0])     //年
+	                dateArray[1] = toInt(array[1]) - 1 //月
+	                dateArray[2] = toInt(array[2])     //日
+	                return ""
+	            })
+	            var dateSetter = oDate.setFullYear
+	            var timeSetter = oDate.setHours
+	            trimDate = trimDate.replace(/[T\s](\d+):(\d+):?(\d+)?\.?(\d)?/, function (_, a, b, c, d) {
+	                dateArray[3] = toInt(a) //小时
+	                dateArray[4] = toInt(b) //分钟
+	                dateArray[5] = toInt(c) //秒
+	                if (d) {                //毫秒
+	                    dateArray[6] = Math.round(parseFloat("0." + d) * 1000)
+	                }
+	                return ""
+	            })
+	            var tzHour = 0
+	            var tzMin = 0
+	            trimDate = trimDate.replace(/Z|([+-])(\d\d):?(\d\d)/, function (z, symbol, c, d) {
+	                dateSetter = oDate.setUTCFullYear
+	                timeSetter = oDate.setUTCHours
+	                if (symbol) {
+	                    tzHour = toInt(symbol + c)
+	                    tzMin = toInt(symbol + d)
+	                }
+	                return ""
+	            })
+
+	            dateArray[3] -= tzHour
+	            dateArray[4] -= tzMin
+	            dateSetter.apply(oDate, dateArray.slice(0, 3))
+	            timeSetter.apply(oDate, dateArray.slice(3))
+	            date = oDate
+	        }
+	    }
+	    if (typeof date === "number") {
+	        date = new Date(date)
+	    }
+	    if (avalon.type(date) !== "date") {
+	        return
+	    }
+	    while (format) {
+	        match = rdateFormat.exec(format)
+	        if (match) {
+	            parts = parts.concat(match.slice(1))
+	            format = parts.pop()
+	        } else {
+	            parts.push(format)
+	            format = null
+	        }
+	    }
+	    parts.forEach(function (value) {
+	        fn = DATE_FORMATS[value]
+	        text += fn ? fn(date, locate) : value.replace(/(^'|'$)/g, "").replace(/''/g, "'")
+	    })
+	    return text
+	}
+
+
+	var locate = {
+	    AMPMS: {
+	        0: "上午",
+	        1: "下午"
+	    },
+	    DAY: {
+	        0: "星期日",
+	        1: "星期一",
+	        2: "星期二",
+	        3: "星期三",
+	        4: "星期四",
+	        5: "星期五",
+	        6: "星期六"
+	    },
+	    MONTH: {
+	        0: "1月",
+	        1: "2月",
+	        2: "3月",
+	        3: "4月",
+	        4: "5月",
+	        5: "6月",
+	        6: "7月",
+	        7: "8月",
+	        8: "9月",
+	        9: "10月",
+	        10: "11月",
+	        11: "12月"
+	    },
+	    SHORTDAY: {
+	        "0": "周日",
+	        "1": "周一",
+	        "2": "周二",
+	        "3": "周三",
+	        "4": "周四",
+	        "5": "周五",
+	        "6": "周六"
+	    },
+	    fullDate: "y年M月d日EEEE",
+	    longDate: "y年M月d日",
+	    medium: "yyyy-M-d H:mm:ss",
+	    mediumDate: "yyyy-M-d",
+	    mediumTime: "H:mm:ss",
+	    "short": "yy-M-d ah:mm",
+	    shortDate: "yy-M-d",
+	    shortTime: "ah:mm"
+	}
+	locate.SHORTMONTH = locate.MONTH
+	dateFilter.locate = locate
+
+	module.exports = dateFilter
+
+/***/ },
+/* 13 */
+/***/ function(module, exports) {
+
+	
+	function orderBy(array, criteria, reverse) {
+	    var type = avalon.type(array)
+	    if (type !== 'array' || type !== 'object')
+	        throw 'orderBy只能处理对象或数组'
+	    var order = (reverse && reverse < 0) ? -1 : 1
+
+	    if (typeof criteria === 'string') {
+	        var key = criteria
+	        criteria = function (a) {
+	            return a && a[key]
+	        }
+	    }
+	    array = convertArray(array)
+	    array.forEach(function (el) {
+	        el.order = criteria(el.value, el.key)
+	    })
+	    array.sort(function (left, right) {
+	        var a = left.order
+	        var b = right.order
+	        return a === b ? 0 : a > b ? order : -order
+	    })
+	    var isArray = type === 'array'
+	    var target = isArray ? [] : {}
+	    return makeData(target, array, function (el) {
+	        if (isArray) {
+	            target.push(el.value)
+	        } else {
+	            target[el.key] = el.value
+	        }
+	    })
+	}
+	function filterBy(array, search) {
+
+	    var type = avalon.type(array)
+
+	    if (type !== 'array' && type !== 'object')
+	        throw 'filterBy只能处理对象或数组'
+	    var args = avalon.slice(arguments, 2)
+	    if (typeof search === 'function') {
+	        var criteria = search
+	    } else if (typeof search === 'string') {
+	        args.unshift(new RegExp(avalon.escapeRegExp(search), 'i'))
+	        criteria = containKey
+	    } else {
+	        throw search + '必须是字符串或函数'
+	    }
+
+	    array = convertArray(array).filter(function (el) {
+	         return !!criteria.apply(el, [el.value].concat(args))
+	    })
+	    var isArray = type === 'array'
+	    var target = isArray ? [] : {}
+	    return makeData(target, array, function (el) {
+	        if (isArray) {
+	            target.push(el.value)
+	        } else {
+	            target[el.key] = el.value
+	        }
+	    })
+	}
+
+	function selectBy(data, array, defaults) {
+	    if (avalon.isObject(data) && !Array.isArray(data)) {
+	        var target = []
+	        return makeData(target, array, function (name) {
+	            target.push(data.hasOwnProperty(name) ? data[name] : defaults ? defaults[name]: '' )
+	        })
+	    } else {
+	        throw 'selectBy只支持对象'
+	    }
+	}
+	Number.isNaN = Number.isNaN || function(a){
+	    return a !== a
+	}
+
+	function limitBy(input, limit, begin) {
+	    if (Math.abs(Number(limit)) === Infinity) {
+	        limit = Number(limit);
+	    } else {
+	        limit = parseInt(limit,10)
+	    }
+	    if (Number.isNaN(limit))
+	        return input
+
+	    if (typeof input === 'number')
+	        input = input + ''
+	    if ((!Array.isArray(input)) && (typeof input !== 'string'))
+	        return input
+
+	    begin = (!begin || Number.isNaN(begin)) ? 0 : ~~begin
+	  
+	    
+	    begin = (begin < 0) ? Math.max(0, input.length + begin) : begin
+	    if (limit >= 0) {
+	        input = input.slice(begin, begin + limit)
+	    } else {
+	        if (begin === 0) {
+	            input = input.slice(limit, input.length)
+	        } else {
+	            input = input.slice(Math.max(0, begin + limit), begin);
+	        }
+	    }
+
+	    return makeData(input, [])
+	}
+
+	function makeData(ret, array, callback) {
+	    for (var i = 0, n = array.length; i < n; i++) {
+	        callback(array[i])
+	    }
+	    return ret
+	}
+
+	function containKey(a, reg) {
+	    if (avalon.isPlainObject(a)) {
+	        for (var k in a) {
+	            if (reg.test(a[k]))
+	                return true
+	        }
+	    } else if (Array.isArray(a)) {
+	        return a.some(function (b) {
+	            return reg.test(b)
+	        })
+	    } else if (a !== null) {
+	        return reg.test(a)
+	    }
+	    return false
+	}
+
+	function convertArray(array) {
+	    var ret = [], i = 0
+	    avalon.each(array, function (key, value) {
+	        ret[i++] = {
+	            value: value,
+	            key: key
+	        }
+	    })
+	    return ret
+	}
+
+	module.exports = {
+	    limitBy: limitBy,
+	    orderBy: orderBy,
+	    selectBy: selectBy,
+	    filterBy: filterBy
+	}
+
+/***/ },
+/* 14 */
+/***/ function(module, exports) {
+
+	
+	var eventFilters = {
+	    stop: function (e) {
+	        e.stopPropagation()
+	        return e
+	    },
+	    prevent: function (e) {
+	        e.preventDefault()
+	        return e
+	    }
+	}
+	var keyCode = {
+	    esc: 27,
+	    tab: 9,
+	    enter: 13,
+	    space: 32,
+	    del: 46,
+	    up: 38,
+	    left: 37,
+	    right: 39,
+	    down: 40
+	}
+
+	avalon.each(keyCode, function (name, keyCode) {
+	    eventFilters[name] = function (e) {
+	        if (e.which !== keyCode) {
+	            e.$return = true
+	        }
+	        return e
+	    }
+	})
+
+	module.exports = eventFilters
+
+/***/ },
+/* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * 虚拟DOM的4大构造器
+	 */
+	var VText = __webpack_require__(16)
+	var VElement = __webpack_require__(17)
+	var VComment = __webpack_require__(18)
+	avalon.vdomAdaptor = function (obj) {
+	    switch (obj.type) {
+	        case '#text':
+	            return new VText(obj)
+	        case '#comment':
+	            return new VComment(obj)
+	        default:
+	            return new VElement(obj)
+	    }
+	}
+
+	module.exports = {
+	    VText: VText,
+	    VComment: VComment,
+	    VElement: VElement
+	}
+
+
+/***/ },
+/* 16 */
+/***/ function(module, exports) {
+
+	var rexpr = avalon.config.rexpr
+
+	function VText(text) {
+	    if (typeof text === 'string') {
+	        this.type = '#text'
+	        this.nodeValue = text
+	        this.skipContent = !rexpr.test(text)
+	    } else {
+	        for (var i in text) {
+	            this[i] = text[i]
+	        }
+	    }
+	}
+
+	VText.prototype = {
+	    constructor: VText,
+	    toDOM: function () {
+	        return document.createTextNode(this.nodeValue)
+	    },
+	    toHTML: function () {
+	        return this.nodeValue
+	    }
+	}
+
+	module.exports = VText
+
+/***/ },
+/* 17 */
+/***/ function(module, exports) {
+
+	
+	function VElement(type, props, children) {
+	    if (typeof type === 'object') {
+	        for (var i in type) {
+	            this[i] = type[i]
+	        }
+	    } else {
+	        this.type = type
+	        this.props = props
+	        this.children = children
+	        this.template = ''
+	    }
+	}
+	function skipFalseAndFunction(a) {
+	    return a !== false && (Object(a) !== a)
+	}
+	VElement.prototype = {
+	    constructor: VElement,
+	    toDOM: function () {
+	        var dom = document.createElement(this.type)
+	        for (var i in this.props) {
+	            var val = this.props[i]
+	            if (skipFalseAndFunction(val)) {
+	                dom.setAttribute(i, val + '')
+	            }
+	        }
+	        if (this.skipContent) {
+	            switch (this.type) {
+	                case 'script':
+	                    dom.text = this.template
+	                    break
+	                case 'style':
+	                case 'template':
+	                    dom.innerHTML = this.template
+	                    break
+	                case 'noscript':
+	                    dom.textContent = this.template
+	                    break
+	                default:
+	                    var a = avalon.parseHTML(this.template)
+	                    dom.appendChild(a)
+	                    break
+	            }
+
+	        } else if (!this.isVoidTag) {
+	            if (this.children.length) {
+	                this.children.forEach(function (c) {
+	                    dom.appendChild(avalon.vdomAdaptor(c).toDOM())
+	                })
+	            } else {
+	                dom.appendChild(avalon.parseHTML(this.template))
+	            }
+
+	        }
+	        return dom
+	    },
+	    toHTML: function () {
+	        var arr = []
+	        for (var i in this.props) {
+	            var val = this.props[i]
+	            if (skipFalseAndFunction(val)) {
+	                arr.push(i + '=' + avalon.quote(this.props[i] + ''))
+	            }
+	        }
+	        arr = arr.length ? ' ' + arr.join(' ') : ''
+	        var str = '<' + this.type + arr
+	        if (this.isVoidTag) {
+	            return str + '/>'
+	        }
+	        str += '>'
+	        if (this.children.length) {
+	            str += this.children.map(function (c) {
+	                return avalon.vdomAdaptor(c).toHTML()
+	            }).join('')
+	        } else {
+	            str += this.template
+	        }
+	        return str + '</' + this.type + '>'
+	    }
+	}
+
+	module.exports = VElement
+
+/***/ },
+/* 18 */
+/***/ function(module, exports) {
+
+	
+	function VComment(text) {
+	    if (typeof text === 'string') {
+	        this.type = '#comment'
+	        this.nodeValue = text
+	        this.skipContent = true
+	    } else {
+	        for (var i in text) {
+	            this[i] = text[i]
+	        }
+	    }
+	}
+	VComment.prototype = {
+	    constructor: VComment,
+	    clone: function () {
+	        return new VComment(this)
+	    },
+	    toDOM: function () {
+	        return document.createComment(this.nodeValue)
+	    },
+	    toHTML: function () {
+	        return '<!--' + this.nodeValue + '-->'
+	    }
+	}
+
+	module.exports = VComment
+
+/***/ },
+/* 19 */,
+/* 20 */,
+/* 21 */,
+/* 22 */,
+/* 23 */,
+/* 24 */,
+/* 25 */,
+/* 26 */
+/***/ function(module, exports) {
+
+	// https://github.com/rsms/js-lru
+	function LRU(maxLength) {
+	    this.size = 0
+	    this.limit = maxLength
+	    this.head = this.tail = void 0
+	    this._keymap = {}
+	}
+
+	var p = LRU.prototype
+
+	p.put = function (key, value) {
+	    var entry = {
+	        key: key,
+	        value: value
+	    }
+	    this._keymap[key] = entry
+	    if (this.tail) {
+	        this.tail.newer = entry
+	        entry.older = this.tail
+	    } else {
+	        this.head = entry
+	    }
+	    this.tail = entry
+	    if (this.size === this.limit) {
+	        this.shift()
+	    } else {
+	        this.size++
+	    }
+	    return value
+	}
+
+	p.shift = function () {
+	    var entry = this.head
+	    if (entry) {
+	        this.head = this.head.newer
+	        this.head.older =
+	                entry.newer =
+	                entry.older =
+	                this._keymap[entry.key] = void 0
+	        delete this._keymap[entry.key] //#1029
+	    }
+	}
+	p.get = function (key) {
+	    var entry = this._keymap[key]
+	    if (entry === void 0)
+	        return
+	    if (entry === this.tail) {
+	        return  entry.value
+	    }
+	    // HEAD--------------TAIL
+	    //   <.older   .newer>
+	    //  <--- add direction --
+	    //   A  B  C  <D>  E
+	    if (entry.newer) {
+	        if (entry === this.head) {
+	            this.head = entry.newer
+	        }
+	        entry.newer.older = entry.older // C <-- E.
+	    }
+	    if (entry.older) {
+	        entry.older.newer = entry.newer // C. --> E
+	    }
+	    entry.newer = void 0 // D --x
+	    entry.older = this.tail // D. --> E
+	    if (this.tail) {
+	        this.tail.newer = entry // E. <-- D
+	    }
+	    this.tail = entry
+	    return entry.value
+	}
+
+	module.exports = LRU
+
+
+/***/ },
+/* 27 */
+/***/ function(module, exports) {
+
+	
+	var scriptNode = avalon.document.createElement('script')
+	var scriptTypes = avalon.oneObject(['', 'text/javascript', 'text/ecmascript',
+	    'application/ecmascript', 'application/javascript'])
+
+	function fixScript(wrapper) {
+	    var els = wrapper.getElementsByTagName('script')
+	    if (els.length) {
+	        for (var i = 0, el; el = els[i++]; ) {
+	            if (scriptTypes[el.type]) {
+	                //以偷龙转凤方式恢复执行脚本功能
+	                var neo = scriptNode.cloneNode(false) //FF不能省略参数
+	                Array.prototype.forEach.call(el.attributes, function (attr) {
+	                    if (attr && attr.specified) {
+	                        neo[attr.name] = attr.value //复制其属性
+	                        neo.setAttribute(attr.name, attr.value)
+	                    }
+	                }) // jshint ignore:line
+	                neo.text = el.text
+	                el.parentNode.replaceChild(neo, el) //替换节点
+	            }
+	        }
+	    }
+	}
+
+	module.exports = fixScript
+
+
+/***/ },
+/* 28 */,
+/* 29 */,
+/* 30 */,
+/* 31 */,
+/* 32 */
+/***/ function(module, exports) {
+
+	//http://www.feiesoft.com/html/events.html
+	//http://segmentfault.com/q/1010000000687977/a-1020000000688757
+	module.exports = {
+	    click: true,
+	    dblclick: true,
+	    keydown: true,
+	    keypress: true,
+	    keyup: true,
+	    mousedown: true,
+	    mousemove: true,
+	    mouseup: true,
+	    mouseover: true,
+	    mouseout: true,
+	    wheel: true,
+	    mousewheel: true,
+	    input: true,
+	    change: true,
+	    beforeinput: true,
+	    compositionstart: true,
+	    compositionupdate: true,
+	    compositionend: true,
+	    select: true,
+	    //http://blog.csdn.net/lee_magnum/article/details/17761441
+	    cut: true,
+	    copy: true,
+	    paste: true,
+	    beforecut: true,
+	    beforecopy: true,
+	    beforepaste: true,
+	    focusin: true,
+	    focusout: true,
+	    DOMFocusIn: true,
+	    DOMFocusOut: true,
+	    DOMActivate: true,
+	    dragend: true,
+	    datasetchanged: true
+	}
+
+/***/ },
+/* 33 */,
+/* 34 */
+/***/ function(module, exports) {
+
+	function scan(nodes) {
+	    for (var i = 0, elem; elem = nodes[i++]; ) {
+	        if (elem.nodeType === 1) {
+	            var $id = hasController(elem)
+	            var vm = avalon.vmodels[$id]
+	            if (vm && !vm.$element) {
+	                cleanWhitespace(elem)//减少虚拟DOM的规模及diff, patch的时间
+	                var str = elem.outerHTML
+	                avalon(elem).removeClass('ms-controller')
+	                vm.$element = elem
+	                var now = new Date() - 0
+	                var vtree = avalon.lexer(str)
+	                avalon.log('create primitive vtree', new Date - now)
+	                now = new Date()
+	                vm.$render = avalon.render(vtree)
+	                avalon.log('create template Function ', new Date - now)
+	                avalon.rerenderStart = new Date
+	                elem.vtree = vtree
+	                avalon.batch($id, true)
+
+	            } else if (!$id) {
+	                scan(elem.childNodes)
+	            }
+	        }
+	    }
+	}
+	var notWhitespace = /\S/
+	function cleanWhitespace(target) {
+	    var keep
+	    for (var i = 0; i < target.childNodes.length; i++) {
+	        var node = target.childNodes[i]
+	        if ((node.nodeType == 3) && (!notWhitespace.test(node.nodeValue))) {
+	            keep = target.removeChild(node)
+	            i--
+	        }else if (node.nodeType === 1) {
+	            cleanWhitespace(node)
+	        }
+	    }
+	    if (target.childNodes.length == 0 && keep) {
+	        target.appendChild(keep)
+	    }
+	}
+	module.exports = avalon.scan = function (a) {
+	    if (!a || !a.nodeType) {
+	        avalon.warn('[avalon.scan] first argument must be element , documentFragment, or document')
+	        return
+	    }
+	    if (getController(a)) {
+	        avalon.warn('[avalon.scan] first argument must has "ms-controller" attribute')
+	    }
+	    scan([a])
+	}
+	function hasController(a) {
+	    return a.getAttribute('ms-controller')
+	}
+	function getController(a) {
+	    if (a.getAttribute && hasController(a)) {
+	        return true
+	    }
+	    //document.all http://www.w3help.org/zh-cn/causes/BX9002
+	    var all = a.getElementsByTagName ? a.getElementsByTagName('*') : a.querySelectorAll('*')
+	    for (var i = 0, node; node = all[i++]; ) {
+	        if (hasController(a)) {
+	            return true
+	        }
+	    }
+	    return false
+	}
+
+/***/ },
+/* 35 */,
+/* 36 */
+/***/ function(module, exports) {
+
+	
+	avalon.directive("controller", {
+	    priority: 1,
+	    parse: function (binding, num) {
+	        var vm = "vm" + num
+	        var isObject = /\{.+\}/.test(binding.expr)
+	        var a = "\n\n\nvar " + vm + " =  avalon.vmodels[" + avalon.quote(binding.expr) + "]\n"
+	        var b = "\n\n\nvar " + vm + " = " + binding.expr + "\n"
+	        var str = (isObject ? b : a) +
+	                "if(" + vm + "){\n" +
+	                "\tif(__vmodel__){\n" +
+	                "\t\t__vmodel__ = avalon.mediatorFactory(__vmodel__, " + vm + ")\n" +
+	                "\t}else{\n" +
+	                "\t\t__vmodel__ = " + vm + "\n" +
+	                "\t}\n" +
+	                "}\n\n\n"
+	        return str
+	    },
+	    diff: avalon.noop,
+	    update:avalon.noop
+	})
+
+
+
+/***/ },
+/* 37 */,
+/* 38 */,
+/* 39 */
+/***/ function(module, exports) {
+
+	var bools = ['autofocus,autoplay,async,allowTransparency,checked,controls',
+	    'declare,disabled,defer,defaultChecked,defaultSelected,',
+	    'isMap,loop,multiple,noHref,noResize,noShade',
+	    'open,readOnly,selected'
+	].join(',')
+
+	var propMap = {//不规则的属性名映射
+	    'accept-charset': 'acceptCharset',
+	    'char': 'ch',
+	    charoff: 'chOff',
+	    'class': 'className',
+	    'for': 'htmlFor',
+	    'http-equiv': 'httpEquiv'
+	}
+	/*
+	contenteditable不是布尔属性
+	http://www.zhangxinxu.com/wordpress/2016/01/contenteditable-plaintext-only/
+	contenteditable=''
+	contenteditable='events'
+	contenteditable='caret'
+	contenteditable='plaintext-only'
+	contenteditable='true'
+	contenteditable='false'
+	 */
+	bools.replace(/\w+/g, function (name) {
+	    propMap[name.toLowerCase()] = name
+	})
+
+
+	var anomaly = ['accessKey,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan',
+	    'dateTime,defaultValue,contentEditable,frameBorder,longDesc,maxLength,marginWidth,marginHeight',
+	    'rowSpan,tabIndex,useMap,vSpace,valueType,vAlign'
+	].join(',')
+	anomaly.replace(/\w+/g, function (name) {
+	    propMap[name.toLowerCase()] = name
+	})
+
+	module.exports = propMap
+
+
+/***/ },
+/* 40 */
+/***/ function(module, exports) {
+
+	
+
+	avalon.directive('css', {
+	    parse: function (binding, num) {
+	        return 'vnode' + num + '.props["ms-css"] = ' + avalon.parseExpr(binding) + ';\n'
+	    },
+	    diff: function (cur, pre) {
+	        var a = cur.props['ms-css']
+	        var p = pre.props['ms-css']
+	        if ( Object(a) === a) {
+	            if (Array.isArray(a)) {
+	                a = cur.props['ms-css'] = avalon.mix.apply({}, a)
+	            }
+	            if (typeof p !== 'object') {
+	                cur.changeStyle = a
+	                
+	            } else {
+	                var patch = {}
+	                var hasChange = false
+	                for (var i in a) {
+	                    if (a[i] !== p[i]) {
+	                        hasChange = true
+	                        patch[i] = a[i]
+	                    }
+	                }
+	                if (hasChange) {
+	                    cur.changeStyle = patch
+	                }
+	            }
+	            if (cur.changeStyle) {
+	                var list = cur.change || (cur.change = [])
+	                avalon.Array.ensure(list, this.update)
+	            }
+	        } else {
+	            cur.props['ms-css'] = p
+	        }
+	    },
+	    update: function (node, vnode) {
+	        var change = vnode.changeStyle
+	        var wrap = avalon(node)
+	        for (var name in change) {
+	            wrap.css(name, change[name])
+	        }
+	        delete vnode.changeStyle
+	    }
+	})
+
+
+/***/ },
+/* 41 */
+/***/ function(module, exports) {
+
+	
+
+	function parseDisplay(nodeName, val) {
+	    //用于取得此类标签的默认display值
+	    var key = '_' + nodeName
+	    if (!parseDisplay[key]) {
+	        var node = document.createElement(nodeName)
+	        avalon.root.appendChild(node)
+	        if (avalon.modern) {
+	            val = getComputedStyle(node, null).display
+	        } else {
+	            val = node.currentStyle.display
+	        }
+	        avalon.root.removeChild(node)
+	        parseDisplay[key] = val
+	    }
+	    return parseDisplay[key]
+	}
+
+	avalon.parseDisplay = parseDisplay
+
+	avalon.directive('visible', {
+	    parse: function (binding, num) {
+	        return 'vnode' + num + '.props["ms-visible"] = ' + avalon.parseExpr(binding) + ';\n'
+	    },
+	    diff: function (cur, pre) {
+	        var c = cur.props['ms-visible'] = !!cur.props['ms-visible']
+	        cur.displayValue = pre.displayValue
+	        if (c !== pre.props['ms-visible']) {
+	            var list = cur.change || (cur.change = [])
+	            avalon.Array.ensure(list, this.update)
+	        }
+	    },
+	    update: function (node, vnode) {
+	        if (vnode.props['ms-visible']) {
+	            var cur = avalon(node).css('display')
+	            if (!vnode.displayValue) {
+	                vnode.displayValue = cur !== 'none' ? cur :
+	                        parseDisplay(node.nodeName)
+	            }
+	            node.style.display = vnode.displayValue
+	        } else {
+	            node.style.display = 'none'
+	        }
+	    }
+	})
+
+/***/ },
+/* 42 */
+/***/ function(module, exports) {
+
+	
+	avalon.directive('expr', {
+	    parse: function () {
+	    },
+	    diff: function (cur, pre) {//curNode, preNode
+	        cur.fixIESkip = true
+	        if (cur.nodeValue !== pre.nodeValue) {
+	            if (pre.dom) {
+	                cur.dom = pre.dom
+	                cur.dom.nodeValue = cur.nodeValue
+	            } else {
+	                var list = cur.change || (cur.change = [])
+	                avalon.Array.ensure(list, this.update)
+	            }
+	        }
+	    },
+	    update: function (node, vnode, parent) {
+
+	        if (node.nodeType !== 3) {
+	            var textNode = document.createTextNode(vnode.nodeValue)
+	            parent.replaceChild(textNode, node)
+	        } else {
+	            node.nodeValue = vnode.nodeValue
+	            textNode = node
+	        }
+	        vnode.dom = node
+	    }
+	})
+
+/***/ },
+/* 43 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var rident = __webpack_require__(44).ident
+	avalon.directive('text', {
+	    parse: function (binding, num, vnode) {
+	        vnode.children = [{type: '#text', nodeValue: ''}]
+	        var val = rident.test(binding.expr) ? binding.expr : avalon.parseExpr(binding)
+	        return 'vnode' + num + '.props["ms-text"] =' + val + '\n'
+	    },
+	    diff: function (cur, pre) {
+	        var curValue = cur.props['ms-text']
+	        var preValue = pre.props['ms-text']
+	        cur.children = pre.children
+	        cur.skipContent = true
+	        if (curValue !== preValue) {
+	            cur.children[0].nodeValue = curValue
+	            if (pre.dom) {
+	                cur.dom = pre.dom
+	                this.update(cur.dom, cur)
+	            } else {
+	                var list = cur.change || (cur.change = [])
+	                avalon.Array.ensure(list, this.update)
+	            }
+	        }
+	        return false
+	    },
+	    update: function (node, vnode) {
+	        var nodeValue = vnode.props['ms-text']
+	        if ('textContent' in node) {
+	            node.textContent = nodeValue + ''
+	        } else {
+	            node.innerText = nodeValue + ''
+	        }
+	        vnode.dom = node
+	    }
+	})
+
+/***/ },
+/* 44 */
+/***/ function(module, exports) {
+
+	module.exports = {
+	    ident: /^[$a-zA-Z_][$a-zA-Z0-9_]*$/,
+	    sp: /^\s+$/, //全部都是空白,
+	    leftSp: /^\s+/, //左边空白
+	    rightSp: /s+$/, //右边空白,
+	    binding: /^ms-(\w+)-?(.*)/, //绑定属性,
+	    string: /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
+	}
+
+/***/ },
+/* 45 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cache = __webpack_require__(26)
+	var textCache = new Cache(128)
+	avalon.textCache = textCache
+	avalon.directive('html', {
+	    parse: function (binding, num) {
+	        return 'vnode' + num + '.htmlVm = __vmodel__\n' +
+	                'vnode' + num + '.skipContent = true;\n' +
+	                'vnode' + num + '.props["ms-html"] =' + avalon.parseExpr(binding) + ';\n'
+	    },
+	    diff: function (cur, pre) {
+	        var curValue = cur.props['ms-html']
+	        var preValue = pre.props['ms-html']
+	        if (curValue !== preValue) {
+
+	            var nodes = textCache.get(curValue)
+	            if (!Array.isArray(nodes)) {
+	                var child = avalon.lexer(curValue)
+	                var render = avalon.render(child)
+	                nodes = render(cur.htmlVm)
+	                curValue = cur.props['ms-html'] = nodes.map(function (el) {
+	                    return 'template' in el ? el.template : el.nodeValue
+	                }).join('-')
+	                textCache.put(curValue, nodes)
+	            }
+	            cur.children = nodes
+	            if (cur.props['ms-html'] !== preValue) {
+	                var list = cur.change || (cur.change = [])
+	                avalon.Array.ensure(list, this.update)
+	            }
+	        }
+	    },
+	    update: function (node, vnode) {
+	        if (node.querySelectorAll) {
+	            var nodes = node.querySelectorAll('[avalon-events]')
+	            avalon.each(nodes, function (el) {
+	                avalon.unbind(el)
+	            })
+	        } else {
+	            var nodes = node.getElementsByTagName('*')
+	            avalon.each(nodes, function (el) {
+	                if (el.getAttribute('avalon-events')) {
+	                    avalon.unbind(el)
+	                }
+	            })
+	        }
+	        //添加节点
+	        if (window.Range) {
+	            node.innerHTML = vnode.children.map(function (c) {
+	                return avalon.vdomAdaptor(c).toHTML()
+	            }).join('')
+	        } else {
+	            avalon.clearHTML(node)
+	            var fragment = document.createDocumentFragment()
+	            vnode.children.forEach(function (c) {
+	                fragment.appendChild(avalon.vdomAdaptor(c).toDOM())
+	            })
+
+	            node.appendChild(fragment)
+	        }
+	    }
+	})
+
+/***/ },
+/* 46 */
+/***/ function(module, exports, __webpack_require__) {
+
+	//根据VM的属性值或表达式的值切换类名，ms-class='xxx yyy zzz:flag'
+	//http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
+	var markID = __webpack_require__(6).getLongID
+
+	var directives = avalon.directives
+	avalon.directive('class', {
+	    parse: function (binding, num) {
+	        //必须是布尔对象或字符串数组
+	        return 'vnode' + num + '.props["' + binding.name + '"] = ' + avalon.parseExpr(binding) + ';\n'
+	    },
+	    diff: function (cur, pre, type) {
+	        var curValue = cur.props['ms-' + type]
+	        var preValue = pre.props['ms-' + type]
+	        if (!pre.classEvent) {
+	            var classEvent = {}
+	            if (type === 'hover') {//在移出移入时切换类名
+	                classEvent.mouseenter = activateClass
+	                classEvent.mouseleave = abandonClass
+	            } else if (type === 'active') {//在获得焦点时切换类名
+	                cur.props.tabindex = cur.props.tabindex || -1
+	                classEvent.tabIndex = cur.props.tabindex
+	                classEvent.mousedown = activateClass
+	                classEvent.mouseup = abandonClass
+	                classEvent.mouseleave = abandonClass
+	            }
+	            cur.classEvent = classEvent
+	        } else {
+	            cur.classEvent = pre.classEvent
+	        }
+
+
+	        var className
+	        if (Array.isArray(curValue)) {
+	            //convert it to a string 
+	            className = curValue.join(' ').trim().replace(/\s+/, ' ')
+	        } else if (typeof curValue === 'object') {
+	            className = Object.keys(curValue).filter(function (name) {
+	                return curValue[name]
+	            }).join(' ')
+	        } else if (typeof curValue === 'string') {
+	            className = curValue.trim().replace(/\s+/, ' ')
+	        } 
+	        
+	        if (typeof className !== 'string') {
+	            cur.props['ms-' + type] = preValue
+	            
+	            return
+	        }
+	        if (!preValue || preValue !== className) {
+	            cur['change-' + type] = className
+	            var list = cur.change || (cur.change = [])
+	            avalon.Array.ensure(list, this.update)
+	        }
+
+	    },
+	    
+	    update: function (node, vnode) {
+	        var classEvent = vnode.classEvent
+	        if (classEvent) {
+	            for (var i in classEvent) {
+	                if (i === 'tabIndex') {
+	                    node[i] = classEvent[i]
+	                } else {
+	                    avalon.bind(node, i, classEvent[i])
+	                }
+	            }
+	            vnode.classEvent = {}
+	        }
+	        var names = ['class', 'hover', 'active']
+	        names.forEach(function (type) {
+	            var name = 'change-' + type
+	            var value = vnode[ name ]
+	            if (!value)
+	                return
+	            if (type === 'class') {
+
+	                setClass(node, vnode)
+	            } else {
+	                var oldType = node.getAttribute(name)
+	                if (oldType) {
+	                    avalon(node).removeClass(oldType)
+	                }
+	                node.setAttribute(name, value)
+	            }
+	        })
+	    }
+	})
+	directives.active = directives.hover = directives['class']
+
+	var classMap = {
+	    mouseenter: 'change-hover',
+	    mouseleave: 'change-hover',
+	    mousedown: 'change-active',
+	    mouseup: 'change-active'
+	}
+
+	function activateClass(e) {
+	    var elem = e.target
+	    avalon(elem).addClass(elem.getAttribute(classMap[e.type]) || '')
+	}
+
+	function abandonClass(e) {
+	    var elem = e.target
+	    var name = classMap[e.type]
+	    avalon(elem).removeClass(elem.getAttribute(name) || '')
+	    if (name !== 'change-active') {
+	        avalon(elem).removeClass(elem.getAttribute('change-active') || '')
+	    }
+	}
+
+	function setClass(node, vnode) {
+	    var old = node.getAttribute('old-change-class')||''
+	    var neo = vnode['change-class']
+	    avalon(node).removeClass(old).addClass(neo)
+	    node.setAttribute('old-change-class', neo)
+	    delete vnode['change-class']
+	}
+
+	markID(activateClass)
+	markID(abandonClass)
+
+
+
+
+/***/ },
+/* 47 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var markID = __webpack_require__(6).getLongID
+
+	var quote = avalon.quote
+
+
+	//Ref: http://developers.whatwg.org/webappapis.html#event-handler-idl-attributes
+	// The assumption is that future DOM event attribute names will begin with
+	// 'on' and be composed of only English letters.
+	var revent = /^ms-on-([a-z]+)/ 
+	var rfilters = /\|.+/g
+	var rvar = /([@$]?\w+)/g
+	var rstring = __webpack_require__(44).string
+	//基于事件代理的高性能事件绑定
+	avalon.directive('on', {
+	    priority: 3000,
+	    parse: function (binding, num) {
+	        var vars = binding.expr.replace(rstring, ' ').replace(rfilters, '').match(rvar)
+	        var canCache = vars.every(function (el) {
+	            return el.charAt(0) === '@' || el === '$event'
+	        })
+	        var vmDefine = 'vnode' + num + '.onVm = __vmodel__\n'
+	        var pid = quote(binding.name)
+	        if (canCache) {
+	            var fn = Function('return ' + avalon.parseExpr(binding, 'on'))()
+	            var uuid = markID(fn)
+	            avalon.eventListeners[uuid] = fn
+	            return vmDefine + 'vnode' + num + '.props[' + pid +
+	                    '] = avalon.eventListeners.' + uuid + '\n'
+	        } else {//如果闭包引用其他变量
+	            return vmDefine + 'vnode' + num + '.props[' + pid +
+	                    '] = ' + avalon.parseExpr(binding, 'on') + '\n'
+	        }
+	    },
+	    diff: function (cur, pre, type, name) {
+	        var fn0 = cur.props[name]
+	        var fn1 = pre.props[name]
+	        if (fn0 !== fn1) {
+	            var match = name.match(revent)
+	            type = match[1]
+	            var search = type + ':' + markID(fn0)
+	            cur.addEvents = cur.addEvents || {}
+	            cur.addEvents[search] = fn0
+
+	            if (typeof fn1 === 'function') {
+	                cur.removeEvents = cur.removeEvents || {}
+	                cur.removeEvents[type + ':' + fn1.uuid] = fn1
+	            }
+
+	            var list = cur.change || (cur.change = [])
+	            avalon.Array.ensure(list, this.update)
+	        }
+	    },
+	    update: function (node, vnode) {
+	        var key, type, listener
+	        node.__av_context__ = vnode.onVm
+	        delete vnode.onVm
+	        for (key in vnode.removeEvents) {
+	            type = key.split(':').shift()
+	            listener = vnode.removeEvents[key]
+	            avalon.unbind(node, type, listener)
+	        }
+	        delete vnode.removeEvents
+	        for (key in vnode.addEvents) {
+	            type = key.split(':').shift()
+	            listener = vnode.addEvents[key]
+
+	            avalon.bind(node, type, listener)
+	        }
+	        delete vnode.addEvents
+	    }
+	})
+
+
+
+
+
+
+/***/ },
+/* 48 */,
+/* 49 */
+/***/ function(module, exports) {
+
+	var valueHijack = false
+	try { //#272 IE9-IE11, firefox
+	    var setters = {}
+	    var aproto = HTMLInputElement.prototype
+	    var bproto = HTMLTextAreaElement.prototype
+	    function newSetter(value) { // jshint ignore:line
+	        setters[this.tagName].call(this, value)
+	        if (!this.caret && this.__duplex__) {
+	            this.__duplex__.update.call(this)
+	        }
+	    }
+	    var inputProto = HTMLInputElement.prototype
+	    Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
+	    setters['INPUT'] = Object.getOwnPropertyDescriptor(aproto, 'value').set
+
+	    Object.defineProperty(aproto, 'value', {
+	        set: newSetter
+	    })
+	    setters['TEXTAREA'] = Object.getOwnPropertyDescriptor(bproto, 'value').set
+	    Object.defineProperty(bproto, 'value', {
+	        set: newSetter
+	    })
+	    valueHijack = true
+	} catch (e) {
+	    //在chrome 43中 ms-duplex终于不需要使用定时器实现双向绑定了
+	    // http://updates.html5rocks.com/2015/04/DOM-attributes-now-on-the-prototype
+	    // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
+	}
+	module.exports = valueHijack
+
+/***/ },
+/* 50 */
+/***/ function(module, exports) {
+
+	var rchangeFilter = /\|\s*change\b/
+	var rcheckedType = /^(?:checkbox|radio)$/
+	var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/
+	var rnoduplexInput = /^(file|button|reset|submit|checkbox|radio|range)$/
+
+	function newControl(binding, vnode) {
+	    var expr = binding.expr
+	    var etype = vnode.props.type
+	    //处理数据转换器
+	    var ptype = binding.param
+	    var isChecked = ptype === 'checked'
+
+	    var ctrl = vnode.ctrl = {
+	        parsers: [],
+	        formatters: [],
+	        modelValue: NaN,
+	        viewValue: NaN,
+	        parse: parse,
+	        format: format
+	    }
+	    if (isChecked) {
+	        if (rcheckedType.test(etype)) {
+	            ctrl.isChecked = true
+	            ctrl.type = 'radio'
+	        } else {
+	            ptype = null
+	        }
+	    }
+	    var parser = avalon.parsers[ptype]
+	    if (parser) {
+	        ctrl.parsers.push(parser)
+	    }
+	    if (rchangeFilter.test(expr)) {
+	        expr = expr.replace(rchangeFilter, '')
+	        if (rnoduplexInput.test(etype)) {
+	            avalon.warn(etype + '不支持change过滤器')
+	        } else {
+	            ctrl.isChanged = true
+	        }
+	    }
+
+	    var match = expr.match(rdebounceFilter)
+	    if (match) {
+	        expr = expr.replace(rdebounceFilter, '')
+	        if (!ctrl.isChanged) {
+	            ctrl.debounceTime = parseInt(match[1], 10) || 300
+	        }
+	    }
+	    binding.expr = ctrl.expr = expr.trim()
+	    if (!/input|textarea|select/.test(vnode.type)) {
+	        if ('contenteditable' in vnode.props) {
+	            ctrl.type = 'contenteditable'
+	        }
+	    } else if (!ctrl.type) {
+	        ctrl.type = vnode.type === 'select' ? 'select' :
+	                etype === 'checkbox' ? 'checkbox' :
+	                etype === 'radio' ? 'radio' :
+	                'input'
+	    }
+	    avalon.parseExpr(binding, 'duplex')
+	}
+
+	function parse(val) {
+	    for (var i = 0, fn; fn = this.parsers[i++]; ) {
+	        val = fn.call(this, val)
+	    }
+	    return val
+	}
+
+	function format(val) {
+	    var formatters = this.formatters
+	    var index = formatters.length
+	    while (index--) {
+	        val = formatters[index](val)
+	    }
+	    return val
+	}
+
+	module.exports = newControl
+
+
+/***/ },
+/* 51 */,
+/* 52 */
+/***/ function(module, exports) {
+
+	
+	/**
+	 * ------------------------------------------------------------
+	 * refreshModel
+	 * 在事件回调与value的setter中调用这些方法,来同步vm
+	 * ------------------------------------------------------------
+	 */
+	var refreshModel = {
+	    input: function (prop) {//处理单个value值处理
+	        var ctrl = this
+	        prop = prop || 'value'
+	        var viewValue = ctrl.elem[prop]
+
+	        //vm.aaa = '1234567890'
+	        //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
+	        viewValue = ctrl.format(viewValue)
+
+	        var val = ctrl.parse(viewValue)
+	        if (val !== ctrl.modelValue) {
+	            ctrl.set(ctrl.vmodel, val)
+	           
+	        }
+
+	    },
+	    radio: function () {
+	        var ctrl = this
+	        if (ctrl.isChecked) {
+	            var val = ctrl.modelValue = !ctrl.modelValue
+	            ctrl.set(ctrl.vmodel, val)
+	        } else {
+	            refreshModel.input.call(ctrl)
+	        }
+	    },
+	    checkbox: function () {
+	        var ctrl = this
+	        var array = ctrl.modelValue
+	        if (!Array.isArray(array)) {
+	            avalon.warn('ms-duplex应用于checkbox上要对应一个数组')
+	            array = [array]
+	        }
+	        var method = ctrl.elem.checked ? 'ensure' : 'remove'
+	        if (array[method]) {
+	            var val = ctrl.parse(ctrl.elem.value)
+	            array[method](val)
+	        }
+
+	    },
+	    select: function () {
+	        var ctrl = this
+	        var val = avalon(ctrl.elem).val() //字符串或字符串数组
+	        if (val + '' !== this.modelValue + '') {
+	            if (Array.isArray(val)) { //转换布尔数组或其他
+	                val = val.map(function (v) {
+	                    return ctrl.parse(v)
+	                })
+	            } else {
+	                val = ctrl.parse(val)
+	            }
+	            ctrl.modelValue = val
+	            ctrl.set(ctrl.vmodel, val)
+	        }
+	    },
+	    contenteditable: function () {
+	        refreshModel.input.call(this, 'innerHTML')
+	    }
+	}
+	module.exports = refreshModel
+
+/***/ },
+/* 53 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var Cache = __webpack_require__(26)
+	//缓存求值函数，以便多次利用
+	module.exports = new Cache(512)
+
+
+/***/ },
+/* 54 */,
+/* 55 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var patch = __webpack_require__(56)
+
+	avalon.directive('if', {
+	    priority: 5,
+	    parse: function (binding, num) {
+	        return 'vnode' + num + '.props["ms-if"] = ' + avalon.quote(binding.expr) + ';\n'
+	    },
+	    diff: function (cur, pre) {
+	        if (cur.type !== pre.type) {
+	            var list = cur.change || (cur.change = [])
+	            avalon.Array.ensure(list, this.update)
+	        }
+	    },
+	    update: function (dom, vnode, parent) {
+	        var dtype = dom.nodeName.toLowerCase()
+	        var vtype = vnode.type
+	        if (dtype !== vtype) {
+	            if (dom.nodeType === 1) {
+	                avalon.caches[vnode.nodeValue] = dom
+	                parent.replaceChild(avalon.vdomAdaptor(vnode).toDOM(), dom)
+	            } else {
+	                var s = dom.signature || dom.nodeValue
+	                var keep = avalon.caches[s]
+	                if (keep) {
+	                    parent.replaceChild(keep, dom)
+	                    patch([keep], [vnode])
+	                } else {
+	                    var el = avalon.vdomAdaptor(vnode).toDOM()
+	                    parent.replaceChild(el, dom)
+	                    avalon.caches[s] = el
+	                }
+	            }
+	        }
+	    }
+	})
+
+
+/***/ },
+/* 56 */
+/***/ function(module, exports) {
+
+	/**
+	 * ------------------------------------------------------------
+	 * patch 对某一个视图根据对应的虚拟DOM树进行全量更新
+	 * ------------------------------------------------------------
+	 */
+	var sp = /^\s*$/
+	function patch(nodes, vnodes, parent) {
+	    var next = nodes[0]
+	    if (!next && !parent)
+	        return
+	    parent = parent || next.parentNode
+	    for (var i = 0, vn = vnodes.length; i < vn; i++) {
+	        var vnode = vnodes[i]
+	        //IE6-8不会生成空白的文本节点，造成虚拟DOM与真实DOM的个数不一致，需要跳过
+	        if(avalon.msie < 9 && vnode.type === '#text' && !sp.fixIESkip && sp.test(vnode.nodeValue) ){
+	            continue
+	        }
+	        var node = next
+	        if (node)
+	            next = node.nextSibling
+
+	        if (vnode.directive === 'for' && vnode.change) {
+
+	            if (node.nodeType === 1) {
+	                var startRepeat = document.createComment(vnode.nodeValue)
+	                parent.insertBefore(startRepeat, node)
+	                vnode.endRepeat = document.createComment('ms-for-end:')
+	                parent.insertBefore(vnode.endRepeat, node.nextSibling)
+	                node = startRepeat
+	            } else {//如果是注释节点
+	                if (!vnode.endRepeat) {
+	                    vnode.endRepeat = getEndRepeat(node)
+	                }
+	            }
+	            next = vnode.endRepeat.nextSibling
+	        }
+
+	        //ms-repeat,ms-if, ms-widget会返回false
+	        if (false === execHooks(node, vnode, parent, 'change')) {
+	            execHooks(node, vnode, parent, 'afterChange')
+	            continue
+	        }
+	        if (!vnode.skipContent && vnode.children && node && node.nodeType === 1) {
+	            //处理子节点
+	            patch(avalon.slice(node.childNodes), vnode.children, node)
+	        }
+	        //ms-duplex
+	        execHooks(node, vnode, parent, 'afterChange')
+	    }
+	}
+
+	function getEndRepeat(node) {
+	    var isBreak = 0, ret = [], node
+	    while (node) {
+	        if (node.type === '#comment') {
+	            if (node.nodeValue.indexOf('ms-for:') === 0) {
+	                isBreak++
+	            } else if (node.nodeValue.indexOf('ms-for-end:') === 0) {
+	                isBreak--
+	            }
+	        }
+	        ret.push(node)
+	        node = node.nextSibling
+	        if (isBreak === 0) {
+	            break
+	        }
+	    }
+	    return ret.pop()
+	}
+
+	function execHooks(node, vnode, parent, hookName) {
+	    var hooks = vnode[hookName]
+	    if (hooks) {
+	        for (var hook; hook = hooks.shift(); ) {
+	            if (false === hook(node, vnode, parent)) {
+	                return false
+	            }
+	        }
+	        delete vnode[hookName]
+	    }
+	}
+
+	module.exports = patch
+
+/***/ },
+/* 57 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var patch = __webpack_require__(56)
+	var Cache = __webpack_require__(26)
+
+	avalon._each = function (obj, fn) {
+	    if (Array.isArray(obj)) {
+	        for (var i = 0; i < obj.length; i++) {
+	            var item = obj[i]
+	            var type = typeof item
+	            var key = item && type === 'object' ? item.$hashcode : type + item
+	            fn(i, obj[i], key)
+	        }
+	    } else {
+	        for (var i in obj) {
+	            if (obj.hasOwnProperty(i)) {
+	                fn(i, obj[i], i)
+	            }
+	        }
+	    }
+	}
+	var rforPrefix = /ms-for\:\s*/
+	var rforLeft = /^\s*\(\s*/
+	var rforRight = /\s*\)\s*$/
+	var rforSplit = /\s*,\s*/
+	var rforAs = /\s+as\s+([$\w]+)/
+	var rident = __webpack_require__(44).ident
+	var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
+	avalon.directive('for', {
+	    parse: function (str, num) {
+	        var aliasAs
+	        str = str.replace(rforAs, function (a, b) {
+	            if (!rident.test(b) || rinvalid.test(b)) {
+	                avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.')
+	            } else {
+	                aliasAs = b
+	            }
+	            return ''
+	        })
+	        var arr = str.replace(rforPrefix, '').split(' in ')
+	        var assign = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
+	        var alias = aliasAs ? 'var ' + aliasAs + ' = loop' + num + '\n' : ''
+	        //  var forValue = 'vnode' + num + '.forValue = loop' + num + '\n'
+	        var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
+	        if (kv.length === 1) {
+	            kv.unshift('$key')
+	        }
+
+	        return assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
+	    },
+	    diff: function (current, previous, __index__) {
+
+	        var cur = current[__index__]
+	        var pre = previous[__index__] || {}
+
+	        var isInit = !('directive' in pre)
+	        var isChange = false, i, c, p
+	        if (isInit) {
+	            pre.components = []
+	            pre.repeatCount = 0
+	        }
+	        var nodes = current.slice(cur.start, cur.end)
+	        cur.endRepeat = pre.endRepeat
+	        cur.components = getComponents(nodes.slice(1, -1), cur.signature)
+	        var n = nodes.length - pre.repeatCount
+	        if (n > 0) {
+	            var spliceArgs = [__index__, 0]
+	            for (var i = 0; i < n; i++) {
+	                spliceArgs.push(null)
+	            }
+	            previous.splice.apply(previous, spliceArgs)
+	        } else {
+	            previous.splice.apply(previous, [__index__, Math.abs(n)])
+	        }
+	        cur.action = isInit ? 'init' : 'update'
+	        if (!isInit) {
+	            var cache = {}
+	            cur.removedComponents = {}
+	            /* eslint-disable no-cond-assign */
+	            var quota = 0
+	            for (i = 0; c = cur.components[i++]; ) {
+	                /* eslint-enable no-cond-assign */
+	                quota++
+	                saveInCache(cache, c)
+	            }
+	            /* eslint-disable no-cond-assign */
+	            for (i = 0; p = pre.components[i++]; ) {
+	                /* eslint-enable no-cond-assign */
+	                c = isInCache(cache, p.key)
+	                if (c) {
+	                    quota--
+	                    if (!isChange) {//如果位置发生了变化
+	                        isChange = c.index !== p.index
+	                    }
+	                    c.nodes = p.nodes
+	                    avalon.diff(c.children, p.children)
+	                } else {
+	                    if (quota) {
+	                        c = fuzzyMatchCache(cache, p.key)
+	                        quota--
+	                        isChange = true //内容发生变化
+	                        c.nodes = p.nodes
+	                        avalon.diff(c.children, p.children)
+	                    } else {
+	                        isChange = true
+	                        cur.removedComponents[p.index] = p
+	                    }
+
+	                }
+	            }
+	            //这是新添加的元素
+	            for (i in cache) {
+	                isChange = true
+	                c = cache[i]
+	                avalon.diff(c.children, [])
+	            }
+
+	        } else {
+	            /* eslint-disable no-cond-assign */
+	            for (i = 0; c = cur.components[i++]; ) {
+	                /* eslint-enable no-cond-assign */
+	                avalon.diff(c.children, [])
+	            }
+	            isChange = true
+	        }
+	        pre.components.length = 0 //release memory
+	        if (isChange) {
+	            var list = cur.change || (cur.change = [])
+	            avalon.Array.ensure(list, this.update)
+	        }
+
+	        return __index__ + nodes.length - 1
+
+	    },
+	    update: function (startRepeat, vnode, parent) {
+
+	        var action = vnode.action
+	        var endRepeat = vnode.endRepeat
+
+	        var fragment = document.createDocumentFragment()
+	        if (action === 'init') {
+	            var node = startRepeat.nextSibling
+	            while (node && node !== endRepeat) {
+	                parent.removeChild(node)
+	                node = startRepeat.nextSibling
+	            }
+	        }
+
+	        for (var i in vnode.removedComponents) {
+	            var el = vnode.removedComponents[i]
+	            if (el.nodes) {
+	                el.nodes.forEach(function (n) {
+	                    if (n.parentNode) {
+	                        n.parentNode.removeChild(n)
+	                    }
+	                })
+	                el.nodes.length = el.children.length = 0
+	            }
+
+	        }
+	        delete vnode.removedComponents
+	        var insertPoint = startRepeat
+	        for (var i = 0; i < vnode.components.length; i++) {
+	            var com = vnode.components[i]
+	            var cnodes = com.nodes
+	            if (cnodes) {
+	                if (insertPoint.nextSibling !== cnodes[0]) {
+	                    var moveFragment = fragment.cloneNode(false)
+	                    cnodes.forEach(function (node) {
+	                        moveFragment.appendChild(node)
+	                    })
+	                    parent.insertBefore(moveFragment, insertPoint.nextSibling)
+	                }
+
+	            } else {
+	                var newFragment = fragment.cloneNode(false)
+	                componentToDom(com, newFragment)
+	                cnodes = com.nodes
+	                parent.insertBefore(newFragment, insertPoint.nextSibling)
+	            }
+	            insertPoint = cnodes[cnodes.length - 1]
+	        }
+	        var entity = [], vnodes = []
+	        vnode.components.forEach(function (c) {
+	            entity.push.apply(entity, c.nodes)
+	            vnodes.push.apply(vnodes, c.children)
+	        })
+	        vnode.repeatCount = vnodes.length
+	        patch(entity, vnodes, parent)
+	        return false
+	    }
+
+	})
+
+
+	var forCache = new Cache(128)
+	function componentToDom(com, fragment, cur) {
+	    com.nodes = []
+	    com.children.forEach(function (c) {
+	        if (c.type.charAt(0) === '#') {
+	            var expr = c.type + '#' + c.nodeValue
+	            var node = forCache.get(expr)
+	            if (!node) {
+	                node = avalon.vdomAdaptor(c).toDOM()
+	                forCache.put(expr, node)
+	            }
+	            cur = node.cloneNode(true)
+	        } else {
+	            cur = avalon.vdomAdaptor(c).toDOM()
+	        }
+	        com.nodes.push(cur)
+	        fragment.appendChild(cur)
+	    })
+	    return fragment
+	}
+
+	//将要循环的节点根据锚点元素再分成一个个更大的单元,用于diff
+	function getComponents(nodes, signature) {
+	    var components = []
+	    var com = {
+	        children: []
+	    }
+	    for (var i = 0, el; el = nodes[i]; i++) {
+	        if (el.type === '#comment' && el.nodeValue === signature) {
+	            com.children.push(el)
+	            com.key = el.key
+	            com.index = components.length
+	            components.push(com)
+	            com = {
+	                children: []
+	            }
+	        } else {
+	            com.children.push(el)
+	        }
+	    }
+	    return components
+	}
+
+	var rfuzzy = /^(string|number|boolean)/
+	var rkfuzzy = /^_*(string|number|boolean)/
+	function fuzzyMatchCache(cache, id) {
+	    var m = id.match(rfuzzy)
+	    if (m) {
+	        var fid = m[1]
+	        for (var i in cache) {
+	            var n = i.match(rkfuzzy)
+	            if (n && n[1] === fid) {
+	                return isInCache(cache, i)
+	            }
+	        }
+	    }
+	}
+
+	// 新位置: 旧位置
+	function isInCache(cache, id) {
+	    var c = cache[id]
+	    if (c) {
+	        var stack = [{id: id, c: c}]
+	        while (1) {
+	            id += '_'
+	            if (cache[id]) {
+	                stack.push({
+	                    id: id,
+	                    c: cache[id]
+	                })
+	            } else {
+	                break
+	            }
+	        }
+	        var a = stack.pop()
+	        delete cache[a.id]
+	        return a.c
+	    }
+	    return c
+	}
+
+	function saveInCache(cache, component) {
+	    var trackId = component.key
+	    if (!cache[trackId]) {
+	        cache[trackId] = component
+	    } else {
+	        while (1) {
+	            trackId += '_'
+	            if (!cache[trackId]) {
+	                cache[trackId] = component
+	                break
+	            }
+	        }
+	    }
+	}
+
+
+/***/ },
+/* 58 */
+/***/ function(module, exports) {
+
+	
+
+	//插入点机制,组件的模板中有一些ms-slot元素,用于等待被外面的元素替代
+	function wrap(str) {
+	    return str.replace('return __value__', function (a) {
+	        var prefix = 'if(Array.isArray(__value__)){\n' +
+	                '    __value__ = avalon.mix.apply({},__value__)\n' +
+	                '}\n'
+	        return prefix + a
+	    })
+	}
+
+	avalon.directive('widget', {
+	    parse: function (binding, num, elem) {
+	        var wid = avalon.makeHashCode('w')
+	        avalon.resolvedComponents[wid] = {
+	            props: avalon.mix({}, elem.props),
+	            template: elem.template
+	        }
+	        return  'vnode' + num + '.props.wid = "' + wid + '"\n' +
+	                'vnode' + num + '.props["ms-widget"] = ' + wrap(avalon.parseExpr(binding), 'widget') + ';\n' +
+	                '\tvnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
+	    },
+	    define: function (topVm, defaults, options) {
+	        var after = avalon.mix({}, defaults, options)
+	        var events = {}
+	        //绑定生命周期的回调
+	        'onInit onRready onViewChange onDispose'.replace(/\S+/g, function (a) {
+	            if (typeof after[a] === 'function')
+	                events[a] = after[a]
+	            delete after[a]
+	        })
+	        var vm = avalon.mediatorFactory(topVm, after)
+	        for (var i in events) {
+	            vm.$watch(i, events[i])
+	        }
+	        return vm
+	    },
+	    diff: function (cur, pre) {
+	        var renderCount = cur.renderCount
+	        if (!renderCount) {
+	            cur.change = [this.replaceByComment]
+	        } else if (renderCount === 1) {
+	            avalon.diff(cur.children, [])
+	            cur.change = [this.replaceByComponent]
+	            cur.afterChange = [
+	                function (dom, vnode) {
+	                    cur.vmodel.$fire('onReady', dom, vnode)
+	                }
+	            ]
+	        } else {
+	            var needUpdate = !cur.$diff || cur.$diff(cur, pre)
+	            cur.skipContent = !needUpdate
+
+	            var viewChangeObservers = cur.vmodel.$events.onViewChange
+	            if (viewChangeObservers && viewChangeObservers.length) {
+	                cur.change = cur.change || []
+	                var isChange = false
+	                cur.change.push(function (dom, vnode) {
+	                    if (checkChildrenChange(vnode)) {
+	                        isChange = true
+	                    }
+	                })
+	                cur.afterChange = [function (dom) {
+	                        isChange && cur.vmodel.$fire('onViewChange', dom)
+	                    }]
+	            }
+	        }
+	    },
+	    replaceByComment: function (dom, node, parent) {
+	        var comment = document.createComment(node.nodeValue)
+	        if (dom) {
+	            parent.replaceChild(comment, dom)
+	        } else {
+	            parent.appendChild(comment)
+	        }
+	    },
+	    replaceByComponent: function (dom, node, parent) {      
+	        var com = avalon.vdomAdaptor(node).toDOM()
+	        if (dom) {
+	            parent.replaceChild(com, dom)
+	        } else {
+	            parent.appendChild(com)
+	        }
+	    }
+	})
+	function checkChange(elem) {
+
+	}
+	function checkChildrenChange(elem) {
+	    for (var i = 0, el; el = elem.children[i++]; ) {
+	        if (el.change && el.change.length || el.afterChange && el.afterChange) {
+	            return true
+	        }
+	        if (el.children) {
+	            if (checkChildrenChange(el)) {
+	                return true
+	            }
+	        }
+	    }
+	    return false
+	}
+
+	// http://www.besteric.com/2014/11/16/build-blog-mirror-site-on-gitcafe/
+
+/***/ },
+/* 59 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	avalon.lexer = __webpack_require__(60)
+	avalon.diff = __webpack_require__(61)
+	avalon.batch = __webpack_require__(62)
+	// dispatch与patch 为内置模块
+
+	var parseView = __webpack_require__(63)
+
+	function render(vtree) {
+	    var num = num || String(new Date - 0).slice(0, 6)
+	    var body = parseView(vtree, num) + '\n\nreturn vnodes' + num
+	    var fn = Function('__vmodel__', body)
+	    return fn
+	}
+	avalon.render = render
+
+	module.exports = avalon
+
+
+/***/ },
+/* 60 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * ------------------------------------------------------------
+	 * lexer 将字符串变成一个虚拟DOM树,方便以后进一步变成模板函数
+	 * 此阶段只会生成VElement,VText,VComment
+	 * ------------------------------------------------------------
+	 */
+
+	var makeHashCode = avalon.makeHashCode
+	var vdom = __webpack_require__(15)
+	var VText = vdom.VText
+	var VComment = vdom.VComment
+
+
+	//匹配只有开标签的无内容元素（Void elements 或 self-contained tags）
+	//http://www.colorglare.com/2014/02/03/to-close-or-not-to-close.html
+	//http://blog.jobbole.com/61514/
+
+	var rfullTag = /^<([^\s>\/=.$<]+)(?:\s+[^=\s]+(?:=[^>\s]+)?)*\s*>(?:[\s\S]*)<\/\1>/
+	var rvoidTag = /^<([^\s>\/=.$<]+)\s*([^>]*?)\/?>/
+
+	var rtext = /^[^<]+/
+	var rcomment = /^<!--([\w\W]*?)-->/
+
+	var rnumber = /\d+/g
+	var rspAfterForStart = /^\s*ms-for\:/
+	var rspBeforeForEnd = /^\s*ms-for-end\:/
+	var r = __webpack_require__(44)
+	var rsp = r.sp
+	var rfill = /\?\?\d+/g
+	var rleftSp = r.leftSp
+	var rstring = r.string
+
+
+	var rbind = avalon.config.rbind
+
+
+	var maps = {}
+	var number = 1
+	function dig(a) {
+	    var key = '??' + number++
+	    maps[key] = a
+	    return key
+	}
+	function fill(a) {
+	    var val = maps[a]
+	    return val
+	}
+
+
+	function lexer(text, recursive) {
+	    var nodes = []
+	    if (recursive && !rbind.test(text)) {
+	        return nodes
+	    }
+	    if (!recursive) {
+	        text = text.replace(rstring, dig)
+	    }
+	    do {
+	        var outerHTML = ''
+	        var node = false
+	        var match = text.match(rtext)
+	        if (match) {//尝试匹配文本
+	            outerHTML = match[0]
+	            node = new VText(outerHTML.replace(rfill, fill))
+	        }
+
+	        if (!node) {//尝试匹配注释
+	            match = text.match(rcomment)
+	            if (match) {
+	                outerHTML = match[0]
+	                node = new VComment(match[1].replace(rfill, fill))
+	                var nodeValue = node.nodeValue
+	                if (rspBeforeForEnd.test(nodeValue)) {
+	                    var sp = nodes[nodes.length - 1]
+	                    //移除紧挨着<!--ms-for-end:xxxx-->前的空白节点
+	                    if (sp && sp.type === '#text' && rsp.test(sp.nodeValue)) {
+	                        nodes.pop()
+	                    }
+	                }
+	            }
+	        }
+
+
+	        if (!node) {//尝试匹配拥有闭标签的元素节点
+	            match = text.match(rfullTag)
+	            if (match) {
+	                outerHTML = match[0]//贪婪匹配 outerHTML,可能匹配过多
+	                var type = match[1].toLowerCase()//nodeName
+	                outerHTML = clipOuterHTML(outerHTML, type)
+
+	                match = outerHTML.match(rvoidTag) //抽取所有属性
+
+	                var props = {}
+	                if (match[2]) {
+	                    handleProps(match[2], props)
+	                }
+
+	                var innerHTML = outerHTML.slice(match[0].length,
+	                        (type.length + 3) * -1) //抽取innerHTML
+
+	                node = {
+	                    type: type,
+	                    props: props,
+	                    template: innerHTML.replace(rfill, fill).trim(),
+	                    children: []
+	                }
+	                node = modifyProps(node, innerHTML, nodes)
+	            }
+	        }
+
+	        if (!node) {
+	            match = text.match(rvoidTag)
+	            if (match) {//尝试匹配自闭合标签
+	                outerHTML = match[0]
+	                type = match[1].toLowerCase()
+	                props = {}
+	                if (match[2]) {
+	                    handleProps(match[2], props)
+	                }
+	                node = {
+	                    type: type,
+	                    props: props,
+	                    template: '',
+	                    children: [],
+	                    isVoidTag: true
+	                }
+	                modifyProps(node, '', nodes)
+	            }
+	        }
+
+	        if (node) {//从text中移除被匹配的部分
+	            nodes.push(node)
+	            text = text.slice(outerHTML.length)
+	            if (node.type === '#comment' && rspAfterForStart.test(node.nodeValue)) {
+	                node.signature = makeHashCode('for')
+	                //移除紧挨着<!--ms-for:xxxx-->后的空白节点
+	                text = text.replace(rleftSp, '')
+	            }
+	        } else {
+	            break
+	        }
+	    } while (1);
+	    if (!recursive) {
+	        maps = {}
+	    }
+	    return nodes
+	}
+
+	//用于创建适配某一种标签的正则表达式
+	var openStr = '(?:\\s+[^>=]*?(?:=[^>]+?)?)*>'
+	var tagCache = {}// 缓存所有匹配开标签闭标签的正则
+	var rchar = /./g
+	var regArgs = avalon.msie < 9 ? 'ig' : 'g'//IE6-8，标签名都是大写
+	function clipOuterHTML(matchText, type) {
+	    var opens = []
+	    var closes = []
+	    var ropen = tagCache[type + 'open'] ||
+	            (tagCache[type + 'open'] = new RegExp('<' + type + openStr, regArgs))
+	    var rclose = tagCache[type + 'close'] ||
+	            (tagCache[type + 'close'] = new RegExp('<\/' + type + '>', regArgs))
+	    
+	    /* jshint ignore:start */
+	    matchText.replace(ropen, function (_, b) {
+	        //注意,页面有时很长,b的数值就很大,如
+	        //000000000<000000011>000000041<000000066>000000096<000000107>
+	        opens.push(('0000000000' + b + '<').slice(-10))//取得所有开标签的位置
+	        return _.replace(rchar, '1')
+	    }).replace(rclose, function (_, b) {
+	        closes.push(('0000000000' + b + '>').slice(-10))//取得所有闭标签的位置               
+	    })
+
+	    /* jshint ignore:end */
+	    //<div><div>01</div><div>02</div></div><div>222</div><div>333</div>
+	    //会变成000<005<012>018<025>031>037<045>051<059>
+	    //再变成<<><>><><>
+	    //最后获取正确的>的索引值,这里为<<><>>的最后一个字符,
+	    var pos = opens.concat(closes).sort()
+	    var gtlt = pos.join('').replace(rnumber, '')
+	    var k = 0, last = 0
+
+	    for (var i = 0, n = gtlt.length; i < n; i++) {
+	        var c = gtlt.charAt(i)
+	        if (c === '<') {
+	            k += 1
+	        } else {
+	            k -= 1
+	        }
+	        if (k === 0) {
+	            last = i
+	            break
+	        }
+	    }
+	    var findex = parseFloat(pos[last]) + type.length + 3 // (</>为三个字符)
+	    return  matchText.slice(0, findex) //取得正确的outerHTML
+	}
+
+
+	function modifyProps(node, innerHTML, nodes) {
+	    var type = node.type
+	    if (node.props['ms-skip']) {
+	        node.skipContent = true
+	    } else {
+	        switch (type) {
+	            case 'style':
+	            case 'script':
+	            case 'noscript':
+	            case 'template':
+	            case 'textarea':
+	                node.skipContent = true
+	                if (type === 'textarea') {
+	                    node.props.type = 'textarea'
+	                }
+	                break
+	            case 'input':
+	                if (!node.props.type) {
+	                    node.props.type = 'text'
+	                }
+	            case 'xmp':
+	                node.children.push(new VText(node.template))
+	                break
+	            case 'option':
+	                node.children.push(new VText(trimHTML(node.template)))
+	                break
+	            default:
+	                if (!node.isVoidTag) {
+	                    var childs = lexer(innerHTML, true)
+	                    node.children = childs
+	                    if (type === 'table') {
+	                        addTbody(node.children)
+	                    }
+	                }
+	                break
+	        }
+	        var forExpr = node.props['ms-for'] 
+	        if (forExpr) {
+	            nodes.push({
+	                type: '#comment',
+	                nodeValue: 'ms-for:' + forExpr,
+	                signature: makeHashCode('for')
+	            })
+	            delete node.props['ms-for']
+	            nodes.push(node)
+	            node = {
+	                type: '#comment',
+	                nodeValue: 'ms-for-end:'
+	            }
+	        }
+	    }
+	    return node
+	}
+	//如果直接将tr元素写table下面,那么浏览器将将它们(相邻的那几个),放到一个动态创建的tbody底下
+	function addTbody(nodes) {
+	    var tbody, needAddTbody = false, count = 0, start = 0, n = nodes.length
+	    for (var i = 0; i < n; i++) {
+	        var node = nodes[i]
+	        if (!tbody) {
+	            if (node.type === 'tr') {
+	                tbody = {
+	                    type: 'tbody',
+	                    template: '',
+	                    children: [],
+	                    props: {}
+	                }
+	                tbody.children.push(node)
+	                needAddTbody = true
+	                if (start === 0)
+	                    start = i
+	                nodes[i] = tbody
+	            }
+	        } else {
+	            if (node.type !== 'tr' && node.type.charAt(0) !== "#") {
+	                tbody = false
+	            } else {
+	                tbody.children.push(node)
+	                count++
+	                nodes[i] = 0
+	            }
+	        }
+	    }
+
+	    if (needAddTbody) {
+	        for (i = start; i < n; i++) {
+	            if (nodes[i] === 0) {
+	                nodes.splice(i, 1)
+	                i--
+	                count--
+	                if (count === 0) {
+	                    break
+	                }
+	            }
+	        }
+	    }
+	}
+
+
+	var ramp = /&amp;/g
+	var rnowhite = /\S+/g
+	var rquote = /&quot;/g
+	var rnogutter = /\s*=\s*/g
+	function handleProps(str, props) {
+	    str.replace(rnogutter, '=').replace(rnowhite, function (el) {
+	        var arr = el.split('='), value = arr[1] || '',
+	                name = arr[0].toLowerCase()
+	        if (arr.length === 2) {
+	            if (value.indexOf('??') === 0) {
+	                value = value.replace(rfill, fill).
+	                        slice(1, -1).
+	                        replace(ramp, '&').
+	                        replace(rquote, '"')
+	            }
+	        }
+	        props[name] = value
+	    })
+	}
+
+	//form prototype.js
+	var rtrimHTML = /<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi
+	function trimHTML(v) {
+	    return String(v).replace(rtrimHTML, '').trim()
+	}
+
+
+	module.exports = lexer
+
+/***/ },
+/* 61 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * ------------------------------------------------------------
+	 * diff 对比新旧两个虚拟DOM树,根据directive中的diff方法为新虚拟DOM树
+	 * 添加change, afterChange更新钩子
+	 * ------------------------------------------------------------
+	 */
+	var emptyArr = []
+	var emptyObj = {
+	    children: [], props: {}
+	}
+	var directives = avalon.directives
+	var rbinding = __webpack_require__(44).binding
+	function diff(current, previous) {
+	    if (!current)
+	        return
+	    for (var i = 0; i < current.length; i++) {
+	        var cur = current[i]
+	        var pre = previous[i] || emptyObj
+	        switch (cur.type) {
+	            case '#text':
+	                if (!cur.skipContent) {
+	                    directives.expr.diff(cur, pre)
+	                }
+	                break
+	            case '#comment':
+	                if (cur.directive === 'for') {
+	                    i = directives['for'].diff(current, previous, i)
+	                } else if (cur.directive ) {//if widget
+	                    directives[cur.directive].diff(cur, pre)
+	                }
+	                break
+	            default:
+	                if (!cur.skipAttrs) {
+	                    diffProps(cur, pre)
+	                }
+	                if (!cur.skipContent) {
+	                    diff(cur.children, pre.children || emptyArr)
+	                }
+	                break
+	        }
+	    }
+	}
+
+	function diffProps(current, previous) {
+	    for (var name in current.props) {
+	        var match = name.match(rbinding)
+	        if (match) {
+	            var type = match[1]
+	            try {
+	                if (directives[type]) {
+	                    directives[type].diff(current, previous || emptyObj, type, name)
+	                }
+	            } catch (e) {
+	                avalon.log(current, previous, e, 'diffProps error')
+	            }
+	        }
+	    }
+
+	}
+
+	module.exports = diff
+
+
+/***/ },
+/* 62 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	/**
+	 * ------------------------------------------------------------
+	 * batch 同时对N个视图进行全量更新
+	 * ------------------------------------------------------------
+	 */
+
+	var patch = __webpack_require__(56)
+
+	//如果正在更新一个子树,那么将它放到
+	var dirtyTrees = {}
+	var isBatchingUpdates = false
+	var needRenderIds = []
+	function batchUpdate(id, immediate) {
+	    var vm = avalon.vmodels[id] || {}
+	    if (avalon.__stop > 0 || typeof vm.$render !== 'function' || !vm.$element || isBatchingUpdates) {
+	        dirtyTrees[id] = id
+	        return
+	    }
+
+	    if (!document.nodeName)//如果是在mocha等测试环境中立即返回
+	        return
+	    if (dirtyTrees[id]) {
+	        avalon.Array.ensure(needRenderIds, id)
+	    } else {
+	        dirtyTrees[id] = true
+	    }
+
+
+	    var dom = vm.$element
+
+	    flushUpdate(function () {
+	        isBatchingUpdates = true
+	        var vtree = vm.$render()
+	        avalon.diff(vtree, dom.vtree || [])
+	        patch([dom], vtree)
+	        dom.vtree = vtree
+
+	        avalon.log('rerender', vm.$id, new Date - avalon.rerenderStart)
+	        isBatchingUpdates = false
+	        delete dirtyTrees[id]
+	        for (var i in dirtyTrees) {//更新其他子树
+	            batchUpdate(i, true)
+	            break
+	        }
+
+	    }, immediate)
+
+
+	}
+
+	function flushUpdate(callback, immediate ) {
+	    if (immediate) {
+	        callback()
+	        var id = needRenderIds.shift()
+	        if (id) {
+	            batchUpdate(id, true)
+	        }
+	    } else {
+	        avalon.nextTick(callback)
+	    }
+	}
+
+	module.exports = avalon.batch = batchUpdate
+
+
+/***/ },
+/* 63 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var parseExpr = __webpack_require__(64)
+	var parseBindings = __webpack_require__(65)
+	var parseDelimiter = __webpack_require__(66)
+	var rexpr = avalon.config.rexpr
+	var quote = avalon.quote
+	var makeHashCode = avalon.makeHashCode
+	var r = __webpack_require__(44)
+	var rident = r.ident
+	var rsp = r.sp
+	function wrapDelimiter(expr) {
+	    return rident.test(expr) ? expr : parseExpr(expr)
+	}
+
+
+	function wrap(a, num) {
+	    return '(function(){\n\n' + a + '\n\nreturn vnodes' + num + '\n})();\n'
+	}
+
+	function parseView(arr, num) {
+	    num = num || String(new Date - 0).slice(0, 5)
+
+	    var forstack = []
+	    var hasIf = false
+	    var children = 'vnodes' + num
+	    var vnode = 'vnode' + num
+	    var str = 'var ' + children + ' = []\n'
+	    for (var i = 0; i < arr.length; i++) {
+	        var el = arr[i]
+	        if (el.type === '#text') {
+	            str += 'var ' + vnode + ' = {type:"#text", skipContent:true}\n'
+	            var hasDelimiter = rexpr.test(el.nodeValue)
+
+	            if (hasDelimiter) {
+	                var array = parseDelimiter(el.nodeValue)
+	                if (array.length === 1) {
+	                    var a = parseExpr(array[0].expr)
+	                    str += vnode + '.nodeValue = ' + wrapDelimiter(array[0].expr) + '\n'
+	                } else {
+	                    a = array.map(function (el) {
+	                        return el.type ? wrapDelimiter(el.expr) : quote(el.expr)
+	                    }).join(' + ')
+	                    str += vnode + '.nodeValue = String(' + a + ')\n'
+	                }
+	                str += vnode + '.fixIESkip = true\n'
+	                /* jshint ignore:start */
+	                str += vnode + '.skipContent = false\n'
+	            } else {
+	                if (rsp.test(el.nodeValue)) {
+	                    str += vnode + '.nodeValue = "\\n"\n'
+	                } else {
+	                    str += vnode + '.nodeValue = ' + quote(el.nodeValue) + '\n'
+	                }
+	            }
+	            str += children + '.push(' + vnode + ')\n'
+
+	        } else if (el.type === '#comment') {
+	            var nodeValue = el.nodeValue
+	            if (nodeValue.indexOf('ms-for:') === 0) {// 处理ms-for指令
+	                var signature = el.signature
+	                forstack.push(signature)
+	                str += '\nvar ' + signature + '= {' +
+	                        '\n\ttype:"#comment",' +
+	                        '\n\tdirective:"for",' +
+	                        '\n\tskipContent:false,' +
+	                        '\n\tsignature:' + quote(signature) + ',' +
+	                        '\n\tstart:' + children + '.length,' +
+	                        '\n\tnodeValue:' + quote(nodeValue) +
+	                        '\n}\n'
+	                str += children + '.push(' + signature + ')\n'
+	                str += avalon.directives['for'].parse(nodeValue, num)
+
+	            } else if (nodeValue.indexOf('ms-for-end:') === 0) {
+	                var signature = forstack[forstack.length - 1]
+
+	                str += children + '.push({' +
+	                        '\n\ttype:"#comment",' +
+	                        '\n\tskipContent:true,' +
+	                        '\n\tnodeValue:' + quote(signature) + ',' +
+	                        '\n\tkey:traceKey\n})\n'
+	                str += '\n})\n' //结束循环
+	                if (forstack.length) {
+	                    var signature = forstack[forstack.length - 1]
+	                    str += signature + '.end =' + children + '.push({' +
+	                            '\n\ttype:"#comment",' +
+	                            '\n\tskipContent:true,' +
+	                            '\n\tsignature:' + quote(signature) + ',' +
+	                            '\n\tnodeValue:' + quote(signature + ':end') +
+	                            '\n})\n'
+	                    forstack.pop()
+	                }
+	            } else if (nodeValue.indexOf('ms-js:') === 0) {//插入普通JS代码
+	                str += parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
+	            } else {
+	                str += children + '.push(' + quote(el) + ')\n\n\n'
+	            }
+	            continue
+	        } else { //处理元素节点
+	            var hasIf = el.props['ms-if']
+
+	            if (hasIf) { // 处理ms-if指令
+	                el.signature = makeHashCode('ms-if')
+	                str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'
+	                str += children + '.push({' +
+	                        '\n\ttype: "#comment",' +
+	                        '\n\tdirective: "if",' +
+	                        '\n\tnodeValue:' + quote(el.signature) + ',\n' +
+	                        '\n\tsignature:' + quote(el.signature) + ',\n' +
+	                        '\n\tprops: {"ms-if":true} })\n'
+	                str += '\n}else{\n\n'
+	            }
+	            str += 'var ' + vnode + ' = {' +
+	                        '\n\ttype: ' + quote(el.type) + ',' +
+	                        '\n\tprops: {},' +
+	                        '\n\tchildren: [],' +
+	                        '\n\tisVoidTag: ' + !!el.isVoidTag + ',' +
+	                        '\n\ttemplate: ""}\n'
+	            var hasWidget = el.props['ms-widget']
+	            if (hasWidget) {// 处理ms-widget指令
+	                
+	                str += avalon.directives.widget.parse({
+	                    expr: hasWidget,
+	                    type: 'widget'
+	                }, num, el)
+	                hasWidget = false
+	            } else {
+
+	                var hasBindings = parseBindings(el.props, num, el)
+	                if (hasBindings) {
+	                    str += hasBindings
+	                }
+	                if(el.children.length){
+	                    str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
+	                }else{
+	                    str += vnode + '.template = ' + quote(el.template) + '\n'
+	                }
+	            }
+	            str += children + '.push(' + vnode + ')\n'
+	            if (hasIf) {
+	                str += '}\n'
+	                hasIf = false
+	            }
+	        }
+	    }
+	    return str
+	}
+
+	module.exports = parseView
+
+/***/ },
+/* 64 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+
+	//缓存求值函数，以便多次利用
+	var evaluatorPool = __webpack_require__(53)
+
+	var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
+	var rstring = __webpack_require__(44).string
+	var rfill = /\?\?\d+/g
+	var brackets = /\(([^)]*)\)/
+	var rAt = /(^|[^\w\u00c0-\uFFFF_])(@)(?=\w)/g
+	var rhandleName = /^\@[$\w]+$/
+	var rshortCircuit = /\|\|/g
+	var rpipeline = /\|(?=\w)/
+	var ruselessSp = /\s*(\.|\|)\s*/g
+
+	function parseExpr(str, category) {
+
+	    var binding = {}
+	    category = category || 'other'
+	    if (typeof str === 'object') {
+	        category = str.type
+	        binding = str
+	        str = binding.expr
+	    }
+	    if (typeof str !== 'string')
+	        return ''
+	    var input = str.trim()
+	    var cacheStr = evaluatorPool.get(category + ':' + input)
+
+	    if (cacheStr) {
+	        return cacheStr
+	    }
+
+	    var number = 1
+	//相同的表达式生成相同的函数
+	    var maps = {}
+	    function dig(a) {
+	        var key = '??' + number++
+	        maps[key] = a
+	        return key
+	    }
+
+	    function fill(a) {
+	        return maps[a]
+	    }
+
+	    input = input.replace(rregexp, dig).//移除所有正则
+	            replace(rstring, dig).//移除所有字符串
+	            replace(rshortCircuit, dig).//移除所有短路或
+	            replace(ruselessSp, '$1').//移除. |两端空白
+	            split(rpipeline) //使用管道符分离所有过滤器及表达式的正体
+
+	//还原body
+	    var body = input.shift().replace(rfill, fill).trim()
+	    if (category === 'on' && rhandleName.test(body)) {
+	        body = body + '($event)'
+	    }
+
+	    body = body.replace(rAt, '$1__vmodel__.')
+	    if (category === 'js') {
+	        return evaluatorPool.put(category + ':' + input, body)
+	    }
+
+	//处理表达式的过滤器部分
+
+	    var filters = input.map(function (str) {
+
+	        str = str.replace(rfill, fill).replace(rAt, '$1__vmodel__.') //还原
+	        var hasBracket = false
+	        str = str.replace(brackets, function (a, b) {
+	            hasBracket = true
+	            return /\S/.test(b) ?
+	                    '(__value__,' + b + ');' :
+	                    '(__value__);'
+	        })
+	        if (!hasBracket) {
+	            str += '(__value__);'
+	        }
+	        str = str.replace(/(\w+)/, 'avalon.__read__("$1")')
+	        return '__value__ = ' + str
+	    })
+	    var ret = []
+	    if (category === 'on') {
+	        filters = filters.map(function (el) {
+	            return el.replace(/__value__/g, '$event')
+	        })
+	        if (filters.length) {
+	            filters.push('if($event.$return){\n\treturn;\n}')
+	        }
+	        ret = ['function self($event){',
+	            'try{',
+	            '\tvar __vmodel__ = this;',
+	            '\t' + body,
+	            '}catch(e){',
+	            quoteError(str, category),
+	            '}',
+	            '}']
+	        filters.unshift(2, 0)
+	    } else if (category === 'duplex') {
+
+	        //从vm中得到当前属性的值
+	        var getterBody = [
+	            'function (__vmodel__){',
+	            'try{',
+	            'return ' + body + '\n',
+	            '}catch(e){',
+	            quoteError(str, category),
+	            '}',
+	            '}']
+	        fn = Function('return ' + getterBody.join('\n'))()
+	        evaluatorPool.put('duplex:' + str, fn)
+	        //给vm同步某个属性
+	        var setterBody = [
+	            'function (__vmodel__,__value__){',
+	            'try{',
+	            '\t' + body + ' = __value__',
+	            '}catch(e){',
+	            quoteError(str, category),
+	            '}',
+	            '}']
+	        fn = Function('return ' + setterBody.join('\n'))()
+	        evaluatorPool.put('duplex:set:' + str, fn)
+	        //对某个值进行格式化
+	        if (input.length) {
+	            var formatBody = [
+	                'function (__vmodel__, __value__){',
+	                'try{',
+	                filters.join('\n'),
+	                'return __value__\n',
+	                '}catch(e){',
+	                quoteError(str, category),
+	                '}',
+	                '}']
+	            fn = Function('return ' + formatBody.join('\n'))()
+	            evaluatorPool.put('duplex:format:' + str, fn)
+	        }
+	        return
+	    } else {
+	        ret = [
+	            '(function(){',
+	            'try{',
+	            'var __value__ = ' + body,
+	            'return __value__',
+	            '}catch(e){',
+	            quoteError(str, category),
+	            '\treturn ""',
+	            '}',
+	            '})()'
+	        ]
+	        filters.unshift(3, 0)
+	    }
+
+	    ret.splice.apply(ret, filters)
+	    cacheStr = ret.join('\n')
+	    evaluatorPool.put(category + ':' + input, cacheStr)
+	    return cacheStr
+
+	}
+
+	function quoteError(str, type) {
+	    return '\tavalon.warn(e, ' +
+	            avalon.quote('parse ' + type + ' binding【 ' + str + ' 】fail')
+	            + ')'
+	}
+
+	module.exports = avalon.parseExpr = parseExpr
+
+
+/***/ },
+/* 65 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var rneedQuote = /[W-]/
+	var quote = avalon.quote
+	var directives = avalon.directives
+	var rbinding = __webpack_require__(44).binding
+	var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
+	var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false,"+
+	    "finally,for,function,if,in,instanceof,new,null,return,switch,this,"+
+	    "throw,true,try,typeof,var,void,while,with,"+ /* 关键字*/
+	    "abstract,boolean,byte,char,class,const,double,enum,export,extends,"+
+	    "final,float,goto,implements,import,int,interface,long,native,"+
+	    "package,private,protected,public,short,static,super,synchronized,"+
+	    "throws,transient,volatile")
+	function parseBindings(props, num, elem) {
+	    var bindings = []
+	    var skip = 'ms-skip' in props 
+	    var ret = ''
+	    for (var i in props) {
+	        var value = props[i], match
+
+	        if (!skip && value && (match = i.match(rbinding))) {
+	            var type = match[1]
+	            var param = match[2] || ''
+	            var name = i
+
+	            if (eventMap[type]) {
+	                var order = parseFloat(param) || 0
+	                param = type
+	                type = 'on'
+	            }
+	            name = 'ms-' + type + (param ? '-' + param : '')
+	            if (i !== name) {
+	                delete props[i]
+	                props[name] = value
+	            }
+	            if (directives[type]) {
+	                var binding = {
+	                    type: type,
+	                    param: param,
+	                    name: name,
+	                    expr: value,
+	                    priority: directives[type].priority || type.charCodeAt(0) * 100
+	                }
+	                if (type === 'on') {
+	                    binding.name += '-' + order
+	                    binding.priority += param.charCodeAt(0) * 100 + order
+	                }
+
+	                bindings.push(binding)
+
+	            }
+	        } else {
+	            //IE6-8下关键字不能直接当做对象的键名，需要用引号括起来
+	            if (rneedQuote.test(i) || keyMap[i]) {//收集非绑定属性
+	                ret += 'vnode' + num + '.props[' + quote(i) + '] = ' + quote(value) + '\n'
+	            } else {
+	                ret += 'vnode' + num + '.props.' + i + ' = ' + quote(value) + '\n'
+	            }
+	        }
+	    }
+
+	    if (!bindings.length) {
+	        ret += '\tvnode' + num + '.skipAttrs = true\n'
+	    } else {
+	        avalon.parseExpr(binding)
+
+	        bindings.sort(byPriority).forEach(function (binding) {
+	            ret += directives[binding.type].parse(binding, num, elem)
+	        })
+	    }
+	    return ret
+
+	}
+
+	function byPriority(a, b) {
+	    return a.priority - b.priority
+	}
+
+	module.exports = parseBindings
+
+/***/ },
+/* 66 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var rline = /\r?\n/g
+	var r = __webpack_require__(44)
+
+	function parseDelimiter(str) {
+	    var tokens = [],
+	            value, start = 0,
+	            stop
+	    do {
+	        stop = str.indexOf(avalon.config.openTag, start)
+	        if (stop === -1) {
+	            break
+	        }
+	        value = str.slice(start, stop)
+	        if (start === 0) {
+	            value = value.replace(r.leftSp, '')
+	        }
+	        if (value) { // {{ 左边的文本
+	            tokens.push({
+	                expr: value
+	            })
+	        }
+	        start = stop + avalon.config.openTag.length
+	        stop = str.indexOf(avalon.config.closeTag, start)
+	        if (stop === -1) {
+	            break
+	        }
+	        value = str.slice(start, stop)
+	        if (value) { //处理{{ }}插值表达式
+	            tokens.push({
+	                expr: value.replace(rline, ''),
+	                type: '{{}}'
+	            })
+	        }
+	        start = stop + avalon.config.closeTag.length
+	    } while (1)
+	    value = str.slice(start)
+
+	    var lastText = value.replace(r.rightSp, '')
+	    if (lastText) { //}} 右边的文本
+	        tokens.push({
+	            expr: lastText
+	        })
+	    }
+	    return tokens
+	}
+
+	module.exports = parseDelimiter
+
+
+/***/ },
+/* 67 */
+/***/ function(module, exports) {
+
+	
+	var componentQueue = []
+	var resolvedComponents = avalon.resolvedComponents
+	var rcomponentTag = /^(\w+\-w+|wbr|xmp|template)$/
+	var skip = {'ms-widget': 1, widget: 1, wid: 1}
+	avalon.document.createElement('slot')
+
+	avalon.component = function (name, definition) {
+	    if (typeof name === 'string') {
+	        //这里是定义组件的分支
+	        avalon.components[name] = definition
+
+	        for (var i = 0, obj; obj = componentQueue[i]; i++) {
+	            if (name === obj.type) {
+	                componentQueue.splice(i, 1)
+	                i--
+	            }
+	        }
+	        //这里没有返回值
+	    } else {
+
+	        var node = name //node为页面上节点对应的虚拟DOM
+
+	        var vm = definition
+	        var wid = node.props.wid
+
+	        var options = node.props['ms-widget']
+	        var tagName = node.type.indexOf('-') > 0 ? node.type : options.$type
+
+
+	        //如果组件模板已经定
+	        var placeholder = {
+	            type: '#comment',
+	            directive: 'widget',
+	            props: {'ms-widget': wid},
+	            nodeValue: 'ms-widget placeholder'
+	        }
+	        var docker = resolvedComponents[wid]
+
+	        if (docker.render) {
+	            //重新渲染自己  
+	            return reRender(docker)
+	        } else if (!avalon.components[tagName]) {
+	            componentQueue.push({
+	                type: tagName
+	            })
+	            return placeholder
+	        } else {
+	            //页面上的节点是用于传参的
+	            //通过插件的template字符串生成的节点，是来授参执行的
+	            var type = node.type
+	            if (!rcomponentTag.test(type)) {
+	                avalon.warn(type + '不合适做组件的标签')
+	            }
+	            if (type === 'xmp' || type === 'template' || node.children.length === 0) {
+	                node.children = avalon.lexer(docker.template)
+	            }
+	            definition = avalon.components[tagName]
+	            if (!avalon.modern && !definition.fixTag) {
+	                avalon.document.createElement(tagName)
+	                definition.fixTag = 1
+	            }
+
+
+	            var vtree = avalon.lexer(definition.template.trim())
+	            if (vtree.length > 1) {
+	                avalon.error('组件必须用一个元素包起来')
+	            }
+
+	            var widgetNode = vtree[0]
+	            if (widgetNode.type !== tagName) {
+	                avalon.warn('模板容器标签最好为' + tagName)
+	            }
+	            for (var i in docker.props) {
+	                if (!skip[i]) {
+	                    widgetNode.props[i] = docker.props[i]
+	                }
+	            }
+	            if (!node.isVoidTag) {
+	                //如果不是半闭合标签，那么里面可能存在插槽元素,抽取出来与主模板合并
+	                insertSlots(vtree, node)
+	            }
+	            delete options.$type
+	            delete options.$define
+	            var diff = options
+	            delete options.$diff
+
+	            var define = options.$define || avalon.directives.widget.define
+
+	            var $id = options.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
+	            var vmodel = define(vm, definition.defaults, options)
+	            vmodel.$id = $id
+	            avalon.vmodels[$id] = vmodel
+	            //生成组件的render
+	            var render = avalon.render(vtree)
+	            vmodel.$render = render
+	            vmodel.$fire('onInit', vmodel)
+
+	            avalon.mix(docker, {
+	                render: render,
+	                vmodel: vmodel,
+	                diff: diff,
+	                placeholder: placeholder
+	            })
+
+	            return reRender(docker)
+	        }
+	    }
+	}
+
+	function reRender(docker) {
+	    var vtree = docker.render(docker.vmodel)
+	    var widgetNode = vtree[0]
+	    if (!isComponentReady(widgetNode)) {
+	        return docker.placeholder
+	    }
+	    if (!docker.renderCount) {
+	        docker.renderCount = 1
+	    } else {
+	        docker.renderCount++
+	    }
+	    widgetNode.props['ms-widget'] = docker.props['ms-widget']
+	    widgetNode.vmodel = docker.vmodel
+	    widgetNode.diff = docker.diff
+	    //移除skipAttrs,以便进行diff
+	    delete widgetNode.skipAttrs
+
+	    widgetNode.renderCount = docker.renderCount
+	    return widgetNode
+	}
+	function isComponentReady(vnode) {
+	    var isReady = true
+	    if (componentQueue.length !== 0) {
+	        try {
+	            hasUnresolvedComponent(vnode)
+	        } catch (e) {
+	            isReady = false
+	        }
+	    }
+	    return isReady
+	}
+
+	function hasUnresolvedComponent(vnode) {
+
+	    vnode.children.forEach(function (el) {
+	        if (el.type === '#comment') {
+	            if ('ms-widget' in el.props) {
+	                throw 'unresolved'
+	            }
+	        } else if (el.children) {
+	            hasUnresolvedComponent(el)
+	        }
+	    })
+	}
+
+	function insertSlots(vtree, node) {
+	    var slots = {}
+	    node.children.forEach(function (el) {
+	        if (el.type.charAt(0) !== '#') {
+	            var name = el.props.slot || ''
+	            if (slots[name]) {
+	                slots[name].push(el)
+	            } else {
+	                slots[name] = [el]
+	            }
+	        }
+	    })
+	    mergeTempale(vtree, slots)
+	}
+
+	function mergeTempale(vtree, slots) {
+	    for (var i = 0, node; node = vtree[i++]; ) {
+	        if (node.type.charAt(0) !== '#') {
+	            if (node.type === 'slot') {
+	                var name = node.props.name || ''
+	                if (slots[name]) {
+	                    vtree.splice.apply(vtree, [i - 1, 1].concat(slots[name]))
+	                }
+	            } else {
+	                mergeTempale(node.children, slots)
+	            }
+	        }
+	    }
+	    return vtree
+	}
+
+
+
+/***/ },
+/* 68 */,
+/* 69 */,
+/* 70 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var dispatch = __webpack_require__(71)
+	var $watch = dispatch.$watch
+	var $emit = dispatch.$emit
+	var $$midway = {}
+	var $$skipArray = __webpack_require__(72)
+
+
+	function makeFire($vmodel, heirloom) {
+	    heirloom.__vmodel__ = $vmodel
+	    var hide = $$midway.hideProperty
+
+	    hide($vmodel, '$events', heirloom)
+	    hide($vmodel, '$watch', function () {
+	        if (arguments.length === 2) {
+	            return $watch.apply($vmodel, arguments)
+	        } else {
+	            throw '$watch方法参数不对'
+	        }
+	    })
+	    hide($vmodel, '$fire', function (expr, a, b) {
+	        var list = $vmodel.$events[expr]
+	        $emit(list, $vmodel, expr, a, b)
+	    })
+	}
+
+	function isSkip(key, value, skipArray) {
+	    // 判定此属性能否转换访问器
+	    return key.charAt(0) === '$' ||
+	            skipArray[key] ||
+	            (typeof value === 'function') ||
+	            (value && value.nodeName && value.nodeType > 0)
+	}
+
+
+	function modelAdaptor(definition, old, heirloom, options) {
+	    //如果数组转换为监控数组
+	    if (Array.isArray(definition)) {
+	        return $$midway.arrayFactory(definition, old, heirloom, options)
+	    } else if (Object(definition) === definition && typeof definition !== 'function') {
+	        //如果此属性原来就是一个VM,拆分里面的访问器属性
+	        if (old && old.$id) {
+	            var vm = $$midway.slaveFactory(old, definition, heirloom, options)
+	            ++avalon.__stop
+	            for (var i in definition) {
+	                if ($$skipArray[i])
+	                    continue
+	                vm[i] = definition[i]
+	            }
+	            --avalon.__stop
+	            return vm
+	        } else {
+	            vm = $$midway.masterFactory(definition, heirloom, options)
+	            return vm
+	        }
+	    } else {
+	        return definition
+	    }
+	}
+	$$midway.modelAdaptor = modelAdaptor
+
+	var rtopsub = /([^.]+)\.(.+)/
+	function makeAccessor(sid, spath, heirloom) {
+	    var old = NaN
+	    function get() {
+	        return old
+	    }
+	    get.heirloom = heirloom
+	    return {
+	        get: get,
+	        set: function (val) {
+	            if (old === val) {
+	                return
+	            }
+	            if (val && typeof val === 'object') {
+	                val = $$midway.modelAdaptor(val, old, heirloom, {
+	                    pathname: spath,
+	                    id: sid
+	                })
+	            }
+	            var older = old
+	            old = val
+	            var vm = heirloom.__vmodel__
+	            if (this.$hashcode && vm) {
+	                //★★确保切换到新的events中(这个events可能是来自oldProxy)               
+	                if (vm && heirloom !== vm.$events) {
+	                    get.heirloom = vm.$events
+	                }
+	                $emit(get.heirloom[spath], vm, spath, val, older)
+	                if (sid.indexOf('.*.') > 0) {//如果是item vm
+	                    var arr = sid.match(rtopsub)
+	                    var top = avalon.vmodels[ arr[1] ]
+	                    if (top) {
+	                        var path = arr[2]
+	                        $emit(top.$events[ path ], vm, path, val, older)
+	                    }
+	                }
+	                if( !avalon.__stop ){
+	                var vid = vm.$id.split('.')[0]
+	                   avalon.rerenderStart = new Date
+	                   avalon.batch(vid, true)
+	                }
+	            }
+	        },
+	        enumerable: true,
+	        configurable: true
+	    }
+	}
+
+
+	function define(definition) {
+	    var $id = definition.$id
+	    if (!$id && avalon.config.debug) {
+	        avalon.warn('vm.$id must be specified')
+	    }
+	    var vm = $$midway.masterFactory(definition, {}, {
+	        pathname: '',
+	        id: $id,
+	        master: true
+	    })
+
+	    if (avalon.vmodels[$id]) {
+	        throw Error('error:[', $id, '] had defined!')
+	    }
+	    return avalon.vmodels[$id] = vm
+
+	}
+	var __array__ = {
+	    set: function (index, val) {
+	        if (((index >>> 0) === index) && this[index] !== val) {
+	            if (index > this.length) {
+	                throw Error(index + 'set方法的第一个参数不能大于原数组长度')
+	            }
+	            this.notify('*', val, this[index], true)
+	            this.splice(index, 1, val)
+	        }
+	    },
+	    contains: function (el) { //判定是否包含
+	        return this.indexOf(el) !== -1
+	    },
+	    ensure: function (el) {
+	        if (!this.contains(el)) { //只有不存在才push
+	            this.push(el)
+	        }
+	        return this
+	    },
+	    pushArray: function (arr) {
+	        return this.push.apply(this, arr)
+	    },
+	    remove: function (el) { //移除第一个等于给定值的元素
+	        return this.removeAt(this.indexOf(el))
+	    },
+	    removeAt: function (index) { //移除指定索引上的元素
+	        if ((index >>> 0) === index) {
+	            return this.splice(index, 1)
+	        }
+	        return []
+	    },
+	    clear: function () {
+	        this.removeAll()
+	        return this
+	    }
+	}
+	avalon.define = define
+
+	module.exports = {
+	    $$midway: $$midway,
+	    $$skipArray: $$skipArray,
+	    __array__: __array__,
+	    isSkip: isSkip,
+	    makeFire: makeFire,
+	    makeAccessor: makeAccessor,
+	    modelAdaptor: modelAdaptor
+	}
+
+/***/ },
+/* 71 */
+/***/ function(module, exports) {
+
+	
+	/**
+	 * ------------------------------------------------------------
+	 * 属性监听系统 
+	 * ------------------------------------------------------------
+	 */
+
+	function adjustVm(vm, expr) {
+	    var toppath = expr.split(".")[0], other
+	    try {
+	        if (vm.hasOwnProperty(toppath)) {
+	            if (vm.$accessors) {
+	                other = vm.$accessors[toppath].get.heirloom.__vmodel__
+	            } else {
+	                other = Object.getOwnPropertyDescriptor(vm, toppath).get.heirloom.__vmodel__
+	            }
+
+	        }
+	    } catch (e) {
+	        avalon.log("adjustVm " + e)
+	    }
+	    return other || vm
+	}
+
+
+	function $watch(expr, callback) {
+	    var vm = adjustVm(this, expr)
+	    var hive = vm.$events
+	    var list = hive[expr] || (hive[expr] = [])
+	    if (vm !== this) {
+	        this.$events[expr] = list
+	    }
+	    avalon.Array.ensure(list, callback)
+
+	    return function () {
+	        avalon.Array.remove(list, callback)
+	    }
+	}
+
+	/**
+	 * $fire 方法的内部实现
+	 * 
+	 * @param {Array} list 订阅者数组
+	 * @param {Component} vm
+	 * @param {String} path 监听属性名或路径
+	 * @param {Any} a 当前值 
+	 * @param {Any} b 过去值
+	 * @param {Number} i 如果抛错,让下一个继续执行
+	 * @returns {undefined}
+	 */
+	function $emit(list, vm, path, a, b, i) {
+	    if (list && list.length) {
+	        try {
+	            for (i = i || list.length - 1; i >= 0; i--) {
+	                var callback = list[i]
+	                callback.call(vm, a, b, path)
+	            }
+	        } catch (e) {
+	            if (i - 1 > 0)
+	                $emit(list, vm, path, a, b, i - 1)
+	            avalon.log(e, path)
+	        }
+
+	    }
+	}
+
+
+	module.exports = {
+	    $emit: $emit,
+	    $watch: $watch,
+	    adjustVm: adjustVm
+	}
+
+
+/***/ },
+/* 72 */
+/***/ function(module, exports) {
+
+	/**
+	 * 
+	$$skipArray:是系统级通用的不可监听属性
+	$skipArray: 是当前对象特有的不可监听属性
+
+	 不同点是
+	 $$skipArray被hasOwnProperty后返回false
+	 $skipArray被hasOwnProperty后返回true
+	 */
+
+	module.exports = avalon.oneObject('$id,$render,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,__proxy__,__data__,__const__')
+
+/***/ },
+/* 73 */,
+/* 74 */,
+/* 75 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var avalon = __webpack_require__(3)
+	var browser = __webpack_require__(4)
+
+	avalon.mix(avalon, browser)
+
+	__webpack_require__(76)
+	__webpack_require__(6)
+	__webpack_require__(7)
+
+	module.exports = avalon
+
+/***/ },
+/* 76 */
+/***/ function(module, exports) {
+
+	//这里放置存在异议的方法
+
+	var serialize = avalon.inspect
+	var rwindow = /^\[object (?:Window|DOMWindow|global)\]$/
+	var rarraylike = /(Array|List|Collection|Map|Arguments)\]$/
+
+	avalon.quote = JSON.stringify
+
+	// avalon.type
+	var class2type = {}
+	'Boolean Number String Function Array Date RegExp Object Error'.replace(avalon.rword, function (name) {
+	    class2type['[object ' + name + ']'] = name.toLowerCase()
+	})
+
+	avalon.type = function (obj) { //取得目标的类型
+	    if (obj == null) {
+	        return String(obj)
+	    }
+	    // 早期的webkit内核浏览器实现了已废弃的ecma262v4标准，可以将正则字面量当作函数使用，因此typeof在判定正则时会返回function
+	    return typeof obj === 'object' || typeof obj === 'function' ?
+	            class2type[serialize.call(obj)] || 'object' :
+	            typeof obj
+	}
+
+
+	avalon.isFunction = function (fn) {
+	    return typeof fn === 'function'
+	}
+
+	avalon.isWindow = function (obj) {
+	    return rwindow.test(serialize.call(obj))
+	}
+
+
+	/*判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例*/
+	avalon.isPlainObject = function (obj) {
+	    // 简单的 typeof obj === 'object'检测，会致使用isPlainObject(window)在opera下通不过
+	    return serialize.call(obj) === '[object Object]' &&
+	            Object.getPrototypeOf(obj) === Object.prototype
+	}
+
+	//与jQuery.extend方法，可用于浅拷贝，深拷贝
+	avalon.mix = avalon.fn.mix = function () {
+	    var options, name, src, copy, copyIsArray, clone,
+	            target = arguments[0] || {},
+	            i = 1,
+	            length = arguments.length,
+	            deep = false
+
+	    // 如果第一个参数为布尔,判定是否深拷贝
+	    if (typeof target === 'boolean') {
+	        deep = target
+	        target = arguments[1] || {}
+	        i++
+	    }
+
+	    //确保接受方为一个复杂的数据类型
+	    if (typeof target !== 'object' && typeof target !== 'function') {
+	        target = {}
+	    }
+
+	    //如果只有一个参数，那么新成员添加于mix所在的对象上
+	    if (i === length) {
+	        target = this
+	        i--
+	    }
+
+	    for (; i < length; i++) {
+	        //只处理非空参数
+	        if ((options = arguments[i]) != null) {
+	            for (name in options) {
+	                src = target[name]
+	                try {
+	                    copy = options[name] //当options为VBS对象时报错
+	                } catch (e) {
+	                    continue
+	                }
+
+	                // 防止环引用
+	                if (target === copy) {
+	                    continue
+	                }
+	                if (deep && copy && (avalon.isPlainObject(copy) || (copyIsArray = Array.isArray(copy)))) {
+
+	                    if (copyIsArray) {
+	                        copyIsArray = false
+	                        clone = src && Array.isArray(src) ? src : []
+
+	                    } else {
+	                        clone = src && avalon.isPlainObject(src) ? src : {}
+	                    }
+
+	                    target[name] = avalon.mix(deep, clone, copy)
+	                } else if (copy !== void 0) {
+	                    target[name] = copy
+	                }
+	            }
+	        }
+	    }
+	    return target
+	}
+
+	/*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
+	function isArrayLike(obj) {
+	    if (obj && typeof obj === 'object') {
+	        var n = obj.length,
+	                str = serialize.call(obj)
+	        if (rarraylike.test(str)) {
+	            return true
+	        } else if (str === '[object Object]' && n === (n >>> 0)) {
+	            return true //由于ecma262v5能修改对象属性的enumerable，因此不能用propertyIsEnumerable来判定了
+	        }
+	    }
+	    return false
+	}
+
+
+	avalon.each = function (obj, fn) {
+	    if (obj) { //排除null, undefined
+	        var i = 0
+	        if (isArrayLike(obj)) {
+	            for (var n = obj.length; i < n; i++) {
+	                if (fn(i, obj[i]) === false)
+	                    break
+	            }
+	        } else {
+	            for (i in obj) {
+	                if (obj.hasOwnProperty(i) && fn(i, obj[i]) === false) {
+	                    break
+	                }
+	            }
+	        }
+	    }
+	}
+
+	module.exports = {
+	    avalon: avalon,
+	    isArrayLike: isArrayLike
+	}
+
+
+
+
+/***/ },
+/* 77 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	/*********************************************************************
+	 *                          DOM Api                                 *
+	 *           shim,class,data,css,val,html,event,ready               *
+	 **********************************************************************/
+
+	__webpack_require__(78)
+	__webpack_require__(79)
+	__webpack_require__(80)
+	__webpack_require__(81)
+	__webpack_require__(82)
+	__webpack_require__(83)
+	__webpack_require__(84)
+	__webpack_require__(85)
+
+	module.exports = avalon
+
+
+/***/ },
+/* 78 */
+/***/ function(module, exports) {
+
+	//safari5+是把contains方法放在Element.prototype上而不是Node.prototype
+	if (!avalon.document.contains) {
+	    Node.prototype.contains = function (arg) {
+	        return !!(this.compareDocumentPosition(arg) & 16)
+	    }
+	}
+	avalon.contains = function (root, el) {
+	    try {
+	        while ((el = el.parentNode))
+	            if (el === root)
+	                return true
+	        return false
+	    } catch (e) {
+	        return false
+	    }
+	}
+	function outerHTML() {
+	    return new XMLSerializer().serializeToString(this)
+	}
+
+
+	var svgns = 'http://www.w3.org/2000/svg'
+	var svg = avalon.document.createElementNS(svgns, 'svg')
+
+	svg.innerHTML = '<circle fill="red" />'
+
+	if (!/^\[object SVG\w*Element\]$/.test(svg.firstChild)) {
+	    function createSVG(node, parent) {
+	        /* jshint ignore:start */
+	        if (node && node.childNodes) {
+	            var nodes = node.childNodes
+	            for (var i = 0, el; el = nodes[i++]; ) {
+	                if (el.nodeType === 1) {
+	                    var svg = document.createElementNS(svgns, el.nodeName.toLowerCase())
+	                    avalon.each(el.attributes, function (a, attr) {
+	                        svg.setAttribute(attr.name, attr.value)
+	                    })
+	                    createSVG(el, svg)
+	                    parent.appendChild(svg)
+	                } else {
+	                    parent.appendChild(el.cloneNode(true))
+	                }
+	            }
+	        }
+	        /* jshint ignore:end */
+	    }
+	    //IE9-11,firefox不支持SVG元素的innerHTML,outerHTML属性
+	    Object.defineProperties(SVGElement.prototype, {
+	        outerHTML: {
+	            enumerable: true,
+	            configurable: true,
+	            get: outerHTML,
+	            set: function (html) {
+	                var tagName = this.tagName.toLowerCase()
+	                var parent = this.parent
+	                var parsed = avalon.parseHTML(html)
+	                if (tagName === 'svg') {
+	                    parent.insertBefore(parsed, this)
+	                } else {
+	                    var empty = document.createDocumentFragment()
+	                    createSVG(parsed, empty)
+	                    parent.insertBefore(empty, this)
+	                }
+	                parent.removeChild(this)
+	            }
+	        },
+	        innerHTML: {
+	            enumerable: true,
+	            configurable: true,
+	            get: function () {
+	                var s = this.outerHTML
+	                var ropen = new RegExp('<' + this.nodeName + '\\b(?:(["\'])[^"]*?(\\1)|[^>])*>', 'i')
+	                var rclose = new RegExp('<\/' + this.nodeName + '>$', 'i')
+	                return s.replace(ropen, '').replace(rclose, '')
+	            },
+	            set: function (html) {
+	                if (avalon.clearHTML) {
+	                    avalon.clearHTML(this)
+	                    var frag = avalon.parseHTML(html)
+	                    createSVG(frag, this)
+	                }
+	            }
+	        }
+	    })
+	}
+
+
+
+
+
+/***/ },
+/* 79 */
+/***/ function(module, exports) {
+
+	var rnowhite = /\S+/g
+
+	'add,remove'.replace(avalon.rword, function (method) {
+	    avalon.fn[method + 'Class'] = function (cls) {
+	        var el = this[0] || {}
+	        //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
+	        if (cls && typeof cls === 'string' && el.nodeType === 1) {
+	            cls.replace(rnowhite, function (c) {
+	                el.classList[method](c)
+	            })
+	        }
+	        return this
+	    }
+	})
+
+	avalon.fn.mix({
+	    hasClass: function (cls) {
+	        var el = this[0] || {}
+	        //IE10+, chrome8+, firefox3.6+, safari5.1+,opera11.5+支持classList,
+	        //chrome24+,firefox26+支持classList2.0
+	        return el.nodeType === 1 && el.classList.contains(cls)
+	    },
+	    toggleClass: function (value, stateVal) {
+	        var isBool = typeof stateVal === 'boolean'
+	        var me = this
+	        String(value).replace(rnowhite, function (c) {
+	            var state = isBool ? stateVal : !me.hasClass(c)
+	            me[state ? 'addClass' : 'removeClass'](c)
+	        })
+	        return this
+	    }
+	})
+
+
+
+/***/ },
+/* 80 */
+/***/ function(module, exports) {
+
+	
+	var rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/
+	avalon.parseJSON = JSON.parse
+
+	function parseData(data) {
+	    try {
+	        if (typeof data === 'object')
+	            return data
+	        data = data === 'true' ? true :
+	                data === 'false' ? false :
+	                data === 'null' ? null : +data + '' === data ? +data : rbrace.test(data) ? JSON.parse(data) : data
+	    } catch (e) {
+	    }
+	    return data
+	}
+
+
+	avalon.fn.attr = function (name, value) {
+	    if (arguments.length === 2) {
+	        this[0].setAttribute(name, value)
+	        return this
+	    } else {
+	        return this[0].getAttribute(name)
+	    }
+	}
+
+	avalon.fn.data = function (name, value) {
+	    name = 'data-' + avalon.hyphen(name || '')
+	    switch (arguments.length) {
+	        case 2:
+	            this.attr(name, value)
+	            return this
+	        case 1:
+	            var val = this.attr(name)
+	            return parseData(val)
+	        case 0:
+	            var ret = {}
+	            avalon.each(this[0].attributes, function (i, attr) {
+	                if (attr) {
+	                    name = attr.name
+	                    if (!name.indexOf('data-')) {
+	                        name = avalon.camelize(name.slice(5))
+	                        ret[name] = parseData(attr.value)
+	                    }
+	                }
+	            })
+	            return ret
+	    }
+	}
+
+
+	if (avalon.root.dataset) {
+	    avalon.fn.data = function (name, val) {
+	        name = name && avalon.camelize(name)
+	        var dataset = this[0].dataset
+	        switch (arguments.length) {
+	            case 2:
+	                dataset[name] = val
+	                return this
+	            case 1:
+	                val = dataset[name]
+	                return parseData(val)
+	            case 0:
+	                var ret = {}
+	                for (name in dataset) {
+	                    ret[name] = parseData(dataset[name])
+	                }
+	                return ret
+	        }
+	    }
+	}
+
+
+
+/***/ },
+/* 81 */
+/***/ function(module, exports) {
+
+	var root = avalon.root
+	var camelize = avalon.camelize
+	var cssHooks = avalon.cssHooks
+
+	var prefixes = ['', '-webkit-', '-o-', '-moz-', '-ms-']
+	var cssMap = {
+	    'float': 'cssFloat'
+	}
+
+	avalon.cssNumber = avalon.oneObject('animationIterationCount,columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom')
+
+	avalon.cssName = function (name, host, camelCase) {
+	    if (cssMap[name]) {
+	        return cssMap[name]
+	    }
+	    host = host || root.style
+	    for (var i = 0, n = prefixes.length; i < n; i++) {
+	        camelCase = camelize(prefixes[i] + name)
+	        if (camelCase in host) {
+	            return (cssMap[name] = camelCase)
+	        }
+	    }
+	    return null
+	}
+
+
+	avalon.fn.css = function (name, value) {
+	    if (avalon.isPlainObject(name)) {
+	        for (var i in name) {
+	            avalon.css(this, i, name[i])
+	        }
+	    } else {
+	        var ret = avalon.css(this, name, value)
+	    }
+	    return ret !== void 0 ? ret : this
+	}
+
+	avalon.fn.position = function () {
+	    var offsetParent, offset,
+	            elem = this[0],
+	            parentOffset = {
+	                top: 0,
+	                left: 0
+	            }
+	    if (!elem) {
+	        return parentOffset
+	    }
+	    if (this.css("position") === "fixed") {
+	        offset = elem.getBoundingClientRect()
+	    } else {
+	        offsetParent = this.offsetParent() //得到真正的offsetParent
+	        offset = this.offset() // 得到正确的offsetParent
+	        if (offsetParent[0].tagName !== "HTML") {
+	            parentOffset = offsetParent.offset()
+	        }
+	        parentOffset.top += avalon.css(offsetParent[0], "borderTopWidth", true)
+	        parentOffset.left += avalon.css(offsetParent[0], "borderLeftWidth", true)
+
+	        // Subtract offsetParent scroll positions
+	        parentOffset.top -= offsetParent.scrollTop()
+	        parentOffset.left -= offsetParent.scrollLeft()
+	    }
+	    return {
+	        top: offset.top - parentOffset.top - avalon.css(elem, "marginTop", true),
+	        left: offset.left - parentOffset.left - avalon.css(elem, "marginLeft", true)
+	    }
+	}
+	avalon.fn.offsetParent = function () {
+	    var offsetParent = this[0].offsetParent
+	    while (offsetParent && avalon.css(offsetParent, "position") === "static") {
+	        offsetParent = offsetParent.offsetParent;
+	    }
+	    return avalon(offsetParent || root)
+	}
+
+
+	cssHooks["@:set"] = function (node, name, value) {
+	    node.style[name] = value
+	}
+
+	cssHooks["@:get"] = function (node, name) {
+	    if (!node || !node.style) {
+	        throw new Error("getComputedStyle要求传入一个节点 " + node)
+	    }
+	    var ret, computed = getComputedStyle(node)
+	    if (computed) {
+	        ret = name === "filter" ? computed.getPropertyValue(name) : computed[name]
+	        if (ret === "") {
+	            ret = node.style[name] //其他浏览器需要我们手动取内联样式
+	        }
+	    }
+	    return ret
+	}
+	cssHooks["opacity:get"] = function (node) {
+	    var ret = cssHooks["@:get"](node, "opacity")
+	    return ret === "" ? "1" : ret
+	}
+
+	"top,left".replace(avalon.rword, function (name) {
+	    cssHooks[name + ":get"] = function (node) {
+	        var computed = cssHooks["@:get"](node, name)
+	        return /px$/.test(computed) ? computed :
+	                avalon(node).position()[name] + "px"
+	    }
+	})
+
+	var cssShow = {
+	    position: "absolute",
+	    visibility: "hidden",
+	    display: "block"
+	}
+	var rdisplayswap = /^(none|table(?!-c[ea]).+)/
+
+	function showHidden(node, array) {
+	    //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
+	    if (node.offsetWidth <= 0) { //opera.offsetWidth可能小于0
+	        var styles = getComputedStyle(node, null)
+	        if (rdisplayswap.test(styles["display"])) {
+	            var obj = {
+	                node: node
+	            }
+	            for (var name in cssShow) {
+	                obj[name] = styles[name]
+	                node.style[name] = cssShow[name]
+	            }
+	            array.push(obj)
+	        }
+	        var parent = node.parentNode
+	        if (parent && parent.nodeType === 1) {
+	            showHidden(parent, array)
+	        }
+	    }
+	}
+
+	avalon.each({
+	    Width: "width",
+	    Height: "height"
+	}, function (name, method) {
+	    var clientProp = "client" + name,
+	            scrollProp = "scroll" + name,
+	            offsetProp = "offset" + name
+	    cssHooks[method + ":get"] = function (node, which, override) {
+	        var boxSizing = -4
+	        if (typeof override === "number") {
+	            boxSizing = override
+	        }
+	        which = name === "Width" ? ["Left", "Right"] : ["Top", "Bottom"]
+	        var ret = node[offsetProp] // border-box 0
+	        if (boxSizing === 2) { // margin-box 2
+	            return ret + avalon.css(node, "margin" + which[0], true) + avalon.css(node, "margin" + which[1], true)
+	        }
+	        if (boxSizing < 0) { // padding-box  -2
+	            ret = ret - avalon.css(node, "border" + which[0] + "Width", true) - avalon.css(node, "border" + which[1] + "Width", true)
+	        }
+	        if (boxSizing === -4) { // content-box -4
+	            ret = ret - avalon.css(node, "padding" + which[0], true) - avalon.css(node, "padding" + which[1], true)
+	        }
+	        return ret
+	    }
+	    cssHooks[method + "&get"] = function (node) {
+	        var hidden = [];
+	        showHidden(node, hidden);
+	        var val = cssHooks[method + ":get"](node)
+	        for (var i = 0, obj; obj = hidden[i++]; ) {
+	            node = obj.node
+	            for (var n in obj) {
+	                if (typeof obj[n] === "string") {
+	                    node.style[n] = obj[n]
+	                }
+	            }
+	        }
+	        return val;
+	    }
+	    avalon.fn[method] = function (value) { //会忽视其display
+	        var node = this[0]
+	        if (arguments.length === 0) {
+	            if (node.setTimeout) { //取得窗口尺寸,IE9后可以用node.innerWidth /innerHeight代替
+	                return node["inner" + name]
+	            }
+	            if (node.nodeType === 9) { //取得页面尺寸
+	                var doc = node.documentElement
+	                //FF chrome    html.scrollHeight< body.scrollHeight
+	                //IE 标准模式 : html.scrollHeight> body.scrollHeight
+	                //IE 怪异模式 : html.scrollHeight 最大等于可视窗口多一点？
+	                return Math.max(node.body[scrollProp], doc[scrollProp], node.body[offsetProp], doc[offsetProp], doc[clientProp])
+	            }
+	            return cssHooks[method + "&get"](node)
+	        } else {
+	            return this.css(method, value)
+	        }
+	    }
+	    avalon.fn["inner" + name] = function () {
+	        return cssHooks[method + ":get"](this[0], void 0, -2)
+	    }
+	    avalon.fn["outer" + name] = function (includeMargin) {
+	        return cssHooks[method + ":get"](this[0], void 0, includeMargin === true ? 2 : 0)
+	    }
+	})
+
+	avalon.fn.offset = function () { //取得距离页面左右角的坐标
+	    var node = this[0]
+	    try {
+	        var rect = node.getBoundingClientRect()
+	        // Make sure element is not hidden (display: none) or disconnected
+	        // https://github.com/jquery/jquery/pull/2043/files#r23981494
+	        if (rect.width || rect.height || node.getClientRects().length) {
+	            var doc = node.ownerDocument
+	            var root = doc.documentElement
+	            var win = doc.defaultView
+	            return {
+	                top: rect.top + win.pageYOffset - root.clientTop,
+	                left: rect.left + win.pageXOffset - root.clientLeft
+	            }
+	        }
+	    } catch (e) {
+	        return {
+	            left: 0,
+	            top: 0
+	        }
+	    }
+	}
+
+	avalon.each({
+	    scrollLeft: "pageXOffset",
+	    scrollTop: "pageYOffset"
+	}, function (method, prop) {
+	    avalon.fn[method] = function (val) {
+	        var node = this[0] || {},
+	                win = getWindow(node),
+	                top = method === "scrollTop"
+	        if (!arguments.length) {
+	            return win ? win[prop] : node[method]
+	        } else {
+	            if (win) {
+	                win.scrollTo(!top ? val : win[prop], top ? val : win[prop])
+	            } else {
+	                node[method] = val
+	            }
+	        }
+	    }
+	})
+
+	function getWindow(node) {
+	    return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView : false
+	}
+
+/***/ },
+/* 82 */
+/***/ function(module, exports) {
+
+	function getValType(elem) {
+	    var ret = elem.tagName.toLowerCase()
+	    return ret === 'input' && /checkbox|radio/.test(elem.type) ? 'checked' : ret
+	}
+	var valHooks = {
+	    'select:get': function self(node, ret, index, singleton) {
+	        var nodes = node.children, value,
+	                getter = valHooks['option:get']
+	        index = ret ? index : node.selectedIndex
+	        singleton = ret ? singleton : node.type === 'select-one' || index < 0
+	        ret = ret || []
+	        for (var i = 0, el; el = nodes[i++]; ) {
+	            if (!el.disabled) {
+	                switch (el.nodeName.toLowerCase()) {
+	                    case 'option':
+	                        if ((el.selected || el.index === index)) {
+	                            value = getter(el)
+	                            if (singleton) {
+	                                return value
+	                            } else {
+	                                ret.push(value)
+	                            }
+	                        }
+	                        break
+	                    case 'optgroup':
+	                        value = self(el, ret, index, singleton)
+	                        if (typeof value === 'string') {
+	                            return value
+	                        }
+	                        break
+	                }
+	            }
+	        }
+	        return singleton ? null : ret
+	    },
+	    'select:set': function (node, values, optionSet) {
+	        values = [].concat(values) //强制转换为数组
+	        for (var i = 0, el; el = node.options[i++]; ) {
+	            if ((el.selected = values.indexOf(el.value) > -1)) {
+	                optionSet = true
+	            }
+	        }
+	        if (!optionSet) {
+	            node.selectedIndex = -1
+	        }
+	    }
+	}
+
+	avalon.fn.val = function (value) {
+	    var node = this[0]
+	    if (node && node.nodeType === 1) {
+	        var get = arguments.length === 0
+	        var access = get ? ':get' : ':set'
+	        var fn = valHooks[getValType(node) + access]
+	        if (fn) {
+	            var val = fn(node, value)
+	        } else if (get) {
+	            return (node.value || '').replace(/\r/g, '')
+	        } else {
+	            node.value = value
+	        }
+	    }
+	    return get ? val : this
+	}
+
+/***/ },
+/* 83 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Cache = __webpack_require__(26)
+	var fixScript = __webpack_require__(27)
+	var tagHooks = new function () {// jshint ignore:line
+	    avalon.mix(this, {
+	        option: document.createElement('select'),
+	        thead: document.createElement('table'),
+	        td: document.createElement('tr'),
+	        area: document.createElement('map'),
+	        tr: document.createElement('tbody'),
+	        col: document.createElement('colgroup'),
+	        legend: document.createElement('fieldset'),
+	        _default: document.createElement('div'),
+	        'g': document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+	    })
+	    this.optgroup = this.option
+	    this.tbody = this.tfoot = this.colgroup = this.caption = this.thead
+	    this.th = this.td
+	}// jshint ignore:line
+
+	var svgHooks = {
+	    g: tagHooks.g
+	}
+	String('circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use').replace(avalon.rword, function (tag) {
+	    svgHooks[tag] = tagHooks.g //处理SVG
+	})
+
+	var rtagName = /<([\w:]+)/
+	var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
+
+	var rhtml = /<|&#?\w+;/
+	var htmlCache = new Cache(128)
+	var tempateTag = avalon.document.createElement('template')
+	var htmlHook
+
+	if (/HTMLTemplateElement/.test(tempateTag)) {
+	    htmlHook = tempateTag
+	} else {
+	    avalon.mix(tagHooks, svgHooks)
+	}
+
+	avalon.parseHTML = function (html) {
+	    var fragment = avalon.avalonFragment.cloneNode(false), firstChild
+	    if (typeof html !== 'string') {
+	        return fragment
+	    }
+	    if (!rhtml.test(html)) {
+	        fragment.appendChild(document.createTextNode(html))
+	        return fragment
+	    }
+	    html = html.replace(rxhtml, '<$1></$2>').trim()
+	    var hasCache = htmlCache.get(html)
+	    if (hasCache) {
+	        return hasCache.cloneNode(true)
+	    }
+	    var tag = (rtagName.exec(html) || ['', ''])[1].toLowerCase()
+
+	    var wrapper = svgHooks[tag], firstChild
+	    if (wrapper) {
+	        wrapper.innerHTML = html
+	        //使用innerHTML生成的script节点不会发出请求与执行text属性
+	        fixScript(wrapper)
+	    } else if (htmlHook) {
+	        htmlHook.innerHTML = html
+	        wrapper = htmlHook.content
+	    } else {
+	        wrapper = tagHooks[tag] || tagHooks._default
+	        wrapper.innerHTML = html
+	        fixScript(wrapper)
+	    }
+	    while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
+	        fragment.appendChild(firstChild)
+	    }
+	    if (html.length < 1024) {
+	        htmlCache.put(html, fragment.cloneNode(true))
+	    }
+	    return fragment
+	}
+
+	avalon.innerHTML = function (node, html) {
+	    var a = this.parseHTML(html)
+	    this.clearHTML(node).appendChild(a)
+	}
+
+	avalon.clearHTML = function (node) {
+	    avalon.each(node.getElementsByTagName('*'), function (i, el) {
+	        avalon.unbind(el)
+	    })
+	    node.textContent = ''
+	    while (node.lastChild) {
+	        node.removeChild(node.lastChild)
+	    }
+	    return node
+	}
+
+/***/ },
+/* 84 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var document = avalon.document
+	var window = avalon.window
+	var root = avalon.root
+
+	var getShortID = __webpack_require__(6).getShortID
+	var canBubbleUp = __webpack_require__(32)
+
+	var eventHooks = avalon.eventHooks
+	/*绑定事件*/
+	avalon.bind = function (elem, type, fn) {
+	    if (elem.nodeType === 1) {
+	        var value = elem.getAttribute('avalon-events') || ''
+	        //如果是使用ms-on-*绑定的回调,其uuid格式为e12122324,
+	        //如果是使用bind方法绑定的回调,其uuid格式为_12
+	        var uuid = getShortID(fn)
+	        var key = type + ':' + uuid
+	        var hook = eventHooks[type]
+	        if (hook) {
+	            type = hook.type
+	            if (hook.fix) {
+	                fn = hook.fix(elem, fn)
+	                fn.uuid = uuid + '0'
+	            }
+	            key = type + ':' + fn.uuid
+	        }
+	        avalon.eventListeners[fn.uuid] = fn
+
+	        if (value.indexOf(type + ':') === -1) {//同一种事件只绑定一次
+	            if (canBubbleUp[type] || focusBlur[type]) {
+	                delegateEvent(type)
+	            } else {
+	                nativeBind(elem, type, dispatch)
+	            }
+	        }
+	        var keys = value.split('??')
+	        if (keys[0] === '') {
+	            keys.shift()
+	        }
+	        if (keys.indexOf(key) === -1) {
+	            keys.push(key)
+	            elem.setAttribute('avalon-events', keys.join('??'))
+	            //将令牌放进avalon-events属性中
+	        }
+
+	    } else {
+	        nativeBind(elem, type, fn)
+	    }
+	    return fn //兼容之前的版本
+	}
+
+	avalon.unbind = function (elem, type, fn) {
+	    if (elem.nodeType === 1) {
+	        var value = elem.getAttribute('avalon-events') || ''
+	        switch (arguments.length) {
+	            case 1:
+	                nativeUnBind(elem, type, dispatch)
+	                elem.removeAttribute('avalon-events')
+	                break
+	            case 2:
+	                value = value.split('??').filter(function (str) {
+	                    return str.indexOf(type + ':') === -1
+	                }).join('??')
+
+	                elem.setAttribute('avalon-events', value)
+	                break
+	            case 3:
+	                var search = type + ':' + fn.uuid
+	                value = value.split('??').filter(function (str) {
+	                    return str !== search
+	                }).join('??')
+	                elem.setAttribute('avalon-events', value)
+	                delete avalon.eventListeners[fn.uuid]
+	                break
+	        }
+	    } else {
+	        nativeUnBind(elem, type, fn)
+	    }
+	}
+
+	var reventNames = /[^\s\?]+/g
+	var last = +new Date()
+	function collectHandlers(elem, type, handlers) {
+	    var value = elem.getAttribute('avalon-events')
+	    if (value && (elem.disabled !== true || type !== 'click')) {
+	        var uuids = []
+	        var arr = value.match(reventNames) || []
+	        for (var i = 0, el; el = arr[i++]; ) {
+	            var v = el.split(':')
+	            if (v[0] === type) {
+	                uuids.push(v[1])
+	            } else {
+	                break
+	            }
+	        }
+	        if (uuids.length) {
+	            handlers.push({
+	                elem: elem,
+	                uuids: uuids
+	            })
+	        }
+	    }
+	    elem = elem.parentNode
+	    if (elem && elem.getAttribute && canBubbleUp[type]) {
+	        collectHandlers(elem, type, handlers)
+	    }
+
+	}
+	function dispatch(event) {
+	    event = new avEvent(event)
+	    var type = event.type
+	    var elem = event.target
+	    var handlers = []
+	    collectHandlers(elem, type, handlers)
+	    var i = 0, j, uuid, handler
+	    while ((handler = handlers[i++]) && !event.cancelBubble) {
+	        event.currentTarget = handler.elem
+	        j = 0
+	        while ((uuid = handler.uuids[ j++ ]) &&
+	                !event.isImmediatePropagationStopped) {
+	            var fn = avalon.eventListeners[uuid]
+	            if (fn) {
+	                var vm = elem.__av_context__
+	                if (vm && vm.$hashcode === false) {
+	                    return avalon.unbind(elem, type, fn)
+	                }
+	                if (/move|scroll/.test(type)) {
+	                    var curr = +new Date()
+	                    if (curr - last > 16) {
+	                        fn.call(elem, event, vm)
+	                        last = curr
+	                    }
+	                } else {
+	                    fn.call(handler.elem, event, vm)
+	                }
+	            }
+	        }
+	    }
+	}
+	var focusBlur = {
+	    focus: true,
+	    blur: true
+	}
+
+	var nativeBind = function (el, type, fn, capture) {
+	    el.addEventListener(type, fn, capture)
+	}
+	var nativeUnBind = function (el, type, fn) {
+	    el.removeEventListener(type, fn)
+	}
+
+	function delegateEvent(type) {
+	    var value = root.getAttribute('delegate-events') || ''
+	    if (value.indexOf(type) === -1) {
+	        var arr = value.match(reventNames) || []
+	        arr.push(type)
+	        root.setAttribute('delegate-events', arr.join('??'))
+	        nativeBind(root, type, dispatch, !!focusBlur[type])
+	    }
+	}
+
+	var rvendor = /^(?:ms|webkit|moz)/
+	function avEvent(event) {
+	    if (event.originalEvent) {
+	        return this
+	    }
+	    for (var i in event) {
+	        if (!rvendor.test(i) && typeof event[i] !== 'function') {
+	            this[i] = event[i]
+	        }
+	    }
+	    this.timeStamp = new Date() - 0
+	    this.originalEvent = event
+	}
+	avEvent.prototype = {
+	    preventDefault: function () {
+	        var e = this.originalEvent;
+	        this.returnValue = false
+	        if (e) {
+	            e.returnValue = false
+	            e.preventDefault()
+	        }
+	    },
+	    stopPropagation: function () {
+	        var e = this.originalEvent
+	        this.cancelBubble = true
+	        if (e) {
+	            e.cancelBubble = true
+	            e.stopPropagation()
+	        }
+	    },
+	    stopImmediatePropagation: function () {
+	        var e = this.originalEvent
+	        this.isImmediatePropagationStopped = true
+	        if (e.stopImmediatePropagation) {
+	            e.stopImmediatePropagation()
+	        }
+	        this.stopPropagation()
+	    }
+	}
+
+	avalon.fireDom = function (elem, type, opts) {
+	    var hackEvent = document.createEvent('Events');
+	    hackEvent.initEvent(type, true, true)
+	    avalon.mix(hackEvent, opts)
+	    elem.dispatchEvent(hackEvent)
+	}
+
+	var eventHooks = avalon.eventHooks
+	//针对firefox, chrome修正mouseenter, mouseleave(chrome30+)
+	if (!('onmouseenter' in root)) {
+	    avalon.each({
+	        mouseenter: 'mouseover',
+	        mouseleave: 'mouseout'
+	    }, function (origType, fixType) {
+	        eventHooks[origType] = {
+	            type: fixType,
+	            fn: function (elem, fn) {
+	                return function (e) {
+	                    var t = e.relatedTarget
+	                    if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
+	                        delete e.type
+	                        e.type = origType
+	                        return fn.call(elem, e)
+	                    }
+	                }
+	            }
+	        }
+	    })
+	}
+	//针对IE9+, w3c修正animationend
+	avalon.each({
+	    AnimationEvent: 'animationend',
+	    WebKitAnimationEvent: 'webkitAnimationEnd'
+	}, function (construct, fixType) {
+	    if (window[construct] && !eventHooks.animationend) {
+	        eventHooks.animationend = {
+	            type: fixType
+	        }
+	    }
+	})
+
+	if (document.onmousewheel === void 0) {
+	    /* IE6-11 chrome mousewheel wheelDetla 下 -120 上 120
+	     firefox DOMMouseScroll detail 下3 上-3
+	     firefox wheel detlaY 下3 上-3
+	     IE9-11 wheel deltaY 下40 上-40
+	     chrome wheel deltaY 下100 上-100 */
+	    eventHooks.mousewheel = {
+	        type: 'wheel',
+	        fn: function (elem, fn) {
+	            return function (e) {
+	                e.wheelDeltaY = e.wheelDelta = e.deltaY > 0 ? -120 : 120
+	                e.wheelDeltaX = 0
+	                Object.defineProperty(e, 'type', {
+	                    value: 'mousewheel'
+	                })
+	                fn.call(elem, e)
+	            }
+	        }
+	    }
+	}
+
+	avalon.fn.bind = function (type, fn, phase) {
+	    if (this[0]) { //此方法不会链
+	        return avalon.bind(this[0], type, fn, phase)
+	    }
+	}
+
+	avalon.fn.unbind = function (type, fn, phase) {
+	    if (this[0]) {
+	        avalon.unbind(this[0], type, fn, phase)
+	    }
+	    return this
+	}
+
+/***/ },
+/* 85 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var scan = __webpack_require__(34)
+	var document = avalon.document
+	var window = avalon.window
+
+	var readyList = [], isReady
+	var fireReady = function (fn) {
+	    isReady = true
+
+	    while (fn = readyList.shift()) {
+	        fn(avalon)
+	    }
+	}
+
+	if (document.readyState === 'complete') {
+	    setTimeout(fireReady) //如果在domReady之外加载
+	} else {
+	    document.addEventListener('DOMContentLoaded', fireReady)
+	}
+
+	avalon.bind(window, 'load', fireReady)
+
+	avalon.ready = function (fn) {
+	    if (!isReady) {
+	        readyList.push(fn)
+	    } else {
+	        fn(avalon)
+	    }
+	}
+
+	avalon.ready(function(){
+	    scan(document.body)
+	})
+
+
+/***/ },
+/* 86 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(36)
+	//处理属性样式
+	__webpack_require__(87)
+	__webpack_require__(40)
+	__webpack_require__(41)
+	//处理内容
+	__webpack_require__(42)
+	__webpack_require__(43)
+	__webpack_require__(45)
+	//需要用到事件的
+	__webpack_require__(46)
+	__webpack_require__(47)
+	__webpack_require__(89)
+	//处理逻辑
+	__webpack_require__(55)
+	__webpack_require__(57)
+
+	__webpack_require__(58)
+
+/***/ },
+/* 87 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var attrUpdate = __webpack_require__(88)
+
+	avalon.directive('attr', {
+	    parse: function (binding, num) {
+	        return 'vnode' + num + '.props["ms-attr"] = ' + avalon.parseExpr(binding) + ';\n'
+	    },
+	    diff: function (cur, pre) {
+	        var a = cur.props['ms-attr']
+	        var p = pre.props['ms-attr']
+	        if (Object(a) === a) {
+	            if (Array.isArray(a)) {
+	                a = cur.props['ms-attr'] = avalon.mix.apply({}, a)
+	            }
+	            if (typeof p !== 'object') {
+	                cur.changeAttr = a
+	            } else {
+	                var patch = {}
+	                var hasChange = false
+	                for (var i in a) {
+	                    if (a[i] !== p[i]) {
+	                        hasChange = true
+	                        patch[i] = a[i]
+	                    }
+	                }
+	                if (hasChange) {
+	                    cur.changeAttr = patch
+	                }
+	            }
+	            if (cur.changeAttr) {
+	                var list = cur.change || (cur.change = [])
+	                avalon.Array.ensure(list, this.update)
+	            }
+	        } else {
+	            cur.props['ms-attr'] = p
+	        }
+	    },
+	    //dom, vnode
+	    update: attrUpdate
+	})
+
+
+
+/***/ },
+/* 88 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var propMap = __webpack_require__(39)
+	var rsvg = /^\[object SVG\w*Element\]$/
+
+	function attrUpdate(node, vnode) {
+	    var attrs = vnode.changeAttr
+	    if (attrs) {
+	        for (var attrName in attrs) {
+	            var val = attrs[attrName]
+	            // switch
+	            if (attrName === 'src' && window.chrome && node.tagName === 'EMBED') {
+	                node[attrName] = val
+	                var parent = node.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
+	                var comment = document.createComment('ms-src')
+	                parent.replaceChild(comment, node)
+	                parent.replaceChild(node, comment)
+	            } else if (attrName.indexOf('data-') == 0) {
+	                node.setAttribute(attrName, val)
+	            } else {
+	                var propName = propMap[attrName] || attrName
+	                if (typeof node[propName] === 'boolean') {
+	                    //布尔属性必须使用el.xxx = true|false方式设值
+	                    //如果为false, IE全系列下相当于setAttribute(xxx,''),
+	                    //会影响到样式,需要进一步处理
+	                    node[propName] = !!val
+	                }
+	                if (val === false) {
+	                    node.removeAttribute(attrName)
+	                    continue
+	                }
+
+	                //SVG只能使用setAttribute(xxx, yyy), VML只能使用node.xxx = yyy ,
+	                //HTML的固有属性必须node.xxx = yyy
+	                var isInnate = rsvg.test(node) ? false : attrName in node.cloneNode(false)
+	                if (isInnate) {
+	                    node[propName] = val + ''
+	                } else {
+	                    node.setAttribute(attrName, val)
+	                }
+	            }
+	        }
+	    }
+	    delete vnode.changeAttr
+	}
+
+	module.exports = attrUpdate
+
+/***/ },
+/* 89 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var valueHijack = __webpack_require__(49)
+
+	var newControl = __webpack_require__(50)
+	var initControl = __webpack_require__(90)
+	var refreshControl = __webpack_require__(91)
+
+
+	avalon.directive('duplex', {
+	    priority: 2000,
+	    parse: function (binding, num, vnode) {
+	        newControl(binding, vnode)
+
+	        return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
+	                'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
+	    },
+	    diff: function (cur, pre) {
+
+	        if (pre.ctrl && pre.ctrl.set) {
+	            cur.ctrl = pre.ctrl
+	        } else {
+	            initControl(cur, pre)
+	        }
+
+	        var ctrl = cur.ctrl
+	        delete cur.duplexVm
+
+	        var value = cur.props.value = ctrl.get(ctrl.vmodel)
+	        if (cur.type === 'select' && !cur.children.length) {
+	            avalon.Array.merge(cur.children, avalon.lexer(cur.template))
+	            fixVirtualOptionSelected(cur, value)
+	        }
+
+	        if (!ctrl.elem) {
+	            var isEqual = false
+	        } else {
+	            var preValue = pre.props.value
+	            if (Array.isArray(value)) {
+	                isEqual = value + '' === preValue + ''
+	            } else {
+	                isEqual = value === preValue
+	            }
+	        }
+
+	        if (!isEqual) {
+	            ctrl.modelValue = value
+	            var afterChange = cur.afterChange || (cur.afterChange = [])
+	            avalon.Array.ensure(afterChange, this.update)
+	        }
+	    },
+	    update: function (node, vnode) {
+	        var ctrl = node.__duplex__ = vnode.ctrl
+	        if (!ctrl.elem) {//这是一次性绑定
+	            ctrl.elem = node //方便进行垃圾回收
+	            var events = ctrl.events
+	            for (var name in events) {
+	                avalon.bind(node, name, events[name])
+	                delete events[name]
+	            }
+	        }
+
+	        if (!avalon.msie && valueHijack === false && !node.valueHijack) {
+	            //chrome 42及以下版本需要这个hack
+	            node.valueHijack = ctrl.update
+	            var intervalID = setInterval(function () {
+	                if (!avalon.contains(avalon.root, node)) {
+	                    clearInterval(intervalID)
+	                } else {
+	                    node.valueHijack()
+	                }
+	            }, 30)
+	        }
+
+	        var viewValue = ctrl.modelValue
+
+	        if (ctrl.viewValue !== viewValue) {
+	            ctrl.viewValue = viewValue
+	            refreshControl[ctrl.type].call(ctrl)
+	            if (node.caret) {
+	                ctrl.updateCaret(node, ctrl.caretPos, ctrl.caretPos)
+	            }
+	        }
+	    }
+	})
+
+
+	function fixVirtualOptionSelected(cur, curValue) {
+	    var options = []
+	    cur.children.forEach(function (a) {
+	        if (a.type === 'option') {
+	            options.push(a)
+	        } else if (a.type === 'optgroup') {
+	            a.children.forEach(function (c) {
+	                if (c.type === 'option') {
+	                    options.push(c)
+	                }
+	            })
+	        }
+	    })
+	    var multi = cur.props.multiple
+	    var map = {}
+	    var one = multi === null || multi === void 0 || multi === false
+	    if (Array.isArray(curValue)) {
+	        curValue.forEach(function (a) {
+	            map[a] = 1
+	        })
+	    } else {
+	        map[curValue] = 1
+	    }
+	    for (var i = 0, option; option = options[i++]; ) {
+	        var v = 'value' in option.props ? option.props.value : (option.children[0] || {nodeValue: ''}).nodeValue.trim()
+	        option.props.selected = !!map[v]
+	        if (map[v] && one) {
+	            break
+	        }
+	    }
+	}
+
+/***/ },
+/* 90 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var window = avalon.window
+
+	var refreshModel = __webpack_require__(52)
+	var markID = __webpack_require__(6).getLongID
+	var evaluatorPool = __webpack_require__(53)
+
+	function initControl(cur, pre) {
+	    var ctrl = cur.ctrl = pre.ctrl
+
+	    ctrl.update = updateModel
+	    ctrl.updateCaret = setCaret
+	    ctrl.get = evaluatorPool.get('duplex:' + ctrl.expr)
+	    ctrl.set = evaluatorPool.get('duplex:set:' + ctrl.expr)
+	    var format = evaluatorPool.get('duplex:format:' + ctrl.expr)
+	    if (format) {
+	        ctrl.formatters.push(function (v) {
+	            return format(ctrl.vmodel, v)
+	        })
+	    }
+	    ctrl.vmodel = cur.duplexVm
+
+	    var events = ctrl.events = {}
+	//添加需要监听的事件
+	    switch (ctrl.type) {
+	        case 'radio':
+	            if (cur.props.type === 'radio') {
+	                events.click = updateModel
+	            } else {
+	                events.change = updateModel
+	            }
+	            break
+	        case 'checkbox':
+	        case 'select':
+	            events.change = updateModel
+	            break
+	        case 'contenteditable':
+	            if (ctrl.isChanged) {
+	                events.blur = updateModel
+	            } else {
+	                if (window.webkitURL) {
+	                    // http://code.metager.de/source/xref/WebKit/LayoutTests/fast/events/
+	                    // https://bugs.webkit.org/show_bug.cgi?id=110742
+	                    events.webkitEditableContentChanged = updateModel
+	                } else if (window.MutationEvent) {
+	                    events.DOMCharacterDataModified = updateModel
+	                }
+	                events.input = updateModel
+	            }
+	            break
+	        case 'input':
+	            if (ctrl.isChanged) {
+	                events.change = updateModel
+	            } else {
+
+	                events.input = updateModel
+
+	                events.compositionstart = openComposition
+	                events.compositionend = closeComposition
+	            }
+	            break
+	    }
+
+	    if (/password|text/.test(cur.props.type)) {
+	        events.focus = openCaret
+	        events.blur = closeCaret
+	    }
+
+	}
+
+
+	function updateModel() {
+	    var elem = this
+	    var ctrl = this.__duplex__
+	    if (elem.composing || elem.value === ctrl.lastViewValue)
+	        return
+	    if (elem.caret) {
+	        try {
+	            var pos = getCaret(elem)
+	            if (pos.start === pos.end) {
+	                ctrl.caretPos = pos.start
+	            }
+	        } catch (e) {
+	            avalon.warn('fixCaret error', e)
+	        }
+	    }
+	    if (ctrl.debounceTime > 4) {
+	        var timestamp = new Date()
+	        var left = timestamp - ctrl.time || 0
+	        ctrl.time = timestamp
+	        if (left >= ctrl.debounceTime) {
+	            refreshModel[ctrl.type].call(ctrl)
+	        } else {
+	            clearTimeout(ctrl.debounceID)
+	            ctrl.debounceID = setTimeout(function () {
+	                refreshModel[ctrl.type].call(ctrl)
+	            }, left)
+	        }
+	    } else {
+	        refreshModel[ctrl.type].call(ctrl)
+	    }
+	}
+
+
+
+	function openCaret() {
+	    this.caret = true
+	}
+
+	function closeCaret() {
+	    this.caret = false
+	}
+	function openComposition() {
+	    this.composing = true
+	}
+
+	function closeComposition(e) {
+	    this.composing = false
+	    updateModel.call(this, e)
+	}
+
+
+	markID(openCaret)
+	markID(closeCaret)
+	markID(openComposition)
+	markID(closeComposition)
+	markID(updateModel)
+
+
+
+	function getCaret(ctrl) {
+	    var start = NaN, end = NaN
+	    if (ctrl.setSelectionRange) {
+	        start = ctrl.selectionStart
+	        end = ctrl.selectionEnd
+	    }
+	    return {
+	        start: start,
+	        end: end
+	    }
+	}
+
+	function setCaret(ctrl, begin, end) {
+	    if (!ctrl.value || ctrl.readOnly)
+	        return
+	    ctrl.selectionStart = begin
+	    ctrl.selectionEnd = end
+	}
+
+	module.exports = initControl
+
+/***/ },
+/* 91 */
+/***/ function(module, exports) {
+
+	var refreshControl = {
+	    input: function () {//处理单个value值处理
+	        this.elem.value = this.viewValue
+	    },
+	    radio: function () {//处理单个checked属性
+	        var checked
+	        if (this.isChecked) {
+	            checked = !!this.viewValue
+	        } else {
+	            checked = this.viewValue + '' === this.elem.value
+	        }
+	        this.elem.checked = checked
+	    },
+	    checkbox: function () {//处理多个checked属性
+	        var checked = false
+	        var elem = this.elem
+	        var value = elem.value
+	        for (var i = 0; i < this.modelValue.length; i++) {
+	            var el = this.modelValue[i]
+	            if (el + '' === value) {
+	                checked = true
+	            }
+	        }
+	        elem.checked = checked
+	    },
+	    select: function () {//处理子级的selected属性
+	        var a = Array.isArray(this.viewValue) ? this.viewValue.map(String) : this.viewValue + ''
+	        avalon(this.elem).val(a)
+	    },
+	    contenteditable: function () {//处理单个innerHTML
+	        this.elem.innerHTML = this.viewValue
+	        this.update.call(this.elem)
+	    }
+	}
+
+	module.exports = refreshControl
+
+/***/ },
+/* 92 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var share = __webpack_require__(93)
+	var isSkip = share.isSkip
+	var $$midway = share.$$midway
+	var $$skipArray = share.$$skipArray
+	delete $$skipArray.$accessors
+	delete $$skipArray.__data__
+	delete $$skipArray.__proxy__
+	delete $$skipArray.__const__
+
+	var makeAccessor = share.makeAccessor
+	var makeObserver = share.makeObserver
+	var modelAccessor = share.modelAccessor
+	var modelAdaptor = share.modelAdaptor
+	var makeHashCode = avalon.makeHashCode
+
+
+	//一个vm总是为Observer的实例
+	function Observer() {
+	}
+	function masterFactory(definition, heirloom, options) {
+
+	    var $skipArray = {}
+	    if (definition.$skipArray) {//收集所有不可监听属性
+	        $skipArray = avalon.oneObject(definition.$skipArray)
+	        delete definition.$skipArray
+	    }
+
+	    var keys = {}
+	    options = options || {}
+	    heirloom = heirloom || {}
+	    var accessors = {}
+	    var hashcode = makeHashCode("$")
+	    var pathname = options.pathname || ""
+	    options.id = options.id || hashcode
+	    options.hashcode = hashcode
+	    var key, sid, spath
+	    for (key in definition) {
+	        if ($$skipArray[key])
+	            continue
+	        var val = keys[key] = definition[key]
+	        if (!isSkip(key, val, $skipArray)) {
+	            sid = options.id + "." + key
+	            spath = pathname ? pathname + "." + key : key
+	            accessors[key] = makeAccessor(sid, spath, heirloom)
+	        }
+	    }
+
+	    accessors.$model = modelAccessor
+	    var $vmodel = new Observer()
+	    Object.defineProperties($vmodel, accessors)
+
+	    for (key in keys) {
+	        //对普通监控属性或访问器属性进行赋值
+	        $vmodel[key] = keys[key]
+	        //删除系统属性
+	        if (key in $skipArray) {
+	            delete keys[key]
+	        } else {
+	            keys[key] = true
+	        }
+	    }
+	    makeObserver($vmodel, heirloom, keys, accessors, options)
+
+	    return $vmodel
+	}
+	$$midway.masterFactory = masterFactory
+
+	function slaveFactory(before, after, heirloom, options) {
+	    var keys = {}
+	    var accessors = {}
+	    var pathname = options.pathname
+	    heirloom = heirloom || {}
+	    var key, sid, spath
+	    for (key in after) {
+	        if ($$skipArray[key])
+	            continue
+	        keys[key] = after[key]
+	        if (!isSkip(key, after[key], {})) {
+	            var accessor = Object.getOwnPropertyDescriptor(before, key)
+	            if (accessor && accessor.get) {
+	                accessors[key] = accessor
+	            } else {
+	                sid = options.id + "." + key
+	                spath = pathname ? pathname + "." + key : key
+	                accessors[key] = makeObservable(sid, spath, heirloom)
+	            }
+	        }
+	    }
+	    for (key in before) {
+	        delete before[key]
+	    }
+
+	    options.hashcode = before.$hashcode || makeHashCode('$')
+	    accessors.$model = modelAccessor
+	    var $vmodel = before
+	    Object.defineProperties($vmodel, accessors)
+
+	    for (key in keys) {
+	        if (!accessors[key]) {//添加不可监控的属性
+	            $vmodel[key] = keys[key]
+	        }
+	        keys[key] = true
+	    }
+	    makeObserver($vmodel, heirloom, keys, accessors, options)
+
+	    return $vmodel
+	}
+
+	$$midway.slaveFactory = slaveFactory
+
+	function mediatorFactory(before, after, heirloom) {
+	    var keys = {}
+	    var accessors = {}
+
+	    //收集所有键值对及访问器属性
+	    for (var key in before) {
+	        keys[key] = before[key]
+	        var accessor = Object.getOwnPropertyDescriptor(before, key)
+	        if (accessor.set) {
+	            accessors[key] = accessor
+	        }
+	    }
+	    for (var key in after) {
+	        keys[key] = after[key]
+	        var accessor = Object.getOwnPropertyDescriptor(after, key)
+	        if (accessor.set) {
+	            accessors[key] = accessor
+	        }
+	    }
+
+	    var $vmodel = new Observer()
+	    Object.defineProperties($vmodel, accessors)
+
+	    for (key in keys) {
+	        if (!accessors[key]) {//添加不可监控的属性
+	            $vmodel[key] = keys[key]
+	        }
+	        keys[key] = true
+	    }
+
+	    makeObserve($vmodel, heirloom || {}, keys, accessors, {
+	        id: before.$id,
+	        hashcode: makeHashCode("$"),
+	        master: true
+	    })
+
+	    return $vmodel
+	}
+
+	$$midway.mediatorFactory = avalon.mediatorFactory = mediatorFactory
+	avalon.__stop = 0
+	var __array__ = share.__array__
+	function arrayFactory(array, old, heirloom, options) {
+	    if (old && old.splice) {
+	        var args = [0, old.length].concat(array)
+	        ++avalon.__stop 
+	        old.splice.apply(old, args)
+	        --avalon.__stop 
+	        return old
+	    } else {
+	        for (var i in __array__) {
+	            array[i] = __array__[i]
+	        }
+
+	        array.notify = function (a, b, c, d) {
+	            var vm = heirloom.__vmodel__
+	            if (vm) {
+	                var path = a === null || a === void 0 ?
+	                        options.pathname :
+	                        options.pathname + '.' + a
+	                vm.$fire(path, b, c)
+	                if (!d && !avalon.__stop) {
+	                    avalon.rerenderStart = new Date
+	                    avalon.batch(vm.$id, true)
+	                }
+	            }
+	        }
+
+	        var hashcode = makeHashCode('$')
+	        options.array = true
+	        options.hashcode = hashcode
+	        options.id = options.id || hashcode
+	        makeObserver(array, heirloom, {}, {}, options)
+
+	        for (var j = 0, n = array.length; j < n; j++) {
+	            array[j] = modelAdaptor(array[j], 0, {}, {
+	                id: array.$id + '.*',
+	                master: true
+	            })
+	        }
+	        return array
+	    }
+	}
+	$$midway.arrayFactory = arrayFactory
+
+	var ap = Array.prototype
+	var _splice = ap.splice
+	function notifySize(array, size) {
+	    if (array.length !== size) {
+	        array.notify('length', array.length, size, true)
+	    }
+	}
+
+	__array__.removeAll = function (all) { //移除N个元素
+	    var size = this.length
+	    if (Array.isArray(all)) {
+	        for (var i = this.length - 1; i >= 0; i--) {
+	            if (all.indexOf(this[i]) !== -1) {
+	                _splice.call(this, i, 1)
+	            }
+	        }
+	    } else if (typeof all === 'function') {
+	        for (i = this.length - 1; i >= 0; i--) {
+	            var el = this[i]
+	            if (all(el, i)) {
+	                _splice.call(this, i, 1)
+	            }
+	        }
+	    } else {
+	        _splice.call(this, 0, this.length)
+
+	    }
+
+	    notifySize(this, size)
+	    this.notify()
+	}
+
+
+	var __method__ = ['push', 'pop', 'shift', 'unshift', 'splice']
+	__method__.forEach(function (method) {
+	    var original = ap[method]
+	    __array__[method] = function (a, b) {
+	        // 继续尝试劫持数组元素的属性
+	        var args = [], size = this.length
+	        if (method === 'splice' && Object(this[0]) === this[0]) {
+	            var old = this.slice(a, b)
+	            var neo = ap.slice.call(arguments, 2)
+	            var args = [a, b]
+	            for (var j = 0, jn = neo.length; j < jn; j++) {
+	                var item = old[j]
+	                args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, {
+	                    id: this.$id + '.*',
+	                    master: true
+	                })
+	            }
+	        } else {
+	            for (var i = 0, n = arguments.length; i < n; i++) {
+	                args[i] = modelAdaptor(arguments[i], 0, {}, {
+	                    id: this.$id + '.*',
+	                    master: true
+	                })
+	            }
+	        }
+
+	        var result = original.apply(this, args)
+
+	        notifySize(this, size)
+	        this.notify()
+
+	        return result
+	    }
+	})
+
+	'sort,reverse'.replace(avalon.rword, function (method) {
+	    __array__[method] = function () {
+	        ap[method].apply(this, arguments)
+	        this.notify()
+	        return this
+	    }
+	})
+
+
+	module.exports = avalon
+
+
+/***/ },
+/* 93 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var share = __webpack_require__(70)
+	var makeFire = share.makeFire
+
+	function toJson(val) {
+	    var xtype = avalon.type(val)
+	    if (xtype === 'array') {
+	        var array = []
+	        for (var i = 0; i < val.length; i++) {
+	            array[i] = toJson(val[i])
+	        }
+	        return array
+	    } else if (xtype === 'object') {
+	        var obj = {}
+	        for (i in val) {
+	            if (val.hasOwnProperty(i)) {
+	                var value = val[i]
+	                obj[i] = value && value.nodeType ? value : toJson(value)
+	            }
+	        }
+	        return obj
+	    }
+	    return val
+	}
+
+	function hideProperty(host, name, value) {
+	    Object.defineProperty(host, name, {
+	        value: value,
+	        writable: true,
+	        enumerable: false,
+	        configurable: true
+	    })
+	}
+
+	var modelAccessor = {
+	    get: function () {
+	        return toJson(this)
+	    },
+	    set: avalon.noop,
+	    enumerable: false,
+	    configurable: true
+	}
+
+	share.$$midway.hideProperty = hideProperty
+
+	function makeObserver($vmodel, heirloom, keys, accessors, options) {
+
+	    if (options.array) {
+	        hideProperty($vmodel, '$model', modelAccessor)
+	    } else {
+	        function hasOwnKey(key) {
+	            return keys[key] === true
+	        }
+	        hideProperty($vmodel, 'hasOwnProperty', hasOwnKey)
+	    }
+	    hideProperty($vmodel, '$id', options.id)
+	    hideProperty($vmodel, '$hashcode', options.hashcode)
+	    if (options.master === true) {
+	        hideProperty($vmodel, '$element', null)
+	        hideProperty($vmodel, '$render', avalon.noop)
+	        makeFire($vmodel, heirloom)
+	    }
+	}
+
+
+	var mixin = {
+	    toJson: toJson,
+	    makeObserver: makeObserver,
+	    modelAccessor: modelAccessor
+	}
+	for (var i in share) {
+	    mixin[i] = share[i]
+	}
+
+	module.exports = mixin
+
+
+/***/ }
+/******/ ])
+});
+;
