@@ -5961,7 +5961,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var placeholder = {
 	            type: '#comment',
 	            directive: 'widget',
-	            props: {'ms-widget': expr, wid: wid},
+	            props: { 'ms-widget': wid},
 	            nodeValue: 'ms-widget placeholder'
 	        }
 	        var docker = resolvedComponents[wid]
