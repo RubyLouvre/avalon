@@ -27,9 +27,9 @@
 
 
         <div ms-controller='for0' class='ms-controller'>
-            <p>{{@a}}</p>
-            <wbr class='444' ms-widget="{$type:'ms-button',$id:'www',$change:@fn}">
-                        <wbr class='444' ms-widget="{$type:'ms-tab',$id:'ee',$change:@fn}">
+            <p><input ms-duplex='@text'>{{@a}}</p>
+            <wbr class='444' ms-widget="{$type:'ms-button',$id:'www',onViewChange:@fn}">
+                        <wbr class='444' ms-widget="{$type:'ms-tab',$id:'ee',onViewChange:@fn}">
 
         </div>
    

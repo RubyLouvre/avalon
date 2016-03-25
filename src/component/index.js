@@ -2,6 +2,8 @@
 var componentQueue = []
 var resolvedComponents = avalon.resolvedComponents
 var rcomponentTag = /^(\w+\-w+|wbr|xmp|template)$/
+var skip = {'ms-widget': 1, widget: 1, wid: 1}
+
 avalon.component = function (name, definition) {
     if (typeof name === 'string') {
         //这里是定义组件的分支
@@ -26,14 +28,14 @@ avalon.component = function (name, definition) {
         var placeholder = {
             type: '#comment',
             directive: 'widget',
-            props: {'ms-widget': tagName, wid: wid},
+            props: {'ms-widget': expr, wid: wid},
             nodeValue: 'ms-widget placeholder'
         }
-        var hasResolved = resolvedComponents[wid]
+        var docker = resolvedComponents[wid]
 
-        if (hasResolved) {
+        if (docker.render) {
             //重新渲染自己  
-            return reRender(hasResolved)
+            return reRender(docker)
         } else if (!avalon.components[tagName]) {
             componentQueue.push({
                 type: tagName
@@ -58,10 +60,9 @@ avalon.component = function (name, definition) {
             if (widgetNode.type !== tagName) {
                 avalon.warn('模板容器标签最好为' + tagName)
             }
-            var skip = {'ms-widget': 1, wid: 1}
-            for (var i in node.props) {
+            for (var i in docker.props) {
                 if (!skip[i]) {
-                    widgetNode.props[i] = node.props[i]
+                    widgetNode.props[i] = docker.props[i]
                 }
             }
 
@@ -70,7 +71,11 @@ avalon.component = function (name, definition) {
                 insertSlots(vtree, node)
             }
             delete options.$type
-            var define = options.define || avalon.directives.widget.define
+            delete options.$define
+            var diff = options
+            delete options.$diff
+
+            var define = options.$define || avalon.directives.widget.define
 
             var $id = options.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
             var vmodel = define(vm, definition.defaults, options)
@@ -79,37 +84,38 @@ avalon.component = function (name, definition) {
             //生成组件的render
             var render = avalon.render(vtree)
             vmodel.$render = render
-            vmodel.$fire('$init', vmodel)
+            vmodel.$fire('onInit', vmodel)
 
-            hasResolved = resolvedComponents[wid] = {
+            avalon.mix(docker, {
                 render: render,
                 vmodel: vmodel,
-                type: tagName,
+                diff: diff,
                 placeholder: placeholder
-            }
+            })
 
-            return reRender(hasResolved)
+            return reRender(docker)
         }
     }
 }
 
-function reRender(data) {
-    var vtree = data.render(data.vmodel)
+function reRender(docker) {
+    var vtree = docker.render(docker.vmodel)
     var widgetNode = vtree[0]
     if (!isComponentReady(widgetNode)) {
-        return data.placeholder
+        return docker.placeholder
     }
-    if (!data.renderCount) {
-        data.renderCount = 1
+    if (!docker.renderCount) {
+        docker.renderCount = 1
     } else {
-        data.renderCount++
+        docker.renderCount++
     }
-    widgetNode.props['ms-widget'] = data.type
-    widgetNode.vmodel = data.vmodel
+    widgetNode.props['ms-widget'] = docker.props['ms-widget']
+    widgetNode.vmodel = docker.vmodel
+    widgetNode.diff = docker.diff
     //移除skipAttrs,以便进行diff
     delete widgetNode.skipAttrs
 
-    widgetNode.renderCount = data.renderCount
+    widgetNode.renderCount = docker.renderCount
     return widgetNode
 }
 function isComponentReady(vnode) {

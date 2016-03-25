@@ -4892,23 +4892,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.directive('widget', {
 	    parse: function (binding, num, elem) {
-	        var str = ''
-	        for(var i in elem.props){
-	            if(i !== 'ms-widget'){
-	              str+= 'vnode' + num + '.props['+avalon.quote(i)+'] = ' +
-	                      avalon.quote(elem.props[i]) + ';\n' 
-	            }
+	        var wid = avalon.makeHashCode('w')
+	        avalon.resolvedComponents[wid] = {
+	            props: avalon.mix({}, elem.props)
 	        }
-	        return  str + 'vnode' + num + '.props.wid = ' + avalon.quote(avalon.makeHashCode('w')) + '\n' +
+	        return  'vnode' + num + '.props.wid = "' + wid + '"\n' +
 	                'vnode' + num + '.props["ms-widget"] = ' + wrap(avalon.parseExpr(binding), 'widget') + ';\n' +
-	              //  'vnode' + num + '.props.widget = ' + avalon.quote(binding.expr) + ';\n' +
 	                '\tvnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
 	    },
 	    define: function (topVm, defaults, options) {
 	        var after = avalon.mix({}, defaults, options)
 	        var events = {}
 	        //绑定生命周期的回调
-	        '$init $ready $dispose $change'.replace(/\S+/g, function (a) {
+	        'onInit onRready onViewChange onDispose'.replace(/\S+/g, function (a) {
 	            if (typeof after[a] === 'function')
 	                events[a] = after[a]
 	            delete after[a]
@@ -4919,7 +4915,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        return vm
 	    },
-	    diff: function (cur) {
+	    diff: function (cur, pre) {
 	        var renderCount = cur.renderCount
 	        if (!renderCount) {
 	            cur.change = [this.replaceByComment]
@@ -4927,24 +4923,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	            avalon.diff(cur.children, [])
 	            cur.change = [this.replaceByComponent]
 	            cur.afterChange = [
-	                function (dom) {
-	                    cur.vmodel.$fire('$ready', dom)
+	                function (dom, vnode) {
+	                    cur.vmodel.$fire('onReady', dom, vnode)
 	                }
 	            ]
 	        } else {
-	            cur.change = cur.change || []
-	            var isChange = false
-	            cur.change.push(function (dom, vnode) {
-	                if (checkChildrenChange(vnode)) {
-	                    isChange = true
-	                }
-	            })
-	            cur.afterChange = [function (dom) {
-	                    isChange && cur.vmodel.$fire('$change', dom)
-	                }]
+	            var needUpdate = !cur.$diff || cur.$diff(cur, pre)
+	            cur.skipContent = !needUpdate
+
+	            var viewChangeObservers = cur.vmodel.$events.onViewChange
+	            if (viewChangeObservers && viewChangeObservers.length) {
+	                cur.change = cur.change || []
+	                var isChange = false
+	                cur.change.push(function (dom, vnode) {
+	                    if (checkChildrenChange(vnode)) {
+	                        isChange = true
+	                    }
+	                })
+	                cur.afterChange = [function (dom) {
+	                        isChange && cur.vmodel.$fire('onViewChange', dom)
+	                    }]
+	            }
 	        }
-
-
 	    },
 	    replaceByComment: function (dom, node, parent) {
 	        var comment = document.createComment(node.nodeValue)
@@ -4965,8 +4965,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	})
 
-	function checkChange(){
-	    
+	function checkChange(elem) {
+
 	}
 	function checkChildrenChange(elem) {
 	    for (var i = 0, el; el = elem.children[i++]; ) {
@@ -5935,6 +5935,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var componentQueue = []
 	var resolvedComponents = avalon.resolvedComponents
 	var rcomponentTag = /^(\w+\-w+|wbr|xmp|template)$/
+	var skip = {'ms-widget': 1, widget: 1, wid: 1}
+
 	avalon.component = function (name, definition) {
 	    if (typeof name === 'string') {
 	        //这里是定义组件的分支
@@ -5959,14 +5961,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var placeholder = {
 	            type: '#comment',
 	            directive: 'widget',
-	            props: {'ms-widget': tagName, wid: wid},
+	            props: {'ms-widget': expr, wid: wid},
 	            nodeValue: 'ms-widget placeholder'
 	        }
-	        var hasResolved = resolvedComponents[wid]
+	        var docker = resolvedComponents[wid]
 
-	        if (hasResolved) {
+	        if (docker.render) {
 	            //重新渲染自己  
-	            return reRender(hasResolved)
+	            return reRender(docker)
 	        } else if (!avalon.components[tagName]) {
 	            componentQueue.push({
 	                type: tagName
@@ -5991,10 +5993,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (widgetNode.type !== tagName) {
 	                avalon.warn('模板容器标签最好为' + tagName)
 	            }
-	            var skip = {'ms-widget': 1, wid: 1}
-	            for (var i in node.props) {
+	            for (var i in docker.props) {
 	                if (!skip[i]) {
-	                    widgetNode.props[i] = node.props[i]
+	                    widgetNode.props[i] = docker.props[i]
 	                }
 	            }
 
@@ -6003,7 +6004,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                insertSlots(vtree, node)
 	            }
 	            delete options.$type
-	            var define = options.define || avalon.directives.widget.define
+	            delete options.$define
+	            var diff = options
+	            delete options.$diff
+
+	            var define = options.$define || avalon.directives.widget.define
 
 	            var $id = options.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
 	            var vmodel = define(vm, definition.defaults, options)
@@ -6012,37 +6017,38 @@ return /******/ (function(modules) { // webpackBootstrap
 	            //生成组件的render
 	            var render = avalon.render(vtree)
 	            vmodel.$render = render
-	            vmodel.$fire('$init', vmodel)
+	            vmodel.$fire('onInit', vmodel)
 
-	            hasResolved = resolvedComponents[wid] = {
+	            avalon.mix(docker, {
 	                render: render,
 	                vmodel: vmodel,
-	                type: tagName,
+	                diff: diff,
 	                placeholder: placeholder
-	            }
+	            })
 
-	            return reRender(hasResolved)
+	            return reRender(docker)
 	        }
 	    }
 	}
 
-	function reRender(data) {
-	    var vtree = data.render(data.vmodel)
+	function reRender(docker) {
+	    var vtree = docker.render(docker.vmodel)
 	    var widgetNode = vtree[0]
 	    if (!isComponentReady(widgetNode)) {
-	        return data.placeholder
+	        return docker.placeholder
 	    }
-	    if (!data.renderCount) {
-	        data.renderCount = 1
+	    if (!docker.renderCount) {
+	        docker.renderCount = 1
 	    } else {
-	        data.renderCount++
+	        docker.renderCount++
 	    }
-	    widgetNode.props['ms-widget'] = data.type
-	    widgetNode.vmodel = data.vmodel
+	    widgetNode.props['ms-widget'] = docker.props['ms-widget']
+	    widgetNode.vmodel = docker.vmodel
+	    widgetNode.diff = docker.diff
 	    //移除skipAttrs,以便进行diff
 	    delete widgetNode.skipAttrs
 
-	    widgetNode.renderCount = data.renderCount
+	    widgetNode.renderCount = docker.renderCount
 	    return widgetNode
 	}
 	function isComponentReady(vnode) {

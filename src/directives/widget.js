@@ -12,16 +12,13 @@ function wrap(str) {
 
 avalon.directive('widget', {
     parse: function (binding, num, elem) {
-        var str = ''
-        for (var i in elem.props) {
-            if (i !== 'ms-widget') {
-                str += 'vnode' + num + '.props[' + avalon.quote(i) + '] = ' +
-                        avalon.quote(elem.props[i]) + ';\n'
-            }
+        var wid = avalon.makeHashCode('w')
+        avalon.resolvedComponents[wid] = {
+            props: avalon.mix({}, elem.props)
         }
-        return  str + 'vnode' + num + '.props.wid = ' + avalon.quote(avalon.makeHashCode('w')) + '\n' +
+        return  'vnode' + num + '.props.wid = "' + wid + '"\n' +
                 'vnode' + num + '.props["ms-widget"] = ' + wrap(avalon.parseExpr(binding), 'widget') + ';\n' +
-                '\tvnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__, '+avalon.quote(binding.expr)+')\n'
+                '\tvnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
     },
     define: function (topVm, defaults, options) {
         var after = avalon.mix({}, defaults, options)
@@ -53,7 +50,7 @@ avalon.directive('widget', {
         } else {
             var needUpdate = !cur.$diff || cur.$diff(cur, pre)
             cur.skipContent = !needUpdate
-            
+
             var viewChangeObservers = cur.vmodel.$events.onViewChange
             if (viewChangeObservers && viewChangeObservers.length) {
                 cur.change = cur.change || []
@@ -68,8 +65,6 @@ avalon.directive('widget', {
                     }]
             }
         }
-
-
     },
     replaceByComment: function (dom, node, parent) {
         var comment = document.createComment(node.nodeValue)
