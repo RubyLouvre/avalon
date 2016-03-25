@@ -3959,7 +3959,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                }
 	                if( !avalon.__stop ){
-	                var vid = vm.$id.split('.')[0]
+	                   var vid = vm.$id.split('.')[0]
 	                   avalon.rerenderStart = new Date
 	                   avalon.batch(vid, true)
 	                }
