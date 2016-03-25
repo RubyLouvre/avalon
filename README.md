@@ -18,9 +18,9 @@
 
 4. ms-duplex 拥有四个数据转换
 <blockquote>
-   ms-duplex-string  如果为null, undefined, 转换为'', 其他转字符串
-   ms-duplex-number  如果元素的值为'',则为'',其他情况调用parseFloat, 若结果为NaN,转0
-   ms-duplex-boolean 如果元素的值为'true'则转换为true,其他为false
+   ms-duplex-string  如果为null, undefined, 转换为'', 其他转字符串<br/>
+   ms-duplex-number  如果元素的值为'',则为'',其他情况调用parseFloat, 若结果为NaN,转0<br/>
+   ms-duplex-boolean 如果元素的值为'true'则转换为true,其他为false<br/>
    ms-duplex-checked 根据原来元素的checked属性取反
 </blockquote>
    在其表达式后方的过滤器,除了change与debounce,都是用于格式化元素的值
