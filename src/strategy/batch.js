@@ -9,11 +9,11 @@ var patch = require('./patch')
 
 //如果正在更新一个子树,那么将它放到
 var dirtyTrees = {}
-var isBatchingUpdates = false
 var needRenderIds = []
+avalon.suspendUpdate = 0
 function batchUpdate(id, immediate) {
     var vm = avalon.vmodels[id] || {}
-    if (avalon.__stop > 0 || typeof vm.$render !== 'function' || !vm.$element || isBatchingUpdates) {
+    if (avalon.suspendUpdate > 0 || typeof vm.$render !== 'function' || !vm.$element) {
         dirtyTrees[id] = id
         return
     }
@@ -30,14 +30,12 @@ function batchUpdate(id, immediate) {
     var dom = vm.$element
 
     flushUpdate(function () {
-        isBatchingUpdates = true
         var vtree = vm.$render()
         avalon.diff(vtree, dom.vtree || [])
         patch([dom], vtree)
         dom.vtree = vtree
 
         avalon.log('rerender', vm.$id, new Date - avalon.rerenderStart)
-        isBatchingUpdates = false
         delete dirtyTrees[id]
         for (var i in dirtyTrees) {//更新其他子树
             batchUpdate(i, true)

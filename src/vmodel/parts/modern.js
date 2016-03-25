@@ -56,7 +56,7 @@ function makeObserver($vmodel, heirloom, keys, accessors, options) {
     hideProperty($vmodel, '$hashcode', options.hashcode)
     if (options.master === true) {
         hideProperty($vmodel, '$element', null)
-        hideProperty($vmodel, '$render', avalon.noop)
+        hideProperty($vmodel, '$render', 1)
         makeFire($vmodel, heirloom)
     }
 }
