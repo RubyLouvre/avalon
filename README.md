@@ -17,11 +17,12 @@
 3. 去掉html过滤，所有绑定属性支持过滤器
 
 4. ms-duplex 拥有四个数据转换
+<blockquote>
    ms-duplex-string  如果为null, undefined, 转换为'', 其他转字符串
    ms-duplex-number  如果元素的值为'',则为'',其他情况调用parseFloat, 若结果为NaN,转0
    ms-duplex-boolean 如果元素的值为'true'则转换为true,其他为false
    ms-duplex-checked 根据原来元素的checked属性取反
-  
+</blockquote>
    在其表达式后方的过滤器,除了change与debounce,都是用于格式化元素的值
    change过滤器, 用于延迟数据在元素失去焦点后才同步视图
    debounce(100)过滤器, 必须指定数字并大于4, 用于延迟n毫秒后才同步视图
@@ -35,10 +36,10 @@
    for指令有两种形式
    
    ```javascript
-   <div ms-for="el in @attr">{{el}}</div>
-   <!--ms-for:el in @attr-->
+   <div av-for="el in @attr">{{el}}</div>
+   <!--av-for:el in @attr-->
    <div>{{el}}</div>
-   <!--ms-for-end:-->
+   <!--av-for-end:-->
 
    ```
    for指令拥有4个数组(或对象)过滤器(selectBy,orderBy,limitBy,filterBy) 
