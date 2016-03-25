@@ -3,11 +3,13 @@ var componentQueue = []
 var resolvedComponents = avalon.resolvedComponents
 var rcomponentTag = /^(\w+\-w+|wbr|xmp|template)$/
 var skip = {'ms-widget': 1, widget: 1, wid: 1}
+avalon.document.createElement('slot')
 
 avalon.component = function (name, definition) {
     if (typeof name === 'string') {
         //这里是定义组件的分支
         avalon.components[name] = definition
+
         for (var i = 0, obj; obj = componentQueue[i]; i++) {
             if (name === obj.type) {
                 componentQueue.splice(i, 1)
@@ -24,11 +26,13 @@ avalon.component = function (name, definition) {
 
         var options = node.props['ms-widget']
         var tagName = node.type.indexOf('-') > 0 ? node.type : options.$type
+
+
         //如果组件模板已经定
         var placeholder = {
             type: '#comment',
             directive: 'widget',
-            props: { 'ms-widget': wid},
+            props: {'ms-widget': wid},
             nodeValue: 'ms-widget placeholder'
         }
         var docker = resolvedComponents[wid]
@@ -49,13 +53,20 @@ avalon.component = function (name, definition) {
                 avalon.warn(type + '不合适做组件的标签')
             }
             if (type === 'xmp' || type === 'template' || node.children.length === 0) {
-                node.children = avalon.lexer(node.template)
+                node.children = avalon.lexer(docker.template)
             }
             definition = avalon.components[tagName]
+            if (!avalon.modern && !definition.fixTag) {
+                avalon.document.createElement(tagName)
+                definition.fixTag = 1
+            }
+
+
             var vtree = avalon.lexer(definition.template.trim())
             if (vtree.length > 1) {
                 avalon.error('组件必须用一个元素包起来')
             }
+
             var widgetNode = vtree[0]
             if (widgetNode.type !== tagName) {
                 avalon.warn('模板容器标签最好为' + tagName)
@@ -65,7 +76,6 @@ avalon.component = function (name, definition) {
                     widgetNode.props[i] = docker.props[i]
                 }
             }
-
             if (!node.isVoidTag) {
                 //如果不是半闭合标签，那么里面可能存在插槽元素,抽取出来与主模板合并
                 insertSlots(vtree, node)
@@ -131,6 +141,7 @@ function isComponentReady(vnode) {
 }
 
 function hasUnresolvedComponent(vnode) {
+
     vnode.children.forEach(function (el) {
         if (el.type === '#comment') {
             if ('ms-widget' in el.props) {

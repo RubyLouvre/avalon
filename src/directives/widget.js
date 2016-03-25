@@ -14,7 +14,8 @@ avalon.directive('widget', {
     parse: function (binding, num, elem) {
         var wid = avalon.makeHashCode('w')
         avalon.resolvedComponents[wid] = {
-            props: avalon.mix({}, elem.props)
+            props: avalon.mix({}, elem.props),
+            template: elem.template
         }
         return  'vnode' + num + '.props.wid = "' + wid + '"\n' +
                 'vnode' + num + '.props["ms-widget"] = ' + wrap(avalon.parseExpr(binding), 'widget') + ';\n' +
@@ -74,8 +75,7 @@ avalon.directive('widget', {
             parent.appendChild(comment)
         }
     },
-    replaceByComponent: function (dom, node, parent) {
-        document.createElement(node.type)
+    replaceByComponent: function (dom, node, parent) {      
         var com = avalon.vdomAdaptor(node).toDOM()
         if (dom) {
             parent.replaceChild(com, dom)
@@ -84,7 +84,6 @@ avalon.directive('widget', {
         }
     }
 })
-
 function checkChange(elem) {
 
 }

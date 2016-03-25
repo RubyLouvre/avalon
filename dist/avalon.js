@@ -66,7 +66,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(68)
 
 	__webpack_require__(75)
-	//require('./directives/button/index')
+	__webpack_require__(76)
 	module.exports = avalon
 
 
@@ -860,7 +860,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var c = avalon.escapeRegExp(closeTag)
 	        kernel.rexpr = new RegExp(o + '([\\ss\\S]*)' + c)
 	        kernel.rexprg = new RegExp(o + '([\\ss\\S]*)' + c, 'g')
-	        kernel.rbind = new RegExp(o + '[\\ss\\S]*' + c + '|\\bms-')
+	        kernel.rbind = new RegExp(o + '[\\ss\\S]*' + c + '|\\bms-|\\bslot\\b')
 	    }
 	}
 	kernel.plugins = plugins
@@ -4894,7 +4894,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parse: function (binding, num, elem) {
 	        var wid = avalon.makeHashCode('w')
 	        avalon.resolvedComponents[wid] = {
-	            props: avalon.mix({}, elem.props)
+	            props: avalon.mix({}, elem.props),
+	            template: elem.template
 	        }
 	        return  'vnode' + num + '.props.wid = "' + wid + '"\n' +
 	                'vnode' + num + '.props["ms-widget"] = ' + wrap(avalon.parseExpr(binding), 'widget') + ';\n' +
@@ -4954,8 +4955,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            parent.appendChild(comment)
 	        }
 	    },
-	    replaceByComponent: function (dom, node, parent) {
-	        document.createElement(node.type)
+	    replaceByComponent: function (dom, node, parent) {      
 	        var com = avalon.vdomAdaptor(node).toDOM()
 	        if (dom) {
 	            parent.replaceChild(com, dom)
@@ -4964,7 +4964,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	})
-
 	function checkChange(elem) {
 
 	}
@@ -5605,7 +5604,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (hasBindings) {
 	                    str += hasBindings
 	                }
-	                str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
+	                if(el.children.length){
+	                    str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
+	                }else{
+	                    str += vnode + '.template = ' + quote(el.template) + '\n'
+	                }
 	            }
 	            str += children + '.push(' + vnode + ')\n'
 	            if (hasIf) {
@@ -5936,11 +5939,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	var resolvedComponents = avalon.resolvedComponents
 	var rcomponentTag = /^(\w+\-w+|wbr|xmp|template)$/
 	var skip = {'ms-widget': 1, widget: 1, wid: 1}
+	avalon.document.createElement('slot')
 
 	avalon.component = function (name, definition) {
 	    if (typeof name === 'string') {
 	        //这里是定义组件的分支
 	        avalon.components[name] = definition
+
 	        for (var i = 0, obj; obj = componentQueue[i]; i++) {
 	            if (name === obj.type) {
 	                componentQueue.splice(i, 1)
@@ -5957,11 +5962,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var options = node.props['ms-widget']
 	        var tagName = node.type.indexOf('-') > 0 ? node.type : options.$type
+
+
 	        //如果组件模板已经定
 	        var placeholder = {
 	            type: '#comment',
 	            directive: 'widget',
-	            props: { 'ms-widget': wid},
+	            props: {'ms-widget': wid},
 	            nodeValue: 'ms-widget placeholder'
 	        }
 	        var docker = resolvedComponents[wid]
@@ -5982,13 +5989,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	                avalon.warn(type + '不合适做组件的标签')
 	            }
 	            if (type === 'xmp' || type === 'template' || node.children.length === 0) {
-	                node.children = avalon.lexer(node.template)
+	                node.children = avalon.lexer(docker.template)
 	            }
 	            definition = avalon.components[tagName]
+	            if (!avalon.modern && !definition.fixTag) {
+	                avalon.document.createElement(tagName)
+	                definition.fixTag = 1
+	            }
+
+
 	            var vtree = avalon.lexer(definition.template.trim())
 	            if (vtree.length > 1) {
 	                avalon.error('组件必须用一个元素包起来')
 	            }
+
 	            var widgetNode = vtree[0]
 	            if (widgetNode.type !== tagName) {
 	                avalon.warn('模板容器标签最好为' + tagName)
@@ -5998,7 +6012,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    widgetNode.props[i] = docker.props[i]
 	                }
 	            }
-
 	            if (!node.isVoidTag) {
 	                //如果不是半闭合标签，那么里面可能存在插槽元素,抽取出来与主模板合并
 	                insertSlots(vtree, node)
@@ -6064,6 +6077,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function hasUnresolvedComponent(vnode) {
+
 	    vnode.children.forEach(function (el) {
 	        if (el.type === '#comment') {
 	            if ('ms-widget' in el.props) {
@@ -6925,6 +6939,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	avalon.component("ms-button", {
 	    template: "<button type='button'><span>{{@text}}</span></button>",
+	    defaults: {
+	        text: "按钮"
+	    }
+	})
+
+/***/ },
+/* 76 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(75)
+	avalon.component("ms-panel", {
+	    template: "<ms-panel ><div class='body'><slot></slot></div><p><ms-button ms-widget='1'></ms-button></p></ms-panel>",
 	    defaults: {
 	        text: "按钮"
 	    }

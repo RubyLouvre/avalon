@@ -128,7 +128,11 @@ function parseView(arr, num) {
                 if (hasBindings) {
                     str += hasBindings
                 }
-                str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
+                if(el.children.length){
+                    str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
+                }else{
+                    str += vnode + '.template = ' + quote(el.template) + '\n'
+                }
             }
             str += children + '.push(' + vnode + ')\n'
             if (hasIf) {

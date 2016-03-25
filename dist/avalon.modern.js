@@ -54,15 +54,15 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var avalon = __webpack_require__(76) 
+	var avalon = __webpack_require__(77) 
 
 	__webpack_require__(8)
 	__webpack_require__(15)
-	__webpack_require__(78)
-	__webpack_require__(87)
+	__webpack_require__(79)
+	__webpack_require__(88)
 	__webpack_require__(59)
 	__webpack_require__(67)
-	__webpack_require__(93)
+	__webpack_require__(94)
 
 
 	module.exports = avalon
@@ -414,7 +414,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var c = avalon.escapeRegExp(closeTag)
 	        kernel.rexpr = new RegExp(o + '([\\ss\\S]*)' + c)
 	        kernel.rexprg = new RegExp(o + '([\\ss\\S]*)' + c, 'g')
-	        kernel.rbind = new RegExp(o + '[\\ss\\S]*' + c + '|\\bms-')
+	        kernel.rbind = new RegExp(o + '[\\ss\\S]*' + c + '|\\bms-|\\bslot\\b')
 	    }
 	}
 	kernel.plugins = plugins
@@ -2613,7 +2613,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parse: function (binding, num, elem) {
 	        var wid = avalon.makeHashCode('w')
 	        avalon.resolvedComponents[wid] = {
-	            props: avalon.mix({}, elem.props)
+	            props: avalon.mix({}, elem.props),
+	            template: elem.template
 	        }
 	        return  'vnode' + num + '.props.wid = "' + wid + '"\n' +
 	                'vnode' + num + '.props["ms-widget"] = ' + wrap(avalon.parseExpr(binding), 'widget') + ';\n' +
@@ -2673,8 +2674,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            parent.appendChild(comment)
 	        }
 	    },
-	    replaceByComponent: function (dom, node, parent) {
-	        document.createElement(node.type)
+	    replaceByComponent: function (dom, node, parent) {      
 	        var com = avalon.vdomAdaptor(node).toDOM()
 	        if (dom) {
 	            parent.replaceChild(com, dom)
@@ -2683,7 +2683,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	})
-
 	function checkChange(elem) {
 
 	}
@@ -3324,7 +3323,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (hasBindings) {
 	                    str += hasBindings
 	                }
-	                str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
+	                if(el.children.length){
+	                    str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
+	                }else{
+	                    str += vnode + '.template = ' + quote(el.template) + '\n'
+	                }
 	            }
 	            str += children + '.push(' + vnode + ')\n'
 	            if (hasIf) {
@@ -3655,11 +3658,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	var resolvedComponents = avalon.resolvedComponents
 	var rcomponentTag = /^(\w+\-w+|wbr|xmp|template)$/
 	var skip = {'ms-widget': 1, widget: 1, wid: 1}
+	avalon.document.createElement('slot')
 
 	avalon.component = function (name, definition) {
 	    if (typeof name === 'string') {
 	        //这里是定义组件的分支
 	        avalon.components[name] = definition
+
 	        for (var i = 0, obj; obj = componentQueue[i]; i++) {
 	            if (name === obj.type) {
 	                componentQueue.splice(i, 1)
@@ -3676,11 +3681,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var options = node.props['ms-widget']
 	        var tagName = node.type.indexOf('-') > 0 ? node.type : options.$type
+
+
 	        //如果组件模板已经定
 	        var placeholder = {
 	            type: '#comment',
 	            directive: 'widget',
-	            props: { 'ms-widget': wid},
+	            props: {'ms-widget': wid},
 	            nodeValue: 'ms-widget placeholder'
 	        }
 	        var docker = resolvedComponents[wid]
@@ -3701,13 +3708,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	                avalon.warn(type + '不合适做组件的标签')
 	            }
 	            if (type === 'xmp' || type === 'template' || node.children.length === 0) {
-	                node.children = avalon.lexer(node.template)
+	                node.children = avalon.lexer(docker.template)
 	            }
 	            definition = avalon.components[tagName]
+	            if (!avalon.modern && !definition.fixTag) {
+	                avalon.document.createElement(tagName)
+	                definition.fixTag = 1
+	            }
+
+
 	            var vtree = avalon.lexer(definition.template.trim())
 	            if (vtree.length > 1) {
 	                avalon.error('组件必须用一个元素包起来')
 	            }
+
 	            var widgetNode = vtree[0]
 	            if (widgetNode.type !== tagName) {
 	                avalon.warn('模板容器标签最好为' + tagName)
@@ -3717,7 +3731,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    widgetNode.props[i] = docker.props[i]
 	                }
 	            }
-
 	            if (!node.isVoidTag) {
 	                //如果不是半闭合标签，那么里面可能存在插槽元素,抽取出来与主模板合并
 	                insertSlots(vtree, node)
@@ -3783,6 +3796,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function hasUnresolvedComponent(vnode) {
+
 	    vnode.children.forEach(function (el) {
 	        if (el.type === '#comment') {
 	            if ('ms-widget' in el.props) {
@@ -4106,7 +4120,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 73 */,
 /* 74 */,
 /* 75 */,
-/* 76 */
+/* 76 */,
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -4115,14 +4130,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.mix(avalon, browser)
 
-	__webpack_require__(77)
+	__webpack_require__(78)
 	__webpack_require__(6)
 	__webpack_require__(7)
 
 	module.exports = avalon
 
 /***/ },
-/* 77 */
+/* 78 */
 /***/ function(module, exports) {
 
 	//这里放置存在异议的方法
@@ -4269,7 +4284,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 78 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -4278,7 +4293,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *           shim,class,data,css,val,html,event,ready               *
 	 **********************************************************************/
 
-	__webpack_require__(79)
 	__webpack_require__(80)
 	__webpack_require__(81)
 	__webpack_require__(82)
@@ -4286,12 +4300,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(84)
 	__webpack_require__(85)
 	__webpack_require__(86)
+	__webpack_require__(87)
 
 	module.exports = avalon
 
 
 /***/ },
-/* 79 */
+/* 80 */
 /***/ function(module, exports) {
 
 	//safari5+是把contains方法放在Element.prototype上而不是Node.prototype
@@ -4385,7 +4400,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 80 */
+/* 81 */
 /***/ function(module, exports) {
 
 	var rnowhite = /\S+/g
@@ -4424,7 +4439,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 81 */
+/* 82 */
 /***/ function(module, exports) {
 
 	
@@ -4502,7 +4517,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 82 */
+/* 83 */
 /***/ function(module, exports) {
 
 	var root = avalon.root
@@ -4752,7 +4767,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 83 */
+/* 84 */
 /***/ function(module, exports) {
 
 	function getValType(elem) {
@@ -4821,7 +4836,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 84 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Cache = __webpack_require__(26)
@@ -4919,7 +4934,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 85 */
+/* 86 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var document = avalon.document
@@ -5198,7 +5213,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 86 */
+/* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var scan = __webpack_require__(34)
@@ -5236,12 +5251,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 87 */
+/* 88 */
 /***/ function(module, exports, __webpack_require__) {
 
 	__webpack_require__(36)
 	//处理属性样式
-	__webpack_require__(88)
+	__webpack_require__(89)
 	__webpack_require__(40)
 	__webpack_require__(41)
 	//处理内容
@@ -5251,7 +5266,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	//需要用到事件的
 	__webpack_require__(46)
 	__webpack_require__(47)
-	__webpack_require__(90)
+	__webpack_require__(91)
 	//处理逻辑
 	__webpack_require__(55)
 	__webpack_require__(57)
@@ -5259,11 +5274,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(58)
 
 /***/ },
-/* 88 */
+/* 89 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var attrUpdate = __webpack_require__(89)
+	var attrUpdate = __webpack_require__(90)
 
 	avalon.directive('attr', {
 	    parse: function (binding, num) {
@@ -5306,7 +5321,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 89 */
+/* 90 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var propMap = __webpack_require__(39)
@@ -5356,15 +5371,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = attrUpdate
 
 /***/ },
-/* 90 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var valueHijack = __webpack_require__(49)
 
 	var newControl = __webpack_require__(50)
-	var initControl = __webpack_require__(91)
-	var refreshControl = __webpack_require__(92)
+	var initControl = __webpack_require__(92)
+	var refreshControl = __webpack_require__(93)
 
 
 	avalon.directive('duplex', {
@@ -5478,7 +5493,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 91 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var window = avalon.window
@@ -5632,7 +5647,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = initControl
 
 /***/ },
-/* 92 */
+/* 93 */
 /***/ function(module, exports) {
 
 	var refreshControl = {
@@ -5673,11 +5688,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = refreshControl
 
 /***/ },
-/* 93 */
+/* 94 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var share = __webpack_require__(94)
+	var share = __webpack_require__(95)
 	var isSkip = share.isSkip
 	var $$midway = share.$$midway
 	var $$skipArray = share.$$skipArray
@@ -5951,7 +5966,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 94 */
+/* 95 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var share = __webpack_require__(70)

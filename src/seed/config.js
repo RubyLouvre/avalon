@@ -39,7 +39,7 @@ var plugins = {
         var c = avalon.escapeRegExp(closeTag)
         kernel.rexpr = new RegExp(o + '([\\ss\\S]*)' + c)
         kernel.rexprg = new RegExp(o + '([\\ss\\S]*)' + c, 'g')
-        kernel.rbind = new RegExp(o + '[\\ss\\S]*' + c + '|\\bms-')
+        kernel.rbind = new RegExp(o + '[\\ss\\S]*' + c + '|\\bms-|\\bslot\\b')
     }
 }
 kernel.plugins = plugins
