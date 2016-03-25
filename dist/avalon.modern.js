@@ -2115,16 +2115,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var ctrl = this
 	        prop = prop || 'value'
 	        var viewValue = ctrl.elem[prop]
+	        var rawValue = viewValue
 
+	        viewValue = ctrl.format(viewValue)
 	        //vm.aaa = '1234567890'
 	        //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
-	        viewValue = ctrl.format(viewValue)
-
 	        var val = ctrl.parse(viewValue)
+	        viewValue = val+''
+	        console.log(val,"___",ctrl.modelValue)
 	        if (val !== ctrl.modelValue) {
 	            ctrl.set(ctrl.vmodel, val)
-	           
 	        }
+	        
+	        if (rawValue !== viewValue) {
+	            ctrl.viewValue = viewValue
+	            ctrl.elem[prop] = viewValue
+	        }
+	        
 
 	    },
 	    radio: function () {
@@ -3150,30 +3157,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	var dirtyTrees = {}
 	var needRenderIds = []
 	avalon.suspendUpdate = 0
+	var isBatchingUpdates = false
 	function batchUpdate(id, immediate) {
 	    var vm = avalon.vmodels[id] || {}
-	    if (avalon.suspendUpdate > 0 || typeof vm.$render !== 'function' || !vm.$element) {
-	        dirtyTrees[id] = id
-	        return
-	    }
-
-	    if (!document.nodeName)//如果是在mocha等测试环境中立即返回
-	        return
 	    if (dirtyTrees[id]) {
 	        avalon.Array.ensure(needRenderIds, id)
 	    } else {
 	        dirtyTrees[id] = true
 	    }
+	    if (avalon.suspendUpdate > 0 || typeof vm.$render !== 'function' || !vm.$element || isBatchingUpdates) {
+	        return
+	    }
+
+	    if (!document.nodeName)//如果是在mocha等测试环境中立即返回
+	        return
 
 
 	    var dom = vm.$element
 
 	    flushUpdate(function () {
+	        isBatchingUpdates = true
 	        var vtree = vm.$render()
 	        avalon.diff(vtree, dom.vtree || [])
 	        patch([dom], vtree)
 	        dom.vtree = vtree
-
+	        isBatchingUpdates = false
 	        avalon.log('rerender', vm.$id, new Date - avalon.rerenderStart)
 	        delete dirtyTrees[id]
 	        for (var i in dirtyTrees) {//更新其他子树
@@ -3957,11 +3965,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        $emit(top.$events[ path ], vm, path, val, older)
 	                    }
 	                }
-	                if( !avalon.suspendUpdate){
-	                   var vid = vm.$id.split('.')[0]
-	                   avalon.rerenderStart = new Date
-	                   avalon.batch(vid, true)
-	                }
+	                var vid = vm.$id.split('.')[0]
+	                avalon.rerenderStart = new Date
+	                avalon.batch(vid, true)
+	               
 	            }
 	        },
 	        enumerable: true,
@@ -5411,8 +5418,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var ctrl = cur.ctrl
 	        delete cur.duplexVm
-
 	        var value = cur.props.value = ctrl.get(ctrl.vmodel)
+
 	        if (cur.type === 'select' && !cur.children.length) {
 	            avalon.Array.merge(cur.children, avalon.lexer(cur.template))
 	            fixVirtualOptionSelected(cur, value)
@@ -5458,7 +5465,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }, 30)
 	        }
 
-	        var viewValue = ctrl.modelValue
+	        var viewValue = ctrl.format(ctrl.modelValue)
 
 	        if (ctrl.viewValue !== viewValue) {
 	            ctrl.viewValue = viewValue
