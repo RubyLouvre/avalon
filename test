@@ -1,0 +1,6 @@
+// mocha的入口文件
+
+process.env.modern = false
+var assert = require('assert')
+console.log("开始测试")
+require("./src/__test__")

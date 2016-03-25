@@ -1,47 +1,30 @@
 {
-  "name": "avalonjs",
-  "title": "avalon",
-  "description": "A lightweight,high-performance and easy-to-learn javascript MVVM framework",
-  "version": "1.4.7",
-  "main": "avalon.js",
-  "homepage": "http://avalonjs.github.io/",
-  "author": {
-    "name": "RubyLouvre(司徒正美) and other contributors",
-    "url": "http://home.cnblogs.com/u/rubylouvre/"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/avalon/avalon.git"
-  },
-  "keywords": [
-    "mvvm",
-    "javascript",
-    "browser",
-    "library"
-  ],
-  "bugs": {
-    "url": "https://github.com/avalon/avalon/issues"
-  },
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "https://github.com/jquery/jquery/blob/master/LICENSE.txt"
+    "name": "avalon",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/RubyLouvre/avalon.git"
+    },
+    "version": "2.0",
+    "description": "mvvm",
+    "main": "dist/avalon.js",
+    "keywords": ["javascript", "mvvm", "virtual dom"],
+    "dependencies": {},
+    "devDependencies": {
+        "chai": "^1.9.1",
+        "karma": "^0.13.19",
+        "webpack": "^2.1",
+        "text-loader": "0.0.1",
+        "eslint-loader":"1.3.0",
+        "karma-chrome-launcher": "^0.2.2",
+        "karma-coverage": "^0.5.3",
+        "karma-firefox-launcher": "^0.1.7",
+        "karma-junit-reporter": "^0.3.8",
+        "karma-mocha": "^0.1.8",
+        "karma-phantomjs-launcher": "^0.2.3",
+        "mocha": "^1.21.4"
+    },
+    "bugs": {
+        "url": "https://github.com/RubyLouvre/avalon/issues"
     }
-  ],
-  "dependencies": {},
-  "devDependencies": {
-    "gulp": "^3.8.11",
-    "gulp-uglify": "1.1.0",
-    "gulp-rename": "1.2.0",
-    "gulp-jshint": "1.9.2",
-    "gulp-replace": "0.5.2",
-    "grunt-contrib-watch": "0.6.1",
-    "gulp-concat": "2.4.3"
-  },
-  "scripts": {
-    "build": "npm install && gulp"
-  },
-  "commitplease": {
-    "components": []
-  }
 }

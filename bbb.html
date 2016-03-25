@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="./dist/avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'for0',
+                aaa: false,
+                arr: [{a: 1}]
+            })
+            setTimeout(function () {
+                console.log("1111")
+                vm.arr = [{a: 99}, {a: 888}]
+            }, 3000)
+        </script>
+    </head>
+    <body>
+
+
+        <div ms-controller='for0' >
+            <input ms-duplex-checked='@aaa' type="radio">{{@aaa}}
+            <div ms-if="@aaa">111</div>
+            <ul>
+                <li ms-for='el in @arr'>{{el.a}}</li>
+            </ul>
+        </div>
+
+    </body>
+</html>
