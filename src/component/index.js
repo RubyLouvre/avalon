@@ -28,7 +28,7 @@ avalon.component = function (name, definition) {
         var placeholder = {
             type: '#comment',
             directive: 'widget',
-            props: {'ms-widget': expr, wid: wid},
+            props: { wid: wid},
             nodeValue: 'ms-widget placeholder'
         }
         var docker = resolvedComponents[wid]
