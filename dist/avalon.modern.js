@@ -5735,6 +5735,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var keys = {}
 	    options = options || {}
+	    heirloom = heirloom || {}
 	    var accessors = {}
 	    var hashcode = makeHashCode("$")
 	    var pathname = options.pathname || ""
@@ -5776,6 +5777,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var keys = {}
 	    var accessors = {}
 	    var pathname = options.pathname
+	    heirloom = heirloom || {}
 	    var key, sid, spath
 	    for (key in after) {
 	        if ($$skipArray[key])

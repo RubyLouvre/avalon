@@ -28,6 +28,7 @@ function masterFactory(definition, heirloom, options) {
 
     var keys = {}
     options = options || {}
+    heirloom = heirloom || {}
     var accessors = {}
     var hashcode = makeHashCode('$')
     var pathname = options.pathname || ''
@@ -73,6 +74,7 @@ function slaveFactory(before, after, heirloom, options) {
     var keys = {}
     var skips = {}
     var accessors = {}
+   heirloom = heirloom || {}
     var pathname = options.pathname
     var resue = before.$accessors || {}
     var key, sid, spath
