@@ -96,7 +96,7 @@ function makeAccessor(sid, spath, heirloom) {
                     }
                 }
                 if( !avalon.__stop ){
-                var vid = vm.$id.split('.')[0]
+                   var vid = vm.$id.split('.')[0]
                    avalon.rerenderStart = new Date
                    avalon.batch(vid, true)
                 }
