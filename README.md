@@ -35,10 +35,10 @@
    for指令有两种形式
    
    ```javascript
-   <div av-for="el in @attr">{{el}}</div>
-   <!--av-for:el in @attr-->
+   <div ms-for="el in @attr">{{el}}</div>
+   <!--ms-for:el in @attr-->
    <div>{{el}}</div>
-   <!--av-for-end:-->
+   <!--ms-for-end:-->
 
    ```
    for指令拥有4个数组(或对象)过滤器(selectBy,orderBy,limitBy,filterBy) 
