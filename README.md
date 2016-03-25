@@ -1,4 +1,4 @@
-# Avalon
+# Avalon 1.4
 [![Issue Stats](http://issuestats.com/github/RubyLouvre/avalon/badge/pr?style=flat)](http://issuestats.com/github/RubyLouvre/avalon)
 [![Issue Stats](http://issuestats.com/github/RubyLouvre/avalon/badge/issue?style=flat)](http://issuestats.com/github/RubyLouvre/avalon)
 
@@ -153,7 +153,7 @@ The code structure of the source code are listed here, from top to bottom:
 
 --------------------------------------------------
 
-# Avalon
+# Avalon 1.4
 
 迷你简单易用的MVVM框架
 
@@ -319,3 +319,5 @@ MVVM最先使用是在WPF，对于微软来说是从WinForm的MVP和其余的MVC
 使得数据的变化能即时以增量的形式反馈到View上。
 同理的实现好像还有iOS delegate，为MVC提供类似binding的Publish/Subscribe功能
 </pre>
+
+
