@@ -47,7 +47,6 @@ module.exports = avalon.scan = function (a) {
     }
     if (getController(a)) {
         avalon.warn('[avalon.scan] first argument must has "ms-controller" attribute')
-        return
     }
     scan([a])
 }
