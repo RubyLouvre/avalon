@@ -18,6 +18,7 @@ var refreshModel = {
         var val = ctrl.parse(viewValue)
         if (val !== ctrl.modelValue) {
             ctrl.set(ctrl.vmodel, val)
+           
         }
 
     },

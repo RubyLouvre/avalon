@@ -42,6 +42,7 @@ function parseView(arr, num) {
                     }).join(' + ')
                     str += vnode + '.nodeValue = String(' + a + ')\n'
                 }
+                str += vnode + '.fixIESkip = true\n'
                 /* jshint ignore:start */
                 str += vnode + '.skipContent = false\n'
             } else {

@@ -12,8 +12,13 @@ avalon.directive('text', {
         cur.skipContent = true
         if (curValue !== preValue) {
             cur.children[0].nodeValue = curValue
-            var list = cur.change || (cur.change = [])
-            avalon.Array.ensure(list, this.update)
+            if (pre.dom) {
+                cur.dom = pre.dom
+                this.update(cur.dom, cur)
+            } else {
+                var list = cur.change || (cur.change = [])
+                avalon.Array.ensure(list, this.update)
+            }
         }
         return false
     },
@@ -24,5 +29,6 @@ avalon.directive('text', {
         } else {
             node.innerText = nodeValue + ''
         }
+        vnode.dom = node
     }
 })

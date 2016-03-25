@@ -64,17 +64,14 @@ avalon.directive('duplex', {
             }
         }
 
-        if (!avalon.modern && valueHijack === false && !node.valueHijack) {
+        if (!avalon.msie && valueHijack === false && !node.valueHijack) {
             //chrome 42及以下版本需要这个hack
             node.valueHijack = ctrl.update
             var intervalID = setInterval(function () {
                 if (!avalon.contains(avalon.root, node)) {
                     clearInterval(intervalID)
                 } else {
-                    if (ctrl.viewValue !== vnode.props.value) {
-                        ctrl.viewValue = viewValue
-                        node.valueHijack()
-                    }
+                     node.valueHijack()
                 }
             }, 30)
         }
