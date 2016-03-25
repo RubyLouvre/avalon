@@ -4,7 +4,7 @@
 
 主要特征如下：
 
-1. 添加新的av-前缀，也兼容旧的ms-前缀
+1. ms-*属性的行为全部统一
 
 2. 使用虚拟DOM提高性能，确保更新是从上到下，从外到内，并且能准确知道渲染结束的时机，从而更好地支持扫描后的回调
     流程如下:
@@ -56,3 +56,8 @@
 10.  去掉AMD内置加载器，建议使用webpack打包工程
 11.  vm去掉对计算属性的支持
 12.  添加`<!--js: code -->`指令，方便插入JS逻辑，实现定义中间变量（如计算属性）
+13. avalon支持直接在IE6下使用 <ms-panel>这样的自定义标签, 
+    支持onInit, onReady, onViewChange, onDispose四个生命周期回调
+    支持传入$diff方法 实现react的shouldComponentUpdate功能
+    支持<slot name='xx'></slot>这样的DOM插槽 机制
+    支持组件套组件

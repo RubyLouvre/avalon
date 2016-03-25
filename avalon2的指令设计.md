@@ -38,74 +38,74 @@
 
 ## 元素节点上的绑定属性
 
-### a-skip
+### ms-skip
 只要存在此属性，不管其值为何，都立即对此元素及其子孙停止扫描
 
 
-### a-if
+### ms-if
 
 
-### a-attr
+### ms-attr
 ```
- a-attr="{ title:@title, align:@bb+1 }"
- a-attr="[ @obj1, @obj2 ]"
- a-attr="@obj"
- a-attr="[ @obj1, isB ? @objB : {}]"
+ ms-attr="{ title:@title, align:@bb+1 }"
+ ms-attr="[ @obj1, @obj2 ]"
+ ms-attr="@obj"
+ ms-attr="[ @obj1, isB ? @objB : {}]"
 ```
 指定一个属性，可使用过滤器， 但其值为false，null, undefined，会移除真实DOM的对应属性
 
-#### a-visible="@toggle"
+#### ms-visible="@toggle"
 可使用过滤器， 对元素的style.display进行处理
 
-### a-class
+### ms-class
 ```
- a-class="{ 'class-a': @isA, 'class-b': @isB }"
- a-class="[ @aObject, @bObject ]"
- a-class="[ @aString, @isB ? @bString : '']"
- a-class="@classString"
+ ms-class="{ 'class-a': @isA, 'class-b': @isB }"
+ ms-class="[ @aObject, @bObject ]"
+ ms-class="[ @aString, @isB ? @bString : '']"
+ ms-class="@classString"
 ```
 可使用过滤器，为元素添加一组类名，当类名发生变动时，以前添加的类名会被移除。 有对象及数组两种形式。数组应该为一个字符串数组，且元素不能为空字符串。
 
-### a-hover
-类似于*a-class*，但在用户滑过此元素表面时会添加这些类名，离开时移除类名
+### ms-hover
+类似于*ms-class*，但在用户滑过此元素表面时会添加这些类名，离开时移除类名
 
-### a-active
+### ms-active
 
-类似于a-class，但在用户点击此元素时添加这些类名，鼠标弹出时离开时移除类名
+类似于ms-class，但在用户点击此元素时添加这些类名，鼠标弹出时离开时移除类名
 
-### a-css
+### ms-css
 ```
-a-css="@styleObject"
-a-css="[@styleObject,@styleObject2]"
+ms-css="@styleObject"
+ms-css="[@styleObject,@styleObject2]"
 ```
 可使用过滤器，功能类似于之前的ms-css，用于设置元素的样式
 
-### a-on
+### ms-on
 ```
-a-click="@fn"
-a-on-click-0=" @toggle = !@toggle"
-a-on-keydown="@xxx |stop"
-a-click="@fn"
+ms-click="@fn"
+ms-on-click-0=" @toggle = !@toggle"
+ms-on-keydown="@xxx |stop"
+ms-click="@fn"
 ```
 可使用特定的过滤器(stop, prevent, up,down,right, left, esc,tab, enter,space,del),绑事事件回调
 
 ```
 可使用过滤器，将vm中的某个字任串属性转换成HTML节点，插入到目标元素底下，
 
-### a-duplex
+### ms-duplex
 可使用过滤器，双工绑定
 
 
-### a-effect
+### ms-effect
 可使用过滤器，结合其他指令使用动画效果
 
-### a-widget
+### ms-widget
 ```
-a-wiget="@obj"
-a-wiget="{title: @ddd, $id: "sss"}"
-a-wiget="[@obj1, @obj2 ,{$id: 'item' + i }]"
+ms-wiget="@obj"
+ms-wiget="{title: @ddd, $id: "sss"}"
+ms-wiget="[@obj1, @obj2 ,{$id: 'item' + i }]"
 ```
-a-widget的值可以为页面上一个临时对象,也可以是一个数组,或者指向vm中的一个对象属性
+ms-widget的值可以为页面上一个临时对象,也可以是一个数组,或者指向vm中的一个对象属性
 在内部发现是一个数组,会进行合并,保证只有一个对象(下称配置对象)
 此配置对象应有$id, type这两个固定配置项
 $id为组件vm的$id, type为组件的类型 
@@ -119,27 +119,28 @@ $id为组件vm的$id, type为组件的类型
 ```
 
 ```
-a-attr="{xxx:yyy}"--> props[a-attr] = fn
-a-text   --> 检测template children 与 update
-a-html   --> 检测template children 与 update
-a-duplex --> 检测DOM的update
-a-on     --> 检测DOM的update
+ms-attr="{xxx:yyy}"--> props[ms-attr] = fn
+ms-text   --> 检测template children 与 update
+ms-html   --> 检测template children 与 update
+ms-duplex --> 检测DOM的update
+ms-on     --> 检测DOM的update
 ```
 
 
 | 指令           | 语法               | 进度  |
 | ------------- |:-----------------:| -----:|
-| a-attr       | 对象或对象数组        | yes |
-| a-css      | 对象或对象数组          | yes |
-| a-controller | 字符串               | yes |
+| ms-attr       | 对象或对象数组        | yes |
+| ms-css      | 对象或对象数组          | yes |
+| ms-controller | 字符串               | yes |
 | text          | 字符串              | yes |
-| a-class      | 布尔对象或字符串数组    | yes |
-| a-hover      | 布尔对象或字符串数组    | yes |
-| a-active     | 布尔对象或字符串数组    | yes |
-| a-on         | 函数                | yes |
-| a-effect     | 对象或对象数组        | no |
-| a-widget     | 对象或对象数组        | half |
+| ms-class      | 布尔对象或字符串数组    | yes |
+| ms-hover      | 布尔对象或字符串数组    | yes |
+| ms-active     | 布尔对象或字符串数组    | yes |
+| ms-on         | 函数                | yes |
+| ms-effect     | 对象或对象数组        | no |
+| ms-widget     | 对象或对象数组        | half |
 | if指令        |     合法JS代码        | yes |
 | for指令       | 类PHP的特殊语法        | yes |
 | forEnd指令    | 空指令（仅表示结束）     | yes|
 | js指令        |  合法JS代码            | yes|
+
