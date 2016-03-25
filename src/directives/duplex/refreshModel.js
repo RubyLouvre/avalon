@@ -17,10 +17,11 @@ var refreshModel = {
         //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
         var val = ctrl.parse(viewValue)
         viewValue = val+''
-        if (rawValue !== viewValue) {
+        if (rawValue !== viewValue ) {
             ctrl.elem[prop] = viewValue
         }
-        if (val !== ctrl.modelValue) {
+        
+       if (val !== ctrl.modelValue || val === "") {
             ctrl.set(ctrl.vmodel, val)
         }
 

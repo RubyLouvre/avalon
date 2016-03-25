@@ -4154,13 +4154,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        events.keyup = updateModel      // A single keystoke
 	                        events.keydown = updateModel    // The first character when a key is held down
 	                    }
+	                   
+	                    cur.valueHijack = updateModel  // 'selectionchange' covers cut, paste, drop, delete, etc.
 	                    if (msie >= 8) {
 	                        // Internet Explorer 9 doesn't fire the 'input' event when deleting text, including using
 	                        // the backspace, delete, or ctrl-x keys, clicking the 'x' to clear the input, dragging text
 	                        // out of the field, and cutting or deleting text using the context menu. 'selectionchange'
 	                        // can detect all of those except dragging text out of the field, for which we use 'dragend'.
 	                        // These are also needed in IE8 because of the bug described above.
-	                        cur.valueHijack = updateModel  // 'selectionchange' covers cut, paste, drop, delete, etc.
+	                    
 	                        events.dragend = updateModelDelay
 	                    }
 	                } else {
@@ -4225,8 +4227,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	function updateModelHack(e) {
-	    if (e.propertyName === 'value' &&this.value != this.oldValue ) { 
-	        this.oldValue = this.value
+	    if (e.propertyName === 'value' ) { 
 	        updateModel.call(this, e)
 	    }
 	}
@@ -4271,7 +4272,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	markID(updateModelDelay)
 	markID(updateModelKeyDown)
 
-	if (msie >= 8 && msie < 10) {
+	if (msie >= 5 && msie < 10) {
 	    avalon.bind(document, 'selectionchange', function (e) {
 	        var el = document.activeElement || {}
 	        if (!el.caret && el.valueHijack) {
@@ -4335,10 +4336,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
 	        var val = ctrl.parse(viewValue)
 	        viewValue = val+''
-	        if (rawValue !== viewValue) {
+	        if (rawValue !== viewValue ) {
 	            ctrl.elem[prop] = viewValue
 	        }
-	        if (val !== ctrl.modelValue) {
+	        
+	       if (val !== ctrl.modelValue || val === "") {
 	            ctrl.set(ctrl.vmodel, val)
 	        }
 

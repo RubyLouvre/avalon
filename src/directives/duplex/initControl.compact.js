@@ -81,13 +81,15 @@ function initControl(cur, pre) {
                         events.keyup = updateModel      // A single keystoke
                         events.keydown = updateModel    // The first character when a key is held down
                     }
+                   
+                    cur.valueHijack = updateModel  // 'selectionchange' covers cut, paste, drop, delete, etc.
                     if (msie >= 8) {
                         // Internet Explorer 9 doesn't fire the 'input' event when deleting text, including using
                         // the backspace, delete, or ctrl-x keys, clicking the 'x' to clear the input, dragging text
                         // out of the field, and cutting or deleting text using the context menu. 'selectionchange'
                         // can detect all of those except dragging text out of the field, for which we use 'dragend'.
                         // These are also needed in IE8 because of the bug described above.
-                        cur.valueHijack = updateModel  // 'selectionchange' covers cut, paste, drop, delete, etc.
+                    
                         events.dragend = updateModelDelay
                     }
                 } else {
@@ -152,8 +154,7 @@ function updateModel() {
 
 
 function updateModelHack(e) {
-    if (e.propertyName === 'value' &&this.value != this.oldValue ) { 
-        this.oldValue = this.value
+    if (e.propertyName === 'value' ) { 
         updateModel.call(this, e)
     }
 }
@@ -198,7 +199,7 @@ markID(updateModelHack)
 markID(updateModelDelay)
 markID(updateModelKeyDown)
 
-if (msie >= 8 && msie < 10) {
+if (msie >= 5 && msie < 10) {
     avalon.bind(document, 'selectionchange', function (e) {
         var el = document.activeElement || {}
         if (!el.caret && el.valueHijack) {
