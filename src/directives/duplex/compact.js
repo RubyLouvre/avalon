@@ -1,5 +1,4 @@
 
-
 var valueHijack = require('./valueHijack')
 
 var newControl = require('./newControl')
@@ -24,17 +23,15 @@ avalon.directive('duplex', {
 
         var ctrl = cur.ctrl
         delete cur.duplexVm
-        var value = ctrl.modelValue = ctrl.get(ctrl.vmodel)
-        var isArray = Array.isArray(value)
-        if (!isArray) {
-            value = ctrl.format(value + '')
-        }
+        var value = cur.props.value = ctrl.get(ctrl.vmodel)
+
 
         if (cur.type === 'select' && !cur.children.length) {
             avalon.Array.merge(cur.children, avalon.lexer(cur.template))
             fixVirtualOptionSelected(cur, value)
         }
 
+       
         if (!ctrl.elem) {
             var isEqual = false
         } else {
@@ -46,9 +43,9 @@ avalon.directive('duplex', {
                 isEqual = value === preValue
             }
         }
-        cur.props.value = value
+
         if (!isEqual) {
-            ctrl._viewValue = value
+            ctrl.modelValue = value
             var afterChange = cur.afterChange || (cur.afterChange = [])
             avalon.Array.ensure(afterChange, this.update)
         }
@@ -75,7 +72,7 @@ avalon.directive('duplex', {
                 }
             }, 30)
         }
-        var viewValue = vnode.props.value
+        var viewValue = ctrl.format(ctrl.modelValue)
         if (ctrl.viewValue !== viewValue) {
             ctrl.viewValue = viewValue
             refreshControl[ctrl.type].call(ctrl)

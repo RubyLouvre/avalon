@@ -10,23 +10,16 @@ var refreshModel = {
         var ctrl = this
         prop = prop || 'value'
         var viewValue = ctrl.elem[prop]
-        var rawValue = viewValue
 
-        viewValue = ctrl.format(viewValue)
         //vm.aaa = '1234567890'
         //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
+        viewValue = ctrl.format(viewValue)
+
         var val = ctrl.parse(viewValue)
-        viewValue = val+''
-        console.log(val,"___",ctrl.modelValue)
         if (val !== ctrl.modelValue) {
             ctrl.set(ctrl.vmodel, val)
+           
         }
-        
-        if (rawValue !== viewValue) {
-            ctrl.viewValue = viewValue
-            ctrl.elem[prop] = viewValue
-        }
-        
 
     },
     radio: function () {

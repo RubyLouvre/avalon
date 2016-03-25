@@ -95,11 +95,10 @@ function makeAccessor(sid, spath, heirloom) {
                         $emit(top.$events[ path ], vm, path, val, older)
                     }
                 }
-                if( !avalon.suspendUpdate){
-                   var vid = vm.$id.split('.')[0]
-                   avalon.rerenderStart = new Date
-                   avalon.batch(vid, true)
-                }
+                var vid = vm.$id.split('.')[0]
+                avalon.rerenderStart = new Date
+                avalon.batch(vid, true)
+               
             }
         },
         enumerable: true,

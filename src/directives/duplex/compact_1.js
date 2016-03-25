@@ -1,16 +1,16 @@
 
+
 var valueHijack = require('./valueHijack')
 
 var newControl = require('./newControl')
-var initControl = require('./bindEvents.modern')
-var refreshControl = require('./refreshControl.modern')
+var initControl = require('./bindEvents.compact')
+var refreshControl = require('./refreshControl.compact')
 
 
 avalon.directive('duplex', {
     priority: 2000,
     parse: function (binding, num, vnode) {
         newControl(binding, vnode)
-
         return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
                 'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
     },
@@ -24,7 +24,11 @@ avalon.directive('duplex', {
 
         var ctrl = cur.ctrl
         delete cur.duplexVm
-        var value = cur.props.value = ctrl.get(ctrl.vmodel)
+        var value = ctrl.modelValue = ctrl.get(ctrl.vmodel)
+        var isArray = Array.isArray(value)
+        if (!isArray) {
+            value = ctrl.format(value + '')
+        }
 
         if (cur.type === 'select' && !cur.children.length) {
             avalon.Array.merge(cur.children, avalon.lexer(cur.template))
@@ -35,15 +39,16 @@ avalon.directive('duplex', {
             var isEqual = false
         } else {
             var preValue = pre.props.value
+
             if (Array.isArray(value)) {
                 isEqual = value + '' === preValue + ''
             } else {
                 isEqual = value === preValue
             }
         }
-
+        cur.props.value = value
         if (!isEqual) {
-            ctrl.modelValue = value
+            ctrl._viewValue = value
             var afterChange = cur.afterChange || (cur.afterChange = [])
             avalon.Array.ensure(afterChange, this.update)
         }
@@ -66,13 +71,11 @@ avalon.directive('duplex', {
                 if (!avalon.contains(avalon.root, node)) {
                     clearInterval(intervalID)
                 } else {
-                    node.valueHijack()
+                     node.valueHijack()
                 }
             }, 30)
         }
-
-        var viewValue = ctrl.format(ctrl.modelValue)
-
+        var viewValue = vnode.props.value
         if (ctrl.viewValue !== viewValue) {
             ctrl.viewValue = viewValue
             refreshControl[ctrl.type].call(ctrl)
@@ -108,7 +111,8 @@ function fixVirtualOptionSelected(cur, curValue) {
         map[curValue] = 1
     }
     for (var i = 0, option; option = options[i++]; ) {
-        var v = 'value' in option.props ? option.props.value : (option.children[0] || {nodeValue: ''}).nodeValue.trim()
+        var v = 'value' in option.props ? option.props.value :
+                (option.children[0] || {nodeValue: ''}).nodeValue.trim()
         option.props.selected = !!map[v]
         if (map[v] && one) {
             break
