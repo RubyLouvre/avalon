@@ -24,11 +24,7 @@ avalon.directive('duplex', {
 
         var ctrl = cur.ctrl
         delete cur.duplexVm
-        var value = ctrl.modelValue = ctrl.get(ctrl.vmodel)
-        var isArray = Array.isArray(value)
-        if (!isArray) {
-            value = ctrl.format(value + '')
-        }
+        var value = ctrl.get(ctrl.vmodel)
 
         if (cur.type === 'select' && !cur.children.length) {
             avalon.Array.merge(cur.children, avalon.lexer(cur.template))
@@ -46,9 +42,9 @@ avalon.directive('duplex', {
                 isEqual = value === preValue
             }
         }
-        cur.props.value = value
+
         if (!isEqual) {
-            ctrl._viewValue = value
+           cur.props.value =  ctrl.modelValue = value
             var afterChange = cur.afterChange || (cur.afterChange = [])
             avalon.Array.ensure(afterChange, this.update)
         }
@@ -63,22 +59,20 @@ avalon.directive('duplex', {
                 delete events[name]
             }
         }
-
-        if (!avalon.modern && valueHijack === false && !node.valueHijack) {
+//!avalon.msie && valueHijack === false &&
+        if ( !node.valueHijack) {
             //chrome 42及以下版本需要这个hack
             node.valueHijack = ctrl.update
             var intervalID = setInterval(function () {
                 if (!avalon.contains(avalon.root, node)) {
                     clearInterval(intervalID)
                 } else {
-                    if (ctrl.viewValue !== vnode.props.value) {
-                        ctrl.viewValue = viewValue
-                        node.valueHijack()
-                    }
+                    console.log('---')
+                    node.valueHijack()
                 }
             }, 30)
         }
-        var viewValue = vnode.props.value
+        var viewValue = ctrl.modelValue
         if (ctrl.viewValue !== viewValue) {
             ctrl.viewValue = viewValue
             refreshControl[ctrl.type].call(ctrl)
@@ -114,7 +108,7 @@ function fixVirtualOptionSelected(cur, curValue) {
         map[curValue] = 1
     }
     for (var i = 0, option; option = options[i++]; ) {
-        var v = 'value' in option.props ? option.props.value :
+        var v = 'value' in option.props ? option.props.value : 
                 (option.children[0] || {nodeValue: ''}).nodeValue.trim()
         option.props.selected = !!map[v]
         if (map[v] && one) {

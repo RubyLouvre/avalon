@@ -69,29 +69,37 @@ function initControl(cur, pre) {
                 //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
                 //http://www.matts411.com/post/internet-explorer-9-oninput/
                 if (avalon.msie < 10) {
+
                     // Internet Explorer <= 8 doesn't support the 'input' event, but does include 'propertychange' that fires whenever
                     // any property of an element changes. Unlike 'input', it also fires if a property is changed from JavaScript code,
                     // but that's an acceptable compromise for this binding. IE 9 does support 'input', but since it doesn't fire it
                     // when using autocomplete, we'll use 'propertychange' for it also.
-                    events.propertychange = updateModelHack
-                    if (msie === 8) {
-                        // IE 8 has a bug where it fails to fire 'propertychange' on the first update following a value change from
-                        // JavaScript code. It also doesn't fire if you clear the entire value. To fix this, we bind to the following
-                        // events too.
-                        events.keyup = updateModel      // A single keystoke
-                        events.keydown = updateModel    // The first character when a key is held down
-                    }
+//                    events.propertychange = updateModelHack
+//                    if (msie === 8) {
+//                        // IE 8 has a bug where it fails to fire 'propertychange' on the first update following a value change from
+//                        // JavaScript code. It also doesn't fire if you clear the entire value. To fix this, we bind to the following
+//                        // events too.
+//                        events.keyup = updateModel      // A single keystoke
+//                        events.keydown = updateModel    // The first character when a key is held down
+//                    }
+//                   
+//                    cur.valueHijack = updateModel  // 'selectionchange' covers cut, paste, drop, delete, etc.
+//                    if (msie >= 8) {
+//                        // Internet Explorer 9 doesn't fire the 'input' event when deleting text, including using
+//                        // the backspace, delete, or ctrl-x keys, clicking the 'x' to clear the input, dragging text
+//                        // out of the field, and cutting or deleting text using the context menu. 'selectionchange'
+//                        // can detect all of those except dragging text out of the field, for which we use 'dragend'.
+//                        // These are also needed in IE8 because of the bug described above.
+//                    
+//                        events.dragend = updateModelDelay
+//                    }
+                        events.input = updateModel
+                    //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
+                    //如果当前浏览器支持Int8Array,那么我们就不需要以下这些事件来打补丁了
                    
-                    cur.valueHijack = updateModel  // 'selectionchange' covers cut, paste, drop, delete, etc.
-                    if (msie >= 8) {
-                        // Internet Explorer 9 doesn't fire the 'input' event when deleting text, including using
-                        // the backspace, delete, or ctrl-x keys, clicking the 'x' to clear the input, dragging text
-                        // out of the field, and cutting or deleting text using the context menu. 'selectionchange'
-                        // can detect all of those except dragging text out of the field, for which we use 'dragend'.
-                        // These are also needed in IE8 because of the bug described above.
-                    
-                        events.dragend = updateModelDelay
-                    }
+                     //   events.keydown = updateModelKeyDown //safari < 5 opera < 11
+                        events.paste = updateModelDelay//safari < 5
+                        events.cut = updateModelDelay//safari < 5
                 } else {
                     events.input = updateModel
                     //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
@@ -123,7 +131,7 @@ function initControl(cur, pre) {
 function updateModel() {
     var elem = this
     var ctrl = this.__duplex__
-    if (elem.composing )
+    if (elem.composing)
         return
     if (elem.caret) {
         try {

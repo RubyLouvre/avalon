@@ -2,7 +2,7 @@
 var valueHijack = require('./valueHijack')
 
 var newControl = require('./newControl')
-var initControl = require('./initControl.modern')
+var initControl = require('./bindEvents.modern')
 var refreshControl = require('./refreshControl.modern')
 
 

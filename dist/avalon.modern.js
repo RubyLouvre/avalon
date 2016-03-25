@@ -2099,18 +2099,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var ctrl = this
 	        prop = prop || 'value'
 	        var viewValue = ctrl.elem[prop]
-	        var rawValue = viewValue
 
-	        viewValue = ctrl.format(viewValue)
 	        //vm.aaa = '1234567890'
 	        //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
+	        viewValue = ctrl.format(viewValue)
+
 	        var val = ctrl.parse(viewValue)
-	        viewValue = val+''
-	        if (rawValue !== viewValue ) {
-	            ctrl.elem[prop] = viewValue
-	        }
-	        
-	       if (val !== ctrl.modelValue || val === "") {
+	        if (val !== ctrl.modelValue) {
 	            ctrl.set(ctrl.vmodel, val)
 	        }
 
@@ -2154,7 +2149,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    contenteditable: function () {
-	        refreshModel.input.call(this,'innerHTML')
+	        refreshModel.input.call(this, 'innerHTML')
 	    }
 	}
 	module.exports = refreshModel
@@ -3845,279 +3840,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 68 */,
 /* 69 */,
-/* 70 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	var dispatch = __webpack_require__(71)
-	var $watch = dispatch.$watch
-	var $emit = dispatch.$emit
-	var $$midway = {}
-	var $$skipArray = __webpack_require__(72)
-
-
-	function makeFire($vmodel, heirloom) {
-	    heirloom.__vmodel__ = $vmodel
-	    var hide = $$midway.hideProperty
-
-	    hide($vmodel, '$events', heirloom)
-	    hide($vmodel, '$watch', function () {
-	        if (arguments.length === 2) {
-	            return $watch.apply($vmodel, arguments)
-	        } else {
-	            throw '$watch方法参数不对'
-	        }
-	    })
-	    hide($vmodel, '$fire', function (expr, a, b) {
-	        var list = $vmodel.$events[expr]
-	        $emit(list, $vmodel, expr, a, b)
-	    })
-	}
-
-	function isSkip(key, value, skipArray) {
-	    // 判定此属性能否转换访问器
-	    return key.charAt(0) === '$' ||
-	            skipArray[key] ||
-	            (typeof value === 'function') ||
-	            (value && value.nodeName && value.nodeType > 0)
-	}
-
-
-	function modelAdaptor(definition, old, heirloom, options) {
-	    //如果数组转换为监控数组
-	    if (Array.isArray(definition)) {
-	        return $$midway.arrayFactory(definition, old, heirloom, options)
-	    } else if (Object(definition) === definition && typeof definition !== 'function') {
-	        //如果此属性原来就是一个VM,拆分里面的访问器属性
-	        if (old && old.$id) {
-	            var vm = $$midway.slaveFactory(old, definition, heirloom, options)
-	            avalon.stopBatch = true
-	            for (var i in definition) {
-	                if ($$skipArray[i])
-	                    continue
-	                vm[i] = definition[i]
-	            }
-	            avalon.stopBatch = false
-	            return vm
-	        } else {
-	            vm = $$midway.masterFactory(definition, heirloom, options)
-	            return vm
-	        }
-	    } else {
-	        return definition
-	    }
-	}
-	$$midway.modelAdaptor = modelAdaptor
-
-	var rtopsub = /([^.]+)\.(.+)/
-	function makeAccessor(sid, spath, heirloom) {
-	    var old = NaN
-	    function get() {
-	        return old
-	    }
-	    get.heirloom = heirloom
-	    return {
-	        get: get,
-	        set: function (val) {
-	            if (old === val) {
-	                return
-	            }
-	            if (val && typeof val === 'object') {
-	                val = $$midway.modelAdaptor(val, old, heirloom, {
-	                    pathname: spath,
-	                    id: sid
-	                })
-	            }
-	            var older = old
-	            old = val
-	            var vm = heirloom.__vmodel__
-	            if (this.$hashcode && vm) {
-	                //★★确保切换到新的events中(这个events可能是来自oldProxy)               
-	                if (vm && heirloom !== vm.$events) {
-	                    get.heirloom = vm.$events
-	                }
-	                $emit(get.heirloom[spath], vm, spath, val, older)
-	                if (sid.indexOf('.*.') > 0) {//如果是item vm
-	                    var arr = sid.match(rtopsub)
-	                    var top = avalon.vmodels[ arr[1] ]
-	                    if (top) {
-	                        var path = arr[2]
-	                        $emit(top.$events[ path ], vm, path, val, older)
-	                    }
-	                }
-	                var vid = vm.$id.split('.')[0]
-	                avalon.rerenderStart = new Date
-	                if (!avalon.stopBatch) {
-	                    avalon.batch(vid, true)
-	                }
-	            }
-	        },
-	        enumerable: true,
-	        configurable: true
-	    }
-	}
-
-
-	function define(definition) {
-	    var $id = definition.$id
-	    if (!$id && avalon.config.debug) {
-	        avalon.warn('vm.$id must be specified')
-	    }
-	    var vm = $$midway.masterFactory(definition, {}, {
-	        pathname: '',
-	        id: $id,
-	        master: true
-	    })
-
-	    if (avalon.vmodels[$id]) {
-	        throw Error('error:[', $id, '] had defined!')
-	    }
-	    return avalon.vmodels[$id] = vm
-
-	}
-	var __array__ = {
-	    set: function (index, val) {
-	        if (((index >>> 0) === index) && this[index] !== val) {
-	            if (index > this.length) {
-	                throw Error(index + 'set方法的第一个参数不能大于原数组长度')
-	            }
-	            this.notify('*', val, this[index], true)
-	            this.splice(index, 1, val)
-	        }
-	    },
-	    contains: function (el) { //判定是否包含
-	        return this.indexOf(el) !== -1
-	    },
-	    ensure: function (el) {
-	        if (!this.contains(el)) { //只有不存在才push
-	            this.push(el)
-	        }
-	        return this
-	    },
-	    pushArray: function (arr) {
-	        return this.push.apply(this, arr)
-	    },
-	    remove: function (el) { //移除第一个等于给定值的元素
-	        return this.removeAt(this.indexOf(el))
-	    },
-	    removeAt: function (index) { //移除指定索引上的元素
-	        if ((index >>> 0) === index) {
-	            return this.splice(index, 1)
-	        }
-	        return []
-	    },
-	    clear: function () {
-	        this.removeAll()
-	        return this
-	    }
-	}
-	avalon.define = define
-
-	module.exports = {
-	    $$midway: $$midway,
-	    $$skipArray: $$skipArray,
-	    __array__: __array__,
-	    isSkip: isSkip,
-	    makeFire: makeFire,
-	    makeAccessor: makeAccessor,
-	    modelAdaptor: modelAdaptor
-	}
-
-/***/ },
-/* 71 */
-/***/ function(module, exports) {
-
-	
-	/**
-	 * ------------------------------------------------------------
-	 * 属性监听系统 
-	 * ------------------------------------------------------------
-	 */
-
-	function adjustVm(vm, expr) {
-	    var toppath = expr.split(".")[0], other
-	    try {
-	        if (vm.hasOwnProperty(toppath)) {
-	            if (vm.$accessors) {
-	                other = vm.$accessors[toppath].get.heirloom.__vmodel__
-	            } else {
-	                other = Object.getOwnPropertyDescriptor(vm, toppath).get.heirloom.__vmodel__
-	            }
-
-	        }
-	    } catch (e) {
-	        avalon.log("adjustVm " + e)
-	    }
-	    return other || vm
-	}
-
-
-	function $watch(expr, callback) {
-	    var vm = adjustVm(this, expr)
-	    var hive = vm.$events
-	    var list = hive[expr] || (hive[expr] = [])
-	    if (vm !== this) {
-	        this.$events[expr] = list
-	    }
-	    avalon.Array.ensure(list, callback)
-
-	    return function () {
-	        avalon.Array.remove(list, callback)
-	    }
-	}
-
-	/**
-	 * $fire 方法的内部实现
-	 * 
-	 * @param {Array} list 订阅者数组
-	 * @param {Component} vm
-	 * @param {String} path 监听属性名或路径
-	 * @param {Any} a 当前值 
-	 * @param {Any} b 过去值
-	 * @param {Number} i 如果抛错,让下一个继续执行
-	 * @returns {undefined}
-	 */
-	function $emit(list, vm, path, a, b, i) {
-	    if (list && list.length) {
-	        try {
-	            for (i = i || list.length - 1; i >= 0; i--) {
-	                var callback = list[i]
-	                callback.call(vm, a, b, path)
-	            }
-	        } catch (e) {
-	            if (i - 1 > 0)
-	                $emit(list, vm, path, a, b, i - 1)
-	            avalon.log(e, path)
-	        }
-
-	    }
-	}
-
-
-	module.exports = {
-	    $emit: $emit,
-	    $watch: $watch,
-	    adjustVm: adjustVm
-	}
-
-
-/***/ },
-/* 72 */
-/***/ function(module, exports) {
-
-	/**
-	 * 
-	$$skipArray:是系统级通用的不可监听属性
-	$skipArray: 是当前对象特有的不可监听属性
-
-	 不同点是
-	 $$skipArray被hasOwnProperty后返回false
-	 $skipArray被hasOwnProperty后返回true
-	 */
-
-	module.exports = avalon.oneObject('$id,$render,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,__proxy__,__data__,__const__')
-
-/***/ },
+/* 70 */,
+/* 71 */,
+/* 72 */,
 /* 73 */,
 /* 74 */,
 /* 75 */,
@@ -5379,7 +5104,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var valueHijack = __webpack_require__(49)
 
 	var newControl = __webpack_require__(50)
-	var initControl = __webpack_require__(92)
+	var initControl = __webpack_require__(98)
 	var refreshControl = __webpack_require__(93)
 
 
@@ -5494,160 +5219,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 92 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var window = avalon.window
-
-	var refreshModel = __webpack_require__(52)
-	var markID = __webpack_require__(6).getLongID
-	var evaluatorPool = __webpack_require__(53)
-
-	function initControl(cur, pre) {
-	    var ctrl = cur.ctrl = pre.ctrl
-
-	    ctrl.update = updateModel
-	    ctrl.updateCaret = setCaret
-	    ctrl.get = evaluatorPool.get('duplex:' + ctrl.expr)
-	    ctrl.set = evaluatorPool.get('duplex:set:' + ctrl.expr)
-	    var format = evaluatorPool.get('duplex:format:' + ctrl.expr)
-	    if (format) {
-	        ctrl.formatters.push(function (v) {
-	            return format(ctrl.vmodel, v)
-	        })
-	    }
-	    ctrl.vmodel = cur.duplexVm
-
-	    var events = ctrl.events = {}
-	//添加需要监听的事件
-	    switch (ctrl.type) {
-	        case 'radio':
-	            if (cur.props.type === 'radio') {
-	                events.click = updateModel
-	            } else {
-	                events.change = updateModel
-	            }
-	            break
-	        case 'checkbox':
-	        case 'select':
-	            events.change = updateModel
-	            break
-	        case 'contenteditable':
-	            if (ctrl.isChanged) {
-	                events.blur = updateModel
-	            } else {
-	                if (window.webkitURL) {
-	                    // http://code.metager.de/source/xref/WebKit/LayoutTests/fast/events/
-	                    // https://bugs.webkit.org/show_bug.cgi?id=110742
-	                    events.webkitEditableContentChanged = updateModel
-	                } else if (window.MutationEvent) {
-	                    events.DOMCharacterDataModified = updateModel
-	                }
-	                events.input = updateModel
-	            }
-	            break
-	        case 'input':
-	            if (ctrl.isChanged) {
-	                events.change = updateModel
-	            } else {
-
-	                events.input = updateModel
-
-	                events.compositionstart = openComposition
-	                events.compositionend = closeComposition
-	            }
-	            break
-	    }
-
-	    if (/password|text/.test(cur.props.type)) {
-	        events.focus = openCaret
-	        events.blur = closeCaret
-	    }
-
-	}
-
-
-	function updateModel() {
-	    var elem = this
-	    var ctrl = this.__duplex__
-	    if (elem.composing || elem.value === ctrl.lastViewValue)
-	        return
-	    if (elem.caret) {
-	        try {
-	            var pos = getCaret(elem)
-	            if (pos.start === pos.end) {
-	                ctrl.caretPos = pos.start
-	            }
-	        } catch (e) {
-	            avalon.warn('fixCaret error', e)
-	        }
-	    }
-	    if (ctrl.debounceTime > 4) {
-	        var timestamp = new Date()
-	        var left = timestamp - ctrl.time || 0
-	        ctrl.time = timestamp
-	        if (left >= ctrl.debounceTime) {
-	            refreshModel[ctrl.type].call(ctrl)
-	        } else {
-	            clearTimeout(ctrl.debounceID)
-	            ctrl.debounceID = setTimeout(function () {
-	                refreshModel[ctrl.type].call(ctrl)
-	            }, left)
-	        }
-	    } else {
-	        refreshModel[ctrl.type].call(ctrl)
-	    }
-	}
-
-
-
-	function openCaret() {
-	    this.caret = true
-	}
-
-	function closeCaret() {
-	    this.caret = false
-	}
-	function openComposition() {
-	    this.composing = true
-	}
-
-	function closeComposition(e) {
-	    this.composing = false
-	    updateModel.call(this, e)
-	}
-
-
-	markID(openCaret)
-	markID(closeCaret)
-	markID(openComposition)
-	markID(closeComposition)
-	markID(updateModel)
-
-
-
-	function getCaret(ctrl) {
-	    var start = NaN, end = NaN
-	    if (ctrl.setSelectionRange) {
-	        start = ctrl.selectionStart
-	        end = ctrl.selectionEnd
-	    }
-	    return {
-	        start: start,
-	        end: end
-	    }
-	}
-
-	function setCaret(ctrl, begin, end) {
-	    if (!ctrl.value || ctrl.readOnly)
-	        return
-	    ctrl.selectionStart = begin
-	    ctrl.selectionEnd = end
-	}
-
-	module.exports = initControl
-
-/***/ },
+/* 92 */,
 /* 93 */
 /***/ function(module, exports) {
 
@@ -5970,7 +5542,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 95 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var share = __webpack_require__(70)
+	var share = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"./share\""); e.code = 'MODULE_NOT_FOUND'; throw e; }()))
 	var makeFire = share.makeFire
 
 	function toJson(val) {
@@ -6045,6 +5617,162 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = mixin
 
+
+/***/ },
+/* 96 */,
+/* 97 */,
+/* 98 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var window = avalon.window
+
+	var refreshModel = __webpack_require__(52)
+	var markID = __webpack_require__(6).getLongID
+	var evaluatorPool = __webpack_require__(53)
+
+	function initControl(cur, pre) {
+	    var ctrl = cur.ctrl = pre.ctrl
+
+	    ctrl.update = updateModel
+	    ctrl.updateCaret = setCaret
+	    ctrl.get = evaluatorPool.get('duplex:' + ctrl.expr)
+	    ctrl.set = evaluatorPool.get('duplex:set:' + ctrl.expr)
+	    var format = evaluatorPool.get('duplex:format:' + ctrl.expr)
+	    if (format) {
+	        ctrl.formatters.push(function (v) {
+	            return format(ctrl.vmodel, v)
+	        })
+	    }
+	    ctrl.vmodel = cur.duplexVm
+
+	    var events = ctrl.events = {}
+	//添加需要监听的事件
+	    switch (ctrl.type) {
+	        case 'radio':
+	            if (cur.props.type === 'radio') {
+	                events.click = updateModel
+	            } else {
+	                events.change = updateModel
+	            }
+	            break
+	        case 'checkbox':
+	        case 'select':
+	            events.change = updateModel
+	            break
+	        case 'contenteditable':
+	            if (ctrl.isChanged) {
+	                events.blur = updateModel
+	            } else {
+	                if (window.webkitURL) {
+	                    // http://code.metager.de/source/xref/WebKit/LayoutTests/fast/events/
+	                    // https://bugs.webkit.org/show_bug.cgi?id=110742
+	                    events.webkitEditableContentChanged = updateModel
+	                } else if (window.MutationEvent) {
+	                    events.DOMCharacterDataModified = updateModel
+	                }
+	                events.input = updateModel
+	            }
+	            break
+	        case 'input':
+	            if (ctrl.isChanged) {
+	                events.change = updateModel
+	            } else {
+
+	                events.input = updateModel
+
+	                events.compositionstart = openComposition
+	                events.compositionend = closeComposition
+	            }
+	            break
+	    }
+
+	    if (/password|text/.test(cur.props.type)) {
+	        events.focus = openCaret
+	        events.blur = closeCaret
+	    }
+
+	}
+
+
+	function updateModel() {
+	    var elem = this
+	    var ctrl = this.__duplex__
+	    if (elem.composing || elem.value === ctrl.lastViewValue)
+	        return
+	    if (elem.caret) {
+	        try {
+	            var pos = getCaret(elem)
+	            if (pos.start === pos.end) {
+	                ctrl.caretPos = pos.start
+	            }
+	        } catch (e) {
+	            avalon.warn('fixCaret error', e)
+	        }
+	    }
+	    if (ctrl.debounceTime > 4) {
+	        var timestamp = new Date()
+	        var left = timestamp - ctrl.time || 0
+	        ctrl.time = timestamp
+	        if (left >= ctrl.debounceTime) {
+	            refreshModel[ctrl.type].call(ctrl)
+	        } else {
+	            clearTimeout(ctrl.debounceID)
+	            ctrl.debounceID = setTimeout(function () {
+	                refreshModel[ctrl.type].call(ctrl)
+	            }, left)
+	        }
+	    } else {
+	        refreshModel[ctrl.type].call(ctrl)
+	    }
+	}
+
+
+
+	function openCaret() {
+	    this.caret = true
+	}
+
+	function closeCaret() {
+	    this.caret = false
+	}
+	function openComposition() {
+	    this.composing = true
+	}
+
+	function closeComposition(e) {
+	    this.composing = false
+	    updateModel.call(this, e)
+	}
+
+
+	markID(openCaret)
+	markID(closeCaret)
+	markID(openComposition)
+	markID(closeComposition)
+	markID(updateModel)
+
+
+
+	function getCaret(ctrl) {
+	    var start = NaN, end = NaN
+	    if (ctrl.setSelectionRange) {
+	        start = ctrl.selectionStart
+	        end = ctrl.selectionEnd
+	    }
+	    return {
+	        start: start,
+	        end: end
+	    }
+	}
+
+	function setCaret(ctrl, begin, end) {
+	    if (!ctrl.value || ctrl.readOnly)
+	        return
+	    ctrl.selectionStart = begin
+	    ctrl.selectionEnd = end
+	}
+
+	module.exports = initControl
 
 /***/ }
 /******/ ])
