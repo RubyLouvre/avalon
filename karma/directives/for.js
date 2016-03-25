@@ -162,4 +162,32 @@ describe('for', function () {
             })
         })
     })
+    
+    it('添加新的对象元素', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <ul ms-controller='for3'>
+             <li ms-for='el in @array'>{{el.a}}</li>
+             </ul>
+             */
+        })
+        vm = avalon.define({
+            $id: 'for3',
+            array: [{a:1}]
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            var lis = div.getElementsByTagName('li')
+
+            expect(lis[0].innerHTML).to.equal('1')
+
+            vm.array = [{a:2},{a:3}]
+            setTimeout(function () {
+
+                expect(lis[0].innerHTML).to.equal('2')
+                expect(lis[1].innerHTML).to.equal('3')
+                done()
+            })
+        })
+    })
 })

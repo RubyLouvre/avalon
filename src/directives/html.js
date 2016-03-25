@@ -10,6 +10,7 @@ avalon.directive('html', {
     diff: function (cur, pre) {
         var curValue = cur.props['ms-html']
         var preValue = pre.props['ms-html']
+        cur.skipContent = false
         if (curValue !== preValue) {
 
             var nodes = textCache.get(curValue)
