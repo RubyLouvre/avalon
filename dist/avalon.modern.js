@@ -54,15 +54,15 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var avalon = __webpack_require__(77) 
+	var avalon = __webpack_require__(76) 
 
 	__webpack_require__(8)
 	__webpack_require__(15)
-	__webpack_require__(79)
-	__webpack_require__(88)
+	__webpack_require__(78)
+	__webpack_require__(87)
 	__webpack_require__(59)
 	__webpack_require__(67)
-	__webpack_require__(94)
+	__webpack_require__(93)
 
 
 	module.exports = avalon
@@ -4134,8 +4134,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 73 */,
 /* 74 */,
 /* 75 */,
-/* 76 */,
-/* 77 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -4144,14 +4143,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.mix(avalon, browser)
 
-	__webpack_require__(78)
+	__webpack_require__(77)
 	__webpack_require__(6)
 	__webpack_require__(7)
 
 	module.exports = avalon
 
 /***/ },
-/* 78 */
+/* 77 */
 /***/ function(module, exports) {
 
 	//这里放置存在异议的方法
@@ -4298,7 +4297,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 79 */
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -4307,6 +4306,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *           shim,class,data,css,val,html,event,ready               *
 	 **********************************************************************/
 
+	__webpack_require__(79)
 	__webpack_require__(80)
 	__webpack_require__(81)
 	__webpack_require__(82)
@@ -4314,13 +4314,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(84)
 	__webpack_require__(85)
 	__webpack_require__(86)
-	__webpack_require__(87)
 
 	module.exports = avalon
 
 
 /***/ },
-/* 80 */
+/* 79 */
 /***/ function(module, exports) {
 
 	//safari5+是把contains方法放在Element.prototype上而不是Node.prototype
@@ -4414,7 +4413,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 81 */
+/* 80 */
 /***/ function(module, exports) {
 
 	var rnowhite = /\S+/g
@@ -4453,7 +4452,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 82 */
+/* 81 */
 /***/ function(module, exports) {
 
 	
@@ -4531,7 +4530,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 83 */
+/* 82 */
 /***/ function(module, exports) {
 
 	var root = avalon.root
@@ -4781,7 +4780,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 84 */
+/* 83 */
 /***/ function(module, exports) {
 
 	function getValType(elem) {
@@ -4850,7 +4849,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 85 */
+/* 84 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Cache = __webpack_require__(26)
@@ -4948,7 +4947,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 86 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var document = avalon.document
@@ -5227,7 +5226,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 87 */
+/* 86 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var scan = __webpack_require__(34)
@@ -5265,12 +5264,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 88 */
+/* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
 	__webpack_require__(36)
 	//处理属性样式
-	__webpack_require__(89)
+	__webpack_require__(88)
 	__webpack_require__(40)
 	__webpack_require__(41)
 	//处理内容
@@ -5280,7 +5279,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	//需要用到事件的
 	__webpack_require__(46)
 	__webpack_require__(47)
-	__webpack_require__(91)
+	__webpack_require__(90)
 	//处理逻辑
 	__webpack_require__(55)
 	__webpack_require__(57)
@@ -5288,11 +5287,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(58)
 
 /***/ },
-/* 89 */
+/* 88 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var attrUpdate = __webpack_require__(90)
+	var attrUpdate = __webpack_require__(89)
 
 	avalon.directive('attr', {
 	    parse: function (binding, num) {
@@ -5335,7 +5334,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 90 */
+/* 89 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var propMap = __webpack_require__(39)
@@ -5385,15 +5384,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = attrUpdate
 
 /***/ },
-/* 91 */
+/* 90 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var valueHijack = __webpack_require__(49)
 
 	var newControl = __webpack_require__(50)
-	var initControl = __webpack_require__(92)
-	var refreshControl = __webpack_require__(93)
+	var initControl = __webpack_require__(96)
+	var refreshControl = __webpack_require__(92)
 
 
 	avalon.directive('duplex', {
@@ -5507,161 +5506,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
+/* 91 */,
 /* 92 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var window = avalon.window
-
-	var refreshModel = __webpack_require__(52)
-	var markID = __webpack_require__(6).getLongID
-	var evaluatorPool = __webpack_require__(53)
-
-	function initControl(cur, pre) {
-	    var ctrl = cur.ctrl = pre.ctrl
-
-	    ctrl.update = updateModel
-	    ctrl.updateCaret = setCaret
-	    ctrl.get = evaluatorPool.get('duplex:' + ctrl.expr)
-	    ctrl.set = evaluatorPool.get('duplex:set:' + ctrl.expr)
-	    var format = evaluatorPool.get('duplex:format:' + ctrl.expr)
-	    if (format) {
-	        ctrl.formatters.push(function (v) {
-	            return format(ctrl.vmodel, v)
-	        })
-	    }
-	    ctrl.vmodel = cur.duplexVm
-
-	    var events = ctrl.events = {}
-	//添加需要监听的事件
-	    switch (ctrl.type) {
-	        case 'radio':
-	            if (cur.props.type === 'radio') {
-	                events.click = updateModel
-	            } else {
-	                events.change = updateModel
-	            }
-	            break
-	        case 'checkbox':
-	        case 'select':
-	            events.change = updateModel
-	            break
-	        case 'contenteditable':
-	            if (ctrl.isChanged) {
-	                events.blur = updateModel
-	            } else {
-	                if (window.webkitURL) {
-	                    // http://code.metager.de/source/xref/WebKit/LayoutTests/fast/events/
-	                    // https://bugs.webkit.org/show_bug.cgi?id=110742
-	                    events.webkitEditableContentChanged = updateModel
-	                } else if (window.MutationEvent) {
-	                    events.DOMCharacterDataModified = updateModel
-	                }
-	                events.input = updateModel
-	            }
-	            break
-	        case 'input':
-	            if (ctrl.isChanged) {
-	                events.change = updateModel
-	            } else {
-
-	                events.input = updateModel
-
-	                events.compositionstart = openComposition
-	                events.compositionend = closeComposition
-	            }
-	            break
-	    }
-
-	    if (/password|text/.test(cur.props.type)) {
-	        events.focus = openCaret
-	        events.blur = closeCaret
-	    }
-
-	}
-
-
-	function updateModel() {
-	    var elem = this
-	    var ctrl = this.__duplex__
-	    if (elem.composing || elem.value === ctrl.lastViewValue)
-	        return
-	    if (elem.caret) {
-	        try {
-	            var pos = getCaret(elem)
-	            if (pos.start === pos.end) {
-	                ctrl.caretPos = pos.start
-	            }
-	        } catch (e) {
-	            avalon.warn('fixCaret error', e)
-	        }
-	    }
-	    if (ctrl.debounceTime > 4) {
-	        var timestamp = new Date()
-	        var left = timestamp - ctrl.time || 0
-	        ctrl.time = timestamp
-	        if (left >= ctrl.debounceTime) {
-	            refreshModel[ctrl.type].call(ctrl)
-	        } else {
-	            clearTimeout(ctrl.debounceID)
-	            ctrl.debounceID = setTimeout(function () {
-	                refreshModel[ctrl.type].call(ctrl)
-	            }, left)
-	        }
-	    } else {
-	        refreshModel[ctrl.type].call(ctrl)
-	    }
-	}
-
-
-
-	function openCaret() {
-	    this.caret = true
-	}
-
-	function closeCaret() {
-	    this.caret = false
-	}
-	function openComposition() {
-	    this.composing = true
-	}
-
-	function closeComposition(e) {
-	    this.composing = false
-	    updateModel.call(this, e)
-	}
-
-
-	markID(openCaret)
-	markID(closeCaret)
-	markID(openComposition)
-	markID(closeComposition)
-	markID(updateModel)
-
-
-
-	function getCaret(ctrl) {
-	    var start = NaN, end = NaN
-	    if (ctrl.setSelectionRange) {
-	        start = ctrl.selectionStart
-	        end = ctrl.selectionEnd
-	    }
-	    return {
-	        start: start,
-	        end: end
-	    }
-	}
-
-	function setCaret(ctrl, begin, end) {
-	    if (!ctrl.value || ctrl.readOnly)
-	        return
-	    ctrl.selectionStart = begin
-	    ctrl.selectionEnd = end
-	}
-
-	module.exports = initControl
-
-/***/ },
-/* 93 */
 /***/ function(module, exports) {
 
 	var refreshControl = {
@@ -5702,11 +5548,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = refreshControl
 
 /***/ },
-/* 94 */
+/* 93 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var share = __webpack_require__(95)
+	var share = __webpack_require__(94)
 	var isSkip = share.isSkip
 	var $$midway = share.$$midway
 	var $$skipArray = share.$$skipArray
@@ -5982,7 +5828,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 95 */
+/* 94 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var share = __webpack_require__(70)
@@ -6060,6 +5906,161 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = mixin
 
+
+/***/ },
+/* 95 */,
+/* 96 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var window = avalon.window
+
+	var refreshModel = __webpack_require__(52)
+	var markID = __webpack_require__(6).getLongID
+	var evaluatorPool = __webpack_require__(53)
+
+	function initControl(cur, pre) {
+	    var ctrl = cur.ctrl = pre.ctrl
+
+	    ctrl.update = updateModel
+	    ctrl.updateCaret = setCaret
+	    ctrl.get = evaluatorPool.get('duplex:' + ctrl.expr)
+	    ctrl.set = evaluatorPool.get('duplex:set:' + ctrl.expr)
+	    var format = evaluatorPool.get('duplex:format:' + ctrl.expr)
+	    if (format) {
+	        ctrl.formatters.push(function (v) {
+	            return format(ctrl.vmodel, v)
+	        })
+	    }
+	    ctrl.vmodel = cur.duplexVm
+
+	    var events = ctrl.events = {}
+	//添加需要监听的事件
+	    switch (ctrl.type) {
+	        case 'radio':
+	            if (cur.props.type === 'radio') {
+	                events.click = updateModel
+	            } else {
+	                events.change = updateModel
+	            }
+	            break
+	        case 'checkbox':
+	        case 'select':
+	            events.change = updateModel
+	            break
+	        case 'contenteditable':
+	            if (ctrl.isChanged) {
+	                events.blur = updateModel
+	            } else {
+	                if (window.webkitURL) {
+	                    // http://code.metager.de/source/xref/WebKit/LayoutTests/fast/events/
+	                    // https://bugs.webkit.org/show_bug.cgi?id=110742
+	                    events.webkitEditableContentChanged = updateModel
+	                } else if (window.MutationEvent) {
+	                    events.DOMCharacterDataModified = updateModel
+	                }
+	                events.input = updateModel
+	            }
+	            break
+	        case 'input':
+	            if (ctrl.isChanged) {
+	                events.change = updateModel
+	            } else {
+
+	                events.input = updateModel
+
+	                events.compositionstart = openComposition
+	                events.compositionend = closeComposition
+	            }
+	            break
+	    }
+
+	    if (/password|text/.test(cur.props.type)) {
+	        events.focus = openCaret
+	        events.blur = closeCaret
+	    }
+
+	}
+
+
+	function updateModel() {
+	    var elem = this
+	    var ctrl = this.__duplex__
+	    if (elem.composing || elem.value === ctrl.lastViewValue)
+	        return
+	    if (elem.caret) {
+	        try {
+	            var pos = getCaret(elem)
+	            if (pos.start === pos.end) {
+	                ctrl.caretPos = pos.start
+	            }
+	        } catch (e) {
+	            avalon.warn('fixCaret error', e)
+	        }
+	    }
+	    if (ctrl.debounceTime > 4) {
+	        var timestamp = new Date()
+	        var left = timestamp - ctrl.time || 0
+	        ctrl.time = timestamp
+	        if (left >= ctrl.debounceTime) {
+	            refreshModel[ctrl.type].call(ctrl)
+	        } else {
+	            clearTimeout(ctrl.debounceID)
+	            ctrl.debounceID = setTimeout(function () {
+	                refreshModel[ctrl.type].call(ctrl)
+	            }, left)
+	        }
+	    } else {
+	        refreshModel[ctrl.type].call(ctrl)
+	    }
+	}
+
+
+
+	function openCaret() {
+	    this.caret = true
+	}
+
+	function closeCaret() {
+	    this.caret = false
+	}
+	function openComposition() {
+	    this.composing = true
+	}
+
+	function closeComposition(e) {
+	    this.composing = false
+	    updateModel.call(this, e)
+	}
+
+
+	markID(openCaret)
+	markID(closeCaret)
+	markID(openComposition)
+	markID(closeComposition)
+	markID(updateModel)
+
+
+
+	function getCaret(ctrl) {
+	    var start = NaN, end = NaN
+	    if (ctrl.setSelectionRange) {
+	        start = ctrl.selectionStart
+	        end = ctrl.selectionEnd
+	    }
+	    return {
+	        start: start,
+	        end: end
+	    }
+	}
+
+	function setCaret(ctrl, begin, end) {
+	    if (!ctrl.value || ctrl.readOnly)
+	        return
+	    ctrl.selectionStart = begin
+	    ctrl.selectionEnd = end
+	}
+
+	module.exports = initControl
 
 /***/ }
 /******/ ])
