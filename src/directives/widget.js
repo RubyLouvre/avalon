@@ -13,22 +13,21 @@ function wrap(str) {
 avalon.directive('widget', {
     parse: function (binding, num, elem) {
         var str = ''
-        for(var i in elem.props){
-            if(i !== 'ms-widget'){
-              str+= 'vnode' + num + '.props['+avalon.quote(i)+'] = ' +
-                      avalon.quote(elem.props[i]) + ';\n' 
+        for (var i in elem.props) {
+            if (i !== 'ms-widget') {
+                str += 'vnode' + num + '.props[' + avalon.quote(i) + '] = ' +
+                        avalon.quote(elem.props[i]) + ';\n'
             }
         }
         return  str + 'vnode' + num + '.props.wid = ' + avalon.quote(avalon.makeHashCode('w')) + '\n' +
                 'vnode' + num + '.props["ms-widget"] = ' + wrap(avalon.parseExpr(binding), 'widget') + ';\n' +
-              //  'vnode' + num + '.props.widget = ' + avalon.quote(binding.expr) + ';\n' +
-                '\tvnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
+                '\tvnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__, '+avalon.quote(binding.expr)+')\n'
     },
     define: function (topVm, defaults, options) {
         var after = avalon.mix({}, defaults, options)
         var events = {}
         //绑定生命周期的回调
-        '$init $ready $dispose $change'.replace(/\S+/g, function (a) {
+        'onInit onRready onViewChange onDispose'.replace(/\S+/g, function (a) {
             if (typeof after[a] === 'function')
                 events[a] = after[a]
             delete after[a]
@@ -39,7 +38,7 @@ avalon.directive('widget', {
         }
         return vm
     },
-    diff: function (cur) {
+    diff: function (cur, pre) {
         var renderCount = cur.renderCount
         if (!renderCount) {
             cur.change = [this.replaceByComment]
@@ -47,21 +46,27 @@ avalon.directive('widget', {
             avalon.diff(cur.children, [])
             cur.change = [this.replaceByComponent]
             cur.afterChange = [
-                function (dom) {
-                    cur.vmodel.$fire('$ready', dom)
+                function (dom, vnode) {
+                    cur.vmodel.$fire('onReady', dom, vnode)
                 }
             ]
         } else {
-            cur.change = cur.change || []
-            var isChange = false
-            cur.change.push(function (dom, vnode) {
-                if (checkChildrenChange(vnode)) {
-                    isChange = true
-                }
-            })
-            cur.afterChange = [function (dom) {
-                    isChange && cur.vmodel.$fire('$change', dom)
-                }]
+            var needUpdate = !cur.$diff || cur.$diff(cur, pre)
+            cur.skipContent = !needUpdate
+            
+            var viewChangeObservers = cur.vmodel.$events.onViewChange
+            if (viewChangeObservers && viewChangeObservers.length) {
+                cur.change = cur.change || []
+                var isChange = false
+                cur.change.push(function (dom, vnode) {
+                    if (checkChildrenChange(vnode)) {
+                        isChange = true
+                    }
+                })
+                cur.afterChange = [function (dom) {
+                        isChange && cur.vmodel.$fire('onViewChange', dom)
+                    }]
+            }
         }
 
 
@@ -85,8 +90,8 @@ avalon.directive('widget', {
     }
 })
 
-function checkChange(){
-    
+function checkChange(elem) {
+
 }
 function checkChildrenChange(elem) {
     for (var i = 0, el; el = elem.children[i++]; ) {
