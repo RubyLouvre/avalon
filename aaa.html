@@ -6,16 +6,14 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="./dist/avalon.js"></script>
         <script>
-            var vm = avalon.define({
-                $id: 'for0',
-                a: "司徒正美",
-                text:"333",
-                array: [1, 2, 3, 4, 5],
-                fn: function(a){
-                    console.log("view change")
-                }
-            })
-      
+          var vm = avalon.define({
+            $id: 'duplex1',
+            aaa: 12345,
+            bbb: '123a',
+            ccc: 'true',
+            ddd: true
+
+        })
         </script>
         <style>
             .ms-controller{
@@ -23,11 +21,11 @@
             }
         </style>
     </head>
-    <body><div ms-controller='for0' class='ms-controller'><p><input ms-duplex='@text'>{{@a}}<button >{{@text}}</button></p>
-         <wbr class='444' ms-widget="{$type:'ms-button',$id:'www',onViewChange:@fn}">
-            <xmp class='ii' ms-widget="{$type:'ms-panel',$id:'ee',onViewChange:@fn}"><div slot=''>这是body</div></xmp>
+    <body>
 
-        </div>
-   
-</body>
+ <div ms-controller='duplex1' >
+             <input ms-duplex-string='@aaa|limitBy(4)'><span>{{@aaa}}</span>
+           
+             </div>
+    </body>
 </html>

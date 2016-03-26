@@ -47,8 +47,6 @@ module.exports = avalon.scan = function (a) {
         avalon.warn('[avalon.scan] first argument must be element , documentFragment, or document')
         return
     }
-    if (getController(a)) {
-    }
     scan([a])
     if (scanStatistics === 0) {
         avalon.warn('[avalon.scan] your nodes must has "ms-controller" attribute')
