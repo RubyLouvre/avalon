@@ -3097,10 +3097,12 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 34 */
 /***/ function(module, exports) {
 
+	var scanStatistics = 0
 	function scan(nodes) {
 	    for (var i = 0, elem; elem = nodes[i++]; ) {
 	        if (elem.nodeType === 1) {
-	            var $id = hasController(elem)
+	            var $id = getController(elem)
+	            ++scanStatistics
 	            var vm = avalon.vmodels[$id]
 	            if (vm && !vm.$element) {
 	                cleanWhitespace(elem)//减少虚拟DOM的规模及diff, patch的时间
@@ -3128,14 +3130,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var keep
 	    for (var i = 0; i < target.childNodes.length; i++) {
 	        var node = target.childNodes[i]
-	        if ((node.nodeType == 3) && (!notWhitespace.test(node.nodeValue))) {
+	        if ((node.nodeType === 3) && (!notWhitespace.test(node.nodeValue))) {
 	            keep = target.removeChild(node)
 	            i--
-	        }else if (node.nodeType === 1) {
+	        } else if (node.nodeType === 1) {
 	            cleanWhitespace(node)
 	        }
 	    }
-	    if (target.childNodes.length == 0 && keep) {
+	    if (target.childNodes.length === 0 && keep) {
 	        target.appendChild(keep)
 	    }
 	}
@@ -3145,25 +3147,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return
 	    }
 	    if (getController(a)) {
-	        avalon.warn('[avalon.scan] first argument must has "ms-controller" attribute')
 	    }
 	    scan([a])
+	    if (scanStatistics === 0) {
+	        avalon.warn('[avalon.scan] your nodes must has "ms-controller" attribute')
+	    }
+	    scanStatistics = 0
 	}
-	function hasController(a) {
-	    return a.getAttribute('ms-controller')
-	}
+
 	function getController(a) {
-	    if (a.getAttribute && hasController(a)) {
-	        return true
-	    }
-	    //document.all http://www.w3help.org/zh-cn/causes/BX9002
-	    var all = a.getElementsByTagName ? a.getElementsByTagName('*') : a.querySelectorAll('*')
-	    for (var i = 0, node; node = all[i++]; ) {
-	        if (hasController(a)) {
-	            return true
-	        }
-	    }
-	    return false
+	    return a.getAttribute('ms-controller')
 	}
 
 /***/ },
