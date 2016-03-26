@@ -3108,16 +3108,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var vm = avalon.vmodels[$id]
 	            if (vm && !vm.$element) {
 	                cleanWhitespace(elem)//减少虚拟DOM的规模及diff, patch的时间
-	                var str = elem.outerHTML
 	                avalon(elem).removeClass('ms-controller')
 	                vm.$element = elem
-	                var now = new Date() - 0
-	                var vtree = elem.vtree = avalon.lexer(str)
-	                avalon.log('create primitive vtree', new Date - now)
-	                now = new Date()
+	                var now = new Date()
+	                var vtree = elem.vtree = avalon.lexer(elem.outerHTML)
+	                var now2 = new Date()
+	                avalon.log('create primitive vtree', now2 - now)
 	                vm.$render = avalon.render(vtree)
-	                avalon.log('create template Function ', new Date - now)
-	                avalon.rerenderStart = new Date
+	                var now3 = new Date()
+	                avalon.log('create template Function ', now3 - now2)
+	                avalon.rerenderStart = now3
 	                avalon.batch($id, true)
 
 	            } else if (!$id) {
