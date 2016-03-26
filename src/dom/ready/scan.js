@@ -3,7 +3,9 @@ function scan(nodes) {
     for (var i = 0, elem; elem = nodes[i++]; ) {
         if (elem.nodeType === 1) {
             var $id = getController(elem)
-            ++scanStatistics
+            if ($id) {
+                ++scanStatistics
+            }
             var vm = avalon.vmodels[$id]
             if (vm && !vm.$element) {
                 cleanWhitespace(elem)//减少虚拟DOM的规模及diff, patch的时间
@@ -11,13 +13,12 @@ function scan(nodes) {
                 avalon(elem).removeClass('ms-controller')
                 vm.$element = elem
                 var now = new Date() - 0
-                var vtree = avalon.lexer(str)
+                var vtree = elem.vtree = avalon.lexer(str)
                 avalon.log('create primitive vtree', new Date - now)
                 now = new Date()
                 vm.$render = avalon.render(vtree)
                 avalon.log('create template Function ', new Date - now)
                 avalon.rerenderStart = new Date
-                elem.vtree = vtree
                 avalon.batch($id, true)
 
             } else if (!$id) {
