@@ -45,18 +45,13 @@ avalon.directive('html', {
             })
         }
         //添加节点
-        if (window.Range) {
-            node.innerHTML = vnode.children.map(function (c) {
-                return avalon.vdomAdaptor(c, 'toHTML')
-            }).join('')
-        } else {
-            avalon.clearHTML(node)
-            var fragment = document.createDocumentFragment()
-            vnode.children.forEach(function (c) {
-                fragment.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
-            })
+        avalon.clearHTML(node)
+        var fragment = document.createDocumentFragment()
+        vnode.children.forEach(function (c) {
+            fragment.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
+        })
 
-            node.appendChild(fragment)
-        }
+        node.appendChild(fragment)
+        
     }
 })

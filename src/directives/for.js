@@ -195,21 +195,21 @@ avalon.directive('for', {
 var forCache = new Cache(128)
 function componentToDom(com, fragment, cur) {
     com.nodes = []
-    com.children.forEach(function (c) {
-        if (c.type.charAt(0) === '#') {
+    for (var i = 0, c; c = com.children[i++]; ) {
+        if (c.node === 1) {
+            cur = avalon.vdomAdaptor(c, 'toDOM')
+        } else {
             var expr = c.type + '#' + c.nodeValue
             var node = forCache.get(expr)
             if (!node) {
-                node = avalon.vdomAdaptor(c,'toDOM')
+                node = avalon.vdomAdaptor(c, 'toDOM')
                 forCache.put(expr, node)
             }
             cur = node.cloneNode(true)
-        } else {
-            cur = avalon.vdomAdaptor(c,'toDOM')
         }
         com.nodes.push(cur)
         fragment.appendChild(cur)
-    })
+    }
     return fragment
 }
 
@@ -220,7 +220,7 @@ function getComponents(nodes, signature) {
         children: []
     }
     for (var i = 0, el; el = nodes[i]; i++) {
-        if (el.type === '#comment' && el.nodeValue === signature) {
+        if (el.nodeType === 8 && el.nodeValue === signature) {
             com.children.push(el)
             com.key = el.key
             com.index = components.length
