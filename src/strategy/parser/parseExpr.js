@@ -76,7 +76,7 @@ function parseExpr(str, category) {
         if (!hasBracket) {
             str += '(__value__);'
         }
-        str = str.replace(/(\w+)/, 'avalon.__read__("$1")')
+        str = str.replace(/(\w+)/, 'avalon.__format__("$1")')
         return '__value__ = ' + str
     })
     var ret = []

@@ -4,7 +4,7 @@
 var VText = require('./VText')
 var VElement = require('./VElement')
 var VComment = require('./VComment')
-avalon.vdomAdaptor = function (obj) {
+avalon.vdomAdaptor = function (obj, type) {
     switch (obj.type) {
         case '#text':
             return new VText(obj)

@@ -4,6 +4,7 @@ function VComment(text) {
         this.type = '#comment'
         this.nodeValue = text
         this.skipContent = true
+        this.nodeType = 8
     } else {
         for (var i in text) {
             this[i] = text[i]
@@ -12,9 +13,6 @@ function VComment(text) {
 }
 VComment.prototype = {
     constructor: VComment,
-    clone: function () {
-        return new VComment(this)
-    },
     toDOM: function () {
         return document.createComment(this.nodeValue)
     },

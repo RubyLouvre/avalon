@@ -9,6 +9,7 @@ function VElement(type, props, children) {
         this.props = props
         this.children = children
         this.template = ''
+        this.nodeType = 1
     }
 }
 function skipFalseAndFunction(a) {

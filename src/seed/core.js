@@ -12,7 +12,7 @@ avalon.init = function (el) {
 avalon.fn = avalon.prototype = avalon.init.prototype
 
 
-avalon.mix = function (destination, source) {
+avalon.shadowCopy = function (destination, source) {
     for (var property in source) {
         destination[property] = source[property]
     }
@@ -23,7 +23,7 @@ var rword = /[^, ]+/g
 
 var hasConsole = window.console
 
-avalon.mix(avalon, {
+avalon.shadowCopy(avalon, {
     noop: function () {
     },
     //切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach

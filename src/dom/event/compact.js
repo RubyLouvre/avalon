@@ -178,12 +178,12 @@ avalon.fireDom = function (elem, type, opts) {
     if (document.createEvent) {
         var hackEvent = document.createEvent('Events')
         hackEvent.initEvent(type, true, true, opts)
-        avalon.mix(hackEvent, opts)
+        avalon.shadowCopy(hackEvent, opts)
 
         elem.dispatchEvent(hackEvent)
     } else if (root.contains(elem)) {//IE6-8触发事件必须保证在DOM树中,否则报'SCRIPT16389: 未指明的错误'
         hackEvent = document.createEventObject()
-        avalon.mix(hackEvent, opts)
+        avalon.shadowCopy(hackEvent, opts)
         elem.fireEvent('on' + type, hackEvent)
     }
 }

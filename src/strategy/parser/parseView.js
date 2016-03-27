@@ -28,7 +28,7 @@ function parseView(arr, num) {
     for (var i = 0; i < arr.length; i++) {
         var el = arr[i]
         if (el.type === '#text') {
-            str += 'var ' + vnode + ' = {type:"#text", skipContent:true}\n'
+            str += 'var ' + vnode + ' = {type:"#text",nodeType:3, skipContent:true}\n'
             var hasDelimiter = rexpr.test(el.nodeValue)
 
             if (hasDelimiter) {
@@ -60,11 +60,12 @@ function parseView(arr, num) {
                 var signature = el.signature
                 forstack.push(signature)
                 str += '\nvar ' + signature + '= {' +
+                        '\n\tnodeType:8,' +
                         '\n\ttype:"#comment",' +
                         '\n\tdirective:"for",' +
                         '\n\tskipContent:false,' +
-                        '\n\tsignature:' + quote(signature) + ',' +
                         '\n\tstart:' + children + '.length,' +
+                        '\n\tsignature:' + quote(signature) + ',' +
                         '\n\tnodeValue:' + quote(nodeValue) +
                         '\n}\n'
                 str += children + '.push(' + signature + ')\n'
@@ -74,6 +75,7 @@ function parseView(arr, num) {
                 var signature = forstack[forstack.length - 1]
 
                 str += children + '.push({' +
+                        '\n\tnodeType:8,' +
                         '\n\ttype:"#comment",' +
                         '\n\tskipContent:true,' +
                         '\n\tnodeValue:' + quote(signature) + ',' +
@@ -82,6 +84,7 @@ function parseView(arr, num) {
                 if (forstack.length) {
                     var signature = forstack[forstack.length - 1]
                     str += signature + '.end =' + children + '.push({' +
+                            '\n\tnodeType:8,' +
                             '\n\ttype:"#comment",' +
                             '\n\tskipContent:true,' +
                             '\n\tsignature:' + quote(signature) + ',' +
@@ -102,6 +105,7 @@ function parseView(arr, num) {
                 el.signature = makeHashCode('ms-if')
                 str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'
                 str += children + '.push({' +
+                        '\n\tnodeType:8,' +
                         '\n\ttype: "#comment",' +
                         '\n\tdirective: "if",' +
                         '\n\tnodeValue:' + quote(el.signature) + ',\n' +
@@ -110,6 +114,7 @@ function parseView(arr, num) {
                 str += '\n}else{\n\n'
             }
             str += 'var ' + vnode + ' = {' +
+                        '\n\tnodeType:1,' + 
                         '\n\ttype: ' + quote(el.type) + ',' +
                         '\n\tprops: {},' +
                         '\n\tchildren: [],' +

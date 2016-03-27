@@ -3,7 +3,7 @@ require('./lang.fix')
 var avalon = require('./core')
 var browser = require('./browser')
 
-avalon.mix(avalon, browser)
+avalon.shadowCopy(avalon, browser)
 
 require('./lang.compact')
 require('./lang.share')

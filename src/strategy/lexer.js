@@ -99,6 +99,7 @@ function lexer(text, recursive) {
                         (type.length + 3) * -1) //抽取innerHTML
 
                 node = {
+                    nodeType: 1,
                     type: type,
                     props: props,
                     template: innerHTML.replace(rfill, fill).trim(),
@@ -118,6 +119,7 @@ function lexer(text, recursive) {
                     handleProps(match[2], props)
                 }
                 node = {
+                    nodeType: 1,
                     type: type,
                     props: props,
                     template: '',

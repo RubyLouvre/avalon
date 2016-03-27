@@ -96,7 +96,7 @@ avalon.component = function (name, definition) {
             vmodel.$render = render
             vmodel.$fire('onInit', vmodel)
 
-            avalon.mix(docker, {
+            avalon.shadowCopy(docker, {
                 render: render,
                 vmodel: vmodel,
                 diff: diff,

@@ -5,6 +5,7 @@ function VText(text) {
         this.type = '#text'
         this.nodeValue = text
         this.skipContent = !rexpr.test(text)
+        this.nodeType = 3
     } else {
         for (var i in text) {
             this[i] = text[i]
