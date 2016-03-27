@@ -73,7 +73,7 @@ function lexer(text, recursive) {
                 if (rspBeforeForEnd.test(nodeValue)) {
                     var sp = nodes[nodes.length - 1]
                     //移除紧挨着<!--ms-for-end:xxxx-->前的空白节点
-                    if (sp && sp.type === '#text' && rsp.test(sp.nodeValue)) {
+                    if (sp && sp.nodeType === 3 && rsp.test(sp.nodeValue)) {
                         nodes.pop()
                     }
                 }
@@ -133,7 +133,7 @@ function lexer(text, recursive) {
         if (node) {//从text中移除被匹配的部分
             nodes.push(node)
             text = text.slice(outerHTML.length)
-            if (node.type === '#comment' && rspAfterForStart.test(node.nodeValue)) {
+            if (node.nodeType === 8 && rspAfterForStart.test(node.nodeValue)) {
                 node.signature = makeHashCode('for')
                 //移除紧挨着<!--ms-for:xxxx-->后的空白节点
                 text = text.replace(rleftSp, '')
@@ -236,6 +236,7 @@ function modifyProps(node, innerHTML, nodes) {
         var forExpr = node.props['ms-for'] 
         if (forExpr) {
             nodes.push({
+                nodeType: 8,
                 type: '#comment',
                 nodeValue: 'ms-for:' + forExpr,
                 signature: makeHashCode('for')
@@ -243,6 +244,8 @@ function modifyProps(node, innerHTML, nodes) {
             delete node.props['ms-for']
             nodes.push(node)
             node = {
+                nodeType: 8,
+                skipContent: true,
                 type: '#comment',
                 nodeValue: 'ms-for-end:'
             }
@@ -258,6 +261,7 @@ function addTbody(nodes) {
         if (!tbody) {
             if (node.type === 'tr') {
                 tbody = {
+                    nodeType: 1,
                     type: 'tbody',
                     template: '',
                     children: [],
@@ -270,7 +274,7 @@ function addTbody(nodes) {
                 nodes[i] = tbody
             }
         } else {
-            if (node.type !== 'tr' && node.type.charAt(0) !== "#") {
+            if (node.type !== 'tr' && node.nodeType === 1) {
                 tbody = false
             } else {
                 tbody.children.push(node)

@@ -200,12 +200,12 @@ function componentToDom(com, fragment, cur) {
             var expr = c.type + '#' + c.nodeValue
             var node = forCache.get(expr)
             if (!node) {
-                node = avalon.vdomAdaptor(c).toDOM()
+                node = avalon.vdomAdaptor(c,'toDOM')
                 forCache.put(expr, node)
             }
             cur = node.cloneNode(true)
         } else {
-            cur = avalon.vdomAdaptor(c).toDOM()
+            cur = avalon.vdomAdaptor(c,'toDOM')
         }
         com.nodes.push(cur)
         fragment.appendChild(cur)

@@ -2,16 +2,17 @@
  * 虚拟DOM的4大构造器
  */
 var VText = require('./VText')
-var VElement = require('./VElement')
 var VComment = require('./VComment')
-avalon.vdomAdaptor = function (obj, type) {
-    switch (obj.type) {
-        case '#text':
-            return new VText(obj)
-        case '#comment':
-            return new VComment(obj)
+var VElement = require('./VElement')
+
+avalon.vdomAdaptor = function (obj, method) {
+    switch (obj.nodeType) {
+        case 3:
+            return VText.prototype[method].call(obj) 
+        case 8:
+            return VComment.prototype[method].call(obj)
         default:
-            return new VElement(obj)
+            return VElement.prototype[method].call(obj)
     }
 }
 

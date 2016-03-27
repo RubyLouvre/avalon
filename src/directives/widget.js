@@ -76,7 +76,7 @@ avalon.directive('widget', {
         }
     },
     replaceByComponent: function (dom, node, parent) {      
-        var com = avalon.vdomAdaptor(node).toDOM()
+        var com = avalon.vdomAdaptor(node, 'toDOM')
         if (dom) {
             parent.replaceChild(com, dom)
         } else {

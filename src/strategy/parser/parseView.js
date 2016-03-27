@@ -27,8 +27,8 @@ function parseView(arr, num) {
     var str = 'var ' + children + ' = []\n'
     for (var i = 0; i < arr.length; i++) {
         var el = arr[i]
-        if (el.type === '#text') {
-            str += 'var ' + vnode + ' = {type:"#text",nodeType:3, skipContent:true}\n'
+        if (el.nodeType === 3) {
+            str += 'var ' + vnode + ' = {type:"#text",nodeType:3,skipContent:true}\n'
             var hasDelimiter = rexpr.test(el.nodeValue)
 
             if (hasDelimiter) {
@@ -54,7 +54,7 @@ function parseView(arr, num) {
             }
             str += children + '.push(' + vnode + ')\n'
 
-        } else if (el.type === '#comment') {
+        } else if (el.nodeType === 8) {
             var nodeValue = el.nodeValue
             if (nodeValue.indexOf('ms-for:') === 0) {// 处理ms-for指令
                 var signature = el.signature
@@ -100,7 +100,6 @@ function parseView(arr, num) {
             continue
         } else { //处理元素节点
             var hasIf = el.props['ms-if']
-
             if (hasIf) { // 处理ms-if指令
                 el.signature = makeHashCode('ms-if')
                 str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'

@@ -16,13 +16,13 @@ function diff(current, previous) {
     for (var i = 0; i < current.length; i++) {
         var cur = current[i]
         var pre = previous[i] || emptyObj
-        switch (cur.type) {
-            case '#text':
+        switch (cur.nodeType) {
+            case 3:
                 if (!cur.skipContent) {
                     directives.expr.diff(cur, pre)
                 }
                 break
-            case '#comment':
+            case 8:
                 if (cur.directive === 'for') {
                     i = directives['for'].diff(current, previous, i)
                 } else if (cur.directive ) {//if widget

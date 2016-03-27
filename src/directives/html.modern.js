@@ -35,7 +35,7 @@ avalon.directive('html', {
         })
         //添加节点
         node.innerHTML = vnode.children.map(function (c) {
-            return avalon.vdomAdaptor(c).toHTML()
+            return avalon.vdomAdaptor(c, 'toHTML')
         }).join('')
 
     }
