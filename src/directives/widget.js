@@ -14,7 +14,7 @@ avalon.directive('widget', {
     parse: function (binding, num, elem) {
         var wid = avalon.makeHashCode('w')
         avalon.resolvedComponents[wid] = {
-            props: avalon.mix({}, elem.props),
+            props: avalon.shadowCopy({}, elem.props),
             template: elem.template
         }
         return  'vnode' + num + '.props.wid = "' + wid + '"\n' +

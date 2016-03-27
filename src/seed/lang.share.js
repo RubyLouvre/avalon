@@ -5,7 +5,7 @@ var rhashcode = /\d\.\d{4}/
 var rescape = /[-.*+?^${}()|[\]\/\\]/g
 
 var _slice = [].slice
-avalon.mix({
+avalon.shadowCopy(avalon, {
     caches: {}, //avalon2.0 新增
     vmodels: {},
     filters: {},

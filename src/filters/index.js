@@ -11,22 +11,16 @@ function K(a) {
     return a
 }
 
-avalon.mix({
-    __read__: function (name) {
-        var fn = filters[name]
-        if (fn) {
-            return fn.get ? fn.get : fn
-        }
-        return K
-    },
-    __write__: function (name) {
-        var fn = filters[name]
-        return fn && fn.set || K
+avalon.__format__ = function (name) {
+    var fn = filters[name]
+    if (fn) {
+        return fn.get ? fn.get : fn
     }
-})
+    return K
+}
 
 
-avalon.mix(filters, {
+avalon.shadowCopy(filters, {
     uppercase: function (str) {
         return str.toUpperCase()
     },

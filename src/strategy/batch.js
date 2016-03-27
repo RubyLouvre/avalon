@@ -56,7 +56,7 @@ function flushUpdate(callback, immediate ) {
             batchUpdate(id, true)
         }
     } else {
-        avalon.nextTick(callback)
+        setTimeout(callback, 0)
     }
 }
 

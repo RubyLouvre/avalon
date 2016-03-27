@@ -7,7 +7,7 @@ function kernel(settings) {
         if (typeof kernel.plugins[p] === 'function') {
             kernel.plugins[p](val)
         } else if (typeof kernel[p] === 'object') {
-            avalon.mix(kernel[p], val)
+            avalon.shadowCopy(kernel[p], val)
         } else {
             kernel[p] = val
         }

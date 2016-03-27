@@ -302,7 +302,7 @@ var applyEffect = function (el, dir/*[before, [after, [opts]]]*/) {
     }
 }
 
-avalon.mix(avalon.effect, {
+avalon.shadowCopy(avalon.effect, {
     apply: applyEffect,
     append: function (el, parent, after, opts) {
         return applyEffect(el, 1, function () {

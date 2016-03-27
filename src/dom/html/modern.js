@@ -1,7 +1,7 @@
 var Cache = require('../../seed/cache')
 var fixScript = require('./fixScript')
 var tagHooks = new function () {// jshint ignore:line
-    avalon.mix(this, {
+    avalon.shadowCopy(this, {
         option: document.createElement('select'),
         thead: document.createElement('table'),
         td: document.createElement('tr'),
@@ -35,7 +35,7 @@ var htmlHook
 if (/HTMLTemplateElement/.test(tempateTag)) {
     htmlHook = tempateTag
 } else {
-    avalon.mix(tagHooks, svgHooks)
+    avalon.shadowCopy(tagHooks, svgHooks)
 }
 
 avalon.parseHTML = function (html) {

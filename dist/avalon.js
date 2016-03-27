@@ -81,7 +81,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var avalon = __webpack_require__(3)
 	var browser = __webpack_require__(4)
 
-	avalon.mix(avalon, browser)
+	avalon.shadowCopy(avalon, browser)
 
 	__webpack_require__(5)
 	__webpack_require__(6)
@@ -307,7 +307,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.fn = avalon.prototype = avalon.init.prototype
 
 
-	avalon.mix = function (destination, source) {
+	avalon.shadowCopy = function (destination, source) {
 	    for (var property in source) {
 	        destination[property] = source[property]
 	    }
@@ -318,7 +318,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var hasConsole = window.console
 
-	avalon.mix(avalon, {
+	avalon.shadowCopy(avalon, {
 	    noop: function () {
 	    },
 	    //切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach
@@ -395,37 +395,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        browser.msie = document.documentMode || (window.XMLHttpRequest ? 7 : 6)
 	    }
 	}
-
-	browser.nextTick = (function () {// jshint ignore:line
-	    var tickImmediate = window.setImmediate
-	    var tickObserver = window.MutationObserver
-	    if (tickImmediate) {
-	        return tickImmediate.bind(window)
-	    }
-
-	    var queue = []
-	    function callback() {
-	        var n = queue.length
-	        for (var i = 0; i < n; i++) {
-	            queue[i]()
-	        }
-	        queue = queue.slice(n)
-	    }
-
-	    if (tickObserver) {
-	        var node = document.createTextNode('avalon')
-	        new tickObserver(callback).observe(node, {characterData: true})// jshint ignore:line
-	        var bool = false
-	        return function (fn) {
-	            queue.push(fn)
-	            bool = !bool
-	            node.data = bool
-	        }
-	    }
-	    return function (fn) {
-	        setTimeout(fn, 4)
-	    }
-	})()
 
 	module.exports = browser
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
@@ -669,7 +638,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rescape = /[-.*+?^${}()|[\]\/\\]/g
 
 	var _slice = [].slice
-	avalon.mix({
+	avalon.shadowCopy(avalon, {
 	    caches: {}, //avalon2.0 新增
 	    vmodels: {},
 	    filters: {},
@@ -828,7 +797,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (typeof kernel.plugins[p] === 'function') {
 	            kernel.plugins[p](val)
 	        } else if (typeof kernel[p] === 'object') {
-	            avalon.mix(kernel[p], val)
+	            avalon.shadowCopy(kernel[p], val)
 	        } else {
 	            kernel[p] = val
 	        }
@@ -886,22 +855,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return a
 	}
 
-	avalon.mix({
-	    __read__: function (name) {
-	        var fn = filters[name]
-	        if (fn) {
-	            return fn.get ? fn.get : fn
-	        }
-	        return K
-	    },
-	    __write__: function (name) {
-	        var fn = filters[name]
-	        return fn && fn.set || K
+	avalon.__format__ = function (name) {
+	    var fn = filters[name]
+	    if (fn) {
+	        return fn.get ? fn.get : fn
 	    }
-	})
+	    return K
+	}
 
 
-	avalon.mix(filters, {
+	avalon.shadowCopy(filters, {
 	    uppercase: function (str) {
 	        return str.toUpperCase()
 	    },
@@ -2835,12 +2798,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (document.createEvent) {
 	        var hackEvent = document.createEvent('Events')
 	        hackEvent.initEvent(type, true, true, opts)
-	        avalon.mix(hackEvent, opts)
+	        avalon.shadowCopy(hackEvent, opts)
 
 	        elem.dispatchEvent(hackEvent)
 	    } else if (root.contains(elem)) {//IE6-8触发事件必须保证在DOM树中,否则报'SCRIPT16389: 未指明的错误'
 	        hackEvent = document.createEventObject()
-	        avalon.mix(hackEvent, opts)
+	        avalon.shadowCopy(hackEvent, opts)
 	        elem.fireEvent('on' + type, hackEvent)
 	    }
 	}
@@ -4907,7 +4870,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parse: function (binding, num, elem) {
 	        var wid = avalon.makeHashCode('w')
 	        avalon.resolvedComponents[wid] = {
-	            props: avalon.mix({}, elem.props),
+	            props: avalon.shadowCopy({}, elem.props),
 	            template: elem.template
 	        }
 	        return  'vnode' + num + '.props.wid = "' + wid + '"\n' +
@@ -5476,7 +5439,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            batchUpdate(id, true)
 	        }
 	    } else {
-	        avalon.nextTick(callback)
+	        setTimeout(callback, 0)
 	    }
 	}
 
@@ -5718,7 +5681,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!hasBracket) {
 	            str += '(__value__);'
 	        }
-	        str = str.replace(/(\w+)/, 'avalon.__read__("$1")')
+	        str = str.replace(/(\w+)/, 'avalon.__format__("$1")')
 	        return '__value__ = ' + str
 	    })
 	    var ret = []
@@ -6046,7 +6009,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            vmodel.$render = render
 	            vmodel.$fire('onInit', vmodel)
 
-	            avalon.mix(docker, {
+	            avalon.shadowCopy(docker, {
 	                render: render,
 	                vmodel: vmodel,
 	                diff: diff,

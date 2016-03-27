@@ -31,35 +31,4 @@ if (window.window === window) {
     }
 }
 
-browser.nextTick = (function () {// jshint ignore:line
-    var tickImmediate = window.setImmediate
-    var tickObserver = window.MutationObserver
-    if (tickImmediate) {
-        return tickImmediate.bind(window)
-    }
-
-    var queue = []
-    function callback() {
-        var n = queue.length
-        for (var i = 0; i < n; i++) {
-            queue[i]()
-        }
-        queue = queue.slice(n)
-    }
-
-    if (tickObserver) {
-        var node = document.createTextNode('avalon')
-        new tickObserver(callback).observe(node, {characterData: true})// jshint ignore:line
-        var bool = false
-        return function (fn) {
-            queue.push(fn)
-            bool = !bool
-            node.data = bool
-        }
-    }
-    return function (fn) {
-        setTimeout(fn, 4)
-    }
-})()
-
 module.exports = browser

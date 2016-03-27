@@ -201,7 +201,7 @@ avEvent.prototype = {
 avalon.fireDom = function (elem, type, opts) {
     var hackEvent = document.createEvent('Events');
     hackEvent.initEvent(type, true, true)
-    avalon.mix(hackEvent, opts)
+    avalon.shadowCopy(hackEvent, opts)
     elem.dispatchEvent(hackEvent)
 }
 
