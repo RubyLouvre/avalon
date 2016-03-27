@@ -6535,11 +6535,12 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var dispatch = __webpack_require__(71)
-	var $watch = dispatch.$watch
-	var $emit = dispatch.$emit
 	var $$midway = {}
 	var $$skipArray = __webpack_require__(72)
+	var dispatch = __webpack_require__(71)
+	var $emit = dispatch.$emit
+	var $watch = dispatch.$watch
+
 
 
 	function makeFire($vmodel, heirloom) {
@@ -6562,8 +6563,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function isSkip(key, value, skipArray) {
 	    // 判定此属性能否转换访问器
-	    return key.charAt(0) === '$' ||
-	            skipArray[key] ||
+	    return  skipArray[key] ||
+	            key.charAt(0) === '$' ||        
 	            (typeof value === 'function') ||
 	            (value && value.nodeName && value.nodeType > 0)
 	}

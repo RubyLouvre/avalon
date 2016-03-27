@@ -1,9 +1,10 @@
 
-var dispatch = require('../../strategy/dispatch')
-var $watch = dispatch.$watch
-var $emit = dispatch.$emit
 var $$midway = {}
 var $$skipArray = require('./skipArray')
+var dispatch = require('../../strategy/dispatch')
+var $emit = dispatch.$emit
+var $watch = dispatch.$watch
+
 
 
 function makeFire($vmodel, heirloom) {
@@ -26,8 +27,8 @@ function makeFire($vmodel, heirloom) {
 
 function isSkip(key, value, skipArray) {
     // 判定此属性能否转换访问器
-    return key.charAt(0) === '$' ||
-            skipArray[key] ||
+    return  skipArray[key] ||
+            key.charAt(0) === '$' ||        
             (typeof value === 'function') ||
             (value && value.nodeName && value.nodeType > 0)
 }
