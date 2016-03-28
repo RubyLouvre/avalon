@@ -42,7 +42,11 @@ function modelAdaptor(definition, old, heirloom, options) {
         //如果此属性原来就是一个VM,拆分里面的访问器属性
         if (old && old.$id) {
              ++avalon.suspendUpdate
-            var vm = $$midway.slaveFactory(old, definition, heirloom, options)
+            if(old.$track !== Object.keys(definition).sort().join(';;')){
+               var vm = $$midway.slaveFactory(old, definition, heirloom, options)
+            }else{
+               vm = old
+            }
             for (var i in definition) {
                 if ($$skipArray[i])
                     continue

@@ -2418,6 +2418,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                node = startRepeat.nextSibling
 	            }
 	        }
+	         if(!startRepeat.domTemplate &&  vnode.components[0]){
+	            var domTemplate = fragment.cloneNode(false)
+	            componentToDom(vnode.components[0], domTemplate)
+	            startRepeat.domTemplate = domTemplate
+	        
+	         }
 
 	        for (var i in vnode.removedComponents) {
 	            var el = vnode.removedComponents[i]
@@ -2444,11 +2450,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    })
 	                    parent.insertBefore(moveFragment, insertPoint.nextSibling)
 	                }
-
 	            } else {
-	                var newFragment = fragment.cloneNode(false)
-	                componentToDom(com, newFragment)
-	                cnodes = com.nodes
+	                var newFragment = startRepeat.domTemplate.cloneNode(true)
+	                cnodes = com.nodes = avalon.slice(newFragment.childNodes)
 	                parent.insertBefore(newFragment, insertPoint.nextSibling)
 	            }
 	            insertPoint = cnodes[cnodes.length - 1]
@@ -2468,9 +2472,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var forCache = new Cache(128)
 	function componentToDom(com, fragment, cur) {
-	    com.nodes = []
 	    for (var i = 0, c; c = com.children[i++]; ) {
-	        if (c.node === 1) {
+	        if (c.nodeType === 1) {
 	            cur = avalon.vdomAdaptor(c, 'toDOM')
 	        } else {
 	            var expr = c.type + '#' + c.nodeValue
@@ -2481,7 +2484,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            cur = node.cloneNode(true)
 	        }
-	        com.nodes.push(cur)
 	        fragment.appendChild(cur)
 	    }
 	    return fragment
@@ -3872,7 +3874,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //如果此属性原来就是一个VM,拆分里面的访问器属性
 	        if (old && old.$id) {
 	             ++avalon.suspendUpdate
-	            var vm = $$midway.slaveFactory(old, definition, heirloom, options)
+	            if(old.$track !== Object.keys(definition).sort().join(';;')){
+	               var vm = $$midway.slaveFactory(old, definition, heirloom, options)
+	            }else{
+	               vm = old
+	            }
 	            for (var i in definition) {
 	                if ($$skipArray[i])
 	                    continue
@@ -4017,7 +4023,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 $skipArray被hasOwnProperty后返回true
 	 */
 
-	module.exports = avalon.oneObject('$id,$render,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,__proxy__,__data__,__const__')
+	module.exports = avalon.oneObject('$id,$render,$track,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,__proxy__,__data__,__const__')
 
 /***/ },
 /* 72 */
@@ -6005,6 +6011,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    hideProperty($vmodel, '$id', options.id)
 	    hideProperty($vmodel, '$hashcode', options.hashcode)
+	    hideProperty($vmodel, '$track', Object.keys(keys).sort().join(';;'))
 	    if (options.master === true) {
 	        hideProperty($vmodel, '$element', null)
 	        hideProperty($vmodel, '$render', 1)

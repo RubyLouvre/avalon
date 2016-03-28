@@ -144,6 +144,12 @@ avalon.directive('for', {
                 node = startRepeat.nextSibling
             }
         }
+         if(!startRepeat.domTemplate &&  vnode.components[0]){
+            var domTemplate = fragment.cloneNode(false)
+            componentToDom(vnode.components[0], domTemplate)
+            startRepeat.domTemplate = domTemplate
+        
+         }
 
         for (var i in vnode.removedComponents) {
             var el = vnode.removedComponents[i]
@@ -170,11 +176,9 @@ avalon.directive('for', {
                     })
                     parent.insertBefore(moveFragment, insertPoint.nextSibling)
                 }
-
             } else {
-                var newFragment = fragment.cloneNode(false)
-                componentToDom(com, newFragment)
-                cnodes = com.nodes
+                var newFragment = startRepeat.domTemplate.cloneNode(true)
+                cnodes = com.nodes = avalon.slice(newFragment.childNodes)
                 parent.insertBefore(newFragment, insertPoint.nextSibling)
             }
             insertPoint = cnodes[cnodes.length - 1]
@@ -194,9 +198,8 @@ avalon.directive('for', {
 
 var forCache = new Cache(128)
 function componentToDom(com, fragment, cur) {
-    com.nodes = []
     for (var i = 0, c; c = com.children[i++]; ) {
-        if (c.node === 1) {
+        if (c.nodeType === 1) {
             cur = avalon.vdomAdaptor(c, 'toDOM')
         } else {
             var expr = c.type + '#' + c.nodeValue
@@ -207,7 +210,6 @@ function componentToDom(com, fragment, cur) {
             }
             cur = node.cloneNode(true)
         }
-        com.nodes.push(cur)
         fragment.appendChild(cur)
     }
     return fragment

@@ -54,6 +54,7 @@ function makeObserver($vmodel, heirloom, keys, accessors, options) {
     }
     hideProperty($vmodel, '$id', options.id)
     hideProperty($vmodel, '$hashcode', options.hashcode)
+    hideProperty($vmodel, '$track', Object.keys(keys).sort().join(';;'))
     if (options.master === true) {
         hideProperty($vmodel, '$element', null)
         hideProperty($vmodel, '$render', 1)
