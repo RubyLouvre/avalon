@@ -65,7 +65,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(67)
 	__webpack_require__(68)
 
-	//require('../components/button/index')
+	__webpack_require__(94)
 	//require('../components/panel/index')
 	module.exports = avalon
 
@@ -1535,11 +1535,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            this[i] = type[i]
 	        }
 	    } else {
+	        this.nodeType = 1
 	        this.type = type
 	        this.props = props
 	        this.children = children
 	        this.template = ''
-	        this.nodeType = 1
 	    }
 	}
 	function skipFalseAndFunction(a) {
@@ -1581,7 +1581,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            } else {
 	                dom.appendChild(avalon.parseHTML(this.template))
 	            }
-
 	        }
 	        return dom
 	    },
@@ -6063,7 +6062,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function hasUnresolvedComponent(vnode) {
 
 	    vnode.children.forEach(function (el) {
-	        if (el.type === '#comment') {
+	        if (el.nodeType === 8) {
 	            if ('ms-widget' in el.props) {
 	                throw 'unresolved'
 	            }
@@ -6076,7 +6075,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function insertSlots(vtree, node) {
 	    var slots = {}
 	    node.children.forEach(function (el) {
-	        if (el.type.charAt(0) !== '#') {
+	        if (el.nodeType === 1) {
 	            var name = el.props.slot || ''
 	            if (slots[name]) {
 	                slots[name].push(el)
@@ -6090,7 +6089,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function mergeTempale(vtree, slots) {
 	    for (var i = 0, node; node = vtree[i++]; ) {
-	        if (node.type.charAt(0) !== '#') {
+	        if (node.nodeType === 1) {
 	            if (node.type === 'slot') {
 	                var name = node.props.name || ''
 	                if (slots[name]) {
@@ -6549,6 +6548,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //如果此属性原来就是一个VM,拆分里面的访问器属性
 	        if (old && old.$id) {
 	             ++avalon.suspendUpdate
+	             //1.5带来的优化方案
 	            if(old.$track !== Object.keys(definition).sort().join(';;')){
 	               var vm = $$midway.slaveFactory(old, definition, heirloom, options)
 	            }else{
@@ -6922,6 +6922,38 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = defineProperties
 
+
+/***/ },
+/* 75 */,
+/* 76 */,
+/* 77 */,
+/* 78 */,
+/* 79 */,
+/* 80 */,
+/* 81 */,
+/* 82 */,
+/* 83 */,
+/* 84 */,
+/* 85 */,
+/* 86 */,
+/* 87 */,
+/* 88 */,
+/* 89 */,
+/* 90 */,
+/* 91 */,
+/* 92 */,
+/* 93 */,
+/* 94 */
+/***/ function(module, exports) {
+
+	//var avalon = require('avalon')
+
+	avalon.component('ms-button', {
+	    template: '<button type="button"><span>{{@text}}</span></button>',
+	    defaults: {
+	        text: "buttonText"
+	    }
+	})
 
 /***/ }
 /******/ ])

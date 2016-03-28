@@ -5,11 +5,11 @@ function VElement(type, props, children) {
             this[i] = type[i]
         }
     } else {
+        this.nodeType = 1
         this.type = type
         this.props = props
         this.children = children
         this.template = ''
-        this.nodeType = 1
     }
 }
 function skipFalseAndFunction(a) {
@@ -51,7 +51,6 @@ VElement.prototype = {
             } else {
                 dom.appendChild(avalon.parseHTML(this.template))
             }
-
         }
         return dom
     },

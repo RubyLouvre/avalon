@@ -143,7 +143,7 @@ function isComponentReady(vnode) {
 function hasUnresolvedComponent(vnode) {
 
     vnode.children.forEach(function (el) {
-        if (el.type === '#comment') {
+        if (el.nodeType === 8) {
             if ('ms-widget' in el.props) {
                 throw 'unresolved'
             }
@@ -156,7 +156,7 @@ function hasUnresolvedComponent(vnode) {
 function insertSlots(vtree, node) {
     var slots = {}
     node.children.forEach(function (el) {
-        if (el.type.charAt(0) !== '#') {
+        if (el.nodeType === 1) {
             var name = el.props.slot || ''
             if (slots[name]) {
                 slots[name].push(el)
@@ -170,7 +170,7 @@ function insertSlots(vtree, node) {
 
 function mergeTempale(vtree, slots) {
     for (var i = 0, node; node = vtree[i++]; ) {
-        if (node.type.charAt(0) !== '#') {
+        if (node.nodeType === 1) {
             if (node.type === 'slot') {
                 var name = node.props.name || ''
                 if (slots[name]) {

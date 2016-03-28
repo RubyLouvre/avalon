@@ -9,7 +9,7 @@ require('./strategy/index')
 require('./component/index')
 require('./vmodel/compact')
 
-//require('../components/button/index')
+require('../components/button/index')
 //require('../components/panel/index')
 module.exports = avalon
 
