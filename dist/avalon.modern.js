@@ -2073,7 +2073,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
 	        var val = ctrl.parse(viewValue)
 	        viewValue = val+''
-	        console.log(val,"___",ctrl.modelValue)
 	        if (val !== ctrl.modelValue) {
 	            ctrl.set(ctrl.vmodel, val)
 	        }
