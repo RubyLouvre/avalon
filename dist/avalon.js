@@ -3213,6 +3213,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else {
 	            cur.props['ms-attr'] = p
 	        }
+	        pre.changeAttr = null
 	    },
 	    //dom, vnode
 	    update: attrUpdate
@@ -3243,7 +3244,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (!node.hasAttribute) {
 	                    val = String(val).replace(ramp, '&') //处理IE67自动转义的问题
 	                }
-	                console.log(attrName,"!!")
 	                node[attrName] = val
 	                if (window.chrome && node.tagName === 'EMBED') {
 	                    var parent = node.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
@@ -3282,7 +3282,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 
 	        }
-	        delete vnode.changeAttr
+	        vnode.changeAttr = null
 	    }
 	}
 
@@ -3445,6 +3445,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    diff: function (cur, pre) {//curNode, preNode
 	        cur.fixIESkip = true
+	        cur.dom = pre.dom
 	        if (cur.nodeValue !== pre.nodeValue) {
 	            if (pre.dom) {
 	                cur.dom = pre.dom
@@ -3454,9 +3455,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                avalon.Array.ensure(list, this.update)
 	            }
 	        }
+	        pre.dom = null
 	    },
 	    update: function (node, vnode, parent) {
-
 	        if (node.nodeType !== 3) {
 	            var textNode = document.createTextNode(vnode.nodeValue)
 	            parent.replaceChild(textNode, node)
@@ -3475,7 +3476,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rident = __webpack_require__(44).ident
 	avalon.directive('text', {
 	    parse: function (binding, num, vnode) {
-	        vnode.children = [{type: '#text',nodeType: 3, nodeValue: ''}]
+	        vnode.children = [{type: '#text', nodeType: 3, nodeValue: ''}]
 	        var val = rident.test(binding.expr) ? binding.expr : avalon.parseExpr(binding)
 	        return 'vnode' + num + '.props["ms-text"] =' + val + '\n'
 	    },
@@ -3484,16 +3485,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var preValue = pre.props['ms-text']
 	        cur.children = pre.children
 	        cur.skipContent = true
+	        cur.dom = pre.dom
 	        if (curValue !== preValue) {
 	            cur.children[0].nodeValue = curValue
 	            if (pre.dom) {
-	                cur.dom = pre.dom
 	                this.update(cur.dom, cur)
 	            } else {
 	                var list = cur.change || (cur.change = [])
 	                avalon.Array.ensure(list, this.update)
 	            }
 	        }
+	        pre.dom = null
 	        return false
 	    },
 	    update: function (node, vnode) {
@@ -3615,7 +3617,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else {
 	            cur.classEvent = pre.classEvent
 	        }
-
+	        pre.classEvent = null
 
 	        var className
 	        if (Array.isArray(curValue)) {
@@ -3814,21 +3816,20 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        if (pre.ctrl && pre.ctrl.set) {
 	            cur.ctrl = pre.ctrl
+	            pre.ctrl = null
 	        } else {
 	            initControl(cur, pre)
 	        }
 
 	        var ctrl = cur.ctrl
-	        delete cur.duplexVm
+	        cur.duplexVm = null
 	        var value = cur.props.value = ctrl.get(ctrl.vmodel)
-
 
 	        if (cur.type === 'select' && !cur.children.length) {
 	            avalon.Array.merge(cur.children, avalon.lexer(cur.template))
 	            fixVirtualOptionSelected(cur, value)
 	        }
 
-	       
 	        if (!ctrl.elem) {
 	            var isEqual = false
 	        } else {
@@ -4603,7 +4604,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
 	    },
 	    diff: function (current, previous, __index__) {
-
 	        var cur = current[__index__]
 	        var pre = previous[__index__] || {}
 
@@ -4613,17 +4613,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	            pre.components = []
 	            pre.repeatCount = 0
 	        }
+	        if (!('repeatCount' in pre)) {
+	            var range = getRepeatRange(previous, __index__)
+	            cur.components = getComponents(range.slice(1, -1), pre.signature)
+	            pre.repeatCount = range.length - 2
+	        }
+
 	        var nodes = current.slice(cur.start, cur.end)
 	        cur.endRepeat = pre.endRepeat
 	        cur.components = getComponents(nodes.slice(1, -1), cur.signature)
-	        var n = nodes.length - pre.repeatCount
+	        var n = Math.max(nodes.length - 2, 0) - pre.repeatCount
 	        if (n > 0) {
 	            var spliceArgs = [__index__, 0]
 	            for (var i = 0; i < n; i++) {
 	                spliceArgs.push(null)
 	            }
 	            previous.splice.apply(previous, spliceArgs)
-	        } else {
+	        } else if (n < 0) {
 	            previous.splice.apply(previous, [__index__, Math.abs(n)])
 	        }
 	        cur.action = isInit ? 'init' : 'update'
@@ -4699,12 +4705,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                node = startRepeat.nextSibling
 	            }
 	        }
-	         if(!startRepeat.domTemplate &&  vnode.components[0]){
+	        if (!startRepeat.domTemplate && vnode.components[0]) {
 	            var domTemplate = fragment.cloneNode(false)
 	            componentToDom(vnode.components[0], domTemplate)
 	            startRepeat.domTemplate = domTemplate
-	        
-	         }
+
+	        }
 
 	        for (var i in vnode.removedComponents) {
 	            var el = vnode.removedComponents[i]
@@ -4714,7 +4720,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        n.parentNode.removeChild(n)
 	                    }
 	                })
-	                el.nodes.length = el.children.length = 0
+	                el.nodes.length = 0
 	            }
 
 	        }
@@ -4726,9 +4732,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (cnodes) {
 	                if (insertPoint.nextSibling !== cnodes[0]) {
 	                    var moveFragment = fragment.cloneNode(false)
-	                    cnodes.forEach(function (node) {
-	                        moveFragment.appendChild(node)
-	                    })
+	                    for (var k = 0, cc; cc = cnodes[k++]; ) {
+	                        moveFragment.appendChild(cc)
+	                    }
 	                    parent.insertBefore(moveFragment, insertPoint.nextSibling)
 	                }
 	            } else {
@@ -4750,7 +4756,23 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	})
 
-
+	function getRepeatRange(nodes, i) {
+	    var isBreak = 0, ret = [], node
+	    while (node = nodes[i++]) {
+	        if (node.type === '#comment') {
+	            if (node.nodeValue.indexOf('ms-for:') === 0) {
+	                isBreak++
+	            } else if (node.nodeValue.indexOf('ms-for-end:') === 0) {
+	                isBreak--
+	            }
+	        }
+	        ret.push(node)
+	        if (isBreak === 0) {
+	            break
+	        }
+	    }
+	    return ret
+	}
 	var forCache = new Cache(128)
 	function componentToDom(com, fragment, cur) {
 	    for (var i = 0, c; c = com.children[i++]; ) {
@@ -5392,6 +5414,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var patch = __webpack_require__(56)
 
+
 	//如果正在更新一个子树,那么将它放到
 	var dirtyTrees = {}
 	var needRenderIds = []
@@ -5419,6 +5442,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var vtree = vm.$render()
 	        avalon.diff(vtree, dom.vtree || [])
 	        patch([dom], vtree)
+	        
 	        dom.vtree = vtree
 	        isBatchingUpdates = false
 	        avalon.log('rerender', vm.$id, new Date - avalon.rerenderStart)
@@ -5529,18 +5553,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var signature = forstack[forstack.length - 1]
 
 	                str += children + '.push({' +
-	                        '\n\tnodeType:8,' +
+	                        '\n\tnodeType: 8,' +
 	                        '\n\ttype:"#comment",' +
-	                        '\n\tskipContent:true,' +
+	                        '\n\tskipContent: true,' +
 	                        '\n\tnodeValue:' + quote(signature) + ',' +
 	                        '\n\tkey:traceKey\n})\n'
 	                str += '\n})\n' //结束循环
 	                if (forstack.length) {
 	                    var signature = forstack[forstack.length - 1]
 	                    str += signature + '.end =' + children + '.push({' +
-	                            '\n\tnodeType:8,' +
+	                            '\n\tnodeType: 8,' +
 	                            '\n\ttype:"#comment",' +
-	                            '\n\tskipContent:true,' +
+	                            '\n\tskipContent: true,' +
 	                            '\n\tsignature:' + quote(signature) + ',' +
 	                            '\n\tnodeValue:' + quote(signature + ':end') +
 	                            '\n})\n'
