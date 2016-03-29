@@ -54,7 +54,6 @@ avalon.directive('widget', {
             cur.afterChange = [
                 function (dom, vnode) {
                     cur.vmodel.$fire('onReady', dom, vnode)
-                    me.addDisposeWatcher(dom)
                 }
             ]
 
@@ -78,20 +77,7 @@ avalon.directive('widget', {
         }
     },
     addDisposeWatcher: function (dom) {
-
-        if (typeof document.registerElement === 'function') {
-            if(!avalon.components[dom.nodeName].register)
-                avalon.components[dom.nodeName].register = 1
-            var prototype = Object.create(HTMLElement.prototype)
-            prototype.detachedCallback = function () {
-                avalon.fireDisposedComponents = avalon.noop
-                var me = this
-                setTimeout(function () {
-                    fireDisposeCallback(me)
-                })
-            }
-            document.registerElement(dom.nodeName, {prototype: prototype})
-        } else if (window.chrome) {
+        if (window.chrome) {
             dom.addEventListener("DOMNodeRemovedFromDocument", function () {
                 avalon.fireDisposedComponents = avalon.noop
                 setTimeout(function () {
@@ -99,7 +85,6 @@ avalon.directive('widget', {
                 })
             })
         }
-
     },
     replaceByComment: function (dom, node, parent) {
         var comment = document.createComment(node.nodeValue)
@@ -116,6 +101,7 @@ avalon.directive('widget', {
         } else {
             parent.appendChild(com)
         }
+        avalon.directives.widget.addDisposeWatcher(com)
     }
 })
 
