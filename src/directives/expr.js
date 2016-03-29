@@ -4,6 +4,7 @@ avalon.directive('expr', {
     },
     diff: function (cur, pre) {//curNode, preNode
         cur.fixIESkip = true
+        cur.dom = pre.dom
         if (cur.nodeValue !== pre.nodeValue) {
             if (pre.dom) {
                 cur.dom = pre.dom
@@ -13,9 +14,9 @@ avalon.directive('expr', {
                 avalon.Array.ensure(list, this.update)
             }
         }
+        pre.dom = null
     },
     update: function (node, vnode, parent) {
-
         if (node.nodeType !== 3) {
             var textNode = document.createTextNode(vnode.nodeValue)
             parent.replaceChild(textNode, node)
