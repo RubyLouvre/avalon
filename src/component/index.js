@@ -116,19 +116,6 @@ avalon.component = function (name, definition) {
     }
 }
 
-avalon.fireDisposedComponents = function (nodes) {
-    for (var i = 0, el; el = nodes[i++]; ) {
-        if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
-            var wid = el.getAttribute('wid')
-            var docker = avalon.resolvedComponents[ wid ]
-            if (docker && docker.vmodel) {
-                docker.vmodel.$fire("onDispose", el)
-                delete docker.vmodel
-                delete avalon.resolvedComponents[ wid ]
-            }
-        }
-    }
-}
 
 function reRender(docker) {
     var vtree = docker.render(docker.vmodel)

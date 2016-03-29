@@ -4910,8 +4910,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        })
 	        var vm = avalon.mediatorFactory(topVm, after)
 	        ++avalon.suspendUpdate
-	        for(var i in after){
-	            if(skipArray[i])
+	        for (var i in after) {
+	            if (skipArray[i])
 	                continue
 	            vm[i] = after[i]
 	        }
@@ -4927,13 +4927,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            cur.change = [this.replaceByComment]
 	        } else if (renderCount === 1) {
 	            avalon.diff(cur.children, [])
+	            var me = this
 	            cur.change = [this.replaceByComponent]
 	            cur.afterChange = [
 	                function (dom, vnode) {
 	                    cur.vmodel.$fire('onReady', dom, vnode)
+	                    me.addDisposeWatcher(dom)
 	                }
 	            ]
-	            
+
 	        } else {
 	            var needUpdate = !cur.$diff || cur.$diff(cur, pre)
 	            cur.skipContent = !needUpdate
@@ -4953,6 +4955,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	    },
+	    addDisposeWatcher: function (dom) {
+
+	        if (typeof document.registerElement === 'function') {
+	            if(!avalon.components[dom.nodeName].register)
+	                avalon.components[dom.nodeName].register = 1
+	            var prototype = Object.create(HTMLElement.prototype)
+	            prototype.detachedCallback = function () {
+	                avalon.fireDisposedComponents = avalon.noop
+	                var me = this
+	                setTimeout(function () {
+	                    fireDisposeCallback(me)
+	                })
+	            }
+	            document.registerElement(dom.nodeName, {prototype: prototype})
+	        } else if (window.chrome) {
+	            dom.addEventListener("DOMNodeRemovedFromDocument", function () {
+	                avalon.fireDisposedComponents = avalon.noop
+	                setTimeout(function () {
+	                    fireDisposeCallback(dom)
+	                })
+	            })
+	        }
+
+	    },
 	    replaceByComment: function (dom, node, parent) {
 	        var comment = document.createComment(node.nodeValue)
 	        if (dom) {
@@ -4961,7 +4987,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            parent.appendChild(comment)
 	        }
 	    },
-	    replaceByComponent: function (dom, node, parent) {      
+	    replaceByComponent: function (dom, node, parent) {
 	        var com = avalon.vdomAdaptor(node, 'toDOM')
 	        if (dom) {
 	            parent.replaceChild(com, dom)
@@ -4970,6 +4996,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	})
+
+	function fireDisposeCallback(el) {
+	    if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
+	        var wid = el.getAttribute('wid')
+	        var docker = avalon.resolvedComponents[ wid ]
+	        if (docker && docker.vmodel) {
+	            docker.vmodel.$fire("onDispose", el)
+	            delete docker.vmodel
+	            delete avalon.resolvedComponents[ wid ]
+	        }
+	    }
+	}
+
+	avalon.fireDisposedComponents = function (nodes) {
+	    for (var i = 0, el; el = nodes[i++]; ) {
+	        fireDisposeCallback(el)
+	    }
+	}
 
 	function checkChildrenChange(elem) {
 	    for (var i = 0, el; el = elem.children[i++]; ) {
@@ -6078,19 +6122,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-	avalon.fireDisposedComponents = function (nodes) {
-	    for (var i = 0, el; el = nodes[i++]; ) {
-	        if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
-	            var wid = el.getAttribute('wid')
-	            var docker = avalon.resolvedComponents[ wid ]
-	            if (docker && docker.vmodel) {
-	                docker.vmodel.$fire("onDispose", el)
-	                delete docker.vmodel
-	                delete avalon.resolvedComponents[ wid ]
-	            }
-	        }
-	    }
-	}
 
 	function reRender(docker) {
 	    var vtree = docker.render(docker.vmodel)
