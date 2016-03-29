@@ -39,7 +39,7 @@ function attrUpdate(node, vnode) {
             }
         }
     }
-    delete vnode.changeAttr
+    vnode.changeAttr = null
 }
 
 module.exports = attrUpdate
