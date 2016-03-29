@@ -25,7 +25,7 @@ avalon.component = function (name, definition) {
         var wid = node.props.wid
 
         var options = node.props['ms-widget']
-        var tagName = node.type.indexOf('-') > 0 ? node.type : options.$type
+        var tagName = node.type.indexOf('-') > 0 ? node.type : options.is
 
 
         //如果组件模板已经定
@@ -76,11 +76,22 @@ avalon.component = function (name, definition) {
                     widgetNode.props[i] = docker.props[i]
                 }
             }
+            console.log(node.isVoidTag, "node.isVoidTag")
             if (!node.isVoidTag) {
                 //如果不是半闭合标签，那么里面可能存在插槽元素,抽取出来与主模板合并
-                insertSlots(vtree, node)
+                insertSlots(vtree, node, definition.contentSlot)
+            }else{
+                var slots =  {}
+                var slotName = definition.contentSlot
+                slots[slotName] = {
+                    type: '#text', 
+                    props: {}, 
+                    nodeType:3,
+                    nodeValue: '{{@'+slotName+'}}'
+                }
+                mergeTempale(vtree, slots)
             }
-            delete options.$type
+            delete options.is
             delete options.$define
             var diff = options
             delete options.$diff
@@ -153,18 +164,23 @@ function hasUnresolvedComponent(vnode) {
     })
 }
 
-function insertSlots(vtree, node) {
+function insertSlots(vtree, node, contentSlot) {
     var slots = {}
-    node.children.forEach(function (el) {
-        if (el.nodeType === 1) {
-            var name = el.props.slot || ''
-            if (slots[name]) {
-                slots[name].push(el)
-            } else {
-                slots[name] = [el]
+    if (contentSlot) {
+        slots[contentSlot] = node.children
+        console.log(slots)
+    } else {
+        node.children.forEach(function (el) {
+            if (el.nodeType === 1) {
+                var name = el.props.slot || 'default'
+                if (slots[name]) {
+                    slots[name].push(el)
+                } else {
+                    slots[name] = [el]
+                }
             }
-        }
-    })
+        })
+    }
     mergeTempale(vtree, slots)
 }
 
@@ -172,7 +188,7 @@ function mergeTempale(vtree, slots) {
     for (var i = 0, node; node = vtree[i++]; ) {
         if (node.nodeType === 1) {
             if (node.type === 'slot') {
-                var name = node.props.name || ''
+                var name = node.props.name || 'default'
                 if (slots[name]) {
                     vtree.splice.apply(vtree, [i - 1, 1].concat(slots[name]))
                 }

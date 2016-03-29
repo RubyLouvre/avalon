@@ -84,9 +84,7 @@ avalon.directive('widget', {
         }
     }
 })
-function checkChange(elem) {
 
-}
 function checkChildrenChange(elem) {
     for (var i = 0, el; el = elem.children[i++]; ) {
         if (el.change && el.change.length || el.afterChange && el.afterChange) {

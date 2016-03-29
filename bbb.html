@@ -9,7 +9,11 @@
             var vm = avalon.define({
                 $id: 'for0',
                 aaa: false,
-                arr: [{a: 1},{a:2}]
+                btn: "111",
+                arr: [{a: 1},{a:2}],
+                ms_xx: {
+                    a: 1
+                }
             })
             setTimeout(function () {
                 console.log("1111")
@@ -23,10 +27,12 @@
         <div ms-controller='for0' >
             <input ms-duplex-checked='@aaa' type="radio">{{@aaa}}
             <div ms-if="@aaa">111</div>
+            <div >{{@['ms:xx'].a}}</div>
             <ul>
                 <li ms-for='el in @arr'>{{el.a}}</li>
             </ul>
-            <xmp ms-widget="{$type:'ms-button', text: 'dddd'}">xxxx</xmp>
+            <xmp ms-widget="{is:'ms-button'}">{{@btn}}</xmp>
+            <xmp ms-widget="{is:'ms-panel'}" style='border:1px solid red;display:block'>ccccc</xmp>
         </div>
 
     </body>

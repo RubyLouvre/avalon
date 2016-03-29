@@ -65,8 +65,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(67)
 	__webpack_require__(68)
 
-	__webpack_require__(94)
-	//require('../components/panel/index')
+	__webpack_require__(75)
+	__webpack_require__(95)
 	module.exports = avalon
 
 
@@ -4720,7 +4720,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        n.parentNode.removeChild(n)
 	                    }
 	                })
-	                el.nodes.length = 0
+	                el.nodes.length = el.children.length = 0
 	            }
 
 	        }
@@ -4958,9 +4958,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	})
-	function checkChange(elem) {
 
-	}
 	function checkChildrenChange(elem) {
 	    for (var i = 0, el; el = elem.children[i++]; ) {
 	        if (el.change && el.change.length || el.afterChange && el.afterChange) {
@@ -5968,7 +5966,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var wid = node.props.wid
 
 	        var options = node.props['ms-widget']
-	        var tagName = node.type.indexOf('-') > 0 ? node.type : options.$type
+	        var tagName = node.type.indexOf('-') > 0 ? node.type : options.is
 
 
 	        //如果组件模板已经定
@@ -6019,11 +6017,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    widgetNode.props[i] = docker.props[i]
 	                }
 	            }
+	            console.log(node.isVoidTag, "node.isVoidTag")
 	            if (!node.isVoidTag) {
 	                //如果不是半闭合标签，那么里面可能存在插槽元素,抽取出来与主模板合并
-	                insertSlots(vtree, node)
+	                insertSlots(vtree, node, definition.contentSlot)
+	            }else{
+	                var slots =  {}
+	                var slotName = definition.contentSlot
+	                slots[slotName] = {
+	                    type: '#text', 
+	                    props: {}, 
+	                    nodeType:3,
+	                    nodeValue: '{{@'+slotName+'}}'
+	                }
+	                mergeTempale(vtree, slots)
 	            }
-	            delete options.$type
+	            delete options.is
 	            delete options.$define
 	            var diff = options
 	            delete options.$diff
@@ -6096,18 +6105,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 	}
 
-	function insertSlots(vtree, node) {
+	function insertSlots(vtree, node, contentSlot) {
 	    var slots = {}
-	    node.children.forEach(function (el) {
-	        if (el.nodeType === 1) {
-	            var name = el.props.slot || ''
-	            if (slots[name]) {
-	                slots[name].push(el)
-	            } else {
-	                slots[name] = [el]
+	    if (contentSlot) {
+	        slots[contentSlot] = node.children
+	        console.log(slots)
+	    } else {
+	        node.children.forEach(function (el) {
+	            if (el.nodeType === 1) {
+	                var name = el.props.slot || 'default'
+	                if (slots[name]) {
+	                    slots[name].push(el)
+	                } else {
+	                    slots[name] = [el]
+	                }
 	            }
-	        }
-	    })
+	        })
+	    }
 	    mergeTempale(vtree, slots)
 	}
 
@@ -6115,7 +6129,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (var i = 0, node; node = vtree[i++]; ) {
 	        if (node.nodeType === 1) {
 	            if (node.type === 'slot') {
-	                var name = node.props.name || ''
+	                var name = node.props.name || 'default'
 	                if (slots[name]) {
 	                    vtree.splice.apply(vtree, [i - 1, 1].concat(slots[name]))
 	                }
@@ -6948,7 +6962,20 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 75 */,
+/* 75 */
+/***/ function(module, exports) {
+
+	//var avalon = require('avalon')
+
+	avalon.component('ms-button', {
+	    template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
+	    defaults: {
+	        buttonText: "btn"
+	    },
+	    contentSlot: 'buttonText'
+	})
+
+/***/ },
 /* 76 */,
 /* 77 */,
 /* 78 */,
@@ -6967,17 +6994,26 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 91 */,
 /* 92 */,
 /* 93 */,
-/* 94 */
+/* 94 */,
+/* 95 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var button = __webpack_require__(75)
+	var tmpl = __webpack_require__(96)
+
+	avalon.component('ms-panel', {
+	    template: tmpl,
+	    defaults: {
+	        body: "&nbsp;&nbsp;"
+	    },
+	    contentSlot: 'body'
+	})
+
+/***/ },
+/* 96 */
 /***/ function(module, exports) {
 
-	//var avalon = require('avalon')
-
-	avalon.component('ms-button', {
-	    template: '<button type="button"><span>{{@text}}</span></button>',
-	    defaults: {
-	        text: "buttonText"
-	    }
-	})
+	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button ms-widget=\"{buttonText: 'ok'}\"/></p>\n</ms-panel>"
 
 /***/ }
 /******/ ])
