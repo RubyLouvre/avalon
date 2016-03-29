@@ -9,17 +9,22 @@
             var vm = avalon.define({
                 $id: 'for0',
                 aaa: false,
-                btn: "111",
+                btn: "VM中的其他属性",
                 arr: [{a: 1},{a:2}],
-                ms_xx: {
-                    a: 1
+                ms_button: {
+                    buttonText: "VM中的TEXT"
                 }
+                
             })
             setTimeout(function () {
-                console.log("1111")
                 vm.arr = [{a: 99}, {a: 888}]
             }, 3000)
         </script>
+        <style>
+            ms-button{
+                display: inline-block;
+            }
+        </style>
     </head>
     <body>
 
@@ -27,12 +32,13 @@
         <div ms-controller='for0' >
             <input ms-duplex-checked='@aaa' type="radio">{{@aaa}}
             <div ms-if="@aaa">111</div>
-            <div >{{@['ms:xx'].a}}</div>
             <ul>
                 <li ms-for='el in @arr'>{{el.a}}</li>
             </ul>
-            <xmp ms-widget="{is:'ms-button'}">{{@btn}}</xmp>
-            <xmp ms-widget="{is:'ms-panel'}" style='border:1px solid red;display:block'>ccccc</xmp>
+<!--            <xmp ms-widget="{is:'ms-button'}">{{@btn}}</xmp>
+            <ms-button>使用默认配置对象</ms-button>
+            <ms-button>页面上的TEXT</ms-button>-->
+            <xmp ms-widget="{is:'ms-panel',ee: 1}" style='border:1px solid red;display:block'>ccccc</xmp>
         </div>
 
     </body>

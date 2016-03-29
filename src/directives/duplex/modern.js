@@ -27,7 +27,7 @@ avalon.directive('duplex', {
         var value = cur.props.value = ctrl.get(ctrl.vmodel)
 
         if (cur.type === 'select' && !cur.children.length) {
-            avalon.Array.merge(cur.children, avalon.lexer(cur.template))
+            avalon.Array.merge(cur.children, avalon.lexer(cur.template, 0, 2))
             fixVirtualOptionSelected(cur, value)
         }
 

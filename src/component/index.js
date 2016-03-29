@@ -3,6 +3,7 @@ var componentQueue = []
 var resolvedComponents = avalon.resolvedComponents
 var rcomponentTag = /^(\w+\-w+|wbr|xmp|template)$/
 var skip = {'ms-widget': 1, widget: 1, wid: 1}
+var VText = require('../vdom/VText')
 avalon.document.createElement('slot')
 
 avalon.component = function (name, definition) {
@@ -25,16 +26,16 @@ avalon.component = function (name, definition) {
         var wid = node.props.wid
 
         var options = node.props['ms-widget']
-        var tagName = node.type.indexOf('-') > 0 ? node.type : options.is
-
-
         //如果组件模板已经定
         var placeholder = {
+            nodeType: 8,
             type: '#comment',
             directive: 'widget',
             props: {'ms-widget': wid},
             nodeValue: 'ms-widget placeholder'
         }
+
+        var tagName = node.type.indexOf('-') > 0 ? node.type : options.is
         var docker = resolvedComponents[wid]
 
         if (docker.render) {
@@ -61,41 +62,37 @@ avalon.component = function (name, definition) {
                 definition.fixTag = 1
             }
 
-
             var vtree = avalon.lexer(definition.template.trim())
             if (vtree.length > 1) {
                 avalon.error('组件必须用一个元素包起来')
             }
 
             var widgetNode = vtree[0]
+            widgetNode.props.resolved = true
             if (widgetNode.type !== tagName) {
                 avalon.warn('模板容器标签最好为' + tagName)
             }
+            widgetNode
             for (var i in docker.props) {
                 if (!skip[i]) {
                     widgetNode.props[i] = docker.props[i]
                 }
             }
-            console.log(node.isVoidTag, "node.isVoidTag")
-            if (!node.isVoidTag) {
+
+            if (definition.contentSlot) {
+                var slots = {}
+                var slotName = definition.contentSlot
+                slots[slotName] = /\S/.test(docker.template) ?  node.children : new VText('{{@' + slotName + '}}')
+                mergeTempale(vtree, slots)
+            } else if (!node.isVoidTag) {
                 //如果不是半闭合标签，那么里面可能存在插槽元素,抽取出来与主模板合并
                 insertSlots(vtree, node, definition.contentSlot)
-            }else{
-                var slots =  {}
-                var slotName = definition.contentSlot
-                slots[slotName] = {
-                    type: '#text', 
-                    props: {}, 
-                    nodeType:3,
-                    nodeValue: '{{@'+slotName+'}}'
-                }
-                mergeTempale(vtree, slots)
             }
+            options = options || {}
             delete options.is
             delete options.$define
-            var diff = options
+            var diff = options.diff
             delete options.$diff
-
             var define = options.$define || avalon.directives.widget.define
 
             var $id = options.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
@@ -168,7 +165,6 @@ function insertSlots(vtree, node, contentSlot) {
     var slots = {}
     if (contentSlot) {
         slots[contentSlot] = node.children
-        console.log(slots)
     } else {
         node.children.forEach(function (el) {
             if (el.nodeType === 1) {

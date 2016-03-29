@@ -66,7 +66,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(68)
 
 	__webpack_require__(75)
-	__webpack_require__(95)
+	__webpack_require__(76)
 	module.exports = avalon
 
 
@@ -3826,7 +3826,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var value = cur.props.value = ctrl.get(ctrl.vmodel)
 
 	        if (cur.type === 'select' && !cur.children.length) {
-	            avalon.Array.merge(cur.children, avalon.lexer(cur.template))
+	            avalon.Array.merge(cur.children, avalon.lexer(cur.template, 0, 2))
 	            fixVirtualOptionSelected(cur, value)
 	        }
 
@@ -4870,10 +4870,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 58 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	
-
+	var skipArray = __webpack_require__(71)
 	//插入点机制,组件的模板中有一些ms-slot元素,用于等待被外面的元素替代
 	function wrap(str) {
 	    return str.replace('return __value__', function (a) {
@@ -4905,7 +4905,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            delete after[a]
 	        })
 	        var vm = avalon.mediatorFactory(topVm, after)
-	        for (var i in events) {
+	        ++avalon.suspendUpdate
+	        for(var i in after){
+	            if(skipArray[i])
+	                continue
+	            vm[i] = after[i]
+	        }
+	        --avalon.suspendUpdate
+	        for (i in events) {
 	            vm.$watch(i, events[i])
 	        }
 	        return vm
@@ -5051,12 +5058,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-	function lexer(text, recursive) {
+	function lexer(text, curDeep, maxDeep) {
 	    var nodes = []
-	    if (recursive && !rbind.test(text)) {
+	    maxDeep = maxDeep || 1
+	    if (typeof curDeep !== 'number') {
+	        curDeep = 0
+	    } else {
+	        curDeep = curDeep + 1
+	    }
+	    if (curDeep >= maxDeep && !rbind.test(text)) {
 	        return nodes
 	    }
-	    if (!recursive) {
+	    if (!curDeep) {
 	        text = text.replace(rstring, dig)
 	    }
 	    do {
@@ -5109,7 +5122,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    template: innerHTML.replace(rfill, fill).trim(),
 	                    children: []
 	                }
-	                node = modifyProps(node, innerHTML, nodes)
+	                node = modifyProps(node, innerHTML, nodes, curDeep, maxDeep)
 	            }
 	        }
 
@@ -5130,7 +5143,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    children: [],
 	                    isVoidTag: true
 	                }
-	                modifyProps(node, '', nodes)
+	                modifyProps(node, '', nodes, curDeep, maxDeep)
 	            }
 	        }
 
@@ -5146,7 +5159,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            break
 	        }
 	    } while (1);
-	    if (!recursive) {
+	    if (!curDeep) {
 	        maps = {}
 	    }
 	    return nodes
@@ -5164,7 +5177,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            (tagCache[type + 'open'] = new RegExp('<' + type + openStr, regArgs))
 	    var rclose = tagCache[type + 'close'] ||
 	            (tagCache[type + 'close'] = new RegExp('<\/' + type + '>', regArgs))
-	    
+
 	    /* jshint ignore:start */
 	    matchText.replace(ropen, function (_, b) {
 	        //注意,页面有时很长,b的数值就很大,如
@@ -5201,7 +5214,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-	function modifyProps(node, innerHTML, nodes) {
+	function modifyProps(node, innerHTML, nodes, curDeep, maxDeep) {
 	    var type = node.type
 	    if (node.props['ms-skip']) {
 	        node.skipContent = true
@@ -5228,8 +5241,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                node.children.push(new VText(trimHTML(node.template)))
 	                break
 	            default:
+	                
 	                if (!node.isVoidTag) {
-	                    var childs = lexer(innerHTML, true)
+	                    var childs = lexer(innerHTML, curDeep, maxDeep)
 	                    node.children = childs
 	                    if (type === 'table') {
 	                        addTbody(node.children)
@@ -5237,7 +5251,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	                break
 	        }
-	        var forExpr = node.props['ms-for'] 
+	        var forExpr = node.props['ms-for']
 	        if (forExpr) {
 	            nodes.push({
 	                nodeType: 8,
@@ -5488,7 +5502,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return rident.test(expr) ? expr : parseExpr(expr)
 	}
 
-
 	function wrap(a, num) {
 	    return '(function(){\n\n' + a + '\n\nreturn vnodes' + num + '\n})();\n'
 	}
@@ -5596,8 +5609,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        '\n\tisVoidTag: ' + !!el.isVoidTag + ',' +
 	                        '\n\ttemplate: ""}\n'
 	            var hasWidget = el.props['ms-widget']
+	            if(!hasWidget && el.type.indexOf('-') > 0 && !el.props.resolved){
+	                hasWidget = '@'+ el.type.replace(/-/g,"_")
+	            }
+	            
 	            if (hasWidget) {// 处理ms-widget指令
-	                
 	                str += avalon.directives.widget.parse({
 	                    expr: hasWidget,
 	                    type: 'widget'
@@ -5937,13 +5953,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 67 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	
 	var componentQueue = []
 	var resolvedComponents = avalon.resolvedComponents
 	var rcomponentTag = /^(\w+\-w+|wbr|xmp|template)$/
 	var skip = {'ms-widget': 1, widget: 1, wid: 1}
+	var VText = __webpack_require__(16)
 	avalon.document.createElement('slot')
 
 	avalon.component = function (name, definition) {
@@ -5966,16 +5983,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var wid = node.props.wid
 
 	        var options = node.props['ms-widget']
-	        var tagName = node.type.indexOf('-') > 0 ? node.type : options.is
-
-
 	        //如果组件模板已经定
 	        var placeholder = {
+	            nodeType: 8,
 	            type: '#comment',
 	            directive: 'widget',
 	            props: {'ms-widget': wid},
 	            nodeValue: 'ms-widget placeholder'
 	        }
+
+	        var tagName = node.type.indexOf('-') > 0 ? node.type : options.is
 	        var docker = resolvedComponents[wid]
 
 	        if (docker.render) {
@@ -6002,41 +6019,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	                definition.fixTag = 1
 	            }
 
-
 	            var vtree = avalon.lexer(definition.template.trim())
 	            if (vtree.length > 1) {
 	                avalon.error('组件必须用一个元素包起来')
 	            }
 
 	            var widgetNode = vtree[0]
+	            widgetNode.props.resolved = true
 	            if (widgetNode.type !== tagName) {
 	                avalon.warn('模板容器标签最好为' + tagName)
 	            }
+	            widgetNode
 	            for (var i in docker.props) {
 	                if (!skip[i]) {
 	                    widgetNode.props[i] = docker.props[i]
 	                }
 	            }
-	            console.log(node.isVoidTag, "node.isVoidTag")
-	            if (!node.isVoidTag) {
+
+	            if (definition.contentSlot) {
+	                var slots = {}
+	                var slotName = definition.contentSlot
+	                slots[slotName] = /\S/.test(docker.template) ?  node.children : new VText('{{@' + slotName + '}}')
+	                mergeTempale(vtree, slots)
+	            } else if (!node.isVoidTag) {
 	                //如果不是半闭合标签，那么里面可能存在插槽元素,抽取出来与主模板合并
 	                insertSlots(vtree, node, definition.contentSlot)
-	            }else{
-	                var slots =  {}
-	                var slotName = definition.contentSlot
-	                slots[slotName] = {
-	                    type: '#text', 
-	                    props: {}, 
-	                    nodeType:3,
-	                    nodeValue: '{{@'+slotName+'}}'
-	                }
-	                mergeTempale(vtree, slots)
 	            }
+	            options = options || {}
 	            delete options.is
 	            delete options.$define
-	            var diff = options
+	            var diff = options.diff
 	            delete options.$diff
-
 	            var define = options.$define || avalon.directives.widget.define
 
 	            var $id = options.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
@@ -6109,7 +6122,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var slots = {}
 	    if (contentSlot) {
 	        slots[contentSlot] = node.children
-	        console.log(slots)
 	    } else {
 	        node.children.forEach(function (el) {
 	            if (el.nodeType === 1) {
@@ -6976,44 +6988,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 76 */,
-/* 77 */,
-/* 78 */,
-/* 79 */,
-/* 80 */,
-/* 81 */,
-/* 82 */,
-/* 83 */,
-/* 84 */,
-/* 85 */,
-/* 86 */,
-/* 87 */,
-/* 88 */,
-/* 89 */,
-/* 90 */,
-/* 91 */,
-/* 92 */,
-/* 93 */,
-/* 94 */,
-/* 95 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var button = __webpack_require__(75)
-	var tmpl = __webpack_require__(96)
+	var tmpl = __webpack_require__(77)
 
 	avalon.component('ms-panel', {
 	    template: tmpl,
 	    defaults: {
-	        body: "&nbsp;&nbsp;"
+	        body: "&nbsp;&nbsp;",
+	        'ms_button': {
+	            buttonText: 'click me!'
+	        }
 	    },
 	    contentSlot: 'body'
 	})
 
 /***/ },
-/* 96 */
+/* 77 */
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button ms-widget=\"{buttonText: 'ok'}\"/></p>\n</ms-panel>"
+	module.exports = "<ms-panel>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</ms-panel>"
 
 /***/ }
 /******/ ])

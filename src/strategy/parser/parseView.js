@@ -12,7 +12,6 @@ function wrapDelimiter(expr) {
     return rident.test(expr) ? expr : parseExpr(expr)
 }
 
-
 function wrap(a, num) {
     return '(function(){\n\n' + a + '\n\nreturn vnodes' + num + '\n})();\n'
 }
@@ -120,8 +119,11 @@ function parseView(arr, num) {
                         '\n\tisVoidTag: ' + !!el.isVoidTag + ',' +
                         '\n\ttemplate: ""}\n'
             var hasWidget = el.props['ms-widget']
+            if(!hasWidget && el.type.indexOf('-') > 0 && !el.props.resolved){
+                hasWidget = '@'+ el.type.replace(/-/g,"_")
+            }
+            
             if (hasWidget) {// 处理ms-widget指令
-                
                 str += avalon.directives.widget.parse({
                     expr: hasWidget,
                     type: 'widget'

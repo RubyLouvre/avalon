@@ -47,12 +47,18 @@ function fill(a) {
 }
 
 
-function lexer(text, recursive) {
+function lexer(text, curDeep, maxDeep) {
     var nodes = []
-    if (recursive && !rbind.test(text)) {
+    maxDeep = maxDeep || 1
+    if (typeof curDeep !== 'number') {
+        curDeep = 0
+    } else {
+        curDeep = curDeep + 1
+    }
+    if (curDeep >= maxDeep && !rbind.test(text)) {
         return nodes
     }
-    if (!recursive) {
+    if (!curDeep) {
         text = text.replace(rstring, dig)
     }
     do {
@@ -105,7 +111,7 @@ function lexer(text, recursive) {
                     template: innerHTML.replace(rfill, fill).trim(),
                     children: []
                 }
-                node = modifyProps(node, innerHTML, nodes)
+                node = modifyProps(node, innerHTML, nodes, curDeep, maxDeep)
             }
         }
 
@@ -126,7 +132,7 @@ function lexer(text, recursive) {
                     children: [],
                     isVoidTag: true
                 }
-                modifyProps(node, '', nodes)
+                modifyProps(node, '', nodes, curDeep, maxDeep)
             }
         }
 
@@ -142,7 +148,7 @@ function lexer(text, recursive) {
             break
         }
     } while (1);
-    if (!recursive) {
+    if (!curDeep) {
         maps = {}
     }
     return nodes
@@ -160,7 +166,7 @@ function clipOuterHTML(matchText, type) {
             (tagCache[type + 'open'] = new RegExp('<' + type + openStr, regArgs))
     var rclose = tagCache[type + 'close'] ||
             (tagCache[type + 'close'] = new RegExp('<\/' + type + '>', regArgs))
-    
+
     /* jshint ignore:start */
     matchText.replace(ropen, function (_, b) {
         //注意,页面有时很长,b的数值就很大,如
@@ -197,7 +203,7 @@ function clipOuterHTML(matchText, type) {
 }
 
 
-function modifyProps(node, innerHTML, nodes) {
+function modifyProps(node, innerHTML, nodes, curDeep, maxDeep) {
     var type = node.type
     if (node.props['ms-skip']) {
         node.skipContent = true
@@ -224,8 +230,9 @@ function modifyProps(node, innerHTML, nodes) {
                 node.children.push(new VText(trimHTML(node.template)))
                 break
             default:
+                
                 if (!node.isVoidTag) {
-                    var childs = lexer(innerHTML, true)
+                    var childs = lexer(innerHTML, curDeep, maxDeep)
                     node.children = childs
                     if (type === 'table') {
                         addTbody(node.children)
@@ -233,7 +240,7 @@ function modifyProps(node, innerHTML, nodes) {
                 }
                 break
         }
-        var forExpr = node.props['ms-for'] 
+        var forExpr = node.props['ms-for']
         if (forExpr) {
             nodes.push({
                 nodeType: 8,

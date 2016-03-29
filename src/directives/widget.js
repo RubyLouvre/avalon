@@ -1,5 +1,5 @@
 
-
+var skipArray = require('../vmodel/parts/skipArray')
 //插入点机制,组件的模板中有一些ms-slot元素,用于等待被外面的元素替代
 function wrap(str) {
     return str.replace('return __value__', function (a) {
@@ -31,7 +31,14 @@ avalon.directive('widget', {
             delete after[a]
         })
         var vm = avalon.mediatorFactory(topVm, after)
-        for (var i in events) {
+        ++avalon.suspendUpdate
+        for(var i in after){
+            if(skipArray[i])
+                continue
+            vm[i] = after[i]
+        }
+        --avalon.suspendUpdate
+        for (i in events) {
             vm.$watch(i, events[i])
         }
         return vm
