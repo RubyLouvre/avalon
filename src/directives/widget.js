@@ -55,6 +55,7 @@ avalon.directive('widget', {
                     cur.vmodel.$fire('onReady', dom, vnode)
                 }
             ]
+            
         } else {
             var needUpdate = !cur.$diff || cur.$diff(cur, pre)
             cur.skipContent = !needUpdate

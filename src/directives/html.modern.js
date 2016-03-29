@@ -18,7 +18,7 @@ avalon.directive('html', {
                 nodes = render(cur.htmlVm)
                 cur.props['ms-html'] = nodes.map(function (el) {
                     return 'template' in el ? el.template : el.nodeValue
-                }),join('-')
+                }), join('-')
                 textCache.put(curValue, nodes)
             }
             cur.children = nodes
@@ -34,9 +34,11 @@ avalon.directive('html', {
             avalon.unbind(el)
         })
         //添加节点
-        node.innerHTML = vnode.children.map(function (c) {
-            return avalon.vdomAdaptor(c, 'toHTML')
-        }).join('')
-
+        avalon.clearHTML(node)
+        var fragment = document.createDocumentFragment()
+        vnode.children.forEach(function (c) {
+            fragment.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
+        })
+        avalon.fireDisposedComponents(nodes)
     }
 })

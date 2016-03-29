@@ -107,6 +107,7 @@ avalon.directive('for', {
                         avalon.diff(c.children, p.children)
                     } else {
                         isChange = true
+                        cur.hasRemove = true
                         cur.removedComponents[p.index] = p
                     }
 
@@ -155,18 +156,21 @@ avalon.directive('for', {
             startRepeat.domTemplate = domTemplate
 
         }
-
-        for (var i in vnode.removedComponents) {
-            var el = vnode.removedComponents[i]
-            if (el.nodes) {
-                el.nodes.forEach(function (n) {
-                    if (n.parentNode) {
-                        n.parentNode.removeChild(n)
-                    }
-                })
-                el.nodes.length = el.children.length = 0
+        if (vnode.hasRemove) {
+            vnode.hasRemove = false
+            var removedNodes = parent.getElementsByTagName('*')
+            for (var i in vnode.removedComponents) {
+                var el = vnode.removedComponents[i]
+                if (el.nodes) {
+                    el.nodes.forEach(function (n) {
+                        if (n.parentNode) {
+                            n.parentNode.removeChild(n)
+                        }
+                    })
+                    el.nodes.length = el.children.length = 0
+                }
             }
-
+            avalon.fireDisposedComponents(removedNodes)
         }
         delete vnode.removedComponents
         var insertPoint = startRepeat

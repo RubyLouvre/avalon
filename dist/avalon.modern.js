@@ -1717,7 +1717,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        })
 
 	        node.appendChild(fragment)
-	        
+	        avalon.fireDisposedComponents(nodes)
 	    }
 	})
 
@@ -2382,6 +2382,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        avalon.diff(c.children, p.children)
 	                    } else {
 	                        isChange = true
+	                        cur.hasRemove = true
 	                        cur.removedComponents[p.index] = p
 	                    }
 
@@ -2430,18 +2431,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	            startRepeat.domTemplate = domTemplate
 
 	        }
-
-	        for (var i in vnode.removedComponents) {
-	            var el = vnode.removedComponents[i]
-	            if (el.nodes) {
-	                el.nodes.forEach(function (n) {
-	                    if (n.parentNode) {
-	                        n.parentNode.removeChild(n)
-	                    }
-	                })
-	                el.nodes.length = el.children.length = 0
+	        if (vnode.hasRemove) {
+	            vnode.hasRemove = false
+	            var removedNodes = parent.getElementsByTagName('*')
+	            for (var i in vnode.removedComponents) {
+	                var el = vnode.removedComponents[i]
+	                if (el.nodes) {
+	                    el.nodes.forEach(function (n) {
+	                        if (n.parentNode) {
+	                            n.parentNode.removeChild(n)
+	                        }
+	                    })
+	                    el.nodes.length = el.children.length = 0
+	                }
 	            }
-
+	            avalon.fireDisposedComponents(removedNodes)
 	        }
 	        delete vnode.removedComponents
 	        var insertPoint = startRepeat
@@ -2648,6 +2652,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    cur.vmodel.$fire('onReady', dom, vnode)
 	                }
 	            ]
+	            
 	        } else {
 	            var needUpdate = !cur.$diff || cur.$diff(cur, pre)
 	            cur.skipContent = !needUpdate
@@ -3678,7 +3683,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var componentQueue = []
 	var resolvedComponents = avalon.resolvedComponents
 	var rcomponentTag = /^(\w+\-w+|wbr|xmp|template)$/
-	var skip = {'ms-widget': 1, widget: 1, wid: 1}
+	var skipWidget = {'ms-widget': 1, widget: 1, wid: 1, resolved: 1}
 	var VText = __webpack_require__(16)
 	avalon.document.createElement('slot')
 
@@ -3750,7 +3755,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            widgetNode
 	            for (var i in docker.props) {
-	                if (!skip[i]) {
+	                if (!skipWidget[i]) {
 	                    widgetNode.props[i] = docker.props[i]
 	                }
 	            }
@@ -3758,7 +3763,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (definition.contentSlot) {
 	                var slots = {}
 	                var slotName = definition.contentSlot
-	                slots[slotName] = /\S/.test(docker.template) ?  node.children : new VText('{{@' + slotName + '}}')
+	                slots[slotName] = /\S/.test(docker.template) ? node.children : new VText('{{@' + slotName + '}}')
 	                mergeTempale(vtree, slots)
 	            } else if (!node.isVoidTag) {
 	                //如果不是半闭合标签，那么里面可能存在插槽元素,抽取出来与主模板合并
@@ -3767,7 +3772,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            options = options || {}
 	            delete options.is
 	            delete options.$define
-	            var diff = options.diff
+	            var diff = options.$diff
 	            delete options.$diff
 	            var define = options.$define || avalon.directives.widget.define
 
@@ -3788,6 +3793,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	            })
 
 	            return reRender(docker)
+	        }
+	    }
+	}
+
+	avalon.fireDisposedComponents = function (nodes) {
+	    for (var i = 0, el; el = nodes[i++]; ) {
+	        if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
+	            var wid = el.getAttribute('wid')
+	            var docker = avalon.resolvedComponents[ wid ]
+	            if (docker && docker.vmodel) {
+	                docker.vmodel.$fire("onDispose", el)
+	                delete docker.vmodel
+	                delete avalon.resolvedComponents[ wid ]
+	            }
 	        }
 	    }
 	}
