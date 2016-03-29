@@ -164,7 +164,7 @@ avalon.directive('for', {
                         n.parentNode.removeChild(n)
                     }
                 })
-                el.nodes.length = 0
+                el.nodes.length = el.children.length = 0
             }
 
         }
