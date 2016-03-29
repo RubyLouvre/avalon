@@ -17,21 +17,20 @@ avalon.directive('duplex', {
 
         if (pre.ctrl && pre.ctrl.set) {
             cur.ctrl = pre.ctrl
+            pre.ctrl = null
         } else {
             initControl(cur, pre)
         }
 
         var ctrl = cur.ctrl
-        delete cur.duplexVm
+        cur.duplexVm = null
         var value = cur.props.value = ctrl.get(ctrl.vmodel)
-
 
         if (cur.type === 'select' && !cur.children.length) {
             avalon.Array.merge(cur.children, avalon.lexer(cur.template))
             fixVirtualOptionSelected(cur, value)
         }
 
-       
         if (!ctrl.elem) {
             var isEqual = false
         } else {

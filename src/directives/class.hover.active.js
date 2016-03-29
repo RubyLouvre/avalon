@@ -27,7 +27,7 @@ avalon.directive('class', {
         } else {
             cur.classEvent = pre.classEvent
         }
-
+        pre.classEvent = null
 
         var className
         if (Array.isArray(curValue)) {

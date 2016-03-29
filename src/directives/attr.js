@@ -35,6 +35,7 @@ avalon.directive('attr', {
         } else {
             cur.props['ms-attr'] = p
         }
+        pre.changeAttr = null
     },
     //dom, vnode
     update: attrUpdate

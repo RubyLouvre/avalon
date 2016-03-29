@@ -75,18 +75,18 @@ function parseView(arr, num) {
                 var signature = forstack[forstack.length - 1]
 
                 str += children + '.push({' +
-                        '\n\tnodeType:8,' +
+                        '\n\tnodeType: 8,' +
                         '\n\ttype:"#comment",' +
-                        '\n\tskipContent:true,' +
+                        '\n\tskipContent: true,' +
                         '\n\tnodeValue:' + quote(signature) + ',' +
                         '\n\tkey:traceKey\n})\n'
                 str += '\n})\n' //结束循环
                 if (forstack.length) {
                     var signature = forstack[forstack.length - 1]
                     str += signature + '.end =' + children + '.push({' +
-                            '\n\tnodeType:8,' +
+                            '\n\tnodeType: 8,' +
                             '\n\ttype:"#comment",' +
-                            '\n\tskipContent:true,' +
+                            '\n\tskipContent: true,' +
                             '\n\tsignature:' + quote(signature) + ',' +
                             '\n\tnodeValue:' + quote(signature + ':end') +
                             '\n})\n'

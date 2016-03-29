@@ -7,6 +7,7 @@
 
 var patch = require('./patch')
 
+
 //如果正在更新一个子树,那么将它放到
 var dirtyTrees = {}
 var needRenderIds = []
@@ -34,6 +35,7 @@ function batchUpdate(id, immediate) {
         var vtree = vm.$render()
         avalon.diff(vtree, dom.vtree || [])
         patch([dom], vtree)
+        
         dom.vtree = vtree
         isBatchingUpdates = false
         avalon.log('rerender', vm.$id, new Date - avalon.rerenderStart)
