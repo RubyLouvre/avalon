@@ -6051,10 +6051,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var options = node.props['ms-widget'] || {}
 	        var vms = []
 	        if(Array.isArray(options)){
-	            options = avalon.mix.apply({},options)
 	            vms = options.filter(function(el){
 	                return el.$id
 	            })
+	            options = avalon.mix.apply({},options)
 	        }else if(options.$id){
 	            vms = [options]
 	        }

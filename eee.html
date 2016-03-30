@@ -9,7 +9,6 @@
 
             var vm = avalon.define({
                 $id: 'widget0',
-                aaa: '<div><ms-button ms-widget="@config"></ms-button></div>',
                 config: {
                     buttonText: '按钮',
                     onInit: function (a) {
@@ -27,7 +26,7 @@
                 }
             })
             setTimeout(function () {
-                vm.config.buttonText = 111
+                vm.config.buttonText = 'change'
                 setTimeout(function () {
                     document.body.innerHTML = ""
                 }, 1000)
@@ -38,9 +37,7 @@
 
     <body>
         <div ms-controller='widget0' >
-            <div><ms-button ms-widget="@config"></ms-button></div>
+            <div><wbr ms-widget="[{is:'ms-button'},@config]"/></div>
         </div>
-
-
     </body>
 </html>
