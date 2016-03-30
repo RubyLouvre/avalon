@@ -10,6 +10,7 @@ var emptyObj = {
 }
 var directives = avalon.directives
 var rbinding = require('../seed/regexp').binding
+
 function diff(current, previous) {
     if (!current)
         return
@@ -25,7 +26,7 @@ function diff(current, previous) {
             case 8:
                 if (cur.directive === 'for') {
                     i = directives['for'].diff(current, previous, i)
-                } else if (cur.directive ) {//if widget
+                } else if (cur.directive) {//if widget
                     directives[cur.directive].diff(cur, pre)
                 }
                 break

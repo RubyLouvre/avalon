@@ -5,7 +5,7 @@ var fireDisposeHook = require('./fireDisposeHook')
 
 var componentQueue = []
 var resolvedComponents = avalon.resolvedComponents
-var skipWidget = {'ms-widget': 1, widget: 1, wid: 1, resolved: 1}
+var skipWidget = {'ms-widget': 1, widget: 1, resolved: 1}
 
 avalon.document.createElement('slot')
 
@@ -41,7 +41,6 @@ avalon.component = function (name, definition) {
 
         var vm = definition
         var wid = node.props.wid
-
         var options = node.props['ms-widget']
         //如果组件模板已经定
         var placeholder = {
@@ -106,12 +105,18 @@ avalon.component = function (name, definition) {
                 //如果不是半闭合标签，那么里面可能存在插槽元素,抽取出来与主模板合并
                 insertSlots(vtree, node, definition.contentSlot)
             }
+           
             options = options || {}
-            delete options.is
-            delete options.$define
             var diff = options.$diff
-            delete options.$diff
-            var define = options.$define || avalon.directives.widget.define
+            var define = options.$define
+            define = define || avalon.directives.widget.define
+            try { //options可能是vm, 在IE下使用delete会报错
+                delete options.is
+                delete options.$define
+                delete options.$diff
+                delete options.$define
+            } catch (e) {
+            }
 
             var $id = options.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
             var vmodel = define(vm, definition.defaults, options)
@@ -120,7 +125,11 @@ avalon.component = function (name, definition) {
             //生成组件的render
             var render = avalon.render(vtree)
             vmodel.$render = render
-            vmodel.$fire('onInit', vmodel)
+            vmodel.$fire('onInit', {
+                type: 'init',
+                vmodel: vmodel,
+                target: null
+            })
 
             avalon.shadowCopy(docker, {
                 render: render,
@@ -149,8 +158,6 @@ function reRender(docker) {
     }
     if (!docker.renderCount) {
         docker.renderCount = 1
-    } else {
-        docker.renderCount++
     }
     widgetNode.props['ms-widget'] = docker.props['ms-widget']
     widgetNode.vmodel = docker.vmodel
@@ -158,7 +165,6 @@ function reRender(docker) {
     //移除skipAttrs,以便进行diff
     delete widgetNode.skipAttrs
 
-    widgetNode.renderCount = docker.renderCount
     return widgetNode
 }
 function isComponentReady(vnode) {
