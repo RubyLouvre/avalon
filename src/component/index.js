@@ -1,15 +1,32 @@
 
+var VText = require('../vdom/VText')
+var outerTags = avalon.oneObject('wbr,xmp,template')
+var fireDisposeHook = require('./fireDisposeHook')
+
 var componentQueue = []
 var resolvedComponents = avalon.resolvedComponents
-var rcomponentTag = /^(\w+\-w+|wbr|xmp|template)$/
 var skipWidget = {'ms-widget': 1, widget: 1, wid: 1, resolved: 1}
-var VText = require('../vdom/VText')
+
 avalon.document.createElement('slot')
+
 
 avalon.component = function (name, definition) {
     if (typeof name === 'string') {
         //这里是定义组件的分支
-        avalon.components[name] = definition
+        if (!avalon.components[name]) {
+            if (document.registerElement && isCustomTag(name)) {
+                var prototype = Object.create(HTMLElement.prototype)
+                prototype.detachedCallback = function () {
+                    var dom = this
+                    avalon.fireDisposedComponents = avalon.noop
+                    setTimeout(function () {
+                        fireDisposeHook(dom)
+                    })
+                }
+                document.registerElement(name, prototype)
+            }
+            avalon.components[name] = definition
+        }
 
         for (var i = 0, obj; obj = componentQueue[i]; i++) {
             if (name === obj.type) {
@@ -50,9 +67,10 @@ avalon.component = function (name, definition) {
             //页面上的节点是用于传参的
             //通过插件的template字符串生成的节点，是来授参执行的
             var type = node.type
-            if (!rcomponentTag.test(type)) {
+            if (!outerTags[type] && !isCustomTag(type)) {
                 avalon.warn(type + '不合适做组件的标签')
             }
+
             if (type === 'xmp' || type === 'template' || node.children.length === 0) {
                 node.children = avalon.lexer(docker.template)
             }
@@ -116,6 +134,12 @@ avalon.component = function (name, definition) {
     }
 }
 
+var ralphabet = /^[a-z]+$/
+
+function isCustomTag(type) {
+    return type.length > 3 && type.indexOf('-') > 0 &&
+            ralphabet.test(type.charAt(0) + type.slice(-1))
+}
 
 function reRender(docker) {
     var vtree = docker.render(docker.vmodel)

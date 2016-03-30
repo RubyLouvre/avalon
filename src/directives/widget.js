@@ -1,5 +1,7 @@
 
 var skipArray = require('../vmodel/parts/skipArray')
+var fireDisposeHook = require('../component/fireDisposeHook')
+
 //插入点机制,组件的模板中有一些ms-slot元素,用于等待被外面的元素替代
 function wrap(str) {
     return str.replace('return __value__', function (a) {
@@ -81,7 +83,7 @@ avalon.directive('widget', {
             dom.addEventListener("DOMNodeRemovedFromDocument", function () {
                 avalon.fireDisposedComponents = avalon.noop
                 setTimeout(function () {
-                    fireDisposeCallback(dom)
+                    fireDisposeHook(dom)
                 })
             })
         }
@@ -105,23 +107,6 @@ avalon.directive('widget', {
     }
 })
 
-function fireDisposeCallback(el) {
-    if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
-        var wid = el.getAttribute('wid')
-        var docker = avalon.resolvedComponents[ wid ]
-        if (docker && docker.vmodel) {
-            docker.vmodel.$fire("onDispose", el)
-            delete docker.vmodel
-            delete avalon.resolvedComponents[ wid ]
-        }
-    }
-}
-
-avalon.fireDisposedComponents = function (nodes) {
-    for (var i = 0, el; el = nodes[i++]; ) {
-        fireDisposeCallback(el)
-    }
-}
 
 function checkChildrenChange(elem) {
     for (var i = 0, el; el = elem.children[i++]; ) {

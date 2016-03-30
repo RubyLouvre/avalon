@@ -5,6 +5,10 @@ module.exports = function (config) {
         files: [
             {pattern: 'node_modules/chai/chai.js', include: true},
             'dist/avalon.js',
+           // 'components/button/index.js',
+           // 'components/panel/index.js',
+
+            'karma/directives/text.js',
             'karma/directives/expr.js',
             'karma/directives/text.js',
             'karma/directives/class.js',
@@ -15,7 +19,8 @@ module.exports = function (config) {
             'karma/directives/if.js',
             'karma/directives/on.js',
             'karma/directives/duplex.js',
-            'karma/directives/for.js'
+            'karma/directives/for.js',
+            'karma/directives/widget.js'
         ],
         exclude: [],
         reporters: ['mocha'],

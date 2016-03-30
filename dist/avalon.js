@@ -61,12 +61,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(15)
 	__webpack_require__(19)
 	__webpack_require__(35)
-	__webpack_require__(59)
-	__webpack_require__(67)
+	__webpack_require__(60)
 	__webpack_require__(68)
+	__webpack_require__(70)
 
-	__webpack_require__(75)
 	__webpack_require__(76)
+	__webpack_require__(77)
 	module.exports = avalon
 
 
@@ -4877,7 +4877,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var skipArray = __webpack_require__(71)
+	var skipArray = __webpack_require__(59)
+	var fireDisposeHook = __webpack_require__(69)
+
 	//插入点机制,组件的模板中有一些ms-slot元素,用于等待被外面的元素替代
 	function wrap(str) {
 	    return str.replace('return __value__', function (a) {
@@ -4959,7 +4961,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            dom.addEventListener("DOMNodeRemovedFromDocument", function () {
 	                avalon.fireDisposedComponents = avalon.noop
 	                setTimeout(function () {
-	                    fireDisposeCallback(dom)
+	                    fireDisposeHook(dom)
 	                })
 	            })
 	        }
@@ -4983,23 +4985,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	})
 
-	function fireDisposeCallback(el) {
-	    if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
-	        var wid = el.getAttribute('wid')
-	        var docker = avalon.resolvedComponents[ wid ]
-	        if (docker && docker.vmodel) {
-	            docker.vmodel.$fire("onDispose", el)
-	            delete docker.vmodel
-	            delete avalon.resolvedComponents[ wid ]
-	        }
-	    }
-	}
-
-	avalon.fireDisposedComponents = function (nodes) {
-	    for (var i = 0, el; el = nodes[i++]; ) {
-	        fireDisposeCallback(el)
-	    }
-	}
 
 	function checkChildrenChange(elem) {
 	    for (var i = 0, el; el = elem.children[i++]; ) {
@@ -5019,15 +5004,31 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 59 */
+/***/ function(module, exports) {
+
+	/**
+	 * 
+	$$skipArray:是系统级通用的不可监听属性
+	$skipArray: 是当前对象特有的不可监听属性
+
+	 不同点是
+	 $$skipArray被hasOwnProperty后返回false
+	 $skipArray被hasOwnProperty后返回true
+	 */
+
+	module.exports = avalon.oneObject('$id,$render,$track,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,__proxy__,__data__,__const__')
+
+/***/ },
+/* 60 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	avalon.lexer = __webpack_require__(60)
-	avalon.diff = __webpack_require__(61)
-	avalon.batch = __webpack_require__(62)
+	avalon.lexer = __webpack_require__(61)
+	avalon.diff = __webpack_require__(62)
+	avalon.batch = __webpack_require__(63)
 	// dispatch与patch 为内置模块
 
-	var parseView = __webpack_require__(63)
+	var parseView = __webpack_require__(64)
 
 	function render(vtree) {
 	    var num = num || String(new Date - 0).slice(0, 6)
@@ -5041,7 +5042,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 60 */
+/* 61 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -5382,7 +5383,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = lexer
 
 /***/ },
-/* 61 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -5449,7 +5450,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 62 */
+/* 63 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -5520,13 +5521,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 63 */
+/* 64 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var parseExpr = __webpack_require__(64)
-	var parseBindings = __webpack_require__(65)
-	var parseDelimiter = __webpack_require__(66)
+	var parseExpr = __webpack_require__(65)
+	var parseBindings = __webpack_require__(66)
+	var parseDelimiter = __webpack_require__(67)
 	var rexpr = avalon.config.rexpr
 	var quote = avalon.quote
 	var makeHashCode = avalon.makeHashCode
@@ -5679,7 +5680,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = parseView
 
 /***/ },
-/* 64 */
+/* 65 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -5851,7 +5852,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 65 */
+/* 66 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var rneedQuote = /[W-]/
@@ -5934,7 +5935,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = parseBindings
 
 /***/ },
-/* 66 */
+/* 67 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var rline = /\r?\n/g
@@ -5987,21 +5988,38 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 67 */
+/* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
+	var VText = __webpack_require__(16)
+	var outerTags = avalon.oneObject('wbr,xmp,template')
+	var fireDisposeHook = __webpack_require__(69)
+
 	var componentQueue = []
 	var resolvedComponents = avalon.resolvedComponents
-	var rcomponentTag = /^(\w+\-w+|wbr|xmp|template)$/
 	var skipWidget = {'ms-widget': 1, widget: 1, wid: 1, resolved: 1}
-	var VText = __webpack_require__(16)
+
 	avalon.document.createElement('slot')
+
 
 	avalon.component = function (name, definition) {
 	    if (typeof name === 'string') {
 	        //这里是定义组件的分支
-	        avalon.components[name] = definition
+	        if (!avalon.components[name]) {
+	            if (document.registerElement && isCustomTag(name)) {
+	                var prototype = Object.create(HTMLElement.prototype)
+	                prototype.detachedCallback = function () {
+	                    var dom = this
+	                    avalon.fireDisposedComponents = avalon.noop
+	                    setTimeout(function () {
+	                        fireDisposeHook(dom)
+	                    })
+	                }
+	                document.registerElement(name, prototype)
+	            }
+	            avalon.components[name] = definition
+	        }
 
 	        for (var i = 0, obj; obj = componentQueue[i]; i++) {
 	            if (name === obj.type) {
@@ -6042,9 +6060,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            //页面上的节点是用于传参的
 	            //通过插件的template字符串生成的节点，是来授参执行的
 	            var type = node.type
-	            if (!rcomponentTag.test(type)) {
+	            if (!outerTags[type] && !isCustomTag(type)) {
 	                avalon.warn(type + '不合适做组件的标签')
 	            }
+
 	            if (type === 'xmp' || type === 'template' || node.children.length === 0) {
 	                node.children = avalon.lexer(docker.template)
 	            }
@@ -6108,6 +6127,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
+	var ralphabet = /^[a-z]+$/
+
+	function isCustomTag(type) {
+	    return type.length > 3 && type.indexOf('-') > 0 &&
+	            ralphabet.test(type.charAt(0) + type.slice(-1))
+	}
 
 	function reRender(docker) {
 	    var vtree = docker.render(docker.vmodel)
@@ -6192,12 +6217,37 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 68 */
+/* 69 */
+/***/ function(module, exports) {
+
+	function fireDisposeHook(el) {
+	    if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
+	        var wid = el.getAttribute('wid')
+	        var docker = avalon.resolvedComponents[ wid ]
+	        if (docker && docker.vmodel) {
+	            docker.vmodel.$fire("onDispose", el)
+	            delete docker.vmodel
+	            delete avalon.resolvedComponents[ wid ]
+	        }
+	    }
+	}
+
+
+	avalon.fireDisposedComponents = function (nodes) {
+	    for (var i = 0, el; el = nodes[i++]; ) {
+	        fireDisposeHook(el)
+	    }
+	}
+	//http://stackoverflow.com/questions/31798816/simple-mutationobserver-version-of-domnoderemovedfromdocument
+	module.exports = fireDisposeHook
+
+/***/ },
+/* 70 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 
-	var share = __webpack_require__(69)
+	var share = __webpack_require__(71)
 
 	var isSkip = share.isSkip
 	var toJson = share.toJson
@@ -6265,7 +6315,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	$$midway.masterFactory = masterFactory
-	var addAccessors = __webpack_require__(74)
+	var addAccessors = __webpack_require__(75)
 
 	function slaveFactory(before, after, heirloom, options) {
 	    var keys = {}
@@ -6494,11 +6544,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	//使用这个AJAX库 https://github.com/matthew-andrews/isomorphic-fetch
 
 /***/ },
-/* 69 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var share = __webpack_require__(70)
-	var canHideProperty = __webpack_require__(73)
+	var share = __webpack_require__(72)
+	var canHideProperty = __webpack_require__(74)
 	var makeFire = share.makeFire
 	function toJson(val) {
 	    var xtype = avalon.type(val)
@@ -6587,13 +6637,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 70 */
+/* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var $$midway = {}
-	var $$skipArray = __webpack_require__(71)
-	var dispatch = __webpack_require__(72)
+	var $$skipArray = __webpack_require__(59)
+	var dispatch = __webpack_require__(73)
 	var $emit = dispatch.$emit
 	var $watch = dispatch.$watch
 
@@ -6771,23 +6821,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 71 */
-/***/ function(module, exports) {
-
-	/**
-	 * 
-	$$skipArray:是系统级通用的不可监听属性
-	$skipArray: 是当前对象特有的不可监听属性
-
-	 不同点是
-	 $$skipArray被hasOwnProperty后返回false
-	 $skipArray被hasOwnProperty后返回true
-	 */
-
-	module.exports = avalon.oneObject('$id,$render,$track,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,__proxy__,__data__,__const__')
-
-/***/ },
-/* 72 */
+/* 73 */
 /***/ function(module, exports) {
 
 	
@@ -6865,7 +6899,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 73 */
+/* 74 */
 /***/ function(module, exports) {
 
 	//如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
@@ -6882,12 +6916,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = flag
 
 /***/ },
-/* 74 */
+/* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var canHideProperty = __webpack_require__(73)
-	var $$skipArray = __webpack_require__(71)
+	var canHideProperty = __webpack_require__(74)
+	var $$skipArray = __webpack_require__(59)
 
 
 	var defineProperties = Object.defineProperties
@@ -7010,7 +7044,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 75 */
+/* 76 */
 /***/ function(module, exports) {
 
 	//var avalon = require('avalon')
@@ -7018,17 +7052,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.component('ms-button', {
 	    template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
 	    defaults: {
-	        buttonText: "btn"
+	        buttonText: "button"
 	    },
 	    contentSlot: 'buttonText'
 	})
 
 /***/ },
-/* 76 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var button = __webpack_require__(75)
-	var tmpl = __webpack_require__(77)
+	var button = __webpack_require__(76)
+	var tmpl = __webpack_require__(78)
 
 	avalon.component('ms-panel', {
 	    template: tmpl,
@@ -7042,10 +7076,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 77 */
+/* 78 */
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</ms-panel>"
+	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
 
 /***/ }
 /******/ ])
