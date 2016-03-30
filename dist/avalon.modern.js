@@ -2599,15 +2599,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var skipArray = __webpack_require__(59)
 	var fireDisposeHook = __webpack_require__(69)
 
-	//插入点机制,组件的模板中有一些ms-slot元素,用于等待被外面的元素替代
-	function wrap(str) {
-	    return str.replace('return __value__', function (a) {
-	        var prefix = 'if(Array.isArray(__value__)){\n' +
-	                '    __value__ = avalon.mix.apply({},__value__)\n' +
-	                '}\n'
-	        return prefix + a
-	    })
-	}
+	//插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
 
 	avalon.directive('widget', {
 	    parse: function (binding, num, elem) {
@@ -2617,10 +2609,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            template: elem.template
 	        }
 	        return  'vnode' + num + '.props.wid = "' + wid + '"\n' +
-	                'vnode' + num + '.props["ms-widget"] = ' + wrap(avalon.parseExpr(binding), 'widget') + ';\n' +
+	                'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget') + ';\n' +
 	                '\tvnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
 	    },
-	    define: function (topVm, defaults, options) {
+	    define: function (topVm, defaults, options, accessors) {
 	        var after = avalon.mix({}, defaults, options)
 	        var events = {}
 	        //绑定生命周期的回调
@@ -2630,8 +2622,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            delete after[a]
 	        })
 	        var vm = avalon.mediatorFactory(topVm, after)
-	        if (options.$id) {
-	            vm = avalon.mediatorFactory(vm, options)
+	        if (accessors.length) {
+	            accessors.forEach(function(bag){
+	               vm = avalon.mediatorFactory(vm, bag)
+	            })
 	        }
 	        ++avalon.suspendUpdate
 	        for (var i in after) {
@@ -3773,7 +3767,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var vm = definition
 	        var wid = node.props.wid
-	        var options = node.props['ms-widget']
+	        var options = node.props['ms-widget'] || {}
+	        var vms = []
+	        if(Array.isArray(options)){
+	            options = avalon.mix.apply({},options)
+	            vms = options.filter(function(el){
+	                return el.$id
+	            })
+	        }else if(options.$id){
+	            vms = [options]
+	        }
 	        //如果组件模板已经定
 	        var placeholder = {
 	            nodeType: 8,
@@ -3828,30 +3831,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 
-	            if (definition.contentSlot) {
+	            if (definition.soleSlot) {
 	                var slots = {}
-	                var slotName = definition.contentSlot
+	                var slotName = definition.soleSlot
 	                slots[slotName] = /\S/.test(docker.template) ? node.children : new VText('{{@' + slotName + '}}')
 	                mergeTempale(vtree, slots)
 	            } else if (!node.isVoidTag) {
 	                //如果不是半闭合标签，那么里面可能存在插槽元素,抽取出来与主模板合并
-	                insertSlots(vtree, node, definition.contentSlot)
+	                insertSlots(vtree, node, definition.soleSlot)
 	            }
 	           
-	            options = options || {}
 	            var diff = options.$diff
 	            var define = options.$define
 	            define = define || avalon.directives.widget.define
+	            var $id = options.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
+
 	            try { //options可能是vm, 在IE下使用delete会报错
 	                delete options.is
 	                delete options.$define
 	                delete options.$diff
-	                delete options.$define
+	                delete options.$id
 	            } catch (e) {
 	            }
 
-	            var $id = options.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
-	            var vmodel = define(vm, definition.defaults, options)
+	            var vmodel = define(vm, definition.defaults, options, vms)
 	            vmodel.$id = $id
 	            avalon.vmodels[$id] = vmodel
 	            //生成组件的render
@@ -3924,10 +3927,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 	}
 
-	function insertSlots(vtree, node, contentSlot) {
+	function insertSlots(vtree, node, soleSlot) {
 	    var slots = {}
-	    if (contentSlot) {
-	        slots[contentSlot] = node.children
+	    if (soleSlot) {
+	        slots[soleSlot] = node.children
 	    } else {
 	        node.children.forEach(function (el) {
 	            if (el.nodeType === 1) {

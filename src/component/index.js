@@ -41,7 +41,16 @@ avalon.component = function (name, definition) {
 
         var vm = definition
         var wid = node.props.wid
-        var options = node.props['ms-widget']
+        var options = node.props['ms-widget'] || {}
+        var vms = []
+        if(Array.isArray(options)){
+            options = avalon.mix.apply({},options)
+            vms = options.filter(function(el){
+                return el.$id
+            })
+        }else if(options.$id){
+            vms = [options]
+        }
         //如果组件模板已经定
         var placeholder = {
             nodeType: 8,
@@ -96,30 +105,30 @@ avalon.component = function (name, definition) {
                 }
             }
 
-            if (definition.contentSlot) {
+            if (definition.soleSlot) {
                 var slots = {}
-                var slotName = definition.contentSlot
+                var slotName = definition.soleSlot
                 slots[slotName] = /\S/.test(docker.template) ? node.children : new VText('{{@' + slotName + '}}')
                 mergeTempale(vtree, slots)
             } else if (!node.isVoidTag) {
                 //如果不是半闭合标签，那么里面可能存在插槽元素,抽取出来与主模板合并
-                insertSlots(vtree, node, definition.contentSlot)
+                insertSlots(vtree, node, definition.soleSlot)
             }
            
-            options = options || {}
             var diff = options.$diff
             var define = options.$define
             define = define || avalon.directives.widget.define
+            var $id = options.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
+
             try { //options可能是vm, 在IE下使用delete会报错
                 delete options.is
                 delete options.$define
                 delete options.$diff
-                delete options.$define
+                delete options.$id
             } catch (e) {
             }
 
-            var $id = options.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
-            var vmodel = define(vm, definition.defaults, options)
+            var vmodel = define(vm, definition.defaults, options, vms)
             vmodel.$id = $id
             avalon.vmodels[$id] = vmodel
             //生成组件的render
@@ -192,10 +201,10 @@ function hasUnresolvedComponent(vnode) {
     })
 }
 
-function insertSlots(vtree, node, contentSlot) {
+function insertSlots(vtree, node, soleSlot) {
     var slots = {}
-    if (contentSlot) {
-        slots[contentSlot] = node.children
+    if (soleSlot) {
+        slots[soleSlot] = node.children
     } else {
         node.children.forEach(function (el) {
             if (el.nodeType === 1) {

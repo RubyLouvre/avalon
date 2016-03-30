@@ -5,5 +5,5 @@ avalon.component('ms-button', {
     defaults: {
         buttonText: "button"
     },
-    contentSlot: 'buttonText'
+    soleSlot: 'buttonText'
 })

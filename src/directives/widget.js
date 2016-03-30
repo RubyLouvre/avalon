@@ -2,15 +2,7 @@
 var skipArray = require('../vmodel/parts/skipArray')
 var fireDisposeHook = require('../component/fireDisposeHook')
 
-//插入点机制,组件的模板中有一些ms-slot元素,用于等待被外面的元素替代
-function wrap(str) {
-    return str.replace('return __value__', function (a) {
-        var prefix = 'if(Array.isArray(__value__)){\n' +
-                '    __value__ = avalon.mix.apply({},__value__)\n' +
-                '}\n'
-        return prefix + a
-    })
-}
+//插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
 
 avalon.directive('widget', {
     parse: function (binding, num, elem) {
@@ -20,10 +12,10 @@ avalon.directive('widget', {
             template: elem.template
         }
         return  'vnode' + num + '.props.wid = "' + wid + '"\n' +
-                'vnode' + num + '.props["ms-widget"] = ' + wrap(avalon.parseExpr(binding), 'widget') + ';\n' +
+                'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget') + ';\n' +
                 '\tvnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
     },
-    define: function (topVm, defaults, options) {
+    define: function (topVm, defaults, options, accessors) {
         var after = avalon.mix({}, defaults, options)
         var events = {}
         //绑定生命周期的回调
@@ -33,8 +25,10 @@ avalon.directive('widget', {
             delete after[a]
         })
         var vm = avalon.mediatorFactory(topVm, after)
-        if (options.$id) {
-            vm = avalon.mediatorFactory(vm, options)
+        if (accessors.length) {
+            accessors.forEach(function(bag){
+               vm = avalon.mediatorFactory(vm, bag)
+            })
         }
         ++avalon.suspendUpdate
         for (var i in after) {
