@@ -14,9 +14,9 @@ function wrap(str) {
 
 avalon.directive('widget', {
     parse: function (binding, num, elem) {
-        var wid = elem.props.wid = avalon.makeHashCode('w')
+        var wid = elem.props.wid || (elem.props.wid = avalon.makeHashCode('w'))
         avalon.resolvedComponents[wid] = {
-            props: avalon.shadowCopy({wid: wid}, elem.props),
+            props: avalon.shadowCopy({}, elem.props),
             template: elem.template
         }
         return  'vnode' + num + '.props.wid = "' + wid + '"\n' +
@@ -32,8 +32,10 @@ avalon.directive('widget', {
                 events[a] = after[a]
             delete after[a]
         })
-        var vm = avalon.mediatorFactory(topVm, defaults)
-        vm = avalon.mediatorFactory(vm, options)
+        var vm = avalon.mediatorFactory(topVm, after)
+        if (options.$id) {
+            vm = avalon.mediatorFactory(vm, options)
+        }
         ++avalon.suspendUpdate
         for (var i in after) {
             if (skipArray[i])
@@ -95,6 +97,9 @@ avalon.directive('widget', {
                     fireDisposeHook(dom)
                 })
             })
+        } else if(dom.type.indexOf('-') === -1) {
+            avalon.Array.ensure(checkDisposeList, dom)
+            checkDispose()
         }
     },
     replaceByComment: function (dom, node, parent) {
@@ -115,6 +120,25 @@ avalon.directive('widget', {
         avalon.directives.widget.addDisposeWatcher(com)
     }
 })
+
+var checkDisposeList = []
+var checkID = 0
+function checkDispose() {
+    if (!checkID) {
+        checkID = setInterval(function () {
+            for (var i = 0, el; el = checkDisposeList[i++]; ) {
+                if(false === fireDisposeHook(el)){
+                   avalon.Array.removeAt(checkDisposeList, i)
+                   --i
+                }
+             }
+            if(checkDisposeList.length == 0){
+                clearInterval(checkID)
+                checkID = 0
+            }
+        }, 1000)
+    }
+}
 
 
 // http://www.besteric.com/2014/11/16/build-blog-mirror-site-on-gitcafe/

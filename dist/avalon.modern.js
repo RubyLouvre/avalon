@@ -2630,8 +2630,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            delete after[a]
 	        })
 	        var vm = avalon.mediatorFactory(topVm, after)
-	        if(options.$id){
-	           vm = avalon.mediatorFactory(vm, options)
+	        if (options.$id) {
+	            vm = avalon.mediatorFactory(vm, options)
 	        }
 	        ++avalon.suspendUpdate
 	        for (var i in after) {
@@ -2694,6 +2694,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    fireDisposeHook(dom)
 	                })
 	            })
+	        } else if(dom.type.indexOf('-') === -1) {
+	            avalon.Array.ensure(checkDisposeList, dom)
+	            checkDispose()
 	        }
 	    },
 	    replaceByComment: function (dom, node, parent) {
@@ -2714,6 +2717,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	        avalon.directives.widget.addDisposeWatcher(com)
 	    }
 	})
+
+	var checkDisposeList = []
+	var checkID = 0
+	function checkDispose() {
+	    if (!checkID) {
+	        checkID = setInterval(function () {
+	            for (var i = 0, el; el = checkDisposeList[i++]; ) {
+	                if(false === fireDisposeHook(el)){
+	                   avalon.Array.removeAt(checkDisposeList, i)
+	                   --i
+	                }
+	             }
+	            if(checkDisposeList.length == 0){
+	                clearInterval(checkID)
+	                checkID = 0
+	            }
+	        }, 1000)
+	    }
+	}
 
 
 	// http://www.besteric.com/2014/11/16/build-blog-mirror-site-on-gitcafe/
@@ -3958,6 +3980,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            vm.$hashcode = false
 	            delete docker.vmodel
 	            delete avalon.resolvedComponents[ wid ]
+	            return false
 	        }
 	    }
 	}
@@ -4180,7 +4203,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        }
 	    } catch (e) {
-	        avalon.log("adjustVm " + e)
 	    }
 	    return other || vm
 	}

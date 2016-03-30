@@ -13,6 +13,7 @@ function fireDisposeHook(el) {
             vm.$hashcode = false
             delete docker.vmodel
             delete avalon.resolvedComponents[ wid ]
+            return false
         }
     }
 }

@@ -17,7 +17,6 @@ function adjustVm(vm, expr) {
 
         }
     } catch (e) {
-        avalon.log("adjustVm " + e)
     }
     return other || vm
 }
