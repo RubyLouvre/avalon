@@ -39,7 +39,7 @@ if (!outerTags[type] && !isCustomTag(type)) {
 ```html
 <ms-button></ms-button>
 <xmp ms-widget='{is:"ms-button"}'></xmp>
-<wbr ms-widget='{is:"ms-button"}'></wbr>
+<wbr ms-widget='{is:"ms-button"}'/>
 <template ms-widget='{is:"ms-button"}'></template>
 
 ```
@@ -48,7 +48,7 @@ if (!outerTags[type] && !isCustomTag(type)) {
 
 ```html
 <xmp ms-widget='{is:"ms-button"}'></xmp>
-<wbr ms-widget='{is:"ms-button"}'></wbr>
+<wbr ms-widget='{is:"ms-button"}'/>
 
 ```
 
@@ -58,14 +58,13 @@ template在IE9下认为是一个XML元素，并且HTML5元素。
 
 ```html
 <xmp ms-widget='{is:"ms-panel"}'>
-<ms-tabs ms-widget="@tabsConfig">
-  <div slot='tab'>xxxxx</div>
-  <div slot='tab'>xxxxx</div>
-  <div slot='tab'>xxxxx</div>
-  <p><ms-button /><</p>
-<ms-tabs>
-
-<xmp>
+    <ms-tabs ms-widget="@tabsConfig">
+      <div slot='tab'>xxxxx</div>
+      <div slot='tab'>xxxxx</div>
+      <div slot='tab'>xxxxx</div>
+      <p><ms-button /><</p>
+    <ms-tabs>
+</xmp>
 
 ```
 xmp为一个普通标签，与DIV一样，里面可以套其他元素，但它不会将它们都转换元素节点，里面只有一个文本节点，因此你想怎么写也行，如ms-button，本来你要`<ms-button></ms-button>`这样的写，现在半闭合就行了。
