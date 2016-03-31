@@ -6136,17 +6136,88 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 98 */
 /***/ function(module, exports) {
 
-	
+	//用于chrome, safari
+	var tags = {}
+	function byCustomElement(name) {
+	    if (tags[name])
+	        return
+	    tags[name] = true
+	    var prototype = Object.create(HTMLElement.prototype)
+	    prototype.detachedCallback = function () {
+	        var dom = this
+	        setTimeout(function () {
+	            fireDisposeHook(dom)
+	        })
+	    }
+	    document.registerElement(name, prototype)
+	}
+
 	//http://stackoverflow.com/questions/11425209/are-dom-mutation-observers-slower-than-dom-mutation-events
 	//http://stackoverflow.com/questions/31798816/simple-mutationobserver-version-of-domnoderemovedfromdocument
 	function byMutationEvent(dom) {
 	    dom.addEventListener("DOMNodeRemovedFromDocument", function () {
-	        avalon.fireDisposedComponents = avalon.noop
 	        setTimeout(function () {
 	            fireDisposeHook(dom)
 	        })
 	    })
 	}
+	//用于IE8+, firefox
+	function byRewritePrototype() {
+	    if (byRewritePrototype.execute) {
+	        return
+	    }
+	    
+	    byRewritePrototype.execute = true
+	    var p = Node.prototype
+	    var _removeChild = p.removeChild
+	    p.removeChild = function (a, b) {
+	        _removeChild.call(this, a, b)
+	        if (a.nodeType === 1) {
+	            setTimeout(function () {
+	                fireDisposeHook(a)
+	            })
+	        }
+	        return a
+	    }
+	    var _replaceChild = p.replaceChild
+	    p.replaceChild = function (a, b) {
+	        _replaceChild.call(this, a, b)
+	        if (a.nodeType === 1) {
+	            setTimeout(function () {
+	                fireDisposeHook(a)
+	            })
+	        }
+	        return a
+	    }
+	    var _innerHTML = p.innerHTML
+	    p.innerHTML = function (html) {
+	        var all = this.getElementsByTagName('*')
+	        _innerHTML.call(this, html)
+	        fireDisposedComponents(all)
+	    }
+	    var _appendChild = p._appendChild
+	    p.appendChild = function (a) {
+	        _appendChild.call(this, a)
+	        if (a.nodeType === 1 && this.nodeType === 11) {
+	            setTimeout(function () {
+	                fireDisposeHook(a)
+	            })
+	        }
+	        return a
+	    }
+	    var _insertBefore = p.insertBefore
+	    p.insertBefore = function (a) {
+	        _insertBefore.call(this, a)
+	        if (a.nodeType === 1 && this.nodeType === 11) {
+	            setTimeout(function () {
+	                fireDisposeHook(a)
+	            })
+	        }
+	        return a
+	    }
+	}
+
+
 	//用于IE6,7
 	var checkDisposeNodes = []
 	var checkID = 0
@@ -6165,68 +6236,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                checkID = 0
 	            }
 	        }, 1000)
-	    }
-	}
-
-	//用于safari
-	var tags = {}
-	function byCustomElement(name) {
-	    if (tags[name])
-	        return
-	    tags[name] = true
-	    var prototype = Object.create(HTMLElement.prototype)
-	    prototype.detachedCallback = function () {
-	        var dom = this
-	        avalon.fireDisposedComponents = avalon.noop
-	        setTimeout(function () {
-	            fireDisposeHook(dom)
-	        })
-	    }
-	    document.registerElement(name, prototype)
-	}
-
-
-	//用于IE8+, firefox
-	function byRewritePrototype() {
-	    if (byRewritePrototype.execute) {
-	        return
-	    }
-	    byRewritePrototype.execute = true
-	    var _removeChild = Node.prototype.removeChild
-	    Node.prototype.removeChild = function (a, b) {
-	        _removeChild.call(this, a, b)
-	        if (a.nodeType === 1) {
-	            setTimeout(function () {
-	                fireDisposeHook(a)
-	            })
-	        }
-	        return a
-	    }
-	    var _innerHTML = Node.prototype.innerHTML
-	    Node.prototype.innerHTML = function (html) {
-	        var all = this.getElementsByTagName('*')
-	        _innerHTML.call(this, html)
-	        fireDisposedComponents(all)
-	    }
-	    var _appendChild = Node.prototype.innerHTML
-	    Node.prototype.appendChild = function (a) {
-	        _appendChild.call(this, a)
-	        if (a.nodeType === 1 && this.nodeType === 11) {
-	            setTimeout(function () {
-	                fireDisposeHook(a)
-	            })
-	        }
-	        return a
-	    }
-	    var _insertBefore = Node.prototype.insertBefore
-	    Node.prototype.insertBefore = function (a) {
-	        _insertBefore.call(this, a)
-	        if (a.nodeType === 1 && this.nodeType === 11) {
-	            setTimeout(function () {
-	                fireDisposeHook(a)
-	            })
-	        }
-	        return a
 	    }
 	}
 
