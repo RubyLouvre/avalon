@@ -18,7 +18,7 @@ avalon2的组件是基于avalon1.4与1.5, ms-widget绑定属性用来做配置,�
 
 但avalon只建议用wbr, xmp, template及以ms-开头的标签做组件，否则会收到一个警告
 
-```
+```javascript
 var ralphabet = /^[a-z]+$/
 
 function isCustomTag(type) {
@@ -56,7 +56,7 @@ template在IE9下认为是一个XML元素，并且HTML5元素。
 
 如果组件套组件可以这么玩
 
-```
+```html
 <xmp ms-widget='{is:"ms-panel"}'>
 <ms-tabs ms-widget="@tabsConfig">
   <div slot='tab'>xxxxx</div>
@@ -72,7 +72,7 @@ xmp为一个普通标签，与DIV一样，里面可以套其他元素，但它�
 
 自定义标签只是为组件提供了一个is配置项，更多的配置项在ms-widget中。在1.4里，那是一个字符串，现在它是一个对象或一个对象数组。以前我们要操作组件非常困难，必须等到组件生成后，通过onInit这个回调才能得到组件vm。现在强烈建议，ms-widget为vm中一个子vm对象。
 
-```
+```javascript
 avalon.define({
     $id: 'test',
     xxx: {buttonText:'aaa'}
@@ -91,13 +91,13 @@ avalon.define({
 
 然后 我们直接将改vm.xxx.buttonText = "333",视图就会立即变成
 
-```
+```html
 <button type="button"><span>333</span></button>
 ```
 
 当然，由于我们已经在ms-widget上传入足够 的配置，那么xmp的innerHTML对我们就没有用，因此也可以简化成
 
-```
+```javascript
 avalon.define({
     $id: 'test',
     xxx: {buttonText:'aaa'}
@@ -130,7 +130,7 @@ innerHTML内，添加一些slot元素，并且指定其name就行了。
 
 当我们不使用slot，又不愿意写面板内部放进vm时，你的页面会是这样的：
 
-```
+```html
 <ms-tabs ms-widget='{panels:[
 "第一个面板的内部dfsdfsdfsdfdsfdsf",
 "第二个面板的内部dfsdfsdfsdfdsfdsf"
@@ -140,7 +140,7 @@ innerHTML内，添加一些slot元素，并且指定其name就行了。
 
 使用了slot后
 
-```
+```html
 <ms-tabs>
 <div slot='panels'>第一个面板的内部dfsdfsdfsdfdsfdsf</div>
 <div slot='panels'>第二个面板的内部dfsdfsdfsdfdsfdsf</div>
@@ -151,7 +151,7 @@ innerHTML内，添加一些slot元素，并且指定其name就行了。
 
 而你的组件是这样定义
 
-```
+```html
 <ms-tabs>
 <slot name='panels'></solt>
 <slot name='panels'></solt>
@@ -167,7 +167,7 @@ innerHTML内，添加一些slot元素，并且指定其name就行了。
 
 我们可以看一下ms-button是怎么使用的
 
-```
+```javascript
 avalon.component('ms-button', {
     template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
     defaults: {
@@ -181,7 +181,7 @@ avalon.component('ms-button', {
 
 组件属性的寻找顺序，会优先找配置对象，然后是innerHTML，然后是defaults中的默认值.我们可以看一下测试
 
-```
+```javascript
 div.innerHTML = heredoc(function () {
             /*
              <div ms-controller='widget0' >
@@ -215,7 +215,7 @@ div.innerHTML = heredoc(function () {
 生命周期回调的例子.
 avalon是使用多种策略来监听元素是否移除
 
-```
+```html
 <!DOCTYPE html>
 <html>
     <head>
