@@ -3465,7 +3465,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            node.nodeValue = vnode.nodeValue
 	            textNode = node
 	        }
-	        vnode.dom = textNode
+	        if(avalon.contains(avalon.root, textNode)){
+	           vnode.dom = textNode
+	        }
 	    }
 	})
 
