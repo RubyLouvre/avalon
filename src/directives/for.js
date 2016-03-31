@@ -158,7 +158,6 @@ avalon.directive('for', {
         }
         if (vnode.hasRemove) {
             vnode.hasRemove = false
-            var removedNodes = parent.getElementsByTagName('*')
             for (var i in vnode.removedComponents) {
                 var el = vnode.removedComponents[i]
                 if (el.nodes) {
@@ -170,7 +169,6 @@ avalon.directive('for', {
                     el.nodes.length = el.children.length = 0
                 }
             }
-            avalon.fireDisposedComponents(removedNodes)
         }
         delete vnode.removedComponents
         var insertPoint = startRepeat
