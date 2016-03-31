@@ -52,6 +52,5 @@ avalon.directive('html', {
         })
 
         node.appendChild(fragment)
-        avalon.fireDisposedComponents(nodes)
     }
 })

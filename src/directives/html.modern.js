@@ -39,6 +39,5 @@ avalon.directive('html', {
         vnode.children.forEach(function (c) {
             fragment.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
         })
-        avalon.fireDisposedComponents(nodes)
     }
 })
