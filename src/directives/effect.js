@@ -1,7 +1,6 @@
 avalon.directive("effect", {
     parse: function (binding, num) {
         return 'vnode' + num + '.props["ms-effect"] = ' + avalon.parseExpr(binding) + ';\n'
-
     },
     diff: function (cur, pre) {
         var definition = cur.props['ms-effect']
@@ -24,26 +23,23 @@ avalon.directive("effect", {
         if (!type || !options || typeof effect[method] !== 'function')
             return
 
-        if (options.queue) {
-            if (animationQueue.length) {
-                animationQueue.push(function () {
-                    effect[method](dom, options)
-                })
-            } else {
-                effect[method](dom, options)
-            }
+        if (options.queue && animationQueue.length) {
+            animationQueue.push(function () {
+                effect[method](options)
+            })
         } else {
-            effect[method](dom, options)
+            effect[method](options)
         }
     }
 })
 var animationQueue = []
 var lock = false
 function callNextAniation() {
+    animationQueue.shift()
     if (lock)
         return
     lock = true
-    var fn = animationQueue.shift()
+    var fn = animationQueue[0]
     if (fn) {
         avalon.nextTick(function () {
             lock = false
@@ -86,29 +82,29 @@ Effect.prototype = {
     leave: createMethod('leave'),
     move: createMethod('move')
 }
-
+function callHooks(options, name, el) {
+    var list = options[name]
+    list = Array.isArray(list) ? list : typeof list === 'function' ? [list] : []
+    list.forEach(function (fn) {
+        fn(el)
+    })
+}
 function createMethod(action) {
     var lower = action.toLowerCase()
     return  function (options) {
         function wrapDone(e) {
             var isOk = e !== false
             var dirWord = isOk ? 'Done' : 'Abort'
-            var callback = options['on' + action + dirWord]
-            callback = callback || noop
-            callback.call(elem, {
-                type: action + dirWord.toLowerCase(),
-                target: elem
-            })
+            callHooks(options, 'on' + action + dirWord, elem)
+
             el.unbind(transitionEndEvent)
             el.unbind(animationEndEvent)
             el.removeClass(options[lower + 'ActiveClass'])
             callNextAniation()
         }
         var elem = this.el
-        var onBeforeEnter = options['onBefore' + action]
-        if (onBeforeEnter) {
-            onBeforeEnter.call(elem, {type: 'before' + lower, target: elem})
-        }
+        callHooks(options, 'onBefore' + action, elem)
+
         if (options[lower]) {
             options[lower](elem, function (ok) {
                 wrapDone(!!ok)
@@ -119,12 +115,7 @@ function createMethod(action) {
             function wrapDone(e) {
                 var isOk = e !== false
                 var dirWord = isOk ? 'Done' : 'Abort'
-                var callback = options['on' + action + dirWord]
-                callback = callback || noop
-                callback.call(elem, {
-                    type: action + dirWord.toLowerCase(),
-                    target: elem
-                })
+                callHooks(options, 'on' + action + dirWord, elem)
                 el.unbind(transitionEndEvent)
                 el.unbind(animationEndEvent)
                 el.removeClass(options[lower + 'ActiveClass'] || '')
@@ -146,69 +137,9 @@ function createMethod(action) {
 }
 
 
+function effectFactory() {
 
-var supportTransition = false
-var supportAnimation = false
-var supportCssAnimation = false
-
-var transitionEndEvent
-var animationEndEvent
-var transitionDuration = avalon.cssName("transition-duration")
-var animationDuration = avalon.cssName("animation-duration")
-new function () {// jshint ignore:line
-    var checker = {
-        'TransitionEvent': 'transitionend',
-        'WebKitTransitionEvent': 'webkitTransitionEnd',
-        'OTransitionEvent': 'oTransitionEnd',
-        'otransitionEvent': 'otransitionEnd'
-    }
-    var tran
-    //有的浏览器同时支持私有实现与标准写法，比如webkit支持前两种，Opera支持1、3、4
-    for (var name in checker) {
-        if (window[name]) {
-            tran = checker[name]
-            break;
-        }
-        try {
-            var a = document.createEvent(name);
-            tran = checker[name]
-            break;
-        } catch (e) {
-        }
-    }
-    if (typeof tran === "string") {
-        supportTransition = true
-        supportCssAnimation = true
-        transitionEndEvent = tran
-    }
-
-    //大致上有两种选择
-    //IE10+, Firefox 16+ & Opera 12.1+: animationend
-    //Chrome/Safari: webkitAnimationEnd
-    //http://blogs.msdn.com/b/davrous/archive/2011/12/06/introduction-to-css3-animat ions.aspx
-    //IE10也可以使用MSAnimationEnd监听，但是回调里的事件 type依然为animationend
-    //  el.addEventListener("MSAnimationEnd", function(e) {
-    //     alert(e.type)// animationend！！！
-    // })
-    checker = {
-        'AnimationEvent': 'animationend',
-        'WebKitAnimationEvent': 'webkitAnimationEnd'
-    }
-    var ani;
-    for (name in checker) {
-        if (window[name]) {
-            ani = checker[name];
-            break;
-        }
-    }
-    if (typeof ani === "string") {
-        supportTransition = true
-        supportCssAnimation = true
-        animationEndEvent = ani
-    }
-
-
-}()
+}
 
 
 
@@ -223,33 +154,42 @@ var applyEffect = function (el, dir/*[before, [after, [opts]]]*/) {
     var before = args[2]
     var after = args[3]
     var opts = args[4]
-    var effect = effectFactory(el, opts)
-    if (!effect) {
+    var effect = effectFactory(el)
+    if (!effect) {//没有动画
         before()
         after()
         return false
-    } else {
-        var method = dir ? 'enter' : 'leave'
-        effect[method](before, after)
     }
 }
 
 avalon.shadowCopy(avalon.effect, {
     apply: applyEffect,
-    append: function (el, parent, after, opts) {
-        return applyEffect(el, 1, function () {
-            parent.appendChild(el)
-        }, after, opts)
+    append: function (el, parent, after) {
+        return applyEffect(el, {
+            method: 'enter',
+            onBeforeEnter: function () {
+                parent.appendChild(el)
+            },
+            onEnterDone: after
+        })
     },
-    before: function (el, target, after, opts) {
-        return applyEffect(el, 1, function () {
-            target.parentNode.insertBefore(el, target)
-        }, after, opts)
+    before: function (el, target, after) {
+        return applyEffect(el, {
+            method: 'enter',
+            onBeforeEnter: function () {
+                target.parentNode.insertBefore(el, target)
+            },
+            onEnterDone: after
+        })
     },
-    remove: function (el, parent, after, opts) {
-        return applyEffect(el, 0, function () {
-            if (el.parentNode === parent)
-                parent.removeChild(el)
-        }, after, opts)
+    remove: function (el, parent, after) {
+        return applyEffect(el, {
+            method: 'leave',
+            onLeaveDone: [function () {
+                    if (el.parentNode === parent) {
+                        parent.removeChild(el)
+                    }
+                }, after]
+        })
     }
 })
