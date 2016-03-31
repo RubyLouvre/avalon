@@ -1,34 +1,35 @@
 avalon.directive("effect", {
-    priority: 5,
-    init: function (binding) {
-        var text = binding.expr,
-                className,
-                rightExpr
-        var colonIndex = text.replace(rexprg, function (a) {
-            return a.replace(/./g, "0")
-        }).indexOf(":") //取得第一个冒号的位置
-        if (colonIndex === -1) { // 比如 ms-class/effect="aaa bbb ccc" 的情况
-            className = text
-            rightExpr = true
-        } else { // 比如 ms-class/effect-1="ui-state-active:checked" 的情况
-            className = text.slice(0, colonIndex)
-            rightExpr = text.slice(colonIndex + 1)
-        }
-        if (!rexpr.test(text)) {
-            className = quote(className)
-        } else {
-            className = normalizeExpr(className)
-        }
-        binding.expr = "[" + className + "," + rightExpr + "]"
+    parse: function (binding, num) {
+        return 'vnode' + num + '.props["ms-effect"] = ' + avalon.parseExpr(binding) + ';\n'
+
     },
-    update: function (arr) {
-        var name = arr[0]
-        var elem = this.element
-        if (elem.getAttribute("data-effect-name") === name) {
-            return
-        } else {
-            elem.removeAttribute("data-effect-driver")
+    diff: function (cur, pre) {
+        var definition = cur.props['ms-effect']
+        if (Array.isArray(definition)) {
+            cur.props['ms-effect'] = definition = avalon.mix.apply({}, definition)
         }
+        if (definition && typeof definition == 'object') {
+            if (!pre.props['ms-effect']) {
+                var list = cur.afterChange = cur.afterChange || []
+                avalon.Array.ensure(list, this.update)
+            }
+        }
+    },
+    update: function (dom, vnode) {
+        var definition = vnode.props['ms-effect']
+        var type = definition.is
+        var options = avalon.effects[type]
+        var method = definition.method
+        var effect = new avalon.Effect(dom)
+        if (!type || !options || typeof effect[method] !== 'function')
+            return
+
+
+        effect[method](dom, options)
+
+
+
+
         var inlineStyles = elem.style
         var computedStyles = window.getComputedStyle ? window.getComputedStyle(elem) : null
         var useAni = false
@@ -65,14 +66,40 @@ avalon.directive("effect", {
 })
 
 avalon.effects = {}
-avalon.effect = function (name, callbacks) {
-    avalon.effects[name] = callbacks
+avalon.effect = function (name, define) {
+    var obj = avalon.effects[name] = define
+    if (supportCssAnimation) {
+        if (!obj.enterClass) {
+            obj.enterClass = name + '-enter'
+        }
+        if (!obj.enterActiveClass) {
+            obj.enterClass = obj.enterClass + '-active'
+        }
+        if (!obj.leaveClass) {
+            obj.leaveClass = name + '-leave'
+        }
+        if (!obj.leaveActiveClass) {
+            obj.leaveClass = obj.leaveClass + '-active'
+        }
+
+    }
+    if (obj.dir) {
+        obj.dir = 'enter'
+    }
+    //js 则需要
+    var fn = obj.enter || obj.leave
+    if (typeof fn === 'functon') {
+
+    }
+
+
 }
 
 
 
 var supportTransition = false
 var supportAnimation = false
+var supportCssAnimation = false
 
 var transitionEndEvent
 var animationEndEvent
@@ -101,6 +128,7 @@ new function () {// jshint ignore:line
     }
     if (typeof tran === "string") {
         supportTransition = true
+        supportCssAnimation = true
         transitionEndEvent = tran
     }
 
@@ -125,10 +153,47 @@ new function () {// jshint ignore:line
     }
     if (typeof ani === "string") {
         supportTransition = true
+        supportCssAnimation = true
         animationEndEvent = ani
     }
 
+
 }()
+
+var Effect = function (el) {
+    this.el = el
+}
+avalon.Effect = Effect
+Effect.prototype = {
+    enter: function (options) {
+        if(options.enter){
+            options.enter(this.el, function(){
+                
+            })
+            
+        }else if (supportCssAnimation) {
+            var el = avalon(this.el)
+            el.addClass(options.enterClass)
+            el.bind(transitionEndEvent, function (e) {
+                options.enterDone.call(el[0], e)
+                el.unbind(transitionEndEvent)
+                el.removeClass(options.enterActiveClass)
+            })
+            el.bind(animationEndEvent, function (e) {
+                options.enterDone.call(el[0], e)
+                el.unbind(animationEndEvent)
+                el.removeClass(options.enterActiveClass)
+            })
+            avalon.nextTick(function () {
+                el.addClass(options.enterActiveClass)
+            })
+        }
+    }
+}
+
+
+
+
 
 var effectPool = []//重复利用动画实例
 function effectFactory(el, opts) {
