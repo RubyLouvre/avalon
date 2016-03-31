@@ -2642,20 +2642,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var docker = coms[wid]
 	        if (!docker.renderCount) {
 	            cur.change = [this.replaceByComment]
-	        } else if (docker.renderCount === 1) {
-	            avalon.diff(cur.children, [])
-	            cur.change = [this.replaceByComponent]
-	            cur.afterChange = [
-	                function (dom, vnode) {
-	                    vnode.vmodel.$element = dom
-	                    cur.vmodel.$fire('onReady', {
-	                        type: 'ready',
-	                        target: dom,
-	                        vmodel: vnode.vmodel
-	                    })
-	                    docker.renderCount = 2
-	                }
-	            ]
+	        } else if (!pre.props.resolved) {
+	            avalon.diff(cur.children, pre.children)
+	                cur.change = [this.replaceByComponent]
+	                cur.afterChange = [
+	                    function (dom, vnode) {
+	                        vnode.vmodel.$element = dom
+	                        cur.vmodel.$fire('onReady', {
+	                            type: 'ready',
+	                            target: dom,
+	                            vmodel: vnode.vmodel
+	                        })
+	                        docker.renderCount = 2
+	                    }
+	                ]
+	          
 	        } else {
 	            var needUpdate = !cur.$diff || cur.$diff(cur, pre)
 	            cur.skipContent = !needUpdate
@@ -3899,7 +3900,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            //如果组件还没有定义,那么返回一个注释节点占位
 	            return placeholder
 	        } else {
-	           
+
 	            var type = node.type
 	            //判定用户传入的标签名是否符合规格
 	            if (!outerTags[type] && !isCustomTag(type)) {
@@ -3968,7 +3969,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                vmodel: vmodel,
 	                target: null
 	            })
-	           
+
 	            avalon.shadowCopy(docker, {
 	                diff: diff,
 	                render: render,
@@ -4053,16 +4054,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (node.type === 'slot') {
 	                var name = node.props.name || 'default'
 	                if (slots[name]) {
-	                    vtree.splice.apply(vtree, [i - 1, 1].concat(slots[name]))
+	                    var s = slots[name]
+	                    vtree.splice.apply(vtree, [i - 1, 1].concat(s))
+	                    if (s.length === 1 && s[0].nodeType === 3) {
+	                        removeEmptyText(vtree)
+	                    }
 	                }
 	            } else {
 	                mergeTempale(node.children, slots)
 	            }
 	        }
 	    }
+
 	    return vtree
 	}
 
+	function removeEmptyText(nodes) {
+	    //如果定义组件时,slot元素两旁有大片空白,且slot元素又是被一个文本节点替代时,需要合并这三个文本节点
+	    for (var i = 0, el; el = nodes[i]; i++) {
+	        if (el.skipContent === false && el.nodeType === 3) {
+	            var pre = nodes[i - 1]
+	            var next = nodes[i + 1]
+	            if (pre && pre.nodeType === 3 && !/\S/.test(pre.nodeValue)) {
+	                avalon.Array.remove(nodes, pre)
+	                --i
+	            }
+	            if (next && next.nodeType === 3 && !/\S/.test(next.nodeValue)) {
+	                avalon.Array.remove(nodes, next)
+	            }
+	        }
+	    }
+	}
 
 
 /***/ },

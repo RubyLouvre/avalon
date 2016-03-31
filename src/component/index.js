@@ -48,7 +48,7 @@ avalon.component = function (name, definition) {
             //如果组件还没有定义,那么返回一个注释节点占位
             return placeholder
         } else {
-           
+
             var type = node.type
             //判定用户传入的标签名是否符合规格
             if (!outerTags[type] && !isCustomTag(type)) {
@@ -117,7 +117,7 @@ avalon.component = function (name, definition) {
                 vmodel: vmodel,
                 target: null
             })
-           
+
             avalon.shadowCopy(docker, {
                 diff: diff,
                 render: render,
@@ -202,13 +202,34 @@ function mergeTempale(vtree, slots) {
             if (node.type === 'slot') {
                 var name = node.props.name || 'default'
                 if (slots[name]) {
-                    vtree.splice.apply(vtree, [i - 1, 1].concat(slots[name]))
+                    var s = slots[name]
+                    vtree.splice.apply(vtree, [i - 1, 1].concat(s))
+                    if (s.length === 1 && s[0].nodeType === 3) {
+                        removeEmptyText(vtree)
+                    }
                 }
             } else {
                 mergeTempale(node.children, slots)
             }
         }
     }
+
     return vtree
 }
 
+function removeEmptyText(nodes) {
+    //如果定义组件时,slot元素两旁有大片空白,且slot元素又是被一个文本节点替代时,需要合并这三个文本节点
+    for (var i = 0, el; el = nodes[i]; i++) {
+        if (el.skipContent === false && el.nodeType === 3) {
+            var pre = nodes[i - 1]
+            var next = nodes[i + 1]
+            if (pre && pre.nodeType === 3 && !/\S/.test(pre.nodeValue)) {
+                avalon.Array.remove(nodes, pre)
+                --i
+            }
+            if (next && next.nodeType === 3 && !/\S/.test(next.nodeValue)) {
+                avalon.Array.remove(nodes, next)
+            }
+        }
+    }
+}

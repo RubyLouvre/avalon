@@ -113,8 +113,16 @@ describe('widget', function () {
             }
         })
         avalon.scan(div)
+        function getDiv(el){
+            if(el.querySelector){
+                return el.querySelector('.body')
+            }else{
+                return el.getElementsByTagName('div')[0].
+                    getElementsByTagName('div')[0]
+            }
+        }
         setTimeout(function () {
-            var div2 = div.getElementsByTagName('div')[0].getElementsByTagName('div')[0]
+            var div2 = getDiv(div)
             var span = div.getElementsByTagName('span')[0]
             expect(div2.innerHTML).to.equal('这是面板的内容')
             expect(span.innerHTML).to.equal('vm中的值')
@@ -126,12 +134,13 @@ describe('widget', function () {
                 vm.panelBody = '新面板plus'
                 vm.aaa.ms_button.buttonText = "新按钮plus"
                 setTimeout(function () {
+
                     expect(div2.innerHTML).to.equal('新面板plus')
                     expect(span.innerHTML).to.equal('新按钮plus')
                     done()
-                })
-            })
-        })
-    })
+                }, 300)
+            }, 300)
+        }, 300)
+    }, 100)
 
 })
