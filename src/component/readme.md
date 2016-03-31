@@ -62,7 +62,7 @@ template在IE9下认为是一个XML元素，并且HTML5元素。
       <div slot='tab'>xxxxx</div>
       <div slot='tab'>xxxxx</div>
       <div slot='tab'>xxxxx</div>
-      <p><ms-button /><</p>
+      <p><ms-button /></p>
     <ms-tabs>
 </xmp>
 
