@@ -10,11 +10,11 @@ avalon.directive('text', {
         var preValue = pre.props['ms-text']
         cur.children = pre.children
         cur.skipContent = true
-        cur.dom = pre.dom
+        var dom = cur.dom = pre.dom
         if (curValue !== preValue) {
             cur.children[0].nodeValue = curValue
-            if (pre.dom) {
-                this.update(cur.dom, cur)
+            if (dom) {
+                this.update(dom, cur)
             } else {
                 var list = cur.change || (cur.change = [])
                 avalon.Array.ensure(list, this.update)

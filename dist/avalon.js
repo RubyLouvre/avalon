@@ -3443,11 +3443,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    diff: function (cur, pre) {//curNode, preNode
 	        cur.fixIESkip = true
-	        cur.dom = pre.dom
+	        var dom = cur.dom = pre.dom
 	        if (cur.nodeValue !== pre.nodeValue) {
-	            if (pre.dom) {
-	                cur.dom = pre.dom
-	                cur.dom.nodeValue = cur.nodeValue
+	            if (dom && avalon.contains(avalon.root,dom)) {
+	                this.update(dom, cur)
 	            } else {
 	                var list = cur.change || (cur.change = [])
 	                avalon.Array.ensure(list, this.update)
@@ -3463,9 +3462,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            node.nodeValue = vnode.nodeValue
 	            textNode = node
 	        }
-	        if(avalon.contains(avalon.root, textNode)){
-	           vnode.dom = textNode
-	        }
+	        vnode.dom = textNode
 	    }
 	})
 
@@ -3485,11 +3482,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var preValue = pre.props['ms-text']
 	        cur.children = pre.children
 	        cur.skipContent = true
-	        cur.dom = pre.dom
+	        var dom = cur.dom = pre.dom
 	        if (curValue !== preValue) {
 	            cur.children[0].nodeValue = curValue
-	            if (pre.dom) {
-	                this.update(cur.dom, cur)
+	            if (dom) {
+	                this.update(dom, cur)
 	            } else {
 	                var list = cur.change || (cur.change = [])
 	                avalon.Array.ensure(list, this.update)
