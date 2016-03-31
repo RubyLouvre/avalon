@@ -61,8 +61,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(15)
 	__webpack_require__(19)
 	__webpack_require__(35)
-	__webpack_require__(60)
-	__webpack_require__(68)
+	__webpack_require__(61)
+	__webpack_require__(69)
 	__webpack_require__(70)
 
 	__webpack_require__(76)
@@ -4875,7 +4875,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	var skipArray = __webpack_require__(59)
-	var disposeDetectStrategy = __webpack_require__(98)
+	var disposeDetectStrategy = __webpack_require__(60)
 
 	//插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
 
@@ -4888,7 +4888,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        return  'vnode' + num + '.props.wid = "' + wid + '"\n' +
 	                'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget') + ';\n' +
-	                '\tvnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
+	                'vnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
 	    },
 	    define: function (topVm, defaults, options, accessors) {
 	        var after = avalon.mix({}, defaults, options)
@@ -5018,15 +5018,156 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 60 */
+/***/ function(module, exports) {
+
+	//用于chrome, safari
+	var tags = {}
+	function byCustomElement(name) {
+	    if (tags[name])
+	        return
+	    tags[name] = true
+	    var prototype = Object.create(HTMLElement.prototype)
+	    prototype.detachedCallback = function () {
+	        var dom = this
+	        setTimeout(function () {
+	            fireDisposeHook(dom)
+	        })
+	    }
+	    document.registerElement(name, prototype)
+	}
+
+	//http://stackoverflow.com/questions/11425209/are-dom-mutation-observers-slower-than-dom-mutation-events
+	//http://stackoverflow.com/questions/31798816/simple-mutationobserver-version-of-domnoderemovedfromdocument
+	function byMutationEvent(dom) {
+	    dom.addEventListener("DOMNodeRemovedFromDocument", function () {
+	        setTimeout(function () {
+	            fireDisposeHook(dom)
+	        })
+	    })
+	}
+	//用于IE8+, firefox
+	function byRewritePrototype() {
+	    if (byRewritePrototype.execute) {
+	        return
+	    }
+	    
+	    byRewritePrototype.execute = true
+	    var p = Node.prototype
+	    var _removeChild = p.removeChild
+	    p.removeChild = function (a, b) {
+	        _removeChild.call(this, a, b)
+	        if (a.nodeType === 1) {
+	            setTimeout(function () {
+	                fireDisposeHook(a)
+	            })
+	        }
+	        return a
+	    }
+	    var _replaceChild = p.replaceChild
+	    p.replaceChild = function (a, b) {
+	        _replaceChild.call(this, a, b)
+	        if (a.nodeType === 1) {
+	            setTimeout(function () {
+	                fireDisposeHook(a)
+	            })
+	        }
+	        return a
+	    }
+	    var _innerHTML = p.innerHTML
+	    p.innerHTML = function (html) {
+	        var all = this.getElementsByTagName('*')
+	        _innerHTML.call(this, html)
+	        fireDisposedComponents(all)
+	    }
+	    var _appendChild = p._appendChild
+	    p.appendChild = function (a) {
+	        _appendChild.call(this, a)
+	        if (a.nodeType === 1 && this.nodeType === 11) {
+	            setTimeout(function () {
+	                fireDisposeHook(a)
+	            })
+	        }
+	        return a
+	    }
+	    var _insertBefore = p.insertBefore
+	    p.insertBefore = function (a) {
+	        _insertBefore.call(this, a)
+	        if (a.nodeType === 1 && this.nodeType === 11) {
+	            setTimeout(function () {
+	                fireDisposeHook(a)
+	            })
+	        }
+	        return a
+	    }
+	}
+
+
+	//用于IE6,7
+	var checkDisposeNodes = []
+	var checkID = 0
+	function byPolling(dom) {
+	    avalon.Array.ensure(checkDisposeNodes, dom)
+	    if (!checkID) {
+	        checkID = setInterval(function () {
+	            for (var i = 0, el; el = checkDisposeNodes[i++]; ) {
+	                if (false === fireDisposeHook(el)) {
+	                    avalon.Array.removeAt(checkDisposeNodes, i)
+	                    --i
+	                }
+	            }
+	            if (checkDisposeNodes.length == 0) {
+	                clearInterval(checkID)
+	                checkID = 0
+	            }
+	        }, 1000)
+	    }
+	}
+
+
+	module.exports = {
+	    byPolling: byPolling,
+	    byMutationEvent: byMutationEvent,
+	    byCustomElement: byCustomElement,
+	    byRewritePrototype: byRewritePrototype
+	}
+
+	function fireDisposeHook(el) {
+	    if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
+	        var wid = el.getAttribute('wid')
+	        var docker = avalon.resolvedComponents[ wid ]
+	        if (docker && docker.vmodel) {
+	            var vm = docker.vmodel
+	            docker.vmodel.$fire("onDispose", {
+	                type: 'dispose',
+	                target: el,
+	                vmodel: vm
+	            })
+	            vm.$element = null
+	            vm.$hashcode = false
+	            delete docker.vmodel
+	            delete avalon.resolvedComponents[ wid ]
+	            return false
+	        }
+	    }
+	}
+
+	function fireDisposedComponents (nodes) {
+	    for (var i = 0, el; el = nodes[i++]; ) {
+	        fireDisposeHook(el)
+	    }
+	}
+
+/***/ },
+/* 61 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	avalon.lexer = __webpack_require__(61)
-	avalon.diff = __webpack_require__(62)
-	avalon.batch = __webpack_require__(63)
+	avalon.lexer = __webpack_require__(62)
+	avalon.diff = __webpack_require__(63)
+	avalon.batch = __webpack_require__(64)
 	// dispatch与patch 为内置模块
 
-	var parseView = __webpack_require__(64)
+	var parseView = __webpack_require__(65)
 
 	function render(vtree) {
 	    var num = num || String(new Date - 0).slice(0, 6)
@@ -5040,7 +5181,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 61 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -5381,7 +5522,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = lexer
 
 /***/ },
-/* 62 */
+/* 63 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -5449,7 +5590,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 63 */
+/* 64 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -5520,13 +5661,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 64 */
+/* 65 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var parseExpr = __webpack_require__(65)
-	var parseBindings = __webpack_require__(66)
-	var parseDelimiter = __webpack_require__(67)
+	var parseExpr = __webpack_require__(66)
+	var parseBindings = __webpack_require__(67)
+	var parseDelimiter = __webpack_require__(68)
 	var rexpr = avalon.config.rexpr
 	var quote = avalon.quote
 	var makeHashCode = avalon.makeHashCode
@@ -5679,7 +5820,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = parseView
 
 /***/ },
-/* 65 */
+/* 66 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -5851,7 +5992,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 66 */
+/* 67 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var rneedQuote = /[W-]/
@@ -5934,7 +6075,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = parseBindings
 
 /***/ },
-/* 67 */
+/* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var rline = /\r?\n/g
@@ -5987,7 +6128,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 68 */
+/* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -6101,9 +6242,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            try { //options可能是vm, 在IE下使用delete会报错
 	                delete options.is
-	                delete options.$define
-	                delete options.$diff
 	                delete options.$id
+	                delete options.$diff
+	                delete options.$define
 	            } catch (e) {
 	            }
 
@@ -6120,9 +6261,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            })
 
 	            avalon.shadowCopy(docker, {
-	                render: render,
-	                vmodel: vmodel,
 	                diff: diff,
+	                render: render,
+	                vmodel: vmodel,          
 	                placeholder: placeholder
 	            })
 
@@ -6218,7 +6359,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 69 */,
 /* 70 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -7056,166 +7196,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
-
-/***/ },
-/* 79 */,
-/* 80 */,
-/* 81 */,
-/* 82 */,
-/* 83 */,
-/* 84 */,
-/* 85 */,
-/* 86 */,
-/* 87 */,
-/* 88 */,
-/* 89 */,
-/* 90 */,
-/* 91 */,
-/* 92 */,
-/* 93 */,
-/* 94 */,
-/* 95 */,
-/* 96 */,
-/* 97 */,
-/* 98 */
-/***/ function(module, exports) {
-
-	//用于chrome, safari
-	var tags = {}
-	function byCustomElement(name) {
-	    if (tags[name])
-	        return
-	    tags[name] = true
-	    var prototype = Object.create(HTMLElement.prototype)
-	    prototype.detachedCallback = function () {
-	        var dom = this
-	        setTimeout(function () {
-	            fireDisposeHook(dom)
-	        })
-	    }
-	    document.registerElement(name, prototype)
-	}
-
-	//http://stackoverflow.com/questions/11425209/are-dom-mutation-observers-slower-than-dom-mutation-events
-	//http://stackoverflow.com/questions/31798816/simple-mutationobserver-version-of-domnoderemovedfromdocument
-	function byMutationEvent(dom) {
-	    dom.addEventListener("DOMNodeRemovedFromDocument", function () {
-	        setTimeout(function () {
-	            fireDisposeHook(dom)
-	        })
-	    })
-	}
-	//用于IE8+, firefox
-	function byRewritePrototype() {
-	    if (byRewritePrototype.execute) {
-	        return
-	    }
-	    
-	    byRewritePrototype.execute = true
-	    var p = Node.prototype
-	    var _removeChild = p.removeChild
-	    p.removeChild = function (a, b) {
-	        _removeChild.call(this, a, b)
-	        if (a.nodeType === 1) {
-	            setTimeout(function () {
-	                fireDisposeHook(a)
-	            })
-	        }
-	        return a
-	    }
-	    var _replaceChild = p.replaceChild
-	    p.replaceChild = function (a, b) {
-	        _replaceChild.call(this, a, b)
-	        if (a.nodeType === 1) {
-	            setTimeout(function () {
-	                fireDisposeHook(a)
-	            })
-	        }
-	        return a
-	    }
-	    var _innerHTML = p.innerHTML
-	    p.innerHTML = function (html) {
-	        var all = this.getElementsByTagName('*')
-	        _innerHTML.call(this, html)
-	        fireDisposedComponents(all)
-	    }
-	    var _appendChild = p._appendChild
-	    p.appendChild = function (a) {
-	        _appendChild.call(this, a)
-	        if (a.nodeType === 1 && this.nodeType === 11) {
-	            setTimeout(function () {
-	                fireDisposeHook(a)
-	            })
-	        }
-	        return a
-	    }
-	    var _insertBefore = p.insertBefore
-	    p.insertBefore = function (a) {
-	        _insertBefore.call(this, a)
-	        if (a.nodeType === 1 && this.nodeType === 11) {
-	            setTimeout(function () {
-	                fireDisposeHook(a)
-	            })
-	        }
-	        return a
-	    }
-	}
-
-
-	//用于IE6,7
-	var checkDisposeNodes = []
-	var checkID = 0
-	function byPolling(dom) {
-	    avalon.Array.ensure(checkDisposeNodes, dom)
-	    if (!checkID) {
-	        checkID = setInterval(function () {
-	            for (var i = 0, el; el = checkDisposeNodes[i++]; ) {
-	                if (false === fireDisposeHook(el)) {
-	                    avalon.Array.removeAt(checkDisposeNodes, i)
-	                    --i
-	                }
-	            }
-	            if (checkDisposeNodes.length == 0) {
-	                clearInterval(checkID)
-	                checkID = 0
-	            }
-	        }, 1000)
-	    }
-	}
-
-
-	module.exports = {
-	    byPolling: byPolling,
-	    byMutationEvent: byMutationEvent,
-	    byCustomElement: byCustomElement,
-	    byRewritePrototype: byRewritePrototype
-	}
-
-	function fireDisposeHook(el) {
-	    if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
-	        var wid = el.getAttribute('wid')
-	        var docker = avalon.resolvedComponents[ wid ]
-	        if (docker && docker.vmodel) {
-	            var vm = docker.vmodel
-	            docker.vmodel.$fire("onDispose", {
-	                type: 'dispose',
-	                target: el,
-	                vmodel: vm
-	            })
-	            vm.$element = null
-	            vm.$hashcode = false
-	            delete docker.vmodel
-	            delete avalon.resolvedComponents[ wid ]
-	            return false
-	        }
-	    }
-	}
-
-	function fireDisposedComponents (nodes) {
-	    for (var i = 0, el; el = nodes[i++]; ) {
-	        fireDisposeHook(el)
-	    }
-	}
 
 /***/ }
 /******/ ])

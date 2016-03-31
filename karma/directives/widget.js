@@ -50,4 +50,49 @@ describe('widget', function () {
 
     })
 
+    it('lifecycle', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='widget1' >
+             <div><wbr ms-widget="[{is:'ms-button'},@config]"/></div>
+             </div>
+             */
+        })
+        var index = 0
+        vm = avalon.define({
+            $id: 'widget1',
+            config: {
+                buttonText: '按钮',
+                onInit: function (e) {
+                    expect(e.type).to.equal('init')
+                    ++index
+                },
+                onReady: function (e) {
+                    expect(e.type).to.equal('ready')
+                    ++index
+                },
+                onViewChange: function (e) {
+                    expect(e.type).to.equal('viewchange')
+                    ++index
+                },
+                onDispose: function (e) {
+                    expect(e.type).to.equal('dispose')
+                    ++index
+                }
+            }
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            expect(index).to.equal(2)
+            vm.config.buttonText = 'change'
+            setTimeout(function () {
+                div.innerHTML = ""
+                setTimeout(function () {
+                    expect(index).to.equal(4)
+                    done()
+                })
+            })
+        })
+    })
+
 })

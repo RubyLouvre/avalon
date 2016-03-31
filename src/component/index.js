@@ -109,9 +109,9 @@ avalon.component = function (name, definition) {
 
             try { //options可能是vm, 在IE下使用delete会报错
                 delete options.is
-                delete options.$define
-                delete options.$diff
                 delete options.$id
+                delete options.$diff
+                delete options.$define
             } catch (e) {
             }
 
@@ -128,9 +128,9 @@ avalon.component = function (name, definition) {
             })
 
             avalon.shadowCopy(docker, {
-                render: render,
-                vmodel: vmodel,
                 diff: diff,
+                render: render,
+                vmodel: vmodel,          
                 placeholder: placeholder
             })
 
