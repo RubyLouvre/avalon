@@ -95,4 +95,43 @@ describe('widget', function () {
         })
     })
 
+    it('通过更新配置对象修改组件界面', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='widget2' >
+             <xmp ms-widget="[{is:'ms-panel'}, @aaa]" style='border:1px solid red;display:block'>{{@panelBody}}</xmp>
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'widget2',
+            panelBody: '这是面板的内容',
+            aaa: {
+                ms_button: {
+                    buttonText: "vm中的值"
+                }
+            }
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            var div2 = div.getElementsByTagName('div')[0].getElementsByTagName('div')[0]
+            var span = div.getElementsByTagName('span')[0]
+            expect(div2.innerHTML).to.equal('这是面板的内容')
+            expect(span.innerHTML).to.equal('vm中的值')
+            vm.panelBody = '新面板'
+            vm.aaa.ms_button.buttonText = "新按钮"
+            setTimeout(function () {
+                expect(div2.innerHTML).to.equal('新面板')
+                expect(span.innerHTML).to.equal('新按钮')
+                vm.panelBody = '新面板plus'
+                vm.aaa.ms_button.buttonText = "新按钮plus"
+                setTimeout(function () {
+                    expect(div2.innerHTML).to.equal('新面板plus')
+                    expect(span.innerHTML).to.equal('新按钮plus')
+                    done()
+                })
+            })
+        })
+    })
+
 })
