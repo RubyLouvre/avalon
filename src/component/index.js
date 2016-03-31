@@ -1,7 +1,6 @@
 
 var VText = require('../vdom/VText')
 var outerTags = avalon.oneObject('wbr,xmp,template')
-var fireDisposeHook = require('./fireDisposeHook')
 
 var componentQueue = []
 var resolvedComponents = avalon.resolvedComponents
@@ -9,22 +8,10 @@ var skipWidget = {'ms-widget': 1, widget: 1, resolved: 1}
 
 avalon.document.createElement('slot')
 
-
 avalon.component = function (name, definition) {
     if (typeof name === 'string') {
         //这里是定义组件的分支
         if (!avalon.components[name]) {
-            if (document.registerElement && isCustomTag(name)) {
-                var prototype = Object.create(HTMLElement.prototype)
-                prototype.detachedCallback = function () {
-                    var dom = this
-                    avalon.fireDisposedComponents = avalon.noop
-                    setTimeout(function () {
-                        fireDisposeHook(dom)
-                    })
-                }
-                document.registerElement(name, prototype)
-            }
             avalon.components[name] = definition
         }
 

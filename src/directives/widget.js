@@ -1,10 +1,10 @@
 
 var skipArray = require('../vmodel/parts/skipArray')
-var fireDisposeHook = require('../component/fireDisposeHook')
+var disposeDetectStrategy = require('../component/disposeDetectStrategy')
 
 //插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
 
-avalon.directive('widget', {
+var dir = avalon.directive('widget', {
     parse: function (binding, num, elem) {
         var wid = elem.props.wid || (elem.props.wid = avalon.makeHashCode('w'))
         avalon.resolvedComponents[wid] = {
@@ -26,8 +26,8 @@ avalon.directive('widget', {
         })
         var vm = avalon.mediatorFactory(topVm, after)
         if (accessors.length) {
-            accessors.forEach(function(bag){
-               vm = avalon.mediatorFactory(vm, bag)
+            accessors.forEach(function (bag) {
+                vm = avalon.mediatorFactory(vm, bag)
             })
         }
         ++avalon.suspendUpdate
@@ -83,17 +83,13 @@ avalon.directive('widget', {
             }
         }
     },
-    addDisposeWatcher: function (dom) {
-        if (window.chrome) {
-            dom.addEventListener("DOMNodeRemovedFromDocument", function () {
-                avalon.fireDisposedComponents = avalon.noop
-                setTimeout(function () {
-                    fireDisposeHook(dom)
-                })
-            })
-        } else if(dom.type.indexOf('-') === -1) {
-            avalon.Array.ensure(checkDisposeList, dom)
-            checkDispose()
+    addDisposeMonitor: function (dom) {
+        if (window.chrome && window.MutationEvent) {
+            disposeDetectStrategy.byMutationEvent(dom)
+        } else if (Object.defineProperty && window.Node) {
+            disposeDetectStrategy.byRewritePrototype(dom)
+        } else {
+            disposeDetectStrategy.byPolling(dom)
         }
     },
     replaceByComment: function (dom, node, parent) {
@@ -105,34 +101,26 @@ avalon.directive('widget', {
         }
     },
     replaceByComponent: function (dom, node, parent) {
+        var hasDdash = node.type.indexOf('-') > 0
+        var hasDetect = false
+        if (hasDdash && document.registerElement) {
+            //必须在自定义标签实例化时,注册它
+            disposeDetectStrategy.byCustomElement(dom.tagName)
+            hasDetect = true
+        }
         var com = avalon.vdomAdaptor(node, 'toDOM')
         if (dom) {
             parent.replaceChild(com, dom)
         } else {
             parent.appendChild(com)
         }
-        avalon.directives.widget.addDisposeWatcher(com)
+        if(!hasDetect){
+           dir.addDisposeMonitor(com)
+        }
     }
 })
 
-var checkDisposeList = []
-var checkID = 0
-function checkDispose() {
-    if (!checkID) {
-        checkID = setInterval(function () {
-            for (var i = 0, el; el = checkDisposeList[i++]; ) {
-                if(false === fireDisposeHook(el)){
-                   avalon.Array.removeAt(checkDisposeList, i)
-                   --i
-                }
-             }
-            if(checkDisposeList.length == 0){
-                clearInterval(checkID)
-                checkID = 0
-            }
-        }, 1000)
-    }
-}
+
 
 
 // http://www.besteric.com/2014/11/16/build-blog-mirror-site-on-gitcafe/
