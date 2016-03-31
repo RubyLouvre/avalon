@@ -1717,7 +1717,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        })
 
 	        node.appendChild(fragment)
-	        avalon.fireDisposedComponents(nodes)
 	    }
 	})
 
@@ -2433,7 +2432,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        if (vnode.hasRemove) {
 	            vnode.hasRemove = false
-	            var removedNodes = parent.getElementsByTagName('*')
 	            for (var i in vnode.removedComponents) {
 	                var el = vnode.removedComponents[i]
 	                if (el.nodes) {
@@ -2445,7 +2443,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    el.nodes.length = el.children.length = 0
 	                }
 	            }
-	            avalon.fireDisposedComponents(removedNodes)
 	        }
 	        delete vnode.removedComponents
 	        var insertPoint = startRepeat
@@ -2597,11 +2594,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	var skipArray = __webpack_require__(59)
-	var fireDisposeHook = __webpack_require__(69)
+	var disposeDetectStrategy = __webpack_require__(98)
 
 	//插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
 
-	avalon.directive('widget', {
+	var dir = avalon.directive('widget', {
 	    parse: function (binding, num, elem) {
 	        var wid = elem.props.wid || (elem.props.wid = avalon.makeHashCode('w'))
 	        avalon.resolvedComponents[wid] = {
@@ -2623,8 +2620,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        })
 	        var vm = avalon.mediatorFactory(topVm, after)
 	        if (accessors.length) {
-	            accessors.forEach(function(bag){
-	               vm = avalon.mediatorFactory(vm, bag)
+	            accessors.forEach(function (bag) {
+	                vm = avalon.mediatorFactory(vm, bag)
 	            })
 	        }
 	        ++avalon.suspendUpdate
@@ -2680,17 +2677,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	    },
-	    addDisposeWatcher: function (dom) {
-	        if (window.chrome) {
-	            dom.addEventListener("DOMNodeRemovedFromDocument", function () {
-	                avalon.fireDisposedComponents = avalon.noop
-	                setTimeout(function () {
-	                    fireDisposeHook(dom)
-	                })
-	            })
-	        } else if(dom.type.indexOf('-') === -1) {
-	            avalon.Array.ensure(checkDisposeList, dom)
-	            checkDispose()
+	    addDisposeMonitor: function (dom) {
+	        if (window.chrome && window.MutationEvent) {
+	            disposeDetectStrategy.byMutationEvent(dom)
+	        } else if (Object.defineProperty && window.Node) {
+	            disposeDetectStrategy.byRewritePrototype(dom)
+	        } else {
+	            disposeDetectStrategy.byPolling(dom)
 	        }
 	    },
 	    replaceByComment: function (dom, node, parent) {
@@ -2702,34 +2695,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    replaceByComponent: function (dom, node, parent) {
+	        var hasDdash = node.type.indexOf('-') > 0
+	        var hasDetect = false
+	        if (hasDdash && document.registerElement) {
+	            //必须在自定义标签实例化时,注册它
+	            disposeDetectStrategy.byCustomElement(dom.tagName)
+	            hasDetect = true
+	        }
 	        var com = avalon.vdomAdaptor(node, 'toDOM')
 	        if (dom) {
 	            parent.replaceChild(com, dom)
 	        } else {
 	            parent.appendChild(com)
 	        }
-	        avalon.directives.widget.addDisposeWatcher(com)
+	        if(!hasDetect){
+	           dir.addDisposeMonitor(com)
+	        }
 	    }
 	})
 
-	var checkDisposeList = []
-	var checkID = 0
-	function checkDispose() {
-	    if (!checkID) {
-	        checkID = setInterval(function () {
-	            for (var i = 0, el; el = checkDisposeList[i++]; ) {
-	                if(false === fireDisposeHook(el)){
-	                   avalon.Array.removeAt(checkDisposeList, i)
-	                   --i
-	                }
-	             }
-	            if(checkDisposeList.length == 0){
-	                clearInterval(checkID)
-	                checkID = 0
-	            }
-	        }, 1000)
-	    }
-	}
+
 
 
 	// http://www.besteric.com/2014/11/16/build-blog-mirror-site-on-gitcafe/
@@ -3727,7 +3712,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var VText = __webpack_require__(16)
 	var outerTags = avalon.oneObject('wbr,xmp,template')
-	var fireDisposeHook = __webpack_require__(69)
 
 	var componentQueue = []
 	var resolvedComponents = avalon.resolvedComponents
@@ -3735,22 +3719,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.document.createElement('slot')
 
-
 	avalon.component = function (name, definition) {
 	    if (typeof name === 'string') {
 	        //这里是定义组件的分支
 	        if (!avalon.components[name]) {
-	            if (document.registerElement && isCustomTag(name)) {
-	                var prototype = Object.create(HTMLElement.prototype)
-	                prototype.detachedCallback = function () {
-	                    var dom = this
-	                    avalon.fireDisposedComponents = avalon.noop
-	                    setTimeout(function () {
-	                        fireDisposeHook(dom)
-	                    })
-	                }
-	                document.registerElement(name, prototype)
-	            }
 	            avalon.components[name] = definition
 	        }
 
@@ -3965,39 +3937,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 69 */
-/***/ function(module, exports) {
-
-	function fireDisposeHook(el) {
-	    if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
-	        var wid = el.getAttribute('wid')
-	        var docker = avalon.resolvedComponents[ wid ]
-	        if (docker && docker.vmodel) {
-	            var vm = docker.vmodel
-	            docker.vmodel.$fire("onDispose", {
-	                type: 'dispose',
-	                target: el,
-	                vmodel: vm
-	            })
-	            vm.$element = null
-	            vm.$hashcode = false
-	            delete docker.vmodel
-	            delete avalon.resolvedComponents[ wid ]
-	            return false
-	        }
-	    }
-	}
-
-
-	avalon.fireDisposedComponents = function (nodes) {
-	    for (var i = 0, el; el = nodes[i++]; ) {
-	        fireDisposeHook(el)
-	    }
-	}
-	//http://stackoverflow.com/questions/31798816/simple-mutationobserver-version-of-domnoderemovedfromdocument
-	module.exports = fireDisposeHook
-
-/***/ },
+/* 69 */,
 /* 70 */,
 /* 71 */,
 /* 72 */
@@ -6191,6 +6131,138 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = mixin
 
+
+/***/ },
+/* 98 */
+/***/ function(module, exports) {
+
+	
+	//http://stackoverflow.com/questions/11425209/are-dom-mutation-observers-slower-than-dom-mutation-events
+	//http://stackoverflow.com/questions/31798816/simple-mutationobserver-version-of-domnoderemovedfromdocument
+	function byMutationEvent(dom) {
+	    dom.addEventListener("DOMNodeRemovedFromDocument", function () {
+	        avalon.fireDisposedComponents = avalon.noop
+	        setTimeout(function () {
+	            fireDisposeHook(dom)
+	        })
+	    })
+	}
+	//用于IE6,7
+	var checkDisposeNodes = []
+	var checkID = 0
+	function byPolling(dom) {
+	    avalon.Array.ensure(checkDisposeNodes, dom)
+	    if (!checkID) {
+	        checkID = setInterval(function () {
+	            for (var i = 0, el; el = checkDisposeNodes[i++]; ) {
+	                if (false === fireDisposeHook(el)) {
+	                    avalon.Array.removeAt(checkDisposeNodes, i)
+	                    --i
+	                }
+	            }
+	            if (checkDisposeNodes.length == 0) {
+	                clearInterval(checkID)
+	                checkID = 0
+	            }
+	        }, 1000)
+	    }
+	}
+
+	//用于safari
+	var tags = {}
+	function byCustomElement(name) {
+	    if (tags[name])
+	        return
+	    tags[name] = true
+	    var prototype = Object.create(HTMLElement.prototype)
+	    prototype.detachedCallback = function () {
+	        var dom = this
+	        avalon.fireDisposedComponents = avalon.noop
+	        setTimeout(function () {
+	            fireDisposeHook(dom)
+	        })
+	    }
+	    document.registerElement(name, prototype)
+	}
+
+
+	//用于IE8+, firefox
+	function byRewritePrototype() {
+	    if (byRewritePrototype.execute) {
+	        return
+	    }
+	    byRewritePrototype.execute = true
+	    var _removeChild = Node.prototype.removeChild
+	    Node.prototype.removeChild = function (a, b) {
+	        _removeChild.call(this, a, b)
+	        if (a.nodeType === 1) {
+	            setTimeout(function () {
+	                fireDisposeHook(a)
+	            })
+	        }
+	        return a
+	    }
+	    var _innerHTML = Node.prototype.innerHTML
+	    Node.prototype.innerHTML = function (html) {
+	        var all = this.getElementsByTagName('*')
+	        _innerHTML.call(this, html)
+	        fireDisposedComponents(all)
+	    }
+	    var _appendChild = Node.prototype.innerHTML
+	    Node.prototype.appendChild = function (a) {
+	        _appendChild.call(this, a)
+	        if (a.nodeType === 1 && this.nodeType === 11) {
+	            setTimeout(function () {
+	                fireDisposeHook(a)
+	            })
+	        }
+	        return a
+	    }
+	    var _insertBefore = Node.prototype.insertBefore
+	    Node.prototype.insertBefore = function (a) {
+	        _insertBefore.call(this, a)
+	        if (a.nodeType === 1 && this.nodeType === 11) {
+	            setTimeout(function () {
+	                fireDisposeHook(a)
+	            })
+	        }
+	        return a
+	    }
+	}
+
+
+	module.exports = {
+	    byPolling: byPolling,
+	    byMutationEvent: byMutationEvent,
+	    byCustomElement: byCustomElement,
+	    byRewritePrototype: byRewritePrototype
+	}
+
+	function fireDisposeHook(el) {
+	    if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
+	        var wid = el.getAttribute('wid')
+	        var docker = avalon.resolvedComponents[ wid ]
+	        if (docker && docker.vmodel) {
+	            var vm = docker.vmodel
+	            docker.vmodel.$fire("onDispose", {
+	                type: 'dispose',
+	                target: el,
+	                vmodel: vm
+	            })
+	            vm.$element = null
+	            vm.$hashcode = false
+	            delete docker.vmodel
+	            delete avalon.resolvedComponents[ wid ]
+	            return false
+	        }
+	    }
+	}
+
+	function fireDisposedComponents (nodes) {
+	    for (var i = 0, el; el = nodes[i++]; ) {
+	        fireDisposeHook(el)
+	    }
+	}
 
 /***/ }
 /******/ ])
