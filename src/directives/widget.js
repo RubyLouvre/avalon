@@ -13,7 +13,7 @@ var dir = avalon.directive('widget', {
         }
         return  'vnode' + num + '.props.wid = "' + wid + '"\n' +
                 'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget') + ';\n' +
-                '\tvnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
+                'vnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
     },
     define: function (topVm, defaults, options, accessors) {
         var after = avalon.mix({}, defaults, options)
@@ -105,7 +105,7 @@ var dir = avalon.directive('widget', {
         var hasDetect = false
         if (hasDdash && document.registerElement) {
             //必须在自定义标签实例化时,注册它
-            disposeDetectStrategy.byCustomElement(dom.tagName)
+            disposeDetectStrategy.byCustomElement(node.type)
             hasDetect = true
         }
         var com = avalon.vdomAdaptor(node, 'toDOM')

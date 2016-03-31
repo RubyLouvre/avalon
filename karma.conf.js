@@ -4,10 +4,7 @@ module.exports = function (config) {
         frameworks: ['mocha'],
         files: [
             {pattern: 'node_modules/chai/chai.js', include: true},
-            'dist/avalon.js',
-           // 'components/button/index.js',
-           // 'components/panel/index.js',
-
+            'dist/avalon.test.js',
             'karma/directives/text.js',
             'karma/directives/expr.js',
             'karma/directives/text.js',

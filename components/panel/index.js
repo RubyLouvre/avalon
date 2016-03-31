@@ -9,5 +9,5 @@ avalon.component('ms-panel', {
             buttonText: 'click me!'
         }
     },
-    contentSlot: 'body'
+    soleSlot: 'body'
 })

@@ -16,7 +16,8 @@ fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')
 module.exports = {
     entry: {
         avalon: './src/avalon', //我们开发时的入口文件
-        'avalon.modern': './src/avalon.modern'
+        'avalon.modern': './src/avalon.modern',
+        'avalon.test': './src/avalon.test'
     },
     output: {
         path: path.join(__dirname, 'dist'),
