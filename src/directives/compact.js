@@ -16,3 +16,4 @@ require('./if')
 require('./for')
 
 require('./widget')
+require('./effect')

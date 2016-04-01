@@ -1,14 +1,23 @@
-avalon.directive("effect", {
+var support = require('../effect/index')
+avalon.directive('effect', {
     parse: function (binding, num) {
         return 'vnode' + num + '.props["ms-effect"] = ' + avalon.parseExpr(binding) + ';\n'
     },
     diff: function (cur, pre) {
-        var definition = cur.props['ms-effect']
-        if (Array.isArray(definition)) {
-            cur.props['ms-effect'] = definition = avalon.mix.apply({}, definition)
+        var curObj = cur.props['ms-effect']
+        if(typeof curObj === 'string'){
+            var is = curObj
+            curObj = cur.props['ms-effect'] = {
+                is: is,
+                action: 'enter'
+            }
+           
+        }else if (Array.isArray(curObj)) {
+            curObj = cur.props['ms-effect'] = avalon.mix.apply({}, curObj)
         }
-        if (definition && typeof definition == 'object') {
-            if (!pre.props['ms-effect']) {
+        if (Object(curObj) == curObj) {
+            var preObj = pre.props['ms-effect']
+            if ( Object(preObj) !== preObj || diffObj(curObj, preObj ))  {
                 var list = cur.afterChange = cur.afterChange || []
                 avalon.Array.ensure(list, this.update)
             }
@@ -17,21 +26,35 @@ avalon.directive("effect", {
     update: function (dom, vnode) {
         var definition = vnode.props['ms-effect']
         var type = definition.is
-        var options = avalon.effects[type]
-        var method = definition.method
-        var effect = new avalon.Effect(dom)
-        if (!type || !options || typeof effect[method] !== 'function')
-            return
+        
+        var effects = avalon.effects
+        if(support.css && !effects[type]){
+            avalon.effect(type, {})
+        }
+        var options = effects[type]
+        var action = definition.action
 
+        var effect = new avalon.Effect(dom)
+        if (!type || !options || typeof effect[action] !== 'function'){
+            return
+        }   
+       
         if (options.queue && animationQueue.length) {
             animationQueue.push(function () {
-                effect[method](options)
+                effect[action](options)
             })
         } else {
-            effect[method](options)
+            effect[action](options)
         }
     }
 })
+function diffObj(a, b){
+    for(var i in a){
+        if(a[i] !== b[i])
+            return true
+    }
+    return false
+}
 var animationQueue = []
 var lock = false
 function callNextAniation() {
@@ -49,27 +72,26 @@ function callNextAniation() {
 }
 
 avalon.effects = {}
-avalon.effect = function (name, define) {
-    var obj = avalon.effects[name] = define
-    if (supportCssAnimation) {
-        if (!obj.enterClass) {
-            obj.enterClass = name + '-enter'
+avalon.effect = function (name, definition) {
+    avalon.effects[name] = definition
+    if (support.css) {
+        if (!definition.enterClass) {
+            definition.enterClass = name + '-enter'
         }
-        if (!obj.enterActiveClass) {
-            obj.enterClass = obj.enterClass + '-active'
+        if (!definition.enterActiveClass) {
+            definition.enterActiveClass = definition.enterClass + '-active'
         }
-        if (!obj.leaveClass) {
-            obj.leaveClass = name + '-leave'
+        if (!definition.leaveClass) {
+            definition.leaveClass = name + '-leave'
         }
-        if (!obj.leaveActiveClass) {
-            obj.leaveClass = obj.leaveClass + '-active'
+        if (!definition.leaveActiveClass) {
+            definition.leaveActiveClass = definition.leaveClass + '-active'
         }
 
     }
-    if (obj.dir) {
-        obj.dir = 'enter'
+    if (!definition.action) {
+        definition.action = 'enter'
     }
-    //js 则需要
 }
 
 
@@ -78,118 +100,62 @@ var Effect = function (el) {
 }
 avalon.Effect = Effect
 Effect.prototype = {
-    enter: createMethod('enter'),
-    leave: createMethod('leave'),
-    move: createMethod('move')
+    enter: createMethod('Enter'),
+    leave: createMethod('Leave'),
+    move: createMethod('Move')
 }
-function callHooks(options, name, el) {
+function execHooks(options, name, el) {
     var list = options[name]
     list = Array.isArray(list) ? list : typeof list === 'function' ? [list] : []
     list.forEach(function (fn) {
-        fn(el)
+       fn && fn(el)
     })
 }
 function createMethod(action) {
     var lower = action.toLowerCase()
-    return  function (options) {
-        function wrapDone(e) {
+    return function (options) {
+        var elem = this.el
+        var $el = avalon(elem)
+        var animationDone = function(e) {
             var isOk = e !== false
             var dirWord = isOk ? 'Done' : 'Abort'
-            callHooks(options, 'on' + action + dirWord, elem)
-
-            el.unbind(transitionEndEvent)
-            el.unbind(animationEndEvent)
-            el.removeClass(options[lower + 'ActiveClass'])
+            execHooks(options, 'on' + action + dirWord, elem)
+            $el.unbind(support.transitionEndEvent)
+            $el.unbind(support.animationEndEvent)
             callNextAniation()
         }
-        var elem = this.el
-        callHooks(options, 'onBefore' + action, elem)
+       
+        execHooks(options, 'onBefore' + action, elem)
 
         if (options[lower]) {
             options[lower](elem, function (ok) {
-                wrapDone(!!ok)
+                animationDone(!!ok)
             })
-        } else if (supportCssAnimation) {
-            var el = avalon(elem)
-            el.addClass(options[lower + 'Class'])
-            function wrapDone(e) {
-                var isOk = e !== false
-                var dirWord = isOk ? 'Done' : 'Abort'
-                callHooks(options, 'on' + action + dirWord, elem)
-                el.unbind(transitionEndEvent)
-                el.unbind(animationEndEvent)
-                el.removeClass(options[lower + 'ActiveClass'] || '')
-                callNextAniation()
+        } else if (support.css) {
+            
+            $el.addClass(options[lower + 'Class'])
+            if(lower === 'leave'){
+                $el.removeClass(options.enterClass)
+                $el.removeClass(options.enterActiveClass)
+            }else if(lower === 'enter'){
+                $el.removeClass(options.leaveClass)
+                $el.removeClass(options.leaveActiveClass)
             }
-            el.bind(transitionEndEvent, wrapDone)
-            el.bind(animationEndEvent, wrapDone)
-            avalon.nextTick(function () {
-                el.addClass(options[lower + 'ActiveClass'])
-                var el = window.getComputedStyle(elem)
-                var tranDuration = computedStyles[transitionDuration]
-                var animDuration = computedStyles[animationDuration]
-                if (tranDuration == '0s' && animDuration === '0s') {
-                    wrapDone(false)
+            $el.bind(support.transitionEndEvent, animationDone)
+            $el.bind(support.animationEndEvent, animationDone)
+            setTimeout(function () {
+                var forceReflow = avalon.root.offsetWidth
+                $el.addClass(options[lower + 'ActiveClass'])
+                var computedStyles = window.getComputedStyle(elem)
+                var tranDuration = computedStyles[support.transitionDuration]
+                var animDuration = computedStyles[support.animationDuration]
+                if (tranDuration === '0s' && animDuration === '0s') {
+                    animationDone(false)
                 }
-            })
+            }, 17)// = 1000/60
         }
     }
 }
 
 
-function effectFactory() {
 
-}
-
-
-
-var applyEffect = function (el, dir/*[before, [after, [opts]]]*/) {
-    var args = aslice.call(arguments, 0)
-    if (typeof args[2] !== "function") {
-        args.splice(2, 0, noop)
-    }
-    if (typeof args[3] !== "function") {
-        args.splice(3, 0, noop)
-    }
-    var before = args[2]
-    var after = args[3]
-    var opts = args[4]
-    var effect = effectFactory(el)
-    if (!effect) {//没有动画
-        before()
-        after()
-        return false
-    }
-}
-
-avalon.shadowCopy(avalon.effect, {
-    apply: applyEffect,
-    append: function (el, parent, after) {
-        return applyEffect(el, {
-            method: 'enter',
-            onBeforeEnter: function () {
-                parent.appendChild(el)
-            },
-            onEnterDone: after
-        })
-    },
-    before: function (el, target, after) {
-        return applyEffect(el, {
-            method: 'enter',
-            onBeforeEnter: function () {
-                target.parentNode.insertBefore(el, target)
-            },
-            onEnterDone: after
-        })
-    },
-    remove: function (el, parent, after) {
-        return applyEffect(el, {
-            method: 'leave',
-            onLeaveDone: [function () {
-                    if (el.parentNode === parent) {
-                        parent.removeChild(el)
-                    }
-                }, after]
-        })
-    }
-})

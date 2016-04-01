@@ -17,10 +17,10 @@ var tran
 for (var name in checker) {
     if (window[name]) {
         tran = checker[name]
-        break;
+        break
     }
     try {
-        var a = document.createEvent(name);
+        var a = document.createEvent(name)
         tran = checker[name]
         break;
     } catch (e) {
@@ -44,7 +44,7 @@ checker = {
     'AnimationEvent': 'animationend',
     'WebKitAnimationEvent': 'webkitAnimationEnd'
 }
-var ani;
+var ani
 for (name in checker) {
     if (window[name]) {
         ani = checker[name];
@@ -58,9 +58,9 @@ if (typeof ani === "string") {
 }
 
 module.exports = {
-    supportTransition: supportTransition,
-    supportAnimation: supportAnimation,
-    supportCSS: supportCSS,
+    transition: supportTransition,
+    animation: supportAnimation,
+    css: supportCSS,
     transitionEndEvent: transitionEndEvent,
     animationEndEvent: animationEndEvent,
     transitionDuration: transitionDuration,

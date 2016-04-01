@@ -40,8 +40,15 @@ function filterBy(array, search) {
     if (typeof search === 'function') {
         var criteria = search
     } else if (typeof search === 'string') {
-        args.unshift(new RegExp(avalon.escapeRegExp(search), 'i'))
-        criteria = containKey
+        if(search.trim() === ''){
+           criteria = function(){
+               return false
+           }
+        }else{
+           args.unshift(new RegExp(avalon.escapeRegExp(search), 'i'))
+           criteria = containKey
+        }
+        
     } else {
         throw search + '必须是字符串或函数'
     }
