@@ -1,9 +1,8 @@
 
 function adjustVm(vm, expr) {
-    if(vm.$map){
+    if(vm.$innuendo){
          var toppath = expr.split(".")[0]
-         return vm.$map[toppath] || vm
-         
+         return vm.$innuendo[toppath] || vm
     }else{
         return vm
     }
@@ -52,6 +51,7 @@ function $emit(list, vm, path, a, b, i) {
 
 
 module.exports = {
+    adjustVm: adjustVm,
     $emit: $emit,
     $watch: $watch
 }

@@ -5918,6 +5918,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var dispatch = __webpack_require__(98)
 	var $emit = dispatch.$emit
 	var $watch = dispatch.$watch
+	var adjustVm = dispatch.adjustVm
 
 	function $fire(expr, a, b) {
 	    var list = this.$events[expr]
@@ -5930,8 +5931,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            (key.charAt(0) !== '$') &&
 	            (avalon.isPlainObject(value) || Array.isArray(value)) &&
 	            !value.$id
-
-
 	}
 
 
@@ -6037,30 +6036,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var oldValue = target[name]
 	        if (oldValue !== value) {
 	            //如果是新属性
-	            if (oldValue === void 0 && !target.hasOwnProperty(name)) {
+	            if (!$$skipArray[name] && oldValue === void 0 && !target.hasOwnProperty(name)) {
 	                var arr = target.$track.split(';;')
 	                arr.push(name)
 	                target.$track = arr.sort().join(';;')
 	            }
 	            target[name] = value
 	            if (!$$skipArray[name]) {
-	                var heirloom = target.$events
-	                var vm = heirloom.__vmodel__
-	                if (vm && heirloom !== vm.$events) {
-	                    target.$events = vm.$events
-	                }
+	                var curVm = target.$events.__vmodel__
 	                //触发视图变更
 	                var arr = target.$id.split('.')
-	                arr.shift()
+	                var top = arr.shift()
+	                
 	                var path = arr.length ? arr.join('.') + '.' + name : name
-	                var list = target.$events[path]
+	                var vm = adjustVm(curVm, path)
+	                var list = vm.$events[path]
 	                if (list && list.length) {
 	                    $emit(list, vm, path, value, oldValue)
 	                }
-	                var vid = vm.$id.split('.')[0]
+	                
 	                avalon.rerenderStart = new Date
-	                avalon.batch(vid, true)
-	                //console.log('valueChange', name)
+	                avalon.batch(top, true)
 	            }
 	        }
 
@@ -6068,19 +6064,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    has: function (target, name) {
 	        return target.hasOwnProperty(name)
 	    }
-
 	}
-	$$skipArray.$map = true
+	$$skipArray.$innuendo = true
+
 	function mediatorFactory(before, after, heirloom) {
 
-	    var $map = {}
-	    var isProxy = after instanceof Proxy
+	    var $innuendo = {}
+	    var afterIsProxy = after.$id && after.$events
 	    var $skipArray = {}
 	    var definition = {}
 	    heirloom = heirloom || {}
 	    for (var key in before) {
 	        definition[key] = before[key]
-	        $map[key] = before
+	        $innuendo[key] = before
 	    }
 	    for (var key in after) {
 	        if ($$skipArray[key])
@@ -6091,31 +6087,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	                id: definition.$id + '.' + key
 	            })
 	        }
-	        $map[key] = after
+	        $innuendo[key] = after
 	    }
 	    definition.$track = Object.keys(definition).sort().join(';;')
 	    definition.hasOwnProperty = hasOwn
-	    
-	    var $vmodel = new Proxy(definition, handlers)
-	    if (isProxy) {
-	        heirloom.__vmodel__ = after
-	    } else {
-	        heirloom.__vmodel__ = $vmodel
-	        for (var i in $map) {
-	            if ($map[i] === after) {
-	                $map[i] = $vmodel
+
+	    var vm = new Proxy(definition, handlers)
+	    heirloom.__vmodel__ = vm
+	    if (!afterIsProxy) {
+	        for (var i in $innuendo) {
+	            if ($innuendo[i] === after) {
+	                $innuendo[i] = vm
 	            }
 	        }
 	    }
-	    
-	    $vmodel.$map = $map
-	    $vmodel.$events = heirloom
-	    $vmodel.$fire = $fire
-	    $vmodel.$watch = $watch
-	    $vmodel.$id = before.$id
-	    $vmodel.$hashcode = makeHashCode("$")
 
-	    return $vmodel
+	    vm.$innuendo = $innuendo
+	    vm.$events = heirloom
+	    vm.$fire = $fire
+	    vm.$watch = $watch
+	    vm.$id = before.$id
+	    vm.$hashcode = avalon.makeHashCode("$")
+
+	    return vm
 	}
 
 	avalon.mediatorFactory = mediatorFactory
@@ -6126,10 +6120,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	function adjustVm(vm, expr) {
-	    if(vm.$map){
+	    if(vm.$innuendo){
 	         var toppath = expr.split(".")[0]
-	         return vm.$map[toppath] || vm
-	         
+	         return vm.$innuendo[toppath] || vm
 	    }else{
 	        return vm
 	    }
@@ -6178,6 +6171,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	module.exports = {
+	    adjustVm: adjustVm,
 	    $emit: $emit,
 	    $watch: $watch
 	}

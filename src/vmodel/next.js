@@ -2,6 +2,7 @@ var $$skipArray = require('./parts/skipArray')
 var dispatch = require('./proxy/dispatch')
 var $emit = dispatch.$emit
 var $watch = dispatch.$watch
+var adjustVm = dispatch.adjustVm
 
 function $fire(expr, a, b) {
     var list = this.$events[expr]
@@ -14,8 +15,6 @@ function canProxy(key, value, skipArray) {
             (key.charAt(0) !== '$') &&
             (avalon.isPlainObject(value) || Array.isArray(value)) &&
             !value.$id
-
-
 }
 
 
@@ -121,30 +120,27 @@ var handlers = {
         var oldValue = target[name]
         if (oldValue !== value) {
             //如果是新属性
-            if (oldValue === void 0 && !target.hasOwnProperty(name)) {
+            if (!$$skipArray[name] && oldValue === void 0 && !target.hasOwnProperty(name)) {
                 var arr = target.$track.split(';;')
                 arr.push(name)
                 target.$track = arr.sort().join(';;')
             }
             target[name] = value
             if (!$$skipArray[name]) {
-                var heirloom = target.$events
-                var vm = heirloom.__vmodel__
-                if (vm && heirloom !== vm.$events) {
-                    target.$events = vm.$events
-                }
+                var curVm = target.$events.__vmodel__
                 //触发视图变更
                 var arr = target.$id.split('.')
-                arr.shift()
+                var top = arr.shift()
+                
                 var path = arr.length ? arr.join('.') + '.' + name : name
-                var list = target.$events[path]
+                var vm = adjustVm(curVm, path)
+                var list = vm.$events[path]
                 if (list && list.length) {
                     $emit(list, vm, path, value, oldValue)
                 }
-                var vid = vm.$id.split('.')[0]
+                
                 avalon.rerenderStart = new Date
-                avalon.batch(vid, true)
-                //console.log('valueChange', name)
+                avalon.batch(top, true)
             }
         }
 
@@ -152,19 +148,19 @@ var handlers = {
     has: function (target, name) {
         return target.hasOwnProperty(name)
     }
-
 }
-$$skipArray.$map = true
+$$skipArray.$innuendo = true
+
 function mediatorFactory(before, after, heirloom) {
 
-    var $map = {}
-    var isProxy = after instanceof Proxy
+    var $innuendo = {}
+    var afterIsProxy = after.$id && after.$events
     var $skipArray = {}
     var definition = {}
     heirloom = heirloom || {}
     for (var key in before) {
         definition[key] = before[key]
-        $map[key] = before
+        $innuendo[key] = before
     }
     for (var key in after) {
         if ($$skipArray[key])
@@ -175,31 +171,29 @@ function mediatorFactory(before, after, heirloom) {
                 id: definition.$id + '.' + key
             })
         }
-        $map[key] = after
+        $innuendo[key] = after
     }
     definition.$track = Object.keys(definition).sort().join(';;')
     definition.hasOwnProperty = hasOwn
-    
-    var $vmodel = new Proxy(definition, handlers)
-    if (isProxy) {
-        heirloom.__vmodel__ = after
-    } else {
-        heirloom.__vmodel__ = $vmodel
-        for (var i in $map) {
-            if ($map[i] === after) {
-                $map[i] = $vmodel
+
+    var vm = new Proxy(definition, handlers)
+    heirloom.__vmodel__ = vm
+    if (!afterIsProxy) {
+        for (var i in $innuendo) {
+            if ($innuendo[i] === after) {
+                $innuendo[i] = vm
             }
         }
     }
-    
-    $vmodel.$map = $map
-    $vmodel.$events = heirloom
-    $vmodel.$fire = $fire
-    $vmodel.$watch = $watch
-    $vmodel.$id = before.$id
-    $vmodel.$hashcode = makeHashCode("$")
 
-    return $vmodel
+    vm.$innuendo = $innuendo
+    vm.$events = heirloom
+    vm.$fire = $fire
+    vm.$watch = $watch
+    vm.$id = before.$id
+    vm.$hashcode = avalon.makeHashCode("$")
+
+    return vm
 }
 
 avalon.mediatorFactory = mediatorFactory
