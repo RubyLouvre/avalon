@@ -4,16 +4,28 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="./dist/avalon.js"></script>
+        <script src="./dist/avalon.next.js"></script>
         <script>
-          var vm = avalon.define({
-            $id: 'duplex1',
-            aaa: 12345,
-            bbb: '123a',
-            ccc: 'true',
-            ddd: true
-
-        })
+            var vm = avalon.define({
+                $id: "test",
+                b: 111,
+                obj: {
+                    e: 222
+                }
+            })
+            vm.$watch('b', function(a, b){
+                console.log("====",a, b)
+            })
+            vm.$watch('obj.e', function(a,b){
+                console.log("====",a, b)
+            })
+            vm.b = 83
+            vm.obj.e = 100
+            console.log(vm)
+//            vm.r = 9999
+//            vm.obj.e = 'eee'
+//            console.log(vm.hasOwnProperty('b'))
+//            console.log(vm.hasOwnProperty('a'))
         </script>
         <style>
             .ms-controller{
@@ -23,9 +35,6 @@
     </head>
     <body>
 
-    <div ms-controller='duplex1' >
-    <input ms-duplex-string='@aaa|limitBy(4)'><span>{{@aaa}}</span>
 
-    </div>
     </body>
 </html>

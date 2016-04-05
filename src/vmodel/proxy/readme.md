@@ -1,0 +1,1 @@
+https://developer.mozilla.org/en-US/docs/Archive/Web/Old_Proxy_API

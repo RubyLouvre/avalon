@@ -17,7 +17,8 @@ module.exports = {
     entry: {
         avalon: './src/avalon', //我们开发时的入口文件
         'avalon.modern': './src/avalon.modern',
-        'avalon.test': './src/avalon.test'
+        'avalon.test': './src/avalon.test',
+         'avalon.next': './src/avalon.next'
     },
     output: {
         path: path.join(__dirname, 'dist'),

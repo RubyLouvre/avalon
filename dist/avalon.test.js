@@ -61,12 +61,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(15)
 	__webpack_require__(19)
 	__webpack_require__(35)
-	__webpack_require__(61)
-	__webpack_require__(69)
-	__webpack_require__(70)
+	__webpack_require__(63)
+	__webpack_require__(71)
+	__webpack_require__(72)
 
-	__webpack_require__(95)
-	__webpack_require__(96)
+	__webpack_require__(99)
+	__webpack_require__(100)
 	module.exports = avalon
 
 
@@ -3150,7 +3150,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(57)
 
 	__webpack_require__(58)
-	__webpack_require__(100)
+	__webpack_require__(61)
 
 /***/ },
 /* 36 */
@@ -5169,13 +5169,253 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 61 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var support = __webpack_require__(62)
+	avalon.directive('effect', {
+	    parse: function (binding, num) {
+	        return 'vnode' + num + '.props["ms-effect"] = ' + avalon.parseExpr(binding) + ';\n'
+	    },
+	    diff: function (cur, pre) {
+	        var curObj = cur.props['ms-effect']
+	        if(typeof curObj === 'string'){
+	            var is = curObj
+	            curObj = cur.props['ms-effect'] = {
+	                is: is,
+	                action: 'enter'
+	            }
+	           
+	        }else if (Array.isArray(curObj)) {
+	            curObj = cur.props['ms-effect'] = avalon.mix.apply({}, curObj)
+	        }
+	        if (Object(curObj) == curObj) {
+	            var preObj = pre.props['ms-effect']
+	            if ( Object(preObj) !== preObj || diffObj(curObj, preObj ))  {
+	                var list = cur.afterChange = cur.afterChange || []
+	                avalon.Array.ensure(list, this.update)
+	            }
+	        }
+	    },
+	    update: function (dom, vnode) {
+	        var definition = vnode.props['ms-effect']
+	        var type = definition.is
+	        
+	        var effects = avalon.effects
+	        if(support.css && !effects[type]){
+	            avalon.effect(type, {})
+	        }
+	        var options = effects[type]
+	        var action = definition.action
+
+	        var effect = new avalon.Effect(dom)
+	        if (!type || !options || typeof effect[action] !== 'function'){
+	            return
+	        }   
+	       
+	        if (options.queue && animationQueue.length) {
+	            animationQueue.push(function () {
+	                effect[action](options)
+	            })
+	        } else {
+	            effect[action](options)
+	        }
+	    }
+	})
+	function diffObj(a, b){
+	    for(var i in a){
+	        if(a[i] !== b[i])
+	            return true
+	    }
+	    return false
+	}
+	var animationQueue = []
+	var lock = false
+	function callNextAniation() {
+	    animationQueue.shift()
+	    if (lock)
+	        return
+	    lock = true
+	    var fn = animationQueue[0]
+	    if (fn) {
+	        avalon.nextTick(function () {
+	            lock = false
+	            fn()
+	        })
+	    }
+	}
+
+	avalon.effects = {}
+	avalon.effect = function (name, definition) {
+	    avalon.effects[name] = definition
+	    if (support.css) {
+	        if (!definition.enterClass) {
+	            definition.enterClass = name + '-enter'
+	        }
+	        if (!definition.enterActiveClass) {
+	            definition.enterActiveClass = definition.enterClass + '-active'
+	        }
+	        if (!definition.leaveClass) {
+	            definition.leaveClass = name + '-leave'
+	        }
+	        if (!definition.leaveActiveClass) {
+	            definition.leaveActiveClass = definition.leaveClass + '-active'
+	        }
+
+	    }
+	    if (!definition.action) {
+	        definition.action = 'enter'
+	    }
+	}
+
+
+	var Effect = function (el) {
+	    this.el = el
+	}
+	avalon.Effect = Effect
+	Effect.prototype = {
+	    enter: createMethod('Enter'),
+	    leave: createMethod('Leave'),
+	    move: createMethod('Move')
+	}
+	function execHooks(options, name, el) {
+	    var list = options[name]
+	    list = Array.isArray(list) ? list : typeof list === 'function' ? [list] : []
+	    list.forEach(function (fn) {
+	       fn && fn(el)
+	    })
+	}
+	function createMethod(action) {
+	    var lower = action.toLowerCase()
+	    return function (options) {
+	        var elem = this.el
+	        var $el = avalon(elem)
+	        var animationDone = function(e) {
+	            var isOk = e !== false
+	            var dirWord = isOk ? 'Done' : 'Abort'
+	            execHooks(options, 'on' + action + dirWord, elem)
+	            $el.unbind(support.transitionEndEvent)
+	            $el.unbind(support.animationEndEvent)
+	            callNextAniation()
+	        }
+	       
+	        execHooks(options, 'onBefore' + action, elem)
+
+	        if (options[lower]) {
+	            options[lower](elem, function (ok) {
+	                animationDone(!!ok)
+	            })
+	        } else if (support.css) {
+	            
+	            $el.addClass(options[lower + 'Class'])
+	            if(lower === 'leave'){
+	                $el.removeClass(options.enterClass)
+	                $el.removeClass(options.enterActiveClass)
+	            }else if(lower === 'enter'){
+	                $el.removeClass(options.leaveClass)
+	                $el.removeClass(options.leaveActiveClass)
+	            }
+	            $el.bind(support.transitionEndEvent, animationDone)
+	            $el.bind(support.animationEndEvent, animationDone)
+	            setTimeout(function () {
+	                var forceReflow = avalon.root.offsetWidth
+	                $el.addClass(options[lower + 'ActiveClass'])
+	                var computedStyles = window.getComputedStyle(elem)
+	                var tranDuration = computedStyles[support.transitionDuration]
+	                var animDuration = computedStyles[support.animationDuration]
+	                if (tranDuration === '0s' && animDuration === '0s') {
+	                    animationDone(false)
+	                }
+	            }, 17)// = 1000/60
+	        }
+	    }
+	}
+
+
+
+
+
+/***/ },
+/* 62 */
+/***/ function(module, exports) {
+
+	var supportTransition = false
+	var supportAnimation = false
+	var supportCSS = false
+	var transitionEndEvent
+	var animationEndEvent
+	var transitionDuration = avalon.cssName("transition-duration")
+	var animationDuration = avalon.cssName("animation-duration")
+
+	var checker = {
+	    'TransitionEvent': 'transitionend',
+	    'WebKitTransitionEvent': 'webkitTransitionEnd',
+	    'OTransitionEvent': 'oTransitionEnd',
+	    'otransitionEvent': 'otransitionEnd'
+	}
+	var tran
+	//有的浏览器同时支持私有实现与标准写法，比如webkit支持前两种，Opera支持1、3、4
+	for (var name in checker) {
+	    if (window[name]) {
+	        tran = checker[name]
+	        break
+	    }
+	    try {
+	        var a = document.createEvent(name)
+	        tran = checker[name]
+	        break;
+	    } catch (e) {
+	    }
+	}
+	if (typeof tran === "string") {
+	    supportTransition = true
+	    supportCSS = true
+	    transitionEndEvent = tran
+	}
+
+	//大致上有两种选择
+	//IE10+, Firefox 16+ & Opera 12.1+: animationend
+	//Chrome/Safari: webkitAnimationEnd
+	//http://blogs.msdn.com/b/davrous/archive/2011/12/06/introduction-to-css3-animat ions.aspx
+	//IE10也可以使用MSAnimationEnd监听，但是回调里的事件 type依然为animationend
+	//  el.addEventListener("MSAnimationEnd", function(e) {
+	//     alert(e.type)// animationend！！！
+	// })
+	checker = {
+	    'AnimationEvent': 'animationend',
+	    'WebKitAnimationEvent': 'webkitAnimationEnd'
+	}
+	var ani
+	for (name in checker) {
+	    if (window[name]) {
+	        ani = checker[name];
+	        break;
+	    }
+	}
+	if (typeof ani === "string") {
+	    supportTransition = true
+	    supportCSS = true
+	    animationEndEvent = ani
+	}
+
+	module.exports = {
+	    transition: supportTransition,
+	    animation: supportAnimation,
+	    css: supportCSS,
+	    transitionEndEvent: transitionEndEvent,
+	    animationEndEvent: animationEndEvent,
+	    transitionDuration: transitionDuration,
+	    animationDuration: animationDuration
+	}
+
+/***/ },
+/* 63 */
+/***/ function(module, exports, __webpack_require__) {
+
 	
-	avalon.lexer = __webpack_require__(62)
-	avalon.diff = __webpack_require__(63)
-	avalon.batch = __webpack_require__(64)
+	avalon.lexer = __webpack_require__(64)
+	avalon.diff = __webpack_require__(65)
+	avalon.batch = __webpack_require__(66)
 	// dispatch与patch 为内置模块
 
-	var parseView = __webpack_require__(65)
+	var parseView = __webpack_require__(67)
 
 	function render(vtree) {
 	    var num = num || String(new Date - 0).slice(0, 6)
@@ -5189,7 +5429,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 62 */
+/* 64 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -5530,7 +5770,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = lexer
 
 /***/ },
-/* 63 */
+/* 65 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -5598,7 +5838,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 64 */
+/* 66 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -5669,13 +5909,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 65 */
+/* 67 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var parseExpr = __webpack_require__(66)
-	var parseBindings = __webpack_require__(67)
-	var parseDelimiter = __webpack_require__(68)
+	var parseExpr = __webpack_require__(68)
+	var parseBindings = __webpack_require__(69)
+	var parseDelimiter = __webpack_require__(70)
 	var rexpr = avalon.config.rexpr
 	var quote = avalon.quote
 	var makeHashCode = avalon.makeHashCode
@@ -5828,7 +6068,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = parseView
 
 /***/ },
-/* 66 */
+/* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -6000,7 +6240,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 67 */
+/* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var rneedQuote = /[W-]/
@@ -6083,7 +6323,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = parseBindings
 
 /***/ },
-/* 68 */
+/* 70 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var rline = /\r?\n/g
@@ -6136,7 +6376,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 69 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -6377,12 +6617,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 70 */
+/* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 
-	var share = __webpack_require__(71)
+	var share = __webpack_require__(73)
 
 	var isSkip = share.isSkip
 	var toJson = share.toJson
@@ -6450,7 +6690,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	$$midway.masterFactory = masterFactory
-	var addAccessors = __webpack_require__(75)
+	var addAccessors = __webpack_require__(77)
 
 	function slaveFactory(before, after, heirloom, options) {
 	    var keys = {}
@@ -6679,11 +6919,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	//使用这个AJAX库 https://github.com/matthew-andrews/isomorphic-fetch
 
 /***/ },
-/* 71 */
+/* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var share = __webpack_require__(72)
-	var canHideProperty = __webpack_require__(74)
+	var share = __webpack_require__(74)
+	var canHideProperty = __webpack_require__(76)
 	var makeFire = share.makeFire
 	function toJson(val) {
 	    var xtype = avalon.type(val)
@@ -6772,13 +7012,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 72 */
+/* 74 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var $$midway = {}
 	var $$skipArray = __webpack_require__(59)
-	var dispatch = __webpack_require__(73)
+	var dispatch = __webpack_require__(75)
 	var $emit = dispatch.$emit
 	var $watch = dispatch.$watch
 
@@ -6956,7 +7196,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 73 */
+/* 75 */
 /***/ function(module, exports) {
 
 	
@@ -7033,7 +7273,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 74 */
+/* 76 */
 /***/ function(module, exports) {
 
 	//如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
@@ -7050,11 +7290,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = flag
 
 /***/ },
-/* 75 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var canHideProperty = __webpack_require__(74)
+	var canHideProperty = __webpack_require__(76)
 	var $$skipArray = __webpack_require__(59)
 
 
@@ -7178,8 +7418,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 76 */,
-/* 77 */,
 /* 78 */,
 /* 79 */,
 /* 80 */,
@@ -7197,7 +7435,11 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 92 */,
 /* 93 */,
 /* 94 */,
-/* 95 */
+/* 95 */,
+/* 96 */,
+/* 97 */,
+/* 98 */,
+/* 99 */
 /***/ function(module, exports) {
 
 	//var avalon = require('avalon')
@@ -7211,11 +7453,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 96 */
+/* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var button = __webpack_require__(95)
-	var tmpl = __webpack_require__(97)
+	var button = __webpack_require__(99)
+	var tmpl = __webpack_require__(101)
 
 	avalon.component('ms-panel', {
 	    template: tmpl,
@@ -7229,251 +7471,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 97 */
+/* 101 */
 /***/ function(module, exports) {
 
 	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
-
-/***/ },
-/* 98 */,
-/* 99 */
-/***/ function(module, exports) {
-
-	var supportTransition = false
-	var supportAnimation = false
-	var supportCSS = false
-	var transitionEndEvent
-	var animationEndEvent
-	var transitionDuration = avalon.cssName("transition-duration")
-	var animationDuration = avalon.cssName("animation-duration")
-
-	var checker = {
-	    'TransitionEvent': 'transitionend',
-	    'WebKitTransitionEvent': 'webkitTransitionEnd',
-	    'OTransitionEvent': 'oTransitionEnd',
-	    'otransitionEvent': 'otransitionEnd'
-	}
-	var tran
-	//有的浏览器同时支持私有实现与标准写法，比如webkit支持前两种，Opera支持1、3、4
-	for (var name in checker) {
-	    if (window[name]) {
-	        tran = checker[name]
-	        break
-	    }
-	    try {
-	        var a = document.createEvent(name)
-	        tran = checker[name]
-	        break;
-	    } catch (e) {
-	    }
-	}
-	if (typeof tran === "string") {
-	    supportTransition = true
-	    supportCSS = true
-	    transitionEndEvent = tran
-	}
-
-	//大致上有两种选择
-	//IE10+, Firefox 16+ & Opera 12.1+: animationend
-	//Chrome/Safari: webkitAnimationEnd
-	//http://blogs.msdn.com/b/davrous/archive/2011/12/06/introduction-to-css3-animat ions.aspx
-	//IE10也可以使用MSAnimationEnd监听，但是回调里的事件 type依然为animationend
-	//  el.addEventListener("MSAnimationEnd", function(e) {
-	//     alert(e.type)// animationend！！！
-	// })
-	checker = {
-	    'AnimationEvent': 'animationend',
-	    'WebKitAnimationEvent': 'webkitAnimationEnd'
-	}
-	var ani
-	for (name in checker) {
-	    if (window[name]) {
-	        ani = checker[name];
-	        break;
-	    }
-	}
-	if (typeof ani === "string") {
-	    supportTransition = true
-	    supportCSS = true
-	    animationEndEvent = ani
-	}
-
-	module.exports = {
-	    transition: supportTransition,
-	    animation: supportAnimation,
-	    css: supportCSS,
-	    transitionEndEvent: transitionEndEvent,
-	    animationEndEvent: animationEndEvent,
-	    transitionDuration: transitionDuration,
-	    animationDuration: animationDuration
-	}
-
-/***/ },
-/* 100 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var support = __webpack_require__(99)
-	avalon.directive('effect', {
-	    parse: function (binding, num) {
-	        return 'vnode' + num + '.props["ms-effect"] = ' + avalon.parseExpr(binding) + ';\n'
-	    },
-	    diff: function (cur, pre) {
-	        var curObj = cur.props['ms-effect']
-	        if(typeof curObj === 'string'){
-	            var is = curObj
-	            curObj = cur.props['ms-effect'] = {
-	                is: is,
-	                action: 'enter'
-	            }
-	           
-	        }else if (Array.isArray(curObj)) {
-	            curObj = cur.props['ms-effect'] = avalon.mix.apply({}, curObj)
-	        }
-	        if (Object(curObj) == curObj) {
-	            var preObj = pre.props['ms-effect']
-	            if ( Object(preObj) !== preObj || diffObj(curObj, preObj ))  {
-	                var list = cur.afterChange = cur.afterChange || []
-	                avalon.Array.ensure(list, this.update)
-	            }
-	        }
-	    },
-	    update: function (dom, vnode) {
-	        var definition = vnode.props['ms-effect']
-	        var type = definition.is
-	        
-	        var effects = avalon.effects
-	        if(support.css && !effects[type]){
-	            avalon.effect(type, {})
-	        }
-	        var options = effects[type]
-	        var action = definition.action
-
-	        var effect = new avalon.Effect(dom)
-	        if (!type || !options || typeof effect[action] !== 'function'){
-	            return
-	        }   
-	       
-	        if (options.queue && animationQueue.length) {
-	            animationQueue.push(function () {
-	                effect[action](options)
-	            })
-	        } else {
-	            effect[action](options)
-	        }
-	    }
-	})
-	function diffObj(a, b){
-	    for(var i in a){
-	        if(a[i] !== b[i])
-	            return true
-	    }
-	    return false
-	}
-	var animationQueue = []
-	var lock = false
-	function callNextAniation() {
-	    animationQueue.shift()
-	    if (lock)
-	        return
-	    lock = true
-	    var fn = animationQueue[0]
-	    if (fn) {
-	        avalon.nextTick(function () {
-	            lock = false
-	            fn()
-	        })
-	    }
-	}
-
-	avalon.effects = {}
-	avalon.effect = function (name, definition) {
-	    avalon.effects[name] = definition
-	    if (support.css) {
-	        if (!definition.enterClass) {
-	            definition.enterClass = name + '-enter'
-	        }
-	        if (!definition.enterActiveClass) {
-	            definition.enterActiveClass = definition.enterClass + '-active'
-	        }
-	        if (!definition.leaveClass) {
-	            definition.leaveClass = name + '-leave'
-	        }
-	        if (!definition.leaveActiveClass) {
-	            definition.leaveActiveClass = definition.leaveClass + '-active'
-	        }
-
-	    }
-	    if (!definition.action) {
-	        definition.action = 'enter'
-	    }
-	}
-
-
-	var Effect = function (el) {
-	    this.el = el
-	}
-	avalon.Effect = Effect
-	Effect.prototype = {
-	    enter: createMethod('Enter'),
-	    leave: createMethod('Leave'),
-	    move: createMethod('Move')
-	}
-	function execHooks(options, name, el) {
-	    var list = options[name]
-	    list = Array.isArray(list) ? list : typeof list === 'function' ? [list] : []
-	    list.forEach(function (fn) {
-	       fn && fn(el)
-	    })
-	}
-	function createMethod(action) {
-	    var lower = action.toLowerCase()
-	    return function (options) {
-	        var elem = this.el
-	        var $el = avalon(elem)
-	        var animationDone = function(e) {
-	            var isOk = e !== false
-	            var dirWord = isOk ? 'Done' : 'Abort'
-	            execHooks(options, 'on' + action + dirWord, elem)
-	            $el.unbind(support.transitionEndEvent)
-	            $el.unbind(support.animationEndEvent)
-	            callNextAniation()
-	        }
-	       
-	        execHooks(options, 'onBefore' + action, elem)
-
-	        if (options[lower]) {
-	            options[lower](elem, function (ok) {
-	                animationDone(!!ok)
-	            })
-	        } else if (support.css) {
-	            
-	            $el.addClass(options[lower + 'Class'])
-	            if(lower === 'leave'){
-	                $el.removeClass(options.enterClass)
-	                $el.removeClass(options.enterActiveClass)
-	            }else if(lower === 'enter'){
-	                $el.removeClass(options.leaveClass)
-	                $el.removeClass(options.leaveActiveClass)
-	            }
-	            $el.bind(support.transitionEndEvent, animationDone)
-	            $el.bind(support.animationEndEvent, animationDone)
-	            setTimeout(function () {
-	                var forceReflow = avalon.root.offsetWidth
-	                $el.addClass(options[lower + 'ActiveClass'])
-	                var computedStyles = window.getComputedStyle(elem)
-	                var tranDuration = computedStyles[support.transitionDuration]
-	                var animDuration = computedStyles[support.animationDuration]
-	                if (tranDuration === '0s' && animDuration === '0s') {
-	                    animationDone(false)
-	                }
-	            }, 17)// = 1000/60
-	        }
-	    }
-	}
-
-
-
-
 
 /***/ }
 /******/ ])
