@@ -10,14 +10,38 @@ var canObserve = share.canObserve
 var $$midway = share.$$midway
 var $$skipArray = share.$$skipArray
 $$skipArray.$mapping = true
-
+delete $$skipArray
 var modelAdaptor = share.modelAdaptor
 var makeHashCode = avalon.makeHashCode
+var dispatch = require('../strategy/dispatch')
 
 var $emit = dispatch.$emit
 var $watch = dispatch.$watch
 
-if (window.Proxy) {
+function hasOwn(name) {
+   return (';;' + this.$track + ';;').indexOf(';;' + name + ';;') > -1
+}
+function toJson(val) {
+    var xtype = avalon.type(val)
+    if (xtype === 'array') {
+        var array = []
+        for (var i = 0; i < val.length; i++) {
+            array[i] = toJson(val[i])
+        }
+        return array
+    } else if (xtype === 'object') {
+        var obj = {}
+        val.$track.split('??').forEach(function (i) {
+            var value = val[i]
+            obj[i] = value && value.nodeType ? value : toJson(value)
+        })
+        return obj
+    }
+    return val
+}
+
+
+if (avalon.window.Proxy) {
     function adjustVm(vm, expr) {
         if (vm.$mapping) {
             var toppath = expr.split(".")[0]
@@ -41,7 +65,7 @@ if (window.Proxy) {
             delete definition.$skipArray
         }
         options = options || {}
-        var hashcode = makeHashCode("$")
+        var hashcode = makeHashCode('$')
         options.id = options.id || hashcode
         options.hashcode = hashcode
         var keys = []
@@ -57,12 +81,11 @@ if (window.Proxy) {
             }
         }
         definition.$track = keys.sort().join(';;')
-        var vm = new Proxy(definition, handlers)
+        var vm = Proxy.create ? Proxy.create(definition, handlers) : new Proxy(definition, handlers)
         return makeObserver(vm, heirloom, {}, {}, options)
     }
 
     $$midway.masterFactory = masterFactory
-
     //old = before, definition = after
     function slaveFactory(before, after, heirloom) {
         for (var key in after) {
@@ -110,9 +133,10 @@ if (window.Proxy) {
             }
             $mapping[key] = after
         }
+       
         definition.$track = Object.keys(definition).sort().join(';;')
 
-        var vm = new Proxy(definition, handlers)
+        var vm =  Proxy.create ? Proxy.create(definition, handlers) : new Proxy(definition, handlers)
         if (!afterIsProxy) {
             for (var i in $mapping) {
                 if ($mapping[i] === after) {
@@ -125,15 +149,14 @@ if (window.Proxy) {
 
         return makeObserver(vm, heirloom, {}, {}, {
             id: before.$id,
-            hashcode: makeHashCode("$")
+            hashcode: makeHashCode('$')
         })
     }
 
-    avalon.mediatorFactory = $$midway.masterFactory = mediatorFactory
+    avalon.mediatorFactory = $$midway.mediatorFactory = mediatorFactory
 
 
     function makeObserver($vmodel, heirloom, discard , abandon, options) {
-
         if (options.array) {
             Object.defineProperty($vmodel, '$model', {
                 get: function () {
@@ -143,8 +166,10 @@ if (window.Proxy) {
                 enumerable: false,
                 configurable: true
             })
+        }else{
+            $vmodel.hasOwnProperty = hasOwn
         }
-        $vmodel.hasOwnProperty = hasOwn
+
         $vmodel.$id = options.id
         $vmodel.$hashcode = options.hashcode
         $vmodel.$events = heirloom
@@ -186,7 +211,6 @@ if (window.Proxy) {
             }
         } else {
             _splice.call(this, 0, this.length)
-
         }
 
         notifySize(this, size)
@@ -234,7 +258,6 @@ if (window.Proxy) {
     'sort,reverse'.replace(avalon.rword, function (method) {
         __array__[method] = function () {
             ap[method].apply(this, arguments)
-
             this.notify()
             return this
         }
@@ -242,25 +265,6 @@ if (window.Proxy) {
 }
 
 
-
-function toJson(val) {
-    var xtype = avalon.type(val)
-    if (xtype === 'array') {
-        var array = []
-        for (var i = 0; i < val.length; i++) {
-            array[i] = toJson(val[i])
-        }
-        return array
-    } else if (xtype === 'object') {
-        var obj = {}
-        val.$track.split('??').forEach(function (i) {
-            var value = val[i]
-            obj[i] = value && value.nodeType ? value : toJson(value)
-        })
-        return obj
-    }
-    return val
-}
 
 
 var handlers = {
@@ -302,7 +306,7 @@ var handlers = {
                 if (list && list.length) {
                     $emit(list, vm, path, value, oldValue)
                 }
-                avalon.rerenderStart = new Date
+                avalon.rerenderStart = Date.now()
                 avalon.batch(top, true)
             }
         }
@@ -311,11 +315,6 @@ var handlers = {
     has: function (target, name) {
         return target.hasOwnProperty(name)
     }
-}
-
-
-function hasOwn(name) {
-    return (';;' + this.$track + ';;').indexOf(';;' + name + ';;') > -1
 }
 
 module.exports = avalon

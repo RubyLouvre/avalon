@@ -31,12 +31,13 @@ avalon.directive('on', {
                     '] = ' + avalon.parseExpr(binding, 'on') + '\n'
         }
     },
-    diff: function (cur, pre, type, name) {
+    diff: function (cur, pre, root, match) {
+        var name = match[0] //ms-on-xxx-1
         var fn0 = cur.props[name]
         var fn1 = pre.props[name]
         if (fn0 !== fn1) {
-            var match = name.match(revent)
-            type = match[1]
+            match = name.match(revent)
+            var type = match[1]
             var search = type + ':' + markID(fn0)
             cur.addEvents = cur.addEvents || {}
             cur.addEvents[search] = fn0

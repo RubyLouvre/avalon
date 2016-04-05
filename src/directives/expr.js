@@ -2,7 +2,7 @@
 avalon.directive('expr', {
     parse: function () {
     },
-    diff: function (cur, pre) {//curNode, preNode
+    diff: function (cur, pre, root) {//curNode, preNode
         cur.fixIESkip = true
         var dom = cur.dom = pre.dom
         if (cur.nodeValue !== pre.nodeValue) {
@@ -11,6 +11,8 @@ avalon.directive('expr', {
             } else {
                 var list = cur.change || (cur.change = [])
                 avalon.Array.ensure(list, this.update)
+                root.count += 1
+                console.log('------')
             }
         }
         pre.dom = null

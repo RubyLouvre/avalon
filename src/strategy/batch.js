@@ -33,8 +33,9 @@ function batchUpdate(id, immediate) {
     flushUpdate(function () {
         isBatchingUpdates = true
         var vtree = vm.$render()
-        avalon.diff(vtree, dom.vtree || [])
-        patch([dom], vtree)
+        var root = {count:0}
+        avalon.diff(vtree, dom.vtree || [], root)
+        patch([dom], vtree, 0, root )
         
         dom.vtree = vtree
         isBatchingUpdates = false

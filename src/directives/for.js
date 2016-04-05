@@ -47,7 +47,8 @@ avalon.directive('for', {
 
         return assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
     },
-    diff: function (current, previous, __index__) {
+    diff: function (current, previous, root) {
+        var __index__ = current.i
         var cur = current[__index__]
         var pre = previous[__index__] || {}
 

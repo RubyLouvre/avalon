@@ -4,10 +4,11 @@
  * ------------------------------------------------------------
  */
 var sp = /^\s*$/
-function patch(nodes, vnodes, parent) {
+function patch(nodes, vnodes, parent, root) {
     var next = nodes[0]
-    if (!next && !parent)
+    if ((!next && !parent) || !root.count ){
         return
+    }
     parent = parent || next.parentNode
     for (var i = 0, vn = vnodes.length; i < vn; i++) {
         var vnode = vnodes[i]
@@ -36,16 +37,16 @@ function patch(nodes, vnodes, parent) {
         }
 
         //ms-repeat,ms-if, ms-widget会返回false
-        if (false === execHooks(node, vnode, parent, 'change')) {
-            execHooks(node, vnode, parent, 'afterChange')
+        if (false === execHooks(node, vnode, parent, 'change', root)) {
+            execHooks(node, vnode, parent, 'afterChange', root)
             continue
         }
         if (!vnode.skipContent && vnode.children && node && node.nodeType === 1) {
             //处理子节点
-            patch(avalon.slice(node.childNodes), vnode.children, node)
+            patch(avalon.slice(node.childNodes), vnode.children, node, root)
         }
         //ms-duplex
-        execHooks(node, vnode, parent, 'afterChange')
+        execHooks(node, vnode, parent, 'afterChange', root)
     }
 }
 
@@ -68,10 +69,11 @@ function getEndRepeat(node) {
     return ret.pop()
 }
 
-function execHooks(node, vnode, parent, hookName) {
+function execHooks(node, vnode, parent, hookName, root) {
     var hooks = vnode[hookName]
     if (hooks) {
         for (var hook; hook = hooks.shift(); ) {
+            root.count -= 1
             if (false === hook(node, vnode, parent)) {
                 return false
             }

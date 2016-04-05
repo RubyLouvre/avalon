@@ -8,7 +8,8 @@ avalon.directive('class', {
         //必须是布尔对象或字符串数组
         return 'vnode' + num + '.props["' + binding.name + '"] = ' + avalon.parseExpr(binding) + ';\n'
     },
-    diff: function (cur, pre, type) {
+    diff: function (cur, pre, root, match) {
+        var type = match[1]
         var curValue = cur.props['ms-' + type]
         var preValue = pre.props['ms-' + type]
         if (!pre.classEvent) {

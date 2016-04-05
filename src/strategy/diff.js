@@ -11,7 +11,7 @@ var emptyObj = {
 var directives = avalon.directives
 var rbinding = require('../seed/regexp').binding
 
-function diff(current, previous) {
+function diff(current, previous, root) {
     if (!current)
         return
     for (var i = 0; i < current.length; i++) {
@@ -20,36 +20,37 @@ function diff(current, previous) {
         switch (cur.nodeType) {
             case 3:
                 if (!cur.skipContent) {
-                    directives.expr.diff(cur, pre)
+                    directives.expr.diff(cur, pre, root)
                 }
                 break
             case 8:
                 if (cur.directive === 'for') {
-                    i = directives['for'].diff(current, previous, i)
+                    current.i = i
+                    i = directives['for'].diff(current, previous, root)
                 } else if (cur.directive) {//if widget
-                    directives[cur.directive].diff(cur, pre)
+                    directives[cur.directive].diff(cur, pre, root)
                 }
                 break
             default:
                 if (!cur.skipAttrs) {
-                    diffProps(cur, pre)
+                    diffProps(cur, pre, root)
                 }
                 if (!cur.skipContent) {
-                    diff(cur.children, pre.children || emptyArr)
+                    diff(cur.children, pre.children || emptyArr, root)
                 }
                 break
         }
     }
 }
 
-function diffProps(current, previous) {
+function diffProps(current, previous, root) {
     for (var name in current.props) {
         var match = name.match(rbinding)
         if (match) {
             var type = match[1]
             try {
                 if (directives[type]) {
-                    directives[type].diff(current, previous || emptyObj, type, name)
+                    directives[type].diff(current, previous || emptyObj, root, match)
                 }
             } catch (e) {
                 avalon.log(current, previous, e, 'diffProps error')

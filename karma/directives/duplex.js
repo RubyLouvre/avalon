@@ -26,7 +26,6 @@ describe('duplex', function () {
             body.removeChild(div)
             delete avalon.vmodels[vm.$id]
         }
-
     })
     it('数据转换', function (done) {
         div.innerHTML = heredoc(function () {

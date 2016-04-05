@@ -3190,7 +3190,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return 'vnode' + num + '.props["ms-attr"] = ' + avalon.parseExpr(binding) + ';\n'
 
 	    },
-	    diff: function (cur, pre) {
+	    diff: function (cur, pre, root) {
 	        var a = cur.props['ms-attr']
 	        var p = pre.props['ms-attr']
 	        if (a && typeof a === 'object') {
@@ -3215,6 +3215,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (cur.changeAttr) {
 	                var list = cur.change || (cur.change = [])
 	                avalon.Array.ensure(list, this.update)
+	                root.count += 1
 	            }
 	        } else {
 	            cur.props['ms-attr'] = p
@@ -3449,7 +3450,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.directive('expr', {
 	    parse: function () {
 	    },
-	    diff: function (cur, pre) {//curNode, preNode
+	    diff: function (cur, pre, root) {//curNode, preNode
 	        cur.fixIESkip = true
 	        var dom = cur.dom = pre.dom
 	        if (cur.nodeValue !== pre.nodeValue) {
@@ -3458,6 +3459,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            } else {
 	                var list = cur.change || (cur.change = [])
 	                avalon.Array.ensure(list, this.update)
+	                root.count += 1
+	                console.log('------')
 	            }
 	        }
 	        pre.dom = null
@@ -3485,7 +3488,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var val = rident.test(binding.expr) ? binding.expr : avalon.parseExpr(binding)
 	        return 'vnode' + num + '.props["ms-text"] =' + val + '\n'
 	    },
-	    diff: function (cur, pre) {
+	    diff: function (cur, pre, root, match) {
 	        var curValue = cur.props['ms-text']
 	        var preValue = pre.props['ms-text']
 	        cur.children = pre.children
@@ -3602,7 +3605,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //必须是布尔对象或字符串数组
 	        return 'vnode' + num + '.props["' + binding.name + '"] = ' + avalon.parseExpr(binding) + ';\n'
 	    },
-	    diff: function (cur, pre, type) {
+	    diff: function (cur, pre, root, match) {
+	        var type = match[1]
 	        var curValue = cur.props['ms-' + type]
 	        var preValue = pre.props['ms-' + type]
 	        if (!pre.classEvent) {
@@ -3753,12 +3757,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    '] = ' + avalon.parseExpr(binding, 'on') + '\n'
 	        }
 	    },
-	    diff: function (cur, pre, type, name) {
+	    diff: function (cur, pre, root, match) {
+	        var name = match[0] //ms-on-xxx-1
 	        var fn0 = cur.props[name]
 	        var fn1 = pre.props[name]
 	        if (fn0 !== fn1) {
-	            var match = name.match(revent)
-	            type = match[1]
+	            match = name.match(revent)
+	            var type = match[1]
 	            var search = type + ':' + markID(fn0)
 	            cur.addEvents = cur.addEvents || {}
 	            cur.addEvents[search] = fn0
@@ -4476,10 +4481,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * ------------------------------------------------------------
 	 */
 	var sp = /^\s*$/
-	function patch(nodes, vnodes, parent) {
+	function patch(nodes, vnodes, parent, root) {
 	    var next = nodes[0]
-	    if (!next && !parent)
+	    if ((!next && !parent) || !root.count ){
 	        return
+	    }
 	    parent = parent || next.parentNode
 	    for (var i = 0, vn = vnodes.length; i < vn; i++) {
 	        var vnode = vnodes[i]
@@ -4508,16 +4514,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        //ms-repeat,ms-if, ms-widget会返回false
-	        if (false === execHooks(node, vnode, parent, 'change')) {
-	            execHooks(node, vnode, parent, 'afterChange')
+	        if (false === execHooks(node, vnode, parent, 'change', root)) {
+	            execHooks(node, vnode, parent, 'afterChange', root)
 	            continue
 	        }
 	        if (!vnode.skipContent && vnode.children && node && node.nodeType === 1) {
 	            //处理子节点
-	            patch(avalon.slice(node.childNodes), vnode.children, node)
+	            patch(avalon.slice(node.childNodes), vnode.children, node, root)
 	        }
 	        //ms-duplex
-	        execHooks(node, vnode, parent, 'afterChange')
+	        execHooks(node, vnode, parent, 'afterChange', root)
 	    }
 	}
 
@@ -4540,10 +4546,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return ret.pop()
 	}
 
-	function execHooks(node, vnode, parent, hookName) {
+	function execHooks(node, vnode, parent, hookName, root) {
 	    var hooks = vnode[hookName]
 	    if (hooks) {
 	        for (var hook; hook = hooks.shift(); ) {
+	            root.count -= 1
 	            if (false === hook(node, vnode, parent)) {
 	                return false
 	            }
@@ -4607,7 +4614,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        return assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
 	    },
-	    diff: function (current, previous, __index__) {
+	    diff: function (current, previous, root) {
+	        var __index__ = current.i
 	        var cur = current[__index__]
 	        var pre = previous[__index__] || {}
 
@@ -5784,7 +5792,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var directives = avalon.directives
 	var rbinding = __webpack_require__(44).binding
 
-	function diff(current, previous) {
+	function diff(current, previous, root) {
 	    if (!current)
 	        return
 	    for (var i = 0; i < current.length; i++) {
@@ -5793,36 +5801,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	        switch (cur.nodeType) {
 	            case 3:
 	                if (!cur.skipContent) {
-	                    directives.expr.diff(cur, pre)
+	                    directives.expr.diff(cur, pre, root)
 	                }
 	                break
 	            case 8:
 	                if (cur.directive === 'for') {
-	                    i = directives['for'].diff(current, previous, i)
+	                    current.i = i
+	                    i = directives['for'].diff(current, previous, root)
 	                } else if (cur.directive) {//if widget
-	                    directives[cur.directive].diff(cur, pre)
+	                    directives[cur.directive].diff(cur, pre, root)
 	                }
 	                break
 	            default:
 	                if (!cur.skipAttrs) {
-	                    diffProps(cur, pre)
+	                    diffProps(cur, pre, root)
 	                }
 	                if (!cur.skipContent) {
-	                    diff(cur.children, pre.children || emptyArr)
+	                    diff(cur.children, pre.children || emptyArr, root)
 	                }
 	                break
 	        }
 	    }
 	}
 
-	function diffProps(current, previous) {
+	function diffProps(current, previous, root) {
 	    for (var name in current.props) {
 	        var match = name.match(rbinding)
 	        if (match) {
 	            var type = match[1]
 	            try {
 	                if (directives[type]) {
-	                    directives[type].diff(current, previous || emptyObj, type, name)
+	                    directives[type].diff(current, previous || emptyObj, root, match)
 	                }
 	            } catch (e) {
 	                avalon.log(current, previous, e, 'diffProps error')
@@ -5874,8 +5883,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    flushUpdate(function () {
 	        isBatchingUpdates = true
 	        var vtree = vm.$render()
-	        avalon.diff(vtree, dom.vtree || [])
-	        patch([dom], vtree)
+	        var root = {count:0}
+	        avalon.diff(vtree, dom.vtree || [], root)
+	        patch([dom], vtree, 0, root )
 	        
 	        dom.vtree = vtree
 	        isBatchingUpdates = false

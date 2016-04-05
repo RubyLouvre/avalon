@@ -6,43 +6,11 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="./dist/avalon.next.js"></script>
         <script>
-            var vm1 = avalon.define({
+            var vm = avalon.define({
                 $id: "test",
                 a: 111,
-                b: 111,
-                obj: {
-                    e: 222
-                }
+                b: 111
             })
-            var vm2 = avalon.define({
-                $id: "test2",
-                c: "333",
-                b:333
-            })
-            vm1.$watch('b', function(a, b){
-                console.log("====",a, b)
-            })
-            
-            vm2.$watch('b', function(a, b){
-                console.log("!!!!",a, b)
-            })
-           
-            vm1.$watch('obj.e', function(a,b){
-                console.log("vm1绑定的",a, b)
-            })
-           
-          var vm3 = avalon.mediatorFactory(vm1,vm2)
-           vm3.$watch('obj.e', function(a,b){
-                console.log('vm3绑定的')
-            })
-          console.log(vm3)
-          vm3.b = 222
-          vm3.obj.e =9
-           
-//            vm.r = 9999
-//            vm.obj.e = 'eee'
-//            console.log(vm.hasOwnProperty('b'))
-//            console.log(vm.hasOwnProperty('a'))
         </script>
         <style>
             .ms-controller{
@@ -52,7 +20,8 @@
     </head>
     <body>
         <div ms-controller="test">
-            <p>{{@obj.e}}</p>
+            <p>{{@a}}</p>
+            <p>{{@b}}</p>
         </div>
 
     </body>

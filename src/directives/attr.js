@@ -6,7 +6,7 @@ avalon.directive('attr', {
         return 'vnode' + num + '.props["ms-attr"] = ' + avalon.parseExpr(binding) + ';\n'
 
     },
-    diff: function (cur, pre) {
+    diff: function (cur, pre, root) {
         var a = cur.props['ms-attr']
         var p = pre.props['ms-attr']
         if (a && typeof a === 'object') {
@@ -31,6 +31,7 @@ avalon.directive('attr', {
             if (cur.changeAttr) {
                 var list = cur.change || (cur.change = [])
                 avalon.Array.ensure(list, this.update)
+                root.count += 1
             }
         } else {
             cur.props['ms-attr'] = p
