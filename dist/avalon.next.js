@@ -6218,11 +6218,18 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/**
+	 * ------------------------------------------------------------
+	 * avalon基于Proxy的vm工厂 
+	 * masterFactory,slaveFactory,mediatorFactory, ArrayFactory
+	 * http://caniuse.com/#search=Proxy
+	 * ------------------------------------------------------------
+	 */
 	var share = __webpack_require__(74)
 	var canObserve = share.canObserve
 	var $$midway = share.$$midway
 	var $$skipArray = share.$$skipArray
-	$$skipArray.$innuendo = true
+	$$skipArray.$mapping = true
 
 	var modelAdaptor = share.modelAdaptor
 	var makeHashCode = avalon.makeHashCode
@@ -6232,15 +6239,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	if (window.Proxy) {
 	    function adjustVm(vm, expr) {
-	        if (vm.$innuendo) {
+	        if (vm.$mapping) {
 	            var toppath = expr.split(".")[0]
-	            return vm.$innuendo[toppath] || vm
+	            return vm.$mapping[toppath] || vm
 	        } else {
 	            return vm
 	        }
 	    }
 	    $watch.adjust = adjustVm
-
 
 	    function $fire(expr, a, b) {
 	        var list = this.$events[expr]
@@ -6276,7 +6282,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    $$midway.masterFactory = masterFactory
-	    //old, definition
+
+	    //old = before, definition = after
 	    function slaveFactory(before, after, heirloom) {
 	        for (var key in after) {
 	            if ($$skipArray[key])
@@ -6303,14 +6310,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    $$midway.slaveFactory = slaveFactory
 
 	    function mediatorFactory(before, after, heirloom) {
-	        var $innuendo = {}
 	        var afterIsProxy = after.$id && after.$events
 	        var $skipArray = {}
 	        var definition = {}
+	        var $mapping = {}
 	        heirloom = heirloom || {}
 	        for (var key in before) {
 	            definition[key] = before[key]
-	            $innuendo[key] = before
+	            $mapping[key] = before
 	        }
 	        for (var key in after) {
 	            if ($$skipArray[key])
@@ -6321,22 +6328,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    id: definition.$id + '.' + key
 	                })
 	            }
-	            $innuendo[key] = after
+	            $mapping[key] = after
 	        }
 	        definition.$track = Object.keys(definition).sort().join(';;')
-	        //  definition.hasOwnProperty = hasOwn
 
 	        var vm = new Proxy(definition, handlers)
-	        // heirloom.__vmodel__ = vm
 	        if (!afterIsProxy) {
-	            for (var i in $innuendo) {
-	                if ($innuendo[i] === after) {
-	                    $innuendo[i] = vm
+	            for (var i in $mapping) {
+	                if ($mapping[i] === after) {
+	                    $mapping[i] = vm
 	                }
 	            }
 	        }
 
-	        vm.$innuendo = $innuendo
+	        vm.$mapping = $mapping
 
 	        return makeObserver(vm, heirloom, {}, {}, {
 	            id: before.$id,
@@ -6498,7 +6503,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var oldValue = target[name]
 	        if (oldValue !== value) {
 	            //如果是新属性
-	            if (!$$skipArray[name] && oldValue === void 0 && !target.hasOwnProperty(name)) {
+	            if (!$$skipArray[name] && oldValue === void 0 &&
+	                    !target.hasOwnProperty(name)) {
 	                var arr = target.$track.split(';;')
 	                arr.push(name)
 	                target.$track = arr.sort().join(';;')
@@ -6516,7 +6522,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (list && list.length) {
 	                    $emit(list, vm, path, value, oldValue)
 	                }
-
 	                avalon.rerenderStart = new Date
 	                avalon.batch(top, true)
 	            }
