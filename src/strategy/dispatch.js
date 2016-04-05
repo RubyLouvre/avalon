@@ -23,7 +23,7 @@ function adjustVm(vm, expr) {
 
 
 function $watch(expr, callback) {
-    var vm = adjustVm(this, expr)
+    var vm = $watch.adjust(this, expr)
     var hive = vm.$events
     var list = hive[expr] || (hive[expr] = [])
     if (vm !== this) {
@@ -36,6 +36,7 @@ function $watch(expr, callback) {
     }
 }
 
+$watch.adjust = adjustVm
 /**
  * $fire 方法的内部实现
  * 

@@ -6,7 +6,6 @@ var $emit = dispatch.$emit
 var $watch = dispatch.$watch
 
 
-
 function makeFire($vmodel, heirloom) {
     heirloom.__vmodel__ = $vmodel
     var hide = $$midway.hideProperty
@@ -25,12 +24,13 @@ function makeFire($vmodel, heirloom) {
     })
 }
 
-function isSkip(key, value, skipArray) {
-    // 判定此属性能否转换访问器
-    return  skipArray[key] ||
-            key.charAt(0) === '$' ||
-            (typeof value === 'function') ||
-            (value && value.nodeName && value.nodeType > 0)
+function canObserve(key, value, skipArray) {
+    // 判定此属性是否还能转换子VM或监听数组
+    return  !skipArray[key] &&
+            (key.charAt(0) !== '$') &&
+            (avalon.isPlainObject(value) || Array.isArray(value)) &&
+            !value.$id
+
 }
 
 
@@ -130,6 +130,50 @@ function define(definition) {
     return avalon.vmodels[$id] = vm
 
 }
+
+function arrayFactory(array, old, heirloom, options) {
+    if (old && old.splice) {
+        var args = [0, old.length].concat(array)
+        ++avalon.suspendUpdate 
+        old.splice.apply(old, args)
+        --avalon.suspendUpdate 
+        return old
+    } else {
+        for (var i in __array__) {
+            array[i] = __array__[i]
+        }
+
+        array.notify = function (a, b, c, d) {
+            var vm = heirloom.__vmodel__
+            if (vm) {
+                var path = a === null || a === void 0 ?
+                        options.pathname :
+                        options.pathname + '.' + a
+                vm.$fire(path, b, c)
+                if (!d && !avalon.suspendUpdate) {
+                    avalon.rerenderStart = new Date
+                    avalon.batch(vm.$id, true)
+                }
+            }
+        }
+
+        var hashcode = makeHashCode('$')
+        options.array = true
+        options.hashcode = hashcode
+        options.id = options.id || hashcode
+        $$midway.makeObserver(array, heirloom, {}, {}, options)
+
+        for (var j = 0, n = array.length; j < n; j++) {
+            array[j] = modelAdaptor(array[j], 0, {}, {
+                id: array.$id + '.*',
+                master: true
+            })
+        }
+        return array
+    }
+}
+$$midway.arrayFactory = arrayFactory
+
 var __array__ = {
     set: function (index, val) {
         if (((index >>> 0) === index) && this[index] !== val) {
@@ -172,7 +216,7 @@ module.exports = {
     $$midway: $$midway,
     $$skipArray: $$skipArray,
     __array__: __array__,
-    isSkip: isSkip,
+    canObserve: canObserve,
     makeFire: makeFire,
     makeAccessor: makeAccessor,
     modelAdaptor: modelAdaptor

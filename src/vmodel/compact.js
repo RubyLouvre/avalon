@@ -2,7 +2,7 @@
 
 var share = require('./parts/compact')
 
-var isSkip = share.isSkip
+var canObserve = share.canObserve
 var toJson = share.toJson
 var $$midway = share.$$midway
 var $$skipArray = share.$$skipArray
@@ -39,7 +39,7 @@ function masterFactory(definition, heirloom, options) {
         if ($$skipArray[key])
             continue
         var val = keys[key] = definition[key]
-        if (!isSkip(key, val, $skipArray)) {
+        if (canObserve(key, val, $skipArray)) {
             sid = options.id + '.' + key
             spath = pathname ? pathname + '.' + key : key
             accessors[key] = makeAccessor(sid, spath, heirloom)
@@ -82,7 +82,7 @@ function slaveFactory(before, after, heirloom, options) {
         if ($$skipArray[key])
             continue
         keys[key] = true
-        if (!isSkip(key, after[key], {})) {
+        if (canObserve(key, after[key], {})) {
             if (resue[key]) {
                 accessors[key] = resue[key]
             } else {
@@ -161,49 +161,7 @@ function mediatorFactory(before, after, heirloom) {
 $$midway.mediatorFactory = avalon.mediatorFactory = mediatorFactory
 
 var __array__ = share.__array__
-function arrayFactory(array, old, heirloom, options) {
-    if (old && old.splice) {
-        var args = [0, old.length].concat(array)
-        ++avalon.suspendUpdate 
-        old.splice.apply(old, args)
-        --avalon.suspendUpdate 
-        return old
-    } else {
-        for (var i in __array__) {
-            array[i] = __array__[i]
-        }
 
-        array.notify = function (a, b, c, d) {
-            var vm = heirloom.__vmodel__
-            if (vm) {
-                var path = a === null || a === void 0 ?
-                        options.pathname :
-                        options.pathname + '.' + a
-                vm.$fire(path, b, c)
-                if (!d && !avalon.suspendUpdate ) {
-                    avalon.rerenderStart = new Date
-                    avalon.batch(vm.$id, true)
-                }
-
-            }
-        }
-
-        var hashcode = makeHashCode('$')
-        options.array = true
-        options.hashcode = hashcode
-        options.id = options.id || hashcode
-        makeObserver(array, heirloom, {}, {}, options)
-        for (var j = 0, n = array.length; j < n; j++) {
-            array[j] = modelAdaptor(array[j], 0, {}, {
-                id: array.$id + '.*',
-                master: true
-            })
-        }
-        return array
-    }
-}
-
-$$midway.arrayFactory = arrayFactory
 
 var ap = Array.prototype
 var _splice = ap.splice

@@ -71,7 +71,7 @@ function makeObserver($vmodel, heirloom, keys, accessors, options) {
     }
 }
 
-
+share.$$midway.makeObserver = makeObserver
 
 share.$$midway.hideProperty = hideProperty
 

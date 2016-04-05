@@ -4337,8 +4337,312 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 72 */,
 /* 73 */,
-/* 74 */,
-/* 75 */,
+/* 74 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var $$midway = {}
+	var $$skipArray = __webpack_require__(59)
+	var dispatch = __webpack_require__(75)
+	var $emit = dispatch.$emit
+	var $watch = dispatch.$watch
+
+
+	function makeFire($vmodel, heirloom) {
+	    heirloom.__vmodel__ = $vmodel
+	    var hide = $$midway.hideProperty
+
+	    hide($vmodel, '$events', heirloom)
+	    hide($vmodel, '$watch', function () {
+	        if (arguments.length === 2) {
+	            return $watch.apply($vmodel, arguments)
+	        } else {
+	            throw '$watch方法参数不对'
+	        }
+	    })
+	    hide($vmodel, '$fire', function (expr, a, b) {
+	        var list = $vmodel.$events[expr]
+	        $emit(list, $vmodel, expr, a, b)
+	    })
+	}
+
+	function canObserve(key, value, skipArray) {
+	    // 判定此属性是否还能转换子VM或监听数组
+	    return  !skipArray[key] &&
+	            (key.charAt(0) !== '$') &&
+	            (avalon.isPlainObject(value) || Array.isArray(value)) &&
+	            !value.$id
+
+	}
+
+
+	function modelAdaptor(definition, old, heirloom, options) {
+	    //如果数组转换为监控数组
+	    if (Array.isArray(definition)) {
+	        return $$midway.arrayFactory(definition, old, heirloom, options)
+	    } else if (Object(definition) === definition && typeof definition !== 'function') {
+	        //如果此属性原来就是一个VM,拆分里面的访问器属性
+	        if (old && old.$id) {
+	            ++avalon.suspendUpdate
+	            //1.5带来的优化方案
+	            if (old.$track !== Object.keys(definition).sort().join(';;')) {
+	                var vm = $$midway.slaveFactory(old, definition, heirloom, options)
+	            } else {
+	                vm = old
+	            }
+	            for (var i in definition) {
+	                if ($$skipArray[i])
+	                    continue
+	                vm[i] = definition[i]
+	            }
+	            --avalon.suspendUpdate
+	            return vm
+	        } else {
+	            vm = $$midway.masterFactory(definition, heirloom, options)
+	            return vm
+	        }
+	    } else {
+	        return definition
+	    }
+	}
+	$$midway.modelAdaptor = modelAdaptor
+
+	var rtopsub = /([^.]+)\.(.+)/
+	function makeAccessor(sid, spath, heirloom) {
+	    var old = NaN
+	    function get() {
+	        return old
+	    }
+	    get.heirloom = heirloom
+	    return {
+	        get: get,
+	        set: function (val) {
+	            if (old === val) {
+	                return
+	            }
+	            if (val && typeof val === 'object') {
+	                val = $$midway.modelAdaptor(val, old, heirloom, {
+	                    pathname: spath,
+	                    id: sid
+	                })
+	            }
+	            var older = old
+	            old = val
+	            var vm = heirloom.__vmodel__
+	            if (this.$hashcode && vm) {
+	                //★★确保切换到新的events中(这个events可能是来自oldProxy)               
+	                if (heirloom !== vm.$events) {
+	                    get.heirloom = vm.$events
+	                }
+	                $emit(get.heirloom[spath], vm, spath, val, older)
+	                if (sid.indexOf('.*.') > 0) {//如果是item vm
+	                    var arr = sid.match(rtopsub)
+	                    var top = avalon.vmodels[ arr[1] ]
+	                    if (top) {
+	                        var path = arr[2]
+	                        $emit(top.$events[ path ], vm, path, val, older)
+	                    }
+	                }
+	                var vid = vm.$id.split('.')[0]
+	                avalon.rerenderStart = new Date
+	                avalon.batch(vid, true)
+
+	            }
+	        },
+	        enumerable: true,
+	        configurable: true
+	    }
+	}
+
+
+	function define(definition) {
+	    var $id = definition.$id
+	    if (!$id && avalon.config.debug) {
+	        avalon.warn('vm.$id must be specified')
+	    }
+	    var vm = $$midway.masterFactory(definition, {}, {
+	        pathname: '',
+	        id: $id,
+	        master: true
+	    })
+
+	    if (avalon.vmodels[$id]) {
+	        throw Error('error:[', $id, '] had defined!')
+	    }
+	    return avalon.vmodels[$id] = vm
+
+	}
+
+	function arrayFactory(array, old, heirloom, options) {
+	    if (old && old.splice) {
+	        var args = [0, old.length].concat(array)
+	        ++avalon.suspendUpdate 
+	        old.splice.apply(old, args)
+	        --avalon.suspendUpdate 
+	        return old
+	    } else {
+	        for (var i in __array__) {
+	            array[i] = __array__[i]
+	        }
+
+	        array.notify = function (a, b, c, d) {
+	            var vm = heirloom.__vmodel__
+	            if (vm) {
+	                var path = a === null || a === void 0 ?
+	                        options.pathname :
+	                        options.pathname + '.' + a
+	                vm.$fire(path, b, c)
+	                if (!d && !avalon.suspendUpdate) {
+	                    avalon.rerenderStart = new Date
+	                    avalon.batch(vm.$id, true)
+	                }
+	            }
+	        }
+
+	        var hashcode = makeHashCode('$')
+	        options.array = true
+	        options.hashcode = hashcode
+	        options.id = options.id || hashcode
+	        $$midway.makeObserver(array, heirloom, {}, {}, options)
+
+	        for (var j = 0, n = array.length; j < n; j++) {
+	            array[j] = modelAdaptor(array[j], 0, {}, {
+	                id: array.$id + '.*',
+	                master: true
+	            })
+	        }
+	        return array
+	    }
+	}
+	$$midway.arrayFactory = arrayFactory
+
+	var __array__ = {
+	    set: function (index, val) {
+	        if (((index >>> 0) === index) && this[index] !== val) {
+	            if (index > this.length) {
+	                throw Error(index + 'set方法的第一个参数不能大于原数组长度')
+	            }
+	            this.notify('*', val, this[index], true)
+	            this.splice(index, 1, val)
+	        }
+	    },
+	    contains: function (el) { //判定是否包含
+	        return this.indexOf(el) !== -1
+	    },
+	    ensure: function (el) {
+	        if (!this.contains(el)) { //只有不存在才push
+	            this.push(el)
+	        }
+	        return this
+	    },
+	    pushArray: function (arr) {
+	        return this.push.apply(this, arr)
+	    },
+	    remove: function (el) { //移除第一个等于给定值的元素
+	        return this.removeAt(this.indexOf(el))
+	    },
+	    removeAt: function (index) { //移除指定索引上的元素
+	        if ((index >>> 0) === index) {
+	            return this.splice(index, 1)
+	        }
+	        return []
+	    },
+	    clear: function () {
+	        this.removeAll()
+	        return this
+	    }
+	}
+	avalon.define = define
+
+	module.exports = {
+	    $$midway: $$midway,
+	    $$skipArray: $$skipArray,
+	    __array__: __array__,
+	    canObserve: canObserve,
+	    makeFire: makeFire,
+	    makeAccessor: makeAccessor,
+	    modelAdaptor: modelAdaptor
+	}
+
+/***/ },
+/* 75 */
+/***/ function(module, exports) {
+
+	
+	/**
+	 * ------------------------------------------------------------
+	 * 属性监听系统 
+	 * ------------------------------------------------------------
+	 */
+
+	function adjustVm(vm, expr) {
+	    var toppath = expr.split(".")[0], other
+	    try {
+	        if (vm.hasOwnProperty(toppath)) {
+	            if (vm.$accessors) {
+	                other = vm.$accessors[toppath].get.heirloom.__vmodel__
+	            } else {
+	                other = Object.getOwnPropertyDescriptor(vm, toppath).get.heirloom.__vmodel__
+	            }
+
+	        }
+	    } catch (e) {
+	    }
+	    return other || vm
+	}
+
+
+	function $watch(expr, callback) {
+	    var vm = $watch.adjust(this, expr)
+	    var hive = vm.$events
+	    var list = hive[expr] || (hive[expr] = [])
+	    if (vm !== this) {
+	        this.$events[expr] = list
+	    }
+	    avalon.Array.ensure(list, callback)
+
+	    return function () {
+	        avalon.Array.remove(list, callback)
+	    }
+	}
+
+	$watch.adjust = adjustVm
+	/**
+	 * $fire 方法的内部实现
+	 * 
+	 * @param {Array} list 订阅者数组
+	 * @param {Component} vm
+	 * @param {String} path 监听属性名或路径
+	 * @param {Any} a 当前值 
+	 * @param {Any} b 过去值
+	 * @param {Number} i 如果抛错,让下一个继续执行
+	 * @returns {undefined}
+	 */
+	function $emit(list, vm, path, a, b, i) {
+	    if (list && list.length) {
+	        try {
+	            for (i = i || list.length - 1; i >= 0; i--) {
+	                var callback = list[i]
+	                callback.call(vm, a, b, path)
+	            }
+	        } catch (e) {
+	            if (i - 1 > 0)
+	                $emit(list, vm, path, a, b, i - 1)
+	            avalon.log(e, path)
+	        }
+
+	    }
+	}
+
+
+	module.exports = {
+	    $emit: $emit,
+	    $watch: $watch,
+	    adjustVm: adjustVm
+	}
+
+
+/***/ },
 /* 76 */,
 /* 77 */,
 /* 78 */
@@ -5914,87 +6218,245 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var $$skipArray = __webpack_require__(59)
-	var dispatch = __webpack_require__(98)
+	var share = __webpack_require__(74)
+	var canObserve = share.canObserve
+	var $$midway = share.$$midway
+	var $$skipArray = share.$$skipArray
+	$$skipArray.$innuendo = true
+
+	var modelAdaptor = share.modelAdaptor
+	var makeHashCode = avalon.makeHashCode
+
 	var $emit = dispatch.$emit
 	var $watch = dispatch.$watch
-	var adjustVm = dispatch.adjustVm
 
-	function $fire(expr, a, b) {
-	    var list = this.$events[expr]
-	    $emit(list, this, expr, a, b)
-	}
-
-	function canProxy(key, value, skipArray) {
-	    // 判定此属性能否转换访问器
-	    return  !skipArray[key] &&
-	            (key.charAt(0) !== '$') &&
-	            (avalon.isPlainObject(value) || Array.isArray(value)) &&
-	            !value.$id
-	}
-
-
-	function masterFactory(definition, heirloom, options) {
-
-	    var $skipArray = {}
-	    if (definition.$skipArray) {//收集所有不可监听属性
-	        $skipArray = avalon.oneObject(definition.$skipArray)
-	        delete definition.$skipArray
-	    }
-	    options = options || {}
-	    var hashcode = avalon.makeHashCode("$")
-	    definition.$id = options.id || hashcode
-	    definition.$hashcode = options.hashcode || hashcode
-	    var keys = []
-	    for (var key in definition) {
-	        if ($$skipArray[key])
-	            continue
-	        keys.push(key)
-	        var val = definition[key]
-	        if (canProxy(key, val, $skipArray)) {
-	            definition[key] = masterFactory(val, heirloom, {
-	                id: definition.$id + '.' + key
-	            })
+	if (window.Proxy) {
+	    function adjustVm(vm, expr) {
+	        if (vm.$innuendo) {
+	            var toppath = expr.split(".")[0]
+	            return vm.$innuendo[toppath] || vm
+	        } else {
+	            return vm
 	        }
 	    }
-	    definition.$events = heirloom
+	    $watch.adjust = adjustVm
 
-	    if (options.master) {
-	        definition.$fire = $fire
-	        definition.$watch = $watch
+
+	    function $fire(expr, a, b) {
+	        var list = this.$events[expr]
+	        $emit(list, this, expr, a, b)
 	    }
 
-	    definition.$track = keys.sort().join(';;')
-	    definition.hasOwnProperty = hasOwn
-	    var vm = new Proxy(definition, handlers)
-	    if (options.master) {
-	        heirloom.__vmodel__ = vm
-	    }
-	    return vm
-	}
+	    function masterFactory(definition, heirloom, options) {
 
-	function hasOwn(name) {
-	    return (';;' + this.$track + ';;').indexOf(';;' + name + ';;') > -1
-	}
-	function define(definition) {
-	    var $id = definition.$id
-	    if (!$id && avalon.config.debug) {
-	        avalon.warn('vm.$id must be specified')
+	        var $skipArray = {}
+	        if (definition.$skipArray) {//收集所有不可监听属性
+	            $skipArray = avalon.oneObject(definition.$skipArray)
+	            delete definition.$skipArray
+	        }
+	        options = options || {}
+	        var hashcode = makeHashCode("$")
+	        options.id = options.id || hashcode
+	        options.hashcode = hashcode
+	        var keys = []
+	        for (var key in definition) {
+	            if ($$skipArray[key])
+	                continue
+	            keys.push(key)
+	            var val = definition[key]
+	            if (canObserve(key, val, $skipArray)) {
+	                definition[key] = masterFactory(val, heirloom, {
+	                    id: definition.$id + '.' + key
+	                })
+	            }
+	        }
+	        definition.$track = keys.sort().join(';;')
+	        var vm = new Proxy(definition, handlers)
+	        return makeObserver(vm, heirloom, {}, {}, options)
 	    }
-	    var vm = masterFactory(definition, {}, {
-	        pathname: '',
-	        id: $id,
-	        master: true
+
+	    $$midway.masterFactory = masterFactory
+	    //old, definition
+	    function slaveFactory(before, after, heirloom) {
+	        for (var key in after) {
+	            if ($$skipArray[key])
+	                continue
+	            if (!before.hasOwnProperty(key)) {//如果before没有此属性,就添加
+	                var val = after[key]
+	                if (canObserve(key, val, {})) {//如果是对象或数组
+	                    before[key] = masterFactory(val, heirloom, {
+	                        id: before.$id + '.' + key
+	                    })
+	                }
+	            }
+	        }
+	        if (key in before) {
+	            if (after.hasOwnProperty(key)) {
+	                delete before[key]
+	            }
+	        }
+	        before.$track = Object.keys(after).sort().join(';;')
+
+	        return before
+	    }
+
+	    $$midway.slaveFactory = slaveFactory
+
+	    function mediatorFactory(before, after, heirloom) {
+	        var $innuendo = {}
+	        var afterIsProxy = after.$id && after.$events
+	        var $skipArray = {}
+	        var definition = {}
+	        heirloom = heirloom || {}
+	        for (var key in before) {
+	            definition[key] = before[key]
+	            $innuendo[key] = before
+	        }
+	        for (var key in after) {
+	            if ($$skipArray[key])
+	                continue
+	            var val = definition[key] = after[key]
+	            if (canObserve(key, val, $skipArray)) {
+	                definition[key] = masterFactory(val, heirloom, {
+	                    id: definition.$id + '.' + key
+	                })
+	            }
+	            $innuendo[key] = after
+	        }
+	        definition.$track = Object.keys(definition).sort().join(';;')
+	        //  definition.hasOwnProperty = hasOwn
+
+	        var vm = new Proxy(definition, handlers)
+	        // heirloom.__vmodel__ = vm
+	        if (!afterIsProxy) {
+	            for (var i in $innuendo) {
+	                if ($innuendo[i] === after) {
+	                    $innuendo[i] = vm
+	                }
+	            }
+	        }
+
+	        vm.$innuendo = $innuendo
+
+	        return makeObserver(vm, heirloom, {}, {}, {
+	            id: before.$id,
+	            hashcode: makeHashCode("$")
+	        })
+	    }
+
+	    avalon.mediatorFactory = $$midway.masterFactory = mediatorFactory
+
+
+	    function makeObserver($vmodel, heirloom, discard , abandon, options) {
+
+	        if (options.array) {
+	            Object.defineProperty($vmodel, '$model', {
+	                get: function () {
+	                    return toJson(this)
+	                },
+	                set: avalon.noop,
+	                enumerable: false,
+	                configurable: true
+	            })
+	        }
+	        $vmodel.hasOwnProperty = hasOwn
+	        $vmodel.$id = options.id
+	        $vmodel.$hashcode = options.hashcode
+	        $vmodel.$events = heirloom
+	        if (options.master === true) {
+	            $vmodel.$element = null
+	            $vmodel.$render = 1
+	            $vmodel.$fire = $fire
+	            $vmodel.$watch = $watch
+	            heirloom.__vmodel__ = $vmodel
+	        }
+	        return $vmodel
+	    }
+
+	    $$midway.makeObserver = makeObserver
+
+	    var __array__ = share.__array__
+	    var ap = Array.prototype
+	    var _splice = ap.splice
+	    function notifySize(array, size) {
+	        if (array.length !== size) {
+	            array.notify('length', array.length, size, true)
+	        }
+	    }
+
+	    __array__.removeAll = function (all) { //移除N个元素
+	        var size = this.length
+	        if (Array.isArray(all)) {
+	            for (var i = this.length - 1; i >= 0; i--) {
+	                if (all.indexOf(this[i]) !== -1) {
+	                    _splice.call(this, i, 1)
+	                }
+	            }
+	        } else if (typeof all === 'function') {
+	            for (i = this.length - 1; i >= 0; i--) {
+	                var el = this[i]
+	                if (all(el, i)) {
+	                    _splice.call(this, i, 1)
+	                }
+	            }
+	        } else {
+	            _splice.call(this, 0, this.length)
+
+	        }
+
+	        notifySize(this, size)
+	        this.notify()
+	    }
+
+
+	    var __method__ = ['push', 'pop', 'shift', 'unshift', 'splice']
+
+	    __method__.forEach(function (method) {
+	        var original = ap[method]
+	        __array__[method] = function (a, b) {
+	            // 继续尝试劫持数组元素的属性
+	            var args = [], size = this.length
+
+	            if (method === 'splice' && Object(this[0]) === this[0]) {
+	                var old = this.slice(a, b)
+	                var neo = ap.slice.call(arguments, 2)
+	                var args = [a, b]
+	                for (var j = 0, jn = neo.length; j < jn; j++) {
+	                    var item = old[j]
+
+	                    args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, {
+	                        id: this.$id + '.*',
+	                        master: true
+	                    })
+	                }
+
+	            } else {
+	                for (var i = 0, n = arguments.length; i < n; i++) {
+	                    args[i] = modelAdaptor(arguments[i], 0, {}, {
+	                        id: this.$id + '.*',
+	                        master: true
+	                    })
+	                }
+	            }
+	            var result = original.apply(this, args)
+
+	            notifySize(this, size)
+	            this.notify()
+	            return result
+	        }
 	    })
 
-	    if (avalon.vmodels[$id]) {
-	        throw Error('error:[', $id, '] had defined!')
-	    }
-	    return avalon.vmodels[$id] = vm
+	    'sort,reverse'.replace(avalon.rword, function (method) {
+	        __array__[method] = function () {
+	            ap[method].apply(this, arguments)
 
+	            this.notify()
+	            return this
+	        }
+	    })
 	}
 
-	avalon.define = define
+
 
 	function toJson(val) {
 	    var xtype = avalon.type(val)
@@ -6047,14 +6509,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                //触发视图变更
 	                var arr = target.$id.split('.')
 	                var top = arr.shift()
-	                
+
 	                var path = arr.length ? arr.join('.') + '.' + name : name
 	                var vm = adjustVm(curVm, path)
 	                var list = vm.$events[path]
 	                if (list && list.length) {
 	                    $emit(list, vm, path, value, oldValue)
 	                }
-	                
+
 	                avalon.rerenderStart = new Date
 	                avalon.batch(top, true)
 	            }
@@ -6065,117 +6527,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return target.hasOwnProperty(name)
 	    }
 	}
-	$$skipArray.$innuendo = true
 
-	function mediatorFactory(before, after, heirloom) {
 
-	    var $innuendo = {}
-	    var afterIsProxy = after.$id && after.$events
-	    var $skipArray = {}
-	    var definition = {}
-	    heirloom = heirloom || {}
-	    for (var key in before) {
-	        definition[key] = before[key]
-	        $innuendo[key] = before
-	    }
-	    for (var key in after) {
-	        if ($$skipArray[key])
-	            continue
-	        var val = definition[key] = after[key]
-	        if (canProxy(key, val, $skipArray)) {
-	            definition[key] = masterFactory(val, heirloom, {
-	                id: definition.$id + '.' + key
-	            })
-	        }
-	        $innuendo[key] = after
-	    }
-	    definition.$track = Object.keys(definition).sort().join(';;')
-	    definition.hasOwnProperty = hasOwn
-
-	    var vm = new Proxy(definition, handlers)
-	    heirloom.__vmodel__ = vm
-	    if (!afterIsProxy) {
-	        for (var i in $innuendo) {
-	            if ($innuendo[i] === after) {
-	                $innuendo[i] = vm
-	            }
-	        }
-	    }
-
-	    vm.$innuendo = $innuendo
-	    vm.$events = heirloom
-	    vm.$fire = $fire
-	    vm.$watch = $watch
-	    vm.$id = before.$id
-	    vm.$hashcode = avalon.makeHashCode("$")
-
-	    return vm
+	function hasOwn(name) {
+	    return (';;' + this.$track + ';;').indexOf(';;' + name + ';;') > -1
 	}
 
-	avalon.mediatorFactory = mediatorFactory
-
-/***/ },
-/* 98 */
-/***/ function(module, exports) {
-
-	
-	function adjustVm(vm, expr) {
-	    if(vm.$innuendo){
-	         var toppath = expr.split(".")[0]
-	         return vm.$innuendo[toppath] || vm
-	    }else{
-	        return vm
-	    }
-	}
-
-	function $watch(expr, callback) {
-	    var vm = adjustVm(this, expr)
-	    var hive = vm.$events
-	    var list = hive[expr] || (hive[expr] = [])
-	    if (vm !== this) {
-	        this.$events[expr] = list
-	    }
-	    avalon.Array.ensure(list, callback)
-
-	    return function () {
-	        avalon.Array.remove(list, callback)
-	    }
-	}
-
-	/**
-	 * $fire 方法的内部实现
-	 * 
-	 * @param {Array} list 订阅者数组
-	 * @param {Component} vm
-	 * @param {String} path 监听属性名或路径
-	 * @param {Any} a 当前值 
-	 * @param {Any} b 过去值
-	 * @param {Number} i 如果抛错,让下一个继续执行
-	 * @returns {undefined}
-	 */
-	function $emit(list, vm, path, a, b, i) {
-	    if (list && list.length) {
-	        try {
-	            for (i = i || list.length - 1; i >= 0; i--) {
-	                var callback = list[i]
-	                callback.call(vm, a, b, path)
-	            }
-	        } catch (e) {
-	            if (i - 1 > 0)
-	                $emit(list, vm, path, a, b, i - 1)
-	            avalon.log(e, path)
-	        }
-
-	    }
-	}
-
-
-	module.exports = {
-	    adjustVm: adjustVm,
-	    $emit: $emit,
-	    $watch: $watch
-	}
-
+	module.exports = avalon
 
 /***/ }
 /******/ ])

@@ -65,8 +65,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(71)
 	__webpack_require__(72)
 
+	__webpack_require__(98)
 	__webpack_require__(99)
-	__webpack_require__(100)
 	module.exports = avalon
 
 
@@ -6624,7 +6624,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var share = __webpack_require__(73)
 
-	var isSkip = share.isSkip
+	var canObserve = share.canObserve
 	var toJson = share.toJson
 	var $$midway = share.$$midway
 	var $$skipArray = share.$$skipArray
@@ -6661,7 +6661,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if ($$skipArray[key])
 	            continue
 	        var val = keys[key] = definition[key]
-	        if (!isSkip(key, val, $skipArray)) {
+	        if (canObserve(key, val, $skipArray)) {
 	            sid = options.id + '.' + key
 	            spath = pathname ? pathname + '.' + key : key
 	            accessors[key] = makeAccessor(sid, spath, heirloom)
@@ -6704,7 +6704,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if ($$skipArray[key])
 	            continue
 	        keys[key] = true
-	        if (!isSkip(key, after[key], {})) {
+	        if (canObserve(key, after[key], {})) {
 	            if (resue[key]) {
 	                accessors[key] = resue[key]
 	            } else {
@@ -6783,49 +6783,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	$$midway.mediatorFactory = avalon.mediatorFactory = mediatorFactory
 
 	var __array__ = share.__array__
-	function arrayFactory(array, old, heirloom, options) {
-	    if (old && old.splice) {
-	        var args = [0, old.length].concat(array)
-	        ++avalon.suspendUpdate 
-	        old.splice.apply(old, args)
-	        --avalon.suspendUpdate 
-	        return old
-	    } else {
-	        for (var i in __array__) {
-	            array[i] = __array__[i]
-	        }
 
-	        array.notify = function (a, b, c, d) {
-	            var vm = heirloom.__vmodel__
-	            if (vm) {
-	                var path = a === null || a === void 0 ?
-	                        options.pathname :
-	                        options.pathname + '.' + a
-	                vm.$fire(path, b, c)
-	                if (!d && !avalon.suspendUpdate ) {
-	                    avalon.rerenderStart = new Date
-	                    avalon.batch(vm.$id, true)
-	                }
-
-	            }
-	        }
-
-	        var hashcode = makeHashCode('$')
-	        options.array = true
-	        options.hashcode = hashcode
-	        options.id = options.id || hashcode
-	        makeObserver(array, heirloom, {}, {}, options)
-	        for (var j = 0, n = array.length; j < n; j++) {
-	            array[j] = modelAdaptor(array[j], 0, {}, {
-	                id: array.$id + '.*',
-	                master: true
-	            })
-	        }
-	        return array
-	    }
-	}
-
-	$$midway.arrayFactory = arrayFactory
 
 	var ap = Array.prototype
 	var _splice = ap.splice
@@ -6995,7 +6953,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-
+	share.$$midway.makeObserver = makeObserver
 
 	share.$$midway.hideProperty = hideProperty
 
@@ -7023,7 +6981,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var $watch = dispatch.$watch
 
 
-
 	function makeFire($vmodel, heirloom) {
 	    heirloom.__vmodel__ = $vmodel
 	    var hide = $$midway.hideProperty
@@ -7042,12 +6999,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 	}
 
-	function isSkip(key, value, skipArray) {
-	    // 判定此属性能否转换访问器
-	    return  skipArray[key] ||
-	            key.charAt(0) === '$' ||
-	            (typeof value === 'function') ||
-	            (value && value.nodeName && value.nodeType > 0)
+	function canObserve(key, value, skipArray) {
+	    // 判定此属性是否还能转换子VM或监听数组
+	    return  !skipArray[key] &&
+	            (key.charAt(0) !== '$') &&
+	            (avalon.isPlainObject(value) || Array.isArray(value)) &&
+	            !value.$id
+
 	}
 
 
@@ -7147,6 +7105,50 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return avalon.vmodels[$id] = vm
 
 	}
+
+	function arrayFactory(array, old, heirloom, options) {
+	    if (old && old.splice) {
+	        var args = [0, old.length].concat(array)
+	        ++avalon.suspendUpdate 
+	        old.splice.apply(old, args)
+	        --avalon.suspendUpdate 
+	        return old
+	    } else {
+	        for (var i in __array__) {
+	            array[i] = __array__[i]
+	        }
+
+	        array.notify = function (a, b, c, d) {
+	            var vm = heirloom.__vmodel__
+	            if (vm) {
+	                var path = a === null || a === void 0 ?
+	                        options.pathname :
+	                        options.pathname + '.' + a
+	                vm.$fire(path, b, c)
+	                if (!d && !avalon.suspendUpdate) {
+	                    avalon.rerenderStart = new Date
+	                    avalon.batch(vm.$id, true)
+	                }
+	            }
+	        }
+
+	        var hashcode = makeHashCode('$')
+	        options.array = true
+	        options.hashcode = hashcode
+	        options.id = options.id || hashcode
+	        $$midway.makeObserver(array, heirloom, {}, {}, options)
+
+	        for (var j = 0, n = array.length; j < n; j++) {
+	            array[j] = modelAdaptor(array[j], 0, {}, {
+	                id: array.$id + '.*',
+	                master: true
+	            })
+	        }
+	        return array
+	    }
+	}
+	$$midway.arrayFactory = arrayFactory
+
 	var __array__ = {
 	    set: function (index, val) {
 	        if (((index >>> 0) === index) && this[index] !== val) {
@@ -7189,7 +7191,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    $$midway: $$midway,
 	    $$skipArray: $$skipArray,
 	    __array__: __array__,
-	    isSkip: isSkip,
+	    canObserve: canObserve,
 	    makeFire: makeFire,
 	    makeAccessor: makeAccessor,
 	    modelAdaptor: modelAdaptor
@@ -7224,7 +7226,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	function $watch(expr, callback) {
-	    var vm = adjustVm(this, expr)
+	    var vm = $watch.adjust(this, expr)
 	    var hive = vm.$events
 	    var list = hive[expr] || (hive[expr] = [])
 	    if (vm !== this) {
@@ -7237,6 +7239,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
+	$watch.adjust = adjustVm
 	/**
 	 * $fire 方法的内部实现
 	 * 
@@ -7438,8 +7441,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 95 */,
 /* 96 */,
 /* 97 */,
-/* 98 */,
-/* 99 */
+/* 98 */
 /***/ function(module, exports) {
 
 	//var avalon = require('avalon')
@@ -7453,11 +7455,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 100 */
+/* 99 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var button = __webpack_require__(99)
-	var tmpl = __webpack_require__(101)
+	var button = __webpack_require__(98)
+	var tmpl = __webpack_require__(100)
 
 	avalon.component('ms-panel', {
 	    template: tmpl,
@@ -7471,7 +7473,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 101 */
+/* 100 */
 /***/ function(module, exports) {
 
 	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"

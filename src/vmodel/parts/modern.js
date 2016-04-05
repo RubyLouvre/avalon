@@ -62,6 +62,7 @@ function makeObserver($vmodel, heirloom, keys, accessors, options) {
     }
 }
 
+share.$$midway.makeObserver = makeObserver
 
 var mixin = {
     toJson: toJson,
