@@ -1,7 +1,17 @@
 
+function adjustVm(vm, expr) {
+    if(vm.$map){
+         var toppath = expr.split(".")[0]
+         return vm.$map[toppath] || vm
+         
+    }else{
+        return vm
+    }
+}
+
 function $watch(expr, callback) {
-   // var vm = adjustVm(this, expr)
-    var hive = this.$events
+    var vm = adjustVm(this, expr)
+    var hive = vm.$events
     var list = hive[expr] || (hive[expr] = [])
     if (vm !== this) {
         this.$events[expr] = list

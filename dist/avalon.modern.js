@@ -4370,7 +4370,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function isSkip(key, value, skipArray) {
 	    // 判定此属性能否转换访问器
 	    return  skipArray[key] ||
-	            key.charAt(0) === '$' ||        
+	            key.charAt(0) === '$' ||
 	            (typeof value === 'function') ||
 	            (value && value.nodeName && value.nodeType > 0)
 	}
@@ -4383,12 +4383,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } else if (Object(definition) === definition && typeof definition !== 'function') {
 	        //如果此属性原来就是一个VM,拆分里面的访问器属性
 	        if (old && old.$id) {
-	             ++avalon.suspendUpdate
-	             //1.5带来的优化方案
-	            if(old.$track !== Object.keys(definition).sort().join(';;')){
-	               var vm = $$midway.slaveFactory(old, definition, heirloom, options)
-	            }else{
-	               vm = old
+	            ++avalon.suspendUpdate
+	            //1.5带来的优化方案
+	            if (old.$track !== Object.keys(definition).sort().join(';;')) {
+	                var vm = $$midway.slaveFactory(old, definition, heirloom, options)
+	            } else {
+	                vm = old
 	            }
 	            for (var i in definition) {
 	                if ($$skipArray[i])
@@ -4431,7 +4431,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var vm = heirloom.__vmodel__
 	            if (this.$hashcode && vm) {
 	                //★★确保切换到新的events中(这个events可能是来自oldProxy)               
-	                if (vm && heirloom !== vm.$events) {
+	                if (heirloom !== vm.$events) {
 	                    get.heirloom = vm.$events
 	                }
 	                $emit(get.heirloom[spath], vm, spath, val, older)
@@ -4446,7 +4446,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var vid = vm.$id.split('.')[0]
 	                avalon.rerenderStart = new Date
 	                avalon.batch(vid, true)
-	               
+
 	            }
 	        },
 	        enumerable: true,

@@ -21,7 +21,7 @@
             })
             vm.b = 83
             vm.obj.e = 100
-            console.log(vm)
+           
 //            vm.r = 9999
 //            vm.obj.e = 'eee'
 //            console.log(vm.hasOwnProperty('b'))
@@ -34,7 +34,9 @@
         </style>
     </head>
     <body>
-
+        <div ms-controller="test">
+            <p>{{@obj.e}}</p>
+        </div>
 
     </body>
 </html>

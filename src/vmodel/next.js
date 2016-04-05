@@ -12,7 +12,9 @@ function canProxy(key, value, skipArray) {
     // 判定此属性能否转换访问器
     return  !skipArray[key] &&
             (key.charAt(0) !== '$') &&
-            (avalon.isPlainObject(value) || Array.isArray(value))
+            (avalon.isPlainObject(value) || Array.isArray(value)) &&
+            !value.$id
+
 
 }
 
@@ -139,8 +141,10 @@ var handlers = {
                 if (list && list.length) {
                     $emit(list, vm, path, value, oldValue)
                 }
-
-                console.log('valueChange', name)
+                var vid = vm.$id.split('.')[0]
+                avalon.rerenderStart = new Date
+                avalon.batch(vid, true)
+                //console.log('valueChange', name)
             }
         }
 
@@ -150,3 +154,52 @@ var handlers = {
     }
 
 }
+$$skipArray.$map = true
+function mediatorFactory(before, after, heirloom) {
+
+    var $map = {}
+    var isProxy = after instanceof Proxy
+    var $skipArray = {}
+    var definition = {}
+    heirloom = heirloom || {}
+    for (var key in before) {
+        definition[key] = before[key]
+        $map[key] = before
+    }
+    for (var key in after) {
+        if ($$skipArray[key])
+            continue
+        var val = definition[key] = after[key]
+        if (canProxy(key, val, $skipArray)) {
+            definition[key] = masterFactory(val, heirloom, {
+                id: definition.$id + '.' + key
+            })
+        }
+        $map[key] = after
+    }
+    definition.$track = Object.keys(definition).sort().join(';;')
+    definition.hasOwnProperty = hasOwn
+    
+    var $vmodel = new Proxy(definition, handlers)
+    if (isProxy) {
+        heirloom.__vmodel__ = after
+    } else {
+        heirloom.__vmodel__ = $vmodel
+        for (var i in $map) {
+            if ($map[i] === after) {
+                $map[i] = $vmodel
+            }
+        }
+    }
+    
+    $vmodel.$map = $map
+    $vmodel.$events = heirloom
+    $vmodel.$fire = $fire
+    $vmodel.$watch = $watch
+    $vmodel.$id = before.$id
+    $vmodel.$hashcode = makeHashCode("$")
+
+    return $vmodel
+}
+
+avalon.mediatorFactory = mediatorFactory
