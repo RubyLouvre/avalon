@@ -7,7 +7,7 @@
  * ------------------------------------------------------------
  */
 var share = require("./parts/modern")
-var canObserve = share.canObserve
+var isSkip = share.isSkip
 var $$midway = share.$$midway
 var $$skipArray = share.$$skipArray
 delete $$skipArray.$accessors
@@ -46,7 +46,7 @@ function masterFactory(definition, heirloom, options) {
         if ($$skipArray[key])
             continue
         var val = keys[key] = definition[key]
-        if (canObserve(key, val, $skipArray)) {
+        if (!isSkip(key, val, $skipArray)) {
             sid = options.id + "." + key
             spath = pathname ? pathname + "." + key : key
             accessors[key] = makeAccessor(sid, spath, heirloom)
@@ -83,7 +83,7 @@ function slaveFactory(before, after, heirloom, options) {
         if ($$skipArray[key])
             continue
         keys[key] = after[key]
-        if (canObserve(key, after[key], {})) {
+        if (!isSkip(key, after[key], {})) {
             var accessor = Object.getOwnPropertyDescriptor(before, key)
             if (accessor && accessor.get) {
                 accessors[key] = accessor

@@ -4385,14 +4385,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 	}
 
-	function canObserve(key, value, skipArray) {
-	    // 判定此属性是否还能转换子VM或监听数组
-	    return  !skipArray[key] &&
-	            (key.charAt(0) !== '$') &&
-	            (value && !value.$id && typeof value === 'object' &&
-	            !value.nodeType && !value.nodeName)
-	}
 
+	function isSkip(key, value, skipArray) {
+	    // 判定此属性能否转换访问器
+	    return key.charAt(0) === '$' ||
+	            skipArray[key] ||
+	            (typeof value === 'function') ||
+	            (value && value.nodeName && value.nodeType > 0)
+	}
 
 	function modelAdaptor(definition, old, heirloom, options) {
 	    //如果数组转换为监控数组
@@ -4461,6 +4461,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        $emit(top.$events[ path ], vm, path, val, older)
 	                    }
 	                }
+	               
 	                var vid = vm.$id.split('.')[0]
 	                avalon.rerenderStart = new Date
 	                avalon.batch(vid, true)
@@ -4575,8 +4576,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = {
 	    $$midway: $$midway,
 	    $$skipArray: $$skipArray,
+	    isSkip: isSkip,
 	    __array__: __array__,
-	    canObserve: canObserve,
 	    makeFire: makeFire,
 	    makeAccessor: makeAccessor,
 	    modelAdaptor: modelAdaptor
@@ -6245,7 +6246,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * ------------------------------------------------------------
 	 */
 	var share = __webpack_require__(74)
-	var canObserve = share.canObserve
 	var $$midway = share.$$midway
 	var $$skipArray = share.$$skipArray
 	$$skipArray.$mapping = true
@@ -6256,7 +6256,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var $emit = dispatch.$emit
 	var $watch = dispatch.$watch
-
+	function canObserve(key, value, skipArray) {
+	    // 判定此属性是否还能转换子VM或监听数组
+	    return  !skipArray[key] &&
+	            (key.charAt(0) !== '$') 
+	            (value && !value.$id && typeof value === 'object' &&
+	            !value.nodeType && !value.nodeName)
+	}
 	function hasOwn(name) {
 	   return (';;' + this.$track + ';;').indexOf(';;' + name + ';;') > -1
 	}

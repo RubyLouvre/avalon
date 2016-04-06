@@ -6648,7 +6648,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var share = __webpack_require__(73)
 
-	var canObserve = share.canObserve
+	var isSkip = share.isSkip
 	var toJson = share.toJson
 	var $$midway = share.$$midway
 	var $$skipArray = share.$$skipArray
@@ -6685,7 +6685,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if ($$skipArray[key])
 	            continue
 	        var val = keys[key] = definition[key]
-	        if (canObserve(key, val, $skipArray)) {
+	        if (!isSkip(key, val, $skipArray)) {
 	            sid = options.id + '.' + key
 	            spath = pathname ? pathname + '.' + key : key
 	            accessors[key] = makeAccessor(sid, spath, heirloom)
@@ -6728,7 +6728,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if ($$skipArray[key])
 	            continue
 	        keys[key] = true
-	        if (canObserve(key, after[key], {})) {
+	        if (!isSkip(key, after[key], {})) {
 	            if (resue[key]) {
 	                accessors[key] = resue[key]
 	            } else {
@@ -7023,14 +7023,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 	}
 
-	function canObserve(key, value, skipArray) {
-	    // 判定此属性是否还能转换子VM或监听数组
-	    return  !skipArray[key] &&
-	            (key.charAt(0) !== '$') &&
-	            (value && !value.$id && typeof value === 'object' &&
-	            !value.nodeType && !value.nodeName)
-	}
 
+	function isSkip(key, value, skipArray) {
+	    // 判定此属性能否转换访问器
+	    return key.charAt(0) === '$' ||
+	            skipArray[key] ||
+	            (typeof value === 'function') ||
+	            (value && value.nodeName && value.nodeType > 0)
+	}
 
 	function modelAdaptor(definition, old, heirloom, options) {
 	    //如果数组转换为监控数组
@@ -7099,6 +7099,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        $emit(top.$events[ path ], vm, path, val, older)
 	                    }
 	                }
+	               
 	                var vid = vm.$id.split('.')[0]
 	                avalon.rerenderStart = new Date
 	                avalon.batch(vid, true)
@@ -7213,8 +7214,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = {
 	    $$midway: $$midway,
 	    $$skipArray: $$skipArray,
+	    isSkip: isSkip,
 	    __array__: __array__,
-	    canObserve: canObserve,
 	    makeFire: makeFire,
 	    makeAccessor: makeAccessor,
 	    modelAdaptor: modelAdaptor

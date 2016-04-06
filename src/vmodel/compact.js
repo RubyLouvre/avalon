@@ -7,7 +7,7 @@
 
 var share = require('./parts/compact')
 
-var canObserve = share.canObserve
+var isSkip = share.isSkip
 var toJson = share.toJson
 var $$midway = share.$$midway
 var $$skipArray = share.$$skipArray
@@ -44,7 +44,7 @@ function masterFactory(definition, heirloom, options) {
         if ($$skipArray[key])
             continue
         var val = keys[key] = definition[key]
-        if (canObserve(key, val, $skipArray)) {
+        if (!isSkip(key, val, $skipArray)) {
             sid = options.id + '.' + key
             spath = pathname ? pathname + '.' + key : key
             accessors[key] = makeAccessor(sid, spath, heirloom)
@@ -87,7 +87,7 @@ function slaveFactory(before, after, heirloom, options) {
         if ($$skipArray[key])
             continue
         keys[key] = true
-        if (canObserve(key, after[key], {})) {
+        if (!isSkip(key, after[key], {})) {
             if (resue[key]) {
                 accessors[key] = resue[key]
             } else {
