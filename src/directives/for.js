@@ -97,14 +97,14 @@ avalon.directive('for', {
                         isChange = c.index !== p.index
                     }
                     c.nodes = p.nodes
-                    avalon.diff(c.children, p.children)
+                    avalon.diff(c.children, p.children, steps)
                 } else {
                     if (quota) {
                         c = fuzzyMatchCache(cache, p.key)
                         quota--
                         isChange = true //内容发生变化
                         c.nodes = p.nodes
-                        avalon.diff(c.children, p.children)
+                        avalon.diff(c.children, p.children, steps)
                     } else {
                         isChange = true
                         cur.hasRemove = true
@@ -117,14 +117,14 @@ avalon.directive('for', {
             for (i in cache) {
                 isChange = true
                 c = cache[i]
-                avalon.diff(c.children, [])
+                avalon.diff(c.children, [], steps)
             }
 
         } else {
             /* eslint-disable no-cond-assign */
             for (i = 0; c = cur.components[i++]; ) {
                 /* eslint-enable no-cond-assign */
-                avalon.diff(c.children, [])
+                avalon.diff(c.children, [], steps)
             }
             isChange = true
         }
@@ -197,7 +197,7 @@ avalon.directive('for', {
             vnodes.push.apply(vnodes, c.children)
         })
         vnode.repeatCount = vnodes.length
-        patch(entity, vnodes, parent)
+        patch(entity, vnodes, parent, {count:Infinity })
         return false
     }
 

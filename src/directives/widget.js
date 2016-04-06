@@ -51,20 +51,20 @@ var dir = avalon.directive('widget', {
             cur.change = [this.replaceByComment]
             steps.count += 1
         } else if (!pre.props.resolved) {
-            avalon.diff(cur.children, pre.children)
-                cur.change = [this.replaceByComponent]
-                cur.afterChange = [
-                    function (dom, vnode) {
-                        vnode.vmodel.$element = dom
-                        cur.vmodel.$fire('onReady', {
-                            type: 'ready',
-                            target: dom,
-                            vmodel: vnode.vmodel
-                        })
-                        docker.renderCount = 2
-                    }
-                ]
-            steps.count += 1
+            avalon.diff(cur.children, pre.children, steps)
+            cur.change = [this.replaceByComponent]
+            cur.afterChange = [
+                function (dom, vnode) {
+                    vnode.vmodel.$element = dom
+                    cur.vmodel.$fire('onReady', {
+                        type: 'ready',
+                        target: dom,
+                        vmodel: vnode.vmodel
+                    })
+                    docker.renderCount = 2
+                }
+            ]
+            
         } else {
             var needUpdate = !cur.$diff || cur.$diff(cur, pre)
             cur.skipContent = !needUpdate

@@ -157,7 +157,7 @@ function arrayFactory(array, old, heirloom, options) {
             }
         }
 
-        var hashcode = makeHashCode('$')
+        var hashcode = avalon.makeHashCode('$')
         options.array = true
         options.hashcode = hashcode
         options.id = options.id || hashcode

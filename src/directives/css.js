@@ -29,7 +29,7 @@ avalon.directive('css', {
             if (cur.changeStyle) {
                 var list = cur.change || (cur.change = [])
                 avalon.Array.ensure(list, this.update)
-                step.counts += 1
+                steps.counts += 1
             }
         } else {
             cur.props[name] = p

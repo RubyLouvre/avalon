@@ -25,8 +25,7 @@ function diff(current, previous, steps) {
                 break
             case 8:
                 if (cur.directive === 'for') {
-                    current.i = i
-                    i = directives['for'].diff(current, previous, steps)
+                    i = directives['for'].diff(current, previous, steps, i)
                 } else if (cur.directive) {//if widget
                     directives[cur.directive].diff(cur, pre, steps)
                 }

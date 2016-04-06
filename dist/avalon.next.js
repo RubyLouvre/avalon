@@ -1511,7 +1511,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (cur.changeStyle) {
 	                var list = cur.change || (cur.change = [])
 	                avalon.Array.ensure(list, this.update)
-	                step.counts += 1
+	                steps.counts += 1
 	            }
 	        } else {
 	            cur.props[name] = p
@@ -2181,7 +2181,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var keep = avalon.caches[s]
 	                if (keep) {
 	                    parent.replaceChild(keep, dom)
-	                    patch([keep], [vnode], {count:Infinity })
+	                    patch([keep], [vnode], null, {count:Infinity })
 	                } else {
 	                    var el = avalon.vdomAdaptor(vnode, 'toDOM')
 	                    parent.replaceChild(el, dom)
@@ -2386,14 +2386,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        isChange = c.index !== p.index
 	                    }
 	                    c.nodes = p.nodes
-	                    avalon.diff(c.children, p.children)
+	                    avalon.diff(c.children, p.children, steps)
 	                } else {
 	                    if (quota) {
 	                        c = fuzzyMatchCache(cache, p.key)
 	                        quota--
 	                        isChange = true //内容发生变化
 	                        c.nodes = p.nodes
-	                        avalon.diff(c.children, p.children)
+	                        avalon.diff(c.children, p.children, steps)
 	                    } else {
 	                        isChange = true
 	                        cur.hasRemove = true
@@ -2406,14 +2406,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            for (i in cache) {
 	                isChange = true
 	                c = cache[i]
-	                avalon.diff(c.children, [])
+	                avalon.diff(c.children, [], steps)
 	            }
 
 	        } else {
 	            /* eslint-disable no-cond-assign */
 	            for (i = 0; c = cur.components[i++]; ) {
 	                /* eslint-enable no-cond-assign */
-	                avalon.diff(c.children, [])
+	                avalon.diff(c.children, [], steps)
 	            }
 	            isChange = true
 	        }
@@ -2486,7 +2486,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            vnodes.push.apply(vnodes, c.children)
 	        })
 	        vnode.repeatCount = vnodes.length
-	        patch(entity, vnodes, parent)
+	        patch(entity, vnodes, parent, {count:Infinity })
 	        return false
 	    }
 
@@ -2661,20 +2661,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	            cur.change = [this.replaceByComment]
 	            steps.count += 1
 	        } else if (!pre.props.resolved) {
-	            avalon.diff(cur.children, pre.children)
-	                cur.change = [this.replaceByComponent]
-	                cur.afterChange = [
-	                    function (dom, vnode) {
-	                        vnode.vmodel.$element = dom
-	                        cur.vmodel.$fire('onReady', {
-	                            type: 'ready',
-	                            target: dom,
-	                            vmodel: vnode.vmodel
-	                        })
-	                        docker.renderCount = 2
-	                    }
-	                ]
-	            steps.count += 1
+	            avalon.diff(cur.children, pre.children, steps)
+	            cur.change = [this.replaceByComponent]
+	            cur.afterChange = [
+	                function (dom, vnode) {
+	                    vnode.vmodel.$element = dom
+	                    cur.vmodel.$fire('onReady', {
+	                        type: 'ready',
+	                        target: dom,
+	                        vmodel: vnode.vmodel
+	                    })
+	                    docker.renderCount = 2
+	                }
+	            ]
+	            
 	        } else {
 	            var needUpdate = !cur.$diff || cur.$diff(cur, pre)
 	            cur.skipContent = !needUpdate
@@ -3531,8 +3531,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                break
 	            case 8:
 	                if (cur.directive === 'for') {
-	                    current.i = i
-	                    i = directives['for'].diff(current, previous, steps)
+	                    i = directives['for'].diff(current, previous, steps, i)
 	                } else if (cur.directive) {//if widget
 	                    directives[cur.directive].diff(cur, pre, steps)
 	                }
@@ -4514,7 +4513,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 
-	        var hashcode = makeHashCode('$')
+	        var hashcode = avalon.makeHashCode('$')
 	        options.array = true
 	        options.hashcode = hashcode
 	        options.id = options.id || hashcode
@@ -5930,7 +5929,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
 	                'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
 	    },
-	    diff: function (cur, pre) {
+	    diff: function (cur, pre, steps) {
 
 	        if (pre.ctrl && pre.ctrl.set) {
 	            cur.ctrl = pre.ctrl
@@ -5962,6 +5961,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            ctrl.modelValue = value
 	            var afterChange = cur.afterChange || (cur.afterChange = [])
 	            avalon.Array.ensure(afterChange, this.update)
+	            steps.count += 1
 	        }
 	    },
 	    update: function (node, vnode) {
@@ -6310,7 +6310,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            keys.push(key)
 	            var val = definition[key]
 	            if (canObserve(key, val, $skipArray)) {
-	                definition[key] = masterFactory(val, heirloom, {
+	                definition[key] = $$midway.modelAdaptor(val, 0, heirloom, {
 	                    id: definition.$id + '.' + key
 	                })
 	            }
@@ -6329,7 +6329,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (!before.hasOwnProperty(key)) {//如果before没有此属性,就添加
 	                var val = after[key]
 	                if (canObserve(key, val, {})) {//如果是对象或数组
-	                    before[key] = masterFactory(val, heirloom, {
+	                    before[key] = $$midway.modelAdaptor(val, 0, heirloom, {
 	                        id: before.$id + '.' + key
 	                    })
 	                }
@@ -6362,7 +6362,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                continue
 	            var val = definition[key] = after[key]
 	            if (canObserve(key, val, $skipArray)) {
-	                definition[key] = masterFactory(val, heirloom, {
+	                definition[key] = $$midway.modelAdaptor(val, 0, heirloom, {
 	                    id: definition.$id + '.' + key
 	                })
 	            }
@@ -6460,14 +6460,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        __array__[method] = function (a, b) {
 	            // 继续尝试劫持数组元素的属性
 	            var args = [], size = this.length
-
 	            if (method === 'splice' && Object(this[0]) === this[0]) {
 	                var old = this.slice(a, b)
 	                var neo = ap.slice.call(arguments, 2)
 	                var args = [a, b]
 	                for (var j = 0, jn = neo.length; j < jn; j++) {
 	                    var item = old[j]
-
+	         
 	                    args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, {
 	                        id: this.$id + '.*',
 	                        master: true
@@ -6528,6 +6527,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                arr.push(name)
 	                target.$track = arr.sort().join(';;')
 	            }
+	           
 	            target[name] = value
 	            if (!$$skipArray[name]) {
 	                var curVm = target.$events.__vmodel__
@@ -6537,6 +6537,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	                var path = arr.length ? arr.join('.') + '.' + name : name
 	                var vm = adjustVm(curVm, path)
+	                
+	                 if(value && typeof value === 'object' && !value.$id){
+	                    value = $$midway.modelAdaptor(value, oldValue, vm.$events, {
+	                        pathname: path,
+	                        id: target.$id
+	                    })
+	                    target[name] = value
+	                 }
+	                
+	                
 	                var list = vm.$events[path]
 	                if (list && list.length) {
 	                    $emit(list, vm, path, value, oldValue)

@@ -13,7 +13,7 @@ avalon.directive('duplex', {
         return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
                 'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
     },
-    diff: function (cur, pre) {
+    diff: function (cur, pre, steps) {
 
         if (pre.ctrl && pre.ctrl.set) {
             cur.ctrl = pre.ctrl
@@ -47,6 +47,7 @@ avalon.directive('duplex', {
             ctrl.modelValue = value
             var afterChange = cur.afterChange || (cur.afterChange = [])
             avalon.Array.ensure(afterChange, this.update)
+            steps.count += 1
         }
     },
     update: function (node, vnode) {

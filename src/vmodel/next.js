@@ -75,7 +75,7 @@ if (avalon.window.Proxy) {
             keys.push(key)
             var val = definition[key]
             if (canObserve(key, val, $skipArray)) {
-                definition[key] = masterFactory(val, heirloom, {
+                definition[key] = $$midway.modelAdaptor(val, 0, heirloom, {
                     id: definition.$id + '.' + key
                 })
             }
@@ -94,7 +94,7 @@ if (avalon.window.Proxy) {
             if (!before.hasOwnProperty(key)) {//如果before没有此属性,就添加
                 var val = after[key]
                 if (canObserve(key, val, {})) {//如果是对象或数组
-                    before[key] = masterFactory(val, heirloom, {
+                    before[key] = $$midway.modelAdaptor(val, 0, heirloom, {
                         id: before.$id + '.' + key
                     })
                 }
@@ -127,7 +127,7 @@ if (avalon.window.Proxy) {
                 continue
             var val = definition[key] = after[key]
             if (canObserve(key, val, $skipArray)) {
-                definition[key] = masterFactory(val, heirloom, {
+                definition[key] = $$midway.modelAdaptor(val, 0, heirloom, {
                     id: definition.$id + '.' + key
                 })
             }
@@ -225,14 +225,13 @@ if (avalon.window.Proxy) {
         __array__[method] = function (a, b) {
             // 继续尝试劫持数组元素的属性
             var args = [], size = this.length
-
             if (method === 'splice' && Object(this[0]) === this[0]) {
                 var old = this.slice(a, b)
                 var neo = ap.slice.call(arguments, 2)
                 var args = [a, b]
                 for (var j = 0, jn = neo.length; j < jn; j++) {
                     var item = old[j]
-
+         
                     args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, {
                         id: this.$id + '.*',
                         master: true
@@ -293,6 +292,7 @@ var handlers = {
                 arr.push(name)
                 target.$track = arr.sort().join(';;')
             }
+           
             target[name] = value
             if (!$$skipArray[name]) {
                 var curVm = target.$events.__vmodel__
@@ -302,6 +302,16 @@ var handlers = {
 
                 var path = arr.length ? arr.join('.') + '.' + name : name
                 var vm = adjustVm(curVm, path)
+                
+                 if(value && typeof value === 'object' && !value.$id){
+                    value = $$midway.modelAdaptor(value, oldValue, vm.$events, {
+                        pathname: path,
+                        id: target.$id
+                    })
+                    target[name] = value
+                 }
+                
+                
                 var list = vm.$events[path]
                 if (list && list.length) {
                     $emit(list, vm, path, value, oldValue)

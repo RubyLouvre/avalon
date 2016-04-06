@@ -24,7 +24,7 @@ avalon.directive('if', {
                 var keep = avalon.caches[s]
                 if (keep) {
                     parent.replaceChild(keep, dom)
-                    patch([keep], [vnode], {count:Infinity })
+                    patch([keep], [vnode], null, {count:Infinity })
                 } else {
                     var el = avalon.vdomAdaptor(vnode, 'toDOM')
                     parent.replaceChild(el, dom)
