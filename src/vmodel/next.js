@@ -19,9 +19,9 @@ var $watch = dispatch.$watch
 function canObserve(key, value, skipArray) {
     // 判定此属性是否还能转换子VM或监听数组
     return  !skipArray[key] &&
-            (key.charAt(0) !== '$') 
-            (value && !value.$id && typeof value === 'object' &&
-            !value.nodeType && !value.nodeName)
+            (key.charAt(0) !== '$') &&
+            value && !value.$id && (typeof value === 'object') &&
+            (!value.nodeType && !value.nodeName)
 }
 function hasOwn(name) {
    return (';;' + this.$track + ';;').indexOf(';;' + name + ';;') > -1
