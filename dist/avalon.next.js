@@ -1897,7 +1897,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    diff: function (cur, pre, steps, name) {
 	        var fn0 = cur.props[name]
 	        var fn1 = pre.props[name]
-	        console.log(fn0)
+	        
 	        if (fn0 !== fn1) {
 	            var match = name.match(revent)
 	            var type = match[1]
@@ -1930,7 +1930,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (key in vnode.addEvents) {
 	            type = key.split(':').shift()
 	            listener = vnode.addEvents[key]
-	           console.log(type)
 	            avalon.bind(node, type, listener)
 	        }
 	        delete vnode.addEvents
@@ -5503,7 +5502,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            key = type + ':' + fn.uuid
 	        }
 	        avalon.eventListeners[fn.uuid] = fn
-
 	        if (value.indexOf(type + ':') === -1) {//同一种事件只绑定一次
 	            if (canBubbleUp[type] || focusBlur[type]) {
 	                delegateEvent(type)
@@ -5605,11 +5603,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (/move|scroll/.test(type)) {
 	                    var curr = +new Date()
 	                    if (curr - last > 16) {
-	                        fn.call(elem, event, vm)
+	                        fn.call(vm || elem, event)
 	                        last = curr
 	                    }
 	                } else {
-	                    fn.call(handler.elem, event, vm)
+	                    fn.call(vm || elem, event)
 	                }
 	            }
 	        }

@@ -2757,7 +2757,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var fn = avalon.eventListeners[uuid]
 	            if (fn) {
 	                var vm = elem.__av_context__
-	                console.log(vm,"!!!")
 	                if (vm && vm.$hashcode === false) {
 	                    return avalon.unbind(elem, type, fn)
 	                }
@@ -3761,7 +3760,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    diff: function (cur, pre, steps, name) {
 	        var fn0 = cur.props[name]
 	        var fn1 = pre.props[name]
-	        console.log(fn0)
+	        
 	        if (fn0 !== fn1) {
 	            var match = name.match(revent)
 	            var type = match[1]
@@ -3794,7 +3793,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (key in vnode.addEvents) {
 	            type = key.split(':').shift()
 	            listener = vnode.addEvents[key]
-	           console.log(type)
 	            avalon.bind(node, type, listener)
 	        }
 	        delete vnode.addEvents

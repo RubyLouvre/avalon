@@ -33,7 +33,7 @@ avalon.directive('on', {
     diff: function (cur, pre, steps, name) {
         var fn0 = cur.props[name]
         var fn1 = pre.props[name]
-        console.log(fn0)
+        
         if (fn0 !== fn1) {
             var match = name.match(revent)
             var type = match[1]
@@ -66,7 +66,6 @@ avalon.directive('on', {
         for (key in vnode.addEvents) {
             type = key.split(':').shift()
             listener = vnode.addEvents[key]
-           console.log(type)
             avalon.bind(node, type, listener)
         }
         delete vnode.addEvents
