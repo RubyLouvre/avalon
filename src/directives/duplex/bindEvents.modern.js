@@ -1,7 +1,7 @@
 var window = avalon.window
 
 var refreshModel = require('./refreshModel')
-var markID = require('../../seed/lang.share').getLongID
+var markID = require('../../seed/lang.share').getShortID
 var evaluatorPool = require('../../strategy/parser/evaluatorPool')
 
 function initControl(cur, pre) {
