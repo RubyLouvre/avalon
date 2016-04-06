@@ -47,8 +47,7 @@ avalon.directive('for', {
 
         return assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
     },
-    diff: function (current, previous, root) {
-        var __index__ = current.i
+    diff: function (current, previous, steps, __index__) {
         var cur = current[__index__]
         var pre = previous[__index__] || {}
 
@@ -133,6 +132,7 @@ avalon.directive('for', {
         if (isChange) {
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
+            steps.count = Infinity
         }
 
         return __index__ + nodes.length - 1

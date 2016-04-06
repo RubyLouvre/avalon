@@ -7,24 +7,25 @@ avalon.directive('html', {
                 'vnode' + num + '.props.wid = 2;\n' +
                 'vnode' + num + '.props["ms-html"] =' + avalon.parseExpr(binding) + ';\n'
     },
-    diff: function (cur, pre) {
-        var curValue = cur.props['ms-html']
-        var preValue = pre.props['ms-html']
+    diff: function (cur, pre, steps, name) {
+        var curValue = cur.props[name]
+        var preValue = pre.props[name]
         if (curValue !== preValue) {
             var nodes = textCache.get(curValue)
             if (!Array.isArray(nodes)) {
                 var child = avalon.lexer(curValue)
                 var render = avalon.render(child)
                 nodes = render(cur.htmlVm)
-                cur.props['ms-html'] = nodes.map(function (el) {
+                cur.props[name] = nodes.map(function (el) {
                     return 'template' in el ? el.template : el.nodeValue
                 }), join('-')
                 textCache.put(curValue, nodes)
             }
             cur.children = nodes
-            if (cur.props['ms-html'] !== preValue) {
+            if (cur.props[name] !== preValue) {
                 var list = cur.change || (cur.change = [])
                 avalon.Array.ensure(list, this.update)
+                steps.count += 1
             }
         }
     },

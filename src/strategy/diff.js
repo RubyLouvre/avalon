@@ -11,7 +11,7 @@ var emptyObj = {
 var directives = avalon.directives
 var rbinding = require('../seed/regexp').binding
 
-function diff(current, previous, root) {
+function diff(current, previous, steps) {
     if (!current)
         return
     for (var i = 0; i < current.length; i++) {
@@ -20,37 +20,37 @@ function diff(current, previous, root) {
         switch (cur.nodeType) {
             case 3:
                 if (!cur.skipContent) {
-                    directives.expr.diff(cur, pre, root)
+                    directives.expr.diff(cur, pre, steps)
                 }
                 break
             case 8:
                 if (cur.directive === 'for') {
                     current.i = i
-                    i = directives['for'].diff(current, previous, root)
+                    i = directives['for'].diff(current, previous, steps)
                 } else if (cur.directive) {//if widget
-                    directives[cur.directive].diff(cur, pre, root)
+                    directives[cur.directive].diff(cur, pre, steps)
                 }
                 break
             default:
                 if (!cur.skipAttrs) {
-                    diffProps(cur, pre, root)
+                    diffProps(cur, pre, steps)
                 }
                 if (!cur.skipContent) {
-                    diff(cur.children, pre.children || emptyArr, root)
+                    diff(cur.children, pre.children || emptyArr, steps)
                 }
                 break
         }
     }
 }
 
-function diffProps(current, previous, root) {
+function diffProps(current, previous, steps) {
     for (var name in current.props) {
         var match = name.match(rbinding)
         if (match) {
             var type = match[1]
             try {
                 if (directives[type]) {
-                    directives[type].diff(current, previous || emptyObj, root, match)
+                    directives[type].diff(current, previous || emptyObj, steps, name)
                 }
             } catch (e) {
                 avalon.log(current, previous, e, 'diffProps error')

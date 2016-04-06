@@ -5,10 +5,11 @@ avalon.directive('if', {
     parse: function (binding, num) {
         return 'vnode' + num + '.props["ms-if"] = ' + avalon.quote(binding.expr) + ';\n'
     },
-    diff: function (cur, pre) {
+    diff: function (cur, pre, steps) {
         if (cur.type !== pre.type) {
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
+            steps.count += 1
         }
     },
     update: function (dom, vnode, parent) {
@@ -23,7 +24,7 @@ avalon.directive('if', {
                 var keep = avalon.caches[s]
                 if (keep) {
                     parent.replaceChild(keep, dom)
-                    patch([keep], [vnode])
+                    patch([keep], [vnode], {count:Infinity })
                 } else {
                     var el = avalon.vdomAdaptor(vnode, 'toDOM')
                     parent.replaceChild(el, dom)

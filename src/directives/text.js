@@ -5,9 +5,9 @@ avalon.directive('text', {
         var val = rident.test(binding.expr) ? binding.expr : avalon.parseExpr(binding)
         return 'vnode' + num + '.props["ms-text"] =' + val + '\n'
     },
-    diff: function (cur, pre, root, match) {
-        var curValue = cur.props['ms-text']
-        var preValue = pre.props['ms-text']
+    diff: function (cur, pre, steps, name) {
+        var curValue = cur.props[name]
+        var preValue = pre.props[name]
         cur.children = pre.children
         cur.skipContent = true
         var dom = cur.dom = pre.dom
@@ -18,6 +18,7 @@ avalon.directive('text', {
             } else {
                 var list = cur.change || (cur.change = [])
                 avalon.Array.ensure(list, this.update)
+                steps.count += 1
             }
         }
         pre.dom = null

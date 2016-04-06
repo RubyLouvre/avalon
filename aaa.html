@@ -9,7 +9,10 @@
             var vm = avalon.define({
                 $id: "test",
                 a: 111,
-                b: 111
+                b: 111,
+                fn: function(){
+                    console.log("1111")
+                }
             })
         </script>
         <style>
@@ -20,7 +23,7 @@
     </head>
     <body>
         <div ms-controller="test">
-            <p>{{@a}}</p>
+            <p ms-click="@fn">{{@a}}</p>
             <p>{{@b}}</p>
         </div>
 

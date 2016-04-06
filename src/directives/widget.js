@@ -42,13 +42,14 @@ var dir = avalon.directive('widget', {
         }
         return vm
     },
-    diff: function (cur, pre) {
+    diff: function (cur, pre, steps) {
         var coms = avalon.resolvedComponents
         var wid = cur.props.wid
 
         var docker = coms[wid]
         if (!docker.renderCount) {
             cur.change = [this.replaceByComment]
+            steps.count += 1
         } else if (!pre.props.resolved) {
             avalon.diff(cur.children, pre.children)
                 cur.change = [this.replaceByComponent]
@@ -63,10 +64,11 @@ var dir = avalon.directive('widget', {
                         docker.renderCount = 2
                     }
                 ]
-          
+            steps.count += 1
         } else {
             var needUpdate = !cur.$diff || cur.$diff(cur, pre)
             cur.skipContent = !needUpdate
+            
             var viewChangeObservers = cur.vmodel.$events.onViewChange
             if (viewChangeObservers && viewChangeObservers.length) {
                 cur.afterChange = [function (dom, vnode) {

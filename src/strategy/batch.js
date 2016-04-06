@@ -33,10 +33,10 @@ function batchUpdate(id, immediate) {
     flushUpdate(function () {
         isBatchingUpdates = true
         var vtree = vm.$render()
-        var root = {count:0}
-        avalon.diff(vtree, dom.vtree || [], root)
-        patch([dom], vtree, 0, root )
-        
+        var steps = {count:0}
+        avalon.diff(vtree, dom.vtree || [], steps)
+        patch([dom], vtree, null, steps )
+        steps.count = 0
         dom.vtree = vtree
         isBatchingUpdates = false
         avalon.log('rerender', vm.$id, new Date - avalon.rerenderStart)

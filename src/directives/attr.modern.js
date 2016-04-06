@@ -5,12 +5,12 @@ avalon.directive('attr', {
     parse: function (binding, num) {
         return 'vnode' + num + '.props["ms-attr"] = ' + avalon.parseExpr(binding) + ';\n'
     },
-    diff: function (cur, pre) {
-        var a = cur.props['ms-attr']
-        var p = pre.props['ms-attr']
+    diff: function (cur, pre, steps, name) {
+        var a = cur.props[name]
+        var p = pre.props[name]
         if (Object(a) === a) {
             if (Array.isArray(a)) {
-                a = cur.props['ms-attr'] = avalon.mix.apply({}, a)
+                a = cur.props[name] = avalon.mix.apply({}, a)
             }
             if (typeof p !== 'object') {
                 cur.changeAttr = a
@@ -25,6 +25,7 @@ avalon.directive('attr', {
                 }
                 if (hasChange) {
                     cur.changeAttr = patch
+                    steps.count += 1
                 }
             }
             if (cur.changeAttr) {
@@ -32,7 +33,7 @@ avalon.directive('attr', {
                 avalon.Array.ensure(list, this.update)
             }
         } else {
-            cur.props['ms-attr'] = p
+            cur.props[name] = p
         }
     },
     //dom, vnode

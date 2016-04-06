@@ -3,8 +3,8 @@ avalon.directive('effect', {
     parse: function (binding, num) {
         return 'vnode' + num + '.props["ms-effect"] = ' + avalon.parseExpr(binding) + ';\n'
     },
-    diff: function (cur, pre) {
-        var curObj = cur.props['ms-effect']
+    diff: function (cur, pre, steps, name) {
+        var curObj = cur.props[name]
         if(typeof curObj === 'string'){
             var is = curObj
             curObj = cur.props['ms-effect'] = {
@@ -13,13 +13,14 @@ avalon.directive('effect', {
             }
            
         }else if (Array.isArray(curObj)) {
-            curObj = cur.props['ms-effect'] = avalon.mix.apply({}, curObj)
+            curObj = cur.props[name] = avalon.mix.apply({}, curObj)
         }
         if (Object(curObj) == curObj) {
-            var preObj = pre.props['ms-effect']
+            var preObj = pre.props[name]
             if ( Object(preObj) !== preObj || diffObj(curObj, preObj ))  {
                 var list = cur.afterChange = cur.afterChange || []
                 avalon.Array.ensure(list, this.update)
+                steps.count += 1
             }
         }
     },

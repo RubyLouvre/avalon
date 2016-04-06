@@ -2,7 +2,6 @@ var markID = require('../seed/lang.share').getLongID
 
 var quote = avalon.quote
 
-
 //Ref: http://developers.whatwg.org/webappapis.html#event-handler-idl-attributes
 // The assumption is that future DOM event attribute names will begin with
 // 'on' and be composed of only English letters.
@@ -31,12 +30,12 @@ avalon.directive('on', {
                     '] = ' + avalon.parseExpr(binding, 'on') + '\n'
         }
     },
-    diff: function (cur, pre, root, match) {
-        var name = match[0] //ms-on-xxx-1
+    diff: function (cur, pre, steps, name) {
         var fn0 = cur.props[name]
         var fn1 = pre.props[name]
+        console.log(fn0)
         if (fn0 !== fn1) {
-            match = name.match(revent)
+            var match = name.match(revent)
             var type = match[1]
             var search = type + ':' + markID(fn0)
             cur.addEvents = cur.addEvents || {}
@@ -48,7 +47,10 @@ avalon.directive('on', {
             }
 
             var list = cur.change || (cur.change = [])
-            avalon.Array.ensure(list, this.update)
+            if(avalon.Array.ensure(list, this.update)){
+                steps.count += 1
+            }
+            
         }
     },
     update: function (node, vnode) {
@@ -64,7 +66,7 @@ avalon.directive('on', {
         for (key in vnode.addEvents) {
             type = key.split(':').shift()
             listener = vnode.addEvents[key]
-
+           console.log(type)
             avalon.bind(node, type, listener)
         }
         delete vnode.addEvents

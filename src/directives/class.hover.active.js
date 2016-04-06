@@ -8,10 +8,10 @@ avalon.directive('class', {
         //必须是布尔对象或字符串数组
         return 'vnode' + num + '.props["' + binding.name + '"] = ' + avalon.parseExpr(binding) + ';\n'
     },
-    diff: function (cur, pre, root, match) {
-        var type = match[1]
-        var curValue = cur.props['ms-' + type]
-        var preValue = pre.props['ms-' + type]
+    diff: function (cur, pre, steps, name) {
+        var type = name.slice(3)
+        var curValue = cur.props[name]
+        var preValue = pre.props[name]
         if (!pre.classEvent) {
             var classEvent = {}
             if (type === 'hover') {//在移出移入时切换类名
@@ -43,14 +43,14 @@ avalon.directive('class', {
         } 
         
         if (typeof className !== 'string') {
-            cur.props['ms-' + type] = preValue
-            
+            cur.props[name] = preValue
             return
         }
         if (!preValue || preValue !== className) {
             cur['change-' + type] = className
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
+            steps.count += 1
         }
 
     },

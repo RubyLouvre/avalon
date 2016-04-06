@@ -23,12 +23,13 @@ avalon.directive('visible', {
     parse: function (binding, num) {
         return 'vnode' + num + '.props["ms-visible"] = ' + avalon.parseExpr(binding) + ';\n'
     },
-    diff: function (cur, pre) {
-        var c = cur.props['ms-visible'] = !!cur.props['ms-visible']
+    diff: function (cur, pre, steps, name) {
+        var c = cur.props[name] = !!cur.props[name]
         cur.displayValue = pre.displayValue
-        if (c !== pre.props['ms-visible']) {
+        if (c !== pre.props[name]) {
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
+            steps.count += 1
         }
     },
     update: function (node, vnode) {
