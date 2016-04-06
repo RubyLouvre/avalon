@@ -89,20 +89,16 @@ avalon.unbind = function (elem, type, fn) {
 
 var reventNames = /[^\s\?]+/g
 var last = +new Date()
+var typeRegExp = {}
 function collectHandlers(elem, type, handlers) {
     var value = elem.getAttribute('avalon-events')
     if (value && (elem.disabled !== true || type !== 'click')) {
         var uuids = [], isBreak
-        var arr = value.match(reventNames) || []
-        for (var i = 0, el; el = arr[i++]; ) {
-            var v = el.split(':')
-            if (v[0] === type) {
-                uuids.push(v[1])
-                isBreak = true
-            } else if (isBreak) {
-                break
-            }
-        }
+        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type+'\\:([^?\s]+)','g'))
+        value.replace(reg, function(a, b){
+            uuids.push(b)
+            return a
+        })
         if (uuids.length) {
             handlers.push({
                 elem: elem,
@@ -116,6 +112,8 @@ function collectHandlers(elem, type, handlers) {
     }
 
 }
+var rhandleHasVm = /^e\d+/
+var rneedSmooth = /move|scroll/
 function dispatch(event) {
     event = new avEvent(event)
     var type = event.type
@@ -131,11 +129,11 @@ function dispatch(event) {
                 !event.isImmediatePropagationStopped) {
             var fn = avalon.eventListeners[uuid]
             if (fn) {
-                var vm = elem.__av_context__
+                var vm = rhandleHasVm.test(uuid) ? elem.__av_context__: 0
                 if (vm && vm.$hashcode === false) {
                     return avalon.unbind(elem, type, fn)
                 }
-                if (/move|scroll/.test(type)) {
+                if (rneedSmooth.test(type)) {
                     var curr = +new Date()
                     if (curr - last > 16) {
                         fn.call(vm || elem, event)
