@@ -1592,7 +1592,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        cur.fixIESkip = true
 	        var dom = cur.dom = pre.dom
 	        if (cur.nodeValue !== pre.nodeValue) {
-	            if (dom && avalon.msie < 9 && avalon.contains(avalon.root,dom)) {
+	            if (dom && avalon.contains(avalon.root,dom)) {
 	                this.update(dom, cur)
 	            } else {
 	                var list = cur.change || (cur.change = [])
@@ -5559,19 +5559,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var reventNames = /[^\s\?]+/g
 	var last = +new Date()
+	var typeRegExp = {}
 	function collectHandlers(elem, type, handlers) {
 	    var value = elem.getAttribute('avalon-events')
 	    if (value && (elem.disabled !== true || type !== 'click')) {
 	        var uuids = []
-	        var arr = value.match(reventNames) || []
-	        for (var i = 0, el; el = arr[i++]; ) {
-	            var v = el.split(':')
-	            if (v[0] === type) {
-	                uuids.push(v[1])
-	            } else {
-	                break
-	            }
-	        }
+	        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type+'\\:([^?\s]+)','g'))
+	        value.replace(reg, function(a, b){
+	            uuids.push(b)
+	            return a
+	        })
 	        if (uuids.length) {
 	            handlers.push({
 	                elem: elem,
@@ -5585,6 +5582,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	}
+
+	var rhandleHasVm = /^e\d+/
+	var rneedSmooth = /move|scroll/
 	function dispatch(event) {
 	    event = new avEvent(event)
 	    var type = event.type
@@ -5599,11 +5599,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                !event.isImmediatePropagationStopped) {
 	            var fn = avalon.eventListeners[uuid]
 	            if (fn) {
-	                var vm = elem.__av_context__
+	                var vm = rhandleHasVm.test(uuid) ? elem.__av_context__ : 0
 	                if (vm && vm.$hashcode === false) {
 	                    return avalon.unbind(elem, type, fn)
 	                }
-	                if (/move|scroll/.test(type)) {
+	                if (rneedSmooth.test(type)) {
 	                    var curr = +new Date()
 	                    if (curr - last > 16) {
 	                        fn.call(vm || elem, event)
@@ -6043,7 +6043,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var window = avalon.window
 
 	var refreshModel = __webpack_require__(52)
-	var markID = __webpack_require__(6).getLongID
+	var markID = __webpack_require__(6).getShortID
 	var evaluatorPool = __webpack_require__(53)
 
 	function initControl(cur, pre) {

@@ -6,7 +6,7 @@ avalon.directive('expr', {
         cur.fixIESkip = true
         var dom = cur.dom = pre.dom
         if (cur.nodeValue !== pre.nodeValue) {
-            if (dom && avalon.msie < 9 && avalon.contains(avalon.root,dom)) {
+            if (dom && avalon.contains(avalon.root,dom)) {
                 this.update(dom, cur)
             } else {
                 var list = cur.change || (cur.change = [])
