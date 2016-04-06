@@ -39,7 +39,7 @@ function toJson(val) {
     }
     return val
 }
-
+share.toJson = toJson
 
 if (avalon.window.Proxy) {
     function adjustVm(vm, expr) {

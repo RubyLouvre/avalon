@@ -5349,6 +5349,11 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 62 */
 /***/ function(module, exports) {
 
+	/**
+	 * ------------------------------------------------------------
+	 * 检测浏览器对CSS动画的支持与API名
+	 * ------------------------------------------------------------
+	 */
 	var supportTransition = false
 	var supportAnimation = false
 	var supportCSS = false
@@ -6634,7 +6639,12 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
+	/**
+	 * ------------------------------------------------------------
+	 * avalon基于纯净的Object.defineProperties的vm工厂 
+	 * masterFactory,slaveFactory,mediatorFactory, ArrayFactory
+	 * ------------------------------------------------------------
+	 */
 
 	var share = __webpack_require__(73)
 
@@ -7017,9 +7027,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // 判定此属性是否还能转换子VM或监听数组
 	    return  !skipArray[key] &&
 	            (key.charAt(0) !== '$') &&
-	            (avalon.isPlainObject(value) || Array.isArray(value)) &&
-	            !value.$id
-
+	            (value && !value.$id && typeof value === 'object' &&
+	            !value.nodeType && !value.nodeName)
 	}
 
 

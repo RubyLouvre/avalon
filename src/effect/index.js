@@ -1,3 +1,8 @@
+/**
+ * ------------------------------------------------------------
+ * 检测浏览器对CSS动画的支持与API名
+ * ------------------------------------------------------------
+ */
 var supportTransition = false
 var supportAnimation = false
 var supportCSS = false

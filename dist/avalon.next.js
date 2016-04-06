@@ -3067,6 +3067,11 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 62 */
 /***/ function(module, exports) {
 
+	/**
+	 * ------------------------------------------------------------
+	 * 检测浏览器对CSS动画的支持与API名
+	 * ------------------------------------------------------------
+	 */
 	var supportTransition = false
 	var supportAnimation = false
 	var supportCSS = false
@@ -4384,9 +4389,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // 判定此属性是否还能转换子VM或监听数组
 	    return  !skipArray[key] &&
 	            (key.charAt(0) !== '$') &&
-	            (avalon.isPlainObject(value) || Array.isArray(value)) &&
-	            !value.$id
-
+	            (value && !value.$id && typeof value === 'object' &&
+	            !value.nodeType && !value.nodeName)
 	}
 
 
@@ -6274,7 +6278,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    return val
 	}
-
+	share.toJson = toJson
 
 	if (avalon.window.Proxy) {
 	    function adjustVm(vm, expr) {

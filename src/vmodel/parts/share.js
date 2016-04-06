@@ -28,9 +28,8 @@ function canObserve(key, value, skipArray) {
     // 判定此属性是否还能转换子VM或监听数组
     return  !skipArray[key] &&
             (key.charAt(0) !== '$') &&
-            (avalon.isPlainObject(value) || Array.isArray(value)) &&
-            !value.$id
-
+            (value && !value.$id && typeof value === 'object' &&
+            !value.nodeType && !value.nodeName)
 }
 
 

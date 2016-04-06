@@ -1,4 +1,11 @@
 
+
+/**
+ * ------------------------------------------------------------
+ * avalon基于纯净的Object.defineProperties的vm工厂 
+ * masterFactory,slaveFactory,mediatorFactory, ArrayFactory
+ * ------------------------------------------------------------
+ */
 var share = require("./parts/modern")
 var canObserve = share.canObserve
 var $$midway = share.$$midway
