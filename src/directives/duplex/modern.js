@@ -78,7 +78,9 @@ avalon.directive('duplex', {
             ctrl.viewValue = viewValue
             refreshControl[ctrl.type].call(ctrl)
             if (node.caret) {
-                ctrl.updateCaret(node, ctrl.caretPos, ctrl.caretPos)
+                var pos = ctrl.caretPos
+                pos && ctrl.updateCaret(node, pos.start, pos.end)
+                ctrl.caretPos = null
             }
         }
     }

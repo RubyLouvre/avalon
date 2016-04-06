@@ -5998,7 +5998,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            ctrl.viewValue = viewValue
 	            refreshControl[ctrl.type].call(ctrl)
 	            if (node.caret) {
-	                ctrl.updateCaret(node, ctrl.caretPos, ctrl.caretPos)
+	                var pos = ctrl.caretPos
+	                pos && ctrl.updateCaret(node, pos.start, pos.end)
+	                ctrl.caretPos = null
 	            }
 	        }
 	    }
@@ -6119,8 +6121,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (elem.caret) {
 	        try {
 	            var pos = getCaret(elem)
-	            if (pos.start === pos.end) {
-	                ctrl.caretPos = pos.start
+	            if (pos.start === pos.end || pos.start + 1 === pos.end) {
+	                ctrl.caretPos = pos
 	            }
 	        } catch (e) {
 	            avalon.warn('fixCaret error', e)

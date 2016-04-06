@@ -127,8 +127,8 @@ function updateModel() {
     if (elem.caret) {
         try {
             var pos = getCaret(elem)
-            if (pos.start === pos.end) {
-                ctrl.caretPos = pos.start
+            if (pos.start === pos.end || pos.start + 1 === pos.end) {
+                ctrl.caretPos = pos
             }
         } catch (e) {
             avalon.warn('fixCaret error', e)
@@ -153,7 +153,7 @@ function updateModel() {
 
 
 function updateModelHack(e) {
-    if (e.propertyName === 'value' ) { 
+    if (e.propertyName === 'value') {
         updateModel.call(this, e)
     }
 }
