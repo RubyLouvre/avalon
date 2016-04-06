@@ -132,7 +132,6 @@ function dispatch(event) {
             var fn = avalon.eventListeners[uuid]
             if (fn) {
                 var vm = elem.__av_context__
-                console.log(vm,"!!!")
                 if (vm && vm.$hashcode === false) {
                     return avalon.unbind(elem, type, fn)
                 }

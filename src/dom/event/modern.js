@@ -24,7 +24,6 @@ avalon.bind = function (elem, type, fn) {
             key = type + ':' + fn.uuid
         }
         avalon.eventListeners[fn.uuid] = fn
-
         if (value.indexOf(type + ':') === -1) {//同一种事件只绑定一次
             if (canBubbleUp[type] || focusBlur[type]) {
                 delegateEvent(type)
@@ -126,11 +125,11 @@ function dispatch(event) {
                 if (/move|scroll/.test(type)) {
                     var curr = +new Date()
                     if (curr - last > 16) {
-                        fn.call(elem, event, vm)
+                        fn.call(vm || elem, event)
                         last = curr
                     }
                 } else {
-                    fn.call(handler.elem, event, vm)
+                    fn.call(vm || elem, event)
                 }
             }
         }
