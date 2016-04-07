@@ -13,7 +13,7 @@ avalon.cssName = function (name, host, camelCase) {
     if (cssMap[name]) {
         return cssMap[name]
     }
-    host = host || root.style
+    host = host || root.style || {}
     for (var i = 0, n = prefixes.length; i < n; i++) {
         camelCase = camelize(prefixes[i] + name)
         if (camelCase in host) {

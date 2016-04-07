@@ -15,7 +15,7 @@ var browser = {
     },
     msie: NaN,
     modern: true,
-    avalonDiv: null,
+    avalonDiv: {},
     avalonFragment: null
 }
 

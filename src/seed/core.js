@@ -21,7 +21,7 @@ avalon.shadowCopy = function (destination, source) {
 
 var rword = /[^, ]+/g
 
-var hasConsole = window.console
+var hasConsole = global.console
 
 avalon.shadowCopy(avalon, {
     noop: function () {

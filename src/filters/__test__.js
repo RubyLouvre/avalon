@@ -46,7 +46,7 @@ describe('filters', function () {
     })
 
     describe('number', function () {
-        var fn = avalon.filters.number.get
+        var fn = avalon.filters.number
         it('test', function () {
             expect(fn(1111111111)).to.equal('1,111,111,111.000')
             expect(fn(1111111111, 2, '.', '-')).to.equal('1-111-111-111.00')

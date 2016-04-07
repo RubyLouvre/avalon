@@ -20,7 +20,7 @@ describe('测试core文件的API', function () {
         })
     })
 
-    describe('mix', function () {
+    describe('shadowCopy', function () {
         it('test', function () {
             var obj = {}
             avalon.mix(obj, {
@@ -138,11 +138,6 @@ describe('测试browser文件的API', function () {
         })
     })
 
-    describe('nextTick', function () {
-        it('test', function () {
-            expect(avalon.nextTick).to.be.a('function')
-        })
-    })
 
 })
 
@@ -220,6 +215,11 @@ describe('测试lang.share文件的API', function () {
             expect(avalon.components).to.be.a('object')
         })
     })
+    describe('resolvedComponents', function () {
+        it('test', function () {
+            expect(avalon.resolvedComponents).to.be.a('object')
+        })
+    })
     describe('directives', function () {
         it('test', function () {
             expect(avalon.directives).to.be.a('object')
@@ -259,7 +259,7 @@ describe('测试lang.share文件的API', function () {
 
     describe('version', function () {
         it('test', function () {
-            expect(avalon.version).to.be.a('number')
+            expect(/\d/.test(avalon.version)).to.be.true
         })
     })
     describe('css', function () {

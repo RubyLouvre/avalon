@@ -17,6 +17,7 @@ var checker = {
     'OTransitionEvent': 'oTransitionEnd',
     'otransitionEvent': 'otransitionEnd'
 }
+var window = avalon.window
 var tran
 //有的浏览器同时支持私有实现与标准写法，比如webkit支持前两种，Opera支持1、3、4
 for (var name in checker) {

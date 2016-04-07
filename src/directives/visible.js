@@ -1,17 +1,21 @@
 
-
-function parseDisplay(nodeName, val) {
+var none = 'none'
+function parseDisplay(elem, val) {
     //用于取得此类标签的默认display值
+    var doc = elem.ownerDocument
+    var nodeName = elem.nodeName
     var key = '_' + nodeName
     if (!parseDisplay[key]) {
-        var node = document.createElement(nodeName)
-        avalon.root.appendChild(node)
+        var temp = doc.body.appendChild(doc.createElement(nodeName))
         if (avalon.modern) {
-            val = getComputedStyle(node, null).display
+            val = getComputedStyle(temp, null).display
         } else {
-            val = node.currentStyle.display
+            val = temp.currentStyle.display
         }
-        avalon.root.removeChild(node)
+        avalon.root.removeChild(temp)
+        if (val === none) {
+            val = 'block'
+        }
         parseDisplay[key] = val
     }
     return parseDisplay[key]
@@ -33,15 +37,31 @@ avalon.directive('visible', {
         }
     },
     update: function (node, vnode) {
-        if (vnode.props['ms-visible']) {
-            var cur = avalon(node).css('display')
-            if (!vnode.displayValue) {
-                vnode.displayValue = cur !== 'none' ? cur :
-                        parseDisplay(node.nodeName)
+        var show = vnode.props['ms-visible']
+        var display = node.style.display
+        var value
+        if (show) {
+            if (display === none) {
+                value = vnode.displayValue
+                if (!value) {
+                    node.style.display = ''
+                }
             }
-            node.style.display = vnode.displayValue
+            if (node.style.display === '' && avalon(node).css('display') === none &&
+                    // fix firefox BUG,必须挂到页面上
+                    avalon.contains(node.ownerDocument, node)) {
+
+                value = parseDisplay(node)
+            }
         } else {
-            node.style.display = 'none'
+            if (display !== none) {
+                value = none
+                vnode.displayValue = display
+            }
+        }
+        if (value !== void 0) {
+            node.style.display = value
         }
     }
 })
+

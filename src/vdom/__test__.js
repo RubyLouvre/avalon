@@ -34,17 +34,6 @@ describe('vdom', function () {
         })
     })
 
-    describe('VComponent', function () {
-        it('test', function () {
-            var el = new vdom.VComponent({type: 'if'})
-            expect(el).to.be.instanceof(vdom.VComponent)
-            expect(el).to.have.property('toDOM')
-            expect(el).to.have.property('toHTML')
-            expect(el).to.have.property('__type__')
-            expect(el.type).to.equal('#component')
-        })
-
-    })
 
     describe('vdomAdaptor', function () {
         it('test', function () {
