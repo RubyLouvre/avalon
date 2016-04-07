@@ -12,7 +12,7 @@ function parseDisplay(elem, val) {
         } else {
             val = temp.currentStyle.display
         }
-        avalon.root.removeChild(temp)
+        doc.body.removeChild(temp)
         if (val === none) {
             val = 'block'
         }

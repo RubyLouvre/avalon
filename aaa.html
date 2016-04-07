@@ -8,36 +8,24 @@
         <script >
             var vm = avalon.define({
                 $id: "test",
-                curIndex: 0, //默认显示第一个
-                buttons: ['aaa', 'bbb', 'ccc'],
-                panels: ["<div>面板1</div>", "<p>面板2</p>", "<strong>面板3</strong>"]
+                title:111,
+                src: 222,
+                lang: 333
             })
 
         </script>
         <style>
-            button{
-                margin:1em 3em;
-            }
-            .panel div{
-                height:200px;
-                background: #a9ea00;
-            }
-            .panel p{
-                height:200px;
-                background: green;
-            }
-            .panel strong{
-                display:block;
-                width:100%;
-                height:200px;
-                background: #999;
-            }
+          
         </style>
     </head>
     <body ms-controller="test" >
-        <div>
-            <button ms-for='(i, el) in @buttons' ms-click='@curIndex = i'>{{el}}</button>
-        </div>
-        <div class='panel' ms-for='(jj, el) in @panels' ms-visible='jj === @curIndex' ms-html='el'></div>
+          <div  aaa='ddd' bbb=333 
+                ms-attr='{title: @title,
+                    ddd:@src, 
+                    lang:@lang}' >{{
+                   @src ? 1
+                   : 22
+              }}</div>
+          
     </body>
 </html>

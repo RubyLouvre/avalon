@@ -3409,7 +3409,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else {
 	            val = temp.currentStyle.display
 	        }
-	        avalon.root.removeChild(temp)
+	        doc.body.removeChild(temp)
 	        if (val === none) {
 	            val = 'block'
 	        }
@@ -5521,8 +5521,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var val = maps[a]
 	    return val
 	}
-
-
+	var rhasString = /=["']/
+	var rlineSp = /\n\s*/g
+	function fixLongAttrValue(attr){
+	    return rhasString.test(attr) ? 
+	     attr.replace(rlineSp,'').replace(rstring, dig): attr
+	}
 	function lexer(text, curDeep, maxDeep) {
 	    var nodes = []
 	    maxDeep = maxDeep || 1
@@ -5574,7 +5578,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	                var props = {}
 	                if (match[2]) {
-	                    handleProps(match[2], props)
+	                    handleProps(fixLongAttrValue(match[2]), props)
 	                }
 
 	                var innerHTML = outerHTML.slice(match[0].length,
@@ -5598,7 +5602,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                type = match[1].toLowerCase()
 	                props = {}
 	                if (match[2]) {
-	                    handleProps(match[2], props)
+	                    handleProps(fixLongAttrValue(match[2]), props)
 	                }
 	                node = {
 	                    nodeType: 1,
@@ -5800,6 +5804,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        props[name] = value
 	    })
+	    console.log(props)
 	}
 
 	//form prototype.js
