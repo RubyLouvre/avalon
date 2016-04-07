@@ -19,8 +19,9 @@ avalon.directive('effect', {
             var preObj = pre.props[name]
             if ( Object(preObj) !== preObj || diffObj(curObj, preObj ))  {
                 var list = cur.afterChange = cur.afterChange || []
-                avalon.Array.ensure(list, this.update)
-                steps.count += 1
+                if(avalon.Array.ensure(list, this.update)){
+                   steps.count += 1
+                }
             }
         }
     },

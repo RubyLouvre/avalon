@@ -30,7 +30,9 @@ avalon.directive('attr', {
             }
             if (cur.changeAttr) {
                 var list = cur.change || (cur.change = [])
-                avalon.Array.ensure(list, this.update)
+                if(avalon.Array.ensure(list, this.update)){
+                    steps.count += 1
+                }
             }
         } else {
             cur.props[name] = p

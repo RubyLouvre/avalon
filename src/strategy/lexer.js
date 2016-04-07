@@ -328,7 +328,6 @@ function handleProps(str, props) {
         }
         props[name] = value
     })
-    console.log(props)
 }
 
 //form prototype.js

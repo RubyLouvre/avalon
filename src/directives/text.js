@@ -17,8 +17,9 @@ avalon.directive('text', {
                 this.update(dom, cur)
             } else {
                 var list = cur.change || (cur.change = [])
-                avalon.Array.ensure(list, this.update)
-                steps.count += 1
+                if(avalon.Array.ensure(list, this.update)){
+                   steps.count += 1
+                }
             }
         }
         pre.dom = null

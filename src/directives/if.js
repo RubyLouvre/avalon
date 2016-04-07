@@ -8,8 +8,9 @@ avalon.directive('if', {
     diff: function (cur, pre, steps) {
         if (cur.type !== pre.type) {
             var list = cur.change || (cur.change = [])
-            avalon.Array.ensure(list, this.update)
-            steps.count += 1
+            if(avalon.Array.ensure(list, this.update)){
+               steps.count += 1
+            }
         }
     },
     update: function (dom, vnode, parent) {

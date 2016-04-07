@@ -1509,8 +1509,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            if (cur.changeStyle) {
 	                var list = cur.change || (cur.change = [])
-	                avalon.Array.ensure(list, this.update)
-	                steps.counts += 1
+	                if(avalon.Array.ensure(list, this.update)){
+	                   steps.count += 1
+	                }
 	            }
 	        } else {
 	            cur.props[name] = p
@@ -1565,8 +1566,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        cur.displayValue = pre.displayValue
 	        if (c !== pre.props[name]) {
 	            var list = cur.change || (cur.change = [])
-	            avalon.Array.ensure(list, this.update)
-	            steps.count += 1
+	            if(avalon.Array.ensure(list, this.update)){
+	                steps.count += 1
+	            }
 	        }
 	    },
 	    update: function (node, vnode) {
@@ -1612,12 +1614,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        cur.fixIESkip = true
 	        var dom = cur.dom = pre.dom
 	        if (cur.nodeValue !== pre.nodeValue) {
+	           
 	            if (dom && avalon.contains(avalon.root,dom)) {
 	                this.update(dom, cur)
 	            } else {
 	                var list = cur.change || (cur.change = [])
-	                avalon.Array.ensure(list, this.update)
-	                steps.count += 1
+	                if(avalon.Array.ensure(list, this.update)){
+	                    steps.count += 1
+	                }   
 	            }
 	        }
 	        pre.dom = null
@@ -1627,6 +1631,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var textNode = document.createTextNode(vnode.nodeValue)
 	            parent.replaceChild(textNode, node)
 	        } else {
+	           
 	            node.nodeValue = vnode.nodeValue
 	            textNode = node
 	        }
@@ -1657,8 +1662,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                this.update(dom, cur)
 	            } else {
 	                var list = cur.change || (cur.change = [])
-	                avalon.Array.ensure(list, this.update)
-	                steps.count += 1
+	                if(avalon.Array.ensure(list, this.update)){
+	                   steps.count += 1
+	                }
 	            }
 	        }
 	        pre.dom = null
@@ -1719,8 +1725,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            cur.children = nodes
 	            if (cur.props[name] !== preValue) {
 	                var list = cur.change || (cur.change = [])
-	                avalon.Array.ensure(list, this.update)
-	                steps.count += 1
+	                if(avalon.Array.ensure(list, this.update)){
+	                   steps.count += 1
+	                }
 	            }
 	        }
 	    },
@@ -1804,8 +1811,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!preValue || preValue !== className) {
 	            cur['change-' + type] = className
 	            var list = cur.change || (cur.change = [])
-	            avalon.Array.ensure(list, this.update)
-	            steps.count += 1
+	            if(avalon.Array.ensure(list, this.update)){
+	                steps.count += 1
+	            }
 	        }
 
 	    },
@@ -2185,8 +2193,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    diff: function (cur, pre, steps) {
 	        if (cur.type !== pre.type) {
 	            var list = cur.change || (cur.change = [])
-	            avalon.Array.ensure(list, this.update)
-	            steps.count += 1
+	            if(avalon.Array.ensure(list, this.update)){
+	               steps.count += 1
+	            }
 	        }
 	    },
 	    update: function (dom, vnode, parent) {
@@ -2940,8 +2949,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var preObj = pre.props[name]
 	            if ( Object(preObj) !== preObj || diffObj(curObj, preObj ))  {
 	                var list = cur.afterChange = cur.afterChange || []
-	                avalon.Array.ensure(list, this.update)
-	                steps.count += 1
+	                if(avalon.Array.ensure(list, this.update)){
+	                   steps.count += 1
+	                }
 	            }
 	        }
 	    },
@@ -3519,7 +3529,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        props[name] = value
 	    })
-	    console.log(props)
 	}
 
 	//form prototype.js
@@ -5878,7 +5887,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            if (cur.changeAttr) {
 	                var list = cur.change || (cur.change = [])
-	                avalon.Array.ensure(list, this.update)
+	                if(avalon.Array.ensure(list, this.update)){
+	                    steps.count += 1
+	                }
 	            }
 	        } else {
 	            cur.props[name] = p

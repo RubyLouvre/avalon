@@ -32,8 +32,9 @@ avalon.directive('visible', {
         cur.displayValue = pre.displayValue
         if (c !== pre.props[name]) {
             var list = cur.change || (cur.change = [])
-            avalon.Array.ensure(list, this.update)
-            steps.count += 1
+            if(avalon.Array.ensure(list, this.update)){
+                steps.count += 1
+            }
         }
     },
     update: function (node, vnode) {

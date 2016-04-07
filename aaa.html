@@ -1,27 +1,56 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
-        <script src="./dist/avalon.js"></script>
-        <script >
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="./dist/avalon.js" ></script>
+        <script>
             var vm = avalon.define({
                 $id: "test",
-                title:111,
-                src: "222",
-                lang: 333
+                percent: 0
             })
-
+            var a = true
+            var id = setInterval(function() {
+                if (a) {
+                    if (vm.percent < 100) {
+                        vm.percent++
+                    } else {
+                        a = false
+                    }
+                } else {
+                    if (vm.percent > 0) {
+                        vm.percent--
+                    } else {
+                        a = true
+                       
+                    }
+                }
+            }, 100)
         </script>
+        <style>
+            .handerx{
+                width:20px;
+                height:20px;
+                position: absolute;
+                color:#fff;
+                background: #000;
+            }
+            .sliderx{
+                width:100%;
+                height:20px;
+                position: relative;
+            }
+            .body{
+                padding:40px;
+            }
+        </style>
     </head>
-    <body ms-controller="test" >
-          <div  aaa='ddd' bbb=333 
-                ms-attr='{title: @title,
-                    ddd:@src, 
-                    lang:@lang}' >{{
-                   @src ? 333: 'empty'
-              }}</div>
-          <input ms-duplex="@src"/>
+    <body ms-controller="test" class="body">
+        <div class="slider" style="background:red;">
+            <div class="handerx" ms-css="{left: @percent+'%'}" >{{ @percent }}</div>
+            <div style="background: greenyellow;height:20px" ms-css="{width:@percent+'%'}"></div>
+        </div>
+        <div class="sliderx" style="background:#d2d2d2;">
+            <div style="background: #2FECDC;height:20px" ms-css="{width:100-@percent+'%'}"></div>
+        </div>
     </body>
 </html>
