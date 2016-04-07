@@ -8,26 +8,15 @@
         <script>
             var vm = avalon.define({
                 $id: 'for0',
-                aaa: false,
-                btn: "VM中的其他属性",
-                arr: [{a: 1}, {a: 2}],
-                ms_button: {
-                    buttonText: "VM中的TEXT"
-                }
-
+                arr: [1, 2, 3, 4]
             })
-            setTimeout(function () {
-                vm.arr = [{a: 99}, {a: 888}]
-            }, 3000)
-            
-            var proto  = Object.create(HTMLElement.prototype)
-            proto.xxx = 11
-            var Helloworld = document.registerElement('hello-world', {
-                prototype: proto
-            });
 
-           var elem = document.createElement('hello-world')
-           console.log(elem)
+            setTimeout(function () {
+                vm.arr = [6, 7, 8, 9]
+                setTimeout(function () {
+                    vm.arr = [61, 72, 83, 94]
+                }, 2000)
+            }, 2000)
 
         </script>
         <style>
@@ -40,15 +29,9 @@
 
 
         <div ms-controller='for0' >
-            <input ms-duplex-checked='@aaa' type="radio">{{@aaa}}
-            <div ms-if="@aaa">111</div>
             <ul>
-                <li ms-for='el in @arr'>{{el.a}}</li>
+                <li ms-for="el in @arr">{{el}}</li>
             </ul>
-            <!--            <xmp ms-widget="{is:'ms-button'}">{{@btn}}</xmp>
-                        <ms-button>使用默认配置对象</ms-button>
-                        <ms-button>页面上的TEXT</ms-button>-->
-            <xmp ms-widget="{is:'ms-panel',ee: 1}" style='border:1px solid red;display:block'>ccccc</xmp>
         </div>
 
     </body>

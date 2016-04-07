@@ -28,10 +28,14 @@
                 }
                 return ret
             }
+            var d = 0
             var id = setInterval(function(){
                 var t1 = Date.now();
                 vm.list = genData(1000)
                 console.log('total ' + (Date.now() - t1) + ' ms');
+//                if(d++ > 3){
+//                    clearInterval(id)
+//                }
               //setInterval()
             }, 50)
 

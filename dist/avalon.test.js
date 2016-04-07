@@ -4661,9 +4661,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            pre.components = []
 	            pre.repeatCount = 0
 	        }
-	        if (!('repeatCount' in pre)) {
-	            var range = getRepeatRange(previous, __index__)
-	            cur.components = getComponents(range.slice(1, -1), pre.signature)
+	      //  if (!('repeatCount' in pre)) {
+	         if(!pre.components){
+	            var range = getRepeatRange(previous, __index__)//所有节点包括前后锚点
+	            pre.components = getComponents(range.slice(1, -1), pre.signature)
 	            pre.repeatCount = range.length - 2
 	        }
 
@@ -4882,8 +4883,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	// 新位置: 旧位置
 	function isInCache(cache, id) {
-	    var c = cache[id]
+	    var c = cache[id], cid = id
 	    if (c) {
+	        var ctack = cache["***"+id]
+	        if(ctack){
+	            var a = ctack.pop()
+	            delete cache[a.id]
+	            if(ctack.length ==0)
+	                delete cache["***"+id]
+	            return a.c
+	        }
 	        var stack = [{id: id, c: c}]
 	        while (1) {
 	            id += '_'
@@ -4898,6 +4907,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        var a = stack.pop()
 	        delete cache[a.id]
+	        if(stack.length){
+	            cache['***'+cid] = stack
+	        }
 	        return a.c
 	    }
 	    return c
@@ -7539,7 +7551,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 100 */
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
+	module.exports = "<ms-panel>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</ms-panel>"
 
 /***/ }
 /******/ ])
