@@ -1792,32 +1792,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        pre.classEvent = null
 
-	        var className
+	        var className = avalon.noop
 	        if (Array.isArray(curValue)) {
-	            //convert it to a string 
-	            className = curValue.join(' ').trim().replace(/\s+/, ' ')
-	        } else if (typeof curValue === 'object') {
-	            className = Object.keys(curValue).filter(function (name) {
-	                return curValue[name]
+	            //处理复杂的一维数组
+	           className = curValue.map(function(el){
+	                return el && typeof el === 'object' ? processBooleanObject(el) :
+	                        el ? el : ''
 	            }).join(' ')
-	        } else if (typeof curValue === 'string') {
-	            className = curValue.trim().replace(/\s+/, ' ')
-	        } 
-	        
-	        if (typeof className !== 'string') {
-	            cur.props[name] = preValue
+	        } else if (avalon.isObject(curValue)) {
+	            //处理布尔对象
+	            className = processBooleanObject(curValue)
+	        } else if (curValue) {
+	            //处理其他真值，如字符串，数字
+	            className = String(curValue)
+	        }
+	        if(className === avalon.noop){
 	            return
 	        }
+	        className = cur.props[name] = className.trim().replace(/\s+/, ' ')
 	        if (!preValue || preValue !== className) {
 	            cur['change-' + type] = className
 	            var list = cur.change || (cur.change = [])
-	            if(avalon.Array.ensure(list, this.update)){
+	            if (avalon.Array.ensure(list, this.update)) {
 	                steps.count += 1
 	            }
 	        }
-
 	    },
-	    
 	    update: function (node, vnode) {
 	        var classEvent = vnode.classEvent
 	        if (classEvent) {
@@ -1834,13 +1834,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        names.forEach(function (type) {
 	            var name = 'change-' + type
 	            var value = vnode[ name ]
-	            if (!value)
+	            if (value === void 0)
 	                return
 	            if (type === 'class') {
-
 	                setClass(node, vnode)
 	            } else {
-	                var oldType = node.getAttribute(name)
+	                var oldType = node.getAttribute('change-'+type)
 	                if (oldType) {
 	                    avalon(node).removeClass(oldType)
 	                }
@@ -1849,7 +1848,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        })
 	    }
 	})
+
 	directives.active = directives.hover = directives['class']
+
+	function processBooleanObject(obj) {
+	    return Object.keys(obj).filter(function (name) {
+	        return obj[name]
+	    }).join(' ')
+	}
 
 	var classMap = {
 	    mouseenter: 'change-hover',
@@ -1873,11 +1879,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function setClass(node, vnode) {
-	    var old = node.getAttribute('old-change-class')||''
-	    var neo = vnode['change-class']
+	    var old = node.getAttribute('old-change-class') || ''
+	    var neo = vnode.props['ms-class']
 	    avalon(node).removeClass(old).addClass(neo)
 	    node.setAttribute('old-change-class', neo)
-	    delete vnode['change-class']
 	}
 
 	markID(activateClass)

@@ -1,38 +1,42 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
+        <title>ms-class</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="viewport" content="width=device-width">
         <script src="./dist/avalon.js"></script>
         <script>
-            var vm = avalon.define({
-                $id: 'for0',
-                arr: [1, 2, 3, 4]
+            avalon.define({
+                $id: "test",
+                array: avalon.range(0, 14)
             })
-
-            setTimeout(function () {
-                vm.arr = [6, 7, 8, 9]
-                setTimeout(function () {
-                    vm.arr = [61, 72, 83, 94]
-                }, 2000)
-            }, 2000)
-
         </script>
         <style>
-            ms-button{
-                display: inline-block;
+            .zebra-table{
+                border-collapse: collapse;
+                width:400px;
+                border:1px solid black;
+            }
+            .zebra-table td{
+                border:1px solid black;
+                text-indent: 1em;
+            }
+            .zebra-table .even td{
+                background:#ddd;
+                color:white;
+            }
+             .zebra-table .hover td{
+                color: red;
+                font-weight: bolder;
             }
         </style>
     </head>
-    <body>
-
-
-        <div ms-controller='for0' >
-            <ul>
-                <li ms-for="el in @arr">{{el}}</li>
-            </ul>
-        </div>
-
+    <body ms-controller="test" >
+        <table class="zebra-table">
+            <tr ms-for="($index, el ) in @array" ms-hover="'hover'" ms-class="{even: $index % 2 == 0}">
+                <td>{{$index}}</td>
+                <td>{{ new Date - 0 | date("yyyy-MM-dd")}}</td>
+            </tr>
+        </table>
     </body>
 </html>
