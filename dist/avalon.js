@@ -657,7 +657,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return a === 'true'
 	        }
 	    },
-	    version: "2.0 alpha",
+	    version: "2.0 beta1",
 	    slice: function (nodes, start, end) {
 	        return _slice.call(nodes, start, end)
 	    },
