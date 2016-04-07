@@ -9,23 +9,19 @@
             var vm = avalon.define({
                 $id: "test",
                 title:111,
-                src: 222,
+                src: "222",
                 lang: 333
             })
 
         </script>
-        <style>
-          
-        </style>
     </head>
     <body ms-controller="test" >
           <div  aaa='ddd' bbb=333 
                 ms-attr='{title: @title,
                     ddd:@src, 
                     lang:@lang}' >{{
-                   @src ? 1
-                   : 22
+                   @src ? 333: 'empty'
               }}</div>
-          
+          <input ms-duplex="@src"/>
     </body>
 </html>
