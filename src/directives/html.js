@@ -32,6 +32,9 @@ avalon.directive('html', {
         }
     },
     update: function (node, vnode) {
+        if(node.nodeType !== 1){
+            return
+        }
         if (node.querySelectorAll) {
             var nodes = node.querySelectorAll('[avalon-events]')
             avalon.each(nodes, function (el) {
@@ -39,8 +42,9 @@ avalon.directive('html', {
             })
         } else {
             var nodes = node.getElementsByTagName('*')
+            //IE6-7这样取所有子孙节点会混入注释节点
             avalon.each(nodes, function (el) {
-                if (el.getAttribute('avalon-events')) {
+                if (el.nodeType === 1 && el.getAttribute('avalon-events')) {
                     avalon.unbind(el)
                 }
             })
@@ -51,7 +55,6 @@ avalon.directive('html', {
         vnode.children.forEach(function (c) {
             fragment.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
         })
-
         node.appendChild(fragment)
     }
 })
