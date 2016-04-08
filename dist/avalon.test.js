@@ -4504,7 +4504,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var keep = avalon.caches[s]
 	                if (keep) {
 	                    parent.replaceChild(keep, dom)
-	                    patch([keep], [vnode], null, steps)
+	                    steps.count && patch([keep], [vnode], null, steps)
 	                } else {
 	                    var el = avalon.vdomAdaptor(vnode, 'toDOM')
 	                    parent.replaceChild(el, dom)
