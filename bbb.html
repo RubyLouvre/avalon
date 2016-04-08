@@ -1,42 +1,43 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>ms-class</title>
+        <title>ms-if</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
         <script src="./dist/avalon.js"></script>
-        <script>
-            avalon.define({
+        <script >
+            var vm = avalon.define({
                 $id: "test",
-                array: avalon.range(0, 14)
+                curIndex: 0, //默认显示第一个
+                buttons: ['aaa', 'bbb', 'ccc'],
+                panels: ["<div>面板1</div>", "<p>面板2</p>", "<strong>面板3</strong>"]
             })
+
         </script>
         <style>
-            .zebra-table{
-                border-collapse: collapse;
-                width:400px;
-                border:1px solid black;
+            button{
+                margin:1em 3em;
             }
-            .zebra-table td{
-                border:1px solid black;
-                text-indent: 1em;
+            .panel div{
+                height:200px;
+                background: #a9ea00;
             }
-            .zebra-table .even td{
-                background:#ddd;
-                color:white;
+            .panel p{
+                height:200px;
+                background: green;
             }
-             .zebra-table .hover td{
-                color: red;
-                font-weight: bolder;
+            .panel strong{
+                display:block;
+                width:100%;
+                height:200px;
+                background: #999;
             }
         </style>
     </head>
     <body ms-controller="test" >
-        <table class="zebra-table">
-            <tr ms-for="($index, el ) in @array" ms-hover="'hover'" ms-class="{even: $index % 2 == 0}">
-                <td>{{$index}}</td>
-                <td>{{ new Date - 0 | date("yyyy-MM-dd")}}</td>
-            </tr>
-        </table>
+        <div>
+            <button ms-for='(i, el) in @buttons' ms-click='@curIndex = i'>{{el}}</button>
+        </div>
+        <div class='panel' ms-for='(jj, el) in @panels' ms-if='jj === @curIndex' ms-html='el'></div>
     </body>
 </html>

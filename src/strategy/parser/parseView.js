@@ -102,12 +102,13 @@ function parseView(arr, num) {
             if (hasIf) { // 处理ms-if指令
                 el.signature = makeHashCode('ms-if')
                 str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'
+                var ifValue = quote(el.signature)
                 str += children + '.push({' +
                         '\n\tnodeType:8,' +
                         '\n\ttype: "#comment",' +
                         '\n\tdirective: "if",' +
-                        '\n\tnodeValue:' + quote(el.signature) + ',\n' +
-                        '\n\tsignature:' + quote(el.signature) + ',\n' +
+                        '\n\tnodeValue:' + ifValue + ',\n' +
+                        '\n\tsignature:' + ifValue + ',\n' +
                         '\n\tprops: {"ms-if":true} })\n'
                 str += '\n}else{\n\n'
             }

@@ -8,33 +8,37 @@ avalon.directive('if', {
     diff: function (cur, pre, steps) {
         if (cur.type !== pre.type) {
             var list = cur.change || (cur.change = [])
-            if(avalon.Array.ensure(list, this.update)){
-               steps.count += 1
-               cur.steps = steps
+            if (avalon.Array.ensure(list, this.update)) {
+                steps.count += 1
+                cur.steps = steps
             }
         }
     },
-    update: function (dom, vnode, parent) {
-        var dtype = dom.nodeName.toLowerCase()
+    update: function (node, vnode, parent) {
+        var dtype = node.nodeType
         var vtype = vnode.type
         if (dtype !== vtype) {
             var steps = vnode.steps
-            delete vnode.steps
-            if (dom.nodeType === 1) {
-                avalon.caches[vnode.nodeValue] = dom
-                parent.replaceChild(avalon.vdomAdaptor(vnode, 'toDOM'), dom)
-            } else {
-                var s = dom.signature || dom.nodeValue
-                var keep = avalon.caches[s]
-                if (keep) {
-                    parent.replaceChild(keep, dom)
-                    steps.count && patch([keep], [vnode], null, steps)
+            if (vnode.nodeType === 1) {
+                //要插入元素节点,将原位置上的注释节点移除并cache
+                var e = node.uniqueID
+                var element = avalon.caches[e]
+                if (!element) {
+                    element = avalon.vdomAdaptor(vnode, 'toDOM')
                 } else {
-                    var el = avalon.vdomAdaptor(vnode, 'toDOM')
-                    parent.replaceChild(el, dom)
-                    avalon.caches[s] = el
+                    delete avalon.caches[e]
                 }
+                parent.replaceChild(element, node)
+                patch([element], [vnode], null, steps)
+            } else if (vnode.nodeType === 8) {
+                //要移除元素节点,在对应位置上插入注释节点
+                var comment = document.createComment(vnode.signature)
+                comment.uniqueID = comment.uniqueID || ++cid
+                parent.replaceChild(comment, node)
+                avalon.caches[comment.uniqueID] = node
             }
         }
     }
 })
+
+var cid = 1
