@@ -1,5 +1,5 @@
 var patch = require('../strategy/patch')
-
+var uniqueID = 1
 avalon.directive('if', {
     priority: 5,
     parse: function (binding, num) {
@@ -29,16 +29,19 @@ avalon.directive('if', {
                     delete avalon.caches[e]
                 }
                 parent.replaceChild(element, node)
-                patch([element], [vnode], null, steps)
+             //   if( steps.count -1 > 0) {
+                    patch([element], [vnode], null, {count: 20000})
+             //   }
             } else if (vnode.nodeType === 8) {
                 //要移除元素节点,在对应位置上插入注释节点
-                var comment = document.createComment(vnode.signature)
-                comment.uniqueID = comment.uniqueID || ++cid
+                var comment = node._av_if_ ||  document.createComment(vnode.signature)
+                node._av_if_ = comment
+                //IE6-8,不能为注释节点添加任何自定义属性,幸好其有一个uniqueID标识的唯一性
+                var uid = comment.uniqueID || (comment.uniqueID || ++uniqueID)
                 parent.replaceChild(comment, node)
-                avalon.caches[comment.uniqueID] = node
+                avalon.caches[uid] = node
             }
         }
     }
 })
 
-var cid = 1
