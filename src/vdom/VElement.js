@@ -22,7 +22,11 @@ VElement.prototype = {
         for (var i in this.props) {
             var val = this.props[i]
             if (skipFalseAndFunction(val)) {
-                dom.setAttribute(i, val + '')
+                if(i === "class" && avalon.msie < 8){
+                    dom.className = val +''
+                }else{
+                    dom.setAttribute(i, val + '')
+                }
             }
         }
         if (this.skipContent) {
