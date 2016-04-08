@@ -1,43 +1,36 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
     <head>
-        <title>新风格</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
-        <script src="./dist/avalon.js"></script>
+        <title>ms-if</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="./dist/avalon.js" ></script>
         <script>
-            var vm = avalon.define({
-                $id: "ms-class",
-                toggle: true,
-                aaa: 'xxx',
-                bbb: 'yyy',
-                ccc: 'zzz'
+            var vmodel = avalon.define({
+                $id: "test",
+                object: {}
             })
-        </script>
-        <style>
-            .test{
-                width:100px;
-                height:100px;
-                border:1px solid red;
-                color:red;
-                -webkit-user-select: none;  /* Chrome all / Safari all */
-                -moz-user-select: none;     /* Firefox all */
-                -ms-user-select: none;      /* IE 10+ */
-                -o-user-select: none;
-                user-select: none;          
-            }
-            .aaa{
-                color:blue;
-                border:1px solid blue;
-            }
-        </style>
-    </head>
-    <body ms-controller="ms-class">
-        <div class="test" ms-class="{aaa:@toggle}" ms-click="@toggle = !@toggle">点我</div>
-        <div  ms-class="'aaa bbb ccc'"> 它的名类是aaa bbb ccc   </div>
-        <div  ms-class="[@aaa,@bbb,@ccc]" >  它的名类是xxx yyy zzz   </div>
-        <div  ms-class="[@aaa, @toggle ? @bbb: @ccc]">  它的名类是xxx yyy  </div>
-     
 
+            setTimeout(function() {
+                vmodel.object = {id: "132", message: "显示！！"}
+            }, 3000)
+
+            setTimeout(function() {
+                vmodel.object = {}
+            }, 5000)
+
+        </script>
+    </head>
+    <body>
+        <div ms-controller="test" >
+            这是比较输出结果:{{@object.id != null}}
+            <div ms-visible="@object.id != null">
+                这是visible的:
+                <span>{{@object.message}}</span>
+            </div>
+            <div ms-if="@object.id != null">
+                这是if的:
+                <span>{{@object.message}}</span>
+            </div>
+        </div>
     </body>
 </html>

@@ -4486,6 +4486,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var list = cur.change || (cur.change = [])
 	            if(avalon.Array.ensure(list, this.update)){
 	               steps.count += 1
+	               cur.steps = steps
 	            }
 	        }
 	    },
@@ -4493,6 +4494,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var dtype = dom.nodeName.toLowerCase()
 	        var vtype = vnode.type
 	        if (dtype !== vtype) {
+	            var steps = vnode.steps
+	            delete vnode.steps
 	            if (dom.nodeType === 1) {
 	                avalon.caches[vnode.nodeValue] = dom
 	                parent.replaceChild(avalon.vdomAdaptor(vnode, 'toDOM'), dom)
@@ -4501,7 +4504,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var keep = avalon.caches[s]
 	                if (keep) {
 	                    parent.replaceChild(keep, dom)
-	                    patch([keep], [vnode], null, {count:Infinity })
+	                    patch([keep], [vnode], null, steps)
 	                } else {
 	                    var el = avalon.vdomAdaptor(vnode, 'toDOM')
 	                    parent.replaceChild(el, dom)
@@ -7556,7 +7559,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 100 */
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</ms-panel>"
+	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
 
 /***/ }
 /******/ ])

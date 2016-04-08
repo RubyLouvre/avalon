@@ -2201,6 +2201,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var list = cur.change || (cur.change = [])
 	            if(avalon.Array.ensure(list, this.update)){
 	               steps.count += 1
+	               cur.steps = steps
 	            }
 	        }
 	    },
@@ -2208,6 +2209,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var dtype = dom.nodeName.toLowerCase()
 	        var vtype = vnode.type
 	        if (dtype !== vtype) {
+	            var steps = vnode.steps
+	            delete vnode.steps
 	            if (dom.nodeType === 1) {
 	                avalon.caches[vnode.nodeValue] = dom
 	                parent.replaceChild(avalon.vdomAdaptor(vnode, 'toDOM'), dom)
@@ -2216,7 +2219,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var keep = avalon.caches[s]
 	                if (keep) {
 	                    parent.replaceChild(keep, dom)
-	                    patch([keep], [vnode], null, {count:Infinity })
+	                    patch([keep], [vnode], null, steps)
 	                } else {
 	                    var el = avalon.vdomAdaptor(vnode, 'toDOM')
 	                    parent.replaceChild(el, dom)
