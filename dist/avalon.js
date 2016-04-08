@@ -1557,7 +1557,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (var i in this.props) {
 	            var val = this.props[i]
 	            if (skipFalseAndFunction(val)) {
-	                dom.setAttribute(i, val + '')
+	                if(i === "class" && avalon.msie < 8){
+	                    dom.className = val +''
+	                }else{
+	                    dom.setAttribute(i, val + '')
+	                }
 	            }
 	        }
 	        if (this.skipContent) {
@@ -2718,7 +2722,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function collectHandlers(elem, type, handlers) {
 	    var value = elem.getAttribute('avalon-events')
 	    if (value && (elem.disabled !== true || type !== 'click')) {
-	        var uuids = [], isBreak
+	        var uuids = []
 	        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type+'\\:([^?\s]+)','g'))
 	        value.replace(reg, function(a, b){
 	            uuids.push(b)
@@ -3595,6 +3599,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    update: function (node, vnode) {
+	        if(node.nodeType !== 1){
+	            return
+	        }
 	        if (node.querySelectorAll) {
 	            var nodes = node.querySelectorAll('[avalon-events]')
 	            avalon.each(nodes, function (el) {
@@ -3602,8 +3609,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            })
 	        } else {
 	            var nodes = node.getElementsByTagName('*')
+	            //IE6-7这样取所有子孙节点会混入注释节点
 	            avalon.each(nodes, function (el) {
-	                if (el.getAttribute('avalon-events')) {
+	                if (el.nodeType === 1 && el.getAttribute('avalon-events')) {
 	                    avalon.unbind(el)
 	                }
 	            })
@@ -3614,7 +3622,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        vnode.children.forEach(function (c) {
 	            fragment.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
 	        })
-
 	        node.appendChild(fragment)
 	    }
 	})
@@ -4473,7 +4480,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var patch = __webpack_require__(56)
-
+	var uniqueID = 1
 	avalon.directive('if', {
 	    priority: 5,
 	    parse: function (binding, num) {
@@ -4503,19 +4510,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    delete avalon.caches[e]
 	                }
 	                parent.replaceChild(element, node)
-	                patch([element], [vnode], null, steps)
+	             //   if( steps.count -1 > 0) {
+	                    patch([element], [vnode], null, {count: 20000})
+	             //   }
 	            } else if (vnode.nodeType === 8) {
 	                //要移除元素节点,在对应位置上插入注释节点
-	                var comment = document.createComment(vnode.signature)
-	                comment.uniqueID = comment.uniqueID || ++cid
+	                var comment = node._av_if_ ||  document.createComment(vnode.signature)
+	                node._av_if_ = comment
+	                //IE6-8,不能为注释节点添加任何自定义属性,幸好其有一个uniqueID标识的唯一性
+	                var uid = comment.uniqueID || (comment.uniqueID || ++uniqueID)
 	                parent.replaceChild(comment, node)
-	                avalon.caches[comment.uniqueID] = node
+	                avalon.caches[uid] = node
 	            }
 	        }
 	    }
 	})
 
-	var cid = 1
+
 
 /***/ },
 /* 56 */
