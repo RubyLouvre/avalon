@@ -2208,7 +2208,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var list = cur.change || (cur.change = [])
 	            if (avalon.Array.ensure(list, this.update)) {
 	                steps.count += 1
-	                cur.steps = steps
 	            }
 	        }
 	    },
@@ -2216,7 +2215,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var dtype = node.nodeType
 	        var vtype = vnode.type
 	        if (dtype !== vtype) {
-	            var steps = vnode.steps
 	            if (vnode.nodeType === 1) {
 	                //要插入元素节点,将原位置上的注释节点移除并cache
 	                var e = node.uniqueID
@@ -2227,9 +2225,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    delete avalon.caches[e]
 	                }
 	                parent.replaceChild(element, node)
-	             //   if( steps.count -1 > 0) {
-	                    patch([element], [vnode], null, {count: 20000})
-	             //   }
 	            } else if (vnode.nodeType === 8) {
 	                //要移除元素节点,在对应位置上插入注释节点
 	                var comment = node._av_if_ ||  document.createComment(vnode.signature)

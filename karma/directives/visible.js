@@ -34,9 +34,9 @@ describe('visible', function () {
         var td = div.getElementsByTagName('td')[0]
 
         expect(c[0].style.display).to.equal('inline-block')
-        expect(c[1].style.display).to.equal('table')
-        expect(tr.style.display).to.equal('table-row')
-        expect(td.style.display).to.equal('table-cell')
+        expect(c[1].style.display).to.equal('')
+        expect(tr.style.display).to.equal('')
+        expect(td.style.display).to.equal('')
         vm.a = false
         setTimeout(function () {
             expect(c[0].style.display).to.equal('none')
@@ -46,9 +46,9 @@ describe('visible', function () {
             vm.a = true
             setTimeout(function () {
                 expect(c[0].style.display).to.equal('inline-block')
-                expect(c[1].style.display).to.equal('table')
-                expect(tr.style.display).to.equal('table-row')
-                expect(td.style.display).to.equal('table-cell')
+                expect(c[1].style.display).to.equal('')
+                expect(tr.style.display).to.equal('')
+                expect(td.style.display).to.equal('')
                 done()
             })
         })
