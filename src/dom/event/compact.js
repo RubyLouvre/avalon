@@ -93,7 +93,7 @@ var typeRegExp = {}
 function collectHandlers(elem, type, handlers) {
     var value = elem.getAttribute('avalon-events')
     if (value && (elem.disabled !== true || type !== 'click')) {
-        var uuids = [], isBreak
+        var uuids = []
         var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type+'\\:([^?\s]+)','g'))
         value.replace(reg, function(a, b){
             uuids.push(b)
