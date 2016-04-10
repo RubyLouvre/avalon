@@ -210,6 +210,14 @@ var dir = avalon.directive('for', {
             insertPoint = cnodes[cnodes.length - 1]
         }
         dir.updateContent(startRepeat, vnode)
+        if(typeof vnode.callback === 'function'){
+            vnode.callback({
+                type: "rendered",
+                target: startRepeat,
+                endRepeat: endRepeat,
+                signature: vnode.signature
+            })
+        }
         return false
     }
 

@@ -9,7 +9,10 @@
             var vm = avalon.define({
                 $id: 'for3',
                 header: ['name','age','sex'],
-                list: []
+                list: [],
+                callback: function(e){
+                    console.log(e)
+                }
             })
             var sexMap = {
                 true: "男",
@@ -27,7 +30,7 @@
                 }
                 return ret
             }
-           setInterval(function(){
+           setTimeout(function(){
                 var t1 = Date.now();
                 vm.list = genData(100)
                 console.log('total ' + (Date.now() - t1) + ' ms');
@@ -38,7 +41,7 @@
 
         <div ms-controller='for3' >
             <table border="1">
-                <tr><th ms-for='el in @header'>{{el}}</th></tr>
+                <tr><th ms-for='el in @header' data-for-rendered='@callback'>{{el}}</th></tr>
                <tr ms-for='tr in @list'>
                     <td ms-for='td in tr | selectBy(["name","age","sex"])' ms-attr="{align:td === 'age' ?'left':'right'}">{{td}}</td>
                 </tr>

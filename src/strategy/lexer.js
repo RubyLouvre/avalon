@@ -250,7 +250,8 @@ function modifyProps(node, innerHTML, nodes, curDeep, maxDeep) {
                 nodeType: 8,
                 type: '#comment',
                 nodeValue: 'ms-for:' + forExpr,
-                signature: makeHashCode('for')
+                signature: makeHashCode('for'),
+                callback: node.props['data-for-rendered']
             })
             delete node.props['ms-for']
             nodes.push(node)

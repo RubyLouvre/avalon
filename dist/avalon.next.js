@@ -62,7 +62,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(89)
 	__webpack_require__(63)
 	__webpack_require__(71)
-	__webpack_require__(98)
+	__webpack_require__(97)
 
 
 	module.exports = avalon
@@ -2546,6 +2546,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            insertPoint = cnodes[cnodes.length - 1]
 	        }
 	        dir.updateContent(startRepeat, vnode)
+	        if(typeof vnode.callback === 'function'){
+	            vnode.callback({
+	                type: "rendered",
+	                target: startRepeat,
+	                endRepeat: endRepeat,
+	                signature: vnode.signature
+	            })
+	        }
 	        return false
 	    }
 
@@ -3494,7 +3502,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                nodeType: 8,
 	                type: '#comment',
 	                nodeValue: 'ms-for:' + forExpr,
-	                signature: makeHashCode('for')
+	                signature: makeHashCode('for'),
+	                callback: node.props['data-for-rendered']
 	            })
 	            delete node.props['ms-for']
 	            nodes.push(node)
@@ -3798,6 +3807,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        '\n}\n'
 	                str += children + '.push(' + signature + ')\n'
 	                str += avalon.directives['for'].parse(nodeValue, num)
+	                if(el.callback){
+	                    str += signature+'.callback = '+
+	                            avalon.parseExpr(el.callback, 'on')
+	                            +'.bind(__vmodel__); \n' 
+	                }
 
 	            } else if (nodeValue.indexOf('ms-for-end:') === 0) {
 	                var signature = forstack[forstack.length - 1]
@@ -6318,8 +6332,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 95 */,
 /* 96 */,
-/* 97 */,
-/* 98 */
+/* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
