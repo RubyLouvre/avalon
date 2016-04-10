@@ -70,9 +70,7 @@ function parseView(arr, num) {
                 str += children + '.push(' + signature + ')\n'
                 str += avalon.directives['for'].parse(nodeValue, num)
                 if(el.callback){
-                    str += signature+'.callback = '+
-                            avalon.parseExpr(el.callback, 'on')
-                            +'.bind(__vmodel__); \n' 
+                    str += signature+ el.callback
                 }
 
             } else if (nodeValue.indexOf('ms-for-end:') === 0) {

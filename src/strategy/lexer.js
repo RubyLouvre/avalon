@@ -47,9 +47,9 @@ function fill(a) {
 }
 var rhasString = /=["']/
 var rlineSp = /\n\s*/g
-function fixLongAttrValue(attr){
-    return rhasString.test(attr) ? 
-     attr.replace(rlineSp,'').replace(rstring, dig): attr
+function fixLongAttrValue(attr) {
+    return rhasString.test(attr) ?
+            attr.replace(rlineSp, '').replace(rstring, dig) : attr
 }
 function lexer(text, curDeep, maxDeep) {
     var nodes = []
@@ -234,7 +234,7 @@ function modifyProps(node, innerHTML, nodes, curDeep, maxDeep) {
                 node.children.push(new VText(trimHTML(node.template)))
                 break
             default:
-                
+
                 if (!node.isVoidTag) {
                     var childs = lexer(innerHTML, curDeep, maxDeep)
                     node.children = childs
@@ -250,9 +250,16 @@ function modifyProps(node, innerHTML, nodes, curDeep, maxDeep) {
                 nodeType: 8,
                 type: '#comment',
                 nodeValue: 'ms-for:' + forExpr,
-                signature: makeHashCode('for'),
-                callback: node.props['data-for-rendered']
+                signature: makeHashCode('for')
             })
+            var callback = node.props['data-for-rendered']
+            if (callback) {
+                nodes[nodes.length - 1].callack = '.callback = ' +
+                        avalon.parseExpr(callback, 'on') +
+                        '.bind(__vmodel__);\n'
+            }
+
+
             delete node.props['ms-for']
             nodes.push(node)
             node = {

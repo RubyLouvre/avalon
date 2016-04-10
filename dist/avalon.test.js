@@ -5584,9 +5584,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	var rhasString = /=["']/
 	var rlineSp = /\n\s*/g
-	function fixLongAttrValue(attr){
-	    return rhasString.test(attr) ? 
-	     attr.replace(rlineSp,'').replace(rstring, dig): attr
+	function fixLongAttrValue(attr) {
+	    return rhasString.test(attr) ?
+	            attr.replace(rlineSp, '').replace(rstring, dig) : attr
 	}
 	function lexer(text, curDeep, maxDeep) {
 	    var nodes = []
@@ -5771,7 +5771,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                node.children.push(new VText(trimHTML(node.template)))
 	                break
 	            default:
-	                
+
 	                if (!node.isVoidTag) {
 	                    var childs = lexer(innerHTML, curDeep, maxDeep)
 	                    node.children = childs
@@ -5787,9 +5787,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	                nodeType: 8,
 	                type: '#comment',
 	                nodeValue: 'ms-for:' + forExpr,
-	                signature: makeHashCode('for'),
-	                callback: node.props['data-for-rendered']
+	                signature: makeHashCode('for')
 	            })
+	            var callback = node.props['data-for-rendered']
+	            if (callback) {
+	                nodes[nodes.length - 1].callack = '.callback = ' +
+	                        avalon.parseExpr(callback, 'on') +
+	                        '.bind(__vmodel__);\n'
+	            }
+
+
 	            delete node.props['ms-for']
 	            nodes.push(node)
 	            node = {
@@ -6093,9 +6100,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                str += children + '.push(' + signature + ')\n'
 	                str += avalon.directives['for'].parse(nodeValue, num)
 	                if(el.callback){
-	                    str += signature+'.callback = '+
-	                            avalon.parseExpr(el.callback, 'on')
-	                            +'.bind(__vmodel__); \n' 
+	                    str += signature+ el.callback
 	                }
 
 	            } else if (nodeValue.indexOf('ms-for-end:') === 0) {
