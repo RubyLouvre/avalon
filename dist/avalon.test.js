@@ -65,8 +65,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(71)
 	__webpack_require__(72)
 
-	__webpack_require__(98)
 	__webpack_require__(99)
+	__webpack_require__(100)
 	module.exports = avalon
 
 
@@ -4646,7 +4646,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rforAs = /\s+as\s+([$\w]+)/
 	var rident = __webpack_require__(44).ident
 	var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
-	avalon.directive('for', {
+	var dir = avalon.directive('for', {
 	    parse: function (str, num) {
 	        var aliasAs
 	        str = str.replace(rforAs, function (a, b) {
@@ -4673,13 +4673,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var pre = previous[__index__] || {}
 
 	        var isInit = !('directive' in pre)
-	        var isChange = false, i, c, p
+	        var orderChange = false, i, c, p
+	        var innerChange = 0
 	        if (isInit) {
 	            pre.components = []
 	            pre.repeatCount = 0
 	        }
-	      //  if (!('repeatCount' in pre)) {
-	         if(!pre.components){
+	        if (!pre.components) {
 	            var range = getRepeatRange(previous, __index__)//所有节点包括前后锚点
 	            pre.components = getComponents(range.slice(1, -1), pre.signature)
 	            pre.repeatCount = range.length - 2
@@ -4715,20 +4715,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	                c = isInCache(cache, p.key)
 	                if (c) {
 	                    quota--
-	                    if (!isChange) {//如果位置发生了变化
-	                        isChange = c.index !== p.index
+	                    if (!orderChange) {//如果位置发生了变化
+	                        orderChange = c.index !== p.index
 	                    }
 	                    c.nodes = p.nodes
-	                    avalon.diff(c.children, p.children, steps)
+	                    avalon.diff(c.children, p.children, c.steps)
+	                    innerChange += c.steps.count
 	                } else {
 	                    if (quota) {
 	                        c = fuzzyMatchCache(cache, p.key)
 	                        quota--
-	                        isChange = true //内容发生变化
+	                        orderChange = true //内容发生变化
 	                        c.nodes = p.nodes
-	                        avalon.diff(c.children, p.children, steps)
+	                        avalon.diff(c.children, p.children, c.steps)
+	                        innerChange += c.steps.count
 	                    } else {
-	                        isChange = true
+	                        orderChange = true
 	                        cur.hasRemove = true
 	                        cur.removedComponents[p.index] = p
 	                    }
@@ -4737,28 +4739,43 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            //这是新添加的元素
 	            for (i in cache) {
-	                isChange = true
+	                orderChange = true
 	                c = cache[i]
-	                avalon.diff(c.children, [], steps)
+	                avalon.diff(c.children, [], c.steps)
+	                innerChange += c.steps.count
 	            }
 
 	        } else {
 	            /* eslint-disable no-cond-assign */
 	            for (i = 0; c = cur.components[i++]; ) {
 	                /* eslint-enable no-cond-assign */
-	                avalon.diff(c.children, [], steps)
+	                avalon.diff(c.children, [], c.steps)
+	                innerChange += c.steps.count
 	            }
-	            isChange = true
+	            orderChange = true
 	        }
 	        pre.components.length = 0 //release memory
-	        if (isChange) {
+	        if (orderChange) {
 	            var list = cur.change || (cur.change = [])
 	            avalon.Array.ensure(list, this.update)
-	            steps.count = Infinity
+	            steps.count += 1
+	        } else if (innerChange) {
+	            var list = cur.change || (cur.change = [])
+	            avalon.Array.ensure(list, this.updateContent)
+	            steps.count += 1
 	        }
-
 	        return __index__ + nodes.length - 1
 
+	    },
+	    updateContent: function (startRepeat, vnode) {
+	        var vnodes = []
+	        vnode.components.forEach(function (c) {
+	            if (c.steps.count) {
+	                patch(c.nodes, c.children, 0, c.steps)
+	            }
+	            vnodes.push.apply(vnodes, c.children)
+	        })
+	        vnode.repeatCount = vnodes.length
 	    },
 	    update: function (startRepeat, vnode, parent) {
 
@@ -4813,13 +4830,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            insertPoint = cnodes[cnodes.length - 1]
 	        }
-	        var entity = [], vnodes = []
-	        vnode.components.forEach(function (c) {
-	            entity.push.apply(entity, c.nodes)
-	            vnodes.push.apply(vnodes, c.children)
-	        })
-	        vnode.repeatCount = vnodes.length
-	        patch(entity, vnodes, parent, {count:Infinity })
+	        dir.updateContent(startRepeat, vnode)
 	        return false
 	    }
 
@@ -4865,6 +4876,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function getComponents(nodes, signature) {
 	    var components = []
 	    var com = {
+	        steps: {count: 0},
 	        children: []
 	    }
 	    for (var i = 0, el; el = nodes[i]; i++) {
@@ -4874,6 +4886,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            com.index = components.length
 	            components.push(com)
 	            com = {
+	                steps: {count: 0},
 	                children: []
 	            }
 	        } else {
@@ -4902,12 +4915,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	function isInCache(cache, id) {
 	    var c = cache[id], cid = id
 	    if (c) {
-	        var ctack = cache["***"+id]
-	        if(ctack){
+	        var ctack = cache["***" + id]
+	        if (ctack) {
 	            var a = ctack.pop()
 	            delete cache[a.id]
-	            if(ctack.length ==0)
-	                delete cache["***"+id]
+	            if (ctack.length == 0)
+	                delete cache["***" + id]
 	            return a.c
 	        }
 	        var stack = [{id: id, c: c}]
@@ -4924,8 +4937,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        var a = stack.pop()
 	        delete cache[a.id]
-	        if(stack.length){
-	            cache['***'+cid] = stack
+	        if (stack.length) {
+	            cache['***' + cid] = stack
 	        }
 	        return a.c
 	    }
@@ -7534,7 +7547,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 95 */,
 /* 96 */,
 /* 97 */,
-/* 98 */
+/* 98 */,
+/* 99 */
 /***/ function(module, exports) {
 
 	//var avalon = require('avalon')
@@ -7548,11 +7562,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 99 */
+/* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var button = __webpack_require__(98)
-	var tmpl = __webpack_require__(100)
+	var button = __webpack_require__(99)
+	var tmpl = __webpack_require__(101)
 
 	avalon.component('ms-panel', {
 	    template: tmpl,
@@ -7566,7 +7580,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 100 */
+/* 101 */
 /***/ function(module, exports) {
 
 	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"

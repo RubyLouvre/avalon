@@ -1,36 +1,48 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
     <head>
-        <title>ms-if</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="./dist/avalon.js" ></script>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="./dist/avalon.js"></script>
         <script>
-            var vmodel = avalon.define({
-                $id: "test",
-                object: {}
+            var vm = avalon.define({
+                $id: 'for3',
+                header: ['name','age','sex'],
+                list: []
             })
-
-            setTimeout(function() {
-                vmodel.object = {id: "132", message: "显示！！"}
-            }, 3000)
-
-            setTimeout(function() {
-                vmodel.object = {}
-            }, 5000)
-
+            var sexMap = {
+                true: "男",
+                false: "女"
+            }
+            function genData(n){
+                var ret = []
+                for(var i =0 ; i< n; i++){
+                    ret.push({
+                        name: Math.random(), 
+                        age: 3+ Math.ceil((Math.random() *30)),
+                        sex: sexMap[1-Math.random() > 0.5],
+                        desc: Math.random()
+                    })
+                }
+                return ret
+            }
+           setInterval(function(){
+                var t1 = Date.now();
+                vm.list = genData(100)
+                console.log('total ' + (Date.now() - t1) + ' ms');
+            }, 70);
         </script>
     </head>
     <body>
-        <div ms-controller="test" >
-            这是比较输出结果:{{@object.id != null}}
-            <div ms-visible="@object.id != null">
-                这是visible的:
-                <span>{{@object.message}}</span>
-            </div>
-            <div ms-if="@object.id != null">
-                这是if的:
-                <span>{{@object.message}}</span>
-            </div>
+
+        <div ms-controller='for3' >
+            <table border="1">
+                <tr><th ms-for='el in @header'>{{el}}</th></tr>
+               <tr ms-for='tr in @list'>
+                    <td ms-for='td in tr | selectBy(["name","age","sex"])' ms-attr="{align:td === 'age' ?'left':'right'}">{{td}}</td>
+                </tr>
+            </table>
         </div>
     </body>
 </html>
