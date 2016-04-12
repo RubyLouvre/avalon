@@ -4982,6 +4982,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var skipArray = __webpack_require__(59)
 	var disposeDetectStrategy = __webpack_require__(60)
+	var patch = __webpack_require__(56)
 
 	//插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
 
@@ -5033,6 +5034,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            steps.count += 1
 	        } else if (!pre.props.resolved) {
 	            avalon.diff(cur.children, pre.children, steps)
+	            cur.steps = steps
 	            cur.change = [this.replaceByComponent]
 	            cur.afterChange = [
 	                function (dom, vnode) {
@@ -5098,6 +5100,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else {
 	            parent.appendChild(com)
 	        }
+	        patch([com],[node], parent, node.steps)
 	        if(!hasDetect){
 	           dir.addDisposeMonitor(com)
 	        }

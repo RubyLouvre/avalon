@@ -113,12 +113,12 @@ describe('widget', function () {
             }
         })
         avalon.scan(div)
-        function getDiv(el){
-            if(el.querySelector){
+        function getDiv(el) {
+            if (el.querySelector) {
                 return el.querySelector('.body')
-            }else{
+            } else {
                 return el.getElementsByTagName('div')[0].
-                    getElementsByTagName('div')[0]
+                        getElementsByTagName('div')[0]
             }
         }
         setTimeout(function () {
@@ -142,5 +142,44 @@ describe('widget', function () {
             }, 300)
         }, 300)
     }, 100)
+
+    it('确保都被扫描', function () {
+        div.innerHTML = heredoc(function () {
+            /*
+             <form ms-controller='widget3'>
+             <div ms-attr="{title:@option.text}">{{@option.text}}</div>
+             <ms-section ms-widget="@option"></ms-section>
+             </form>
+             */
+        })
+        vm = avalon.define({
+            $id: 'widget3',
+            option: {
+                text: 'test'
+            }
+        });
+
+        avalon.component('ms-section', {
+            template: '<ms-section><blockquote ms-attr="{title:@text}">{{@text}}</blockquote></ms-section>',
+            defaults: {
+                text: 'default'
+            }
+        })
+        avalon.scan(div, vm)
+        setTimeout(function () {
+            var div1 = div.getElementsByTagName('div')
+            expect(div1[0].innerHTML).to.equal('test')
+            var blockquote1 = div.getElementsByTagName('blockquote')
+            expect(blockquote1[0].innerHTML).to.equal('test')
+            expect(blockquote1[0].title).to.equal('test')
+            vm.option.text = 999
+            setTimeout(function () {
+                expect(div1[0].innerHTML).to.equal('999')
+                expect(blockquote1[0].innerHTML).to.equal('999')
+                expect(blockquote1[0].title).to.equal('999')
+                done()
+            })
+        })
+    })
 
 })

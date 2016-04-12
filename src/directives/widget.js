@@ -1,6 +1,7 @@
 
 var skipArray = require('../vmodel/parts/skipArray')
 var disposeDetectStrategy = require('../component/disposeDetectStrategy')
+var patch = require('../strategy/patch')
 
 //插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
 
@@ -52,6 +53,7 @@ var dir = avalon.directive('widget', {
             steps.count += 1
         } else if (!pre.props.resolved) {
             avalon.diff(cur.children, pre.children, steps)
+            cur.steps = steps
             cur.change = [this.replaceByComponent]
             cur.afterChange = [
                 function (dom, vnode) {
@@ -117,6 +119,7 @@ var dir = avalon.directive('widget', {
         } else {
             parent.appendChild(com)
         }
+        patch([com],[node], parent, node.steps)
         if(!hasDetect){
            dir.addDisposeMonitor(com)
         }
