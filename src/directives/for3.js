@@ -52,11 +52,11 @@ avalon.directive('for', {
 
         var isInit = !('directive' in pre)
         var isChange = false, i, c, p
-        if (isInit) {
+       if (isInit) {
             pre.components = []
             pre.repeatCount = 0
         }
-         if(!pre.components){
+        if (!pre.components) {
             var range = getRepeatRange(previous, __index__)//所有节点包括前后锚点
             pre.components = getComponents(range.slice(1, -1), pre.signature)
             pre.repeatCount = range.length - 2
@@ -66,6 +66,7 @@ avalon.directive('for', {
         cur.endRepeat = pre.endRepeat
         cur.components = getComponents(nodes.slice(1, -1), cur.signature)
         var n = Math.max(nodes.length - 2, 0) - pre.repeatCount
+
         if (n > 0) {
             var spliceArgs = [__index__, 0]
             for (var i = 0; i < n; i++) {
@@ -131,6 +132,7 @@ avalon.directive('for', {
         if (isChange) {
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
+            cur.steps = steps
             steps.count +=1
         }
 
@@ -196,7 +198,7 @@ avalon.directive('for', {
             vnodes.push.apply(vnodes, c.children)
         })
         vnode.repeatCount = vnodes.length
-        patch(entity, vnodes, parent, {count:1 })
+        patch(entity, vnodes, parent, vnode.steps)
         var cb = avalon.caches[vnode.cid]
         if (cb) {
             cb.call(vnode.vmodel, {

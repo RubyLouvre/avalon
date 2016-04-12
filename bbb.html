@@ -4,20 +4,32 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="./dist/avalon.js" ></script>
         <script>
-            var vm = avalon.define({
-                $id: "test",
-                array: ["aaa","bbb","ccc"]
-            })
-            setTimeout(function(){
-                 vm.array = ['ccc','dd1','dd2','dd3']
-            },3000)
-           
+           vm = avalon.define({
+            $id: 'for0',
+            array: [1, 2, 3, 4, 5],
+            object: {
+                a: 11,
+                b: 22,
+                c: 33,
+                d: 44,
+                e: 55
+            }
+        })
 
         </script>
     </head>
-    <body ms-controller="test">
-        <ul>
-            <li ms-for="($index, el) in @array">{{el}} --- {{$index}}</li>
-        </ul>
+    <body >
+         <div ms-controller='for0' >
+             <ul>
+             <li ms-for='($index, el) in @array | limitBy(4)'>{{$index}}::{{el}}</li>
+             </ul>
+             <ol><!--ms-js: var $index = 0; -->
+             <li ms-for='($key, $val) in @object'>{{$key}}::{{$val}}::{{$index++}}</li>
+             </ol>
+             <!--ms-for: ($index,el) in @array   -->
+             <!--ms-js: if($index > 3){ return }-->
+             <p>{{el}}</p>
+             <!--ms-for-end:-->
+             </div>
     </body>
 </html>

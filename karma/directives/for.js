@@ -162,7 +162,7 @@ describe('for', function () {
             })
         })
     })
-    
+
     it('添加新的对象元素', function (done) {
         div.innerHTML = heredoc(function () {
             /*
@@ -173,7 +173,7 @@ describe('for', function () {
         })
         vm = avalon.define({
             $id: 'for3',
-            array: [{a:1}]
+            array: [{a: 1}]
         })
         avalon.scan(div)
         setTimeout(function () {
@@ -181,12 +181,42 @@ describe('for', function () {
 
             expect(lis[0].innerHTML).to.equal('1')
 
-            vm.array = [{a:2},{a:3}]
+            vm.array = [{a: 2}, {a: 3}]
             setTimeout(function () {
 
                 expect(lis[0].innerHTML).to.equal('2')
                 expect(lis[1].innerHTML).to.equal('3')
                 done()
+            })
+        })
+    })
+
+    it('ms-if与ms-for并用', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <ul ms-controller='for4'>
+             <div class='panel' ms-for='(jj, el) in @panels' ms-if='jj === @curIndex' ms-html='el'></div>
+             </ul>
+             */
+        })
+        vm = avalon.define({
+            $id: 'for4',
+            curIndex: 0, //默认显示第一个
+            panels: ["<div>面板1</div>", "<p>面板2</p>", "<strong>面板3</strong>"]
+        })
+        avalon.scan(div, vm)
+        setTimeout(function () {
+            var ds = div.getElementsByTagName('div')
+            var prop = 'innerText' in div ? 'innerText' : 'textContent'
+            expect(ds[0][prop]).to.equal('面板1')
+            vm.curIndex = 1
+            setTimeout(function () {
+                expect(ds[0][prop]).to.equal('面板2')
+                vm.curIndex = 2
+                setTimeout(function () {
+                    expect(ds[0][prop]).to.equal('面板3')
+                    done()
+                })
             })
         })
     })
