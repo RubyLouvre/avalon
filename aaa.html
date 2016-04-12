@@ -1,59 +1,43 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
+        <title>ms-if</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="./dist/avalon.modern.js"></script>
-        <script>
+        <meta name="viewport" content="width=device-width">
+        <script src="./dist/avalon.js"></script>
+        <script >
             var vm = avalon.define({
-                $id: 'for3',
-                header: ['name','age','sex'],
-                list: [],
-                callback: function(e){
-                    console.log(e)
-                },
-                aaa:111,
-                bbb:false,
-                callback2: function(e){
-                    console.log(e)
-                }
+                $id: "test",
+                curIndex: 0, //默认显示第一个
+                buttons: ['aaa', 'bbb', 'ccc'],
+                panels: ["<div>面板1</div>", "<p>面板2</p>", "<strong>面板3</strong>"]
             })
-            var sexMap = {
-                true: "男",
-                false: "女"
-            }
-            function genData(n){
-                var ret = []
-                for(var i =0 ; i< n; i++){
-                    ret.push({
-                        name: Math.random(), 
-                        age: 3+ Math.ceil((Math.random() *30)),
-                        sex: sexMap[1-Math.random() > 0.5],
-                        desc: Math.random()
-                    })
-                }
-                return ret
-            }
-           setTimeout(function(){
-                var t1 = Date.now();
-                vm.list = genData(100)
-                console.log('total ' + (Date.now() - t1) + ' ms');
-            }, 70);
+
         </script>
+        <style>
+            button{
+                margin:1em 3em;
+            }
+            .panel div{
+                height:200px;
+                background: #a9ea00;
+            }
+            .panel p{
+                height:200px;
+                background: green;
+            }
+            .panel strong{
+                display:block;
+                width:100%;
+                height:200px;
+                background: #999;
+            }
+        </style>
     </head>
-    <body>
-
-        <div ms-controller='for3' >
-            <table border="1">
-                <tr><th ms-for='el in @header' data-for-rendered='@callback'>{{el}}</th></tr>
-               <tr ms-for='tr in @list'>
-                    <td ms-for='td in tr | selectBy(["name","age","sex"])' ms-attr="{align:td === 'age' ?'left':'right'}">{{td}}</td>
-                </tr>
-            </table>
-            <input ms-duplex="@aaa|change" data-duplex-changed="@callback2">
-             <input ms-duplex-checked="@bbb" type="radio" data-duplex-changed="@callback2">
-
+    <body ms-controller="test" >
+        <div>
+            <button ms-for='(i, el) in @buttons' ms-click='@curIndex = i'>{{el}}</button>
         </div>
+        <div class='panel' ms-for='(jj, el) in @panels' ms-if='jj === @curIndex' ms-html='el'></div>
     </body>
 </html>

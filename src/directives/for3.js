@@ -1,4 +1,3 @@
-
 var patch = require('../strategy/patch')
 var Cache = require('../seed/cache')
 
@@ -25,7 +24,7 @@ var rforSplit = /\s*,\s*/
 var rforAs = /\s+as\s+([$\w]+)/
 var rident = require('../seed/regexp').ident
 var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
-var dir = avalon.directive('for', {
+avalon.directive('for', {
     parse: function (el, num) {
         var str = el.nodeValue, aliasAs
         str = str.replace(rforAs, function (a, b) {
@@ -39,26 +38,25 @@ var dir = avalon.directive('for', {
         var arr = str.replace(rforPrefix, '').split(' in ')
         var assign = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
         var alias = aliasAs ? 'var ' + aliasAs + ' = loop' + num + '\n' : ''
+        //  var forValue = 'vnode' + num + '.forValue = loop' + num + '\n'
         var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
         if (kv.length === 1) {
             kv.unshift('$key')
         }
 
-        return  assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
+        return assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
     },
     diff: function (current, previous, steps, __index__) {
         var cur = current[__index__]
         var pre = previous[__index__] || {}
 
         var isInit = !('directive' in pre)
-        var orderChange = false, i, c, p
-        var innerChange = 0
-        var now = new Date
+        var isChange = false, i, c, p
         if (isInit) {
             pre.components = []
             pre.repeatCount = 0
         }
-        if (!pre.components) {
+         if(!pre.components){
             var range = getRepeatRange(previous, __index__)//所有节点包括前后锚点
             pre.components = getComponents(range.slice(1, -1), pre.signature)
             pre.repeatCount = range.length - 2
@@ -94,22 +92,20 @@ var dir = avalon.directive('for', {
                 c = isInCache(cache, p.key)
                 if (c) {
                     quota--
-                    if (!orderChange) {//如果位置发生了变化
-                        orderChange = c.index !== p.index
+                    if (!isChange) {//如果位置发生了变化
+                        isChange = c.index !== p.index
                     }
                     c.nodes = p.nodes
-                    avalon.diff(c.children, p.children, c.steps)
-                    innerChange += c.steps.count
+                    avalon.diff(c.children, p.children, steps)
                 } else {
                     if (quota) {
                         c = fuzzyMatchCache(cache, p.key)
                         quota--
-                        orderChange = true //内容发生变化
+                        isChange = true //内容发生变化
                         c.nodes = p.nodes
-                        avalon.diff(c.children, p.children, c.steps)
-                        innerChange += c.steps.count
+                        avalon.diff(c.children, p.children, steps)
                     } else {
-                        orderChange = true
+                        isChange = true
                         cur.hasRemove = true
                         cur.removedComponents[p.index] = p
                     }
@@ -118,48 +114,31 @@ var dir = avalon.directive('for', {
             }
             //这是新添加的元素
             for (i in cache) {
-                orderChange = true
+                isChange = true
                 c = cache[i]
-                avalon.diff(c.children, [], c.steps)
-                innerChange += c.steps.count
+                avalon.diff(c.children, [], steps)
             }
 
         } else {
             /* eslint-disable no-cond-assign */
             for (i = 0; c = cur.components[i++]; ) {
                 /* eslint-enable no-cond-assign */
-                avalon.diff(c.children, [], c.steps)
-                innerChange += c.steps.count
+                avalon.diff(c.children, [], steps)
             }
-            orderChange = true
+            isChange = true
         }
         pre.components.length = 0 //release memory
-        if (orderChange) {
+        if (isChange) {
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
-            steps.count += 1
-        } else if (innerChange) {
-            var list = cur.change || (cur.change = [])
-            var me = this
-            avalon.Array.ensure(list, function(a,b,c,d){
-                me.updateContent(a, b,c,d)
-            })
-            steps.count += 1
+            steps.count +=1
         }
+
         return __index__ + nodes.length - 1
 
     },
-    updateContent: function (startRepeat, vnode, parent) {
-        var vnodes = []
-        vnode.components.forEach(function (c) {
-            if (c.steps.count) {
-                patch(c.nodes, c.children, parent, c.steps)
-            }
-            vnodes.push.apply(vnodes, c.children)
-        })
-        vnode.repeatCount = vnodes.length
-    },
     update: function (startRepeat, vnode, parent) {
+
         var action = vnode.action
         var endRepeat = vnode.endRepeat
 
@@ -211,8 +190,13 @@ var dir = avalon.directive('for', {
             }
             insertPoint = cnodes[cnodes.length - 1]
         }
-        
-        dir.updateContent(startRepeat, vnode, parent)
+        var entity = [], vnodes = []
+        vnode.components.forEach(function (c) {
+            entity.push.apply(entity, c.nodes)
+            vnodes.push.apply(vnodes, c.children)
+        })
+        vnode.repeatCount = vnodes.length
+        patch(entity, vnodes, parent, {count:1 })
         var cb = avalon.caches[vnode.cid]
         if (cb) {
             cb.call(vnode.vmodel, {
@@ -267,7 +251,6 @@ function componentToDom(com, fragment, cur) {
 function getComponents(nodes, signature) {
     var components = []
     var com = {
-        steps: {count: 0},
         children: []
     }
     for (var i = 0, el; el = nodes[i]; i++) {
@@ -277,7 +260,6 @@ function getComponents(nodes, signature) {
             com.index = components.length
             components.push(com)
             com = {
-                steps: {count: 0},
                 children: []
             }
         } else {
@@ -306,12 +288,12 @@ function fuzzyMatchCache(cache, id) {
 function isInCache(cache, id) {
     var c = cache[id], cid = id
     if (c) {
-        var ctack = cache["***" + id]
-        if (ctack) {
+        var ctack = cache["***"+id]
+        if(ctack){
             var a = ctack.pop()
             delete cache[a.id]
-            if (ctack.length == 0)
-                delete cache["***" + id]
+            if(ctack.length ==0)
+                delete cache["***"+id]
             return a.c
         }
         var stack = [{id: id, c: c}]
@@ -328,8 +310,8 @@ function isInCache(cache, id) {
         }
         var a = stack.pop()
         delete cache[a.id]
-        if (stack.length) {
-            cache['***' + cid] = stack
+        if(stack.length){
+            cache['***'+cid] = stack
         }
         return a.c
     }

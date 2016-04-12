@@ -6,6 +6,7 @@ avalon.directive('if', {
         return 'vnode' + num + '.props["ms-if"] = ' + avalon.quote(binding.expr) + ';\n'
     },
     diff: function (cur, pre, steps) {
+        cur.dom = pre.dom
         if (cur.type !== pre.type) {
             var list = cur.change || (cur.change = [])
             if (avalon.Array.ensure(list, this.update)) {
@@ -15,26 +16,21 @@ avalon.directive('if', {
     },
     update: function (node, vnode, parent) {
         var dtype = node.nodeType
-        var vtype = vnode.type
+        var vtype = vnode.nodeType
         if (dtype !== vtype) {
-            if (vnode.nodeType === 1) {
+            if (vtype === 1) {
                 //要插入元素节点,将原位置上的注释节点移除并cache
-                var e = node.uniqueID
-                var element = avalon.caches[e]
+                var element = vnode.dom//avalon.caches[e]
                 if (!element) {
                     element = avalon.vdomAdaptor(vnode, 'toDOM')
-                } else {
-                    delete avalon.caches[e]
+                    vnode.dom = element
                 }
                 parent.replaceChild(element, node)
-            } else if (vnode.nodeType === 8) {
+            } else if (vtype === 8) {
                 //要移除元素节点,在对应位置上插入注释节点
-                var comment = node._av_if_ ||  document.createComment(vnode.signature)
-                node._av_if_ = comment
-                //IE6-8,不能为注释节点添加任何自定义属性,幸好其有一个uniqueID标识的唯一性
-                var uid = comment.uniqueID || (comment.uniqueID || ++uniqueID)
+                var comment = node._av_if_ ||
+                        (node._av_if_ = document.createComment(vnode.signature))
                 parent.replaceChild(comment, node)
-                avalon.caches[uid] = node
             }
         }
     }

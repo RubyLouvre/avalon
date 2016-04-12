@@ -13,7 +13,7 @@ require('./on')
 require('./duplex/modern')
 //处理逻辑
 require('./if')
-require('./for')
+require('./for3')
 
 require('./widget')
 require('./effect')
