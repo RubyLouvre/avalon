@@ -68,8 +68,8 @@ avalon.directive('for', {
         var n = Math.max(nodes.length - 2, 0) - pre.repeatCount
 
         if (n > 0) {
-            var spliceArgs = [__index__, 0]
-            for (var i = 0; i < n; i++) {
+            var spliceArgs = [__index__ + 1, 0]
+            for (var i = 0, n = n - 1; i < n; i++) {
                 spliceArgs.push(null)
             }
             previous.splice.apply(previous, spliceArgs)
@@ -136,7 +136,7 @@ avalon.directive('for', {
             steps.count +=1
         }
 
-        return __index__ + nodes.length - 1
+        return __index__ + nodes.length -1
 
     },
     update: function (startRepeat, vnode, parent) {

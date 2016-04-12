@@ -21,7 +21,6 @@ function parseBindings(props, num, elem) {
             var type = match[1]
             var param = match[2] || ''
             var name = i
-
             if (eventMap[type]) {
                 var order = parseFloat(param) || 0
                 param = type
@@ -41,6 +40,7 @@ function parseBindings(props, num, elem) {
                     priority: directives[type].priority || type.charCodeAt(0) * 100
                 }
                 if (type === 'on') {
+                    order = order || 0
                     binding.name += '-' + order
                     binding.priority += param.charCodeAt(0) * 100 + order
                 }

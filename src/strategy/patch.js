@@ -21,7 +21,6 @@ function patch(nodes, vnodes, parent, steps) {
             next = node.nextSibling
 
         if (vnode.directive === 'for' && vnode.change) {
-
             if (node.nodeType === 1) {
                 var startRepeat = document.createComment(vnode.nodeValue)
                 parent.insertBefore(startRepeat, node)
@@ -38,6 +37,9 @@ function patch(nodes, vnodes, parent, steps) {
 
         //ms-repeat,ms-if, ms-widget会返回false
         if (false === execHooks(node, vnode, parent, steps, 'change')) {
+            if(vnode.repeatCount){
+                i += vnode.repeatCount + 1 //修正索引值
+            }
             execHooks(node, vnode, parent, steps, 'afterChange')
             continue
         }

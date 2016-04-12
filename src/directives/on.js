@@ -19,6 +19,7 @@ avalon.directive('on', {
         })
         var vmDefine = 'vnode' + num + '.onVm = __vmodel__\n'
         var pid = quote(binding.name)
+       
         if (canCache) {
             var fn = Function('return ' + avalon.parseExpr(binding, 'on'))()
             var uuid = markID(fn)
@@ -31,8 +32,9 @@ avalon.directive('on', {
         }
     },
     diff: function (cur, pre, steps, name) {
+      
         var fn0 = cur.props[name]
-        var fn1 = pre.props[name]
+        var fn1 = (pre.props || {})[name]
         
         if (fn0 !== fn1) {
             var match = name.match(revent)
@@ -54,6 +56,8 @@ avalon.directive('on', {
         }
     },
     update: function (node, vnode) {
+        if(!node) //在循环绑定中，这里为null
+          return
         var key, type, listener
         node.__av_context__ = vnode.onVm
         delete vnode.onVm
