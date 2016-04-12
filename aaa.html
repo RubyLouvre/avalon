@@ -1,30 +1,52 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
     <head>
-        <title>Demo</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="./dist/avalon.js"></script>
+        <title>ms-on</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="./dist/avalon.js" ></script>
         <script>
             var vm = avalon.define({
-                $id: 'demo',
-                option: {
-                    text: 'test'
+                $id: "test",
+                firstName: "司徒",
+                array: ["aaa", "bbb", "ccc"],
+                argsClick: function(e, a, b) {
+                    alert([].slice.call(arguments).join(" "))
+                },
+                loopClick: function(a, e) {
+                    alert(a + "  " + e.type)
+                },
+                status: "",
+                callback: function(e) {
+                    vm.status = e.type
+                },
+                field: "",
+                check: function(e) {
+                    vm.field = e.target.value + "  " + e.type
+                },
+                submit: function() {
+                    var data = vm.$model
+                    if (window.JSON) {
+                        setTimeout(function() {
+                            alert(JSON.stringify(data))
+                        })
+                    }
                 }
-            });
+            })
 
-            avalon.component('ms-section', {
-                template: '<ms-section><div ms-attr="{title:@text}">{{@text}}</div></ms-section>',
-                defaults: {
-                    text: 'default'
-                }
-            });
         </script>
     </head>
     <body>
-        <div ms-controller='demo'>
-            <div ms-attr="{title:@option.text}">{{@option.text}}</div>
-            <ms-section ms-widget="@option"></ms-section>
-        </div>
+        <fieldset ms-controller="test">
+            <legend>有关事件回调传参</legend>
+            <div ms-mouseenter="@callback" ms-mouseleave="@callback">{{@status}}<br/>
+                <input ms-on-input="@check"/>{{@field}}
+            </div>
+            <div ms-click="@argsClick($event, 100, @firstName)">点我</div>
+            <div ms-for="el in @array" >
+                <p ms-click="@loopClick(el, $event)">{{el}}</p>
+            </div>
+            <button ms-click="@submit" type="button">点我</button>
+        </fieldset>
     </body>
 </html>
