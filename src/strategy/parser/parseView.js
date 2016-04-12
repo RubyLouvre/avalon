@@ -58,24 +58,23 @@ function parseView(arr, num) {
             if (nodeValue.indexOf('ms-for:') === 0) {// 处理ms-for指令
                 var signature = el.signature
                 forstack.push(signature)
-                str += '\nvar ' + signature + '= {' +
+                str += '\nvar ' + signature + ' = {' +
                         '\n\tnodeType:8,' +
                         '\n\ttype:"#comment",' +
+                        '\n\tvmodel:__vmodel__,' +
                         '\n\tdirective:"for",' +
                         '\n\tskipContent:false,' +
+                        '\n\tcid:' + quote(el.cid) + ',' +
                         '\n\tstart:' + children + '.length,' +
                         '\n\tsignature:' + quote(signature) + ',' +
                         '\n\tnodeValue:' + quote(nodeValue) +
                         '\n}\n'
                 str += children + '.push(' + signature + ')\n'
-                str += avalon.directives['for'].parse(nodeValue, num)
-                if(el.callback){
-                    str += signature+ el.callback
-                }
+
+                str += avalon.directives['for'].parse(el, num)
 
             } else if (nodeValue.indexOf('ms-for-end:') === 0) {
                 var signature = forstack[forstack.length - 1]
-
                 str += children + '.push({' +
                         '\n\tnodeType: 8,' +
                         '\n\ttype:"#comment",' +
@@ -116,17 +115,17 @@ function parseView(arr, num) {
                 str += '\n}else{\n\n'
             }
             str += 'var ' + vnode + ' = {' +
-                        '\n\tnodeType:1,' + 
-                        '\n\ttype: ' + quote(el.type) + ',' +
-                        '\n\tprops: {},' +
-                        '\n\tchildren: [],' +
-                        '\n\tisVoidTag: ' + !!el.isVoidTag + ',' +
-                        '\n\ttemplate: ""}\n'
+                    '\n\tnodeType:1,' +
+                    '\n\ttype: ' + quote(el.type) + ',' +
+                    '\n\tprops: {},' +
+                    '\n\tchildren: [],' +
+                    '\n\tisVoidTag: ' + !!el.isVoidTag + ',' +
+                    '\n\ttemplate: ""}\n'
             var hasWidget = el.props['ms-widget']
-            if(!hasWidget && el.type.indexOf('-') > 0 && !el.props.resolved){
-                hasWidget = '@'+ el.type.replace(/-/g,"_")
+            if (!hasWidget && el.type.indexOf('-') > 0 && !el.props.resolved) {
+                hasWidget = '@' + el.type.replace(/-/g, "_")
             }
-            
+
             if (hasWidget) {// 处理ms-widget指令
                 str += avalon.directives.widget.parse({
                     expr: hasWidget,
@@ -139,9 +138,9 @@ function parseView(arr, num) {
                 if (hasBindings) {
                     str += hasBindings
                 }
-                if(el.children.length){
+                if (el.children.length) {
                     str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
-                }else{
+                } else {
                     str += vnode + '.template = ' + quote(el.template) + '\n'
                 }
             }

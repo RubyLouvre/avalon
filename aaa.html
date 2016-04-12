@@ -4,13 +4,18 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="./dist/avalon.js"></script>
+        <script src="./dist/avalon.modern.js"></script>
         <script>
             var vm = avalon.define({
                 $id: 'for3',
                 header: ['name','age','sex'],
                 list: [],
                 callback: function(e){
+                    console.log(e)
+                },
+                aaa:111,
+                bbb:false,
+                callback2: function(e){
                     console.log(e)
                 }
             })
@@ -46,6 +51,9 @@
                     <td ms-for='td in tr | selectBy(["name","age","sex"])' ms-attr="{align:td === 'age' ?'left':'right'}">{{td}}</td>
                 </tr>
             </table>
+            <input ms-duplex="@aaa|change" data-duplex-changed="@callback2">
+             <input ms-duplex-checked="@bbb" type="radio" data-duplex-changed="@callback2">
+
         </div>
     </body>
 </html>

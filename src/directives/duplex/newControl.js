@@ -26,6 +26,16 @@ function newControl(binding, vnode) {
             ptype = null
         }
     }
+    var changed = vnode.props['data-duplex-changed']
+    if (changed) {
+        var cid = changed+':cb'
+        if(!avalon.caches[cid]){
+            var fn = Function('return '+ avalon.parseExpr(changed, 'on'))
+            avalon.caches[cid] = ctrl.callback = fn()
+        }else{
+            ctrl.callback = avalon.caches[cid]
+        }
+    }
     var parser = avalon.parsers[ptype]
     if (parser) {
         ctrl.parsers.push(parser)

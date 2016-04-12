@@ -26,8 +26,8 @@ var rforAs = /\s+as\s+([$\w]+)/
 var rident = require('../seed/regexp').ident
 var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
 var dir = avalon.directive('for', {
-    parse: function (str, num) {
-        var aliasAs
+    parse: function (el, num) {
+        var str = el.nodeValue, aliasAs
         str = str.replace(rforAs, function (a, b) {
             if (!rident.test(b) || rinvalid.test(b)) {
                 avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.')
@@ -39,13 +39,12 @@ var dir = avalon.directive('for', {
         var arr = str.replace(rforPrefix, '').split(' in ')
         var assign = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
         var alias = aliasAs ? 'var ' + aliasAs + ' = loop' + num + '\n' : ''
-        //  var forValue = 'vnode' + num + '.forValue = loop' + num + '\n'
         var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
         if (kv.length === 1) {
             kv.unshift('$key')
         }
 
-        return assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
+        return  assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
     },
     diff: function (current, previous, steps, __index__) {
         var cur = current[__index__]
@@ -210,8 +209,9 @@ var dir = avalon.directive('for', {
             insertPoint = cnodes[cnodes.length - 1]
         }
         dir.updateContent(startRepeat, vnode)
-        if(typeof vnode.callback === 'function'){
-            vnode.callback({
+        var cb = avalon.caches[vnode.cid]
+        if (cb) {
+            cb.call(vnode.vmodel, {
                 type: "rendered",
                 target: startRepeat,
                 endRepeat: endRepeat,

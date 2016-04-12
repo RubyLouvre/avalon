@@ -4036,6 +4036,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	            ptype = null
 	        }
 	    }
+	    var changed = vnode.props['data-duplex-changed']
+	    if (changed) {
+	        var cid = changed+':cb'
+	        if(!avalon.caches[cid]){
+	            var fn = Function('return '+ avalon.parseExpr(changed, 'on'))
+	            avalon.caches[cid] = ctrl.callback = fn()
+	        }else{
+	            ctrl.callback = avalon.caches[cid]
+	        }
+	    }
 	    var parser = avalon.parsers[ptype]
 	    if (parser) {
 	        ctrl.parsers.push(parser)
@@ -4356,16 +4366,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //vm.aaa = '1234567890'
 	        //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
 	        var val = ctrl.parse(viewValue)
-	        viewValue = val+''
+	        viewValue = val + ''
+
 	        if (val !== ctrl.modelValue) {
 	            ctrl.set(ctrl.vmodel, val)
+	            callback(ctrl)
 	        }
-	        
+
 	        if (rawValue !== viewValue) {
 	            ctrl.viewValue = viewValue
 	            ctrl.elem[prop] = viewValue
 	        }
-	        
 
 	    },
 	    radio: function () {
@@ -4373,6 +4384,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (ctrl.isChecked) {
 	            var val = ctrl.modelValue = !ctrl.modelValue
 	            ctrl.set(ctrl.vmodel, val)
+	            callback(ctrl)
 	        } else {
 	            refreshModel.input.call(ctrl)
 	        }
@@ -4388,6 +4400,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (array[method]) {
 	            var val = ctrl.parse(ctrl.elem.value)
 	            array[method](val)
+	            callback(ctrl)
 	        }
 
 	    },
@@ -4404,10 +4417,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            ctrl.modelValue = val
 	            ctrl.set(ctrl.vmodel, val)
+	            callback(ctrl)
 	        }
 	    },
 	    contenteditable: function () {
 	        refreshModel.input.call(this, 'innerHTML')
+	    }
+	}
+	    
+	function callback(ctrl) {
+	    if (ctrl.callback) {
+	        ctrl.callback.call(ctrl.vmodel, {
+	            type: 'changed',
+	            target: ctrl.elem
+	        })
 	    }
 	}
 	module.exports = refreshModel
@@ -4645,8 +4668,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rident = __webpack_require__(44).ident
 	var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
 	var dir = avalon.directive('for', {
-	    parse: function (str, num) {
-	        var aliasAs
+	    parse: function (el, num) {
+	        var str = el.nodeValue, aliasAs
 	        str = str.replace(rforAs, function (a, b) {
 	            if (!rident.test(b) || rinvalid.test(b)) {
 	                avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.')
@@ -4658,13 +4681,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var arr = str.replace(rforPrefix, '').split(' in ')
 	        var assign = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
 	        var alias = aliasAs ? 'var ' + aliasAs + ' = loop' + num + '\n' : ''
-	        //  var forValue = 'vnode' + num + '.forValue = loop' + num + '\n'
 	        var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
 	        if (kv.length === 1) {
 	            kv.unshift('$key')
 	        }
 
-	        return assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
+	        return  assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
 	    },
 	    diff: function (current, previous, steps, __index__) {
 	        var cur = current[__index__]
@@ -4829,8 +4851,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            insertPoint = cnodes[cnodes.length - 1]
 	        }
 	        dir.updateContent(startRepeat, vnode)
-	        if(typeof vnode.callback === 'function'){
-	            vnode.callback({
+	        var cb = avalon.caches[vnode.cid]
+	        if (cb) {
+	            cb.call(vnode.vmodel, {
 	                type: "rendered",
 	                target: startRepeat,
 	                endRepeat: endRepeat,
@@ -5781,20 +5804,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        var forExpr = node.props['ms-for']
 	        if (forExpr) {
+	            var cb = node.props['data-for-rendered']
+	            var cid = cb+':cb'
 	            nodes.push({
 	                nodeType: 8,
 	                type: '#comment',
 	                nodeValue: 'ms-for:' + forExpr,
-	                signature: makeHashCode('for')
+	                signature: makeHashCode('for'),
+	                cid: cid
 	            })
-	            var callback = node.props['data-for-rendered']
-	            if (callback) {
-	                nodes[nodes.length - 1].callack = '.callback = ' +
-	                        avalon.parseExpr(callback, 'on') +
-	                        '.bind(__vmodel__);\n'
+	            if(cb && !avalon.caches[cid]){
+	                avalon.caches[cid] = Function('return '+ avalon.parseExpr(cb, 'on'))()  
 	            }
-
-
+	         
 	            delete node.props['ms-for']
 	            nodes.push(node)
 	            node = {
@@ -6086,24 +6108,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (nodeValue.indexOf('ms-for:') === 0) {// 处理ms-for指令
 	                var signature = el.signature
 	                forstack.push(signature)
-	                str += '\nvar ' + signature + '= {' +
+	                str += '\nvar ' + signature + ' = {' +
 	                        '\n\tnodeType:8,' +
 	                        '\n\ttype:"#comment",' +
+	                        '\n\tvmodel:__vmodel__,' +
 	                        '\n\tdirective:"for",' +
 	                        '\n\tskipContent:false,' +
+	                        '\n\tcid:' + quote(el.cid) + ',' +
 	                        '\n\tstart:' + children + '.length,' +
 	                        '\n\tsignature:' + quote(signature) + ',' +
 	                        '\n\tnodeValue:' + quote(nodeValue) +
 	                        '\n}\n'
 	                str += children + '.push(' + signature + ')\n'
-	                str += avalon.directives['for'].parse(nodeValue, num)
-	                if(el.callback){
-	                    str += signature+ el.callback
-	                }
+
+	                str += avalon.directives['for'].parse(el, num)
 
 	            } else if (nodeValue.indexOf('ms-for-end:') === 0) {
 	                var signature = forstack[forstack.length - 1]
-
 	                str += children + '.push({' +
 	                        '\n\tnodeType: 8,' +
 	                        '\n\ttype:"#comment",' +
@@ -6144,17 +6165,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	                str += '\n}else{\n\n'
 	            }
 	            str += 'var ' + vnode + ' = {' +
-	                        '\n\tnodeType:1,' + 
-	                        '\n\ttype: ' + quote(el.type) + ',' +
-	                        '\n\tprops: {},' +
-	                        '\n\tchildren: [],' +
-	                        '\n\tisVoidTag: ' + !!el.isVoidTag + ',' +
-	                        '\n\ttemplate: ""}\n'
+	                    '\n\tnodeType:1,' +
+	                    '\n\ttype: ' + quote(el.type) + ',' +
+	                    '\n\tprops: {},' +
+	                    '\n\tchildren: [],' +
+	                    '\n\tisVoidTag: ' + !!el.isVoidTag + ',' +
+	                    '\n\ttemplate: ""}\n'
 	            var hasWidget = el.props['ms-widget']
-	            if(!hasWidget && el.type.indexOf('-') > 0 && !el.props.resolved){
-	                hasWidget = '@'+ el.type.replace(/-/g,"_")
+	            if (!hasWidget && el.type.indexOf('-') > 0 && !el.props.resolved) {
+	                hasWidget = '@' + el.type.replace(/-/g, "_")
 	            }
-	            
+
 	            if (hasWidget) {// 处理ms-widget指令
 	                str += avalon.directives.widget.parse({
 	                    expr: hasWidget,
@@ -6167,9 +6188,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (hasBindings) {
 	                    str += hasBindings
 	                }
-	                if(el.children.length){
+	                if (el.children.length) {
 	                    str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
-	                }else{
+	                } else {
 	                    str += vnode + '.template = ' + quote(el.template) + '\n'
 	                }
 	            }
@@ -6184,6 +6205,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	module.exports = parseView
+
 
 /***/ },
 /* 68 */

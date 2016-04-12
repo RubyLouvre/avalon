@@ -16,16 +16,17 @@ var refreshModel = {
         //vm.aaa = '1234567890'
         //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
         var val = ctrl.parse(viewValue)
-        viewValue = val+''
+        viewValue = val + ''
+
         if (val !== ctrl.modelValue) {
             ctrl.set(ctrl.vmodel, val)
+            callback(ctrl)
         }
-        
+
         if (rawValue !== viewValue) {
             ctrl.viewValue = viewValue
             ctrl.elem[prop] = viewValue
         }
-        
 
     },
     radio: function () {
@@ -33,6 +34,7 @@ var refreshModel = {
         if (ctrl.isChecked) {
             var val = ctrl.modelValue = !ctrl.modelValue
             ctrl.set(ctrl.vmodel, val)
+            callback(ctrl)
         } else {
             refreshModel.input.call(ctrl)
         }
@@ -48,6 +50,7 @@ var refreshModel = {
         if (array[method]) {
             var val = ctrl.parse(ctrl.elem.value)
             array[method](val)
+            callback(ctrl)
         }
 
     },
@@ -64,10 +67,20 @@ var refreshModel = {
             }
             ctrl.modelValue = val
             ctrl.set(ctrl.vmodel, val)
+            callback(ctrl)
         }
     },
     contenteditable: function () {
         refreshModel.input.call(this, 'innerHTML')
+    }
+}
+    
+function callback(ctrl) {
+    if (ctrl.callback) {
+        ctrl.callback.call(ctrl.vmodel, {
+            type: 'changed',
+            target: ctrl.elem
+        })
     }
 }
 module.exports = refreshModel

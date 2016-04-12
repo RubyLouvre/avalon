@@ -246,20 +246,19 @@ function modifyProps(node, innerHTML, nodes, curDeep, maxDeep) {
         }
         var forExpr = node.props['ms-for']
         if (forExpr) {
+            var cb = node.props['data-for-rendered']
+            var cid = cb+':cb'
             nodes.push({
                 nodeType: 8,
                 type: '#comment',
                 nodeValue: 'ms-for:' + forExpr,
-                signature: makeHashCode('for')
+                signature: makeHashCode('for'),
+                cid: cid
             })
-            var callback = node.props['data-for-rendered']
-            if (callback) {
-                nodes[nodes.length - 1].callack = '.callback = ' +
-                        avalon.parseExpr(callback, 'on') +
-                        '.bind(__vmodel__);\n'
+            if(cb && !avalon.caches[cid]){
+                avalon.caches[cid] = Function('return '+ avalon.parseExpr(cb, 'on'))()  
             }
-
-
+         
             delete node.props['ms-for']
             nodes.push(node)
             node = {

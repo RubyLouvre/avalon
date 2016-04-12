@@ -10,7 +10,6 @@ avalon.directive('duplex', {
     priority: 2000,
     parse: function (binding, num, vnode) {
         newControl(binding, vnode)
-
         return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
                 'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
     },
