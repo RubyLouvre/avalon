@@ -1,4 +1,4 @@
-var dir = avalon.directives('validate', {
+var dir = avalon.directive('validate', {
 //验证单个表单元素
     parse: function (binding, num) {
         return 'vnode' + num + '.props["ms-validate"] = ' + avalon.parseExpr(binding) + ';\n'
@@ -6,8 +6,12 @@ var dir = avalon.directives('validate', {
     diff: function (cur, pre, steps, name) {
         var a = cur.props[name]
         var p = pre.props[name]
-        if (Object(a) === a && !p) {
+        if (Object(a) === a && a!== p) {
             a.fields = a.fields || []
+            a.onError = a.onError || avalon.noop
+            a.onSuccess = a.onSuccess || avalon.noop
+            a.onComplete = a.onComplete || avalon.noop
+             
             var list = cur.change || (cur.change = [])
             if (avalon.Array.ensure(list, this.update)) {
                 steps.count += 1
@@ -18,7 +22,7 @@ var dir = avalon.directives('validate', {
     },
     update: function (node, vnode) {
         var options = vnode.props['ms-validate']
-        options.elem = node
+        options.element = node
         node._ms_validator_ = options
         node.setAttribute("novalidate", "novalidate");
         if (options.validateAllInSubmit) {
@@ -35,7 +39,7 @@ var dir = avalon.directives('validate', {
         var options = this
         var fn = typeof callback === "function" ? callback : options.onValidateAll
         var promise = options.fields.filter(function (field) {
-            var el = field.elem
+            var el = field.element
             return el && !el.disabled && options.elem.contains(el)
         }).map(function (field) {
             return dir.validate(field, true)
@@ -48,7 +52,7 @@ var dir = avalon.directives('validate', {
             if (options.deduplicateInValidateAll) {
                 var uniq = {}
                 reasons = reasons.filter(function (field) {
-                    var el = field.elem
+                    var el = field.element
                     var id = el.getAttribute("data-validation-id")
                     if (!id) {
                         id = setTimeout("1")
@@ -66,9 +70,9 @@ var dir = avalon.directives('validate', {
         })
     },
     validate: function (field, isValidateAll, event) {
-        var value = field.get()
+        var value = field.get(field.vmodel)
         var promises = []
-        var elem = field.elem
+        var elem = field.element
         var options = field.validator
         if (elem.disabled)
             return

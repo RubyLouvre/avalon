@@ -7,82 +7,82 @@
  */
 var refreshModel = {
     input: function (prop) {//处理单个value值处理
-        var ctrl = this
+        var field = this
         prop = prop || 'value'
-        var viewValue = ctrl.elem[prop]
+        var viewValue = field.element[prop]
         var rawValue = viewValue
 
-        viewValue = ctrl.format(viewValue)
+        viewValue = field.format(viewValue)
         //vm.aaa = '1234567890'
         //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
-        var val = ctrl.parse(viewValue)
+        var val = field.parse(viewValue)
         viewValue = val + ''
 
-        if (val !== ctrl.modelValue) {
-            ctrl.set(ctrl.vmodel, val)
-            callback(ctrl)
+        if (val !== field.modelValue) {
+            field.set(field.vmodel, val)
+            callback(field)
         }
 
         if (rawValue !== viewValue) {
-            ctrl.viewValue = viewValue
-            ctrl.elem[prop] = viewValue
+            field.viewValue = viewValue
+            field.element[prop] = viewValue
         }
 
     },
     radio: function () {
-        var ctrl = this
-        if (ctrl.isChecked) {
-            var val = ctrl.modelValue = !ctrl.modelValue
-            ctrl.set(ctrl.vmodel, val)
-            callback(ctrl)
+        var field = this
+        if (field.isChecked) {
+            var val = field.modelValue = !field.modelValue
+            field.set(field.vmodel, val)
+            callback(field)
         } else {
-            refreshModel.input.call(ctrl)
+            refreshModel.input.call(field)
         }
     },
     checkbox: function () {
-        var ctrl = this
-        var array = ctrl.modelValue
+        var field = this
+        var array = field.modelValue
         if (!Array.isArray(array)) {
             avalon.warn('ms-duplex应用于checkbox上要对应一个数组')
             array = [array]
         }
-        var method = ctrl.elem.checked ? 'ensure' : 'remove'
+        var method = field.element.checked ? 'ensure' : 'remove'
         if (array[method]) {
-            var val = ctrl.parse(ctrl.elem.value)
+            var val = field.parse(field.element.value)
             array[method](val)
-            callback(ctrl)
+            callback(field)
         }
 
     },
     select: function () {
-        var ctrl = this
-        var val = avalon(ctrl.elem).val() //字符串或字符串数组
+        var field = this
+        var val = avalon(field.element).val() //字符串或字符串数组
         if (val + '' !== this.modelValue + '') {
             if (Array.isArray(val)) { //转换布尔数组或其他
                 val = val.map(function (v) {
-                    return ctrl.parse(v)
+                    return field.parse(v)
                 })
             } else {
-                val = ctrl.parse(val)
+                val = field.parse(val)
             }
-            ctrl.modelValue = val
-            ctrl.set(ctrl.vmodel, val)
-            callback(ctrl)
+            field.modelValue = val
+            field.set(field.vmodel, val)
+            callback(field)
         }
     },
     contenteditable: function () {
         refreshModel.input.call(this, 'innerHTML')
     }
 }
-var validate = avalon.directives.validate 
-function callback(ctrl) {
-    if(ctrl.validator){
-        validate.validate(ctrl, false)
+
+function callback(field) {
+    if (field.validator) {
+        avalon.directives.validate.validate(field, false)
     }
-    if (ctrl.callback) {
-        ctrl.callback.call(ctrl.vmodel, {
+    if (field.callback) {
+        field.callback.call(field.vmodel, {
             type: 'changed',
-            target: ctrl.elem
+            target: field.element
         })
     }
 }
