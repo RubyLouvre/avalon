@@ -11,6 +11,8 @@ require('./html')
 require('./class.hover.active')
 require('./on')
 require('./duplex/modern')
+require('./validate')
+
 //处理逻辑
 require('./if')
 require('./for3')
