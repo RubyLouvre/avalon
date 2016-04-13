@@ -1,9 +1,9 @@
 module.exports = function addField(node,vnode){
-  if(vnode.props['data-duplex-validator']){
+  if(vnode.props['data-validators']){
       while(!node){
           var options = node._ms_validator_
           if(options){
-              ctrl.validator = options
+              vnode.ctrl.validator = options
               break
           }
           node = node.parentNode

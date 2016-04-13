@@ -49,10 +49,10 @@ var dir = avalon.directives('validate', {
                 var uniq = {}
                 reasons = reasons.filter(function (field) {
                     var el = field.elem
-                    var id = el.getAttribute("data-validation-id")
+                    var id = el.getAttribute("data-validator-id")
                     if (!id) {
                         id = setTimeout("1")
-                        el.setAttribute("data-validation-id", id)
+                        el.setAttribute("data-validator-id", id)
                     }
                     if (uniq[id]) {
                         return false
@@ -89,7 +89,7 @@ var dir = avalon.directives('validate', {
                     var reason = {
                         element: elem,
                         data: field.data,
-                        message: elem.getAttribute("data-duplex-" + name + "-message") || elem.getAttribute("data-duplex-message") || hook.message,
+                        message: elem.getAttribute("data-" + name + "-message") || elem.getAttribute("data-message") || hook.message,
                         validateRule: name,
                         getMessage: getMessage
                     }
