@@ -4,6 +4,7 @@ var valueHijack = require('./valueHijack')
 var newControl = require('./newControl')
 var initControl = require('./bindEvents.compact')
 var refreshControl = require('./refreshControl.compact')
+var addField = require('./addField')
 
 
 avalon.directive('duplex', {
@@ -60,7 +61,7 @@ avalon.directive('duplex', {
                 delete events[name]
             }
         }
-
+        addField(node, vnode)
         if (!avalon.msie && valueHijack === false && !node.valueHijack) {
             //chrome 42及以下版本需要这个hack
             node.valueHijack = ctrl.update

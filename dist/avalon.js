@@ -3858,6 +3858,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var newControl = __webpack_require__(50)
 	var initControl = __webpack_require__(51)
 	var refreshControl = __webpack_require__(54)
+	var addField = __webpack_require__(102)
 
 
 	avalon.directive('duplex', {
@@ -3914,7 +3915,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                delete events[name]
 	            }
 	        }
-
+	        addField(node, vnode)
 	        if (!avalon.msie && valueHijack === false && !node.valueHijack) {
 	            //chrome 42及以下版本需要这个hack
 	            node.valueHijack = ctrl.update
@@ -4029,6 +4030,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        formatters: [],
 	        modelValue: NaN,
 	        viewValue: NaN,
+	        validators: '',
 	        parse: parse,
 	        format: format
 	    }
@@ -4428,8 +4430,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        refreshModel.input.call(this, 'innerHTML')
 	    }
 	}
-	    
+	var validate = avalon.directives.validate 
 	function callback(ctrl) {
+	    if(ctrl.validator){
+	        validate.validate(ctrl, false)
+	    }
 	    if (ctrl.callback) {
 	        ctrl.callback.call(ctrl.vmodel, {
 	            type: 'changed',
@@ -7555,6 +7560,48 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	module.exports = defineProperties
+
+
+/***/ },
+/* 78 */,
+/* 79 */,
+/* 80 */,
+/* 81 */,
+/* 82 */,
+/* 83 */,
+/* 84 */,
+/* 85 */,
+/* 86 */,
+/* 87 */,
+/* 88 */,
+/* 89 */,
+/* 90 */,
+/* 91 */,
+/* 92 */,
+/* 93 */,
+/* 94 */,
+/* 95 */,
+/* 96 */,
+/* 97 */,
+/* 98 */,
+/* 99 */,
+/* 100 */,
+/* 101 */,
+/* 102 */
+/***/ function(module, exports) {
+
+	module.exports = function addField(node,vnode){
+	  if(vnode.props['data-duplex-validator']){
+	      while(!node){
+	          var options = node._ms_validator_
+	          if(options){
+	              ctrl.validator = options
+	              break
+	          }
+	          node = node.parentNode
+	      }
+	  }
+	}
 
 
 /***/ }

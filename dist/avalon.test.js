@@ -3860,6 +3860,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var newControl = __webpack_require__(50)
 	var initControl = __webpack_require__(51)
 	var refreshControl = __webpack_require__(54)
+	var addField = __webpack_require__(102)
 
 
 	avalon.directive('duplex', {
@@ -3916,7 +3917,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                delete events[name]
 	            }
 	        }
-
+	        addField(node, vnode)
 	        if (!avalon.msie && valueHijack === false && !node.valueHijack) {
 	            //chrome 42及以下版本需要这个hack
 	            node.valueHijack = ctrl.update
@@ -4031,6 +4032,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        formatters: [],
 	        modelValue: NaN,
 	        viewValue: NaN,
+	        validators: '',
 	        parse: parse,
 	        format: format
 	    }
@@ -4430,8 +4432,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        refreshModel.input.call(this, 'innerHTML')
 	    }
 	}
-	    
+	var validate = avalon.directives.validate 
 	function callback(ctrl) {
+	    if(ctrl.validator){
+	        validate.validate(ctrl, false)
+	    }
 	    if (ctrl.callback) {
 	        ctrl.callback.call(ctrl.vmodel, {
 	            type: 'changed',
@@ -7616,7 +7621,25 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 101 */
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</ms-panel>"
+	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
+
+/***/ },
+/* 102 */
+/***/ function(module, exports) {
+
+	module.exports = function addField(node,vnode){
+	  if(vnode.props['data-duplex-validator']){
+	      while(!node){
+	          var options = node._ms_validator_
+	          if(options){
+	              ctrl.validator = options
+	              break
+	          }
+	          node = node.parentNode
+	      }
+	  }
+	}
+
 
 /***/ }
 /******/ ])

@@ -15,6 +15,7 @@ function newControl(binding, vnode) {
         formatters: [],
         modelValue: NaN,
         viewValue: NaN,
+        validators: '',
         parse: parse,
         format: format
     }

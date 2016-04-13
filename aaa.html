@@ -1,52 +1,28 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
     <head>
-        <title>ms-on</title>
+        <title>ms-on-mousewheel</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
-        <script src="./dist/avalon.js" ></script>
+        <script src="./dist/avalon.js"></script>
         <script>
             var vm = avalon.define({
                 $id: "test",
-                firstName: "司徒",
-                array: ["aaa", "bbb", "ccc"],
-                argsClick: function(e, a, b) {
-                    alert([].slice.call(arguments).join(" "))
-                },
-                loopClick: function(a, e) {
-                    alert(a + "  " + e.type)
-                },
-                status: "",
+                aaa: "1",
                 callback: function(e) {
-                    vm.status = e.type
-                },
-                field: "",
-                check: function(e) {
-                    vm.field = e.target.value + "  " + e.type
-                },
-                submit: function() {
-                    var data = vm.$model
-                    if (window.JSON) {
-                        setTimeout(function() {
-                            alert(JSON.stringify(data))
-                        })
-                    }
+                    console.log(e)
                 }
             })
-
+            avalon.validators.css = function(){
+                
+            }
         </script>
     </head>
-    <body>
-        <fieldset ms-controller="test">
-            <legend>有关事件回调传参</legend>
-            <div ms-mouseenter="@callback" ms-mouseleave="@callback">{{@status}}<br/>
-                <input ms-on-input="@check"/>{{@field}}
-            </div>
-            <div ms-click="@argsClick($event, 100, @firstName)">点我</div>
-            <div ms-for="el in @array" >
-                <p ms-click="@loopClick(el, $event)">{{el}}</p>
-            </div>
-            <button ms-click="@submit" type="button">点我</button>
-        </fieldset>
+
+    <body ms-controller="test">
+        <div>
+            <input ms-duplex="@aaa" data-duplex-changed="@callback" 
+                   data-duplex-validator='[@sss, @bbb,@ccc]'  >{{@aaa}}
+        </div>
     </body>
 </html>

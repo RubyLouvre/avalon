@@ -74,8 +74,11 @@ var refreshModel = {
         refreshModel.input.call(this, 'innerHTML')
     }
 }
-    
+var validate = avalon.directives.validate 
 function callback(ctrl) {
+    if(ctrl.validator){
+        validate.validate(ctrl, false)
+    }
     if (ctrl.callback) {
         ctrl.callback.call(ctrl.vmodel, {
             type: 'changed',
