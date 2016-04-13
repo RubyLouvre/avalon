@@ -1,4 +1,5 @@
-var refreshControl = {
+
+var updateField = {
     input: function () {//处理单个value值处理
         this.element.value = this.viewValue
     },
@@ -9,7 +10,18 @@ var refreshControl = {
         } else {
             checked = this.viewValue + '' === this.element.value
         }
-        this.element.checked = checked
+        var element = this.element
+        if (avalon.msie === 6) {
+            setTimeout(function () {
+                //IE8 checkbox, radio是使用defaultChecked控制选中状态，
+                //并且要先设置defaultChecked后设置checked
+                //并且必须设置延迟
+                element.defaultChecked = checked
+                element.checked = checked
+            }, 31)
+        } else {
+            element.checked = checked
+        }
     },
     checkbox: function () {//处理多个checked属性
         var checked = false
@@ -24,7 +36,7 @@ var refreshControl = {
         element.checked = checked
     },
     select: function () {//处理子级的selected属性
-        var a = Array.isArray(this.viewValue) ? this.viewValue.map(String) : this.viewValue + ''
+        var a = Array.isArray(this.viewValue) ? this.viewValue.map(String): this.viewValue+''
         avalon(this.element).val(a)
     },
     contenteditable: function () {//处理单个innerHTML
@@ -33,4 +45,4 @@ var refreshControl = {
     }
 }
 
-module.exports = refreshControl
+module.exports = updateField

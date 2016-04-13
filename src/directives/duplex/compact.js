@@ -1,16 +1,16 @@
 
 var valueHijack = require('./valueHijack')
 
-var newControl = require('./newControl')
-var initControl = require('./bindEvents.compact')
-var refreshControl = require('./refreshControl.compact')
+var newField = require('./newField')
+var initField = require('./bindEvents.compact')
+var updateField = require('./updateField.compact')
 var addField = require('./addField')
 
 
 avalon.directive('duplex', {
     priority: 2000,
     parse: function (binding, num, vnode) {
-        newControl(binding, vnode)
+        newField(binding, vnode)
         return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
                 'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
     },
@@ -20,7 +20,7 @@ avalon.directive('duplex', {
             cur.field = pre.field
             pre.field = null
         } else {
-            initControl(cur, pre)
+            initField(cur, pre)
         }
 
         var field = cur.field
@@ -76,7 +76,7 @@ avalon.directive('duplex', {
         var viewValue = field.format(field.modelValue)
         if (field.viewValue !== viewValue) {
             field.viewValue = viewValue
-            refreshControl[field.type].call(field)
+            updateField[field.type].call(field)
             if (node.caret) {
                 var pos = field.caretPos
                 pos && field.updateCaret(node, pos.start, pos.end)

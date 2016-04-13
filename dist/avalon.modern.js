@@ -1986,102 +1986,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = valueHijack
 
 /***/ },
-/* 50 */
-/***/ function(module, exports) {
-
-	var rchangeFilter = /\|\s*change\b/
-	var rcheckedType = /^(?:checkbox|radio)$/
-	var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/
-	var rnoduplexInput = /^(file|button|reset|submit|checkbox|radio|range)$/
-
-	function newControl(binding, vnode) {
-	    var expr = binding.expr
-	    var etype = vnode.props.type
-	    //处理数据转换器
-	    var ptype = binding.param
-	    var isChecked = ptype === 'checked'
-
-	    var field = vnode.field = {
-	        parsers: [],
-	        formatters: [],
-	        modelValue: NaN,
-	        viewValue: NaN,
-	        validators: '',
-	        parse: parse,
-	        format: format
-	    }
-	    if (isChecked) {
-	        if (rcheckedType.test(etype)) {
-	            field.isChecked = true
-	            field.type = 'radio'
-	        } else {
-	            ptype = null
-	        }
-	    }
-	    var changed = vnode.props['data-duplex-changed']
-	    if (changed) {
-	        var cid = changed+':cb'
-	        if(!avalon.caches[cid]){
-	            var fn = Function('return '+ avalon.parseExpr(changed, 'on'))
-	            avalon.caches[cid] = field.callback = fn()
-	        }else{
-	            field.callback = avalon.caches[cid]
-	        }
-	    }
-	    var parser = avalon.parsers[ptype]
-	    if (parser) {
-	        field.parsers.push(parser)
-	    }
-	    if (rchangeFilter.test(expr)) {
-	        expr = expr.replace(rchangeFilter, '')
-	        if (rnoduplexInput.test(etype)) {
-	            avalon.warn(etype + '不支持change过滤器')
-	        } else {
-	            field.isChanged = true
-	        }
-	    }
-
-	    var match = expr.match(rdebounceFilter)
-	    if (match) {
-	        expr = expr.replace(rdebounceFilter, '')
-	        if (!field.isChanged) {
-	            field.debounceTime = parseInt(match[1], 10) || 300
-	        }
-	    }
-	    binding.expr = field.expr = expr.trim()
-	    if (!/input|textarea|select/.test(vnode.type)) {
-	        if ('contenteditable' in vnode.props) {
-	            field.type = 'contenteditable'
-	        }
-	    } else if (!field.type) {
-	        field.type = vnode.type === 'select' ? 'select' :
-	                etype === 'checkbox' ? 'checkbox' :
-	                etype === 'radio' ? 'radio' :
-	                'input'
-	    }
-	    avalon.parseExpr(binding, 'duplex')
-	}
-
-	function parse(val) {
-	    for (var i = 0, fn; fn = this.parsers[i++]; ) {
-	        val = fn.call(this, val)
-	    }
-	    return val
-	}
-
-	function format(val) {
-	    var formatters = this.formatters
-	    var index = formatters.length
-	    while (index--) {
-	        val = formatters[index](val)
-	    }
-	    return val
-	}
-
-	module.exports = newControl
-
-
-/***/ },
+/* 50 */,
 /* 51 */,
 /* 52 */
 /***/ function(module, exports) {
@@ -6189,15 +6094,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var valueHijack = __webpack_require__(49)
 
-	var newControl = __webpack_require__(50)
-	var initControl = __webpack_require__(96)
-	var refreshControl = __webpack_require__(97)
+	var newField = __webpack_require__(104)
+	var initField = __webpack_require__(96)
+	var updateField = __webpack_require__(106)
 	var addField = __webpack_require__(55)
 
 	avalon.directive('duplex', {
 	    priority: 2000,
 	    parse: function (binding, num, vnode) {
-	        newControl(binding, vnode)
+	        newField(binding, vnode)
 	        return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
 	                'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
 	    },
@@ -6206,7 +6111,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (pre.field && pre.field.set) {
 	            cur.field = pre.field
 	        } else {
-	            initControl(cur, pre)
+	            initField(cur, pre)
 	        }
 
 	        var field = cur.field
@@ -6263,7 +6168,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        if (field.viewValue !== viewValue) {
 	            field.viewValue = viewValue
-	            refreshControl[field.type].call(field)
+	            updateField[field.type].call(field)
 	            if (node.caret) {
 	                var pos = field.caretPos
 	                pos && field.updateCaret(node, pos.start, pos.end)
@@ -6460,47 +6365,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = initControl
 
 /***/ },
-/* 97 */
-/***/ function(module, exports) {
-
-	var refreshControl = {
-	    input: function () {//处理单个value值处理
-	        this.element.value = this.viewValue
-	    },
-	    radio: function () {//处理单个checked属性
-	        var checked
-	        if (this.isChecked) {
-	            checked = !!this.viewValue
-	        } else {
-	            checked = this.viewValue + '' === this.element.value
-	        }
-	        this.element.checked = checked
-	    },
-	    checkbox: function () {//处理多个checked属性
-	        var checked = false
-	        var element = this.element
-	        var value = element.value
-	        for (var i = 0; i < this.modelValue.length; i++) {
-	            var el = this.modelValue[i]
-	            if (el + '' === value) {
-	                checked = true
-	            }
-	        }
-	        element.checked = checked
-	    },
-	    select: function () {//处理子级的selected属性
-	        var a = Array.isArray(this.viewValue) ? this.viewValue.map(String) : this.viewValue + ''
-	        avalon(this.element).val(a)
-	    },
-	    contenteditable: function () {//处理单个innerHTML
-	        this.element.innerHTML = this.viewValue
-	        this.update.call(this.element)
-	    }
-	}
-
-	module.exports = refreshControl
-
-/***/ },
+/* 97 */,
 /* 98 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -6825,6 +6690,148 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = mixin
 
+
+/***/ },
+/* 100 */,
+/* 101 */,
+/* 102 */,
+/* 103 */,
+/* 104 */
+/***/ function(module, exports) {
+
+	var rchangeFilter = /\|\s*change\b/
+	var rcheckedType = /^(?:checkbox|radio)$/
+	var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/
+	var rnoduplexInput = /^(file|button|reset|submit|checkbox|radio|range)$/
+
+	function newControl(binding, vnode) {
+	    var expr = binding.expr
+	    var etype = vnode.props.type
+	    //处理数据转换器
+	    var ptype = binding.param
+	    var isChecked = ptype === 'checked'
+
+	    var field = vnode.field = {
+	        parsers: [],
+	        formatters: [],
+	        modelValue: NaN,
+	        viewValue: NaN,
+	        validators: '',
+	        parse: parse,
+	        format: format
+	    }
+	    if (isChecked) {
+	        if (rcheckedType.test(etype)) {
+	            field.isChecked = true
+	            field.type = 'radio'
+	        } else {
+	            ptype = null
+	        }
+	    }
+	    var changed = vnode.props['data-duplex-changed']
+	    if (changed) {
+	        var cid = changed+':cb'
+	        if(!avalon.caches[cid]){
+	            var fn = Function('return '+ avalon.parseExpr(changed, 'on'))
+	            avalon.caches[cid] = field.callback = fn()
+	        }else{
+	            field.callback = avalon.caches[cid]
+	        }
+	    }
+	    var parser = avalon.parsers[ptype]
+	    if (parser) {
+	        field.parsers.push(parser)
+	    }
+	    if (rchangeFilter.test(expr)) {
+	        expr = expr.replace(rchangeFilter, '')
+	        if (rnoduplexInput.test(etype)) {
+	            avalon.warn(etype + '不支持change过滤器')
+	        } else {
+	            field.isChanged = true
+	        }
+	    }
+
+	    var match = expr.match(rdebounceFilter)
+	    if (match) {
+	        expr = expr.replace(rdebounceFilter, '')
+	        if (!field.isChanged) {
+	            field.debounceTime = parseInt(match[1], 10) || 300
+	        }
+	    }
+	    binding.expr = field.expr = expr.trim()
+	    if (!/input|textarea|select/.test(vnode.type)) {
+	        if ('contenteditable' in vnode.props) {
+	            field.type = 'contenteditable'
+	        }
+	    } else if (!field.type) {
+	        field.type = vnode.type === 'select' ? 'select' :
+	                etype === 'checkbox' ? 'checkbox' :
+	                etype === 'radio' ? 'radio' :
+	                'input'
+	    }
+	    avalon.parseExpr(binding, 'duplex')
+	}
+
+	function parse(val) {
+	    for (var i = 0, fn; fn = this.parsers[i++]; ) {
+	        val = fn.call(this, val)
+	    }
+	    return val
+	}
+
+	function format(val) {
+	    var formatters = this.formatters
+	    var index = formatters.length
+	    while (index--) {
+	        val = formatters[index](val)
+	    }
+	    return val
+	}
+
+	module.exports = newControl
+
+
+/***/ },
+/* 105 */,
+/* 106 */
+/***/ function(module, exports) {
+
+	var updateField = {
+	    input: function () {//处理单个value值处理
+	        this.element.value = this.viewValue
+	    },
+	    radio: function () {//处理单个checked属性
+	        var checked
+	        if (this.isChecked) {
+	            checked = !!this.viewValue
+	        } else {
+	            checked = this.viewValue + '' === this.element.value
+	        }
+	        this.element.checked = checked
+	    },
+	    checkbox: function () {//处理多个checked属性
+	        var checked = false
+	        var element = this.element
+	        var value = element.value
+	        for (var i = 0; i < this.modelValue.length; i++) {
+	            var el = this.modelValue[i]
+	            if (el + '' === value) {
+	                checked = true
+	            }
+	        }
+	        element.checked = checked
+	    },
+	    select: function () {//处理子级的selected属性
+	        var a = Array.isArray(this.viewValue) ? this.viewValue.map(String) : this.viewValue + ''
+	        avalon(this.element).val(a)
+	    },
+	    contenteditable: function () {//处理单个innerHTML
+	        this.element.innerHTML = this.viewValue
+	        this.update.call(this.element)
+	    }
+	}
+
+	module.exports = updateField
 
 /***/ }
 /******/ ])
