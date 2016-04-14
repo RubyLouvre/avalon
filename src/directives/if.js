@@ -28,8 +28,8 @@ avalon.directive('if', {
                 parent.replaceChild(element, node)
             } else if (vtype === 8) {
                 //要移除元素节点,在对应位置上插入注释节点
-                var comment = node._av_if_ ||
-                        (node._av_if_ = document.createComment(vnode.signature))
+                var comment = node._ms_if_ ||
+                        (node._ms_if_ = document.createComment(vnode.signature))
                 parent.replaceChild(comment, node)
             }
         }

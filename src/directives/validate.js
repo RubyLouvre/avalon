@@ -1,4 +1,4 @@
-var dir = avalon.directives('validate', {
+var dir = avalon.directive('validate', {
 //验证单个表单元素
     parse: function (binding, num) {
         return 'vnode' + num + '.props["ms-validate"] = ' + avalon.parseExpr(binding) + ';\n'
@@ -6,23 +6,27 @@ var dir = avalon.directives('validate', {
     diff: function (cur, pre, steps, name) {
         var a = cur.props[name]
         var p = pre.props[name]
-        if (Object(a) === a && !p) {
+        if (p && p.onError && p.addField) {
+            cur.props[name] = p
+        } else if (Object(a) === a) {
             a.fields = a.fields || []
+            a.onError = a.onError || avalon.noop
+            a.onSuccess = a.onSuccess || avalon.noop
+            a.onComplete = a.onComplete || avalon.noop
+            a.onReset = a.onReset || avalon.noop
+            a.addField = dir.addField
             var list = cur.change || (cur.change = [])
             if (avalon.Array.ensure(list, this.update)) {
                 steps.count += 1
             }
-        }else if(p){
-            p.fields = []
         }
     },
     update: function (node, vnode) {
         var options = vnode.props['ms-validate']
-        options.elem = node
         node._ms_validator_ = options
         node.setAttribute("novalidate", "novalidate");
         if (options.validateAllInSubmit) {
-            onSubmitCallback = avalon.bind(node, "submit", function (e) {
+            avalon.bind(node, "submit", function (e) {
                 e.preventDefault()
                 dir.validateAll.call(options, options.onValidateAll)
             })
@@ -35,7 +39,7 @@ var dir = avalon.directives('validate', {
         var options = this
         var fn = typeof callback === "function" ? callback : options.onValidateAll
         var promise = options.fields.filter(function (field) {
-            var el = field.elem
+            var el = field.element
             return el && !el.disabled && options.elem.contains(el)
         }).map(function (field) {
             return dir.validate(field, true)
@@ -48,8 +52,8 @@ var dir = avalon.directives('validate', {
             if (options.deduplicateInValidateAll) {
                 var uniq = {}
                 reasons = reasons.filter(function (field) {
-                    var el = field.elem
-                    var id = el.getAttribute("data-validator-id")
+                    var el = field.element
+                    var id = el.getAttribute("data-validation-id")
                     if (!id) {
                         id = setTimeout("1")
                         el.setAttribute("data-validator-id", id)
@@ -65,10 +69,29 @@ var dir = avalon.directives('validate', {
             fn.call(options.elem, reasons) //这里只放置未通过验证的组件
         })
     },
+    addField: function (field) {
+        var options = this
+        var node = field.element
+        if (options.validateInKeyup) {
+            avalon.bind(node, 'keyup', function (e) {
+                dir.validate(field, 0, e)
+            })
+        }
+        if (options.validateInBlur) {
+            avalon.bind(node, 'blur', function (e) {
+                dir.validate(field, 0, e)
+            })
+        }
+        if (options.resetInFocus) {
+            avalon.bind(node, 'focus', function (e) {
+                options.onReset.call(node, e, field)
+            })
+        }
+    },
     validate: function (field, isValidateAll, event) {
-        var value = field.get()
         var promises = []
-        var elem = field.elem
+        var value = field.get(field.vmodel)
+        var elem = field.element
         var options = field.validator
         if (elem.disabled)
             return

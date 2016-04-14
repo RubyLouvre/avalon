@@ -129,7 +129,7 @@ function dispatch(event) {
                 !event.isImmediatePropagationStopped) {
             var fn = avalon.eventListeners[uuid]
             if (fn) {
-                var vm = rhandleHasVm.test(uuid) ? elem.__av_context__: 0
+                var vm = rhandleHasVm.test(uuid) ? elem._ms_context_: 0
                 if (vm && vm.$hashcode === false) {
                     return avalon.unbind(elem, type, fn)
                 }

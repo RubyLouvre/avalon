@@ -59,7 +59,7 @@ avalon.directive('on', {
         if(!node) //在循环绑定中，这里为null
           return
         var key, type, listener
-        node.__av_context__ = vnode.onVm
+        node._ms_context_ = vnode.onVm
         delete vnode.onVm
         for (key in vnode.removeEvents) {
             type = key.split(':').shift()

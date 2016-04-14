@@ -7,25 +7,25 @@ var evaluatorPool = require('../../strategy/parser/evaluatorPool')
 
 
 function initControl(cur, pre) {
-    var ctrl = cur.ctrl = pre.ctrl
+    var field = cur.field = pre.field
 
-    ctrl.update = updateModel
-    ctrl.updateCaret = setCaret
-    ctrl.get = evaluatorPool.get('duplex:' + ctrl.expr)
-    ctrl.set = evaluatorPool.get('duplex:set:' + ctrl.expr)
-    var format = evaluatorPool.get('duplex:format:' + ctrl.expr)
+    field.update = updateModel
+    field.updateCaret = setCaret
+    field.get = evaluatorPool.get('duplex:' + field.expr)
+    field.set = evaluatorPool.get('duplex:set:' + field.expr)
+    var format = evaluatorPool.get('duplex:format:' + field.expr)
     if (format) {
-        ctrl.formatters.push(function (v) {
-            return format(ctrl.vmodel, v)
+        field.formatters.push(function (v) {
+            return format(field.vmodel, v)
         })
     }
 
-    ctrl.vmodel = cur.duplexVm
+    field.vmodel = cur.duplexVm
 
 
-    var events = ctrl.events = {}
+    var events = field.events = {}
 //添加需要监听的事件
-    switch (ctrl.type) {
+    switch (field.type) {
         case 'radio':
             if (cur.props.type === 'radio') {
                 events.click = updateModel
@@ -38,7 +38,7 @@ function initControl(cur, pre) {
             events.change = updateModel
             break
         case 'contenteditable':
-            if (ctrl.isChanged) {
+            if (field.isChanged) {
                 events.blur = updateModel
             } else {
                 if (avalon.modern) {
@@ -63,7 +63,7 @@ function initControl(cur, pre) {
             }
             break
         case 'input':
-            if (ctrl.isChanged) {
+            if (field.isChanged) {
                 events.change = updateModel
             } else {
 
@@ -84,7 +84,7 @@ function initControl(cur, pre) {
                     }
                     if (msie >= 8) {
                         // Internet Explorer 9 doesn't fire the 'input' event when deleting text, including using
-                        // the backspace, delete, or ctrl-x keys, clicking the 'x' to clear the input, dragging text
+                        // the backspace, delete, or field-x keys, clicking the 'x' to clear the input, dragging text
                         // out of the field, and cutting or deleting text using the context menu. 'selectionchange'
                         // can detect all of those except dragging text out of the field, for which we use 'dragend'.
                         // These are also needed in IE8 because of the bug described above.
@@ -121,33 +121,34 @@ function initControl(cur, pre) {
 
 function updateModel() {
     var elem = this
-    var ctrl = this.__duplex__
+    
+    var field = this._ms_field_
     if (elem.composing)
         return
     if (elem.caret) {
         try {
             var pos = getCaret(elem)
             if (pos.start === pos.end || pos.start + 1 === pos.end) {
-                ctrl.caretPos = pos
+                field.caretPos = pos
             }
         } catch (e) {
             avalon.warn('fixCaret error', e)
         }
     }
-    if (ctrl.debounceTime > 4) {
+    if (field.debounceTime > 4) {
         var timestamp = new Date()
-        var left = timestamp - ctrl.time || 0
-        ctrl.time = timestamp
-        if (left >= ctrl.debounceTime) {
-            refreshModel[ctrl.type].call(ctrl)
+        var left = timestamp - field.time || 0
+        field.time = timestamp
+        if (left >= field.debounceTime) {
+            refreshModel[field.type].call(field)
         } else {
-            clearTimeout(ctrl.debounceID)
-            ctrl.debounceID = setTimeout(function () {
-                refreshModel[ctrl.type].call(ctrl)
+            clearTimeout(field.debounceID)
+            field.debounceID = setTimeout(function () {
+                refreshModel[field.type].call(field)
             }, left)
         }
     } else {
-        refreshModel[ctrl.type].call(ctrl)
+        refreshModel[field.type].call(field)
     }
 }
 
@@ -207,11 +208,11 @@ if (msie >= 8 && msie < 10) {
     })
 }
 
-function getCaret(ctrl) {
+function getCaret(field) {
     var start = NaN, end = NaN
-    if (ctrl.setSelectionRange) {
-        start = ctrl.selectionStart
-        end = ctrl.selectionEnd
+    if (field.setSelectionRange) {
+        start = field.selectionStart
+        end = field.selectionEnd
     } else if (document.selection && document.selection.createRange) {
         var range = document.selection.createRange()
         start = 0 - range.duplicate().moveStart('character', -100000)
@@ -223,17 +224,17 @@ function getCaret(ctrl) {
     }
 }
 
-function setCaret(ctrl, begin, end) {
-    if (!ctrl.value || ctrl.readOnly)
+function setCaret(field, begin, end) {
+    if (!field.value || field.readOnly)
         return
-    if (ctrl.createTextRange) {//IE6-8
-        var range = ctrl.createTextRange()
+    if (field.createTextRange) {//IE6-8
+        var range = field.createTextRange()
         range.collapse(true)
         range.moveStart('character', begin)
         range.select()
     } else {
-        ctrl.selectionStart = begin
-        ctrl.selectionEnd = end
+        field.selectionStart = begin
+        field.selectionEnd = end
     }
 }
 

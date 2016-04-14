@@ -5,23 +5,23 @@ var markID = require('../../seed/lang.share').getShortID
 var evaluatorPool = require('../../strategy/parser/evaluatorPool')
 
 function initControl(cur, pre) {
-    var ctrl = cur.ctrl = pre.ctrl
+    var field = cur.field = pre.field
 
-    ctrl.update = updateModel
-    ctrl.updateCaret = setCaret
-    ctrl.get = evaluatorPool.get('duplex:' + ctrl.expr)
-    ctrl.set = evaluatorPool.get('duplex:set:' + ctrl.expr)
-    var format = evaluatorPool.get('duplex:format:' + ctrl.expr)
+    field.update = updateModel
+    field.updateCaret = setCaret
+    field.get = evaluatorPool.get('duplex:' + field.expr)
+    field.set = evaluatorPool.get('duplex:set:' + field.expr)
+    var format = evaluatorPool.get('duplex:format:' + field.expr)
     if (format) {
-        ctrl.formatters.push(function (v) {
-            return format(ctrl.vmodel, v)
+        field.formatters.push(function (v) {
+            return format(field.vmodel, v)
         })
     }
-    ctrl.vmodel = cur.duplexVm
+    field.vmodel = cur.duplexVm
 
-    var events = ctrl.events = {}
+    var events = field.events = {}
 //添加需要监听的事件
-    switch (ctrl.type) {
+    switch (field.type) {
         case 'radio':
             if (cur.props.type === 'radio') {
                 events.click = updateModel
@@ -34,7 +34,7 @@ function initControl(cur, pre) {
             events.change = updateModel
             break
         case 'contenteditable':
-            if (ctrl.isChanged) {
+            if (field.isChanged) {
                 events.blur = updateModel
             } else {
                 if (window.webkitURL) {
@@ -48,12 +48,10 @@ function initControl(cur, pre) {
             }
             break
         case 'input':
-            if (ctrl.isChanged) {
+            if (field.isChanged) {
                 events.change = updateModel
             } else {
-
                 events.input = updateModel
-
                 events.compositionstart = openComposition
                 events.compositionend = closeComposition
             }
@@ -70,33 +68,33 @@ function initControl(cur, pre) {
 
 function updateModel() {
     var elem = this
-    var ctrl = this.__duplex__
-    if (elem.composing || elem.value === ctrl.lastViewValue)
+    var field = this._ms_field_
+    if (elem.composing || elem.value === field.lastViewValue)
         return
     if (elem.caret) {
         try {
             var pos = getCaret(elem)
             if (pos.start === pos.end || pos.start + 1 === pos.end) {
-                ctrl.caretPos = pos
+                field.caretPos = pos
             }
         } catch (e) {
             avalon.warn('fixCaret error', e)
         }
     }
-    if (ctrl.debounceTime > 4) {
+    if (field.debounceTime > 4) {
         var timestamp = new Date()
-        var left = timestamp - ctrl.time || 0
-        ctrl.time = timestamp
-        if (left >= ctrl.debounceTime) {
-            refreshModel[ctrl.type].call(ctrl)
+        var left = timestamp - field.time || 0
+        field.time = timestamp
+        if (left >= field.debounceTime) {
+            refreshModel[field.type].call(field)
         } else {
-            clearTimeout(ctrl.debounceID)
-            ctrl.debounceID = setTimeout(function () {
-                refreshModel[ctrl.type].call(ctrl)
+            clearTimeout(field.debounceID)
+            field.debounceID = setTimeout(function () {
+                refreshModel[field.type].call(field)
             }, left)
         }
     } else {
-        refreshModel[ctrl.type].call(ctrl)
+        refreshModel[field.type].call(field)
     }
 }
 
@@ -127,11 +125,11 @@ markID(updateModel)
 
 
 
-function getCaret(ctrl) {
+function getCaret(field) {
     var start = NaN, end = NaN
-    if (ctrl.setSelectionRange) {
-        start = ctrl.selectionStart
-        end = ctrl.selectionEnd
+    if (field.setSelectionRange) {
+        start = field.selectionStart
+        end = field.selectionEnd
     }
     return {
         start: start,
@@ -139,11 +137,11 @@ function getCaret(ctrl) {
     }
 }
 
-function setCaret(ctrl, begin, end) {
-    if (!ctrl.value || ctrl.readOnly)
+function setCaret(field, begin, end) {
+    if (!field.value || field.readOnly)
         return
-    ctrl.selectionStart = begin
-    ctrl.selectionEnd = end
+    field.selectionStart = begin
+    field.selectionEnd = end
 }
 
 module.exports = initControl

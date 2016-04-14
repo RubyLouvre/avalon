@@ -10,7 +10,7 @@ function newControl(binding, vnode) {
     var ptype = binding.param
     var isChecked = ptype === 'checked'
 
-    var ctrl = vnode.ctrl = {
+    var field = vnode.field = {
         parsers: [],
         formatters: [],
         modelValue: NaN,
@@ -21,8 +21,8 @@ function newControl(binding, vnode) {
     }
     if (isChecked) {
         if (rcheckedType.test(etype)) {
-            ctrl.isChecked = true
-            ctrl.type = 'radio'
+            field.isChecked = true
+            field.type = 'radio'
         } else {
             ptype = null
         }
@@ -32,38 +32,38 @@ function newControl(binding, vnode) {
         var cid = changed+':cb'
         if(!avalon.caches[cid]){
             var fn = Function('return '+ avalon.parseExpr(changed, 'on'))
-            avalon.caches[cid] = ctrl.callback = fn()
+            avalon.caches[cid] = field.callback = fn()
         }else{
-            ctrl.callback = avalon.caches[cid]
+            field.callback = avalon.caches[cid]
         }
     }
     var parser = avalon.parsers[ptype]
     if (parser) {
-        ctrl.parsers.push(parser)
+        field.parsers.push(parser)
     }
     if (rchangeFilter.test(expr)) {
         expr = expr.replace(rchangeFilter, '')
         if (rnoduplexInput.test(etype)) {
             avalon.warn(etype + '不支持change过滤器')
         } else {
-            ctrl.isChanged = true
+            field.isChanged = true
         }
     }
 
     var match = expr.match(rdebounceFilter)
     if (match) {
         expr = expr.replace(rdebounceFilter, '')
-        if (!ctrl.isChanged) {
-            ctrl.debounceTime = parseInt(match[1], 10) || 300
+        if (!field.isChanged) {
+            field.debounceTime = parseInt(match[1], 10) || 300
         }
     }
-    binding.expr = ctrl.expr = expr.trim()
+    binding.expr = field.expr = expr.trim()
     if (!/input|textarea|select/.test(vnode.type)) {
         if ('contenteditable' in vnode.props) {
-            ctrl.type = 'contenteditable'
+            field.type = 'contenteditable'
         }
-    } else if (!ctrl.type) {
-        ctrl.type = vnode.type === 'select' ? 'select' :
+    } else if (!field.type) {
+        field.type = vnode.type === 'select' ? 'select' :
                 etype === 'checkbox' ? 'checkbox' :
                 etype === 'radio' ? 'radio' :
                 'input'

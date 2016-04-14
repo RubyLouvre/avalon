@@ -1,36 +1,36 @@
 
 var valueHijack = require('./valueHijack')
 
-var newControl = require('./newControl')
-var initControl = require('./bindEvents.modern')
-var refreshControl = require('./refreshControl.modern')
+var newField = require('./newField')
+var initField = require('./bindEvents.modern')
+var updateField = require('./updateField.modern')
 var addField = require('./addField')
 
 avalon.directive('duplex', {
     priority: 2000,
     parse: function (binding, num, vnode) {
-        newControl(binding, vnode)
+        newField(binding, vnode)
         return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
                 'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
     },
     diff: function (cur, pre, steps) {
 
-        if (pre.ctrl && pre.ctrl.set) {
-            cur.ctrl = pre.ctrl
+        if (pre.field && pre.field.set) {
+            cur.field = pre.field
         } else {
-            initControl(cur, pre)
+            initField(cur, pre)
         }
 
-        var ctrl = cur.ctrl
+        var field = cur.field
         delete cur.duplexVm
-        var value = cur.props.value = ctrl.get(ctrl.vmodel)
+        var value = cur.props.value = field.get(field.vmodel)
 
         if (cur.type === 'select' && !cur.children.length) {
             avalon.Array.merge(cur.children, avalon.lexer(cur.template, 0, 2))
             fixVirtualOptionSelected(cur, value)
         }
 
-        if (!ctrl.elem) {
+        if (!field.element) {
             var isEqual = false
         } else {
             var preValue = pre.props.value
@@ -42,17 +42,17 @@ avalon.directive('duplex', {
         }
 
         if (!isEqual) {
-            ctrl.modelValue = value
+            field.modelValue = value
             var afterChange = cur.afterChange || (cur.afterChange = [])
             avalon.Array.ensure(afterChange, this.update)
             steps.count += 1
         }
     },
     update: function (node, vnode) {
-        var ctrl = node.__duplex__ = vnode.ctrl
-        if (!ctrl.elem) {//这是一次性绑定
-            ctrl.elem = node //方便进行垃圾回收
-            var events = ctrl.events
+        var field = node._ms_field_ = vnode.field
+        if (!field.element) {//这是一次性绑定
+            field.element = node //方便进行垃圾回收
+            var events = field.events
             for (var name in events) {
                 avalon.bind(node, name, events[name])
                 delete events[name]
@@ -61,7 +61,7 @@ avalon.directive('duplex', {
         addField(node, vnode)
         if (!avalon.msie && valueHijack === false && !node.valueHijack) {
             //chrome 42及以下版本需要这个hack
-            node.valueHijack = ctrl.update
+            node.valueHijack = field.update
             var intervalID = setInterval(function () {
                 if (!avalon.contains(avalon.root, node)) {
                     clearInterval(intervalID)
@@ -71,15 +71,15 @@ avalon.directive('duplex', {
             }, 30)
         }
 
-        var viewValue = ctrl.format(ctrl.modelValue)
+        var viewValue = field.format(field.modelValue)
 
-        if (ctrl.viewValue !== viewValue) {
-            ctrl.viewValue = viewValue
-            refreshControl[ctrl.type].call(ctrl)
+        if (field.viewValue !== viewValue) {
+            field.viewValue = viewValue
+            updateField[field.type].call(field)
             if (node.caret) {
-                var pos = ctrl.caretPos
-                pos && ctrl.updateCaret(node, pos.start, pos.end)
-                ctrl.caretPos = null
+                var pos = field.caretPos
+                pos && field.updateCaret(node, pos.start, pos.end)
+                field.caretPos = null
             }
         }
     }
