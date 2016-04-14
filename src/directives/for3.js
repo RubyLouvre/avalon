@@ -38,7 +38,6 @@ avalon.directive('for', {
         var arr = str.replace(rforPrefix, '').split(' in ')
         var assign = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
         var alias = aliasAs ? 'var ' + aliasAs + ' = loop' + num + '\n' : ''
-        //  var forValue = 'vnode' + num + '.forValue = loop' + num + '\n'
         var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
         if (kv.length === 1) {
             kv.unshift('$key')

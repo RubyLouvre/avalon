@@ -24,7 +24,7 @@ avalon.directive('duplex', {
     },
     diff: function (cur, pre, steps) {
         var duplexID = cur.props["ms-duplex"]
-        cur.field = pre.field || avalon.mix(true, {}, avalon.caches[duplexID])
+        cur.field = pre.field || avalon.mix( {}, avalon.caches[duplexID])
         var field = cur.field
         if (!field.set) {
             initField(cur)

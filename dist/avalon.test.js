@@ -1253,7 +1253,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function orderBy(array, criteria, reverse) {
 	    var type = avalon.type(array)
-	    if (type !== 'array' || type !== 'object')
+	    if (type !== 'array' && type !== 'object')
 	        throw 'orderBy只能处理对象或数组'
 	    var order = (reverse && reverse < 0) ? -1 : 1
 
@@ -1270,11 +1270,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    array.sort(function (left, right) {
 	        var a = left.order
 	        var b = right.order
+	        if(Number.isNaN(a) && Number.isNaN(b)){
+	            return 0
+	        }
 	        return a === b ? 0 : a > b ? order : -order
 	    })
 	    var isArray = type === 'array'
 	    var target = isArray ? [] : {}
-	    return makeData(target, array, function (el) {
+	    return recovery(target, array, function (el) {
 	        if (isArray) {
 	            target.push(el.value)
 	        } else {
@@ -1283,9 +1286,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 	}
 	function filterBy(array, search) {
-
 	    var type = avalon.type(array)
-
 	    if (type !== 'array' && type !== 'object')
 	        throw 'filterBy只能处理对象或数组'
 	    var args = avalon.slice(arguments, 2)
@@ -1310,7 +1311,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 	    var isArray = type === 'array'
 	    var target = isArray ? [] : {}
-	    return makeData(target, array, function (el) {
+	    return recovery(target, array, function (el) {
 	        if (isArray) {
 	            target.push(el.value)
 	        } else {
@@ -1322,13 +1323,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	function selectBy(data, array, defaults) {
 	    if (avalon.isObject(data) && !Array.isArray(data)) {
 	        var target = []
-	        return makeData(target, array, function (name) {
+	        return recovery(target, array, function (name) {
 	            target.push(data.hasOwnProperty(name) ? data[name] : defaults ? defaults[name]: '' )
 	        })
 	    } else {
 	        throw 'selectBy只支持对象'
 	    }
 	}
+
 	Number.isNaN = Number.isNaN || function(a){
 	    return a !== a
 	}
@@ -1361,10 +1363,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 
-	    return makeData(input, [])
+	    return recovery(input, [])
 	}
 
-	function makeData(ret, array, callback) {
+	function recovery(ret, array, callback) {
 	    for (var i = 0, n = array.length; i < n; i++) {
 	        callback(array[i])
 	    }
@@ -3862,9 +3864,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var newField = __webpack_require__(50)
 	var initField = __webpack_require__(51)
-	var updateField = __webpack_require__(54)
-	var addField = __webpack_require__(55)
-	var evaluatorPool = __webpack_require__(53)
+	var updateField = __webpack_require__(53)
+	var addField = __webpack_require__(54)
+	var evaluatorPool = __webpack_require__(55)
 	avalon.directive('duplex', {
 	    priority: 2000,
 	    parse: function (binding, num, vnode) {
@@ -3883,7 +3885,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    diff: function (cur, pre, steps) {
 	        var duplexID = cur.props["ms-duplex"]
-	        cur.field = pre.field || avalon.mix(true, {}, avalon.caches[duplexID])
+	        cur.field = pre.field || avalon.mix( {}, avalon.caches[duplexID])
 	        var field = cur.field
 	        if (!field.set) {
 	            initField(cur)
@@ -4455,16 +4457,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 53 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	var Cache = __webpack_require__(26)
-	//缓存求值函数，以便多次利用
-	module.exports = new Cache(512)
-
-
-/***/ },
-/* 54 */
 /***/ function(module, exports) {
 
 	
@@ -4517,7 +4509,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = updateField
 
 /***/ },
-/* 55 */
+/* 54 */
 /***/ function(module, exports) {
 
 	
@@ -4538,6 +4530,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	}
+
+
+/***/ },
+/* 55 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var Cache = __webpack_require__(26)
+	//缓存求值函数，以便多次利用
+	module.exports = new Cache(512)
 
 
 /***/ },
@@ -4879,7 +4881,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var arr = str.replace(rforPrefix, '').split(' in ')
 	        var assign = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
 	        var alias = aliasAs ? 'var ' + aliasAs + ' = loop' + num + '\n' : ''
-	        //  var forValue = 'vnode' + num + '.forValue = loop' + num + '\n'
 	        var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
 	        if (kv.length === 1) {
 	            kv.unshift('$key')
@@ -6406,7 +6407,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 
 	//缓存求值函数，以便多次利用
-	var evaluatorPool = __webpack_require__(53)
+	var evaluatorPool = __webpack_require__(55)
 
 	var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
 	var rstring = __webpack_require__(44).string
@@ -7816,7 +7817,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 103 */
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
+	module.exports = "<ms-panel>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</ms-panel>"
 
 /***/ }
 /******/ ])

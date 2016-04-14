@@ -1,45 +1,69 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
     <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
-        <script src="./dist/avalon.js"></script>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="./dist/avalon.js" ></script>
         <script>
-            var vm = avalon.define({
-                $id: "test",
-                data: [{checked: false}, {checked: false}, {checked: false}],
-                allchecked: false,
-                checkAll: function (e) {
-                    var checked = e.target.checked
-                    vm.data.forEach(function (el) {
-                        el.checked = checked
-                    })
-                },
-                checkOne: function (e) {
-                    var checked = e.target.checked
-                    if (checked === false) {
-                        vm.allchecked = false
-                    } else {//avalon已经为数组添加了ecma262v5的一些新方法
-                        vm.allchecked = vm.data.every(function (el) {
-                            return el.checked
-                        })
-                    }
+            if (!Date.now) {//fix 旧式IE
+                Date.now = function() {
+                    return new Date - 0;
                 }
+            }
+            var model = avalon.define({
+                $id: "test",
+                selected: "name",
+                options: ["name", "size", "date"],
+                trend: 1,
+                data: [
+                    {name: "aaa", size: 213, date: Date.now() + 20},
+                    {name: "bbb", size: 4576, date:Date.now() - 4},
+                    {name: "ccc", size: 563, date: Date.now() - 7},
+                    {name: "eee", size: 3713, date: Date.now() + 9},
+                    {name: "555", size: 389, date: Date.now() - 20}
+                ]
             })
+//            model.$watch("selected", function(v) {
+//                var t = parseFloat(model.trend)
+//                model.data.sort(function(a, b) {
+//                    if (v === "name") {
+//                        return t * a[v].localeCompare(b[v])
+//                    } else {
+//                        var ret = a[v] > b[v] ? 1 : -1
+//                        return t * ret
+//                    }
+//                })
+//            })
+//            model.$watch("trend", function(t) {
+//                var v = model.selected, t = parseFloat(t)
+//                model.data.sort(function(a, b) {
+//                    var ret = a[v] > b[v] ? 1 : -1
+//                    return t * ret
+//                })
+//            })
+
         </script>
     </head>
-    <body>
-        <table ms-controller="test" border="1">
-            <tr>
-                <td><input type="checkbox" 
-                           ms-duplex-checked="@allchecked" 
-                           data-duplex-changed="@checkAll"/>全选</td>
-            </tr>
-            <tr ms-for="($index, el) in @data">
-                <td><input type="checkbox" ms-duplex-checked="el.checked" data-duplex-changed="@checkOne" />xxxx{{el.checked}}</td>
-            </tr>
+    <body ms-controller="test">
+        <div style="color:red">
+            <p>本例子用于显示如何做一个简单的表格排序</p>
+            <p>ms-repeat="array"相当于ms-repeat-el="array" </p>
+        </div>
+        <p>
+            <select ms-duplex="@selected">
+                <option  ms-for="el in @options">{{el}}</option>
+            </select>
+            <select ms-duplex-number="@trend">
+                <option value="1">up</option>
+                <option value="-1">down</option>
+            </select>
+        </p>
+        <table width="500px" border="1">
+            <tbody >
+                <tr ms-for="el in @data | orderBy(@selected, @trend)">
+                    <td>{{el.name}}</td> <td>{{el.size}}</td> <td>{{el.date}}</td>
+                </tr>
+            </tbody>
         </table>
-
     </body>
 </html>
