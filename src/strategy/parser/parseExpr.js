@@ -12,7 +12,9 @@ var rhandleName = /^\@[$\w]+$/
 var rshortCircuit = /\|\|/g
 var rpipeline = /\|(?=\w)/
 var ruselessSp = /\s*(\.|\|)\s*/g
-
+var wrapDuplex = function(arr){
+    return '(function(){ return ' +arr.join('\n')+'})();\n'
+}
 function parseExpr(str, category) {
 
     var binding = {}
@@ -108,7 +110,7 @@ function parseExpr(str, category) {
             '}',
             '}']
        // fn = Function('return ' + getterBody.join('\n'))()
-        evaluatorPool.put('duplex:' + str, getterBody.join('\n'))
+        evaluatorPool.put('duplex:' + str,wrapDuplex(getterBody))
         //给vm同步某个属性
         var setterBody = [
             'function (__vmodel__,__value__){',
@@ -119,7 +121,7 @@ function parseExpr(str, category) {
             '}',
             '}']
       //  fn = Function('return ' + setterBody.join('\n'))()
-        evaluatorPool.put('duplex:set:' + str, setterBody.join('\n'))
+        evaluatorPool.put('duplex:set:' + str, wrapDuplex(setterBody))
         //对某个值进行格式化
         if (input.length) {
             var formatBody = [
@@ -132,7 +134,7 @@ function parseExpr(str, category) {
                 '}',
                 '}']
            // fn = Function('return ' + formatBody.join('\n'))()
-            evaluatorPool.put('duplex:format:' + str, formatBody.join('\n'))
+            evaluatorPool.put('duplex:format:' + str, wrapDuplex(formatBody))
         }
         return
     } else {

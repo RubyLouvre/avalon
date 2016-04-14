@@ -3,17 +3,16 @@ var window = avalon.window
 var document = avalon.document
 var refreshModel = require('./refreshModel')
 var markID = require('../../seed/lang.share').getShortID
-var evaluatorPool = require('../../strategy/parser/evaluatorPool')
 
 
-function initControl(cur, pre) {
-    var field = cur.field = pre.field
-
+function initControl(cur) {
+  
+    var field = cur.field
     field.update = updateModel
     field.updateCaret = setCaret
-    field.get = evaluatorPool.get('duplex:' + field.expr)
-    field.set = evaluatorPool.get('duplex:set:' + field.expr)
-    var format = evaluatorPool.get('duplex:format:' + field.expr)
+    field.get = cur.props['ms-duplex-get']
+    field.set = cur.props['ms-duplex-set']
+    var format = cur.props['ms-duplex-format']
     if (format) {
         field.formatters.push(function (v) {
             return format(field.vmodel, v)

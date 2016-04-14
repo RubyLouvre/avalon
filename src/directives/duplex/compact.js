@@ -5,25 +5,28 @@ var newField = require('./newField')
 var initField = require('./bindEvents.compact')
 var updateField = require('./updateField.compact')
 var addField = require('./addField')
-
+var evaluatorPool = require('../../strategy/parser/evaluatorPool')
 
 avalon.directive('duplex', {
     priority: 2000,
     parse: function (binding, num, vnode) {
+        var id = binding.expr
         newField(binding, vnode)
+        avalon.caches[id] = vnode.field
         return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
-                'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
+                'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(id) + ';\n' +
+                'vnode' + num + '.props["ms-duplex-get"] = ' + evaluatorPool.get('duplex:' + id) +
+                'vnode' + num + '.props["ms-duplex-set"] = ' + evaluatorPool.get('duplex:' + id) +
+                'vnode' + num + '.props["ms-duplex-format"] = ' + evaluatorPool.get('duplex:' + id)
     },
     diff: function (cur, pre, steps) {
+        var duplexID = cur.props["ms-duplex"]
+        var field = cur.field = pre.field || avalon.mix({}, avalon.caches[duplexID])
 
-        if (pre.field && pre.field.set) {
-            cur.field = pre.field
-            pre.field = null
-        } else {
-            initField(cur, pre)
+        if (!field.set) {
+            initField(cur)
         }
 
-        var field = cur.field
         cur.duplexVm = null
         var value = cur.props.value = field.get(field.vmodel)
 

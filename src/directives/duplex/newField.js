@@ -3,7 +3,7 @@ var rcheckedType = /^(?:checkbox|radio)$/
 var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/
 var rnoduplexInput = /^(file|button|reset|submit|checkbox|radio|range)$/
 
-function newControl(binding, vnode) {
+function newField(binding, vnode) {
     var expr = binding.expr
     var etype = vnode.props.type
     //处理数据转换器
@@ -87,4 +87,4 @@ function format(val) {
     return val
 }
 
-module.exports = newControl
+module.exports = newField

@@ -1995,7 +1995,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/
 	var rnoduplexInput = /^(file|button|reset|submit|checkbox|radio|range)$/
 
-	function newControl(binding, vnode) {
+	function newField(binding, vnode) {
 	    var expr = binding.expr
 	    var etype = vnode.props.type
 	    //处理数据转换器
@@ -2079,7 +2079,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return val
 	}
 
-	module.exports = newControl
+	module.exports = newField
 
 
 /***/ },
@@ -4025,10 +4025,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        '\n\tprops: {"ms-if":true} })\n'
 	                str += '\n}else{\n\n'
 	            }
+
 	            str += 'var ' + vnode + ' = {' +
 	                    '\n\tnodeType:1,' +
 	                    '\n\ttype: ' + quote(el.type) + ',' +
-	                    '\n\tprops: {},' +
+	                    '\n\tprops:{},' +
 	                    '\n\tchildren: [],' +
 	                    '\n\tisVoidTag: ' + !!el.isVoidTag + ',' +
 	                    '\n\ttemplate: ""}\n'
@@ -4049,10 +4050,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (hasBindings) {
 	                    str += hasBindings
 	                }
-	                if (el.children.length) {
-	                    str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
-	                } else {
-	                    str += vnode + '.template = ' + quote(el.template) + '\n'
+	                if (!el.isVoidTag) {
+	                    if (el.children.length) {
+	                        str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
+	                    } else {
+	                        str += vnode + '.template = ' + quote(el.template) + '\n'
+	                    }
 	                }
 	            }
 	            str += children + '.push(' + vnode + ')\n'
@@ -4086,7 +4089,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rshortCircuit = /\|\|/g
 	var rpipeline = /\|(?=\w)/
 	var ruselessSp = /\s*(\.|\|)\s*/g
-
+	var wrapDuplex = function(arr){
+	    return '(function(){ return ' +arr.join('\n')+'})();\n'
+	}
 	function parseExpr(str, category) {
 
 	    var binding = {}
@@ -4181,8 +4186,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            quoteError(str, category),
 	            '}',
 	            '}']
-	        fn = Function('return ' + getterBody.join('\n'))()
-	        evaluatorPool.put('duplex:' + str, fn)
+	       // fn = Function('return ' + getterBody.join('\n'))()
+	        evaluatorPool.put('duplex:' + str,wrapDuplex(getterBody))
 	        //给vm同步某个属性
 	        var setterBody = [
 	            'function (__vmodel__,__value__){',
@@ -4192,8 +4197,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            quoteError(str, category),
 	            '}',
 	            '}']
-	        fn = Function('return ' + setterBody.join('\n'))()
-	        evaluatorPool.put('duplex:set:' + str, fn)
+	      //  fn = Function('return ' + setterBody.join('\n'))()
+	        evaluatorPool.put('duplex:set:' + str, wrapDuplex(setterBody))
 	        //对某个值进行格式化
 	        if (input.length) {
 	            var formatBody = [
@@ -4205,8 +4210,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                quoteError(str, category),
 	                '}',
 	                '}']
-	            fn = Function('return ' + formatBody.join('\n'))()
-	            evaluatorPool.put('duplex:format:' + str, fn)
+	           // fn = Function('return ' + formatBody.join('\n'))()
+	            evaluatorPool.put('duplex:format:' + str, wrapDuplex(formatBody))
 	        }
 	        return
 	    } else {
@@ -6217,23 +6222,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	var initField = __webpack_require__(96)
 	var updateField = __webpack_require__(97)
 	var addField = __webpack_require__(55)
+	var evaluatorPool = __webpack_require__(53)
 
 	avalon.directive('duplex', {
 	    priority: 2000,
 	    parse: function (binding, num, vnode) {
+	        var id = binding.expr
 	        newField(binding, vnode)
+	        avalon.caches[id] = vnode.field
 	        return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
-	                'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(binding.expr) + ';\n'
+	                'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(id) + ';\n' +
+	                'vnode' + num + '.props["ms-duplex-get"] = ' + evaluatorPool.get('duplex:' + id) +
+	                'vnode' + num + '.props["ms-duplex-set"] = ' + evaluatorPool.get('duplex:' + id) +
+	                'vnode' + num + '.props["ms-duplex-format"] = ' + evaluatorPool.get('duplex:' + id)
 	    },
 	    diff: function (cur, pre, steps) {
+	        var duplexID = cur.props["ms-duplex"]
+	        var field = cur.field = pre.field || avalon.mix({}, avalon.caches[duplexID])
 
-	        if (pre.field && pre.field.set) {
-	            cur.field = pre.field
-	        } else {
-	            initField(cur, pre)
+	        if (!field.set) {
+	            initField(cur)
 	        }
-
-	        var field = cur.field
+	        
 	        delete cur.duplexVm
 	        var value = cur.props.value = field.get(field.vmodel)
 
@@ -6339,16 +6349,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var refreshModel = __webpack_require__(52)
 	var markID = __webpack_require__(6).getShortID
-	var evaluatorPool = __webpack_require__(53)
 
-	function initControl(cur, pre) {
-	    var field = cur.field = pre.field
-
+	function initControl(cur) {
+	    var field = cur.field
 	    field.update = updateModel
 	    field.updateCaret = setCaret
-	    field.get = evaluatorPool.get('duplex:' + field.expr)
-	    field.set = evaluatorPool.get('duplex:set:' + field.expr)
-	    var format = evaluatorPool.get('duplex:format:' + field.expr)
+	    field.get = cur.props['ms-duplex-get']
+	    field.set = cur.props['ms-duplex-set']
+	    var format = cur.props['ms-duplex-format']
 	    if (format) {
 	        field.formatters.push(function (v) {
 	            return format(field.vmodel, v)

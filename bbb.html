@@ -1,35 +1,47 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <script src="./dist/avalon.js" ></script>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width">
+        <script src="./dist/avalon.js"></script>
         <script>
-           vm = avalon.define({
-            $id: 'for0',
-            array: [1, 2, 3, 4, 5],
-            object: {
-                a: 11,
-                b: 22,
-                c: 33,
-                d: 44,
-                e: 55
-            }
-        })
-
+            var vm = avalon.define({
+                $id: "test",
+                data: [{checked: false}, {checked: false}, {checked: false}],
+                allchecked: false,
+                checkAll: function() {
+                    var bool = this.checked
+                    vm.data.forEach(function(el) {
+                        el.checked = bool
+                    })
+                },
+                checkOne: function() {
+                    if (!this.checked) {
+                        vm.allchecked = false
+                    } else {//avalon已经为数组添加了ecma262v5的一些新方法
+                        vm.allchecked = vm.data.every(function(el) {
+                            return el.checked
+                        })
+                    }
+                }
+            })
         </script>
     </head>
-    <body >
-         <div ms-controller='for0' >
-             <ul>
-             <li ms-for='($index, el) in @array | limitBy(4)'>{{$index}}::{{el}}</li>
-             </ul>
-             <ol><!--ms-js: var $index = 0; -->
-             <li ms-for='($key, $val) in @object'>{{$key}}::{{$val}}::{{$index++}}</li>
-             </ol>
-             <!--ms-for: ($index,el) in @array   -->
-             <!--ms-js: if($index > 3){ return }-->
-             <p>{{el}}</p>
-             <!--ms-for-end:-->
-             </div>
+    <body>
+        <table ms-controller="test" border="1">
+          
+            <tr ms-for="($index, el) in @data">
+                <td><input type="checkbox" ms-duplex-checked="el.checked" />xxxx{{el.checked}}</td>
+            </tr>
+        </table>
+        <!--
+        data-duplex-changed="@checkOne"
+          <tr>
+                <td><input type="checkbox" 
+                           ms-duplex-checked="@allchecked" 
+                           data-duplex-changed="@checkAll"/>全选</td>
+            </tr>
+        -->
     </body>
 </html>
