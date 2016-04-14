@@ -6228,12 +6228,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parse: function (binding, num, vnode) {
 	        var id = binding.expr
 	        newField(binding, vnode)
-	        avalon.caches[id] = vnode.field
-	        return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
+	        var ret = 'vnode' + num + '.duplexVm = __vmodel__;\n' +
 	                'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(id) + ';\n' +
-	                'vnode' + num + '.props["ms-duplex-get"] = ' + evaluatorPool.get('duplex:' + id) +
-	                'vnode' + num + '.props["ms-duplex-set"] = ' + evaluatorPool.get('duplex:' + id) +
-	                'vnode' + num + '.props["ms-duplex-format"] = ' + evaluatorPool.get('duplex:' + id)
+	                'vnode' + num + '.props["data-duplex-get"] = ' + evaluatorPool.get('duplex:' + id) +
+	                'vnode' + num + '.props["data-duplex-set"] = ' + evaluatorPool.get('duplex:set:' + id)
+	        var format = evaluatorPool.get('duplex:format:' + id)
+	        if (format) {
+	            ret += 'vnode' + num + '.props["data-duplex-format"] = ' + format
+	        }
+	        return ret
 	    },
 	    diff: function (cur, pre, steps) {
 	        var duplexID = cur.props["ms-duplex"]
@@ -6242,7 +6245,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!field.set) {
 	            initField(cur)
 	        }
-	        
+
 	        delete cur.duplexVm
 	        var value = cur.props.value = field.get(field.vmodel)
 
@@ -6353,14 +6356,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var field = cur.field
 	    field.update = updateModel
 	    field.updateCaret = setCaret
-	    field.get = cur.props['ms-duplex-get']
-	    field.set = cur.props['ms-duplex-set']
-	    var format = cur.props['ms-duplex-format']
+	    field.get = cur.props['data-duplex-get']
+	    field.set = cur.props['data-duplex-set']
+	    var format = cur.props['data-duplex-format']
 	    if (format) {
 	        field.formatters.push(function (v) {
 	            return format(field.vmodel, v)
 	        })
 	    }
+
 	    field.vmodel = cur.duplexVm
 
 	    var events = field.events = {}

@@ -3863,23 +3863,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	var updateField = __webpack_require__(54)
 	var addField = __webpack_require__(55)
 	var evaluatorPool = __webpack_require__(53)
-
 	avalon.directive('duplex', {
 	    priority: 2000,
 	    parse: function (binding, num, vnode) {
 	        var id = binding.expr
 	        newField(binding, vnode)
 	        avalon.caches[id] = vnode.field
-	        return 'vnode' + num + '.duplexVm = __vmodel__;\n' +
+	        var ret = 'vnode' + num + '.duplexVm = __vmodel__;\n' +
 	                'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(id) + ';\n' +
-	                'vnode' + num + '.props["ms-duplex-get"] = ' + evaluatorPool.get('duplex:' + id) +
-	                'vnode' + num + '.props["ms-duplex-set"] = ' + evaluatorPool.get('duplex:' + id) +
-	                'vnode' + num + '.props["ms-duplex-format"] = ' + evaluatorPool.get('duplex:' + id)
+	                'vnode' + num + '.props["data-duplex-get"] = ' + evaluatorPool.get('duplex:' + id) +
+	                'vnode' + num + '.props["data-duplex-set"] = ' + evaluatorPool.get('duplex:set:' + id)
+	        var format = evaluatorPool.get('duplex:format:' + id)
+	        if (format) {
+	            ret += 'vnode' + num + '.props["data-duplex-format"] = ' + format
+	        }
+	        return ret
 	    },
 	    diff: function (cur, pre, steps) {
 	        var duplexID = cur.props["ms-duplex"]
-	        var field = cur.field = pre.field || avalon.mix({}, avalon.caches[duplexID])
-
+	        cur.field = pre.field || avalon.mix(true, {}, avalon.caches[duplexID])
+	        var field = cur.field
 	        if (!field.set) {
 	            initField(cur)
 	        }
@@ -4123,24 +4126,22 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	function initControl(cur) {
-	  
+
 	    var field = cur.field
 	    field.update = updateModel
 	    field.updateCaret = setCaret
-	    field.get = cur.props['ms-duplex-get']
-	    field.set = cur.props['ms-duplex-set']
-	    var format = cur.props['ms-duplex-format']
+	    field.get = cur.props['data-duplex-get']
+	    field.set = cur.props['data-duplex-set']
+	    var format = cur.props['data-duplex-format']
 	    if (format) {
 	        field.formatters.push(function (v) {
 	            return format(field.vmodel, v)
 	        })
 	    }
-
 	    field.vmodel = cur.duplexVm
 
-
 	    var events = field.events = {}
-	//添加需要监听的事件
+	    //添加需要监听的事件
 	    switch (field.type) {
 	        case 'radio':
 	            if (cur.props.type === 'radio') {
@@ -4237,7 +4238,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function updateModel() {
 	    var elem = this
-	    
+
 	    var field = this._ms_field_
 	    if (elem.composing)
 	        return

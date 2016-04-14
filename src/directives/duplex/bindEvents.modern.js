@@ -7,14 +7,15 @@ function initControl(cur) {
     var field = cur.field
     field.update = updateModel
     field.updateCaret = setCaret
-    field.get = cur.props['ms-duplex-get']
-    field.set = cur.props['ms-duplex-set']
-    var format = cur.props['ms-duplex-format']
+    field.get = cur.props['data-duplex-get']
+    field.set = cur.props['data-duplex-set']
+    var format = cur.props['data-duplex-format']
     if (format) {
         field.formatters.push(function (v) {
             return format(field.vmodel, v)
         })
     }
+
     field.vmodel = cur.duplexVm
 
     var events = field.events = {}

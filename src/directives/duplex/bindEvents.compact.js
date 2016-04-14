@@ -6,24 +6,22 @@ var markID = require('../../seed/lang.share').getShortID
 
 
 function initControl(cur) {
-  
+
     var field = cur.field
     field.update = updateModel
     field.updateCaret = setCaret
-    field.get = cur.props['ms-duplex-get']
-    field.set = cur.props['ms-duplex-set']
-    var format = cur.props['ms-duplex-format']
+    field.get = cur.props['data-duplex-get']
+    field.set = cur.props['data-duplex-set']
+    var format = cur.props['data-duplex-format']
     if (format) {
         field.formatters.push(function (v) {
             return format(field.vmodel, v)
         })
     }
-
     field.vmodel = cur.duplexVm
 
-
     var events = field.events = {}
-//添加需要监听的事件
+    //添加需要监听的事件
     switch (field.type) {
         case 'radio':
             if (cur.props.type === 'radio') {
@@ -120,7 +118,7 @@ function initControl(cur) {
 
 function updateModel() {
     var elem = this
-    
+
     var field = this._ms_field_
     if (elem.composing)
         return
