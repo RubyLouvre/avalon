@@ -50,7 +50,7 @@ function makeObserver($vmodel, heirloom, keys, accessors, options) {
 
     if (options.array) {
         if (avalon.modern) {
-            hideProperty($vmodel, '$model', modelAccessor)
+            Object.defineProperty($vmodel, '$model', modelAccessor)
         } else {
             $vmodel.$model = toJson($vmodel)
         }

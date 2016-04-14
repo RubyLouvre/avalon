@@ -45,7 +45,7 @@ share.$$midway.hideProperty = hideProperty
 function makeObserver($vmodel, heirloom, keys, accessors, options) {
 
     if (options.array) {
-        hideProperty($vmodel, '$model', modelAccessor)
+        Object.defineProperty($vmodel, '$model', modelAccessor)
     } else {
         function hasOwnKey(key) {
             return keys[key] === true

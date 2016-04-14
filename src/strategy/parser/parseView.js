@@ -114,10 +114,11 @@ function parseView(arr, num) {
                         '\n\tprops: {"ms-if":true} })\n'
                 str += '\n}else{\n\n'
             }
+
             str += 'var ' + vnode + ' = {' +
                     '\n\tnodeType:1,' +
                     '\n\ttype: ' + quote(el.type) + ',' +
-                    '\n\tprops: {},' +
+                    '\n\tprops:{},' +
                     '\n\tchildren: [],' +
                     '\n\tisVoidTag: ' + !!el.isVoidTag + ',' +
                     '\n\ttemplate: ""}\n'
@@ -138,10 +139,12 @@ function parseView(arr, num) {
                 if (hasBindings) {
                     str += hasBindings
                 }
-                if (el.children.length) {
-                    str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
-                } else {
-                    str += vnode + '.template = ' + quote(el.template) + '\n'
+                if (!el.isVoidTag) {
+                    if (el.children.length) {
+                        str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
+                    } else {
+                        str += vnode + '.template = ' + quote(el.template) + '\n'
+                    }
                 }
             }
             str += children + '.push(' + vnode + ')\n'
