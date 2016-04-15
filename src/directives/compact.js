@@ -12,6 +12,7 @@ require('./class.hover.active')
 require('./on')
 require('./duplex/compact')
 require('./validate')
+require('./rules')
 
 //处理逻辑
 require('./if')
