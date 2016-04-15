@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="./dist/avalon.test.js"></script>
+        <script>
+            avalon.effect('animate', {
+                enterClass: 'animate-enter',
+                enterActiveClass: 'animate-enter-active',
+                leaveClass: 'animate-leave',
+                leaveActiveClass: 'animate-leave-active', 
+            })
+            var vm = avalon.define({
+                $id: 'for0',
+                btn: "111",
+                enterDone: function(){},
+                leaveDone: function(){}
+            })
+            var d = {
+                a: 1
+            }
+          
+        </script>
+    </head>
+    <body>
+
+
+        <div ms-controller='for0' >
+            <div ms-effect="{is:'xxx', enterDone: @enterDone, leaveDone: @leaveDone}"></div>
+        </div>
+
+    </body>
+</html>
