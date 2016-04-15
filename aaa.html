@@ -8,24 +8,39 @@
         <script>
             var vm = avalon.define({
                 $id: "test",
-                aaa: "1",
-                v: {
-                    onError: function (a) {
-                        console.log(a, "!!!")
+                aaa: "",
+                bbb: '',
+                ccc: '',
+                validate: {
+                    onError: function (reasons) {
+                        reasons.forEach(function (reason) {
+                            console.log(reason.getMessage())
+                        })
+                    },
+                    onValidateAll: function (reasons) {
+                        if (reasons.length) {
+                            console.log('有表单没有通过')
+                        } else {
+                            console.log('全部通过')
+                        }
                     }
-                },
-                callback: function (e) {
-                    console.log(e)
                 }
             })
-            
+
         </script>
     </head>
 
     <body ms-controller="test">
-        <div ms-validate="@v">
-            <input ms-duplex="@aaa" data-duplex-changed="@callback" 
-                   ms-rules='{ pattern:/^\d+$/}' >{{@aaa}}
-        </div>
+        <form ms-validate="@validate">
+            <p><input ms-duplex="@aaa" placeholder="username"
+                      ms-rules='{required:true,pattern:/^\d+$/}' >{{@aaa}}</p>
+            <p><input type="password" id="pw" placeholder="password"
+                      ms-rules='{required:true}' 
+                      ms-duplex="@bbb" /></p>
+            <p><input type="password" 
+                   ms-rules='{required:true,equalTo:"#pw"}' placeholder="再填一次"
+                   ms-duplex="@ccc | change" /></p>
+            <p><input type="submit" value="submit"/></p>
+        </form>
     </body>
 </html>
