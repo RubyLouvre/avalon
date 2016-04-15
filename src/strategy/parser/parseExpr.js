@@ -26,8 +26,8 @@ function parseExpr(str, category) {
     }
     if (typeof str !== 'string')
         return ''
-    var input = str.trim()
-    var cacheStr = evaluatorPool.get(category + ':' + input)
+    var cacheID = str
+    var cacheStr = evaluatorPool.get(category + ':' + cacheID)
 
     if (cacheStr) {
         return cacheStr
@@ -46,7 +46,7 @@ function parseExpr(str, category) {
         return maps[a]
     }
 
-    input = input.replace(rregexp, dig).//移除所有正则
+    var input = str.replace(rregexp, dig).//移除所有正则
             replace(rstring, dig).//移除所有字符串
             replace(rshortCircuit, dig).//移除所有短路或
             replace(ruselessSp, '$1').//移除. |两端空白
@@ -60,7 +60,7 @@ function parseExpr(str, category) {
 
     body = body.replace(rAt, '$1__vmodel__.')
     if (category === 'js') {
-        return evaluatorPool.put(category + ':' + input, body)
+        return evaluatorPool.put(category + ':' + cacheID, body)
     }
 
 //处理表达式的过滤器部分
@@ -109,8 +109,7 @@ function parseExpr(str, category) {
             quoteError(str, category),
             '}',
             '}']
-       // fn = Function('return ' + getterBody.join('\n'))()
-        evaluatorPool.put('duplex:' + str,wrapDuplex(getterBody))
+        evaluatorPool.put('duplex:' + cacheID,wrapDuplex(getterBody))
         //给vm同步某个属性
         var setterBody = [
             'function (__vmodel__,__value__){',
@@ -120,8 +119,7 @@ function parseExpr(str, category) {
             quoteError(str, category),
             '}',
             '}']
-      //  fn = Function('return ' + setterBody.join('\n'))()
-        evaluatorPool.put('duplex:set:' + str, wrapDuplex(setterBody))
+        evaluatorPool.put('duplex:set:' + cacheID, wrapDuplex(setterBody))
         //对某个值进行格式化
         if (input.length) {
             var formatBody = [
@@ -133,8 +131,7 @@ function parseExpr(str, category) {
                 quoteError(str, category),
                 '}',
                 '}']
-           // fn = Function('return ' + formatBody.join('\n'))()
-            evaluatorPool.put('duplex:format:' + str, wrapDuplex(formatBody))
+            evaluatorPool.put('duplex:format:' + cacheID, wrapDuplex(formatBody))
         }
         return
     } else {
@@ -154,7 +151,7 @@ function parseExpr(str, category) {
 
     ret.splice.apply(ret, filters)
     cacheStr = ret.join('\n')
-    evaluatorPool.put(category + ':' + input, cacheStr)
+    evaluatorPool.put(category + ':' + cacheID, cacheStr)
     return cacheStr
 
 }

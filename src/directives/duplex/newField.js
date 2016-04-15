@@ -42,7 +42,7 @@ function newField(binding, vnode) {
         field.parsers.push(parser)
     }
     if (rchangeFilter.test(expr)) {
-        expr = expr.replace(rchangeFilter, '')
+      //  expr = expr.replace(rchangeFilter, '')
         if (rnoduplexInput.test(etype)) {
             avalon.warn(etype + '不支持change过滤器')
         } else {
@@ -52,7 +52,7 @@ function newField(binding, vnode) {
 
     var match = expr.match(rdebounceFilter)
     if (match) {
-        expr = expr.replace(rdebounceFilter, '')
+       // expr = expr.replace(rdebounceFilter, '')
         if (!field.isChanged) {
             field.debounceTime = parseInt(match[1], 10) || 300
         }

@@ -14,8 +14,8 @@ avalon.directive('duplex', {
         avalon.caches[id] = vnode.field
         var ret = 'vnode' + num + '.duplexVm = __vmodel__;\n' +
                 'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(id) + ';\n' +
-                'vnode' + num + '.props["data-duplex-get"] = ' + evaluatorPool.get('duplex:' + id) +
-                'vnode' + num + '.props["data-duplex-set"] = ' + evaluatorPool.get('duplex:set:' + id)
+                'vnode' + num + '.props["data-duplex-get"] = ' + evaluatorPool.get('duplex:' + id) +'\n'+
+                'vnode' + num + '.props["data-duplex-set"] = ' + evaluatorPool.get('duplex:set:' + id)+'\n'
         var format = evaluatorPool.get('duplex:format:' + id)
         if (format) {
             ret += 'vnode' + num + '.props["data-duplex-format"] = ' + format

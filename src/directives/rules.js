@@ -54,10 +54,10 @@ avalon.shadowCopy(avalon.validators, {
             return value
         }
     },
-    equalTo: {
+    equalto: {
         message: '密码输入不一致',
         get: function (value, field, next) {
-            var id = String(field.data.equalTo).slice(1)
+            var id = String(field.data.equalto).slice(1)
             var other = avalon(document.getElementById(id)).val() || ""
             next(value === other)
             return value
@@ -90,7 +90,7 @@ avalon.shadowCopy(avalon.validators, {
         }
     },
     minlength: {
-        message: '最少输入{{min}}个字',
+        message: '最少输入{{minlength}}个字',
         get: function (value, field, next) {
             var num = parseInt(field.data.minlength, 10)
             next(value.length >= num)
@@ -98,7 +98,7 @@ avalon.shadowCopy(avalon.validators, {
         }
     },
     maxlength: {
-        message: '最多输入{{max}}个字',
+        message: '最多输入{{maxlength}}个字',
         get: function (value, field, next) {
             var num = parseInt(field.data.maxlength, 10)
             next(value.length <= num)
@@ -121,25 +121,10 @@ avalon.shadowCopy(avalon.validators, {
             return value
         }
     },
-    rangelength: {
-        message: '输入长度应在{{rangelength}}之间',
+    chs: {
+        message: '必须是中文字符',
         get: function (value, field, next) {
-            var arr = field.data.rangelength
-            if (Array.isArray(arr) && arr.length === 2) {
-                var len = value.length
-                next(len >= arr[0] && len <= arr[1])
-            }
-            return value
-        }
-    },
-    range: {
-        message: '输入值应在{{range}}之间',
-        get: function (value, field, next) {
-            var arr = field.data.range
-            if (Array.isArray(arr) && arr.length === 2) {
-                var v = parseFloat(value)
-                next(v >= arr[0] && v <= arr[1])
-            }
+            next(/^[\u4e00-\u9fa5]+$/.test(value))
             return value
         }
     }

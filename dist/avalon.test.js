@@ -3876,8 +3876,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        avalon.caches[id] = vnode.field
 	        var ret = 'vnode' + num + '.duplexVm = __vmodel__;\n' +
 	                'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(id) + ';\n' +
-	                'vnode' + num + '.props["data-duplex-get"] = ' + evaluatorPool.get('duplex:' + id) +
-	                'vnode' + num + '.props["data-duplex-set"] = ' + evaluatorPool.get('duplex:set:' + id)
+	                'vnode' + num + '.props["data-duplex-get"] = ' + evaluatorPool.get('duplex:' + id) +'\n'+
+	                'vnode' + num + '.props["data-duplex-set"] = ' + evaluatorPool.get('duplex:set:' + id)+'\n'
 	        var format = evaluatorPool.get('duplex:format:' + id)
 	        if (format) {
 	            ret += 'vnode' + num + '.props["data-duplex-format"] = ' + format
@@ -4071,7 +4071,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        field.parsers.push(parser)
 	    }
 	    if (rchangeFilter.test(expr)) {
-	        expr = expr.replace(rchangeFilter, '')
+	      //  expr = expr.replace(rchangeFilter, '')
 	        if (rnoduplexInput.test(etype)) {
 	            avalon.warn(etype + '不支持change过滤器')
 	        } else {
@@ -4081,7 +4081,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var match = expr.match(rdebounceFilter)
 	    if (match) {
-	        expr = expr.replace(rdebounceFilter, '')
+	       // expr = expr.replace(rdebounceFilter, '')
 	        if (!field.isChanged) {
 	            field.debounceTime = parseInt(match[1], 10) || 300
 	        }
@@ -4780,10 +4780,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return value
 	        }
 	    },
-	    equalTo: {
+	    equalto: {
 	        message: '密码输入不一致',
 	        get: function (value, field, next) {
-	            var id = String(field.data.equalTo).slice(1)
+	            var id = String(field.data.equalto).slice(1)
 	            var other = avalon(document.getElementById(id)).val() || ""
 	            next(value === other)
 	            return value
@@ -4816,7 +4816,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    minlength: {
-	        message: '最少输入{{min}}个字',
+	        message: '最少输入{{minlength}}个字',
 	        get: function (value, field, next) {
 	            var num = parseInt(field.data.minlength, 10)
 	            next(value.length >= num)
@@ -4824,7 +4824,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    maxlength: {
-	        message: '最多输入{{max}}个字',
+	        message: '最多输入{{maxlength}}个字',
 	        get: function (value, field, next) {
 	            var num = parseInt(field.data.maxlength, 10)
 	            next(value.length <= num)
@@ -4847,25 +4847,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return value
 	        }
 	    },
-	    rangelength: {
-	        message: '输入长度应在{{rangelength}}之间',
+	    chs: {
+	        message: '必须是中文字符',
 	        get: function (value, field, next) {
-	            var arr = field.data.rangelength
-	            if (Array.isArray(arr) && arr.length === 2) {
-	                var len = value.length
-	                next(len >= arr[0] && len <= arr[1])
-	            }
-	            return value
-	        }
-	    },
-	    range: {
-	        message: '输入值应在{{range}}之间',
-	        get: function (value, field, next) {
-	            var arr = field.data.range
-	            if (Array.isArray(arr) && arr.length === 2) {
-	                var v = parseFloat(value)
-	                next(v >= arr[0] && v <= arr[1])
-	            }
+	            next(/^[\u4e00-\u9fa5]+$/.test(value))
 	            return value
 	        }
 	    }
@@ -6602,8 +6587,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    if (typeof str !== 'string')
 	        return ''
-	    var input = str.trim()
-	    var cacheStr = evaluatorPool.get(category + ':' + input)
+	    var cacheID = str
+	    var cacheStr = evaluatorPool.get(category + ':' + cacheID)
 
 	    if (cacheStr) {
 	        return cacheStr
@@ -6622,7 +6607,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return maps[a]
 	    }
 
-	    input = input.replace(rregexp, dig).//移除所有正则
+	    var input = str.replace(rregexp, dig).//移除所有正则
 	            replace(rstring, dig).//移除所有字符串
 	            replace(rshortCircuit, dig).//移除所有短路或
 	            replace(ruselessSp, '$1').//移除. |两端空白
@@ -6636,7 +6621,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    body = body.replace(rAt, '$1__vmodel__.')
 	    if (category === 'js') {
-	        return evaluatorPool.put(category + ':' + input, body)
+	        return evaluatorPool.put(category + ':' + cacheID, body)
 	    }
 
 	//处理表达式的过滤器部分
@@ -6685,8 +6670,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            quoteError(str, category),
 	            '}',
 	            '}']
-	       // fn = Function('return ' + getterBody.join('\n'))()
-	        evaluatorPool.put('duplex:' + str,wrapDuplex(getterBody))
+	        evaluatorPool.put('duplex:' + cacheID,wrapDuplex(getterBody))
 	        //给vm同步某个属性
 	        var setterBody = [
 	            'function (__vmodel__,__value__){',
@@ -6696,8 +6680,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            quoteError(str, category),
 	            '}',
 	            '}']
-	      //  fn = Function('return ' + setterBody.join('\n'))()
-	        evaluatorPool.put('duplex:set:' + str, wrapDuplex(setterBody))
+	        evaluatorPool.put('duplex:set:' + cacheID, wrapDuplex(setterBody))
 	        //对某个值进行格式化
 	        if (input.length) {
 	            var formatBody = [
@@ -6709,8 +6692,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                quoteError(str, category),
 	                '}',
 	                '}']
-	           // fn = Function('return ' + formatBody.join('\n'))()
-	            evaluatorPool.put('duplex:format:' + str, wrapDuplex(formatBody))
+	            evaluatorPool.put('duplex:format:' + cacheID, wrapDuplex(formatBody))
 	        }
 	        return
 	    } else {
@@ -6730,7 +6712,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    ret.splice.apply(ret, filters)
 	    cacheStr = ret.join('\n')
-	    evaluatorPool.put(category + ':' + input, cacheStr)
+	    evaluatorPool.put(category + ':' + cacheID, cacheStr)
 	    return cacheStr
 
 	}
