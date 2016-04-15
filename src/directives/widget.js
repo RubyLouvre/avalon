@@ -68,7 +68,7 @@ var dir = avalon.directive('widget', {
             ]
             
         } else {
-            var needUpdate = !cur.$diff || cur.$diff(cur, pre)
+            var needUpdate = !cur.diff || cur.diff(cur, pre)
             cur.skipContent = !needUpdate
             
             var viewChangeObservers = cur.vmodel.$events.onViewChange

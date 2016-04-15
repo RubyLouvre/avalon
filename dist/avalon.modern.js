@@ -1907,7 +1907,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var fn0 = cur.props[name]
 	        var fn1 = (pre.props || {})[name]
 	        
-	        if (fn0 !== fn1) {
+	        if (fn0 !== fn1 || cur.type !== pre.type) {
 	            var match = name.match(revent)
 	            var type = match[1]
 	            var search = type + ':' + markID(fn0)
@@ -1927,7 +1927,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    update: function (node, vnode) {
-	        if(!node) //在循环绑定中，这里为null
+	        if(!node || node.nodeType !== 1) //在循环绑定中，这里为null
 	          return
 	        var key, type, listener
 	        node._ms_context_ = vnode.onVm
@@ -3076,7 +3076,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            ]
 	            
 	        } else {
-	            var needUpdate = !cur.$diff || cur.$diff(cur, pre)
+	            var needUpdate = !cur.diff || cur.diff(cur, pre)
 	            cur.skipContent = !needUpdate
 	            
 	            var viewChangeObservers = cur.vmodel.$events.onViewChange
@@ -4555,7 +4555,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } else {
 
 	        var node = name //node为页面上节点对应的虚拟DOM
-	        var vm = definition
+	        var topVm = definition
 	        var wid = node.props.wid
 	        //将ms-widget的值合并成一个纯粹的对象,并且将里面的vm抽取vms数组中
 	        var options = node.props['ms-widget'] || {}
@@ -4630,20 +4630,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	                insertSlots(vtree, node, definition.soleSlot)
 	            }
 	            //开始构建组件的vm的配置对象
-	            var diff = options.$diff
-	            var define = options.$define
+	            var diff = options.diff
+	            var define = options.define
 	            define = define || avalon.directives.widget.define
 	            var $id = options.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
 
 	            try { //options可能是vm, 在IE下使用delete会报错
 	                delete options.is
-	                delete options.$id
-	                delete options.$diff
-	                delete options.$define
+	                delete options.diff
+	                delete options.define
 	            } catch (e) {
 	            }
-
-	            var vmodel = define(vm, definition.defaults, options, vms)
+	            var vmodel = define(topVm, definition.defaults, options, vms)
 	            vmodel.$id = $id
 	            avalon.vmodels[$id] = vmodel
 	            //生成组件的render
@@ -6020,7 +6018,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                !event.isImmediatePropagationStopped) {
 	            var fn = avalon.eventListeners[uuid]
 	            if (fn) {
-	                var vm = rhandleHasVm.test(uuid) ? elem._ms_context_ : 0
+	                var vm = rhandleHasVm.test(uuid) ? handler.elem._ms_context_ : 0
 	                if (vm && vm.$hashcode === false) {
 	                    return avalon.unbind(elem, type, fn)
 	                }

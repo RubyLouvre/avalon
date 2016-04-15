@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-validate</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../dist/avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                button: {//注意这里不能以 $开头
+                    buttonText: "VM内容"
+                }
+            })
+
+            avalon.component('ms-button', {
+                template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
+                defaults: {
+                    buttonText: "默认内容"
+                },
+                soleSlot: 'buttonText'
+            })
+
+        </script>
+    </head>
+
+    <body ms-controller="test">
+    <!--在自定义标签中，ms-widget不是必须的-->
+    <ms-button ></ms-button>
+    <!--下面三种方式，ms-widget才是存在，其中的is也是必须的-->
+    <xmp ms-widget='{is:"ms-button"}'></xmp>
+    <wbr ms-widget='{is:"ms-button"}'/>
+    <template ms-widget='{is:"ms-button"}'></template>
+</body>
+</html>

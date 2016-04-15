@@ -17,7 +17,7 @@ avalon.component = function (name, definition) {
     } else {
 
         var node = name //node为页面上节点对应的虚拟DOM
-        var vm = definition
+        var topVm = definition
         var wid = node.props.wid
         //将ms-widget的值合并成一个纯粹的对象,并且将里面的vm抽取vms数组中
         var options = node.props['ms-widget'] || {}
@@ -92,20 +92,18 @@ avalon.component = function (name, definition) {
                 insertSlots(vtree, node, definition.soleSlot)
             }
             //开始构建组件的vm的配置对象
-            var diff = options.$diff
-            var define = options.$define
+            var diff = options.diff
+            var define = options.define
             define = define || avalon.directives.widget.define
             var $id = options.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
 
             try { //options可能是vm, 在IE下使用delete会报错
                 delete options.is
-                delete options.$id
-                delete options.$diff
-                delete options.$define
+                delete options.diff
+                delete options.define
             } catch (e) {
             }
-
-            var vmodel = define(vm, definition.defaults, options, vms)
+            var vmodel = define(topVm, definition.defaults, options, vms)
             vmodel.$id = $id
             avalon.vmodels[$id] = vmodel
             //生成组件的render

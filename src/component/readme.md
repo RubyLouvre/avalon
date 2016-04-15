@@ -112,8 +112,8 @@ wbr的行为有点像br元素，用于软换行的
 好了，我们看一下ms-widget能传入什么东西。
 
 1. is, 指定组件的类型
-2. $define，用于生成组件vm，详见widget指令的define方法
-3. $diff，类似于react的shouldUpdateComponent方法，会传两个虚拟DOM给你，
+2. define，用于生成组件vm，详见widget指令的define方法
+3. diff，类似于react的shouldUpdateComponent方法，会传两个虚拟DOM给你，
    你自己进行比较，返回true or false， true就会更新组件
 4. $id, 新生成的组件vm的$id
 5. onInit， 当组件的vm生成后触发的回调（只会执行一次）

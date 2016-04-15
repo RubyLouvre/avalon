@@ -36,7 +36,7 @@ avalon.directive('on', {
         var fn0 = cur.props[name]
         var fn1 = (pre.props || {})[name]
         
-        if (fn0 !== fn1) {
+        if (fn0 !== fn1 || cur.type !== pre.type) {
             var match = name.match(revent)
             var type = match[1]
             var search = type + ':' + markID(fn0)
@@ -56,7 +56,7 @@ avalon.directive('on', {
         }
     },
     update: function (node, vnode) {
-        if(!node) //在循环绑定中，这里为null
+        if(!node || node.nodeType !== 1) //在循环绑定中，这里为null
           return
         var key, type, listener
         node._ms_context_ = vnode.onVm

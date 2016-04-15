@@ -118,7 +118,6 @@ function dispatch(event) {
     event = new avEvent(event)
     var type = event.type
     var elem = event.target
-
     var handlers = []
     collectHandlers(elem, type, handlers)
     var i = 0, j, uuid, handler
@@ -129,7 +128,7 @@ function dispatch(event) {
                 !event.isImmediatePropagationStopped) {
             var fn = avalon.eventListeners[uuid]
             if (fn) {
-                var vm = rhandleHasVm.test(uuid) ? elem._ms_context_: 0
+                var vm = rhandleHasVm.test(uuid) ? handler.elem._ms_context_: 0
                 if (vm && vm.$hashcode === false) {
                     return avalon.unbind(elem, type, fn)
                 }

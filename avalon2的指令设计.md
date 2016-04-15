@@ -95,6 +95,10 @@ ms-click="@fn"
 ### ms-duplex
 可使用过滤器，双工绑定
 
+### ms-rules
+与双工绑定一起,用于定义验证规则
+### ms-validate
+用于验证数据
 
 ### ms-effect
 可使用过滤器，结合其他指令使用动画效果
