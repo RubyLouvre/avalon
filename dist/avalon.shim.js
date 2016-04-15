@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.5.6 built in 2016.3.18
+ avalon.shim.js 1.5.6 built in 2016.4.15
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1376,6 +1376,7 @@ var getKeys = rnative.test(Object.key) ? Object.key : function (a) {
 
 function observeArray(array, old, watch) {
     if (old && old.splice) {
+        console.log(old)
         var args = [0, old.length].concat(array)
         old.splice.apply(old, args)
         return old
@@ -5118,7 +5119,6 @@ avalon.directive("repeat", {
                 }
             }
 
-            //  console.log(effectEnterStagger)
             for (i = 0; i < length; i++) {
                 proxy = proxies[i]
                 keyOrId = xtype === "array" ? proxy.$id : proxy.$key
@@ -5239,11 +5239,9 @@ function shimController(data, transation, proxy, fragments, init) {
     init && transation.appendChild(content)
     var itemName = data.param || "el"
     var valueItem = proxy[itemName], nv
-    if (Object(valueItem) === valueItem) {
-        nv = [proxy].concat(data.vmodels)
-    } else {
-        nv = [proxy].concat(data.vmodels)
-    }
+ 
+    nv = [proxy].concat(data.vmodels)
+   
 
     var fragment = {
         nodes: nodes,

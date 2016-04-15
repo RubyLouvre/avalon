@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.5.6 built in 2016.3.18
+ avalon.modern.js 1.5.6 built in 2016.4.15
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -4366,7 +4366,6 @@ avalon.directive("repeat", {
                 }
             }
 
-            //  console.log(effectEnterStagger)
             for (i = 0; i < length; i++) {
                 proxy = proxies[i]
                 keyOrId = xtype === "array" ? proxy.$id : proxy.$key
@@ -4487,11 +4486,9 @@ function shimController(data, transation, proxy, fragments, init) {
     init && transation.appendChild(content)
     var itemName = data.param || "el"
     var valueItem = proxy[itemName], nv
-    if (Object(valueItem) === valueItem) {
-        nv = [proxy].concat(data.vmodels)
-    } else {
-        nv = [proxy].concat(data.vmodels)
-    }
+ 
+    nv = [proxy].concat(data.vmodels)
+   
 
     var fragment = {
         nodes: nodes,

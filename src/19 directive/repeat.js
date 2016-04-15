@@ -183,7 +183,6 @@ avalon.directive("repeat", {
                 }
             }
 
-            //  console.log(effectEnterStagger)
             for (i = 0; i < length; i++) {
                 proxy = proxies[i]
                 keyOrId = xtype === "array" ? proxy.$id : proxy.$key
@@ -304,11 +303,9 @@ function shimController(data, transation, proxy, fragments, init) {
     init && transation.appendChild(content)
     var itemName = data.param || "el"
     var valueItem = proxy[itemName], nv
-    if (Object(valueItem) === valueItem) {
-        nv = [proxy].concat(data.vmodels)
-    } else {
-        nv = [proxy].concat(data.vmodels)
-    }
+ 
+    nv = [proxy].concat(data.vmodels)
+   
 
     var fragment = {
         nodes: nodes,
