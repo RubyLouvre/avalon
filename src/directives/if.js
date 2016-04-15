@@ -9,8 +9,10 @@ avalon.directive('if', {
         cur.dom = pre.dom
         if (cur.type !== pre.type) {
             var list = cur.change || (cur.change = [])
+
             if (avalon.Array.ensure(list, this.update)) {
                 steps.count += 1
+                cur.steps = steps
             }
         }
     },
@@ -26,6 +28,9 @@ avalon.directive('if', {
                     vnode.dom = element
                 }
                 parent.replaceChild(element, node)
+                if (vnode.steps.count) {
+                    patch([element], [vnode], parent, vnode.steps)
+                }
             } else if (vtype === 8) {
                 //要移除元素节点,在对应位置上插入注释节点
                 var comment = node._ms_if_ ||

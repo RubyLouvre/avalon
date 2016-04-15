@@ -3807,8 +3807,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      
 	        var fn0 = cur.props[name]
 	        var fn1 = (pre.props || {})[name]
-	        
-	        if (fn0 !== fn1 || cur.type !== pre.type) {
+	        if ( fn0 !== fn1  ) {
 	            var match = name.match(revent)
 	            var type = match[1]
 	            var search = type + ':' + markID(fn0)
@@ -3828,7 +3827,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    update: function (node, vnode) {
-	        if(!node || node.nodeType !== 1) //在循环绑定中，这里为null
+	        if(!node || node.nodeType > 1) //在循环绑定中，这里为null
 	          return
 	        var key, type, listener
 	        node._ms_context_ = vnode.onVm
@@ -4868,8 +4867,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        cur.dom = pre.dom
 	        if (cur.type !== pre.type) {
 	            var list = cur.change || (cur.change = [])
+
 	            if (avalon.Array.ensure(list, this.update)) {
 	                steps.count += 1
+	                cur.steps = steps
 	            }
 	        }
 	    },
@@ -4885,6 +4886,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    vnode.dom = element
 	                }
 	                parent.replaceChild(element, node)
+	                if (vnode.steps.count) {
+	                    patch([element], [vnode], parent, vnode.steps)
+	                }
 	            } else if (vtype === 8) {
 	                //要移除元素节点,在对应位置上插入注释节点
 	                var comment = node._ms_if_ ||
