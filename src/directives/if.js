@@ -31,6 +31,7 @@ avalon.directive('if', {
                 if (vnode.steps.count) {
                     patch([element], [vnode], parent, vnode.steps)
                 }
+                return (vnode.steps = false)
             } else if (vtype === 8) {
                 //要移除元素节点,在对应位置上插入注释节点
                 var comment = node._ms_if_ ||
