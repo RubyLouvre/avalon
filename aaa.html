@@ -10,7 +10,7 @@
                 $id: "test",
                 aaa: "1",
                 v: {
-                    onError: function(a){
+                    onError: function (a) {
                         console.log(a, "!!!")
                     }
                 },
@@ -18,25 +18,14 @@
                     console.log(e)
                 }
             })
-            avalon.validators.pattern = {
-                message: '必须匹配/{{pattern}}/这样的格式',
-                get: function (value, field, next) {
-                    var elem = field.element
-                    var h5pattern = elem.getAttribute("pattern")
-                    var mspattern = elem.getAttribute("data-pattern")
-                    var pattern = field.data.pattern = h5pattern || mspattern
-                    var re = new RegExp('^(?:' + pattern + ')$')
-                    next(re.test(value))
-                    return value
-                }
-            }
+            
         </script>
     </head>
 
     <body ms-controller="test">
         <div ms-validate="@v">
             <input ms-duplex="@aaa" data-duplex-changed="@callback" 
-                   data-validators='pattern' data-pattern="\d+" >{{@aaa}}
+                   ms-rules='{ pattern:/^\d+$/}' >{{@aaa}}
         </div>
     </body>
 </html>

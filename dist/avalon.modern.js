@@ -2190,7 +2190,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        while (node && node.nodeType === 1) {
 	            var validator = node._ms_validator_
 	            if (validator) {
-	                field.validators = vnode.props['data-validators']
+	                field.rules = vnode.props['ms-rules']
 	                field.validator = validator
 	                if(avalon.Array.ensure(validator.fields, field)){
 	                    validator.addField(field)
@@ -2314,8 +2314,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var options = field.validator
 	        if (elem.disabled)
 	            return
-	        field.validators.replace(/\w+/g, function (name) {
-	            var hook = avalon.validators[name]
+	        for(var ruleName in field.rules){
+	            var ruleValue = field.rules[ruleName]
+	            if(ruleValue === false)
+	                continue
+	            var hook = avalon.validators[ruleName]
 	            var resolve, reject
 	            promises.push(new Promise(function (a, b) {
 	                resolve = a
@@ -2338,9 +2341,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    resolve(reason)
 	                }
 	            }
-	            field.data = {}
+	            field.data = { }
+	            field.data[ruleName] = ruleValue
 	            hook.get(value, field, next)
-	        })
+	        }
 	        //如果promises不为空，说明经过验证拦截器
 	        var lastPromise = Promise.all(promises).then(function (array) {
 	            var reasons = []
