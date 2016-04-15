@@ -4,12 +4,13 @@ var textCache = new Cache(512)
 avalon.directive('html', {
     parse: function (binding, num) {
         return 'vnode' + num + '.htmlVm = __vmodel__\n' +
-                'vnode' + num + '.props.wid = 2;\n' +
+               'vnode' + num + '.skipContent = true\n' +
                 'vnode' + num + '.props["ms-html"] =' + avalon.parseExpr(binding) + ';\n'
     },
     diff: function (cur, pre, steps, name) {
         var curValue = cur.props[name]
         var preValue = pre.props[name]
+          cur.skipContent = false
         if (curValue !== preValue) {
             var nodes = textCache.get(curValue)
             if (!Array.isArray(nodes)) {
