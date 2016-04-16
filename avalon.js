@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.5.6 built in 2016.4.15
+ avalon.js 1.5.6 built in 2016.4.16
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1376,7 +1376,6 @@ var getKeys = rnative.test(Object.key) ? Object.key : function (a) {
 
 function observeArray(array, old, watch) {
     if (old && old.splice) {
-        console.log(old)
         var args = [0, old.length].concat(array)
         old.splice.apply(old, args)
         return old

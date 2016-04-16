@@ -68,7 +68,7 @@ function scanAttr(elem, vmodels, match) {
             executeBindings(bindings, vmodels)
         }
     }
-    if (scanNode && !stopScan[elem.tagName]) {
+    if (scanNode && !stopScan[elem.tagName] && (isWidget(elem) ? elem.msResolved : 1)) {
         mergeTextNodes && mergeTextNodes(elem)
         scanNodeList(elem, vmodels) //扫描子孙元素
     }

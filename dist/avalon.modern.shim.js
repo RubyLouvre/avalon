@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.5.6 built in 2016.4.15
+ avalon.modern.js 1.5.6 built in 2016.4.16
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2544,7 +2544,7 @@ function scanAttr(elem, vmodels, match) {
             executeBindings(bindings, vmodels)
         }
     }
-    if (scanNode && !stopScan[elem.tagName]) {
+    if (scanNode && !stopScan[elem.tagName] && (isWidget(elem) ? elem.msResolved : 1)) {
         mergeTextNodes && mergeTextNodes(elem)
         scanNodeList(elem, vmodels) //扫描子孙元素
     }
