@@ -158,6 +158,52 @@ describe('on', function () {
             done()
         })
     })
+    it('ms-for+ms-if+ms-on', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <blockquote ms-controller='on5' >
+             <div ms-click='@callback' ms-for='(jj, el) in @panels' ms-if='jj === @curIndex' ms-html='el'></div>
+             </blockquote>
+             */
+        })
+        var map = [
+            function (str) {
+                expect(str).to.equal('面板1')
+            },
+            function (str) {
+                expect(str).to.equal('面板2')
+            },
+            function (str) {
+                expect(str).to.equal('面板3')
+            }
+        ]
+        var i = 0
+        vm = avalon.define({
+            $id: "test",
+            curIndex: 0, //默认显示第一个,
+            callback: function (e) {
+                map[i](e.target.innerHTML)
+            },
+            panels: ["面板1", "面板2", "面板3"]
+        })
+        avalon.scan(div, vm)
+        setTimeout(function () {
+            var divs = div.getElementsByTagName('div')
+            fireClick(divs[0])
+            setTimeout(function () {
+                i = 1
+                fireClick(divs[0])
+                setTimeout(function () {
+                    i = 2
+                    fireClick(divs[0])
+                    setTimeout(function(){
+                        done()
+                    })
+                })
+            })
+        })
 
+
+    })
 })
 
