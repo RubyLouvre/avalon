@@ -3315,14 +3315,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if(typeof curObj === 'string'){
 	            var is = curObj
 	            curObj = cur.props['ms-effect'] = {
-	                is: is,
-	                action: 'enter'
+	                is: is
 	            }
 	           
 	        }else if (Array.isArray(curObj)) {
 	            curObj = cur.props[name] = avalon.mix.apply({}, curObj)
 	        }
-	        if (Object(curObj) == curObj) {
+	        curObj.action = curObj.action || 'enter'
+	        if (Object(curObj) === curObj) {
 	            var preObj = pre.props[name]
 	            if ( Object(preObj) !== preObj || diffObj(curObj, preObj ))  {
 	                var list = cur.afterChange = cur.afterChange || []
@@ -3333,27 +3333,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    update: function (dom, vnode) {
-	        var definition = vnode.props['ms-effect']
-	        var type = definition.is
-	        
+	        var localeOption = vnode.props['ms-effect']
+	        var type = localeOption.is
+	        if(!type){//如果没有指定类型
+	            return avalon.warn('need is option')
+	        }
 	        var effects = avalon.effects
 	        if(support.css && !effects[type]){
 	            avalon.effect(type, {})
 	        }
-	        var options = effects[type]
-	        var action = definition.action
-
-	        var effect = new avalon.Effect(dom)
-	        if (!type || !options || typeof effect[action] !== 'function'){
-	            return
+	        var globalOption = effects[type]
+	        if(!globalOption){//如果没有定义特效
+	            return avalon.warn(type+' effect is undefined')
+	        }
+	        var action = localeOption.action
+	        var Effect = avalon.Effect
+	        if (typeof Effect.prototype[action] !== 'function'){
+	            return avalon.warn(type+' action is undefined')
 	        }   
-	       
-	        if (options.queue && animationQueue.length) {
+	        var effect = new Effect(dom)
+	        var finalOption = avalon.mix({}, globalOption, localeOption)
+	        if (finalOption.queue && animationQueue.length) {
 	            animationQueue.push(function () {
-	                effect[action](options)
+	                effect[action](finalOption)
 	            })
 	        } else {
-	            effect[action](options)
+	            effect[action](finalOption)
 	        }
 	    }
 	})
@@ -3381,6 +3386,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	avalon.effects = {}
+	//这里定义CSS动画
 	avalon.effect = function (name, definition) {
 	    avalon.effects[name] = definition
 	    if (support.css) {
@@ -3409,10 +3415,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	avalon.Effect = Effect
 	Effect.prototype = {
-	    enter: createMethod('Enter'),
-	    leave: createMethod('Leave'),
-	    move: createMethod('Move')
+	    enter: createAction('Enter'),
+	    leave: createAction('Leave'),
+	    move: createAction('Move')
 	}
+	function toMillisecond(str){
+	   var ratio = /\d+s/.test(str) ? 1000 : 1
+	   return parseFloat(str) * ratio
+	}
+
 	function execHooks(options, name, el) {
 	    var list = options[name]
 	    list = Array.isArray(list) ? list : typeof list === 'function' ? [list] : []
@@ -3420,17 +3431,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	       fn && fn(el)
 	    })
 	}
-	function createMethod(action) {
+	function createAction(action) {
 	    var lower = action.toLowerCase()
 	    return function (options) {
 	        var elem = this.el
 	        var $el = avalon(elem)
+	        var enterAnimateDone
+
 	        var animationDone = function(e) {
 	            var isOk = e !== false
+	            enterAnimateDone = true
 	            var dirWord = isOk ? 'Done' : 'Abort'
 	            execHooks(options, 'on' + action + dirWord, elem)
-	            $el.unbind(support.transitionEndEvent)
-	            $el.unbind(support.animationEndEvent)
+	            avalon.unbind(elem,support.transitionEndEvent)
+	            avalon.unbind(elem,support.animationEndEvent)
 	            callNextAniation()
 	        }
 	       
@@ -3444,23 +3458,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	            
 	            $el.addClass(options[lower + 'Class'])
 	            if(lower === 'leave'){
-	                $el.removeClass(options.enterClass)
-	                $el.removeClass(options.enterActiveClass)
+	                $el.removeClass(options.enterClass+' '+options.enterActiveClass)
 	            }else if(lower === 'enter'){
-	                $el.removeClass(options.leaveClass)
-	                $el.removeClass(options.leaveActiveClass)
+	                $el.removeClass(options.leaveClass+' '+options.leaveActiveClass)
 	            }
 	            $el.bind(support.transitionEndEvent, animationDone)
 	            $el.bind(support.animationEndEvent, animationDone)
 	            setTimeout(function () {
 	                var forceReflow = avalon.root.offsetWidth
+	                enterAnimateDone = false
 	                $el.addClass(options[lower + 'ActiveClass'])
 	                var computedStyles = window.getComputedStyle(elem)
 	                var tranDuration = computedStyles[support.transitionDuration]
 	                var animDuration = computedStyles[support.animationDuration]
-	                if (tranDuration === '0s' && animDuration === '0s') {
+	                var time = toMillisecond(tranDuration) || toMillisecond(animDuration)
+	                if (!time === 0) {
 	                    animationDone(false)
+	                }else{
+	                    setTimeout(function(){
+	                        if(!enterAnimateDone){
+	                            animationDone(false)
+	                        }
+	                    },time + 17)
 	                }
+	                //console.log(tranDuration , animDuration)
 	            }, 17)// = 1000/60
 	        }
 	    }
@@ -5967,7 +5988,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	                elem.setAttribute('avalon-events', value)
 	                break
-	            case 3:
+	            default:
 	                var search = type + ':' + fn.uuid
 	                value = value.split('??').filter(function (str) {
 	                    return str !== search

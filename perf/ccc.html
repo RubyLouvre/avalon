@@ -4,7 +4,7 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="./dist/avalon.test.js"></script>
+        <script src="../dist/avalon.js"></script>
         <script>
             avalon.effect('animate', {
                 enterClass: 'animate-enter',
@@ -14,21 +14,45 @@
             })
             var vm = avalon.define({
                 $id: 'for0',
-                btn: "111",
-                enterDone: function(){},
-                leaveDone: function(){}
+                aaa: "test",
+                action: '',
+                enterDone: function(){
+                    avalon.log('动画完成')
+                },
+                leaveDone: function(){
+                    avalon.log('动画回到原点')
+                }
             })
-            var d = {
-                a: 1
-            }
+           
           
         </script>
+        <style>
+            .animate-enter, .animate-leave{
+                width:100px;
+                height:100px;
+                background: #29b6f6;
+                transition: width 2s;
+                -moz-transition: width 2s; /* Firefox 4 */
+                -webkit-transition: width 2s; /* Safari 和 Chrome */
+                -o-transition: width 2s; /* Opera */
+            }  
+            .animate-enter-active, .animate-leave{
+                width:300px;
+            }
+            .animate-leave-active{
+                width:100px;
+            }
+        </style>
     </head>
     <body>
 
 
         <div ms-controller='for0' >
-            <div ms-effect="{is:'xxx', enterDone: @enterDone, leaveDone: @leaveDone}"></div>
+            <div ms-effect="{is:'animate', action:@action, onEnterDone: @enterDone, onLeaveDone: @leaveDone}">
+                {{@aaa}}
+            </div>
+            <button ms-click='@action = @action !== "leave" ? "leave": "action" '
+                    type="button">click</button>
         </div>
 
     </body>
