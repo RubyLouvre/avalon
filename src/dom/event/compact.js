@@ -68,18 +68,15 @@ avalon.unbind = function (elem, type, fn) {
                 value = value.split('??').filter(function (str) {
                     return str.indexOf(type + ':') === -1
                 }).join('??')
-
                 elem.setAttribute('avalon-events', value)
                 break
-            case 3:
+            default:
                 var search = type + ':' + fn.uuid
                 value = value.split('??').filter(function (str) {
                     return str !== search
                 }).join('??')
                 elem.setAttribute('avalon-events', value)
-
                 delete avalon.eventListeners[fn.uuid]
-
                 break
         }
     } else {

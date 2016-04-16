@@ -62,7 +62,7 @@ avalon.unbind = function (elem, type, fn) {
 
                 elem.setAttribute('avalon-events', value)
                 break
-            case 3:
+            default:
                 var search = type + ':' + fn.uuid
                 value = value.split('??').filter(function (str) {
                     return str !== search
