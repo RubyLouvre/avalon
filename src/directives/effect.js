@@ -7,7 +7,7 @@ avalon.directive('effect', {
         var curObj = cur.props[name]
         if(typeof curObj === 'string'){
             var is = curObj
-            curObj = cur.props['ms-effect'] = {
+            curObj = cur.props[name] = {
                 is: is
             }
            
@@ -15,6 +15,7 @@ avalon.directive('effect', {
             curObj = cur.props[name] = avalon.mix.apply({}, curObj)
         }
         curObj.action = curObj.action || 'enter'
+       
         if (Object(curObj) === curObj) {
             var preObj = pre.props[name]
             if ( Object(preObj) !== preObj || diffObj(curObj, preObj ))  {
@@ -112,8 +113,10 @@ Effect.prototype = {
     leave: createAction('Leave'),
     move: createAction('Move')
 }
+
+var rsecond = /\d+s$/
 function toMillisecond(str){
-   var ratio = /\d+s/.test(str) ? 1000 : 1
+   var ratio = rsecond.test(str) ? 1000 : 1
    return parseFloat(str) * ratio
 }
 
@@ -158,8 +161,7 @@ function createAction(action) {
             $el.bind(support.transitionEndEvent, animationDone)
             $el.bind(support.animationEndEvent, animationDone)
             setTimeout(function () {
-                var forceReflow = avalon.root.offsetWidth
-                enterAnimateDone = false
+                enterAnimateDone = avalon.root.offsetWidth === NaN
                 $el.addClass(options[lower + 'ActiveClass'])
                 var computedStyles = window.getComputedStyle(elem)
                 var tranDuration = computedStyles[support.transitionDuration]
