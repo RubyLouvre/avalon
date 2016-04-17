@@ -1,5 +1,6 @@
 var support = require('../effect/index')
 avalon.directive('effect', {
+    priority:1,
     parse: function (binding, num) {
         return 'vnode' + num + '.props["ms-effect"] = ' + avalon.parseExpr(binding) + ';\n'
     },
@@ -14,6 +15,7 @@ avalon.directive('effect', {
         }else if (Array.isArray(curObj)) {
             curObj = cur.props[name] = avalon.mix.apply({}, curObj)
         }
+    
         curObj.action = curObj.action || 'enter'
        
         if (Object(curObj) === curObj) {
@@ -26,7 +28,7 @@ avalon.directive('effect', {
             }
         }
     },
-    update: function (dom, vnode) {
+    update: function (dom, vnode, parent, action) {
         var localeOption = vnode.props['ms-effect']
         var type = localeOption.is
         if(!type){//如果没有指定类型
@@ -40,10 +42,10 @@ avalon.directive('effect', {
         if(!globalOption){//如果没有定义特效
             return avalon.warn(type+' effect is undefined')
         }
-        var action = localeOption.action
+        action = action || localeOption.action
         var Effect = avalon.Effect
         if (typeof Effect.prototype[action] !== 'function'){
-            return avalon.warn(type+' action is undefined')
+            return avalon.warn(action+' action is undefined')
         }   
         var effect = new Effect(dom)
         var finalOption = avalon.mix({}, globalOption, localeOption)
@@ -143,12 +145,11 @@ function createAction(action) {
             avalon.unbind(elem,support.animationEndEvent)
             callNextAniation()
         }
-       
         execHooks(options, 'onBefore' + action, elem)
 
         if (options[lower]) {
             options[lower](elem, function (ok) {
-                animationDone(!!ok)
+                animationDone(ok !== false)
             })
         } else if (support.css) {
             
@@ -182,5 +183,21 @@ function createAction(action) {
     }
 }
 
-
+avalon.applyEffect = function(node, vnode, type, callback){
+    var hasEffect = vnode.props && vnode.props['ms-effect']
+    if(hasEffect){
+        var old = hasEffect[type]
+        if(Array.isArray(old)){
+            old.push(callback)
+        }else if(old){
+             hasEffect[type] = [old, callback]
+        }else{
+             hasEffect[type] = [callback]
+        }
+        var action = type.replace(/^on/,'').replace(/Done$/,'').toLowerCase()
+        avalon.directives.effect.update(node, vnode, 0,  action)
+    }else{
+        callback()
+    }
+}
 

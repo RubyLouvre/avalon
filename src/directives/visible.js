@@ -60,9 +60,12 @@ avalon.directive('visible', {
                 vnode.displayValue = display
             }
         }
-        if (value !== void 0) {
-            node.style.display = value
+        function cb(){
+           if (value !== void 0) {
+              node.style.display = value
+           }
         }
+        avalon.applyEffect(node, vnode, show ? 'onEnterDone': 'onLeaveDone',cb)
     }
 })
 

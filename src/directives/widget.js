@@ -6,15 +6,19 @@ var patch = require('../strategy/patch')
 //插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
 
 var dir = avalon.directive('widget', {
+    priority: 3,
     parse: function (binding, num, elem) {
         var wid = elem.props.wid || (elem.props.wid = avalon.makeHashCode('w'))
         avalon.resolvedComponents[wid] = {
             props: avalon.shadowCopy({}, elem.props),
             template: elem.template
         }
-        return  'vnode' + num + '.props.wid = "' + wid + '"\n' +
-                'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget') + ';\n' +
-                'vnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
+        var ret = 'if(vnode' + num + '.nodeType ===1){\n'
+        ret += 'vnode' + num + '.props.wid = "' + wid + '"\n'
+        ret += 'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget') + '\n'
+        ret += 'vnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
+        ret += '}\n'
+        return ret
     },
     define: function (topVm, defaults, options, accessors) {
         var after = avalon.mix({}, defaults, options)
@@ -52,7 +56,10 @@ var dir = avalon.directive('widget', {
             cur.change = [this.replaceByComment]
             steps.count += 1
         } else if (!pre.props.resolved) {
-            avalon.diff(cur.children, pre.children, steps)
+            var a = cur.props['ms-widget']
+            delete cur.props['ms-widget']
+             avalon.diff([cur], [pre], steps)
+            //avalon.diff(cur.children, pre.children, steps)
             cur.steps = steps
             cur.change = [this.replaceByComponent]
             cur.afterChange = [
@@ -66,11 +73,11 @@ var dir = avalon.directive('widget', {
                     docker.renderCount = 2
                 }
             ]
-            
+
         } else {
             var needUpdate = !cur.diff || cur.diff(cur, pre)
             cur.skipContent = !needUpdate
-            
+
             var viewChangeObservers = cur.vmodel.$events.onViewChange
             if (viewChangeObservers && viewChangeObservers.length) {
                 cur.afterChange = [function (dom, vnode) {
@@ -119,9 +126,9 @@ var dir = avalon.directive('widget', {
         } else {
             parent.appendChild(com)
         }
-        patch([com],[node], parent, node.steps)
-        if(!hasDetect){
-           dir.addDisposeMonitor(com)
+        patch([com], [node], parent, node.steps)
+        if (!hasDetect) {
+            dir.addDisposeMonitor(com)
         }
     }
 })
