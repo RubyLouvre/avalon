@@ -2,10 +2,12 @@
 avalon.directive('expr', {
     parse: function () {
     },
-    diff: function (cur, pre) {
+    diff: function (cur, pre, steps) {
         if (cur.nodeValue !== pre.nodeValue) {
             var list = cur.change || (cur.change = [])
-            avalon.Array.ensure(list, this.update)
+            if (avalon.Array.ensure(list, this.update)) {
+                steps.count += 1
+            }
         }
     },
     update: function (node, vnode, parent) {
