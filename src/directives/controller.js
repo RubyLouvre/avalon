@@ -1,6 +1,6 @@
 
 avalon.directive("controller", {
-    priority: 1,
+    priority: 2,
     parse: function (binding, num) {
         var vm = "vm" + num
         var isObject = /\{.+\}/.test(binding.expr)

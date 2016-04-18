@@ -1,22 +1,6 @@
 var patch = require('../strategy/patch')
 var Cache = require('../seed/cache')
 
-avalon._each = function (obj, fn) {
-    if (Array.isArray(obj)) {
-        for (var i = 0; i < obj.length; i++) {
-            var item = obj[i]
-            var type = typeof item
-            var key = item && type === 'object' ? item.$hashcode : type + item
-            fn(i, obj[i], key)
-        }
-    } else {
-        for (var i in obj) {
-            if (obj.hasOwnProperty(i)) {
-                fn(i, obj[i], i)
-            }
-        }
-    }
-}
 var rforPrefix = /ms-for\:\s*/
 var rforLeft = /^\s*\(\s*/
 var rforRight = /\s*\)\s*$/
@@ -39,11 +23,20 @@ avalon.directive('for', {
         var assign = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
         var alias = aliasAs ? 'var ' + aliasAs + ' = loop' + num + '\n' : ''
         var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
-        if (kv.length === 1) {
-            kv.unshift('$key')
+        //分别创建isArray, ____n, ___i, ___v, ___trackKey变量
+        var ret = 'var isArray = Array.isArray(loop' + num +')\n'
+        ret += 'var ____n = loop'+num+'.length\n'
+        ret += 'for(var ____i in loop' + num + '){\n'
+        ret += 'if(!loop' + num + '.hasOwnProperty(____i) || !(isArray ? ____i < ____n: 1)){continue}\n'
+        ret += 'var ____v  = loop' + num + '[____i]\n'
+        //将变量赋给用户的kv数组
+        ret += 'var '+(kv.pop() + ' = ____v\n')
+        if (kv.length) {
+            ret += 'var '+(kv.pop() + ' = ____i\n')
         }
-
-        return assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
+        ret += "var traceKey  = typeof ____v\n"
+        ret += 'traceKey = ____v && traceKey === "object" ? ____v.$hashcode : traceKey + ____v\n'
+        return assign + alias + ret 
     },
     diff: function (current, previous, steps, __index__) {
         var cur = current[__index__]
@@ -51,7 +44,7 @@ avalon.directive('for', {
 
         var isInit = !('directive' in pre)
         var isChange = false, i, c, p
-       if (isInit) {
+        if (isInit) {
             pre.components = []
             pre.repeatCount = 0
         }
@@ -132,10 +125,10 @@ avalon.directive('for', {
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
             cur.steps = steps
-            steps.count +=1
+            steps.count += 1
         }
 
-        return __index__ + nodes.length -1
+        return __index__ + nodes.length - 1
 
     },
     update: function (startRepeat, vnode, parent) {
@@ -289,12 +282,12 @@ function fuzzyMatchCache(cache, id) {
 function isInCache(cache, id) {
     var c = cache[id], cid = id
     if (c) {
-        var ctack = cache["***"+id]
-        if(ctack){
+        var ctack = cache["***" + id]
+        if (ctack) {
             var a = ctack.pop()
             delete cache[a.id]
-            if(ctack.length ==0)
-                delete cache["***"+id]
+            if (ctack.length == 0)
+                delete cache["***" + id]
             return a.c
         }
         var stack = [{id: id, c: c}]
@@ -311,8 +304,8 @@ function isInCache(cache, id) {
         }
         var a = stack.pop()
         delete cache[a.id]
-        if(stack.length){
-            cache['***'+cid] = stack
+        if (stack.length) {
+            cache['***' + cid] = stack
         }
         return a.c
     }

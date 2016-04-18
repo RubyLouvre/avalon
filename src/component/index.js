@@ -4,6 +4,7 @@ var outerTags = avalon.oneObject('wbr,xmp,template')
 
 var resolvedComponents = avalon.resolvedComponents
 var skipWidget = {'ms-widget': 1, widget: 1, resolved: 1}
+var parseView = require('../strategy/parser/parseView2')
 
 avalon.document.createElement('slot')
 
@@ -18,7 +19,7 @@ avalon.component = function (name, definition) {
 
         var node = name //node为页面上节点对应的虚拟DOM
         var topVm = definition
-     
+
         var wid = node.props.wid
         //将ms-widget的值合并成一个纯粹的对象,并且将里面的vm抽取vms数组中
         var options = node.props['ms-widget'] || {}
@@ -48,7 +49,7 @@ avalon.component = function (name, definition) {
         }
         //如果此组件的实例已经存在,那么重新渲染
         if (docker.render) {
-            return reRender(docker)
+            return docker
         } else if (!avalon.components[tagName]) {
             //如果组件还没有定义,那么返回一个注释节点占位
             return placeholder
@@ -87,7 +88,7 @@ avalon.component = function (name, definition) {
                     widgetNode.props[i] = docker.props[i]
                 }
             }
-            
+
             //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
             if (definition.soleSlot) {
                 var slots = {}
@@ -113,10 +114,14 @@ avalon.component = function (name, definition) {
             vmodel.$id = $id
             avalon.vmodels[$id] = vmodel
             //生成组件的render
-            
-            var render = avalon.render(vtree)
+            var num = num || String(new Date - 0).slice(0, 6)
+            var render = parseView(vtree, num) + '\n\nreturn (avalon.__widget = vnodes' + num + ')\n'
+            //  var render = avalon.render(vtree)
+            //  var str = render +''
+            //  render = str.slice(str.indexOf("{")+1).replace(/}\s*$/,"")
+
             vmodel.$render = render
-            
+
             //触发onInit回调
             vmodel.$fire('onInit', {
                 type: 'init',
@@ -130,8 +135,7 @@ avalon.component = function (name, definition) {
                 vmodel: vmodel,
                 placeholder: placeholder
             })
-
-            return reRender(docker)
+            return docker
         }
     }
 }
@@ -148,7 +152,7 @@ function reRender(docker) {
 
     var widgetNode = vtree[0]
     //确保ms-widget是最先执行
-    widgetNode.order = 'ms-widget;;'+widgetNode.order
+    widgetNode.order = 'ms-widget;;' + widgetNode.order
     if (!isComponentReady(widgetNode)) {
         return docker.placeholder
     }
