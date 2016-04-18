@@ -3,16 +3,16 @@ var quote = avalon.quote
 var directives = avalon.directives
 var rbinding = require('../../seed/regexp').binding
 var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
-var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false,"+
-    "finally,for,function,if,in,instanceof,new,null,return,switch,this,"+
-    "throw,true,try,typeof,var,void,while,with,"+ /* 关键字*/
-    "abstract,boolean,byte,char,class,const,double,enum,export,extends,"+
-    "final,float,goto,implements,import,int,interface,long,native,"+
-    "package,private,protected,public,short,static,super,synchronized,"+
-    "throws,transient,volatile")
+var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false," +
+        "finally,for,function,if,in,instanceof,new,null,return,switch,this," +
+        "throw,true,try,typeof,var,void,while,with," + /* 关键字*/
+        "abstract,boolean,byte,char,class,const,double,enum,export,extends," +
+        "final,float,goto,implements,import,int,interface,long,native," +
+        "package,private,protected,public,short,static,super,synchronized," +
+        "throws,transient,volatile")
 function parseBindings(props, num, elem) {
     var bindings = []
-    var skip = 'ms-skip' in props 
+    var skip = 'ms-skip' in props
     var ret = ''
     for (var i in props) {
         var value = props[i], match
@@ -61,11 +61,25 @@ function parseBindings(props, num, elem) {
     if (!bindings.length) {
         ret += '\tvnode' + num + '.skipAttrs = true\n'
     } else {
-        avalon.parseExpr(binding)
+        bindings.sort(byPriority)
+        ret += ('\tvnode' + num + '.order = "'+ bindings.map(function(a){
+            return a.name
+        }).join(';;')+'"\n')
+        //优化处理ms-widget
+        var first = bindings[0]
+        var isWidget = first && first.type === 'widget'
+        if (isWidget) {
+            bindings.shift()
+            bindings.forEach(function (binding) {
+                ret += 'vnode' + num + '.props[' + quote(binding.name) + '] = ' + quote(binding.expr) + '\n'
+            })
+            ret += directives['widget'].parse(first, num, elem)
+        } else {
+            bindings.forEach(function (binding) {
+                ret += directives[binding.type].parse(binding, num, elem)
+            })
+        }
 
-        bindings.sort(byPriority).forEach(function (binding) {
-            ret += directives[binding.type].parse(binding, num, elem)
-        })
     }
     return ret
 

@@ -1,6 +1,6 @@
 var support = require('../effect/index')
 avalon.directive('effect', {
-    priority:1,
+    priority:2,
     parse: function (binding, num) {
         return 'vnode' + num + '.props["ms-effect"] = ' + avalon.parseExpr(binding) + ';\n'
     },

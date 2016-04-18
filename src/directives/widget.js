@@ -6,18 +6,18 @@ var patch = require('../strategy/patch')
 //插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
 
 var dir = avalon.directive('widget', {
-    priority: 3,
+    priority: 1,
     parse: function (binding, num, elem) {
         var wid = elem.props.wid || (elem.props.wid = avalon.makeHashCode('w'))
         avalon.resolvedComponents[wid] = {
             props: avalon.shadowCopy({}, elem.props),
             template: elem.template
         }
-        var ret = 'if(vnode' + num + '.nodeType ===1){\n'
+        console.log('处理widget')
+        var ret = ''
         ret += 'vnode' + num + '.props.wid = "' + wid + '"\n'
         ret += 'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget') + '\n'
         ret += 'vnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
-        ret += '}\n'
         return ret
     },
     define: function (topVm, defaults, options, accessors) {
@@ -50,18 +50,21 @@ var dir = avalon.directive('widget', {
     diff: function (cur, pre, steps) {
         var coms = avalon.resolvedComponents
         var wid = cur.props.wid
-
         var docker = coms[wid]
         if (!docker.renderCount) {
             cur.change = [this.replaceByComment]
             steps.count += 1
         } else if (!pre.props.resolved) {
-            var a = cur.props['ms-widget']
-            delete cur.props['ms-widget']
-             avalon.diff([cur], [pre], steps)
-            //avalon.diff(cur.children, pre.children, steps)
+            console.log('=============')
+            console.log('widget diff',cur,pre)
             cur.steps = steps
-            cur.change = [this.replaceByComponent]
+            var list = cur.change || (cur.change = [])
+//            if(list.indexOf(this.replaceByComponent) === -1){
+//                console.log('---')
+//                list.unshift(this.replaceByComponent)
+//            }
+            avalon.Array.ensure(list,this.replaceByComponent)
+            // avalon.diff([cur], [pre], steps)
             cur.afterChange = [
                 function (dom, vnode) {
                     vnode.vmodel.$element = dom
@@ -75,6 +78,7 @@ var dir = avalon.directive('widget', {
             ]
 
         } else {
+          
             var needUpdate = !cur.diff || cur.diff(cur, pre)
             cur.skipContent = !needUpdate
 
@@ -126,6 +130,7 @@ var dir = avalon.directive('widget', {
         } else {
             parent.appendChild(com)
         }
+        console.log('replaceByComponent',com)
         patch([com], [node], parent, node.steps)
         if (!hasDetect) {
             dir.addDisposeMonitor(com)

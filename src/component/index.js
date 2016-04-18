@@ -18,6 +18,7 @@ avalon.component = function (name, definition) {
 
         var node = name //node为页面上节点对应的虚拟DOM
         var topVm = definition
+     
         var wid = node.props.wid
         //将ms-widget的值合并成一个纯粹的对象,并且将里面的vm抽取vms数组中
         var options = node.props['ms-widget'] || {}
@@ -82,6 +83,7 @@ avalon.component = function (name, definition) {
                     widgetNode.props[i] = docker.props[i]
                 }
             }
+            
             //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
             if (definition.soleSlot) {
                 var slots = {}
@@ -107,8 +109,10 @@ avalon.component = function (name, definition) {
             vmodel.$id = $id
             avalon.vmodels[$id] = vmodel
             //生成组件的render
+            
             var render = avalon.render(vtree)
             vmodel.$render = render
+            
             //触发onInit回调
             vmodel.$fire('onInit', {
                 type: 'init',
@@ -137,7 +141,10 @@ function isCustomTag(type) {
 
 function reRender(docker) {
     var vtree = docker.render(docker.vmodel)
+
     var widgetNode = vtree[0]
+    //确保ms-widget是最先执行
+    widgetNode.order = 'ms-widget;;'+widgetNode.order
     if (!isComponentReady(widgetNode)) {
         return docker.placeholder
     }

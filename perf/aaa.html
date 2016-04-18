@@ -5,42 +5,45 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width">
         <script src="../dist/avalon.js"></script>
+        <script src="//cdn.bootcss.com/jquery/3.0.0-beta1/jquery.js"></script>
+        <style>
+            .ani{
+                width:100px;
+                height:100px;
+                background: #ff6e6e;
+            }
+        </style>
         <script >
+            avalon.component('ms-button', {
+                template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
+                defaults: {
+                    buttonText: "button"
+                },
+                soleSlot: 'buttonText'
+            })
+            avalon.effect('zoom', {
+                enter: function (el, done) {
+
+                    $(el).css({width: 0, height: 0}).animate({
+                        width: 100, height: 100
+                    }, 1000, done)
+                },
+                leave: function (el, done) {
+                    $(el).animate({
+                        width: 0, height: 0
+                    }, 1000, done)
+                }
+            })
             var vm = avalon.define({
                 $id: "test",
-                curIndex: 0, //默认显示第一个
-                buttons: ['aaa', 'bbb', 'ccc'],
-                callback:function(e){
-                    console.log(e.target)
-                },
-                panels: ["<div>面板1</div>", "<p>面板2</p>", "<strong>面板3</strong>"]
+                aaa: 222,
+                toggle: true
             })
 
         </script>
-        <style>
-            button{
-                margin:1em 3em;
-            }
-            .panel div{
-                height:200px;
-                background: #a9ea00;
-            }
-            .panel p{
-                height:200px;
-                background: green;
-            }
-            .panel strong{
-                display:block;
-                width:100%;
-                height:200px;
-                background: #999;
-            }
-        </style>
+
     </head>
     <body ms-controller="test" >
-        <div>
-            <button ms-for='(i, el) in @buttons' ms-click='@curIndex = i'>{{el}}</button>
-        </div>
-        <div class='panel' ms-click="@callback" ms-for='(jj, el) in @panels' ms-if='jj === @curIndex' ms-html='el'></div>
+        <div class='ani' ms-attr="{eee:@aaa}" ms-widget='{is:"ms-button"}'  ms-effect="{is:'zoom'}">{{@aaa}}</div>
     </body>
 </html>

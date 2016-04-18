@@ -122,7 +122,7 @@ function parseView(arr, num) {
                     '\n\tchildren: [],' +
                     '\n\tisVoidTag: ' + !!el.isVoidTag + ',' +
                     '\n\ttemplate: ""}\n'
-            
+
             var hasWidget = el.props['ms-widget']
             if (!hasWidget && el.type.indexOf('-') > 0 && !el.props.resolved) {
                 el.props['ms-widget'] = '@' + el.type.replace(/-/g, "_")
@@ -141,13 +141,20 @@ function parseView(arr, num) {
                 str += hasBindings
             }
             if (!el.isVoidTag) {
-                if (el.children.length && !el.props['ms-widget']) {
+                if (el.children.length) {
+                    var hasWidget = el.props['ms-widget']
                     var hasIf = el.props['ms-if']
                     if (hasIf) {
                         str += 'if(' + vnode + '.nodeType === 1 ){\n'
                     }
+                    if (hasWidget) {
+                        str += 'if(!' + vnode + '.props.wid ){\n'
+                    }
                     str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
                     if (hasIf) {
+                        str += '}\n'
+                    }
+                    if (hasWidget) {
                         str += '}\n'
                     }
                 } else {

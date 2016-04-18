@@ -43,20 +43,22 @@ function diff(current, previous, steps) {
 }
 
 function diffProps(current, previous, steps) {
-    for (var name in current.props) {
-        var match = name.match(rbinding)
-        if (match) {
-            var type = match[1]
-            try {
+    if (current.order) {
+        try {
+            current.order.replace(/([^;]+)/g, function (name) {
+                var match = name.match(rbinding)
+                var type = match[1]
                 if (directives[type]) {
                     directives[type].diff(current, previous || emptyObj, steps, name)
                 }
-            } catch (e) {
-                avalon.log(current, previous, e, 'diffProps error')
-            }
+                return name
+            })
+        } catch (e) {
+            avalon.log(current, previous, e, 'diffProps error')
         }
     }
+    
 
 }
-
+avalon.diffProps = diffProps
 module.exports = diff

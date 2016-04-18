@@ -5,55 +5,72 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../dist/avalon.js"></script>
-        <script>
-            avalon.effect('animate', {
-                enterClass: 'animate-enter',
-                enterActiveClass: 'animate-enter-active',
-                leaveClass: 'animate-leave',
-                leaveActiveClass: 'animate-leave-active', 
-            })
-            var vm = avalon.define({
-                $id: 'for0',
-                aaa: "test",
-                action: '',
-                enterDone: function(){
-                    avalon.log('动画完成')
-                },
-                leaveDone: function(){
-                    avalon.log('动画回到原点')
-                }
-            })
-           
-          
-        </script>
+        <script src="//cdn.bootcss.com/jquery/3.0.0-beta1/jquery.js"></script>
         <style>
-            .animate-enter, .animate-leave{
+            .ani{
                 width:100px;
                 height:100px;
-                background: #29b6f6;
-                transition: width 2s;
-                -moz-transition: width 2s; /* Firefox 4 */
-                -webkit-transition: width 2s; /* Safari 和 Chrome */
-                -o-transition: width 2s; /* Opera */
-            }  
-            .animate-enter-active, .animate-leave{
-                width:300px;
+                background: #ff6e6e;
             }
-            .animate-leave-active{
-                width:100px;
+            .fade-enter, .fade-leave {
+                -webkit-transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.5s;
+                -moz-transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.5s;
+                -o-transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.5s;
+                transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.5s;
             }
+
+            .fade-enter {
+                opacity:0;
+            }
+
+            .fade-enter-active {
+                opacity:1;
+            }
+
+            .fade-leave {
+               opacity:1;
+            }
+
+            .fade-leave-active {
+               opacity:0;
+            }
+
+
         </style>
+        <script>
+            avalon.effect('fade', {})
+            avalon.effect('zoom', {
+                enter: function(el, done){
+                    
+                    $(el).css({width:0,height:0}).animate({
+                        width:200,height:200
+                    },1000,done)
+                },
+                leave: function(el, done){
+                    console.log('dddd')
+                    $(el).animate({
+                        width:0,height:0
+                    },1000,done)
+                }
+            })
+            var vm = avalon.define({
+                $id: 'effect',
+                toggle:true
+          
+            })
+
+
+        </script>
     </head>
     <body>
-
-
-        <div ms-controller='for0' >
-            <div ms-effect="{is:'animate', action:@action, onEnterDone: @enterDone, onLeaveDone: @leaveDone}">
-                {{@aaa}}
+        <div ms-controller='effect' >
+            <div ms-visible='@toggle' ms-effect='{is:"fade",action:@toggle?"enter":"leave"}' class="ani">
+                ccc
             </div>
-            <button ms-click='@action = @action !== "leave" ? "leave": "enter" '
-                    type="button">click</button>
+            <div ms-if='@toggle' ms-effect='{is:"zoom",action:@toggle?"enter":"leave"}' class="ani">
+                ddd
+            </div>
+            <p><button type="button" ms-click="@toggle = !@toggle">click</button></p>
         </div>
-
     </body>
 </html>

@@ -2,7 +2,7 @@ var patch = require('../strategy/patch')
 var uniqueID = 1
 //ms-for ms-effect ms-if  ms-widget ...
 avalon.directive('if', {
-    priority: 2,
+    priority: 3,
     parse: function (binding, num) {
         var ret = 'var ifVar = '+ avalon.parseExpr(binding,'if')+';\n'
         ret += 'vnode' + num + '.props["ms-if"] = ifVar;\n'
@@ -13,7 +13,7 @@ avalon.directive('if', {
         return ret
     },
     diff: function (cur, pre, steps) {
-        cur.dom = pre.dom
+       // cur.dom = pre.dom
         if (cur.nodeType !== pre.nodeType) {
             var list = cur.change || (cur.change = [])
             if (avalon.Array.ensure(list, this.update)) {
