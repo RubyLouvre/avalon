@@ -18,5 +18,5 @@ require('./rules')
 require('./if')
 require('./for')
 
-require('./widget2')
+require('./widget')
 require('./effect')

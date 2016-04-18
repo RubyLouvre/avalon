@@ -40,7 +40,7 @@ avalon.directive('for', {
         var assign = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
         var alias = aliasAs ? 'var ' + aliasAs + ' = loop' + num + '\n' : ''
         var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
-        if(kv.length === 1){//确保avalon._each的回调有三个参数
+        if (kv.length === 1) {//确保avalon._each的回调有三个参数
             kv.unshift('$key')
         }
         //分别创建isArray, ____n, ___i, ___v, ___trackKey变量
@@ -62,7 +62,7 @@ avalon.directive('for', {
             pre.components = getComponents(range.slice(1, -1), pre.signature)
             pre.repeatCount = range.length - 2
         }
-
+        var quota = pre.components.length
         var nodes = current.slice(cur.start, cur.end)
         cur.endRepeat = pre.endRepeat
         cur.components = getComponents(nodes.slice(1, -1), cur.signature)
@@ -79,60 +79,55 @@ avalon.directive('for', {
         }
         cur.action = isInit ? 'init' : 'update'
         if (!isInit) {
-            var cache = {}
-            cur.removedComponents = {}
+            var cache = pre.cache
+            var newCache = cur.cache = {}
+
             /* eslint-disable no-cond-assign */
-            var quota = 0
             for (i = 0; c = cur.components[i++]; ) {
                 /* eslint-enable no-cond-assign */
-                quota++
-                saveInCache(cache, c)
-            }
-            /* eslint-disable no-cond-assign */
-            for (i = 0; p = pre.components[i++]; ) {
-                /* eslint-enable no-cond-assign */
-                c = isInCache(cache, p.key)
-                if (c) {
-                    quota--
+                var p = isInCache(cache, c.key)
+                if (p) {
                     if (!isChange) {//如果位置发生了变化
                         isChange = c.index !== p.index
                     }
+                    quota--
                     c.nodes = p.nodes
                     avalon.diff(c.children, p.children, steps)
-                } else {
-                    if (quota) {
-                        c = fuzzyMatchCache(cache, p.key)
-                        
+                } else if (quota) {
+                    p = fuzzyMatchCache(cache, c.key)
+                    if (p) {
                         quota--
                         isChange = true //内容发生变化
-       
                         c.nodes = p.nodes
                         avalon.diff(c.children, p.children, steps)
-                    } else {
-                        isChange = true
-                        cur.hasRemove = true
-                        cur.removedComponents[p.index] = p
                     }
+                }
+                saveInCache(newCache, c)
+            }
 
+            //这是新添加的元素
+            for (i in newCache) {
+                c = newCache[i]
+                if (!c.nodes) {
+                    isChange = true
+                    avalon.diff(c.children, [], steps)
                 }
             }
-            //这是新添加的元素
-            for (i in cache) {
-                isChange = true
-                console.log('---')
-                c = cache[i]
-                avalon.diff(c.children, [], steps)
-            }
+            cur.removedComponents = cache
 
         } else {
             /* eslint-disable no-cond-assign */
+            var cache = cur.cache = {}
             for (i = 0; c = cur.components[i++]; ) {
                 /* eslint-enable no-cond-assign */
                 avalon.diff(c.children, [], steps)
+                saveInCache(cache, c)
             }
+            cur.removedComponents = {}
             isChange = true
         }
         pre.components.length = 0 //release memory
+        delete pre.cache
         if (isChange) {
             var list = cur.change || (cur.change = [])
             avalon.Array.ensure(list, this.update)
@@ -160,23 +155,22 @@ avalon.directive('for', {
             var domTemplate = fragment.cloneNode(false)
             componentToDom(vnode.components[0], domTemplate)
             startRepeat.domTemplate = domTemplate
-
         }
-        if (vnode.hasRemove) {
-            vnode.hasRemove = false
-            for (var i in vnode.removedComponents) {
-                var el = vnode.removedComponents[i]
-                if (el.nodes) {
-                    el.nodes.forEach(function (n) {
-                        if (n.parentNode) {
-                            n.parentNode.removeChild(n)
-                        }
-                    })
-                    el.nodes.length = el.children.length = 0
-                }
+
+        for (var i in vnode.removedComponents) {
+            var el = vnode.removedComponents[i]
+            if (el.nodes) {
+                el.nodes.forEach(function (n) {
+                    if (n.parentNode) {
+                        n.parentNode.removeChild(n)
+                    }
+                })
+                el.nodes.length = el.children.length = 0
             }
         }
+
         delete vnode.removedComponents
+        
         var insertPoint = startRepeat
         for (var i = 0; i < vnode.components.length; i++) {
             var com = vnode.components[i]
@@ -278,7 +272,6 @@ function getComponents(nodes, signature) {
 var rfuzzy = /^(string|number|boolean)/
 var rkfuzzy = /^_*(string|number|boolean)/
 function fuzzyMatchCache(cache, id) {
-    console.log(id)
     var m = id.match(rfuzzy)
     if (m) {
         var fid = m[1]
