@@ -14,7 +14,7 @@ var valHooks = {
                 switch (el.nodeName.toLowerCase()) {
                     case 'option':
                         if ((el.selected || el.index === index)) {
-                            value = getter(el)
+                            value = el.value
                             if (singleton) {
                                 return value
                             } else {
