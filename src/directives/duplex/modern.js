@@ -12,10 +12,11 @@ avalon.directive('duplex', {
     parse: function (binding, num, vnode) {
         var id = binding.expr
         newField(binding, vnode)
+        avalon.caches[id] = vnode.field
         var ret = 'vnode' + num + '.duplexVm = __vmodel__;\n' +
                 'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(id) + ';\n' +
-                'vnode' + num + '.props["data-duplex-get"] = ' + evaluatorPool.get('duplex:' + id) +
-                'vnode' + num + '.props["data-duplex-set"] = ' + evaluatorPool.get('duplex:set:' + id)
+                'vnode' + num + '.props["data-duplex-get"] = ' + evaluatorPool.get('duplex:' + id) +'\n'+
+                'vnode' + num + '.props["data-duplex-set"] = ' + evaluatorPool.get('duplex:set:' + id)+'\n'
         var format = evaluatorPool.get('duplex:format:' + id)
         if (format) {
             ret += 'vnode' + num + '.props["data-duplex-format"] = ' + format
@@ -24,13 +25,13 @@ avalon.directive('duplex', {
     },
     diff: function (cur, pre, steps) {
         var duplexID = cur.props["ms-duplex"]
-        var field = cur.field = pre.field || avalon.mix({}, avalon.caches[duplexID])
-
+        cur.field = pre.field || avalon.mix({}, avalon.caches[duplexID])
+        var field = cur.field
         if (!field.set) {
             initField(cur)
         }
 
-        delete cur.duplexVm
+        cur.duplexVm = null
         var value = cur.props.value = field.get(field.vmodel)
 
         if (cur.type === 'select' && !cur.children.length) {
@@ -78,9 +79,8 @@ avalon.directive('duplex', {
                 }
             }, 30)
         }
-
+        
         var viewValue = field.format(field.modelValue)
-
         if (field.viewValue !== viewValue) {
             field.viewValue = viewValue
             updateField[field.type].call(field)
