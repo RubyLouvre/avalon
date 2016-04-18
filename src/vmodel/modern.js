@@ -146,7 +146,7 @@ function mediatorFactory(before, after, heirloom) {
         keys[key] = true
     }
 
-    makeObserve($vmodel, heirloom || {}, keys, accessors, {
+    makeObserver($vmodel, heirloom || {}, keys, accessors, {
         id: before.$id,
         hashcode: makeHashCode("$"),
         master: true
