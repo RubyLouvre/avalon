@@ -6163,7 +6163,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        }
 	                    },time + 17)
 	                }
-	                //console.log(tranDuration , animDuration)
 	            }, 17)// = 1000/60
 	        }
 	    }
