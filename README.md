@@ -62,3 +62,4 @@
     支持传入$diff方法 实现react的shouldComponentUpdate功能<br/>
     支持<slot name='xx'></slot>这样的DOM插槽 机制<br/>
     支持组件套组件
+14. 测试 karma start

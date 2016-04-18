@@ -186,17 +186,30 @@ avalon.applyEffect = function(node, vnode, type, callback){
     var hasEffect = vnode.props && vnode.props['ms-effect']
     if(hasEffect){
         var old = hasEffect[type]
-        if(Array.isArray(old)){
-            old.push(callback)
-        }else if(old){
-             hasEffect[type] = [old, callback]
-        }else{
-             hasEffect[type] = [callback]
+        if(callback){
+            if(Array.isArray(old)){
+                old.push(callback)
+            }else if(old){
+                hasEffect[type] = [old, callback]
+            }else{
+                hasEffect[type] = [callback]
+            }
         }
         var action = type.replace(/^on/,'').replace(/Done$/,'').toLowerCase()
         avalon.directives.effect.update(node, vnode, 0,  action)
-    }else{
+    }else if(callback){
         callback()
     }
+}
+
+avalon.applyEffects = function(nodes, vnodes, type, callback){
+   var n = nodes.length
+   nodes.forEach(function(el, i){
+       avalon.applyEffect(el, vnodes[i], type, function(){
+           if(--n === 0){
+              callback && callback()
+           }
+       })
+   })
 }
 

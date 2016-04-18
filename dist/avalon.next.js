@@ -3051,7 +3051,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (vnode.steps.count) {
 	                    patch([element], [vnode], parent, vnode.steps)
 	                }
-	                avalon.applyEffect(node,vnode,'onEnterDone',avalon.noop)
+	                avalon.applyEffect(node,vnode,'onEnterDone')
 	                return (vnode.steps = false)
 	            } else if (vtype === 8) {
 	                //要移除元素节点,在对应位置上插入注释节点
@@ -3279,7 +3279,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    avalon.diff(c.children, [], steps)
 	                }
 	            }
-	            cur.removedComponents = cache
+	            for(i in cache){
+	                cur.removedComponents = cache
+	                isChange = true
+	                break
+	            }
+	           
 
 	        } else {
 	            /* eslint-disable no-cond-assign */
@@ -3322,13 +3327,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            componentToDom(vnode.components[0], domTemplate)
 	            startRepeat.domTemplate = domTemplate
 	        }
-
 	        for (var i in vnode.removedComponents) {
 	            var el = vnode.removedComponents[i]
 	            if (el.nodes) {
-	                el.nodes.forEach(function (n) {
+	                el.nodes.forEach(function (n, k) {
 	                    if (n.parentNode) {
-	                        n.parentNode.removeChild(n)
+	                        avalon.applyEffect(n, el.children[k], 'onLeaveDone', function () {
+	                            n.parentNode.removeChild(n)
+	                        })
 	                    }
 	                })
 	                el.nodes.length = el.children.length = 0
@@ -3336,7 +3342,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        delete vnode.removedComponents
-	        
+
 	        var insertPoint = startRepeat
 	        for (var i = 0; i < vnode.components.length; i++) {
 	            var com = vnode.components[i]
@@ -3348,11 +3354,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        moveFragment.appendChild(cc)
 	                    }
 	                    parent.insertBefore(moveFragment, insertPoint.nextSibling)
+	                    avalon.applyEffects(com.nodes,com.children,'onMoveDone')
 	                }
 	            } else {
 	                var newFragment = startRepeat.domTemplate.cloneNode(true)
 	                cnodes = com.nodes = avalon.slice(newFragment.childNodes)
 	                parent.insertBefore(newFragment, insertPoint.nextSibling)
+	                avalon.applyEffects(com.nodes,com.children,'onEnterDone')
 	            }
 	            insertPoint = cnodes[cnodes.length - 1]
 	        }
@@ -3849,18 +3857,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var hasEffect = vnode.props && vnode.props['ms-effect']
 	    if(hasEffect){
 	        var old = hasEffect[type]
-	        if(Array.isArray(old)){
-	            old.push(callback)
-	        }else if(old){
-	             hasEffect[type] = [old, callback]
-	        }else{
-	             hasEffect[type] = [callback]
+	        if(callback){
+	            if(Array.isArray(old)){
+	                old.push(callback)
+	            }else if(old){
+	                hasEffect[type] = [old, callback]
+	            }else{
+	                hasEffect[type] = [callback]
+	            }
 	        }
 	        var action = type.replace(/^on/,'').replace(/Done$/,'').toLowerCase()
 	        avalon.directives.effect.update(node, vnode, 0,  action)
-	    }else{
+	    }else if(callback){
 	        callback()
 	    }
+	}
+
+	avalon.applyEffects = function(nodes, vnodes, type, callback){
+	   var n = nodes.length
+	   nodes.forEach(function(el, i){
+	       avalon.applyEffect(el, vnodes[i], type, function(){
+	           if(--n === 0){
+	              callback && callback()
+	           }
+	       })
+	   })
 	}
 
 

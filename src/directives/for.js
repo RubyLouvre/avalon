@@ -113,7 +113,12 @@ avalon.directive('for', {
                     avalon.diff(c.children, [], steps)
                 }
             }
-            cur.removedComponents = cache
+            for(i in cache){
+                cur.removedComponents = cache
+                isChange = true
+                break
+            }
+           
 
         } else {
             /* eslint-disable no-cond-assign */
@@ -156,13 +161,14 @@ avalon.directive('for', {
             componentToDom(vnode.components[0], domTemplate)
             startRepeat.domTemplate = domTemplate
         }
-
         for (var i in vnode.removedComponents) {
             var el = vnode.removedComponents[i]
             if (el.nodes) {
-                el.nodes.forEach(function (n) {
+                el.nodes.forEach(function (n, k) {
                     if (n.parentNode) {
-                        n.parentNode.removeChild(n)
+                        avalon.applyEffect(n, el.children[k], 'onLeaveDone', function () {
+                            n.parentNode.removeChild(n)
+                        })
                     }
                 })
                 el.nodes.length = el.children.length = 0
@@ -170,7 +176,7 @@ avalon.directive('for', {
         }
 
         delete vnode.removedComponents
-        
+
         var insertPoint = startRepeat
         for (var i = 0; i < vnode.components.length; i++) {
             var com = vnode.components[i]
@@ -182,11 +188,13 @@ avalon.directive('for', {
                         moveFragment.appendChild(cc)
                     }
                     parent.insertBefore(moveFragment, insertPoint.nextSibling)
+                    avalon.applyEffects(com.nodes,com.children,'onMoveDone')
                 }
             } else {
                 var newFragment = startRepeat.domTemplate.cloneNode(true)
                 cnodes = com.nodes = avalon.slice(newFragment.childNodes)
                 parent.insertBefore(newFragment, insertPoint.nextSibling)
+                avalon.applyEffects(com.nodes,com.children,'onEnterDone')
             }
             insertPoint = cnodes[cnodes.length - 1]
         }
