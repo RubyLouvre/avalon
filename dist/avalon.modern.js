@@ -3506,7 +3506,155 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 65 */,
+/* 65 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var skipArray = __webpack_require__(66)
+	var disposeDetectStrategy = __webpack_require__(67)
+	var patch = __webpack_require__(63)
+
+	//插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
+	var dir = avalon.directive('widget', {
+	    priority: 1,
+	    parse: function (binding, num, elem) {
+	        var wid = elem.props.wid || (elem.props.wid = avalon.makeHashCode('w'))
+	        avalon.resolvedComponents[wid] = {
+	            props: avalon.shadowCopy({}, elem.props),
+	            template: elem.template
+	        }
+	        var ret = ''
+	        ret += 'vnode' + num + '.props.wid = "' + wid + '"\n'
+	        ret += 'vnode' + num + '.template = ' + avalon.quote(elem.template) + '\n'
+	        ret += 'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget') + '\n'
+	        ret += 'vnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
+	        ret += 'if(typeof vnode' + num + '.render === "string"){\n'
+	        ret += 'avalon.__widget = [];\n'
+	        ret += '__vmodel__ = vnode' + num+'.vmodel\n'
+	        ret += 'try{eval(" new function(){"+ vnode' + num + '.render +"}");\n'
+	        ret += '}catch(e){avalon.log(e)}\n'
+	        ret += 'vnode' + num + ' = avalon.renderWidget(avalon.__widget[0])\n}\n'
+	        return ret
+	    },
+	    define: function (topVm, defaults, options, accessors) {
+	        var after = avalon.mix({}, defaults, options)
+	        var events = {}
+	        //绑定生命周期的回调
+	        'onInit onReady onViewChange onDispose'.replace(/\S+/g, function (a) {
+	            if (typeof after[a] === 'function')
+	                events[a] = after[a]
+	            delete after[a]
+	        })
+	        var vm = avalon.mediatorFactory(topVm, after)
+	        if (accessors.length) {
+	            accessors.forEach(function (bag) {
+	                vm = avalon.mediatorFactory(vm, bag)
+	            })
+	        }
+	        ++avalon.suspendUpdate
+	        for (var i in after) {
+	            if (skipArray[i])
+	                continue
+	            vm[i] = after[i]
+	        }
+	        --avalon.suspendUpdate
+	        for (i in events) {
+	            vm.$watch(i, events[i])
+	        }
+	        return vm
+	    },
+	    diff: function (cur, pre, steps) {
+	        var coms = avalon.resolvedComponents
+	        var wid = cur.props.wid
+	        
+	        var docker = coms[wid]
+	       
+	        if (!docker.renderCount) {
+	            cur.change = [this.replaceByComment]
+	            steps.count += 1
+	        } else if (!pre.props.resolved) {
+
+	            cur.steps = steps
+	            var list = cur.change || (cur.change = [])
+	            avalon.Array.ensure(list, this.replaceByComponent)
+	            cur.afterChange = [
+	                function (dom, vnode) {
+	                    vnode.vmodel.$element = dom
+	                    cur.vmodel.$fire('onReady', {
+	                        type: 'ready',
+	                        target: dom,
+	                        vmodel: vnode.vmodel
+	                    })
+	                    docker.renderCount = 2
+	                }
+	            ]
+
+	        } else {
+
+	            var needUpdate = !cur.diff || cur.diff(cur, pre)
+	            cur.skipContent = !needUpdate
+
+	            var viewChangeObservers = cur.vmodel.$events.onViewChange
+	            if (viewChangeObservers && viewChangeObservers.length) {
+	                cur.afterChange = [function (dom, vnode) {
+	                        var preHTML = avalon.vdomAdaptor(pre, 'toHTML')
+	                        var curHTML = avalon.vdomAdaptor(cur, 'toHTML')
+	                        if (preHTML !== curHTML) {
+	                            cur.vmodel.$fire('onViewChange', {
+	                                type: 'viewchange',
+	                                target: dom,
+	                                vmodel: vnode.vmodel
+	                            })
+	                        }
+	                        docker.renderCount++
+	                    }]
+	            }
+	        }
+	    },
+	    addDisposeMonitor: function (dom) {
+	        if (window.chrome && window.MutationEvent) {
+	            disposeDetectStrategy.byMutationEvent(dom)
+	        } else if (Object.defineProperty && window.Node) {
+	            disposeDetectStrategy.byRewritePrototype(dom)
+	        } else {
+	            disposeDetectStrategy.byPolling(dom)
+	        }
+	    },
+	    replaceByComment: function (dom, node, parent) {
+	        var comment = document.createComment(node.nodeValue)
+	        if (dom) {
+	            parent.replaceChild(comment, dom)
+	        } else {
+	            parent.appendChild(comment)
+	        }
+	    },
+	    replaceByComponent: function (dom, node, parent) {
+	        var hasDdash = node.type.indexOf('-') > 0
+	        var hasDetect = false
+	        if (hasDdash && document.registerElement) {
+	            //必须在自定义标签实例化时,注册它
+	            disposeDetectStrategy.byCustomElement(node.type)
+	            hasDetect = true
+	        }
+	        var com = avalon.vdomAdaptor(node, 'toDOM')
+	        if (dom) {
+	            parent.replaceChild(com, dom)
+	        } else {
+	            parent.appendChild(com)
+	        }
+	        patch([com], [node], parent, node.steps)
+	        if (!hasDetect) {
+	            dir.addDisposeMonitor(com)
+	        }
+	    }
+	})
+
+
+
+
+	// http://www.besteric.com/2014/11/16/build-blog-mirror-site-on-gitcafe/
+
+/***/ },
 /* 66 */
 /***/ function(module, exports) {
 
@@ -5689,7 +5837,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                switch (el.nodeName.toLowerCase()) {
 	                    case 'option':
 	                        if ((el.selected || el.index === index)) {
-	                            value = getter(el)
+	                            value = el.value
 	                            if (singleton) {
 	                                return value
 	                            } else {
@@ -6176,7 +6324,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(62)
 	__webpack_require__(64)
 
-	__webpack_require__(99)
+	__webpack_require__(65)
 	__webpack_require__(68)
 
 /***/ },
@@ -6287,10 +6435,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.directive('expr', {
 	    parse: function () {
 	    },
-	    diff: function (cur, pre) {
+	    diff: function (cur, pre, steps) {
 	        if (cur.nodeValue !== pre.nodeValue) {
 	            var list = cur.change || (cur.change = [])
-	            avalon.Array.ensure(list, this.update)
+	            if (avalon.Array.ensure(list, this.update)) {
+	                steps.count += 1
+	            }
 	        }
 	    },
 	    update: function (node, vnode, parent) {
@@ -6321,10 +6471,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parse: function (binding, num, vnode) {
 	        var id = binding.expr
 	        newField(binding, vnode)
+	        avalon.caches[id] = vnode.field
 	        var ret = 'vnode' + num + '.duplexVm = __vmodel__;\n' +
 	                'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(id) + ';\n' +
-	                'vnode' + num + '.props["data-duplex-get"] = ' + evaluatorPool.get('duplex:' + id) +
-	                'vnode' + num + '.props["data-duplex-set"] = ' + evaluatorPool.get('duplex:set:' + id)
+	                'vnode' + num + '.props["data-duplex-get"] = ' + evaluatorPool.get('duplex:' + id) +'\n'+
+	                'vnode' + num + '.props["data-duplex-set"] = ' + evaluatorPool.get('duplex:set:' + id)+'\n'
 	        var format = evaluatorPool.get('duplex:format:' + id)
 	        if (format) {
 	            ret += 'vnode' + num + '.props["data-duplex-format"] = ' + format
@@ -6333,13 +6484,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    diff: function (cur, pre, steps) {
 	        var duplexID = cur.props["ms-duplex"]
-	        var field = cur.field = pre.field || avalon.mix({}, avalon.caches[duplexID])
-
+	        cur.field = pre.field || avalon.mix({}, avalon.caches[duplexID])
+	        var field = cur.field
 	        if (!field.set) {
 	            initField(cur)
 	        }
 
-	        delete cur.duplexVm
+	        cur.duplexVm = null
 	        var value = cur.props.value = field.get(field.vmodel)
 
 	        if (cur.type === 'select' && !cur.children.length) {
@@ -6387,9 +6538,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }, 30)
 	        }
-
+	        
 	        var viewValue = field.format(field.modelValue)
-
 	        if (field.viewValue !== viewValue) {
 	            field.viewValue = viewValue
 	            updateField[field.type].call(field)
@@ -6629,148 +6779,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = updateField
 
 /***/ },
-/* 99 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	var skipArray = __webpack_require__(66)
-	var disposeDetectStrategy = __webpack_require__(67)
-	var patch = __webpack_require__(63)
-
-	//插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
-
-	var dir = avalon.directive('widget', {
-	    priority: 1,
-	    parse: function (binding, num, elem) {
-	        var wid = elem.props.wid || (elem.props.wid = avalon.makeHashCode('w'))
-	        avalon.resolvedComponents[wid] = {
-	            props: avalon.shadowCopy({}, elem.props),
-	            template: elem.template
-	        }
-	        var ret = ''
-	        ret += 'vnode' + num + '.props.wid = "' + wid + '"\n'
-	        ret += 'vnode' + num + '.template = ' + avalon.quote(elem.template) + '\n'
-	        ret += 'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget') + '\n'
-	        ret += 'vnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
-	        return ret
-	    },
-	    define: function (topVm, defaults, options, accessors) {
-	        var after = avalon.mix({}, defaults, options)
-	        var events = {}
-	        //绑定生命周期的回调
-	        'onInit onReady onViewChange onDispose'.replace(/\S+/g, function (a) {
-	            if (typeof after[a] === 'function')
-	                events[a] = after[a]
-	            delete after[a]
-	        })
-	        var vm = avalon.mediatorFactory(topVm, after)
-	        if (accessors.length) {
-	            accessors.forEach(function (bag) {
-	                vm = avalon.mediatorFactory(vm, bag)
-	            })
-	        }
-	        ++avalon.suspendUpdate
-	        for (var i in after) {
-	            if (skipArray[i])
-	                continue
-	            vm[i] = after[i]
-	        }
-	        --avalon.suspendUpdate
-	        for (i in events) {
-	            vm.$watch(i, events[i])
-	        }
-	        return vm
-	    },
-	    diff: function (cur, pre, steps) {
-	        var coms = avalon.resolvedComponents
-	        var wid = cur.props.wid
-	        var docker = coms[wid]
-	        if (!docker.renderCount) {
-	            cur.change = [this.replaceByComment]
-	            steps.count += 1
-	        } else if (!pre.props.resolved) {
-
-	            cur.steps = steps
-	            var list = cur.change || (cur.change = [])
-	            avalon.Array.ensure(list,this.replaceByComponent)
-	            cur.afterChange = [
-	                function (dom, vnode) {
-	                    vnode.vmodel.$element = dom
-	                    cur.vmodel.$fire('onReady', {
-	                        type: 'ready',
-	                        target: dom,
-	                        vmodel: vnode.vmodel
-	                    })
-	                    docker.renderCount = 2
-	                }
-	            ]
-
-	        } else {
-	          
-	            var needUpdate = !cur.diff || cur.diff(cur, pre)
-	            cur.skipContent = !needUpdate
-
-	            var viewChangeObservers = cur.vmodel.$events.onViewChange
-	            if (viewChangeObservers && viewChangeObservers.length) {
-	                cur.afterChange = [function (dom, vnode) {
-	                        var preHTML = avalon.vdomAdaptor(pre, 'toHTML')
-	                        var curHTML = avalon.vdomAdaptor(cur, 'toHTML')
-	                        if (preHTML !== curHTML) {
-	                            cur.vmodel.$fire('onViewChange', {
-	                                type: 'viewchange',
-	                                target: dom,
-	                                vmodel: vnode.vmodel
-	                            })
-	                        }
-	                        docker.renderCount++
-	                    }]
-	            }
-	        }
-	    },
-	    addDisposeMonitor: function (dom) {
-	        if (window.chrome && window.MutationEvent) {
-	            disposeDetectStrategy.byMutationEvent(dom)
-	        } else if (Object.defineProperty && window.Node) {
-	            disposeDetectStrategy.byRewritePrototype(dom)
-	        } else {
-	            disposeDetectStrategy.byPolling(dom)
-	        }
-	    },
-	    replaceByComment: function (dom, node, parent) {
-	        var comment = document.createComment(node.nodeValue)
-	        if (dom) {
-	            parent.replaceChild(comment, dom)
-	        } else {
-	            parent.appendChild(comment)
-	        }
-	    },
-	    replaceByComponent: function (dom, node, parent) {
-	        var hasDdash = node.type.indexOf('-') > 0
-	        var hasDetect = false
-	        if (hasDdash && document.registerElement) {
-	            //必须在自定义标签实例化时,注册它
-	            disposeDetectStrategy.byCustomElement(node.type)
-	            hasDetect = true
-	        }
-	        var com = avalon.vdomAdaptor(node, 'toDOM')
-	        if (dom) {
-	            parent.replaceChild(com, dom)
-	        } else {
-	            parent.appendChild(com)
-	        }
-	        patch([com], [node], parent, node.steps)
-	        if (!hasDetect) {
-	            dir.addDisposeMonitor(com)
-	        }
-	    }
-	})
-
-
-
-
-	// http://www.besteric.com/2014/11/16/build-blog-mirror-site-on-gitcafe/
-
-/***/ },
+/* 99 */,
 /* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -6922,7 +6931,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        keys[key] = true
 	    }
 
-	    makeObserve($vmodel, heirloom || {}, keys, accessors, {
+	    makeObserver($vmodel, heirloom || {}, keys, accessors, {
 	        id: before.$id,
 	        hashcode: makeHashCode("$"),
 	        master: true
