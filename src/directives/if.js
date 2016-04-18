@@ -13,7 +13,7 @@ avalon.directive('if', {
         return ret
     },
     diff: function (cur, pre, steps) {
-       // cur.dom = pre.dom
+        cur.dom = pre.dom
         if (cur.nodeType !== pre.nodeType) {
             var list = cur.change || (cur.change = [])
             if (avalon.Array.ensure(list, this.update)) {

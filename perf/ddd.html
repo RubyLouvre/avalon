@@ -6,30 +6,19 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
         <script src="../dist/avalon.js"></script>
         <script>
-            var vm = avalon.define({
-                $id: 'test',
-                button: {//注意这里不能以 $开头
-                    buttonText: "VM内容"
-                }
-            })
-
-            avalon.component('ms-button', {
-                template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
-                defaults: {
-                    buttonText: "默认内容"
-                },
-                soleSlot: 'buttonText'
-            })
+        var vm = avalon.define({
+            $id: "if2",
+            curIndex: 1,
+            panels: ["<div>面板1</div>", "<p>面板2</p>", "<strong>面板3</strong>"]
+        })
 
         </script>
     </head>
 
-    <body ms-controller="test">
-    <!--在自定义标签中，ms-widget不是必须的-->
-    <ms-button ></ms-button>
-    <!--下面三种方式，ms-widget才是存在，其中的is也是必须的-->
-    <xmp ms-widget='{is:"ms-button"}'></xmp>
-    <wbr ms-widget='{is:"ms-button"}'/>
-    <template ms-widget='{is:"ms-button"}'></template>
-</body>
+    <body >
+        <div ms-controller='if2'>
+             <div class='panel' ms-for='(jj, el) in @panels' 
+                  ms-if='jj === @curIndex' ms-html='el'></div>
+        </div>
+    </body>
 </html>

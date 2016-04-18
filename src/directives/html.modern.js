@@ -1,37 +1,32 @@
-var Cache = require('../seed/cache')
-var textCache = new Cache(512)
+
 
 avalon.directive('html', {
     parse: function (binding, num) {
-        return 'vnode' + num + '.htmlVm = __vmodel__\n' +
-               'vnode' + num + '.skipContent = true\n' +
-                'vnode' + num + '.props["ms-html"] =' + avalon.parseExpr(binding) + ';\n'
+        var ret = "var htmlId =  " + avalon.parseExpr(binding) + '\n'
+        ret += 'vnode' + num + '.props["ms-html"]  = htmlId;\n'
+        ret += 'vnode' + num + '.props.skipContent  = true;\n'
+        ret += 'var obj  = avalon.htmlFactory(htmlId,' + num + ');\n'
+        ret += 'try{eval(" new function(){"+ obj.render +"}")}catch(e){};\n'
+        ret += 'vnode' + num + '.children = avalon.__html;\n'
+        return ret
     },
     diff: function (cur, pre, steps, name) {
         var curValue = cur.props[name]
         var preValue = pre.props[name]
-          cur.skipContent = false
+        cur.skipContent = false
         if (curValue !== preValue) {
-            var nodes = textCache.get(curValue)
-            if (!Array.isArray(nodes)) {
-                var child = avalon.lexer(curValue)
-                var render = avalon.render(child)
-                nodes = render(cur.htmlVm)
-                cur.props[name] = nodes.map(function (el) {
-                    return 'template' in el ? el.template : el.nodeValue
-                }), join('-')
-                textCache.put(curValue, nodes)
-            }
-            cur.children = nodes
             if (cur.props[name] !== preValue) {
                 var list = cur.change || (cur.change = [])
-                if(avalon.Array.ensure(list, this.update)){
-                   steps.count += 1
+                if (avalon.Array.ensure(list, this.update)) {
+                    steps.count += 1
                 }
             }
         }
     },
     update: function (node, vnode) {
+        if(node.nodeType !== 1){
+            return
+        }
         var nodes = node.querySelectorAll('[avalon-events]')
         avalon.each(nodes, function (el) {
             avalon.unbind(el)

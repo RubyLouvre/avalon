@@ -48,7 +48,7 @@ describe('if', function () {
         })
     })
     
-    it("test", function (done) {
+    it("test02", function (done) {
         div.innerHTML = heredoc(function () {
             /*
              <div ms-controller='if2'>

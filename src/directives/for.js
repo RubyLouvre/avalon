@@ -15,7 +15,6 @@ avalon._each = function (obj, fn) {
             var item = obj[i]
             var type = typeof item
             var key = item && type === 'object' ? item.$hashcode : type + item
-            console.log(item,key)
             fn(i, obj[i], key)
         }
     } else {

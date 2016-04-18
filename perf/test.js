@@ -1,93 +1,111 @@
 function anonymous(__vmodel__) {
-    var vnodes146097 = []
-    var vnode146097 = {
+    var vnodes146098 = []
+    var vnode146098 = {
         nodeType: 1,
-        type: "button",
+        type: "div",
         props: {},
         children: [],
         isVoidTag: false,
         template: ""}
-    vnode146097.props.type = "button"
-    vnode146097.props.resolved = true
-    vnode146097.props["class"] = "ani"
-    vnode146097.props.wid = "w77033125595"
-    vnode146097.order = "ms-effect;;ms-if;;ms-attr"
-    vnode146097.props["ms-effect"] = (function () {
-        try {
-            var __value__ = {is: 'zoom'}
-            return __value__
-        } catch (e) {
-            avalon.warn(e, "parse effect binding【 {is:'zoom'} 】fail")
-            return ""
-        }
-    })();
-    var ifVar = (function () {
-        try {
-            var __value__ = __vmodel__.toggle
-            return __value__
-        } catch (e) {
-            avalon.warn(e, "parse if binding【 @toggle 】fail")
-            return ""
-        }
-    })();
-    vnode146097.props["ms-if"] = ifVar;
-    if (!ifVar) {
-        vnode146097.nodeType = 8;
-        vnode146097.directive = "if";
-        vnode146097.nodeValue = "ms-if"
-    }
-    vnode146097.props["ms-attr"] = (function () {
-        try {
-            var __value__ = {eee: el}
-            return __value__
-        } catch (e) {
-            avalon.warn(e, "parse attr binding【 {eee:el} 】fail")
-            return ""
-        }
-    })();
-    if (vnode146097.nodeType === 1) {
-        vnode146097.children = (function () {
+    vnode146098.order = "ms-controller"
 
-            var vnodes146097 = []
-            var vnode146097 = {
+
+    var vm146098 = avalon.vmodels["if2"]
+    if (vm146098) {
+        if (__vmodel__) {
+            __vmodel__ = avalon.mediatorFactory(__vmodel__, vm146098)
+        } else {
+            __vmodel__ = vm146098
+        }
+    }
+
+
+    vnode146098.children = (function () {
+
+        var vnodes146098 = []
+
+        var for300971289219 = {
+            nodeType: 8,
+            type: "#comment",
+            vmodel: __vmodel__,
+            directive: "for",
+            skipContent: false,
+            cid: "undefined:cb",
+            start: vnodes146098.length,
+            signature: "for300971289219",
+            nodeValue: "ms-for:(jj, el) in @panels"
+        }
+        vnodes146098.push(for300971289219)
+        var loop146098 = (function () {
+            try {
+                var __value__ = __vmodel__.panels
+                return __value__
+            } catch (e) {
+                avalon.warn(e, "parse other binding【 @panels 】fail")
+                return ""
+            }
+        })()
+        avalon._each(loop146098, function (jj, el, traceKey) {
+            var vnode146098 = {
                 nodeType: 1,
-                type: "span",
+                type: "div",
                 props: {},
                 children: [],
                 isVoidTag: false,
                 template: ""}
-            vnode146097.skipAttrs = true
-            vnode146097.children = (function () {
-
-                var vnodes146097 = []
-                var vnode146097 = {type: "#text", nodeType: 3, skipContent: true}
-                vnode146097.nodeValue = (function () {
-                    try {
-                        var __value__ = __vmodel__.aaa
-                        return __value__
-                    } catch (e) {
-                        avalon.warn(e, "parse other binding【 @aaa 】fail")
-                        return ""
-                    }
-                })()
-                vnode146097.fixIESkip = true
-                vnode146097.skipContent = false
-                vnodes146097.push(vnode146097)
-
-
-                return vnodes146097
+            vnode146098.props["class"] = "panel"
+            vnode146098.order = "ms-if;;ms-html"
+            var ifVar = (function () {
+                try {
+                    var __value__ = jj === __vmodel__.curIndex
+                    return __value__
+                } catch (e) {
+                    avalon.warn(e, "parse if binding【 jj === @curIndex 】fail")
+                    return ""
+                }
             })();
+            vnode146098.props["ms-if"] = ifVar;
+            if (!ifVar) {
+                vnode146098.nodeType = 8;
+                vnode146098.directive = "if";
+                vnode146098.nodeValue = "ms-if"
+            }
+            vnode146098.htmlVm = __vmodel__
+            vnode146098.skipContent = true
+            vnode146098.props["ms-html"] = (function () {
+                try {
+                    var __value__ = el
+                    return __value__
+                } catch (e) {
+                    avalon.warn(e, "parse html binding【 el 】fail")
+                    return ""
+                }
+            })();
+            vnode146098.template = ""
+            vnodes146098.push(vnode146098)
+            vnodes146098.push({
+                nodeType: 8,
+                type: "#comment",
+                skipContent: true,
+                nodeValue: "for300971289219",
+                key: traceKey
+            })
 
-            vnodes146097.push(vnode146097)
+        })
+        for300971289219.end = vnodes146098.push({
+            nodeType: 8,
+            type: "#comment",
+            skipContent: true,
+            signature: "for300971289219",
+            nodeValue: "for300971289219:end"
+        })
 
 
-            return vnodes146097
-        })();
+        return vnodes146098
+    })();
 
-    }
-    vnodes146097.push(vnode146097)
+    vnodes146098.push(vnode146098)
 
 
-    return vnodes146097
-
+    return vnodes146098
 }
