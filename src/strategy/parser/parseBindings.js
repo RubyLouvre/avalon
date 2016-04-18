@@ -62,7 +62,7 @@ function parseBindings(props, num, elem) {
         ret += '\tvnode' + num + '.skipAttrs = true\n'
     } else {
         bindings.sort(byPriority)
-        ret += ('\tvnode' + num + '.order = "'+ bindings.map(function(a){
+        ret += ('vnode' + num + '.order = "'+ bindings.map(function(a){
             return a.name
         }).join(';;')+'"\n')
         //优化处理ms-widget

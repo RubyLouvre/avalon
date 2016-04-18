@@ -16,7 +16,7 @@ require('./rules')
 
 //处理逻辑
 require('./if')
-require('./for2')
+require('./for')
 
 require('./widget2')
 require('./effect')

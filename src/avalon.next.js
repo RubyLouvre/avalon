@@ -5,7 +5,7 @@ require('./vdom/index')
 require('./dom/modern')
 require('./directives/modern')
 require('./strategy/index')
-require('./component/index')
+require('./component/index2')
 require('./vmodel/next')
 
 

@@ -6,10 +6,10 @@ avalon.directive('if', {
     parse: function (binding, num) {
         var ret = 'var ifVar = '+ avalon.parseExpr(binding,'if')+';\n'
         ret += 'vnode' + num + '.props["ms-if"] = ifVar;\n'
-        ret += 'if(!ifVar){\n\
-                vnode'+ num +'.nodeType = 8;\n\
-                vnode'+num+'.directive="if";\n\
-                vnode'+num+'.nodeValue="ms-if"\n}\n'
+        ret += 'if(!ifVar){\n'
+        ret += 'vnode'+ num +'.nodeType = 8;\n'
+        ret += 'vnode'+num+'.directive="if";\n'
+        ret += 'vnode'+num+'.nodeValue="ms-if"\n}\n'
         return ret
     },
     diff: function (cur, pre, steps) {

@@ -123,7 +123,7 @@ function parseView(arr, num) {
                     var hasWidget = el.props['ms-widget']
                     var hasIf = el.props['ms-if']
                     if (hasIf) {
-                        str += 'if(' + vnode + '.nodeType === 1 ){\n'
+                        str += 'if(' +vnode+'&&'+ vnode + '.nodeType === 1 ){\n'
                     }
                     if (hasWidget) {
                         str += 'if(!' + vnode + '.props.wid ){\n'

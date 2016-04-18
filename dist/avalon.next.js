@@ -2541,10 +2541,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parse: function (binding, num) {
 	        var ret = 'var ifVar = '+ avalon.parseExpr(binding,'if')+';\n'
 	        ret += 'vnode' + num + '.props["ms-if"] = ifVar;\n'
-	        ret += 'if(!ifVar){\n\
-	                vnode'+ num +'.nodeType = 8;\n\
-	                vnode'+num+'.directive="if";\n\
-	                vnode'+num+'.nodeValue="ms-if"\n}\n'
+	        ret += 'if(!ifVar){\n'
+	        ret += 'vnode'+ num +'.nodeType = 8;\n'
+	        ret += 'vnode'+num+'.directive="if";\n'
+	        ret += 'vnode'+num+'.nodeValue="ms-if"\n}\n'
 	        return ret
 	    },
 	    diff: function (cur, pre, steps) {
@@ -3774,7 +3774,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    var hasWidget = el.props['ms-widget']
 	                    var hasIf = el.props['ms-if']
 	                    if (hasIf) {
-	                        str += 'if(' + vnode + '.nodeType === 1 ){\n'
+	                        str += 'if(' +vnode+'&&'+ vnode + '.nodeType === 1 ){\n'
 	                    }
 	                    if (hasWidget) {
 	                        str += 'if(!' + vnode + '.props.wid ){\n'
@@ -4038,7 +4038,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        ret += '\tvnode' + num + '.skipAttrs = true\n'
 	    } else {
 	        bindings.sort(byPriority)
-	        ret += ('\tvnode' + num + '.order = "'+ bindings.map(function(a){
+	        ret += ('vnode' + num + '.order = "'+ bindings.map(function(a){
 	            return a.name
 	        }).join(';;')+'"\n')
 	        //优化处理ms-widget
@@ -4241,13 +4241,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            avalon.vmodels[$id] = vmodel
 	            //生成组件的render
 	            var num = num || String(new Date - 0).slice(0, 6)
-	            var render = parseView(vtree, num) + '\n\nreturn (avalon.__widget = vnodes' + num + ')\n'
-	            //  var render = avalon.render(vtree)
-	            //  var str = render +''
-	            //  render = str.slice(str.indexOf("{")+1).replace(/}\s*$/,"")
-
+	            var render = parseView(vtree, num) + '\nreturn (avalon.__widget = vnodes' + num + ');\n'
+	         
 	            vmodel.$render = render
-
 	            //触发onInit回调
 	            vmodel.$fire('onInit', {
 	                type: 'init',
@@ -4272,12 +4268,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return type.length > 3 && type.indexOf('-') > 0 &&
 	            ralphabet.test(type.charAt(0) + type.slice(-1))
 	}
-
-	function reRender(docker) {
-	    var vtree = docker.render(docker.vmodel)
-
-	    var widgetNode = vtree[0]
-	    //确保ms-widget是最先执行
+	avalon.renderWidget = function(widgetNode){
+	    var docker = avalon.resolvedComponents[widgetNode.props.wid]
 	    widgetNode.order = 'ms-widget;;' + widgetNode.order
 	    if (!isComponentReady(widgetNode)) {
 	        return docker.placeholder
@@ -4290,7 +4282,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    widgetNode.diff = docker.diff
 	    //移除skipAttrs,以便进行diff
 	    delete widgetNode.skipAttrs
-
 	    return widgetNode
 	}
 	function isComponentReady(vnode) {
@@ -6797,6 +6788,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var item = obj[i]
 	            var type = typeof item
 	            var key = item && type === 'object' ? item.$hashcode : type + item
+	            console.log(item,key)
 	            fn(i, obj[i], key)
 	        }
 	    } else {
@@ -6822,8 +6814,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var assign = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
 	        var alias = aliasAs ? 'var ' + aliasAs + ' = loop' + num + '\n' : ''
 	        var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
+	        if(kv.length === 1){//确保avalon._each的回调有三个参数
+	            kv.unshift('$key')
+	        }
 	        //分别创建isArray, ____n, ___i, ___v, ___trackKey变量
-	        return assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n\n'
+	        return assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n'
 
 	    },
 	    diff: function (current, previous, steps, __index__) {
@@ -6881,8 +6876,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                } else {
 	                    if (quota) {
 	                        c = fuzzyMatchCache(cache, p.key)
+	                        
 	                        quota--
 	                        isChange = true //内容发生变化
+	       
 	                        c.nodes = p.nodes
 	                        avalon.diff(c.children, p.children, steps)
 	                    } else {
@@ -6896,6 +6893,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            //这是新添加的元素
 	            for (i in cache) {
 	                isChange = true
+	                console.log('---')
 	                c = cache[i]
 	                avalon.diff(c.children, [], steps)
 	            }
@@ -7054,6 +7052,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rfuzzy = /^(string|number|boolean)/
 	var rkfuzzy = /^_*(string|number|boolean)/
 	function fuzzyMatchCache(cache, id) {
+	    console.log(id)
 	    var m = id.match(rfuzzy)
 	    if (m) {
 	        var fid = m[1]
