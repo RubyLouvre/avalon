@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                array: [1, 2, 3]
+            })
+           
+        </script>
+
+    </head>
+    <body ms-controller="test">
+        <div ms-for="($index, el) in @array">
+            {{el}}::{{$index}}
+        </div>
+    </body>
+</html>

@@ -36,6 +36,7 @@
             })
             var vm = avalon.define({
                 $id: "test",
+                arr: [1,2,3],
                 aaa: 222,
                 toggle: true
             })
@@ -44,6 +45,12 @@
 
     </head>
     <body ms-controller="test" >
-        <div class='ani' ms-attr="{eee:@aaa}" ms-widget='{is:"ms-button"}'  ms-effect="{is:'zoom'}">{{@aaa}}</div>
+        <div ms-for="el in @arr">
+        <div class='ani' 
+             ms-attr="{eee:el}" 
+             ms-if="@toggle" 
+             ms-widget='{is:"ms-button"}' 
+             ms-effect="{is:'zoom'}">{{@aaa}}</div>
+        </div>
     </body>
 </html>
