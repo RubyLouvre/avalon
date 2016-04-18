@@ -47,7 +47,7 @@ function diffProps(current, previous, steps) {
         try {
             current.order.replace(/([^;]+)/g, function (name) {
                 var match = name.match(rbinding)
-                var type = match[1]
+                var type = match && match[1]
                 if (directives[type]) {
                     directives[type].diff(current, previous || emptyObj, steps, name)
                 }

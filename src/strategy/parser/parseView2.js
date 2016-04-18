@@ -100,20 +100,6 @@ function parseView(arr, num) {
             }
             continue
         } else { //处理元素节点
-//            var hasIf = el.props['ms-if']
-//            if (hasIf) { // 处理ms-if指令
-//                el.signature = makeHashCode('ms-if')
-//                str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'
-//                var ifValue = quote(el.signature)
-//                str += children + '.push({' +
-//                        '\n\tnodeType:8,' +
-//                        '\n\ttype: "#comment",' +
-//                        '\n\tdirective: "if",' +
-//                        '\n\tnodeValue:' + ifValue + ',\n' +
-//                        '\n\tsignature:' + ifValue + ',\n' +
-//                        '\n\tprops: {"ms-if":true} })\n'
-//                str += '\n}else{\n\n'
-//            }
 
             str += 'var ' + vnode + ' = {' +
                     '\n\tnodeType:1,' +
@@ -127,14 +113,6 @@ function parseView(arr, num) {
             if (!hasWidget && el.type.indexOf('-') > 0 && !el.props.resolved) {
                 el.props['ms-widget'] = '@' + el.type.replace(/-/g, "_")
             }
-//
-//            if (hasWidget) {// 处理ms-widget指令
-//                str += avalon.directives.widget.parse({
-//                    expr: hasWidget,
-//                    type: 'widget'
-//                }, num, el)
-//                hasWidget = false
-//            } else {
 
             var hasBindings = parseBindings(el.props, num, el)
             if (hasBindings) {
@@ -164,11 +142,6 @@ function parseView(arr, num) {
             str += children + '.push(' + vnode + ')\n'
         }
 
-//            if (hasIf) {
-//                str += '}\n'
-//                hasIf = false
-//            }
-//        }
     }
     return str
 }

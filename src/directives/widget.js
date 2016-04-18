@@ -13,9 +13,9 @@ var dir = avalon.directive('widget', {
             props: avalon.shadowCopy({}, elem.props),
             template: elem.template
         }
-        console.log('处理widget')
         var ret = ''
         ret += 'vnode' + num + '.props.wid = "' + wid + '"\n'
+        ret += 'vnode' + num + '.template = ' + avalon.quote(elem.template) + '\n'
         ret += 'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget') + '\n'
         ret += 'vnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
         return ret
@@ -55,16 +55,10 @@ var dir = avalon.directive('widget', {
             cur.change = [this.replaceByComment]
             steps.count += 1
         } else if (!pre.props.resolved) {
-            console.log('=============')
-            console.log('widget diff',cur,pre)
+
             cur.steps = steps
             var list = cur.change || (cur.change = [])
-//            if(list.indexOf(this.replaceByComponent) === -1){
-//                console.log('---')
-//                list.unshift(this.replaceByComponent)
-//            }
             avalon.Array.ensure(list,this.replaceByComponent)
-            // avalon.diff([cur], [pre], steps)
             cur.afterChange = [
                 function (dom, vnode) {
                     vnode.vmodel.$element = dom
@@ -130,7 +124,6 @@ var dir = avalon.directive('widget', {
         } else {
             parent.appendChild(com)
         }
-        console.log('replaceByComponent',com)
         patch([com], [node], parent, node.steps)
         if (!hasDetect) {
             dir.addDisposeMonitor(com)

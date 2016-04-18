@@ -3040,9 +3040,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            props: avalon.shadowCopy({}, elem.props),
 	            template: elem.template
 	        }
-	        console.log('处理widget')
 	        var ret = ''
 	        ret += 'vnode' + num + '.props.wid = "' + wid + '"\n'
+	        ret += 'vnode' + num + '.template = ' + avalon.quote(elem.template) + '\n'
 	        ret += 'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget') + '\n'
 	        ret += 'vnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
 	        return ret
@@ -3082,16 +3082,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            cur.change = [this.replaceByComment]
 	            steps.count += 1
 	        } else if (!pre.props.resolved) {
-	            console.log('=============')
-	            console.log('widget diff',cur,pre)
+
 	            cur.steps = steps
 	            var list = cur.change || (cur.change = [])
-	//            if(list.indexOf(this.replaceByComponent) === -1){
-	//                console.log('---')
-	//                list.unshift(this.replaceByComponent)
-	//            }
 	            avalon.Array.ensure(list,this.replaceByComponent)
-	            // avalon.diff([cur], [pre], steps)
 	            cur.afterChange = [
 	                function (dom, vnode) {
 	                    vnode.vmodel.$element = dom
@@ -3157,7 +3151,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else {
 	            parent.appendChild(com)
 	        }
-	        console.log('replaceByComponent',com)
 	        patch([com], [node], parent, node.steps)
 	        if (!hasDetect) {
 	            dir.addDisposeMonitor(com)
@@ -4043,7 +4036,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        try {
 	            current.order.replace(/([^;]+)/g, function (name) {
 	                var match = name.match(rbinding)
-	                var type = match[1]
+	                var type = match && match[1]
 	                if (directives[type]) {
 	                    directives[type].diff(current, previous || emptyObj, steps, name)
 	                }
@@ -4238,20 +4231,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            continue
 	        } else { //处理元素节点
-	//            var hasIf = el.props['ms-if']
-	//            if (hasIf) { // 处理ms-if指令
-	//                el.signature = makeHashCode('ms-if')
-	//                str += 'if(!(' + parseExpr(hasIf, 'if') + ')){\n'
-	//                var ifValue = quote(el.signature)
-	//                str += children + '.push({' +
-	//                        '\n\tnodeType:8,' +
-	//                        '\n\ttype: "#comment",' +
-	//                        '\n\tdirective: "if",' +
-	//                        '\n\tnodeValue:' + ifValue + ',\n' +
-	//                        '\n\tsignature:' + ifValue + ',\n' +
-	//                        '\n\tprops: {"ms-if":true} })\n'
-	//                str += '\n}else{\n\n'
-	//            }
 
 	            str += 'var ' + vnode + ' = {' +
 	                    '\n\tnodeType:1,' +
@@ -4265,14 +4244,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (!hasWidget && el.type.indexOf('-') > 0 && !el.props.resolved) {
 	                el.props['ms-widget'] = '@' + el.type.replace(/-/g, "_")
 	            }
-	//
-	//            if (hasWidget) {// 处理ms-widget指令
-	//                str += avalon.directives.widget.parse({
-	//                    expr: hasWidget,
-	//                    type: 'widget'
-	//                }, num, el)
-	//                hasWidget = false
-	//            } else {
 
 	            var hasBindings = parseBindings(el.props, num, el)
 	            if (hasBindings) {
@@ -4302,11 +4273,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            str += children + '.push(' + vnode + ')\n'
 	        }
 
-	//            if (hasIf) {
-	//                str += '}\n'
-	//                hasIf = false
-	//            }
-	//        }
 	    }
 	    return str
 	}
@@ -4682,6 +4648,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var tagName = node.type.indexOf('-') > 0 ? node.type : options.is
 	        var docker = resolvedComponents[wid]
+	        var docker = resolvedComponents[wid]
+	        if (!docker) {
+	            resolvedComponents[wid] = docker = node
+	        }
 	        //如果此组件的实例已经存在,那么重新渲染
 	        if (docker.render) {
 	            return reRender(docker)

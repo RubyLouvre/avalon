@@ -42,6 +42,10 @@ avalon.component = function (name, definition) {
 
         var tagName = node.type.indexOf('-') > 0 ? node.type : options.is
         var docker = resolvedComponents[wid]
+        var docker = resolvedComponents[wid]
+        if (!docker) {
+            resolvedComponents[wid] = docker = node
+        }
         //如果此组件的实例已经存在,那么重新渲染
         if (docker.render) {
             return reRender(docker)
