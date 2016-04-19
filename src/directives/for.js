@@ -143,10 +143,8 @@ avalon.directive('for', {
 
     },
     update: function (startRepeat, vnode, parent) {
-
         var action = vnode.action
         var endRepeat = vnode.endRepeat
-
         var fragment = document.createDocumentFragment()
         var hasEffect = false
         if (action === 'init') {
@@ -168,8 +166,9 @@ avalon.directive('for', {
         for (var i in vnode.removedComponents) {
             var el = vnode.removedComponents[i]
             if (el.nodes) {
+                el.del = true
                 el.nodes.forEach(function (n, k) {
-                    if (n.parentNode) {
+                    if (n.parentNode) {                       
                         avalon.applyEffect(n, el.children[k],{
                             hook:'onLeaveDone',
                             cb:function () {
