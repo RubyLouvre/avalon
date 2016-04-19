@@ -5663,7 +5663,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (var i in vnode.removedComponents) {
 	            var el = vnode.removedComponents[i]
 	            if (el.nodes) {
-	                el.del = true
 	                el.nodes.forEach(function (n, k) {
 	                    if (n.parentNode) {                       
 	                        avalon.applyEffect(n, el.children[k],{
@@ -6221,7 +6220,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }   
 	        var effect = new Effect(dom)
 	        var finalOption = avalon.mix(option, globalOption, localeOption)
-	        if (finalOption.queue && animationQueue.length) {
+	        if (finalOption.stagger && animationQueue.length) {
 	            animationQueue.push(function () {
 	                effect[action](finalOption)
 	            })
@@ -6246,10 +6245,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    lock = true
 	    var fn = animationQueue[0]
 	    if (fn) {
-	        avalon.nextTick(function () {
+	        setTimeout(function(){
 	            lock = false
 	            fn()
-	        })
+	        },0)
 	    }
 	}
 
@@ -6264,17 +6263,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!definition.enterActiveClass) {
 	            definition.enterActiveClass = definition.enterClass + '-active'
 	        }
-	        if (!definition.enterStaggerClass) {
-	            definition.enterStaggerClass = definition.enterClass + '-stagger'
-	        }
 	        if (!definition.leaveClass) {
 	            definition.leaveClass = name + '-leave'
 	        }
 	        if (!definition.leaveActiveClass) {
 	            definition.leaveActiveClass = definition.leaveClass + '-active'
-	        }
-	       if (!definition.leaveStaggerClass) {
-	            definition.leaveStaggerClass = definition.enterClass + '-stagger'
 	        }
 	    }
 	    if (!definition.action) {
@@ -6326,11 +6319,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                stagger.items++
 	            }
 	        }
-	        console.log(elem.innerHTML.trim())
 	        var staggerIndex = stagger && stagger.count || 0
 	        var animationDone = function(e) {
 	            var isOk = e !== false
-	            console.log(action,'!!!',elem.innerHTML.trim(),new Date - 0)
 	            elem.animating = void 0
 	            enterAnimateDone = true
 	            var dirWord = isOk ? 'Done' : 'Abort'
@@ -6358,11 +6349,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }else if(lower === 'enter'){
 	                $el.removeClass(option.leaveClass+' '+option.leaveActiveClass)
 	            }
+
 	            $el.bind(support.transitionEndEvent, animationDone)
 	            $el.bind(support.animationEndEvent, animationDone)
 	            setTimeout(function () {
 	                enterAnimateDone = avalon.root.offsetWidth === NaN
 	                $el.addClass(option[lower + 'ActiveClass'])
+	               // $el.addClass(option[lower + 'StaggerClass'])
 	                var computedStyles = window.getComputedStyle(elem)
 	                var tranDuration = computedStyles[support.transitionDuration]
 	                var animDuration = computedStyles[support.animationDuration]
@@ -6374,7 +6367,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        if(!enterAnimateDone){
 	                            animationDone(false)
 	                        }
-	                    },time + 17 )
+	                    },time + 130 )
 	                }
 	            }, 17+ staggerTime * staggerIndex)// = 1000/60
 	        }
@@ -6399,9 +6392,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        getAction(opts)
 	        node.animate = true
 	        setTimeout(function(){
-	            console.log(node.innerHTML.trim(),"==")
 	            avalon.directives.effect.update(node,vnode, 0, avalon.shadowCopy({},opts) ) 
-	        })
+	        },0)
 	        
 	    }else if(cb){
 	        cb()

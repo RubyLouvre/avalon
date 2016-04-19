@@ -166,7 +166,6 @@ avalon.directive('for', {
         for (var i in vnode.removedComponents) {
             var el = vnode.removedComponents[i]
             if (el.nodes) {
-                el.del = true
                 el.nodes.forEach(function (n, k) {
                     if (n.parentNode) {                       
                         avalon.applyEffect(n, el.children[k],{

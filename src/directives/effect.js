@@ -57,7 +57,7 @@ avalon.directive('effect', {
         }   
         var effect = new Effect(dom)
         var finalOption = avalon.mix(option, globalOption, localeOption)
-        if (finalOption.queue && animationQueue.length) {
+        if (finalOption.stagger && animationQueue.length) {
             animationQueue.push(function () {
                 effect[action](finalOption)
             })
@@ -82,10 +82,10 @@ function callNextAniation() {
     lock = true
     var fn = animationQueue[0]
     if (fn) {
-        avalon.nextTick(function () {
+        setTimeout(function(){
             lock = false
             fn()
-        })
+        },0)
     }
 }
 
@@ -100,17 +100,11 @@ avalon.effect = function (name, definition) {
         if (!definition.enterActiveClass) {
             definition.enterActiveClass = definition.enterClass + '-active'
         }
-        if (!definition.enterStaggerClass) {
-            definition.enterStaggerClass = definition.enterClass + '-stagger'
-        }
         if (!definition.leaveClass) {
             definition.leaveClass = name + '-leave'
         }
         if (!definition.leaveActiveClass) {
             definition.leaveActiveClass = definition.leaveClass + '-active'
-        }
-       if (!definition.leaveStaggerClass) {
-            definition.leaveStaggerClass = definition.enterClass + '-stagger'
         }
     }
     if (!definition.action) {
@@ -162,11 +156,9 @@ function createAction(action) {
                 stagger.items++
             }
         }
-        console.log(elem.innerHTML.trim())
         var staggerIndex = stagger && stagger.count || 0
         var animationDone = function(e) {
             var isOk = e !== false
-            console.log(action,'!!!',elem.innerHTML.trim(),new Date - 0)
             elem.animating = void 0
             enterAnimateDone = true
             var dirWord = isOk ? 'Done' : 'Abort'
@@ -194,11 +186,13 @@ function createAction(action) {
             }else if(lower === 'enter'){
                 $el.removeClass(option.leaveClass+' '+option.leaveActiveClass)
             }
+
             $el.bind(support.transitionEndEvent, animationDone)
             $el.bind(support.animationEndEvent, animationDone)
             setTimeout(function () {
                 enterAnimateDone = avalon.root.offsetWidth === NaN
                 $el.addClass(option[lower + 'ActiveClass'])
+               // $el.addClass(option[lower + 'StaggerClass'])
                 var computedStyles = window.getComputedStyle(elem)
                 var tranDuration = computedStyles[support.transitionDuration]
                 var animDuration = computedStyles[support.animationDuration]
@@ -210,7 +204,7 @@ function createAction(action) {
                         if(!enterAnimateDone){
                             animationDone(false)
                         }
-                    },time + 17 )
+                    },time + 130 )
                 }
             }, 17+ staggerTime * staggerIndex)// = 1000/60
         }
@@ -235,9 +229,8 @@ avalon.applyEffect = function(node, vnode, opts){
         getAction(opts)
         node.animate = true
         setTimeout(function(){
-            console.log(node.innerHTML.trim(),"==")
             avalon.directives.effect.update(node,vnode, 0, avalon.shadowCopy({},opts) ) 
-        })
+        },0)
         
     }else if(cb){
         cb()
