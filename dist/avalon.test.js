@@ -3912,12 +3912,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }   
 	        var effect = new Effect(dom)
 	        var finalOption = avalon.mix(option, globalOption, localeOption)
-	        if (finalOption.stagger && animationQueue.length) {
+	        if (finalOption.queue) {
 	            animationQueue.push(function () {
 	                effect[action](finalOption)
 	            })
+	            callNextAnimation()
 	        } else {
-	            effect[action](finalOption)
+	            setTimeout(function(){
+	               effect[action](finalOption)
+	            },4)
 	        }
 	    }
 	})
@@ -3928,19 +3931,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    return false
 	}
+
 	var animationQueue = []
-	var lock = false
-	function callNextAniation() {
-	    animationQueue.shift()
-	    if (lock)
+	function callNextAnimation() {
+	    if (animationQueue.lock)
 	        return
-	    lock = true
 	    var fn = animationQueue[0]
 	    if (fn) {
-	        setTimeout(function(){
-	            lock = false
-	            fn()
-	        },0)
+	       callNextAnimation.lock = true
+	       fn()
 	    }
 	}
 
@@ -4025,7 +4024,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    stagger.count = 0
 	                }
 	            }
-	            callNextAniation()
+	            if(option.queue){
+	                animationQueue.lock = false
+	                animationQueue.shift()
+	                callNextAnimation()
+	            }
 	        }
 	        execHooks(option, 'onBefore' + action, elem)
 
@@ -4047,7 +4050,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            setTimeout(function () {
 	                enterAnimateDone = avalon.root.offsetWidth === NaN
 	                $el.addClass(option[lower + 'ActiveClass'])
-	               // $el.addClass(option[lower + 'StaggerClass'])
 	                var computedStyles = window.getComputedStyle(elem)
 	                var tranDuration = computedStyles[support.transitionDuration]
 	                var animDuration = computedStyles[support.animationDuration]
@@ -4083,10 +4085,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        getAction(opts)
 	        node.animate = true
-	        setTimeout(function(){
-	            avalon.directives.effect.update(node,vnode, 0, avalon.shadowCopy({},opts) ) 
-	        },0)
-	        
+	        avalon.directives.effect.update(node,vnode, 0, avalon.shadowCopy({},opts) ) 
+
 	    }else if(cb){
 	        cb()
 	    }

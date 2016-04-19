@@ -57,12 +57,15 @@ avalon.directive('effect', {
         }   
         var effect = new Effect(dom)
         var finalOption = avalon.mix(option, globalOption, localeOption)
-        if (finalOption.stagger && animationQueue.length) {
+        if (finalOption.queue) {
             animationQueue.push(function () {
                 effect[action](finalOption)
             })
+            callNextAnimation()
         } else {
-            effect[action](finalOption)
+            setTimeout(function(){
+               effect[action](finalOption)
+            },4)
         }
     }
 })
@@ -73,19 +76,15 @@ function diffObj(a, b){
     }
     return false
 }
+
 var animationQueue = []
-var lock = false
-function callNextAniation() {
-    animationQueue.shift()
-    if (lock)
+function callNextAnimation() {
+    if (animationQueue.lock)
         return
-    lock = true
     var fn = animationQueue[0]
     if (fn) {
-        setTimeout(function(){
-            lock = false
-            fn()
-        },0)
+       callNextAnimation.lock = true
+       fn()
     }
 }
 
@@ -170,7 +169,11 @@ function createAction(action) {
                     stagger.count = 0
                 }
             }
-            callNextAniation()
+            if(option.queue){
+                animationQueue.lock = false
+                animationQueue.shift()
+                callNextAnimation()
+            }
         }
         execHooks(option, 'onBefore' + action, elem)
 
@@ -192,7 +195,6 @@ function createAction(action) {
             setTimeout(function () {
                 enterAnimateDone = avalon.root.offsetWidth === NaN
                 $el.addClass(option[lower + 'ActiveClass'])
-               // $el.addClass(option[lower + 'StaggerClass'])
                 var computedStyles = window.getComputedStyle(elem)
                 var tranDuration = computedStyles[support.transitionDuration]
                 var animDuration = computedStyles[support.animationDuration]
@@ -228,10 +230,8 @@ avalon.applyEffect = function(node, vnode, opts){
         }
         getAction(opts)
         node.animate = true
-        setTimeout(function(){
-            avalon.directives.effect.update(node,vnode, 0, avalon.shadowCopy({},opts) ) 
-        },0)
-        
+        avalon.directives.effect.update(node,vnode, 0, avalon.shadowCopy({},opts) ) 
+
     }else if(cb){
         cb()
     }
