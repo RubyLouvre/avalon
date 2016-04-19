@@ -28,12 +28,18 @@ avalon.directive('effect', {
             }
         }
     },
-    update: function (dom, vnode, parent, action) {
+    update: function (dom, vnode, parent, option) {
+        if(dom.animating && !option){
+            return
+        }
+        dom.animating = true
         var localeOption = vnode.props['ms-effect']
         var type = localeOption.is
+        option = option || {}
         if(!type){//如果没有指定类型
             return avalon.warn('need is option')
         }
+      
         var effects = avalon.effects
         if(support.css && !effects[type]){
             avalon.effect(type, {})
@@ -42,13 +48,13 @@ avalon.directive('effect', {
         if(!globalOption){//如果没有定义特效
             return avalon.warn(type+' effect is undefined')
         }
-        action = action || localeOption.action
+        var action = option.action || localeOption.action
         var Effect = avalon.Effect
         if (typeof Effect.prototype[action] !== 'function'){
             return avalon.warn(action+' action is undefined')
         }   
         var effect = new Effect(dom)
-        var finalOption = avalon.mix({}, globalOption, localeOption)
+        var finalOption = avalon.mix(option, globalOption, localeOption)
         if (finalOption.queue && animationQueue.length) {
             animationQueue.push(function () {
                 effect[action](finalOption)
@@ -129,41 +135,66 @@ function execHooks(options, name, el) {
        fn && fn(el)
     })
 }
+ var staggerCache = {}
+
 function createAction(action) {
     var lower = action.toLowerCase()
-    return function (options) {
+    return function (option) {
+       
         var elem = this.el
+       
         var $el = avalon(elem)
         var enterAnimateDone
-
+        var staggerTime = isFinite(option.stagger) ? option.stagger * 1000 : 0
+        if(staggerTime){
+            if(option.staggerKey){
+                staggerCache[option.staggerKey] =  staggerCache[option.staggerKey] || {
+                    count:0,
+                    items:0,
+                    key: option.staggerKey
+                }
+                var stagger = staggerCache[option.staggerKey]
+                stagger.count ++
+                stagger.items ++
+            }
+        }
+       
+        var staggerIndex = stagger && stagger.count || 0
         var animationDone = function(e) {
             var isOk = e !== false
+            elem.animating = void 0
             enterAnimateDone = true
             var dirWord = isOk ? 'Done' : 'Abort'
-            execHooks(options, 'on' + action + dirWord, elem)
+            execHooks(option, 'on' + action + dirWord, elem)
             avalon.unbind(elem,support.transitionEndEvent)
             avalon.unbind(elem,support.animationEndEvent)
+            if(stagger){
+               
+                if(--stagger.items === 0){
+                    delete staggerCache[stagger.key]
+                }
+            }
             callNextAniation()
         }
-        execHooks(options, 'onBefore' + action, elem)
+        execHooks(option, 'onBefore' + action, elem)
 
-        if (options[lower]) {
-            options[lower](elem, function (ok) {
+        if (option[lower]) {
+            option[lower](elem, function (ok) {
                 animationDone(ok !== false)
             })
         } else if (support.css) {
             
-            $el.addClass(options[lower + 'Class'])
+            $el.addClass(option[lower + 'Class'])
             if(lower === 'leave'){
-                $el.removeClass(options.enterClass+' '+options.enterActiveClass)
+                $el.removeClass(option.enterClass+' '+option.enterActiveClass)
             }else if(lower === 'enter'){
-                $el.removeClass(options.leaveClass+' '+options.leaveActiveClass)
+                $el.removeClass(option.leaveClass+' '+option.leaveActiveClass)
             }
             $el.bind(support.transitionEndEvent, animationDone)
             $el.bind(support.animationEndEvent, animationDone)
             setTimeout(function () {
                 enterAnimateDone = avalon.root.offsetWidth === NaN
-                $el.addClass(options[lower + 'ActiveClass'])
+                $el.addClass(option[lower + 'ActiveClass'])
                 var computedStyles = window.getComputedStyle(elem)
                 var tranDuration = computedStyles[support.transitionDuration]
                 var animDuration = computedStyles[support.animationDuration]
@@ -177,39 +208,44 @@ function createAction(action) {
                         }
                     },time + 17)
                 }
-            }, 17)// = 1000/60
+            }, 17+ staggerTime * staggerIndex)// = 1000/60
         }
     }
 }
 
-avalon.applyEffect = function(node, vnode, type, callback){
-    var hasEffect = vnode.props && vnode.props['ms-effect']
-    if(hasEffect){
-        var old = hasEffect[type]
-        if(callback){
+avalon.applyEffect = function(node, vnode, opts){
+    var cb = opts.cb
+    var hook = opts.hook
+    var hasEffect = vnode.nodeType === 1 && vnode.props['ms-effect']
+    if(hasEffect && !avalon.document.hidden ){
+        node.animating = true // 防止动画重复进入同一个元素
+        var old = hasEffect[hook]
+        if(cb){
             if(Array.isArray(old)){
-                old.push(callback)
+                old.push(cb)
             }else if(old){
-                hasEffect[type] = [old, callback]
+                hasEffect[hook] = [old, cb]
             }else{
-                hasEffect[type] = [callback]
+                hasEffect[hook] = [cb]
             }
         }
-        var action = type.replace(/^on/,'').replace(/Done$/,'').toLowerCase()
-        avalon.directives.effect.update(node, vnode, 0,  action)
-    }else if(callback){
-        callback()
+        getAction(opts)
+        avalon.directives.effect.update(node, vnode, 0, avalon.shadowCopy({}, opts))
+    }else if(cb){
+        cb()
     }
 }
 
-avalon.applyEffects = function(nodes, vnodes, type, callback){
-   var n = nodes.length
-   nodes.forEach(function(el, i){
-       avalon.applyEffect(el, vnodes[i], type, function(){
-           if(--n === 0){
-              callback && callback()
-           }
-       })
-   })
+function getAction(opts){
+    if(!opts.acton){
+        opts.action = opts.hook.replace(/^on/,'').replace(/Done$/,'').toLowerCase()
+    }
+}
+
+avalon.applyEffects = function(nodes, vnodes, opts){
+    getAction(opts)
+    vnodes.forEach(function(el, i){ 
+      avalon.applyEffect(nodes[i], vnodes[i], opts)
+    })
 }
 

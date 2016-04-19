@@ -65,7 +65,10 @@ avalon.directive('visible', {
               node.style.display = value
            }
         }
-        avalon.applyEffect(node, vnode, show ? 'onEnterDone': 'onLeaveDone',cb)
+        avalon.applyEffect(node, vnode, {
+            hook: show ? 'onEnterDone': 'onLeaveDone',
+            cb: cb
+        })
     }
 })
 

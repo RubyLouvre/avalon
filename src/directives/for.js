@@ -8,7 +8,6 @@ var rforSplit = /\s*,\s*/
 var rforAs = /\s+as\s+([$\w]+)/
 var rident = require('../seed/regexp').ident
 var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
-
 avalon._each = function (obj, fn) {
     if (Array.isArray(obj)) {
         for (var i = 0; i < obj.length; i++) {
@@ -149,9 +148,13 @@ avalon.directive('for', {
         var endRepeat = vnode.endRepeat
 
         var fragment = document.createDocumentFragment()
+        var hasEffect = false
         if (action === 'init') {
             var node = startRepeat.nextSibling
             while (node && node !== endRepeat) {
+                if(!hasEffect && node.nodeType === 1){
+                   hasEffect = node.getAttribute('ms-effect')
+                }
                 parent.removeChild(node)
                 node = startRepeat.nextSibling
             }
@@ -161,13 +164,18 @@ avalon.directive('for', {
             componentToDom(vnode.components[0], domTemplate)
             startRepeat.domTemplate = domTemplate
         }
+        var key = vnode.signature
         for (var i in vnode.removedComponents) {
             var el = vnode.removedComponents[i]
             if (el.nodes) {
                 el.nodes.forEach(function (n, k) {
                     if (n.parentNode) {
-                        avalon.applyEffect(n, el.children[k], 'onLeaveDone', function () {
-                            n.parentNode.removeChild(n)
+                        avalon.applyEffect(n, el.children[k],{
+                            hook:'onLeaveDone',
+                            cb:function () {
+                               n.parentNode.removeChild(n)
+                            },
+                            staggerKey: key+'leave'
                         })
                     }
                 })
@@ -178,6 +186,7 @@ avalon.directive('for', {
         delete vnode.removedComponents
 
         var insertPoint = startRepeat
+
         for (var i = 0; i < vnode.components.length; i++) {
             var com = vnode.components[i]
             var cnodes = com.nodes
@@ -188,13 +197,19 @@ avalon.directive('for', {
                         moveFragment.appendChild(cc)
                     }
                     parent.insertBefore(moveFragment, insertPoint.nextSibling)
-                    avalon.applyEffects(com.nodes,com.children,'onMoveDone')
+                    avalon.applyEffects(com.nodes,com.children,{
+                        hook:'onMoveDone',
+                        staggerKey: key+'move'
+                    })
                 }
             } else {
                 var newFragment = startRepeat.domTemplate.cloneNode(true)
                 cnodes = com.nodes = avalon.slice(newFragment.childNodes)
                 parent.insertBefore(newFragment, insertPoint.nextSibling)
-                avalon.applyEffects(com.nodes,com.children,'onEnterDone')
+                avalon.applyEffects(com.nodes,com.children,{
+                    hook:'onEnterDone',
+                    staggerKey: key+'enter'
+                })
             }
             insertPoint = cnodes[cnodes.length - 1]
         }
