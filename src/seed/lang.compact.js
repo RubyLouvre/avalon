@@ -6,27 +6,40 @@ var rnative = /\[native code\]/ //判定是否原生函数
 var rarraylike = /(Array|List|Collection|Map|Arguments)\]$/
 var ohasOwn = avalon.ohasOwn
 // avalon.quote
-var meta = {
-    '\b': '\\b',
-    '\t': '\\t',
-    '\n': '\\n',
-    '\f': '\\f',
-    '\r': '\\r',
-    '"': '\\"',
-    '\\': '\\\\'
-}
-var quote = typeof JSON !== 'undefined' ? JSON.stringify : function (str) {
-    return '"' + String(str).replace(/[\\\'\x00-\x1f]/g, function (a) {
-        var c = meta[a];
-        return typeof c === 'string' ? c :
-                '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
-    }) + '"'
+//https://github.com/bestiejs/json3/blob/master/lib/json3.js
+var Escapes = {
+    92: "\\\\",
+    34: '\\"',
+    8: "\\b",
+    12: "\\f",
+    10: "\\n",
+    13: "\\r",
+    9: "\\t"
 }
 
+// Internal: Converts `value` into a zero-padded string such that its
+// length is at least equal to `width`. The `width` must be <= 6.
+var leadingZeroes = "000000"
+var toPaddedString = function (width, value) {
+    // The `|| 0` expression is necessary to work around a bug in
+    // Opera <= 7.54u2 where `0 == -0`, but `String(-0) !== "0"`.
+    return (leadingZeroes + (value || 0)).slice(-width)
+};
+var unicodePrefix = "\\u00"
+var escapeChar = function (character) {
+    var charCode = character.charCodeAt(0), escaped = Escapes[charCode]
+    if (escaped) {
+        return escaped
+    }
+    return unicodePrefix + toPaddedString(2, charCode.toString(16))
+};
+var reEscape = /[\x00-\x1f\x22\x5c]/g
+function quote(value) {
+    reEscape.lastIndex = 0
+    return '"' + ( reEscape.test(value)? String(value).replace(reEscape, escapeChar) : value ) + '"'
+}
 
-avalon.quote = quote
-
-
+avalon.quote = typeof JSON !== 'undefined' ? JSON.stringify : quote
 
 // avalon.type
 var class2type = {}
@@ -85,7 +98,7 @@ avalon.isPlainObject = function (obj, key) {
         return false
     }
     try { //IE内置对象没有constructor
-        if (obj.constructor && 
+        if (obj.constructor &&
                 !ohasOwn.call(obj, 'constructor') &&
                 !ohasOwn.call(obj.constructor.prototype || {}, 'isPrototypeOf')) {
             return false

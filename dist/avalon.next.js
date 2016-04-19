@@ -3055,7 +3055,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    patch([element], [vnode], parent, vnode.steps)
 	                }
 	                avalon.applyEffect(node,vnode, {
-	                    hook: 'onEnterDone',
+	                    hook: 'onEnterDone'
 	                })
 	                return (vnode.steps = false)
 	            } else if (vtype === 8) {
