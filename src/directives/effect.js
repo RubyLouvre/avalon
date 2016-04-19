@@ -243,10 +243,3 @@ function getAction(opts){
     }
 }
 
-avalon.applyEffects = function(nodes, vnodes, opts){
-    getAction(opts)
-    vnodes.forEach(function(el, i){ 
-        avalon.applyEffect(nodes[i], vnodes[i], opts)
-    })
-}
-

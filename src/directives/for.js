@@ -195,7 +195,7 @@ avalon.directive('for', {
                         moveFragment.appendChild(cc)
                     }
                     parent.insertBefore(moveFragment, insertPoint.nextSibling)
-                    avalon.applyEffects(com.nodes,com.children,{
+                    applyEffects(com.nodes, com.children,{
                         hook:'onMoveDone',
                         staggerKey: key+'move'
                     })
@@ -204,7 +204,7 @@ avalon.directive('for', {
                 var newFragment = startRepeat.domTemplate.cloneNode(true)
                 cnodes = com.nodes = avalon.slice(newFragment.childNodes)
                 parent.insertBefore(newFragment, insertPoint.nextSibling)
-                avalon.applyEffects(com.nodes,com.children,{
+                applyEffects(com.nodes,com.children,{
                     hook:'onEnterDone',
                     staggerKey: key+'enter'
                 })
@@ -353,3 +353,9 @@ function saveInCache(cache, component) {
         }
     }
 }
+var applyEffects = function(nodes, vnodes, opts){
+    vnodes.forEach(function(el, i){ 
+        avalon.applyEffect(nodes[i], vnodes[i], opts)
+    })
+}
+

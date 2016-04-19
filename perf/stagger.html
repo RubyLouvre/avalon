@@ -92,7 +92,8 @@
                     return el !== a
                 })
             } else {
-                vm.add()
+                if(vm.array.length < 12)
+                  vm.add()
             }
         })
     </script>

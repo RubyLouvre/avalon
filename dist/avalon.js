@@ -5692,7 +5692,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        moveFragment.appendChild(cc)
 	                    }
 	                    parent.insertBefore(moveFragment, insertPoint.nextSibling)
-	                    avalon.applyEffects(com.nodes,com.children,{
+	                    applyEffects(com.nodes, com.children,{
 	                        hook:'onMoveDone',
 	                        staggerKey: key+'move'
 	                    })
@@ -5701,7 +5701,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var newFragment = startRepeat.domTemplate.cloneNode(true)
 	                cnodes = com.nodes = avalon.slice(newFragment.childNodes)
 	                parent.insertBefore(newFragment, insertPoint.nextSibling)
-	                avalon.applyEffects(com.nodes,com.children,{
+	                applyEffects(com.nodes,com.children,{
 	                    hook:'onEnterDone',
 	                    staggerKey: key+'enter'
 	                })
@@ -5850,6 +5850,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	}
+	var applyEffects = function(nodes, vnodes, opts){
+	    vnodes.forEach(function(el, i){ 
+	        avalon.applyEffect(nodes[i], vnodes[i], opts)
+	    })
+	}
+
+
 
 /***/ },
 /* 65 */
@@ -6404,13 +6411,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if(!opts.acton){
 	        opts.action = opts.hook.replace(/^on/,'').replace(/Done$/,'').toLowerCase()
 	    }
-	}
-
-	avalon.applyEffects = function(nodes, vnodes, opts){
-	    getAction(opts)
-	    vnodes.forEach(function(el, i){ 
-	        avalon.applyEffect(nodes[i], vnodes[i], opts)
-	    })
 	}
 
 
