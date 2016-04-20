@@ -2,7 +2,7 @@ var support = require('../effect/index')
 var Cache = require('../seed/cache')
 
 avalon.directive('effect', {
-    priority:2,
+    priority: 5,
     parse: function (binding, num) {
         return 'vnode' + num + '.props["ms-effect"] = ' + avalon.parseExpr(binding) + ';\n'
     },

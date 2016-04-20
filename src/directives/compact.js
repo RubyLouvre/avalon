@@ -20,3 +20,6 @@ require('./for')
 
 require('./widget')
 require('./effect')
+//优先级 ms-important, ms-controller, ms-for, ms-widget, ms-effect, ms-if
+//.......
+//ms-duplex

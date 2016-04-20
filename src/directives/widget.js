@@ -5,7 +5,7 @@ var patch = require('../strategy/patch')
 
 //插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
 var dir = avalon.directive('widget', {
-    priority: 1,
+    priority: 4,
     parse: function (binding, num, elem) {
         var wid = elem.props.wid || (elem.props.wid = avalon.makeHashCode('w'))
         avalon.resolvedComponents[wid] = {

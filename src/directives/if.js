@@ -1,8 +1,8 @@
 var patch = require('../strategy/patch')
 var uniqueID = 1
-//ms-for ms-effect ms-if  ms-widget ...
+//ms-imporant ms-controller ms-for ms-widget ms-effect ms-if   ...
 avalon.directive('if', {
-    priority: 3,
+    priority: 6,
     parse: function (binding, num) {
         var ret = 'var ifVar = '+ avalon.parseExpr(binding,'if')+';\n'
         ret += 'vnode' + num + '.props["ms-if"] = ifVar;\n'

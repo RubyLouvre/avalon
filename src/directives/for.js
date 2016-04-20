@@ -25,6 +25,7 @@ avalon._each = function (obj, fn) {
     }
 }
 avalon.directive('for', {
+    priority: 3,
     parse: function (el, num) {
         var str = el.nodeValue, aliasAs
         str = str.replace(rforAs, function (a, b) {
