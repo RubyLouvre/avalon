@@ -5,7 +5,7 @@ var fs = require('fs')
 var json = require('./package.json')
 
 var version = json.version.split('.')
-var v = version.shift() + '.' + version.join('')
+var v = (version.shift() + '.' + version.join('')).replace(/0+$/,"0")
 var text = fs.readFileSync('./src/seed/lang.share.js', 'utf8')
 text = text.replace(/version\s*\:\s*([^,]+)/, function (a, b) {
     return 'version: ' +JSON.stringify( v )
