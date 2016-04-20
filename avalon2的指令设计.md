@@ -105,9 +105,9 @@ ms-click="@fn"
 
 ### ms-widget
 ```
-ms-wiget="@obj"
-ms-wiget="{title: @ddd, $id: "sss"}"
-ms-wiget="[@obj1, @obj2 ,{$id: 'item' + i }]"
+ms-widget="@obj"
+ms-widget="{title: @ddd, $id: "sss"}"
+ms-widget="[@obj1, @obj2 ,{$id: 'item' + i }]"
 ```
 ms-widget的值可以为页面上一个临时对象,也可以是一个数组,或者指向vm中的一个对象属性
 在内部发现是一个数组,会进行合并,保证只有一个对象(下称配置对象)
