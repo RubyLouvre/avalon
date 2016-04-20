@@ -151,7 +151,10 @@ function mediatorFactory(before, after, heirloom) {
         hashcode: makeHashCode("$"),
         master: true
     })
-
+    if(after.$id && before.$element){
+        after.$element = before.$element
+        after.$render = before.$render
+    }
     return $vmodel
 }
 

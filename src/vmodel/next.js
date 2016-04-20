@@ -151,7 +151,10 @@ if (avalon.window.Proxy) {
         }
 
         vm.$mapping = $mapping
-
+        if(after.$id && before.$element){
+                after.$element = before.$element
+                after.$render = before.$render
+        }
         return makeObserver(vm, heirloom, {}, {}, {
             id: before.$id,
             hashcode: makeHashCode('$')

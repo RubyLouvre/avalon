@@ -3,9 +3,10 @@ avalon.directive('controller', {
     priority: 2,
     parse: function (binding, num) {
         var vm = 'vm' + num
-        var isObject = /\{.+\}/.test(binding.expr)
-        var a = 'var ' + vm + ' =  avalon.vmodels[' + avalon.quote(binding.expr) + ']\n'
-        var b = 'var ' + vm + ' = ' + binding.expr + '\n'
+        var $id = binding.expr
+        var isObject = /\{.+\}/.test($id)
+        var a = 'var ' + vm + ' =  avalon.vmodels[' + avalon.quote($id) + ']\n'
+        var b = 'var ' + vm + ' = ' + $id + '\n'
         var str = (isObject ? b : a) +
                 'if(' + vm + '){\n' +
                 '\tif(__vmodel__){\n' +
