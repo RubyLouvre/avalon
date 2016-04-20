@@ -1,111 +1,164 @@
 function anonymous(__vmodel__) {
-    var vnodes146098 = []
-    var vnode146098 = {
+    var vnodes146112 = []
+    var vnode146112 = {
         nodeType: 1,
-        type: "div",
+        type: "body",
         props: {},
         children: [],
         isVoidTag: false,
         template: ""}
-    vnode146098.order = "ms-controller"
+    vnode146112.order = "ms-controller"
 
 
-    var vm146098 = avalon.vmodels["if2"]
-    if (vm146098) {
+
+    var vm146112 = avalon.vmodels["test"]
+    if (vm146112) {
         if (__vmodel__) {
-            __vmodel__ = avalon.mediatorFactory(__vmodel__, vm146098)
+            __vmodel__ = avalon.mediatorFactory(__vmodel__, vm146112)
         } else {
-            __vmodel__ = vm146098
+            __vmodel__ = vm146112
         }
     }
 
 
-    vnode146098.children = (function () {
+    vnode146112.children = (function () {
 
-        var vnodes146098 = []
+        var vnodes146112 = []
+        var vnode146112 = {
+            nodeType: 1,
+            type: "p",
+            props: {},
+            children: [],
+            isVoidTag: false,
+            template: ""}
+        vnode146112.skipAttrs = true
+        vnode146112.children = (function () {
 
-        var for300971289219 = {
-            nodeType: 8,
-            type: "#comment",
-            vmodel: __vmodel__,
-            directive: "for",
-            skipContent: false,
-            cid: "undefined:cb",
-            start: vnodes146098.length,
-            signature: "for300971289219",
-            nodeValue: "ms-for:(jj, el) in @panels"
+            var vnodes146112 = []
+            var vnode146112 = {type: "#text", nodeType: 3, skipContent: true}
+            vnode146112.nodeValue = (function () {
+                try {
+                    var __value__ = __vmodel__.aaa
+                    return __value__
+                } catch (e) {
+                    avalon.warn(e, "parse other binding【 @aaa 】fail")
+                    return ""
+                }
+            })()
+            vnode146112.fixIESkip = true
+            vnode146112.skipContent = false
+            vnodes146112.push(vnode146112)
+
+
+            return vnodes146112
+        })();
+
+        vnodes146112.push(vnode146112)
+        var vnode146112 = {
+            nodeType: 1,
+            type: "div",
+            props: {},
+            children: [],
+            isVoidTag: false,
+            template: ""}
+        vnode146112.order = "ms-controller"
+
+
+
+        var vm146112 = avalon.vmodels["test2"]
+        if (vm146112) {
+            if (__vmodel__) {
+                __vmodel__ = avalon.mediatorFactory(__vmodel__, vm146112)
+            } else {
+                __vmodel__ = vm146112
+            }
         }
-        vnodes146098.push(for300971289219)
-        var loop146098 = (function () {
-            try {
-                var __value__ = __vmodel__.panels
-                return __value__
-            } catch (e) {
-                avalon.warn(e, "parse other binding【 @panels 】fail")
-                return ""
-            }
-        })()
-        avalon._each(loop146098, function (jj, el, traceKey) {
-            var vnode146098 = {
-                nodeType: 1,
-                type: "div",
-                props: {},
-                children: [],
-                isVoidTag: false,
-                template: ""}
-            vnode146098.props["class"] = "panel"
-            vnode146098.order = "ms-if;;ms-html"
-            var ifVar = (function () {
+
+
+        vnode146112.children = (function () {
+
+            var vnodes146112 = []
+            var vnode146112 = {type: "#text", nodeType: 3, skipContent: true}
+            vnode146112.nodeValue = String((function () {
                 try {
-                    var __value__ = jj === __vmodel__.curIndex
+                    var __value__ = __vmodel__.aaa
                     return __value__
                 } catch (e) {
-                    avalon.warn(e, "parse if binding【 jj === @curIndex 】fail")
+                    avalon.warn(e, "parse other binding【 @aaa 】fail")
                     return ""
                 }
-            })();
-            vnode146098.props["ms-if"] = ifVar;
-            if (!ifVar) {
-                vnode146098.nodeType = 8;
-                vnode146098.directive = "if";
-                vnode146098.nodeValue = "ms-if"
-            }
-            vnode146098.htmlVm = __vmodel__
-            vnode146098.skipContent = true
-            vnode146098.props["ms-html"] = (function () {
+            })() + "::" + (function () {
                 try {
-                    var __value__ = el
+                    var __value__ = __vmodel__.ddd
                     return __value__
                 } catch (e) {
-                    avalon.warn(e, "parse html binding【 el 】fail")
+                    avalon.warn(e, "parse other binding【 @ddd 】fail")
                     return ""
                 }
-            })();
-            vnode146098.template = ""
-            vnodes146098.push(vnode146098)
-            vnodes146098.push({
-                nodeType: 8,
-                type: "#comment",
-                skipContent: true,
-                nodeValue: "for300971289219",
-                key: traceKey
-            })
-
-        })
-        for300971289219.end = vnodes146098.push({
-            nodeType: 8,
-            type: "#comment",
-            skipContent: true,
-            signature: "for300971289219",
-            nodeValue: "for300971289219:end"
-        })
+            })() + "\n        ")
+            vnode146112.fixIESkip = true
+            vnode146112.skipContent = false
+            vnodes146112.push(vnode146112)
 
 
-        return vnodes146098
+            return vnodes146112
+        })();
+
+        vnodes146112.push(vnode146112)
+        var vnode146112 = {
+            nodeType: 1,
+            type: "div",
+            props: {},
+            children: [],
+            isVoidTag: false,
+            template: ""}
+        vnode146112.order = "ms-important"
+
+
+
+        var vm146112 = avalon.vmodels["test3"]
+        if (vm146112) {
+            __vmodel__ = vm146112
+        }
+
+
+        vnode146112.children = (function () {
+
+            var vnodes146112 = []
+            var vnode146112 = {type: "#text", nodeType: 3, skipContent: true}
+            vnode146112.nodeValue = String((function () {
+                try {
+                    var __value__ = __vmodel__.aaa
+                    return __value__
+                } catch (e) {
+                    avalon.warn(e, "parse other binding【 @aaa 】fail")
+                    return ""
+                }
+            })() + "::" + (function () {
+                try {
+                    var __value__ = __vmodel__.ddd
+                    return __value__
+                } catch (e) {
+                    avalon.warn(e, "parse other binding【 @ddd 】fail")
+                    return ""
+                }
+            })() + "\n        ")
+            vnode146112.fixIESkip = true
+            vnode146112.skipContent = false
+            vnodes146112.push(vnode146112)
+
+
+            return vnodes146112
+        })();
+
+        vnodes146112.push(vnode146112)
+
+
+        return vnodes146112
     })();
 
-    vnodes146098.push(vnode146098)
+    vnodes146112.push(vnode146112)
 
 
-    return vnodes146098
+    return vnodes146112
 }
