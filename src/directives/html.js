@@ -1,5 +1,5 @@
 
-var parseView = require('../strategy/parser/parseView2')
+var parseView = require('../strategy/parser/parseView')
 
 avalon.htmlFactory = function(str, num){
   var vtree = avalon.lexer(str)

@@ -9,7 +9,7 @@ var r = require('../../seed/regexp')
 var rident = r.ident
 var rsp = r.sp
 function wrapDelimiter(expr) {
-    return rident.test(expr) ? expr : parseExpr(expr)
+    return rident.test(expr) ? expr : parseExpr(expr,'text')
 }
 
 function wrap(a, num) {

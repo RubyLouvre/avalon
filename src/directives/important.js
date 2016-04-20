@@ -1,4 +1,4 @@
-var parseView = require('../strategy/parser/parseView2')
+var parseView = require('../strategy/parser/parseView')
 
 avalon.directive("important", {
     priority: 1,

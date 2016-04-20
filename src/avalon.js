@@ -6,7 +6,7 @@ require('./vdom/index')
 require('./dom/compact')
 require('./directives/compact')
 require('./strategy/index')
-require('./component/index2')
+require('./component/index')
 require('./vmodel/compact')
 
 module.exports = avalon

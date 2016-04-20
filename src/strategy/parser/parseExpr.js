@@ -139,7 +139,9 @@ function parseExpr(str, category) {
             '(function(){',
             'try{',
             'var __value__ = ' + body,
-            'return __value__',
+            ( category === 'text'? 
+            'return __value__ == null ? "" :__value__': 
+            'return __value__'),
             '}catch(e){',
             quoteError(str, category),
             '\treturn ""',
@@ -148,7 +150,6 @@ function parseExpr(str, category) {
         ]
         filters.unshift(3, 0)
     }
-
     ret.splice.apply(ret, filters)
     cacheStr = ret.join('\n')
     evaluatorPool.put(category + ':' + cacheID, cacheStr)

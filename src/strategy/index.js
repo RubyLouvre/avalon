@@ -4,7 +4,7 @@ avalon.diff = require('./diff')
 avalon.batch = require('./batch')
 // dispatch与patch 为内置模块
 
-var parseView = require('./parser/parseView2')
+var parseView = require('./parser/parseView')
 
 function render(vtree) {
     var num = num || String(new Date - 0).slice(0, 6)

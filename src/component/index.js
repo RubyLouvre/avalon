@@ -4,7 +4,7 @@ var outerTags = avalon.oneObject('wbr,xmp,template')
 
 var resolvedComponents = avalon.resolvedComponents
 var skipWidget = {'ms-widget': 1, widget: 1, resolved: 1}
-var parseView = require('../strategy/parser/parseView2')
+var parseView = require('../strategy/parser/parseView')
 
 avalon.document.createElement('slot')
 

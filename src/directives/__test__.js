@@ -379,7 +379,6 @@ describe('class', function () {
         expect(div.children[4].classData).to.be.eql({xxx: true, yyy: true, zzz: true})
         expect(div.children[5].classData).to.be.eql({XXX: true, yYY: true, ZZZ: true})
         expect(div.children[6].classData).to.be.eql({test99: true})
-        // console.log(nodes[0].children[2])
     })
 })
 describe('include', function () {
