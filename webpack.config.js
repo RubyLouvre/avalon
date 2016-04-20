@@ -8,7 +8,7 @@ var version = json.version.split('.')
 var v = version.shift() + '.' + version.join('')
 var text = fs.readFileSync('./src/seed/lang.share.js', 'utf8')
 text = text.replace(/version\s*\:\s*([^,]+)/, function (a, b) {
-    return 'version: ' +JSON.stringify( v +' beta1')
+    return 'version: ' +JSON.stringify( v )
 })
 
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')
@@ -18,7 +18,7 @@ module.exports = {
         avalon: './src/avalon', //我们开发时的入口文件
         'avalon.modern': './src/avalon.modern',
         'avalon.test': './src/avalon.test',
-         'avalon.next': './src/avalon.next'
+        'avalon.next': './src/avalon.next'
     },
     output: {
         path: path.join(__dirname, 'dist'),
