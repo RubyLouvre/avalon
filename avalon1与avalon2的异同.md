@@ -15,11 +15,12 @@ avalon1与avalon2的异同
 | 最复杂的指令   | ms-repeat|   ms-duplex |
 | 组件指令     | ms-widget='id,name,opts'      | ms-widget='Array'传入一个对象数组，用法更灵活 |
 | 组件生命周期   | onInit, onDispose    | onInit, onReady, onViewChange, onDispose|
+| 动画	      |ms-effect	|ms-effect(与angular的animate更接近)|
 | 如何操作组件  | 通过onInit取得组件vm进行操作   | 直接操作配置对象|
 | 如何对组件传入大片内容  | 使用ms-html或改成模板   | 通过slot机制|
 | 加载器        |  使用AMD风格的内置加载器            | 移除，建议使用webpack进行打包|
 | 模块化        |  源码里自由划分           | 使用nodejs的require与module.exports组织起来|
-| important指令 | 有               |暂时不打算支持|
+| important指令 | 	有              |有（让页面渲染更快）|
 |{{}}与ms-text的关系|ms-text会对内容再次扫描,不是单纯等价于{{}}|完全等价
 | if指令        | ms-if           | ms-if |
 | attr指令       | ms-attr-name=value               | ms-attr="object" object是一个对象，方便每次处理多个属性 |
@@ -29,5 +30,6 @@ avalon1与avalon2的异同
 | js指令        |  没有            | 新增|
 | 模板指令      |  ms-include          | 移除，由于后端无法实现等价功能 |
 | 事件指令      |  普通的事件绑定         | 能支持事件代理的都用事件代理 |
+| 数据验证      |  使用oniui的validation |使用内置的ms-validate,ms-duplex,ms-rules|
 | 后端渲染      |  实现成本高昂          | 轻松支持 |
 | 核心架构       |  观察者模式 ＋ 属性劫持          | 大模板函数＋虚拟DOM＋属性劫持|
