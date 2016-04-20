@@ -3070,7 +3070,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    patch([element], [vnode], parent, vnode.steps)
 	                }
 	                avalon.applyEffect(node,vnode, {
-	                    hook: 'onEnterDone',
+	                    hook: 'onEnterDone'
 	                })
 	                return (vnode.steps = false)
 	            } else if (vtype === 8) {
@@ -7228,7 +7228,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 104 */
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
+	module.exports = "<ms-panel>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</ms-panel>"
 
 /***/ }
 /******/ ])
