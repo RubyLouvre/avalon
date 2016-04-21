@@ -1471,6 +1471,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return '(function(){\n\n' + a + '\n\nreturn vnodes' + num + '\n})();\n'
 	}
 
+	var rmsFor = /^\s*ms\-for\:/
+	var rmsForEnd = /^\s*ms\-for\-end\:/
+	var rmsJs = /^\s*ms\-js\:/
+
 	function parseView(arr, num) {
 	    num = num || String(new Date - 0).slice(0, 5)
 
@@ -1510,7 +1514,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            continue
 	        } else if (el.nodeType === 8) {
 	            var nodeValue = el.nodeValue
-	            if (nodeValue.indexOf('ms-for:') === 0) {// 处理ms-for指令
+	            if (rmsFor.test(nodeValue)) {// 处理ms-for指令
 	                var signature = el.signature
 	                forstack.push(signature)
 	                str += '\nvar ' + signature + ' = {' +
@@ -1528,7 +1532,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	                str += avalon.directives['for'].parse(el, num)
 
-	            } else if (nodeValue.indexOf('ms-for-end:') === 0) {
+	            } else if (rmsForEnd.test(nodeValue)) {
 	                var signature = forstack[forstack.length - 1]
 	                str += children + '.push({' +
 	                        '\n\tnodeType: 8,' +
@@ -1548,7 +1552,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            '\n})\n'
 	                    forstack.pop()
 	                }
-	            } else if (nodeValue.indexOf('ms-js:') === 0) {//插入普通JS代码
+	            } else if (rmsJs.test(nodeValue)) {//插入普通JS代码
 	                str += parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
 	            } else {
 	                str += children + '.push(' + quote(el) + ')\n\n\n'

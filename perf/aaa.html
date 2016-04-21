@@ -9,17 +9,17 @@
 
         </style>
         <script >
-           
-            avalon.effect('ng', {})
             var vm = avalon.define({
                 $id: "test",
-                aaa:'111'
+                arr:[1,2,3]
             })
 
         </script>
 
     </head>
     <body ms-controller="test" >
-       {{@aaa}}
+       <!-- ms-for:el in @arr -->
+       <div>{{el}}</div>
+       <!-- ms-for-end:-->
     </body>
 </html>

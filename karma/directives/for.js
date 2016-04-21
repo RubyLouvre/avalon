@@ -285,4 +285,25 @@ describe('for', function () {
                })
             })
      })
+     it('使用注释循环', function (done) {
+         div.innerHTML = heredoc(function () {
+            /*
+           <div ms-controller="for6" >
+            <!-- ms-for:el in @arr -->
+            <p>{{el}}</p>
+            <!-- ms-for-end:-->
+           </div>
+             */
+            })
+            vm = avalon.define({
+                $id: "for6",
+                arr:[1,2,3]
+            })
+            avalon.scan(div, vm)
+            setTimeout(function(){
+                var ps = div.getElementsByTagName('p')
+                expect(ps.length).to.equal(e)
+                done()
+            })
+     })
 })
