@@ -1,13 +1,13 @@
 
 avalon.directive('html', {
     parse: function (binding, num) {
-        var ret = "var htmlId =  " + avalon.parseExpr(binding) + '\n'
-        ret += 'vnode' + num + '.props["ms-html"]  = htmlId;\n'
-        ret += 'vnode' + num + '.props.skipContent  = true;\n'
-        ret += 'var obj  = avalon.htmlFactory(htmlId,' + num + ');\n'
-        ret += 'try{eval(" new function(){"+ obj.render +"}")}catch(e){};\n'
-        ret += 'vnode' + num + '.children = avalon.__html;\n'
-        return ret
+        var ret = ["var htmlId =  " + avalon.parseExpr(binding),
+            'vnode' + num + '.props["ms-html"]  = htmlId;',
+            'vnode' + num + '.props.skipContent  = true;',
+            'var obj  = avalon.htmlFactory(htmlId,' + num + ');',
+            'try{eval(" new function(){"+ obj.render +"}")}catch(e){};',
+            'vnode' + num + '.children = avalon.__html;']
+        return ret.join('\n') + '\n'
     },
     diff: function (cur, pre, steps, name) {
         var curValue = cur.props[name]
@@ -23,7 +23,7 @@ avalon.directive('html', {
         }
     },
     update: function (node, vnode) {
-        if(node.nodeType !== 1){
+        if (node.nodeType !== 1) {
             return
         }
         var nodes = node.querySelectorAll('[avalon-events]')

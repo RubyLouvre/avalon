@@ -2217,19 +2217,16 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 51 */
 /***/ function(module, exports) {
 
-	
-
 	avalon.directive('html', {
 	    parse: function (binding, num) {
-	              var ret =   "var htmlId =  "+avalon.parseExpr(binding)+'\n'
-	              ret += 'vnode'+ num + '.props["ms-html"]  = htmlId;\n'
-	              ret += 'vnode'+ num + '.props.skipContent  = true;\n'
-	              ret += 'var obj  = avalon.htmlFactory(htmlId,'+num+');\n'
-	              ret += 'try{eval(" new function(){"+ obj.render +"}")}catch(e){};\n'
-	              ret += 'vnode'+ num +'.children = avalon.__html;\n'
-	              return ret
+	        var ret = ["var htmlId =  " + avalon.parseExpr(binding),
+	            'vnode' + num + '.props["ms-html"]  = htmlId;',
+	            'vnode' + num + '.props.skipContent  = true;',
+	            'var obj  = avalon.htmlFactory(htmlId,' + num + ');',
+	            'try{eval(" new function(){"+ obj.render +"}")}catch(e){};',
+	            'vnode' + num + '.children = avalon.__html;']
+	        return ret.join('\n')+'\n'
 	    },
-
 	    diff: function (cur, pre, steps, name) {
 	        var curValue = cur.props[name]
 	        var preValue = pre.props[name]
@@ -2237,14 +2234,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (curValue !== preValue) {
 	            if (cur.props[name] !== preValue) {
 	                var list = cur.change || (cur.change = [])
-	                if(avalon.Array.ensure(list, this.update)){
-	                   steps.count += 1
+	                if (avalon.Array.ensure(list, this.update)) {
+	                    steps.count += 1
 	                }
 	            }
 	        }
 	    },
 	    update: function (node, vnode) {
-	        if(node.nodeType !== 1){
+	        if (node.nodeType !== 1) {
 	            return
 	        }
 	        if (node.querySelectorAll) {
@@ -7264,7 +7261,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 105 */
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</ms-panel>"
+	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
 
 /***/ }
 /******/ ])
