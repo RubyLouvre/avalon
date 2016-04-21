@@ -1,15 +1,4 @@
 
-var parseView = require('../strategy/parser/parseView')
-
-avalon.htmlFactory = function(str, num){
-  var vtree = avalon.lexer(str)
-  avalon.__html = []
-  var render =  parseView(vtree, num) + '\nreturn (avalon.__html = vnodes' + num + ')'
-  return {
-    render: render
-  }
-}
-
 avalon.directive('html', {
     parse: function (binding, num) {
         var ret = "var htmlId =  " + avalon.parseExpr(binding) + '\n'
