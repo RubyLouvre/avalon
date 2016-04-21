@@ -145,5 +145,13 @@ function parseView(arr, num) {
     }
     return str
 }
+avalon.htmlFactory = function(str, num){
+  var vtree = avalon.lexer(str+"")
+  avalon.__html = []
+  var render =  parseView(vtree, num) + '\nreturn (avalon.__html = vnodes' + num + ')'
+  return {
+    render: render
+  }
+}
 
 module.exports = parseView

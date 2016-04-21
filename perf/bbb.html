@@ -1,42 +1,28 @@
-<!DOCTYPE html>
 <html>
     <head>
-        <title>ms-if</title>
+        <title>TODO supply a title</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../dist/avalon.js"></script>
-        <script src="//cdn.bootcss.com/jquery/3.0.0-beta1/jquery.js"></script>
+        <script>
+            var vm1 = avalon.define({
+                $id: "test",
+                a: 111,
+                b: 222
+            })
+        
+        
+        </script>
         <style>
-            .ani{
-                width:100px;
-                height:100px;
-                background: #ff6e6e;
+            .ms-controller{
+                display:none;
             }
         </style>
-        <script >
-            avalon.effect('fade', {
-                enter: function (el, done) {
-
-                    $(el).css('opacity',0).animate({
-                        opacity: 1
-                    }, 1000, done)
-                },
-                leave: function (el, done) {
-                    $(el).animate({
-                       opacity: 0
-                    }, 1000, done)
-                }
-            })
-            var vm = avalon.define({
-                $id: "test",
-                aaa: 222,
-                toggle: true
-            })
-
-        </script>
-
     </head>
-    <body ms-controller="test" >
-        <div class='ani' ms-attr="{title:@aaa}" ms-visible="@toggle" ms-effect="{is:'fade'}">{{@aaa}}</div>
+    <body>
+        <div ms-controller="test">
+            <p><input ms-duplex="@a" />{{@a}}<strong ms-text="@a"></strong></p>
+            <p><input ms-duplex="@b" /><span>{{@b}}</span><span ms-html="@b"></span></p>
+        </div>
     </body>
 </html>
