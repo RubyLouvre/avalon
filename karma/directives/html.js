@@ -38,4 +38,30 @@ describe('html', function () {
         })
 
     })
+    it('test2', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+            <div ms-controller="html2">
+            <p><input ms-duplex="@a" />{{@a}}<strong ms-text="@a"></strong></p>
+            <p><input ms-duplex="@b" /><span>{{@b}}</span><span ms-html="@b"></span></p>
+            </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'html2',
+            a: 111,
+            b: 222
+        })
+        avalon.scan(div, vm)
+        var el = div.getElementsByTagName('p')
+        var prop = 'textContent' in div ? 'textContent': 'innerText'
+        expect(el[0][prop]).to.equal('111111')
+        expect(el[1][prop]).to.equal('222222')
+        vm.b = '333'
+        setTimeout(function () {
+             expect(el[1][prop]).to.equal('333333')
+            done()
+        })
+
+    })
 })
