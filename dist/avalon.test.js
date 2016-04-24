@@ -3180,11 +3180,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	function getEndRepeat(node) {
 	    var isBreak = 0, ret = [], node
 	    while (node) {
-	        if (node.type === '#comment') {
+	        if (node.nodeType === 8) {
 	            if (node.nodeValue.indexOf('ms-for:') === 0) {
-	                isBreak++
+	                ++isBreak
 	            } else if (node.nodeValue.indexOf('ms-for-end:') === 0) {
-	                isBreak--
+	                --isBreak
 	            }
 	        }
 	        ret.push(node)
@@ -7261,7 +7261,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 105 */
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
+	module.exports = "<ms-panel>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</ms-panel>"
 
 /***/ }
 /******/ ])
