@@ -1109,6 +1109,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	function skipFalseAndFunction(a) {
 	    return a !== false && (Object(a) !== a)
 	}
+	var specal = {
+	    "class": function (dom, val) {
+	        dom.className = val
+	    },
+	    style: function (dom, val) {
+	        dom.style.cssText = val
+	    },
+	    'for': function (dom, val) {
+	        dom.htmlFor = val
+	    }
+	}
 	VElement.prototype = {
 	    constructor: VElement,
 	    toDOM: function () {
@@ -1116,11 +1127,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (var i in this.props) {
 	            var val = this.props[i]
 	            if (skipFalseAndFunction(val)) {
-	                if(i === "class" && avalon.msie < 8){
-	                    dom.className = val +''
-	                }else if(i === 'style'){
-	                    dom.style.cssText = val
-	                }else {
+	                if (specal[i] && avalon.msie < 8) {
+	                    specal[i](dom, val)
+	                } else {
 	                    dom.setAttribute(i, val + '')
 	                }
 	            }
@@ -3647,12 +3656,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var wid = cur.props.wid
 	        
 	        var docker = coms[wid]
-	       
 	        if (!docker.renderCount) {
 	            cur.change = [this.replaceByComment]
 	            steps.count += 1
 	        } else if (!pre.props.resolved) {
-
 	            cur.steps = steps
 	            var list = cur.change || (cur.change = [])
 	            avalon.Array.ensure(list, this.replaceByComponent)
@@ -3667,6 +3674,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    docker.renderCount = 2
 	                }
 	            ]
+	            //处理模板不存在指令的情况
+	            if(cur.children.length === 0){
+	                steps.count += 1
+	            }
 
 	        } else {
 
@@ -6330,7 +6341,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
 	                        delete e.type
 	                        e.type = origType
-	                        return fn.call(elem, e)
+	                        return fn.call(this, e)
 	                    }
 	                }
 	            }
@@ -6364,7 +6375,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                Object.defineProperty(e, 'type', {
 	                    value: 'mousewheel'
 	                })
-	                fn.call(elem, e)
+	                fn.call(this, e)
 	            }
 	        }
 	    }

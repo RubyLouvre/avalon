@@ -1566,6 +1566,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	function skipFalseAndFunction(a) {
 	    return a !== false && (Object(a) !== a)
 	}
+	var specal = {
+	    "class": function (dom, val) {
+	        dom.className = val
+	    },
+	    style: function (dom, val) {
+	        dom.style.cssText = val
+	    },
+	    'for': function (dom, val) {
+	        dom.htmlFor = val
+	    }
+	}
 	VElement.prototype = {
 	    constructor: VElement,
 	    toDOM: function () {
@@ -1573,11 +1584,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (var i in this.props) {
 	            var val = this.props[i]
 	            if (skipFalseAndFunction(val)) {
-	                if(i === "class" && avalon.msie < 8){
-	                    dom.className = val +''
-	                }else if(i === 'style'){
-	                    dom.style.cssText = val
-	                }else {
+	                if (specal[i] && avalon.msie < 8) {
+	                    specal[i](dom, val)
+	                } else {
 	                    dom.setAttribute(i, val + '')
 	                }
 	            }
@@ -2738,8 +2747,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var value = elem.getAttribute('avalon-events')
 	    if (value && (elem.disabled !== true || type !== 'click')) {
 	        var uuids = []
-	        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type+'\\:([^?\s]+)','g'))
-	        value.replace(reg, function(a, b){
+	        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type + '\\:([^?\s]+)', 'g'))
+	        value.replace(reg, function (a, b) {
 	            uuids.push(b)
 	            return a
 	        })
@@ -2772,7 +2781,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                !event.isImmediatePropagationStopped) {
 	            var fn = avalon.eventListeners[uuid]
 	            if (fn) {
-	                var vm = rhandleHasVm.test(uuid) ? handler.elem._ms_context_: 0
+	                var vm = rhandleHasVm.test(uuid) ? handler.elem._ms_context_ : 0
 	                if (vm && vm.$hashcode === false) {
 	                    return avalon.unbind(elem, type, fn)
 	                }
@@ -2902,7 +2911,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
 	                        delete e.type
 	                        e.type = origType
-	                        return fn.apply(elem, arguments)
+	                        return fn.apply(this, arguments)
 	                    }
 	                }
 	            }
@@ -2928,13 +2937,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return function (e) {
 	                if (e.propertyName === 'value') {
 	                    e.type = 'input'
-	                    return fn.apply(elem, arguments)
+	                    return fn.apply(this, arguments)
 	                }
 	            }
 	        }
 	    }
 	}
 	if (document.onmousewheel === void 0) {
+	    console.log('0000')
+
 	    /* IE6-11 chrome mousewheel wheelDetla 下 -120 上 120
 	     firefox DOMMouseScroll detail 下3 上-3
 	     firefox wheel detlaY 下3 上-3
@@ -2946,14 +2957,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	        type: fixWheelType,
 	        fix: function (elem, fn) {
 	            return function (e) {
-	                e.wheelDeltaY = e.wheelDelta = e[fixWheelDelta] > 0 ? -120 : 120
+	                var delta = e[fixWheelDelta] > 0 ? -120 : 120
+	                e.wheelDelta = ~~elem._ms_wheel_ + delta
+	                elem._ms_wheel_ = e.wheelDeltaY = e.wheelDelta
+
 	                e.wheelDeltaX = 0
 	                if (Object.defineProperty) {
 	                    Object.defineProperty(e, 'type', {
 	                        value: 'mousewheel'
 	                    })
 	                }
-	                return fn.apply(elem, arguments)
+	                return fn.apply(this, arguments)
 	            }
 	        }
 	    }
@@ -5987,12 +6001,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var wid = cur.props.wid
 	        
 	        var docker = coms[wid]
-	       
 	        if (!docker.renderCount) {
 	            cur.change = [this.replaceByComment]
 	            steps.count += 1
 	        } else if (!pre.props.resolved) {
-
 	            cur.steps = steps
 	            var list = cur.change || (cur.change = [])
 	            avalon.Array.ensure(list, this.replaceByComponent)
@@ -6007,6 +6019,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    docker.renderCount = 2
 	                }
 	            ]
+	            //处理模板不存在指令的情况
+	            if(cur.children.length === 0){
+	                steps.count += 1
+	            }
 
 	        } else {
 
