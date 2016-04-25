@@ -289,9 +289,9 @@ describe('for', function () {
          div.innerHTML = heredoc(function () {
             /*
            <div ms-controller="for6" >
-            <!-- ms-for:el in @arr -->
+            <!--ms-for:el in @arr -->
             <p>{{el}}</p>
-            <!-- ms-for-end:-->
+            <!--ms-for-end:-->
            </div>
              */
             })

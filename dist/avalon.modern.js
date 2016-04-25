@@ -1470,9 +1470,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return '(function(){\n\n' + a + '\n\nreturn vnodes' + num + '\n})();\n'
 	}
 
-	var rmsFor = /^\s*ms\-for\:/
-	var rmsForEnd = /^\s*ms\-for\-end\:/
-	var rmsJs = /^\s*ms\-js\:/
+	var rmsFor = /^\s*ms\-for:/
+	var rmsForEnd = /^\s*ms\-for\-end:/
 
 	function parseView(arr, num) {
 	    num = num || String(new Date - 0).slice(0, 5)
@@ -1514,6 +1513,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else if (el.nodeType === 8) {
 	            var nodeValue = el.nodeValue
 	            if (rmsFor.test(nodeValue)) {// 处理ms-for指令
+	                if(nodeValue.indexOf('ms-for:') !== 0){
+	                    avalon.error('ms-for指令前不能有空格')
+	                }
 	                var signature = el.signature
 	                forstack.push(signature)
 	                str += '\nvar ' + signature + ' = {' +
@@ -1533,6 +1535,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            } else if (rmsForEnd.test(nodeValue)) {
 	                var signature = forstack[forstack.length - 1]
+	                if(nodeValue.indexOf('ms-for-end:') !== 0){
+	                    avalon.error('ms-for-end指令前不能有空格')
+	                }
 	                str += children + '.push({' +
 	                        '\n\tnodeType: 8,' +
 	                        '\n\ttype:"#comment",' +
@@ -1551,7 +1556,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            '\n})\n'
 	                    forstack.pop()
 	                }
-	            } else if (rmsJs.test(nodeValue)) {//插入普通JS代码
+	            } else if (nodeValue.indexOf('ms-js:') === 0) {//插入普通JS代码
 	                str += parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
 	            } else {
 	                str += children + '.push(' + quote(el) + ')\n\n\n'
