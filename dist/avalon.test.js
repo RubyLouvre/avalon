@@ -3157,11 +3157,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parent = parent || next.parentNode
 	    for (var i = 0, vn = vnodes.length; i < vn; i++) {
 	        var vnode = vnodes[i]
-	        //IE6-8不会生成空白的文本节点，造成虚拟DOM与真实DOM的个数不一致，需要跳过
-	        if(avalon.msie < 9 && vnode.type === '#text' && !sp.fixIESkip && sp.test(vnode.nodeValue) ){
+	        var node = next
+	        //IE6-8不会生成空白的文本节点，造成虚拟DOM与真实DOM的个数不一致，需要跳过,#1333
+	        if(avalon.msie < 9 && vnode.type === '#text' && !node.nodeValue && !sp.fixIESkip && sp.test(vnode.nodeValue) ){
 	            continue
 	        }
-	        var node = next
+	      
 	        if (node)
 	            next = node.nextSibling
 
@@ -7283,7 +7284,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 105 */
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
+	module.exports = "<ms-panel>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</ms-panel>"
 
 /***/ }
 /******/ ])
