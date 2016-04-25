@@ -7,33 +7,17 @@
 
 
         <script>
-            var vm = avalon.define({
-                $id: "test",
-                aaa: 111,
-                ddd: 444,
-                arr: ['hehe','haha']
-            })
-            var vm2 = avalon.define({
-                $id: "test2",
-                ddd: 555
-            })
-            var vm3 = avalon.define({
-                $id: "test3",
-                aaa: 333
-            })
+          avalon.ready(function(){
+              var v = avalon.define({
+                  $id: 'test',
+                  con: '<div style="background:red">ccc</div>'
+              })
+              avalon.scan(document.body,v)
+          })
         </script>
     </head>
 
     <body ms-controller="test">
-        <!--ms-for:el in @arr-->
-        <span style="border:1px dotted darkgreen;margin-left:2px;">{{el}}</span>
-        <!--ms-for-end:-->
-        <p>{{@aaa}}</p>
-       <div ms-controller="test2">
-            {{@aaa}}::{{@ddd}}
-        </div>
-        <div ms-important="test3">
-            {{@aaa}}::{{@ddd}}
-        </div>
+        <div ms-html="@con">333</div>
     </body>
 </html>

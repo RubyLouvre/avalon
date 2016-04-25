@@ -15,6 +15,17 @@ function VElement(type, props, children) {
 function skipFalseAndFunction(a) {
     return a !== false && (Object(a) !== a)
 }
+var specal = {
+    "class": function (dom, val) {
+        dom.className = val
+    },
+    style: function (dom, val) {
+        dom.style.cssText = val
+    },
+    'for': function (dom, val) {
+        dom.htmlFor = val
+    }
+}
 VElement.prototype = {
     constructor: VElement,
     toDOM: function () {
@@ -22,9 +33,9 @@ VElement.prototype = {
         for (var i in this.props) {
             var val = this.props[i]
             if (skipFalseAndFunction(val)) {
-                if(i === "class" && avalon.msie < 8){
-                    dom.className = val +''
-                }else{
+                if (specal[i] && avalon.msie < 8) {
+                    specal[i](dom, val)
+                } else {
                     dom.setAttribute(i, val + '')
                 }
             }
