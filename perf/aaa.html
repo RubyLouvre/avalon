@@ -1,26 +1,25 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta charset="UTF-8">
-        <title></title>
+        <title>ms-on-mousewheel</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
         <script src="../dist/avalon.js"></script>
-
-
         <script>
             var vm = avalon.define({
                 $id: "test",
-                aaa: 111,
-                ddd: 444,
-                arr: ['hehe','haha'],
-                a: 1
+                text: "",
+                callback: function(e) {
+                    vm.text = e.wheelDelta + "  " + e.type
+                }
             })
-            avalon.component('ms-view',{
-                template:"<div>xxxx</div>"
-            })
+
         </script>
     </head>
 
     <body ms-controller="test">
-      <xmp ms-widget="[{is:'ms-view',onReady:function(){console.log('ttttt')}}]"></xmp>
+        <div ms-on-mousewheel="@callback" id="aaa" style="background: red;width:200px;height: 200px;">
+            {{@text}}
+        </div>
     </body>
 </html>

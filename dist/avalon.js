@@ -1575,7 +1575,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (skipFalseAndFunction(val)) {
 	                if(i === "class" && avalon.msie < 8){
 	                    dom.className = val +''
-	                }else{
+	                }else if(i === 'style'){
+	                    dom.style.cssText = val
+	                }else {
 	                    dom.setAttribute(i, val + '')
 	                }
 	            }
@@ -5985,10 +5987,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var wid = cur.props.wid
 	        
 	        var docker = coms[wid]
+	       
 	        if (!docker.renderCount) {
 	            cur.change = [this.replaceByComment]
 	            steps.count += 1
 	        } else if (!pre.props.resolved) {
+
 	            cur.steps = steps
 	            var list = cur.change || (cur.change = [])
 	            avalon.Array.ensure(list, this.replaceByComponent)
@@ -6003,10 +6007,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    docker.renderCount = 2
 	                }
 	            ]
-	            //处理模板不存在指令的情况
-	            if(cur.children.length === 0){
-	                steps.count += 1
-	            }
 
 	        } else {
 

@@ -91,8 +91,8 @@ function collectHandlers(elem, type, handlers) {
     var value = elem.getAttribute('avalon-events')
     if (value && (elem.disabled !== true || type !== 'click')) {
         var uuids = []
-        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type+'\\:([^?\s]+)','g'))
-        value.replace(reg, function(a, b){
+        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type + '\\:([^?\s]+)', 'g'))
+        value.replace(reg, function (a, b) {
             uuids.push(b)
             return a
         })
@@ -125,7 +125,7 @@ function dispatch(event) {
                 !event.isImmediatePropagationStopped) {
             var fn = avalon.eventListeners[uuid]
             if (fn) {
-                var vm = rhandleHasVm.test(uuid) ? handler.elem._ms_context_: 0
+                var vm = rhandleHasVm.test(uuid) ? handler.elem._ms_context_ : 0
                 if (vm && vm.$hashcode === false) {
                     return avalon.unbind(elem, type, fn)
                 }
@@ -255,7 +255,7 @@ if (!('onmouseenter' in root)) {
                     if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
                         delete e.type
                         e.type = origType
-                        return fn.apply(elem, arguments)
+                        return fn.apply(this, arguments)
                     }
                 }
             }
@@ -281,13 +281,15 @@ if (!('oninput' in document.createElement('input'))) {
             return function (e) {
                 if (e.propertyName === 'value') {
                     e.type = 'input'
-                    return fn.apply(elem, arguments)
+                    return fn.apply(this, arguments)
                 }
             }
         }
     }
 }
 if (document.onmousewheel === void 0) {
+    console.log('0000')
+
     /* IE6-11 chrome mousewheel wheelDetla 下 -120 上 120
      firefox DOMMouseScroll detail 下3 上-3
      firefox wheel detlaY 下3 上-3
@@ -299,14 +301,17 @@ if (document.onmousewheel === void 0) {
         type: fixWheelType,
         fix: function (elem, fn) {
             return function (e) {
-                e.wheelDeltaY = e.wheelDelta = e[fixWheelDelta] > 0 ? -120 : 120
+                var delta = e[fixWheelDelta] > 0 ? -120 : 120
+                e.wheelDelta = ~~elem._ms_wheel_ + delta
+                elem._ms_wheel_ = e.wheelDeltaY = e.wheelDelta
+
                 e.wheelDeltaX = 0
                 if (Object.defineProperty) {
                     Object.defineProperty(e, 'type', {
                         value: 'mousewheel'
                     })
                 }
-                return fn.apply(elem, arguments)
+                return fn.apply(this, arguments)
             }
         }
     }
