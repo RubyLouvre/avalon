@@ -3183,11 +3183,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	function getEndRepeat(node) {
 	    var isBreak = 0, ret = [], node
 	    while (node) {
-	        if (node.type === '#comment') {
+	        if (node.nodeType === 8) {
 	            if (node.nodeValue.indexOf('ms-for:') === 0) {
-	                isBreak++
+	                ++isBreak
 	            } else if (node.nodeValue.indexOf('ms-for-end:') === 0) {
-	                isBreak--
+	                --isBreak
 	            }
 	        }
 	        ret.push(node)

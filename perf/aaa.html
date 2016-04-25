@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>ms-if</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
+        <title></title>
         <script src="../dist/avalon.js"></script>
+<<<<<<< HEAD
         <style>
 
         </style>
@@ -12,14 +12,42 @@
             var vm = avalon.define({
                 $id: "test",
                 arr:[1,2,3]
+=======
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                aaa: 111,
+                ddd: 444,
+                arr: ['hehe','haha']
             })
-
+            var vm2 = avalon.define({
+                $id: "test2",
+                ddd: 555
+            })
+            var vm3 = avalon.define({
+                $id: "test3",
+                aaa: 333
+>>>>>>> c4bf32d4edc9f4d8d4c2aff961c099a50144fc24
+            })
         </script>
-
     </head>
+<<<<<<< HEAD
     <body ms-controller="test" >
        <!--ms-for:el in @arr -->
        <div>{{el}}</div>
        <!--ms-for-end:-->
+=======
+    <body ms-controller="test">
+        <!--ms-for:el in @arr-->
+        <span style="border:1px dotted darkgreen;margin-left:2px;">{{el}}</span>
+        <!--ms-for-end:-->
+        <p>{{@aaa}}</p>
+       <div ms-controller="test2">
+            {{@aaa}}::{{@ddd}}
+        </div>
+        <div ms-important="test3">
+            {{@aaa}}::{{@ddd}}
+        </div>
+>>>>>>> c4bf32d4edc9f4d8d4c2aff961c099a50144fc24
     </body>
 </html>
