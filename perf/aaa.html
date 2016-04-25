@@ -11,29 +11,16 @@
                 $id: "test",
                 aaa: 111,
                 ddd: 444,
-                arr: ['hehe','haha']
+                arr: ['hehe','haha'],
+                a: 1
             })
-            var vm2 = avalon.define({
-                $id: "test2",
-                ddd: 555
-            })
-            var vm3 = avalon.define({
-                $id: "test3",
-                aaa: 333
+            avalon.component('ms-view',{
+                template:"<div>xxxx</div>"
             })
         </script>
     </head>
 
     <body ms-controller="test">
-        <!--ms-for:el in @arr-->
-        <span style="border:1px dotted darkgreen;margin-left:2px;">{{el}}</span>
-        <!--ms-for-end:-->
-        <p>{{@aaa}}</p>
-       <div ms-controller="test2">
-            {{@aaa}}::{{@ddd}}
-        </div>
-        <div ms-important="test3">
-            {{@aaa}}::{{@ddd}}
-        </div>
+      <xmp ms-widget="[{is:'ms-view',onReady:function(){console.log('ttttt')}}]"></xmp>
     </body>
 </html>
