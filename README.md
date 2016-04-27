@@ -4,6 +4,7 @@
 视浏览器的支持情况使用VBScript/Descriptor/Proxy创建vm,
 以求取最高的性能
 
+<img src='https://github.com/RubyLouvre/avalon/blob/master/structure.jpg?raw=true'/>
 
 主要特征如下：
 
