@@ -1595,19 +1595,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            if (!el.isVoidTag) {
 	                if (el.children.length) {
-	                    var hasWidget = el.props['ms-widget']
 	                    var hasIf = el.props['ms-if']
 	                    if (hasIf) {
 	                        str += 'if(' +vnode+'&&'+ vnode + '.nodeType === 1 ){\n'
 	                    }
-	                    if (hasWidget) {
-	                        str += 'if(!' + vnode + '.props.wid ){\n'
-	                    }
 	                    str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
 	                    if (hasIf) {
-	                        str += '}\n'
-	                    }
-	                    if (hasWidget) {
 	                        str += '}\n'
 	                    }
 	                } else {
@@ -3605,23 +3598,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	var dir = avalon.directive('widget', {
 	    priority: 4,
 	    parse: function (binding, num, elem) {
+	        var isVoidTag = !!elem.isVoidTag
+	        elem.isVoidTag = true
 	        var wid = elem.props.wid || (elem.props.wid = avalon.makeHashCode('w'))
 	        avalon.resolvedComponents[wid] = {
 	            props: avalon.shadowCopy({}, elem.props),
 	            template: elem.template
 	        }
-	        var ret = ''
-	        ret += 'vnode' + num + '.props.wid = "' + wid + '"\n'
-	        ret += 'vnode' + num + '.template = ' + avalon.quote(elem.template) + '\n'
-	        ret += 'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget') + '\n'
-	        ret += 'vnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
-	        ret += 'if(typeof vnode' + num + '.render === "string"){\n'
-	        ret += 'avalon.__widget = [];\n'
-	        ret += '__vmodel__ = vnode' + num+'.vmodel\n'
-	        ret += 'try{eval(" new function(){"+ vnode' + num + '.render +"}");\n'
-	        ret += '}catch(e){avalon.log(e)}\n'
-	        ret += 'vnode' + num + ' = avalon.renderWidget(avalon.__widget[0])\n}\n'
-	        return ret
+	        var ret = [
+	            'vnode' + num + '._isVoidTag = '+isVoidTag,
+	            'vnode' + num + '.props.wid = "' + wid + '"',
+	            'vnode' + num + '.template = ' + avalon.quote(elem.template),
+	            'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget'),
+	            'vnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)',
+	            'if(typeof vnode' + num + '.render === "string"){',
+	            'avalon.__widget = [];',
+	            'var __backup__ = __vmodel__;',
+	            '__vmodel__ = vnode' + num + '.vmodel;',
+	            'try{eval(" new function(){"+ vnode' + num + '.render +"}");',
+	            '}catch(e){avalon.warn(e)','}',
+	            'vnode' + num + ' = avalon.renderWidget(avalon.__widget[0])', '}',
+	            '__vmodel__ = __backup__;']
+	        return ret.join('\n') + '\n'
 	    },
 	    define: function (topVm, defaults, options, accessors) {
 	        var after = avalon.mix({}, defaults, options)
@@ -3651,9 +3649,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return vm
 	    },
 	    diff: function (cur, pre, steps) {
+	        
 	        var coms = avalon.resolvedComponents
 	        var wid = cur.props.wid
-	        
+
 	        var docker = coms[wid]
 	        if (!docker.renderCount) {
 	            cur.change = [this.replaceByComment]
@@ -3674,7 +3673,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            ]
 	            //处理模板不存在指令的情况
-	            if(cur.children.length === 0){
+	            if (cur.children.length === 0) {
 	                steps.count += 1
 	            }
 
@@ -4869,7 +4868,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            //生成组件的render
 	            var num = num || String(new Date - 0).slice(0, 6)
 	            var render = parseView(vtree, num) + '\nreturn (avalon.__widget = vnodes' + num + ');\n'
-	         
 	            vmodel.$render = render
 	            //触发onInit回调
 	            vmodel.$fire('onInit', {

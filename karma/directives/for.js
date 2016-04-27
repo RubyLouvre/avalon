@@ -302,7 +302,7 @@ describe('for', function () {
             avalon.scan(div, vm)
             setTimeout(function(){
                 var ps = div.getElementsByTagName('p')
-                expect(ps.length).to.equal(e)
+                expect(ps.length).to.equal(3)
                 done()
             })
      })

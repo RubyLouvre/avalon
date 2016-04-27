@@ -116,7 +116,6 @@ avalon.component = function (name, definition) {
             //生成组件的render
             var num = num || String(new Date - 0).slice(0, 6)
             var render = parseView(vtree, num) + '\nreturn (avalon.__widget = vnodes' + num + ');\n'
-         
             vmodel.$render = render
             //触发onInit回调
             vmodel.$fire('onInit', {

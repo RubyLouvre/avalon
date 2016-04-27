@@ -129,19 +129,12 @@ function parseView(arr, num) {
             }
             if (!el.isVoidTag) {
                 if (el.children.length) {
-                    var hasWidget = el.props['ms-widget']
                     var hasIf = el.props['ms-if']
                     if (hasIf) {
                         str += 'if(' +vnode+'&&'+ vnode + '.nodeType === 1 ){\n'
                     }
-                    if (hasWidget) {
-                        str += 'if(!' + vnode + '.props.wid ){\n'
-                    }
                     str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
                     if (hasIf) {
-                        str += '}\n'
-                    }
-                    if (hasWidget) {
                         str += '}\n'
                     }
                 } else {
