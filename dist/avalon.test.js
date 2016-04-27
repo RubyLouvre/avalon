@@ -3079,13 +3079,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.directive('if', {
 	    priority: 6,
 	    parse: function (binding, num) {
-	        var ret = 'var ifVar = '+ avalon.parseExpr(binding,'if')+';\n'
-	        ret += 'vnode' + num + '.props["ms-if"] = ifVar;\n'
-	        ret += 'if(!ifVar){\n'
-	        ret += 'vnode'+ num +'.nodeType = 8;\n'
-	        ret += 'vnode'+num+'.directive="if";\n'
-	        ret += 'vnode'+num+'.nodeValue="ms-if"\n}\n'
-	        return ret
+	        var vnode = 'vnode' + num
+	        var ret = [
+	            'var ifVar = ' + avalon.parseExpr(binding, 'if'),
+	            vnode + '.props["ms-if"] = ifVar;',
+	            'if(!ifVar){',
+	            vnode + '.nodeType = 8;',
+	            vnode + '.directive="if";',
+	            vnode + 'nodeValue="ms-if"', '}'
+	        ]
+	        return ret.join('\n') + '\n'
 	    },
 	    diff: function (cur, pre, steps) {
 	        cur.dom = pre.dom
@@ -3112,20 +3115,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (vnode.steps.count) {
 	                    patch([element], [vnode], parent, vnode.steps)
 	                }
-	                avalon.applyEffect(node,vnode, {
+	                avalon.applyEffect(node, vnode, {
 	                    hook: 'onEnterDone'
 	                })
 	                return (vnode.steps = false)
 	            } else if (vtype === 8) {
 	                //要移除元素节点,在对应位置上插入注释节点
-	                avalon.applyEffect(node,vnode,{
+	                avalon.applyEffect(node, vnode, {
 	                    hook: 'onLeaveDone',
-	                    cb: function(){
-	                       var comment = node._ms_if_ ||
-	                        (node._ms_if_ = document.createComment(vnode.nodeValue))
-	                
-	                       parent.replaceChild(comment, node)
-	                   }
+	                    cb: function () {
+	                        var comment = node._ms_if_ ||
+	                                (node._ms_if_ = document.createComment(vnode.nodeValue))
+
+	                        parent.replaceChild(comment, node)
+	                    }
 	                })
 	            }
 	        }
