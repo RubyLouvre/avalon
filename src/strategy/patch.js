@@ -14,7 +14,7 @@ function patch(nodes, vnodes, parent, steps) {
         var vnode = vnodes[i]
         var node = next
         //IE6-8不会生成空白的文本节点，造成虚拟DOM与真实DOM的个数不一致，需要跳过,#1333
-        if(avalon.msie < 9 && vnode.type === '#text' && !node.nodeValue && !sp.fixIESkip && sp.test(vnode.nodeValue) ){
+        if(avalon.msie < 9 && !vnode.fixIESkip && vnode.nodeType === 3 && sp.test(vnode.nodeValue) && sp.test(vnode.nodeValue) ){
             continue
         }
       

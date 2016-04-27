@@ -17,7 +17,7 @@ function parseBindings(props, num, elem) {
     for (var i in props) {
         var value = props[i], match
 
-        if (!skip && value && (match = i.match(rbinding))) {
+        if (!skip &&  (match = i.match(rbinding))) {
             var type = match[1]
             var param = match[2] || ''
             var name = i

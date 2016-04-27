@@ -8,8 +8,12 @@
         <script>
             var vm = avalon.define({
                 $id: 'test',
-                array: [1, 2, 3]
+                array: [1, 2, 3],
+                ddd: "<strong>222</strong>"
             })
+            setTimeout(function(){
+                vm.ddd = "<em>333</em>"
+            },3000)
            
         </script>
 
@@ -18,5 +22,6 @@
         <div ms-for="($index, el) in @array">
             {{el}}::{{$index}}
         </div>
+        <div ms-html="@ddd">vvvv</div>
     </body>
 </html>
