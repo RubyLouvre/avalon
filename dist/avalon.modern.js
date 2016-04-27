@@ -3823,7 +3823,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _innerHTML.call(this, html)
 	        fireDisposedComponents(all)
 	    }
-	    var _appendChild = p._appendChild
+	    var _appendChild = p.appendChild
 	    p.appendChild = function (a) {
 	        _appendChild.call(this, a)
 	        if (a.nodeType === 1 && this.nodeType === 11) {

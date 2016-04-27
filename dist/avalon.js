@@ -2944,8 +2944,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 	if (document.onmousewheel === void 0) {
-	    console.log('0000')
-
 	    /* IE6-11 chrome mousewheel wheelDetla 下 -120 上 120
 	     firefox DOMMouseScroll detail 下3 上-3
 	     firefox wheel detlaY 下3 上-3
@@ -6169,7 +6167,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _innerHTML.call(this, html)
 	        fireDisposedComponents(all)
 	    }
-	    var _appendChild = p._appendChild
+	    var _appendChild = p.appendChild
 	    p.appendChild = function (a) {
 	        _appendChild.call(this, a)
 	        if (a.nodeType === 1 && this.nodeType === 11) {

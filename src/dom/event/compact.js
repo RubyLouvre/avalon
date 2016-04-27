@@ -288,8 +288,6 @@ if (!('oninput' in document.createElement('input'))) {
     }
 }
 if (document.onmousewheel === void 0) {
-    console.log('0000')
-
     /* IE6-11 chrome mousewheel wheelDetla 下 -120 上 120
      firefox DOMMouseScroll detail 下3 上-3
      firefox wheel detlaY 下3 上-3
