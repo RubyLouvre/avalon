@@ -1848,7 +1848,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (var i in props) {
 	        var value = props[i], match
 
-	        if (!skip && value && (match = i.match(rbinding))) {
+	        if (!skip &&  (match = i.match(rbinding))) {
 	            var type = match[1]
 	            var param = match[2] || ''
 	            var name = i
@@ -2231,10 +2231,12 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	avalon.directive('html', {
-	    parse: function (binding, num) {
+	    parse: function (binding, num,el) {
+	        var isVoidTag = !!el.isVoidTag
+	        el.isVoidTag = false
 	        var ret = ["var htmlId =  " + avalon.parseExpr(binding),
 	            'vnode' + num + '.props["ms-html"]  = htmlId;',
-	            'vnode' + num + '.props.skipContent  = true;',
+	            'vnode' + num + '._isVoidTag  = '+isVoidTag,
 	            'var obj  = avalon.htmlFactory(htmlId,' + num + ');',
 	            'try{eval(" new function(){"+ obj.render +"}")}catch(e){};',
 	            'vnode' + num + '.children = avalon.__html;']
@@ -2243,7 +2245,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    diff: function (cur, pre, steps, name) {
 	        var curValue = cur.props[name]
 	        var preValue = pre.props[name]
-	        cur.skipContent = false
+	        cur.isVoidTag = cur._isVoidTag
 	        if (curValue !== preValue) {
 	            if (cur.props[name] !== preValue) {
 	                var list = cur.change || (cur.change = [])
