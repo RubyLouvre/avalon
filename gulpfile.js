@@ -47,6 +47,7 @@ gulp.task('combo', function () {
                     return  "avalon.js " + version + " built in " + date + "\n support IE6+ and other browsers"
                 }))
                 .pipe(gulp.dest('./'))
+                .pipe(gulp.dest('./dist'))
                 .pipe(jshint())
                 .pipe(jshint.reporter('default'))
                 .pipe(gulp.dest('../avalon.test/src/'))
@@ -59,11 +60,12 @@ gulp.task('combo', function () {
                 })
 
         var shimFiles = compatibleFiles.map(function (el) {
-           
+
             return /domReady/.test(el) ? el.replace("domRedy", "domReady.noop") : el
-        }).filter(function(el){
+        }).filter(function (el) {
             return !/loader/.test(el)
         })
+
         gulp.src(shimFiles)
                 .pipe(concat('avalon.shim.js'))
                 .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
@@ -80,7 +82,7 @@ gulp.task('combo', function () {
 
         replaceUrls(modernFiles, {
             "01 variable": "01 variable.modern",
-            "02 core": "02 core.modern",
+            "03 core": "03 core.modern",
             "05 dom.polyfill": "05 dom.polyfill.modern",
             "08 modelFactory": "08 modelFactory.modern",
             "15 HTML": "15 HTML.modern",
@@ -108,14 +110,32 @@ gulp.task('combo', function () {
                 .pipe(uglify())
                 .pipe(rename('avalon.modern.min.js'))
                 .pipe(gulp.dest('./dist/'))
-
+        var mobileFiles = modernFiles.concat()
+        var pop = mobileFiles.pop()
+        var mobile = [pop.replace(/24 outer.js/, '23 touch.0.js'),
+            pop.replace(/24 outer.js/, '23 touch.01.tap.js'),
+            pop.replace(/24 outer.js/, '23 touch.02.press.js'),
+            pop.replace(/24 outer.js/, '23 touch.03.swipe.js'),
+            pop
+        ]
+        mobileFiles = mobileFiles.concat(mobile)
+        gulp.src(mobileFiles)
+                .pipe(concat('avalon.mobile.js'))
+                .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
+                    return "version: " + fixVersion(version)
+                }))
+                .pipe(replace(/!!/, function (a, b) {
+                    return  "avalon.mobile.js " + version + " built in " + date + "\n support touch devices "
+                }))
+                .pipe(gulp.dest('./dist/'))
 
         var modernShimFiles = modernFiles.map(function (el) {
             return /domReady/.test(el) ? el.replace("domRedy.modern", "domReady.noop") : el
-        }).filter(function(el){
+        }).filter(function (el) {
             return !/loader/.test(el)
         })
 
+        
         gulp.src(modernShimFiles)
                 .pipe(concat('avalon.modern.shim.js'))
                 .pipe(replace(/version:\s+([\d\.]+)/, function (a, b) {
@@ -126,7 +146,7 @@ gulp.task('combo', function () {
                 }))
                 .pipe(gulp.dest('./dist/'))
                 .pipe(gulp.dest('../avalon.test/src/'))
-                
+
 
     })
 

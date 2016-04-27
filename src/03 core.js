@@ -147,22 +147,9 @@ avalon.mix({
     version: 1.4,
     ui: {},
     log: log,
-    slice: W3C ? function (nodes, start, end) {
+    slice:  function (nodes, start, end) {
         return aslice.call(nodes, start, end)
-    } : function (nodes, start, end) {
-        var ret = []
-        var len = nodes.length
-        if (end === void 0)
-            end = len
-        if (typeof end === "number" && isFinite(end)) {
-            start = _number(start, len)
-            end = _number(end, len)
-            for (var i = start; i < end; ++i) {
-                ret[i - start] = nodes[i]
-            }
-        }
-        return ret
-    },
+    } ,
     noop: noop,
     /*如果不用Error对象封装一下，str在控制台下可能会乱码*/
     error: function (str, e) {
