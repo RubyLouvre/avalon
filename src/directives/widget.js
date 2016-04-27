@@ -19,10 +19,12 @@ var dir = avalon.directive('widget', {
         ret += 'vnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)\n'
         ret += 'if(typeof vnode' + num + '.render === "string"){\n'
         ret += 'avalon.__widget = [];\n'
+        ret += 'var __backup__ = __vmodel__;\n'
         ret += '__vmodel__ = vnode' + num+'.vmodel\n'
         ret += 'try{eval(" new function(){"+ vnode' + num + '.render +"}");\n'
-        ret += '}catch(e){avalon.log(e)}\n'
+        ret += '}catch(e){avalon.log(e,"!!!")}\n'
         ret += 'vnode' + num + ' = avalon.renderWidget(avalon.__widget[0])\n}\n'
+        ret += '__vmodel__ = __backup__;\n'
         return ret
     },
     define: function (topVm, defaults, options, accessors) {
