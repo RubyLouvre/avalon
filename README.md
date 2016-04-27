@@ -1,6 +1,9 @@
 #avalon 2 
 
-基于avalon1.6内部版本研发出来，对早期版本不兼容
+基于avalon1.6内部版本研发出来，兼容IE6及各种山寨浏览器,
+视浏览器的支持情况使用VBScript/Descriptor/Proxy创建vm,
+以求取最高的性能
+
 
 主要特征如下：
 
