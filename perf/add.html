@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+ 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../dist/avalon.js"></script>
+    <script>
+         var vm = avalon.define({
+            $id: "test",
+            array: [1, 2, 3, 4],
+            add: function() {
+                vm.array.push(5,6,7)
+            },
+            value: ""
+        })
+        </script>
+    </head>
+    <body ms-controller="test">
+       <button ms-click="@add">Add</button>
+       <div class="my-repeat-animation"  ms-for="item in @array" >
+        {{item}}
+      </div>
+    </body>
+</html>
