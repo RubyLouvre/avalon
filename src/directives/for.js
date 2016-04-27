@@ -102,24 +102,20 @@ avalon.directive('for', {
                         avalon.diff(c.children, p.children, steps)
                     }
                 }
-                saveInCache(newCache, c)
-            }
-
-            //这是新添加的元素
-            for (i in newCache) {
-                c = newCache[i]
-                if (!c.nodes) {
+                if(!c.nodes){//这是新添加的元素
                     isChange = true
                     avalon.diff(c.children, [], steps)
                 }
+               
+                saveInCache(newCache, c)
             }
+
             for(i in cache){
                 cur.removedComponents = cache
                 isChange = true
                 break
             }
-           
-
+          
         } else {
             /* eslint-disable no-cond-assign */
             var cache = cur.cache = {}

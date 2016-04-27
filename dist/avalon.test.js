@@ -3161,7 +3161,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var vnode = vnodes[i]
 	        var node = next
 	        //IE6-8不会生成空白的文本节点，造成虚拟DOM与真实DOM的个数不一致，需要跳过,#1333
-	        if(avalon.msie < 9 && vnode.type === '#text' && !node.nodeValue && !sp.fixIESkip && sp.test(vnode.nodeValue) ){
+	        if(avalon.msie < 9 && !vnode.fixIESkip && vnode.nodeType === 3 && sp.test(vnode.nodeValue) && sp.test(vnode.nodeValue) ){
 	            continue
 	        }
 	      
@@ -3342,24 +3342,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        avalon.diff(c.children, p.children, steps)
 	                    }
 	                }
-	                saveInCache(newCache, c)
-	            }
-
-	            //这是新添加的元素
-	            for (i in newCache) {
-	                c = newCache[i]
-	                if (!c.nodes) {
+	                if(!c.nodes){//这是新添加的元素
 	                    isChange = true
 	                    avalon.diff(c.children, [], steps)
 	                }
+	               
+	                saveInCache(newCache, c)
 	            }
+
 	            for(i in cache){
 	                cur.removedComponents = cache
 	                isChange = true
 	                break
 	            }
-	           
-
+	          
 	        } else {
 	            /* eslint-disable no-cond-assign */
 	            var cache = cur.cache = {}
