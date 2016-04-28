@@ -121,6 +121,7 @@ avalon.component = function (name, definition) {
             vmodel.$fire('onInit', {
                 type: 'init',
                 vmodel: vmodel,
+                wid: wid,
                 target: null
             })
 

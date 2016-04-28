@@ -76,6 +76,7 @@ var dir = avalon.directive('widget', {
                     cur.vmodel.$fire('onReady', {
                         type: 'ready',
                         target: dom,
+                        wid:wid,
                         vmodel: vnode.vmodel
                     })
                     docker.renderCount = 2
@@ -100,6 +101,7 @@ var dir = avalon.directive('widget', {
                             cur.vmodel.$fire('onViewChange', {
                                 type: 'viewchange',
                                 target: dom,
+                                wid:wid,
                                 vmodel: vnode.vmodel
                             })
                         }

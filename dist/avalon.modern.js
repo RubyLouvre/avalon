@@ -3669,6 +3669,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    cur.vmodel.$fire('onReady', {
 	                        type: 'ready',
 	                        target: dom,
+	                        wid:wid,
 	                        vmodel: vnode.vmodel
 	                    })
 	                    docker.renderCount = 2
@@ -3693,6 +3694,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            cur.vmodel.$fire('onViewChange', {
 	                                type: 'viewchange',
 	                                target: dom,
+	                                wid:wid,
 	                                vmodel: vnode.vmodel
 	                            })
 	                        }
@@ -4875,6 +4877,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            vmodel.$fire('onInit', {
 	                type: 'init',
 	                vmodel: vmodel,
+	                wid: wid,
 	                target: null
 	            })
 
