@@ -1637,8 +1637,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rstring = __webpack_require__(40).string
 	var rfill = /\?\?\d+/g
 	var brackets = /\(([^)]*)\)/
-	var rAt = /(^|[^\w\u00c0-\uFFFF_])(@)(?=\w)/g
-	var rhandleName = /^\@[$\w]+$/
+	var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|#)(?=\w)/g
+	var rhandleName = /^(?:\@|\#)[$\w]+$/
 	var rshortCircuit = /\|\|/g
 	var rpipeline = /\|(?=\w)/
 	var ruselessSp = /\s*(\.|\|)\s*/g
@@ -2434,7 +2434,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parse: function (binding, num) {
 	        var vars = binding.expr.replace(rstring, ' ').replace(rfilters, '').match(rvar)
 	        var canCache = vars.every(function (el) {
-	            return el.charAt(0) === '@' || el === '$event'
+	            return el.charAt(0) === '@' || el.charAt(0) === '#' || el === '$event'
 	        })
 	        var vmDefine = 'vnode' + num + '.onVm = __vmodel__\n'
 	        var pid = quote(binding.name)

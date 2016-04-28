@@ -15,7 +15,7 @@ avalon.directive('on', {
     parse: function (binding, num) {
         var vars = binding.expr.replace(rstring, ' ').replace(rfilters, '').match(rvar)
         var canCache = vars.every(function (el) {
-            return el.charAt(0) === '@' || el === '$event'
+            return el.charAt(0) === '@' || el.charAt(0) === '#' || el === '$event'
         })
         var vmDefine = 'vnode' + num + '.onVm = __vmodel__\n'
         var pid = quote(binding.name)

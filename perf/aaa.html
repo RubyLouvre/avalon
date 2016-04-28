@@ -8,8 +8,8 @@
         <script>
             var vm = avalon.define({
                 $id: "test",
-                text: "",
-                callback: function(e) {
+                text: "222",
+                cb: function(e) {
                     vm.text = e.wheelDelta + "  " + e.type
                 }
             })
@@ -18,8 +18,8 @@
     </head>
 
     <body ms-controller="test">
-        <div  id="aaa" style="background: red;width:200px;height: 200px;">
-            {{@text}}
+        <div  id="aaa" style="background: red;width:200px;height: 200px;" ms-on-mousewheel="#cb">
+            {{#text}}
         </div>
     </body>
 </html>
