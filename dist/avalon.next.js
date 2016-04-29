@@ -7025,27 +7025,34 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    $$midway.slaveFactory = slaveFactory
 
-	    function mediatorFactory(before, after, heirloom) {
-	        var afterIsProxy = after.$id && after.$events
+	    function mediatorFactory(before, after) {
+	       
 	        var $skipArray = {}
 	        var definition = {}
 	        var $mapping = {}
-	        heirloom = heirloom || {}
-	        for (var key in before) {
-	            definition[key] = before[key]
-	            $mapping[key] = before
-	        }
-	        for (var key in after) {
-	            if ($$skipArray[key])
-	                continue
-	            var val = definition[key] = after[key]
-	            if (canObserve(key, val, $skipArray)) {
-	                definition[key] = $$midway.modelAdaptor(val, 0, heirloom, {
-	                    id: definition.$id + '.' + key
-	                })
+	        var heirloom = {}
+	        //将这个属性名对应的Proxy放到$mapping中
+	        for (var i = 0; i < arguments.length; i++) {
+	            var obj = arguments[i]
+	            //收集所有键值对及访问器属性
+	            for (var key in obj) {
+	                if ($$skipArray[key])
+	                    continue
+	                var val = definition[key] = obj[key]
+	                if (canObserve(key, val, $skipArray)) {
+	                    definition[key] = $$midway.modelAdaptor(val, 0, heirloom, {
+	                        id: definition.$id + '.' + key
+	                    })
+	                }
 	            }
-	            $mapping[key] = after
+	            $mapping[key] = obj
+	            after = obj
 	        }
+	         var afterIsProxy = after.$id && after.$events
+	        if(typeof this === 'function'){
+	            this($mapping, definition)
+	        }
+
 	       
 	        definition.$track = Object.keys(definition).sort().join(';;')
 
@@ -7060,12 +7067,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        vm.$mapping = $mapping
 	        if(after.$id && before.$element){
-	                after.$element = before.$element
-	                after.$render = before.$render
+	            after.$element = before.$element
+	            after.$render = before.$render
 	        }
+	       // console.log(vm.$mapping)
 	        return makeObserver(vm, heirloom, {}, {}, {
 	            id: before.$id,
-	            hashcode: makeHashCode('$')
+	            hashcode: makeHashCode('$'),
+	            master: true
 	        })
 	    }
 
@@ -7216,7 +7225,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var arr = target.$id.split('.')
 	                var top = arr.shift()
 
-	                var path = arr.length ? arr.join('.') + '.' + name : name
+	                var path = arr.concat(name).join('.')
 	                var vm = adjustVm(curVm, path)
 	                
 	                 if(value && typeof value === 'object' && !value.$id){

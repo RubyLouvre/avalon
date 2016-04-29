@@ -1,0 +1,45 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>测试用例</title>
+        <script src="avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                firstName: "100",
+                lastName: "123",
+               $computed:{
+                    fullName: { //一个包含set或get的对象
+                        set: function(val) { //里面必须用this指向vm，但不能使用vm
+                            var array = (val || "").split(" ");
+                            this.firstName = ~~array[0] ;
+                            this.lastName = ~~array[1] ;
+                        },
+                        get: function() {
+                             return (~~this.firstName)+ (~~this.lastName)
+
+                        }
+                    }
+                }
+            })
+        </script>
+    </head>
+    <body >
+    <div ms-controller="test">
+        <p>First name:
+            <input ms-duplex="firstName" />
+        </p>
+        <p>Last name:
+            <input ms-duplex="lastName" />
+        </p>
+        <p>Hello,
+        
+        </p>
+ 
+        <div>{{firstName + lastName }}</div>
+        <div>{{fullName}}</div>
+        
+    </div>
+    </body>
+</html>

@@ -6903,8 +6903,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
-
 	/**
 	 * ------------------------------------------------------------
 	 * avalon基于纯净的Object.defineProperties的vm工厂 
@@ -6942,8 +6940,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    options = options || {}
 	    heirloom = heirloom || {}
 	    var accessors = {}
-	    var hashcode = makeHashCode("$")
-	    var pathname = options.pathname || ""
+	    var hashcode = makeHashCode('$')
+	    var pathname = options.pathname || ''
 	    options.id = options.id || hashcode
 	    options.hashcode = hashcode
 	    var key, sid, spath
@@ -6952,8 +6950,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            continue
 	        var val = keys[key] = definition[key]
 	        if (!isSkip(key, val, $skipArray)) {
-	            sid = options.id + "." + key
-	            spath = pathname ? pathname + "." + key : key
+	            sid = options.id + '.' + key
+	            spath = pathname ? pathname + '.' + key : key
 	            accessors[key] = makeAccessor(sid, spath, heirloom)
 	        }
 	    }
@@ -6993,8 +6991,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (accessor && accessor.get) {
 	                accessors[key] = accessor
 	            } else {
-	                sid = options.id + "." + key
-	                spath = pathname ? pathname + "." + key : key
+	                sid = options.id + '.' + key
+	                spath = pathname ? pathname + '.' + key : key
 	                accessors[key] = makeAccessor(sid, spath, heirloom)
 	            }
 	        }
@@ -7039,14 +7037,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	    }
-	    if(typeof this == 'function'){
+	    if(typeof this === 'function'){
 	        this(keys, unresolve)
 	    }
 	    for (key in unresolve) {
 	        if ($$skipArray[key])
 	            continue
 	        if (!isSkip(key, keys[key], empty)) {
-	            accessors[key] = makeAccessor(before.$id + "." + key, key, heirloom)
+	            accessors[key] = makeAccessor(before.$id + '.' + key, key, heirloom)
 	            accessors[key].set(keys[key])
 	        }
 	    }

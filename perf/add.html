@@ -1,28 +1,48 @@
 <!DOCTYPE html>
 <html>
- 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="../dist/avalon.js"></script>
-    <script>
-         var vm = avalon.define({
-            $id: "test",
-            a:1,
-            b:2
-        })
-        
-        var vm2 = avalon.define({
-            $id: "test2",
-            c: 1,
-            d: 2
-        })
-        
-        var vm3 = avalon.mediatorFactory(vm, {d:11,e:999})
-        console.log(vm3)
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.next.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                a: 1,
+                b: 1,
+                e: {
+                    d: 22
+                }
+            })
+
+            var vm2 = avalon.define({
+                $id: "test2",
+                b: 2,
+                c: 2
+            })
+            var vm3 = avalon.define({
+                $id: "test3",
+                b: 3,
+                c: 3,
+                e: 3
+            })
+            vm3.$watch('c', function(){
+                console.log('----')
+            })
+            var vm4 = avalon.mediatorFactory(vm, vm2, vm3)
+            vm4.$watch('c', function(){
+                console.log("=====")
+            })
+          
         </script>
     </head>
     <body ms-controller="test">
-    
+        {{@a}}
+        <div ms-controller='test2'>
+            {{@b}}
+            <div ms-controller='test3'>
+                {{@c}}
+            </div>
+        </div>
     </body>
 </html>

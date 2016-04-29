@@ -1,12 +1,10 @@
-
-
 /**
  * ------------------------------------------------------------
  * avalon基于纯净的Object.defineProperties的vm工厂 
  * masterFactory,slaveFactory,mediatorFactory, ArrayFactory
  * ------------------------------------------------------------
  */
-var share = require("./parts/modern")
+var share = require('./parts/modern')
 var isSkip = share.isSkip
 var $$midway = share.$$midway
 var $$skipArray = share.$$skipArray
@@ -37,8 +35,8 @@ function masterFactory(definition, heirloom, options) {
     options = options || {}
     heirloom = heirloom || {}
     var accessors = {}
-    var hashcode = makeHashCode("$")
-    var pathname = options.pathname || ""
+    var hashcode = makeHashCode('$')
+    var pathname = options.pathname || ''
     options.id = options.id || hashcode
     options.hashcode = hashcode
     var key, sid, spath
@@ -47,8 +45,8 @@ function masterFactory(definition, heirloom, options) {
             continue
         var val = keys[key] = definition[key]
         if (!isSkip(key, val, $skipArray)) {
-            sid = options.id + "." + key
-            spath = pathname ? pathname + "." + key : key
+            sid = options.id + '.' + key
+            spath = pathname ? pathname + '.' + key : key
             accessors[key] = makeAccessor(sid, spath, heirloom)
         }
     }
@@ -88,8 +86,8 @@ function slaveFactory(before, after, heirloom, options) {
             if (accessor && accessor.get) {
                 accessors[key] = accessor
             } else {
-                sid = options.id + "." + key
-                spath = pathname ? pathname + "." + key : key
+                sid = options.id + '.' + key
+                spath = pathname ? pathname + '.' + key : key
                 accessors[key] = makeAccessor(sid, spath, heirloom)
             }
         }
@@ -134,14 +132,14 @@ function mediatorFactory(before, after) {
             }
         }
     }
-    if(typeof this == 'function'){
+    if(typeof this === 'function'){
         this(keys, unresolve)
     }
     for (key in unresolve) {
         if ($$skipArray[key])
             continue
         if (!isSkip(key, keys[key], empty)) {
-            accessors[key] = makeAccessor(before.$id + "." + key, key, heirloom)
+            accessors[key] = makeAccessor(before.$id + '.' + key, key, heirloom)
             accessors[key].set(keys[key])
         }
     }

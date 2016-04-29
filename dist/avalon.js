@@ -7459,7 +7459,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	    }
-	    if(typeof this == 'function'){
+	    if(typeof this === 'function'){
 	        this(keys, unresolve)
 	    }
 	    for (key in unresolve) {
