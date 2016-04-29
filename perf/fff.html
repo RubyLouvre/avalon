@@ -1,27 +1,64 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML>
 <html>
     <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../dist/avalon.js"></script>
+        <title>ms-repeat</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script src="../dist/avalon.js" ></script>
         <script>
-            var vm = avalon.define({
-                $id: 'test',
-                array: [1, 2, 3],
-                ddd: "<strong>222</strong>"
-            })
-            setTimeout(function(){
-                vm.ddd = "<em>333</em>"
-            },3000)
-           
-        </script>
 
+            var definition = {
+                $id: 'test',
+                array: ['1', '2', '3', '4'],
+                removeAt: function (e) {
+                    var elem = e.target
+                    if (isFinite(elem.value)) {//this为input元素
+                        var a = ~~elem.value
+                        this.array.removeAt(a)
+                        elem.value = ''
+                    }
+                }
+            }
+            'push,unshift,remove,ensure'.replace(avalon.rword, function (method) {
+                definition[method] = function (e) {
+                    //avalon2中,所有通过ms-on-* 及其变体绑定的事件,其this都是指向vm,
+                    //而元素本身则通过e.targeta得到
+                    var elem = e.target
+                    if (elem.value) {
+                        this.array[method](elem.value)
+                        elem.value = ''
+                    }
+                }
+            })
+            'pop,shift,sort,reverse'.replace(avalon.rword, function (method) {
+                definition[method] = function (e) {
+                    this.array[method]()
+                }
+            })
+            
+            avalon.define(definition)
+
+        </script>
     </head>
     <body ms-controller="test">
-        <div ms-for="($index, el) in @array">
-            {{el}}::{{$index}}
-        </div>
-        <div ms-html="@ddd">vvvv</div>
+        <p>监控数组拥有以下方法，我们可以操作它们就能同步对应的区域</p>
+        <blockquote>
+            push, shift, unshift, pop, slice, splice, remove, removeAt, removeAll, clear,
+            ensure, pushArray, sort, reverse, set
+        </blockquote>
+        <ul>
+            <li ms-for="($index,el) in @array">数组的第{{$index+1}}个元素为{{el}}</li>
+        </ul>
+        <p>对数组进行push操作，并回车<input ms-keypress="@push | enter"></p>
+        <p>对数组进行unshift操作，并回车<input ms-keypress="@unshift | enter"></p>
+        <p>对数组进行ensure操作，并回车<input ms-keypress="@ensure | enter"><br/>
+            (只有数组不存在此元素才push进去)</p>
+        <p>对数组进行remove操作，并回车<input ms-keypress="@remove | enter"></p>
+        <p>对数组进行removeAt操作，并回车<input ms-keypress="@removeAt | enter"></p>
+        <p><button type='button' ms-click="@sort">对数组进行sort操作</button></p>
+        <p><button type='button' ms-click="@reverse">对数组进行reverse操作</button></p>
+        <p><button type='button' ms-click="@shift">对数组进行shift操作</button></p>
+        <p><button type='button' ms-click="@pop">对数组进行pop操作</button></p>
+        <p>当前数组的长度为<span style="color:red">{{@array.length}}</span>。</p>
+
     </body>
 </html>

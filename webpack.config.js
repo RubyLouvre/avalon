@@ -12,7 +12,9 @@ text = text.replace(/version\s*\:\s*([^,]+)/, function (a, b) {
 })
 
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')
-
+var now = new Date
+var snow = now.getFullYear()+'-'+ (now.getMonth()+1) + 
+        '-'+ now.getDate()+':'+ now.getHours()
 module.exports = {
     entry: {
         avalon: './src/avalon', //我们开发时的入口文件
@@ -26,7 +28,9 @@ module.exports = {
         libraryTarget: 'umd',
         library: 'avalon'
     }, //页面引用的文件
-
+    plugins: [
+      new webpack.BannerPlugin('built in '+snow+' version '+ v+' by 司徒正美')
+    ],
     module: {
         loaders: [
             {test: /\.jade$/, loader: 'text-loader'}

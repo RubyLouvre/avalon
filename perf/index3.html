@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <title></title>
-        <script src="../dist/avalon.js"></script>
+        <script src="../dist/avalon.modern.js"></script>
         <script>
             var tpl = '<div><select ms-duplex="@currentNum">' +
                     '<option ms-for="el in @numList">{{el}}</option>' +
@@ -41,6 +41,6 @@
     <body ms-controller="test">
         <div>{{@aaa}}</div>
     <xmp ms-widget="{is:'ms-pager'}"></xmp>
-    <!-- <ms-pager></ms-pager>-->
+    <ms-pager></ms-pager>
 </body>
 </html>
