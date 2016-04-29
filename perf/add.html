@@ -8,18 +8,21 @@
     <script>
          var vm = avalon.define({
             $id: "test",
-            array: [1, 2, 3, 4],
-            add: function() {
-                vm.array.push(5,6,7)
-            },
-            value: ""
+            a:1,
+            b:2
         })
+        
+        var vm2 = avalon.define({
+            $id: "test2",
+            c: 1,
+            d: 2
+        })
+        
+        var vm3 = avalon.mediatorFactory(vm, {d:11,e:999})
+        console.log(vm3)
         </script>
     </head>
     <body ms-controller="test">
-       <button ms-click="@add">Add</button>
-       <div class="my-repeat-animation"  ms-for="item in @array" >
-        {{item}}
-      </div>
+    
     </body>
 </html>

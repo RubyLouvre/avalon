@@ -17,7 +17,7 @@ var dispatch = require('../strategy/dispatch')
 var $emit = dispatch.$emit
 var $watch = dispatch.$watch
 function canObserve(key, value, skipArray) {
-    // 判定此属性是否还能转换子VM或监听数组
+    // 判定此属性的类型是否为纯对象或数组,方便转换为子VM或监听数组
     return  !skipArray[key] &&
             (key.charAt(0) !== '$') &&
             value && !value.$id && (typeof value === 'object') &&
@@ -48,7 +48,7 @@ share.toJson = toJson
 
 if (avalon.window.Proxy) {
     function adjustVm(vm, expr) {
-        if (vm.$mapping) {
+        if (vm.$mapping) {//$mapping是保持此子vm对应的顶层vm
             var toppath = expr.split(".")[0]
             return vm.$mapping[toppath] || vm
         } else {

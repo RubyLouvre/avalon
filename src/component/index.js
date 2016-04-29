@@ -5,21 +5,16 @@ var outerTags = avalon.oneObject('wbr,xmp,template')
 var resolvedComponents = avalon.resolvedComponents
 var skipWidget = {'ms-widget': 1, widget: 1, resolved: 1}
 var parseView = require('../strategy/parser/parseView')
-
+var componentEvents = ['onInit','onReady','onViewChange','onDispose']
 avalon.document.createElement('slot')
+
+var skipProps = avalon.oneObject(['is','diff','define'].concat(componentEvents))
 
 avalon.component = function (name, definition) {
     //这是定义组件的分支,并将列队中的同类型对象移除
     if (typeof name === 'string') {
         if (!avalon.components[name]) {
             avalon.components[name] = definition
-            var _defaults = definition.defaults
-            if (typeof _defaults === 'object') {
-                var _id = ("_" + new Date - 0)
-                _defaults.$id = _id
-                definition.defaults = avalon.define(_defaults)
-                delete avalon.vmodels[ _id ]
-            }
         }
         //这里没有返回值
     } else {
@@ -30,16 +25,10 @@ avalon.component = function (name, definition) {
         var wid = node.props.wid
         //将ms-widget的值合并成一个纯粹的对象,并且将里面的vm抽取vms数组中
         var options = node.props['ms-widget'] || {}
-        
-        var vms = []
-        
+
+        var optionData = options
         if (Array.isArray(options)) {
-            vms = options.filter(function (el) {
-                return el.$id
-            })
-            options = avalon.mix.apply({}, options)
-        } else if (options.$id) {
-            vms = [options]
+            optionData = avalon.mix.apply({}, options)
         }
         //如果组件模板已经定
         var placeholder = {
@@ -50,7 +39,7 @@ avalon.component = function (name, definition) {
             nodeValue: 'ms-widget placeholder'
         }
 
-        var tagName = node.type.indexOf('-') > 0 ? node.type : options.is
+        var tagName = node.type.indexOf('-') > 0 ? node.type : optionData.is
         var docker = resolvedComponents[wid]
         var docker = resolvedComponents[wid]
         if (!docker) {
@@ -108,27 +97,29 @@ avalon.component = function (name, definition) {
                 insertSlots(vtree, node, definition.soleSlot)
             }
             //开始构建组件的vm的配置对象
-            var diff = options.diff
-            var define = options.define
+            var diff = optionData.diff
+            var define = optionData.define
             define = define || avalon.directives.widget.define
-            var $id = options.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
-            try { //options可能是vm, 在IE下使用delete会报错
-                delete options.is
-                delete options.diff
-                delete options.define
-            } catch (e) {
-            }
+            var $id = optionData.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
+
             var defaults = definition.defaults
-            if(defaults && defaults.$id){
-                defaults.$element = topVm.$element
-                defaults.$render = topVm.$render
-                vms.push(defaults)
-            }
-            var vmodel = define(topVm, defaults, options, vms)
+            var defineArgs = [topVm, defaults].concat(options)
+            var vmodel = define.apply(function(a, b){
+                for(var s in skipProps){
+                    delete a[s]
+                    delete b[s]
+                }
+            }, defineArgs)
             vmodel.$id = $id
             vmodel.$element = topVm.$element
+            
             avalon.vmodels[$id] = vmodel
-          
+            componentEvents.forEach(function(fn){
+               if(typeof optionData[fn] === 'function'){
+                   vmodel.$watch(fn, optionData[fn])
+               }
+            })
+           
             //生成组件的render
             var num = num || String(new Date - 0).slice(0, 6)
             var render = parseView(vtree, num) + '\nreturn (avalon.__widget = vnodes' + num + ');\n'

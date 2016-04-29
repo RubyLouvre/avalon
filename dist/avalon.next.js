@@ -3624,32 +3624,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            '__vmodel__ = __backup__;']
 	        return ret.join('\n') + '\n'
 	    },
-	    define: function (topVm, defaults, options, accessors) {
-	        var after = avalon.mix({}, defaults, options)
-	        var events = {}
-	        //绑定生命周期的回调
-	        'onInit onReady onViewChange onDispose'.replace(/\S+/g, function (a) {
-	            if (typeof after[a] === 'function')
-	                events[a] = after[a]
-	            delete after[a]
-	        })
-	        var vm = avalon.mediatorFactory(topVm, after)
-	        if (accessors.length) {
-	            accessors.forEach(function (bag) {
-	                vm = avalon.mediatorFactory(vm, bag)
-	            })
-	        }
-	        ++avalon.suspendUpdate
-	        for (var i in after) {
-	            if (skipArray[i])
-	                continue
-	            vm[i] = after[i]
-	        }
-	        --avalon.suspendUpdate
-	        for (i in events) {
-	            vm.$watch(i, events[i])
-	        }
-	        return vm
+	    define: function () { 
+	        return avalon.mediatorFactory.apply(this, arguments)
 	    },
 	    diff: function (cur, pre, steps) {
 	        var coms = avalon.resolvedComponents
@@ -4759,21 +4735,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	var resolvedComponents = avalon.resolvedComponents
 	var skipWidget = {'ms-widget': 1, widget: 1, resolved: 1}
 	var parseView = __webpack_require__(37)
-
+	var componentEvents = ['onInit','onReady','onViewChange','onDispose']
 	avalon.document.createElement('slot')
+
+	var skipProps = avalon.oneObject(['is','diff','define'].concat(componentEvents))
 
 	avalon.component = function (name, definition) {
 	    //这是定义组件的分支,并将列队中的同类型对象移除
 	    if (typeof name === 'string') {
 	        if (!avalon.components[name]) {
 	            avalon.components[name] = definition
-	            var _defaults = definition.defaults
-	            if (typeof _defaults === 'object') {
-	                var _id = ("_" + new Date - 0)
-	                _defaults.$id = _id
-	                definition.defaults = avalon.define(_defaults)
-	                delete avalon.vmodels[ _id ]
-	            }
 	        }
 	        //这里没有返回值
 	    } else {
@@ -4784,16 +4755,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var wid = node.props.wid
 	        //将ms-widget的值合并成一个纯粹的对象,并且将里面的vm抽取vms数组中
 	        var options = node.props['ms-widget'] || {}
-	        
-	        var vms = []
-	        
+
+	        var optionData = options
 	        if (Array.isArray(options)) {
-	            vms = options.filter(function (el) {
-	                return el.$id
-	            })
-	            options = avalon.mix.apply({}, options)
-	        } else if (options.$id) {
-	            vms = [options]
+	            optionData = avalon.mix.apply({}, options)
 	        }
 	        //如果组件模板已经定
 	        var placeholder = {
@@ -4804,7 +4769,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            nodeValue: 'ms-widget placeholder'
 	        }
 
-	        var tagName = node.type.indexOf('-') > 0 ? node.type : options.is
+	        var tagName = node.type.indexOf('-') > 0 ? node.type : optionData.is
 	        var docker = resolvedComponents[wid]
 	        var docker = resolvedComponents[wid]
 	        if (!docker) {
@@ -4862,27 +4827,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	                insertSlots(vtree, node, definition.soleSlot)
 	            }
 	            //开始构建组件的vm的配置对象
-	            var diff = options.diff
-	            var define = options.define
+	            var diff = optionData.diff
+	            var define = optionData.define
 	            define = define || avalon.directives.widget.define
-	            var $id = options.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
-	            try { //options可能是vm, 在IE下使用delete会报错
-	                delete options.is
-	                delete options.diff
-	                delete options.define
-	            } catch (e) {
-	            }
+	            var $id = optionData.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
+
 	            var defaults = definition.defaults
-	            if(defaults && defaults.$id){
-	                defaults.$element = topVm.$element
-	                defaults.$render = topVm.$render
-	                vms.push(defaults)
-	            }
-	            var vmodel = define(topVm, defaults, options, vms)
+	            var defineArgs = [topVm, defaults].concat(options)
+	            var vmodel = define.apply(function(a, b){
+	                for(var s in skipProps){
+	                    delete a[s]
+	                    delete b[s]
+	                }
+	            }, defineArgs)
 	            vmodel.$id = $id
 	            vmodel.$element = topVm.$element
+	            
 	            avalon.vmodels[$id] = vmodel
-	          
+	            componentEvents.forEach(function(fn){
+	               if(typeof optionData[fn] === 'function'){
+	                   vmodel.$watch(fn, optionData[fn])
+	               }
+	            })
+	           
 	            //生成组件的render
 	            var num = num || String(new Date - 0).slice(0, 6)
 	            var render = parseView(vtree, num) + '\nreturn (avalon.__widget = vnodes' + num + ');\n'
@@ -6957,7 +6924,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var $emit = dispatch.$emit
 	var $watch = dispatch.$watch
 	function canObserve(key, value, skipArray) {
-	    // 判定此属性是否还能转换子VM或监听数组
+	    // 判定此属性的类型是否为纯对象或数组,方便转换为子VM或监听数组
 	    return  !skipArray[key] &&
 	            (key.charAt(0) !== '$') &&
 	            value && !value.$id && (typeof value === 'object') &&
@@ -6988,7 +6955,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	if (avalon.window.Proxy) {
 	    function adjustVm(vm, expr) {
-	        if (vm.$mapping) {
+	        if (vm.$mapping) {//$mapping是保持此子vm对应的顶层vm
 	            var toppath = expr.split(".")[0]
 	            return vm.$mapping[toppath] || vm
 	        } else {

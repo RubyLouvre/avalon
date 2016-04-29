@@ -30,32 +30,8 @@ var dir = avalon.directive('widget', {
             '__vmodel__ = __backup__;']
         return ret.join('\n') + '\n'
     },
-    define: function (topVm, defaults, options, accessors) {
-        var after = avalon.mix({}, defaults, options)
-        var events = {}
-        //绑定生命周期的回调
-        'onInit onReady onViewChange onDispose'.replace(/\S+/g, function (a) {
-            if (typeof after[a] === 'function')
-                events[a] = after[a]
-            delete after[a]
-        })
-        var vm = avalon.mediatorFactory(topVm, after)
-        if (accessors.length) {
-            accessors.forEach(function (bag) {
-                vm = avalon.mediatorFactory(vm, bag)
-            })
-        }
-        ++avalon.suspendUpdate
-        for (var i in after) {
-            if (skipArray[i])
-                continue
-            vm[i] = after[i]
-        }
-        --avalon.suspendUpdate
-        for (i in events) {
-            vm.$watch(i, events[i])
-        }
-        return vm
+    define: function () { 
+        return avalon.mediatorFactory.apply(this, arguments)
     },
     diff: function (cur, pre, steps) {
         var coms = avalon.resolvedComponents

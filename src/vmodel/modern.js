@@ -90,7 +90,7 @@ function slaveFactory(before, after, heirloom, options) {
             } else {
                 sid = options.id + "." + key
                 spath = pathname ? pathname + "." + key : key
-                accessors[key] = makeObservable(sid, spath, heirloom)
+                accessors[key] = makeAccessor(sid, spath, heirloom)
             }
         }
     }
@@ -115,24 +115,34 @@ function slaveFactory(before, after, heirloom, options) {
 }
 
 $$midway.slaveFactory = slaveFactory
-
-function mediatorFactory(before, after, heirloom) {
+var empty = {}
+function mediatorFactory(before, after) {
     var keys = {}
     var accessors = {}
-
-    //收集所有键值对及访问器属性
-    for (var key in before) {
-        keys[key] = before[key]
-        var accessor = Object.getOwnPropertyDescriptor(before, key)
-        if (accessor.set) {
-            accessors[key] = accessor
+    var unresolve = {}
+    var heirloom = {}
+    for (var i = 0; i < arguments.length; i++) {
+        var obj = arguments[i]
+        //收集所有键值对及访问器属性
+        for (var key in obj) {
+            keys[key] = obj[key]
+            var accessor = Object.getOwnPropertyDescriptor(obj, key)
+            if (accessor.set) {
+                accessors[key] = accessor
+            } else if (typeof keys[key] !== 'function') {
+                unresolve[key] = 1
+            }
         }
     }
-    for (var key in after) {
-        keys[key] = after[key]
-        var accessor = Object.getOwnPropertyDescriptor(after, key)
-        if (accessor.set) {
-            accessors[key] = accessor
+    if(typeof this == 'function'){
+        this(keys, unresolve)
+    }
+    for (key in unresolve) {
+        if ($$skipArray[key])
+            continue
+        if (!isSkip(key, keys[key], empty)) {
+            accessors[key] = makeAccessor(before.$id + "." + key, key, heirloom)
+            accessors[key].set(keys[key])
         }
     }
 
@@ -146,12 +156,12 @@ function mediatorFactory(before, after, heirloom) {
         keys[key] = true
     }
 
-    makeObserver($vmodel, heirloom || {}, keys, accessors, {
+    makeObserver($vmodel, heirloom, keys, accessors, {
         id: before.$id,
         hashcode: makeHashCode("$"),
         master: true
     })
-    if(after.$id && before.$element){
+    if (after.$id && before.$element) {
         after.$element = before.$element
         after.$render = before.$render
     }
