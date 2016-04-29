@@ -24,7 +24,7 @@ function canObserve(key, value, skipArray) {
             (!value.nodeType && !value.nodeName)
 }
 function hasOwn(name) {
-   return (';;' + this.$track + ';;').indexOf(';;' + name + ';;') > -1
+    return (';;' + this.$track + ';;').indexOf(';;' + name + ';;') > -1
 }
 function toJson(val) {
     var xtype = avalon.type(val)
@@ -86,10 +86,14 @@ if (avalon.window.Proxy) {
             }
         }
         definition.$track = keys.sort().join(';;')
-        var vm = Proxy.create ? Proxy.create(definition, handlers) : new Proxy(definition, handlers)
+        var vm = proxyfy(definition)
         return makeObserver(vm, heirloom, {}, {}, options)
     }
-
+    
+    function proxyfy(definition) {
+        return Proxy.create ? Proxy.create(definition, handlers) :
+                new Proxy(definition, handlers)
+    }
     $$midway.masterFactory = masterFactory
     //old = before, definition = after
     function slaveFactory(before, after, heirloom) {
@@ -117,8 +121,8 @@ if (avalon.window.Proxy) {
 
     $$midway.slaveFactory = slaveFactory
 
-    function mediatorFactory(before, after) {
-       
+    function mediatorFactory(before) {
+
         var $skipArray = {}
         var definition = {}
         var $mapping = {}
@@ -136,33 +140,23 @@ if (avalon.window.Proxy) {
                         id: definition.$id + '.' + key
                     })
                 }
+                $mapping[key] = obj
             }
-            $mapping[key] = obj
-            after = obj
+            var _after = obj
         }
-         var afterIsProxy = after.$id && after.$events
-        if(typeof this === 'function'){
+        if (typeof this === 'function') {
             this($mapping, definition)
         }
 
-       
         definition.$track = Object.keys(definition).sort().join(';;')
 
-        var vm =  Proxy.create ? Proxy.create(definition, handlers) : new Proxy(definition, handlers)
-        if (!afterIsProxy) {
-            for (var i in $mapping) {
-                if ($mapping[i] === after) {
-                    $mapping[i] = vm
-                }
-            }
-        }
-
+        var vm = proxyfy(definition)
         vm.$mapping = $mapping
-        if(after.$id && before.$element){
-            after.$element = before.$element
-            after.$render = before.$render
+        
+        if (_after.$id && before.$element) {
+            _after.$element = before.$element
+            _after.$render = before.$render
         }
-       // console.log(vm.$mapping)
         return makeObserver(vm, heirloom, {}, {}, {
             id: before.$id,
             hashcode: makeHashCode('$'),
@@ -183,7 +177,7 @@ if (avalon.window.Proxy) {
                 enumerable: false,
                 configurable: true
             })
-        }else{
+        } else {
             $vmodel.hasOwnProperty = hasOwn
         }
 
@@ -248,7 +242,7 @@ if (avalon.window.Proxy) {
                 var args = [a, b]
                 for (var j = 0, jn = neo.length; j < jn; j++) {
                     var item = old[j]
-         
+
                     args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, {
                         id: this.$id + '.*',
                         master: true
@@ -280,9 +274,6 @@ if (avalon.window.Proxy) {
     })
 }
 
-
-
-
 var handlers = {
     deleteProperty: function (target, name) {
         if (target.hasOwnProperty(name)) {
@@ -309,7 +300,7 @@ var handlers = {
                 arr.push(name)
                 target.$track = arr.sort().join(';;')
             }
-           
+
             target[name] = value
             if (!$$skipArray[name]) {
                 var curVm = target.$events.__vmodel__
@@ -319,16 +310,15 @@ var handlers = {
 
                 var path = arr.concat(name).join('.')
                 var vm = adjustVm(curVm, path)
-                
-                 if(value && typeof value === 'object' && !value.$id){
+                if (value && typeof value === 'object' && !value.$id) {
                     value = $$midway.modelAdaptor(value, oldValue, vm.$events, {
                         pathname: path,
                         id: target.$id
                     })
                     target[name] = value
-                 }
-                
-                
+                }
+
+
                 var list = vm.$events[path]
                 if (list && list.length) {
                     $emit(list, vm, path, value, oldValue)

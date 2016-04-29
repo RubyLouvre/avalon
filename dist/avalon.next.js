@@ -6932,7 +6932,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            (!value.nodeType && !value.nodeName)
 	}
 	function hasOwn(name) {
-	   return (';;' + this.$track + ';;').indexOf(';;' + name + ';;') > -1
+	    return (';;' + this.$track + ';;').indexOf(';;' + name + ';;') > -1
 	}
 	function toJson(val) {
 	    var xtype = avalon.type(val)
@@ -6994,10 +6994,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	        definition.$track = keys.sort().join(';;')
-	        var vm = Proxy.create ? Proxy.create(definition, handlers) : new Proxy(definition, handlers)
+	        var vm = proxyfy(definition)
 	        return makeObserver(vm, heirloom, {}, {}, options)
 	    }
-
+	    
+	    function proxyfy(definition) {
+	        return Proxy.create ? Proxy.create(definition, handlers) :
+	                new Proxy(definition, handlers)
+	    }
 	    $$midway.masterFactory = masterFactory
 	    //old = before, definition = after
 	    function slaveFactory(before, after, heirloom) {
@@ -7025,8 +7029,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    $$midway.slaveFactory = slaveFactory
 
-	    function mediatorFactory(before, after) {
-	       
+	    function mediatorFactory(before) {
+
 	        var $skipArray = {}
 	        var definition = {}
 	        var $mapping = {}
@@ -7044,33 +7048,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        id: definition.$id + '.' + key
 	                    })
 	                }
+	                $mapping[key] = obj
 	            }
-	            $mapping[key] = obj
-	            after = obj
+	            var _after = obj
 	        }
-	         var afterIsProxy = after.$id && after.$events
-	        if(typeof this === 'function'){
+	        if (typeof this === 'function') {
 	            this($mapping, definition)
 	        }
 
-	       
 	        definition.$track = Object.keys(definition).sort().join(';;')
 
-	        var vm =  Proxy.create ? Proxy.create(definition, handlers) : new Proxy(definition, handlers)
-	        if (!afterIsProxy) {
-	            for (var i in $mapping) {
-	                if ($mapping[i] === after) {
-	                    $mapping[i] = vm
-	                }
-	            }
-	        }
-
+	        var vm = proxyfy(definition)
 	        vm.$mapping = $mapping
-	        if(after.$id && before.$element){
-	            after.$element = before.$element
-	            after.$render = before.$render
+	        
+	        if (_after.$id && before.$element) {
+	            _after.$element = before.$element
+	            _after.$render = before.$render
 	        }
-	       // console.log(vm.$mapping)
 	        return makeObserver(vm, heirloom, {}, {}, {
 	            id: before.$id,
 	            hashcode: makeHashCode('$'),
@@ -7091,7 +7085,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                enumerable: false,
 	                configurable: true
 	            })
-	        }else{
+	        } else {
 	            $vmodel.hasOwnProperty = hasOwn
 	        }
 
@@ -7156,7 +7150,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var args = [a, b]
 	                for (var j = 0, jn = neo.length; j < jn; j++) {
 	                    var item = old[j]
-	         
+
 	                    args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, {
 	                        id: this.$id + '.*',
 	                        master: true
@@ -7188,9 +7182,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 	}
 
-
-
-
 	var handlers = {
 	    deleteProperty: function (target, name) {
 	        if (target.hasOwnProperty(name)) {
@@ -7217,7 +7208,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                arr.push(name)
 	                target.$track = arr.sort().join(';;')
 	            }
-	           
+
 	            target[name] = value
 	            if (!$$skipArray[name]) {
 	                var curVm = target.$events.__vmodel__
@@ -7227,16 +7218,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	                var path = arr.concat(name).join('.')
 	                var vm = adjustVm(curVm, path)
-	                
-	                 if(value && typeof value === 'object' && !value.$id){
+	                if (value && typeof value === 'object' && !value.$id) {
 	                    value = $$midway.modelAdaptor(value, oldValue, vm.$events, {
 	                        pathname: path,
 	                        id: target.$id
 	                    })
 	                    target[name] = value
-	                 }
-	                
-	                
+	                }
+
+
 	                var list = vm.$events[path]
 	                if (list && list.length) {
 	                    $emit(list, vm, path, value, oldValue)
