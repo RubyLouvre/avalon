@@ -3651,10 +3651,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return vm
 	    },
 	    diff: function (cur, pre, steps) {
-	        
 	        var coms = avalon.resolvedComponents
 	        var wid = cur.props.wid
-
 	        var docker = coms[wid]
 	        if (!docker.renderCount) {
 	            cur.change = [this.replaceByComment]
@@ -3665,7 +3663,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            avalon.Array.ensure(list, this.replaceByComponent)
 	            cur.afterChange = [
 	                function (dom, vnode) {
-	                    vnode.vmodel.$element = dom
 	                    cur.vmodel.$fire('onReady', {
 	                        type: 'ready',
 	                        target: dom,
@@ -4698,7 +4695,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.suspendUpdate = 0
 	var isBatchingUpdates = false
 	function batchUpdate(id, immediate) {
-	    var vm = avalon.vmodels[id] || {}
+	    var vm = typeof id === 'string' ?  avalon.vmodels[id]||{} : id
 	    if (dirtyTrees[id]) {
 	        avalon.Array.ensure(needRenderIds, id)
 	    } else {
@@ -4769,6 +4766,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (typeof name === 'string') {
 	        if (!avalon.components[name]) {
 	            avalon.components[name] = definition
+	            var _defaults = definition.defaults
+	            if (typeof _defaults === 'object') {
+	                var _id = ("_" + new Date - 0)
+	                _defaults.$id = _id
+	                definition.defaults = avalon.define(_defaults)
+	                delete avalon.vmodels[ _id ]
+	            }
 	        }
 	        //这里没有返回值
 	    } else {
@@ -4779,7 +4783,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var wid = node.props.wid
 	        //将ms-widget的值合并成一个纯粹的对象,并且将里面的vm抽取vms数组中
 	        var options = node.props['ms-widget'] || {}
+	        
 	        var vms = []
+	        
 	        if (Array.isArray(options)) {
 	            vms = options.filter(function (el) {
 	                return el.$id
@@ -4859,20 +4865,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var define = options.define
 	            define = define || avalon.directives.widget.define
 	            var $id = options.$id || avalon.makeHashCode(tagName.replace(/-/g, '_'))
-
 	            try { //options可能是vm, 在IE下使用delete会报错
 	                delete options.is
 	                delete options.diff
 	                delete options.define
 	            } catch (e) {
 	            }
-	            var vmodel = define(topVm, definition.defaults, options, vms)
+	            var defaults = definition.defaults
+	            if(defaults && defaults.$id){
+	                defaults.$element = topVm.$element
+	                defaults.$render = topVm.$render
+	                vms.push(defaults)
+	            }
+	            var vmodel = define(topVm, defaults, options, vms)
 	            vmodel.$id = $id
+	            vmodel.$element = topVm.$element
 	            avalon.vmodels[$id] = vmodel
+	          
 	            //生成组件的render
 	            var num = num || String(new Date - 0).slice(0, 6)
 	            var render = parseView(vtree, num) + '\nreturn (avalon.__widget = vnodes' + num + ');\n'
-	            vmodel.$render = render
+	            vmodel.$render = topVm.$render
 	            //触发onInit回调
 	            vmodel.$fire('onInit', {
 	                type: 'init',
@@ -4898,7 +4911,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return type.length > 3 && type.indexOf('-') > 0 &&
 	            ralphabet.test(type.charAt(0) + type.slice(-1))
 	}
-	avalon.renderWidget = function(widgetNode){
+	avalon.renderWidget = function (widgetNode) {
 	    var docker = avalon.resolvedComponents[widgetNode.props.wid]
 	    widgetNode.order = 'ms-widget;;' + widgetNode.order
 	    if (!isComponentReady(widgetNode)) {
@@ -4925,9 +4938,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function hasUnresolvedComponent(vnode) {
-
 	    vnode.children.forEach(function (el) {
-	        if (el.nodeType === 8) {
+	        if (el.nodeType === 8 && el.props) {
 	            if ('ms-widget' in el.props) {
 	                throw 'unresolved'
 	            }
@@ -5088,7 +5100,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            var older = old
 	            old = val
+	         
 	            var vm = heirloom.__vmodel__
+	             
 	            if (this.$hashcode && vm) {
 	                //★★确保切换到新的events中(这个events可能是来自oldProxy)               
 	                if (heirloom !== vm.$events) {
@@ -5104,10 +5118,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }
 	                }
 	               
-	                var vid = vm.$id.split('.')[0]
 	                avalon.rerenderStart = new Date
-	                avalon.batch(vid, true)
-
+	                var dotIndex = vm.$id.indexOf('.')
+	                if(dotIndex > 0){
+	                    avalon.batch(vm.$id(0, dotIndex), true)
+	                }else{
+	                    avalon.batch(vm, true)
+	                }
+	              
 	            }
 	        },
 	        enumerable: true,
@@ -5155,7 +5173,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                vm.$fire(path, b, c)
 	                if (!d && !avalon.suspendUpdate) {
 	                    avalon.rerenderStart = new Date
-	                    avalon.batch(vm.$id, true)
+	                    avalon.batch(vm, true)
 	                }
 	            }
 	        }

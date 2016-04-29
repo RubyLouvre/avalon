@@ -58,10 +58,8 @@ var dir = avalon.directive('widget', {
         return vm
     },
     diff: function (cur, pre, steps) {
-        
         var coms = avalon.resolvedComponents
         var wid = cur.props.wid
-
         var docker = coms[wid]
         if (!docker.renderCount) {
             cur.change = [this.replaceByComment]
@@ -72,7 +70,6 @@ var dir = avalon.directive('widget', {
             avalon.Array.ensure(list, this.replaceByComponent)
             cur.afterChange = [
                 function (dom, vnode) {
-                    vnode.vmodel.$element = dom
                     cur.vmodel.$fire('onReady', {
                         type: 'ready',
                         target: dom,

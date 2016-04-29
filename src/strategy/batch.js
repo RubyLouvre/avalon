@@ -14,7 +14,7 @@ var needRenderIds = []
 avalon.suspendUpdate = 0
 var isBatchingUpdates = false
 function batchUpdate(id, immediate) {
-    var vm = avalon.vmodels[id] || {}
+    var vm = typeof id === 'string' ?  avalon.vmodels[id]||{} : id
     if (dirtyTrees[id]) {
         avalon.Array.ensure(needRenderIds, id)
     } else {

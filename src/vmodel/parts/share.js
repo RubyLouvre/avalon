@@ -85,7 +85,9 @@ function makeAccessor(sid, spath, heirloom) {
             }
             var older = old
             old = val
+         
             var vm = heirloom.__vmodel__
+             
             if (this.$hashcode && vm) {
                 //★★确保切换到新的events中(这个events可能是来自oldProxy)               
                 if (heirloom !== vm.$events) {
@@ -101,10 +103,14 @@ function makeAccessor(sid, spath, heirloom) {
                     }
                 }
                
-                var vid = vm.$id.split('.')[0]
                 avalon.rerenderStart = new Date
-                avalon.batch(vid, true)
-
+                var dotIndex = vm.$id.indexOf('.')
+                if(dotIndex > 0){
+                    avalon.batch(vm.$id(0, dotIndex), true)
+                }else{
+                    avalon.batch(vm, true)
+                }
+              
             }
         },
         enumerable: true,
@@ -152,7 +158,7 @@ function arrayFactory(array, old, heirloom, options) {
                 vm.$fire(path, b, c)
                 if (!d && !avalon.suspendUpdate) {
                     avalon.rerenderStart = new Date
-                    avalon.batch(vm.$id, true)
+                    avalon.batch(vm, true)
                 }
             }
         }
