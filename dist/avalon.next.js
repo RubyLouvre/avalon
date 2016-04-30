@@ -1,4 +1,4 @@
-/*! built in 2016-4-30:10 version 2.0 by 司徒正美 */
+/*! built in 2016-4-30:22 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1569,8 +1569,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            '\n})\n'
 	                    forstack.pop()
 	                }
-	            } else if (nodeValue.indexOf('ms-js:') === 0) {//插入普通JS代码
-	                str += parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
 	            } else {
 	                str += children + '.push(' + quote(el) + ')\n\n\n'
 	            }
@@ -6929,7 +6927,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var share = __webpack_require__(78)
 	var $$midway = share.$$midway
 	var $$skipArray = share.$$skipArray
-	$$skipArray.$mapping = true
+	$$skipArray.$compose = true
+	$$skipArray.$decompose = true
 	delete $$skipArray
 	var modelAdaptor = share.modelAdaptor
 	var makeHashCode = avalon.makeHashCode
@@ -6969,9 +6968,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	if (avalon.window.Proxy) {
 	    function adjustVm(vm, expr) {
-	        if (vm.$mapping) {//$mapping是保持此子vm对应的顶层vm
+	        if (vm.$compose) {//$compose是保持此子vm对应的顶层vm
 	            var toppath = expr.split(".")[0]
-	            return vm.$mapping[toppath] || vm
+	            return vm.$compose[toppath] || vm
 	        } else {
 	            return vm
 	        }
@@ -7043,14 +7042,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    $$midway.slaveFactory = slaveFactory
 
 	    function mediatorFactory(before) {
-
 	        var $skipArray = {}
 	        var definition = {}
-	        var $mapping = {}
-	        var heirloom = {}
-	        //将这个属性名对应的Proxy放到$mapping中
+	        var $compose = {}
+	        var heirloom = {}, _after
+	        //将这个属性名对应的Proxy放到$compose中
 	        for (var i = 0; i < arguments.length; i++) {
 	            var obj = arguments[i]
+	            var isVm = obj.$id && obj.$events
 	            //收集所有键值对及访问器属性
 	            for (var key in obj) {
 	                if ($$skipArray[key])
@@ -7061,18 +7060,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        id: definition.$id + '.' + key
 	                    })
 	                }
-	                $mapping[key] = obj
+	                if(isVm)
+	                  $compose[key] = obj
 	            }
-	            var _after = obj
+	            if(isVm)
+	               _after = obj
 	        }
 	        if (typeof this === 'function') {
-	            this($mapping, definition)
+	            this($compose, definition)
 	        }
 
 	        definition.$track = Object.keys(definition).sort().join(';;')
 
 	        var vm = proxyfy(definition)
-	        vm.$mapping = $mapping
+	        vm.$compose = $compose
+	        for(var i in $compose){
+	            var part = $compose[i]
+	            if(!part.$decompose){
+	                part.$decompose = {}
+	            }
+	            part.$decompose[i] = vm
+	        }
+	        
 	        
 	        if (_after.$id && before.$element) {
 	            _after.$element = before.$element
@@ -7209,11 +7218,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return target[name]
 	    },
 	    set: function (target, name, value) {
-	        if (name === '$model') {
+	        if (name === '$model'  ) {
 	            return
 	        }
 	        var oldValue = target[name]
-	        if (oldValue !== value) {
+	        if (oldValue !== value ) {
 	            //如果是新属性
 	            if (!$$skipArray[name] && oldValue === void 0 &&
 	                    !target.hasOwnProperty(name)) {
@@ -7221,8 +7230,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	                arr.push(name)
 	                target.$track = arr.sort().join(';;')
 	            }
-
 	            target[name] = value
+	            if(target.$decompose){
+	               //让组成mediatorVm的各个顶层vm反向同步meditorVm
+	               var whole = target.$decompose[name] 
+	               if(whole && (name in whole)){
+	                   if(whole.$hashcode){
+	                       whole[name] = value
+	                   }else{//如果元素不存在就移除
+	                       delete target.$decompose[name] 
+	                   }
+	                   return
+	               }
+	            }
+	           
 	            if (!$$skipArray[name]) {
 	                var curVm = target.$events.__vmodel__
 	                //触发视图变更

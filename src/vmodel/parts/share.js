@@ -1,7 +1,7 @@
 
 var $$midway = {}
 var $$skipArray = require('./skipArray')
-var dispatch = require('../../strategy/dispatch')
+var dispatch = require('./dispatch')
 var $emit = dispatch.$emit
 var $watch = dispatch.$watch
 

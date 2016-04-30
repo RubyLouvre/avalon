@@ -8,11 +8,12 @@
 var share = require('./parts/share')
 var $$midway = share.$$midway
 var $$skipArray = share.$$skipArray
-$$skipArray.$mapping = true
+$$skipArray.$compose = true
+$$skipArray.$decompose = true
 delete $$skipArray
 var modelAdaptor = share.modelAdaptor
 var makeHashCode = avalon.makeHashCode
-var dispatch = require('../strategy/dispatch')
+var dispatch = require('./parts/dispatch')
 
 var $emit = dispatch.$emit
 var $watch = dispatch.$watch
@@ -48,9 +49,9 @@ share.toJson = toJson
 
 if (avalon.window.Proxy) {
     function adjustVm(vm, expr) {
-        if (vm.$mapping) {//$mapping是保持此子vm对应的顶层vm
+        if (vm.$compose) {//$compose是保持此子vm对应的顶层vm
             var toppath = expr.split(".")[0]
-            return vm.$mapping[toppath] || vm
+            return vm.$compose[toppath] || vm
         } else {
             return vm
         }
@@ -122,14 +123,14 @@ if (avalon.window.Proxy) {
     $$midway.slaveFactory = slaveFactory
 
     function mediatorFactory(before) {
-
         var $skipArray = {}
         var definition = {}
-        var $mapping = {}
-        var heirloom = {}
-        //将这个属性名对应的Proxy放到$mapping中
+        var $compose = {}
+        var heirloom = {}, _after
+        //将这个属性名对应的Proxy放到$compose中
         for (var i = 0; i < arguments.length; i++) {
             var obj = arguments[i]
+            var isVm = obj.$id && obj.$events
             //收集所有键值对及访问器属性
             for (var key in obj) {
                 if ($$skipArray[key])
@@ -140,18 +141,28 @@ if (avalon.window.Proxy) {
                         id: definition.$id + '.' + key
                     })
                 }
-                $mapping[key] = obj
+                if(isVm)
+                  $compose[key] = obj
             }
-            var _after = obj
+            if(isVm)
+               _after = obj
         }
         if (typeof this === 'function') {
-            this($mapping, definition)
+            this($compose, definition)
         }
 
         definition.$track = Object.keys(definition).sort().join(';;')
 
         var vm = proxyfy(definition)
-        vm.$mapping = $mapping
+        vm.$compose = $compose
+        for(var i in $compose){
+            var part = $compose[i]
+            if(!part.$decompose){
+                part.$decompose = {}
+            }
+            part.$decompose[i] = vm
+        }
+        
         
         if (_after.$id && before.$element) {
             _after.$element = before.$element
@@ -288,11 +299,11 @@ var handlers = {
         return target[name]
     },
     set: function (target, name, value) {
-        if (name === '$model') {
+        if (name === '$model'  ) {
             return
         }
         var oldValue = target[name]
-        if (oldValue !== value) {
+        if (oldValue !== value ) {
             //如果是新属性
             if (!$$skipArray[name] && oldValue === void 0 &&
                     !target.hasOwnProperty(name)) {
@@ -300,8 +311,20 @@ var handlers = {
                 arr.push(name)
                 target.$track = arr.sort().join(';;')
             }
-
             target[name] = value
+            if(target.$decompose){
+               //让组成mediatorVm的各个顶层vm反向同步meditorVm
+               var whole = target.$decompose[name] 
+               if(whole && (name in whole)){
+                   if(whole.$hashcode){
+                       whole[name] = value
+                   }else{//如果元素不存在就移除
+                       delete target.$decompose[name] 
+                   }
+                   return
+               }
+            }
+           
             if (!$$skipArray[name]) {
                 var curVm = target.$events.__vmodel__
                 //触发视图变更
