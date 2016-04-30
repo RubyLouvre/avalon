@@ -32,11 +32,10 @@ describe('for', function () {
              <ul>
              <li ms-for='($index, el) in @array | limitBy(4)'>{{$index}}::{{el}}</li>
              </ul>
-             <ol><!--ms-js: var $index = 0; -->
-             <li ms-for='($key, $val) in @object'>{{$key}}::{{$val}}::{{$index++}}</li>
+             <ol>
+             <li ms-for='($key, $val) in @object'>{{$key}}::{{$val}}</li>
              </ol>
              <!--ms-for: ($index,el) in @array   -->
-             <!--ms-js: if($index > 3){ return }-->
              <p>{{el}}</p>
              <!--ms-for-end:-->
              </div>
@@ -61,15 +60,16 @@ describe('for', function () {
             expect(lis[1].innerHTML).to.equal('1::2')
             expect(lis[2].innerHTML).to.equal('2::3')
             expect(lis[3].innerHTML).to.equal('3::4')
-            expect(lis[4].innerHTML).to.equal('a::11::0')
-            expect(lis[5].innerHTML).to.equal('b::22::1')
-            expect(lis[6].innerHTML).to.equal('c::33::2')
-            expect(lis[7].innerHTML).to.equal('d::44::3')
-            expect(lis[8].innerHTML).to.equal('e::55::4')
+            expect(lis[4].innerHTML).to.equal('a::11')
+            expect(lis[5].innerHTML).to.equal('b::22')
+            expect(lis[6].innerHTML).to.equal('c::33')
+            expect(lis[7].innerHTML).to.equal('d::44')
+            expect(lis[8].innerHTML).to.equal('e::55')
             expect(ps[0].innerHTML).to.equal('1')
             expect(ps[1].innerHTML).to.equal('2')
             expect(ps[2].innerHTML).to.equal('3')
             expect(ps[3].innerHTML).to.equal('4')
+            expect(ps[4].innerHTML).to.equal('5')
             vm.array.reverse()
             vm.array.unshift(9)
             setTimeout(function () {
@@ -81,6 +81,7 @@ describe('for', function () {
                 expect(ps[1].innerHTML).to.equal('5')
                 expect(ps[2].innerHTML).to.equal('4')
                 expect(ps[3].innerHTML).to.equal('3')
+                expect(ps[4].innerHTML).to.equal('2')
                 done()
             })
         })
