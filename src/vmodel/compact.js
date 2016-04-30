@@ -138,7 +138,8 @@ function mediatorFactory(before, after) {
         this(keys, unresolve)
     }
     for (key in unresolve) {
-        if ($$skipArray[key])
+        //系统属性跳过,已经有访问器的属性跳过
+        if ($$skipArray[key] || accessors[key])
             continue
         if (!isSkip(key, keys[key], empty)) {
             accessors[key] = makeAccessor(before.$id, key, heirloom)

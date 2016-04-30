@@ -136,7 +136,7 @@ function mediatorFactory(before, after) {
         this(keys, unresolve)
     }
     for (key in unresolve) {
-        if ($$skipArray[key])
+        if ($$skipArray[key] || accessors[key])
             continue
         if (!isSkip(key, keys[key], empty)) {
             accessors[key] = makeAccessor(before.$id + '.' + key, key, heirloom)

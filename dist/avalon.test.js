@@ -1,4 +1,4 @@
-/*! built in 2016-4-30:10 version 2.0 by 司徒正美 */
+/*! built in 2016-4-30:21 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1575,8 +1575,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            '\n})\n'
 	                    forstack.pop()
 	                }
-	            } else if (nodeValue.indexOf('ms-js:') === 0) {//插入普通JS代码
-	                str += parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
 	            } else {
 	                str += children + '.push(' + quote(el) + ')\n\n\n'
 	            }
@@ -7061,7 +7059,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this(keys, unresolve)
 	    }
 	    for (key in unresolve) {
-	        if ($$skipArray[key])
+	        if ($$skipArray[key] || accessors[key])
 	            continue
 	        if (!isSkip(key, keys[key], empty)) {
 	            accessors[key] = makeAccessor(before.$id + '.' + key, key, heirloom)
