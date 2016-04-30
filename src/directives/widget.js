@@ -74,7 +74,7 @@ var dir = avalon.directive('widget', {
                             cur.vmodel.$fire('onViewChange', {
                                 type: 'viewchange',
                                 target: dom,
-                                wid:wid,
+                                wid: wid,
                                 vmodel: vnode.vmodel
                             })
                         }

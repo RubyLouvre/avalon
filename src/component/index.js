@@ -1,14 +1,16 @@
 
 var VText = require('../vdom/VText')
 var outerTags = avalon.oneObject('wbr,xmp,template')
-
+var parseView = require('../strategy/parser/parseView')
 var resolvedComponents = avalon.resolvedComponents
 var skipWidget = {'ms-widget': 1, widget: 1, resolved: 1}
-var parseView = require('../strategy/parser/parseView')
-var componentEvents = ['onInit', 'onReady', 'onViewChange', 'onDispose']
+var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose')
+var moreSkip = avalon.mix({
+    is: 1,
+    diff: 1,
+    define: 1
+}, componentEvents)
 avalon.document.createElement('slot')
-
-var skipProps = avalon.oneObject(['is', 'diff', 'define'].concat(componentEvents))
 
 avalon.component = function (name, definition) {
     //这是定义组件的分支,并将列队中的同类型对象移除
@@ -29,13 +31,13 @@ avalon.component = function (name, definition) {
             props: {'ms-widget': wid},
             nodeValue: 'ms-widget placeholder'
         }
-        
+
         //处理ms-widget的参数
         var optionMixin = {}
         function mixinHooks(option, index) {
             for (var k in option) {
                 var v = option[k]
-                if (componentEvents.indexOf(k)!== -1) {
+                if (componentEvents[k]) {
                     if (k in optionMixin) {
                         optionMixin[k].push(v)
                     } else {
@@ -90,9 +92,9 @@ avalon.component = function (name, definition) {
                 avalon.warn('模板容器标签最好为' + tagName)
             }
             //将用户标签中的属性合并到组件标签的属性里
-            for (var i in docker.props) {
-                if (!skipWidget[i]) {
-                    widgetNode.props[i] = docker.props[i]
+            for (var k in docker.props) {
+                if (!skipWidget[k]) {
+                    widgetNode.props[k] = docker.props[k]
                 }
             }
 
@@ -115,21 +117,21 @@ avalon.component = function (name, definition) {
             mixinHooks(defaults, false)
             var defineArgs = [topVm, defaults].concat(options)
             var vmodel = define.apply(function (a, b) {
-                for (var s in skipProps) {
-                    delete a[s]
-                    delete b[s]
+                for (var k in moreSkip) {
+                    delete a[k]
+                    delete b[k]
                 }
             }, defineArgs)
             vmodel.$id = $id
             vmodel.$element = topVm.$element
             avalon.vmodels[$id] = vmodel
-            componentEvents.forEach(function (k) {
+            for (k in componentEvents) {
                 if (optionMixin[k]) {
                     optionMixin[k].forEach(function (fn) {
                         vmodel.$watch(k, fn)
                     })
                 }
-            })
+            }
 
             //生成组件的render
             var num = num || String(new Date - 0).slice(0, 6)

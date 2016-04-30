@@ -29,10 +29,14 @@
                 }
 
             })
+            
 
             var vm = avalon.define({
                 $id: 'test',
-                aaa: '测试测试'
+                aaa: '测试测试',
+                click:function(){
+                    document.body.innerHTML = ''
+                }
             })
 
         </script>
@@ -42,5 +46,6 @@
         <div>{{@aaa}}</div>
     <xmp ms-widget="{is:'ms-pager'}"></xmp>
     <ms-pager></ms-pager>
+    <button ms-click="@click" type="button">ddd</button>
 </body>
 </html>
