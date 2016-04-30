@@ -72,14 +72,14 @@ function initControl(cur) {
                     // but that's an acceptable compromise for this binding. IE 9 does support 'input', but since it doesn't fire it
                     // when using autocomplete, we'll use 'propertychange' for it also.
                     events.propertychange = updateModelHack
-                    if (msie === 8) {
+                    if (msie > 7 ) {
                         // IE 8 has a bug where it fails to fire 'propertychange' on the first update following a value change from
                         // JavaScript code. It also doesn't fire if you clear the entire value. To fix this, we bind to the following
                         // events too.
                         events.keyup = updateModel      // A single keystoke
                         events.keydown = updateModel    // The first character when a key is held down
                     }
-                    if (msie >= 8) {
+                    if (msie > 8) {
                         // Internet Explorer 9 doesn't fire the 'input' event when deleting text, including using
                         // the backspace, delete, or field-x keys, clicking the 'x' to clear the input, dragging text
                         // out of the field, and cutting or deleting text using the context menu. 'selectionchange'
