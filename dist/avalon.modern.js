@@ -1,4 +1,4 @@
-/*! built in 2016-4-30:22 version 2.0 by 司徒正美 */
+/*! built in 2016-4-30:23 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1568,6 +1568,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            '\n})\n'
 	                    forstack.pop()
 	                }
+	            } else if (nodeValue.indexOf('ms-js:') === 0) {//插入普通JS代码
+	                str += parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
 	            } else {
 	                str += children + '.push(' + quote(el) + ')\n\n\n'
 	            }
@@ -5100,7 +5102,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                avalon.rerenderStart = new Date
 	                var dotIndex = vm.$id.indexOf('.')
 	                if(dotIndex > 0){
-	                    avalon.batch(vm.$id(0, dotIndex), true)
+	                    avalon.batch(vm.$id.slice(0, dotIndex), true)
 	                }else{
 	                    avalon.batch(vm, true)
 	                }
