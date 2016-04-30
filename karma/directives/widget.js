@@ -141,9 +141,9 @@ describe('widget', function () {
                 }, 300)
             }, 300)
         }, 300)
-    }, 100)
+    })
 
-    it('确保都被扫描', function () {
+    it('确保都被扫描', function (done) {
         div.innerHTML = heredoc(function () {
             /*
              <form ms-controller='widget3'>
@@ -180,6 +180,72 @@ describe('widget', function () {
                 done()
             })
         })
+    });
+
+    it('确保生命周期钩子都生效,其onViewChange回调会在config被修复也触发', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <form ms-controller='widget4'>
+             <wbr ms-widget="[{is:'ms-dialog',$id:'aaa'},@config]" />
+             </form>
+             */
+        })
+        var hookIndex = 0
+        avalon.component('ms-dialog', {
+            template: '<div class="dialog"><p><slot name="content"></p></div>',
+            defaults: {
+                buttonText: "内容",
+                onInit: function (a) {
+                    hookIndex++
+                    expect(a.type).to.be.equal('init')
+                },
+                onReady: function (a) {
+                    hookIndex++
+                    expect(a.type).to.be.equal('ready')
+                },
+                onViewChange: function (a) {
+                    hookIndex++
+                    expect(a.type).to.be.equal('viewchange')
+                },
+                onDispose: function (a) {
+                    hookIndex++
+                    expect(a.type).to.be.equal('dispose')
+                }
+            },
+            soleSlot: 'content'
+        })
+        vm = avalon.define({
+            $id: 'widget4',
+            config: {
+                content: '弹窗1'
+            }
+        })
+        avalon.scan(div, vm)
+        setTimeout(function () {
+            var divs = div.getElementsByTagName('div')
+            var successRender = false
+            for (var i = 0, el; el = divs[i++]; ) {
+                if (el.nodeType === 1 && el.className === 'dialog') {
+                    successRender = true
+                    break
+                }
+            }
+            expect(successRender).to.be.equal(true)
+            var hasText = div.innerHTML.indexOf('弹窗1') > 0
+            expect(hasText).to.be.equal(true)
+            vm.config.content = '弹窗2'
+            setTimeout(function () {
+                var hasText = div.innerHTML.indexOf('弹窗2') > 0
+                expect(hasText).to.be.equal(true)
+                div.innerHTML = ''
+                setTimeout(function () {
+                    expect(hookIndex).to.be.equal(4)
+                    done()
+                })
+            })
+
+        })
+
     })
 
 })

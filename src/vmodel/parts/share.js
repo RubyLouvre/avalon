@@ -106,7 +106,7 @@ function makeAccessor(sid, spath, heirloom) {
                 avalon.rerenderStart = new Date
                 var dotIndex = vm.$id.indexOf('.')
                 if(dotIndex > 0){
-                    avalon.batch(vm.$id(0, dotIndex), true)
+                    avalon.batch(vm.$id.slice(0, dotIndex), true)
                 }else{
                     avalon.batch(vm, true)
                 }

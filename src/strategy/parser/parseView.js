@@ -102,6 +102,8 @@ function parseView(arr, num) {
                             '\n})\n'
                     forstack.pop()
                 }
+            } else if (nodeValue.indexOf('ms-js:') === 0) {//插入普通JS代码
+                str += parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
             } else {
                 str += children + '.push(' + quote(el) + ')\n\n\n'
             }
