@@ -38,7 +38,7 @@ if (typeof tran === "string") {
     transitionEndEvent = tran
 }
 
-//大致上有两种选择
+//animationend有两个可用形态
 //IE10+, Firefox 16+ & Opera 12.1+: animationend
 //Chrome/Safari: webkitAnimationEnd
 //http://blogs.msdn.com/b/davrous/archive/2011/12/06/introduction-to-css3-animat ions.aspx
@@ -58,7 +58,7 @@ for (name in checker) {
     }
 }
 if (typeof ani === "string") {
-    supportTransition = true
+    supportAnimation = true
     supportCSS = true
     animationEndEvent = ani
 }

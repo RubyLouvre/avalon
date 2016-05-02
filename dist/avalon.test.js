@@ -1,4 +1,4 @@
-/*! built in 2016-5-1:0 version 2.0 by 司徒正美 */
+/*! built in 2016-5-2:16 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3157,6 +3157,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (var i = 0, vn = vnodes.length; i < vn; i++) {
 	        var vnode = vnodes[i]
 	        var node = next
+	        
 	        //IE6-8不会生成空白的文本节点，造成虚拟DOM与真实DOM的个数不一致，需要跳过,#1333
 	        if(avalon.msie < 9 && !vnode.fixIESkip && vnode.nodeType === 3 && sp.test(vnode.nodeValue) && sp.test(vnode.nodeValue) ){
 	            continue
@@ -3165,7 +3166,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (node)
 	            next = node.nextSibling
 
-	        if (vnode.directive === 'for' && vnode.change) {
+	        if (vnode.directive === 'for' && vnode.change && node) {
 	            if (node.nodeType === 1) {
 	                var startRepeat = document.createComment(vnode.nodeValue)
 	                parent.insertBefore(startRepeat, node)
@@ -3299,12 +3300,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            pre.components = getComponents(range.slice(1, -1), pre.signature)
 	            pre.repeatCount = range.length - 2
 	        }
+	                     
+
 	        var quota = pre.components.length
 	        var nodes = current.slice(cur.start, cur.end)
 	        cur.endRepeat = pre.endRepeat
 	        cur.components = getComponents(nodes.slice(1, -1), cur.signature)
 	        var n = Math.max(nodes.length - 2, 0) - pre.repeatCount
-
 	        if (n > 0) {
 	            var spliceArgs = [__index__ + 1, 0]
 	            for (var i = 0, n = n - 1; i < n; i++) {
@@ -3382,18 +3384,34 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var fragment = document.createDocumentFragment()
 	        var hasEffect = false
 	        if (action === 'init') {
+	            //在ms-widget中,这部分内容会先行被渲染出来
+	            var hasRender = false
 	            var node = startRepeat.nextSibling
 	            while (node && node !== endRepeat) {
-	                if(!hasEffect && node.nodeType === 1){
-	                   hasEffect = node.getAttribute('ms-effect')
+	                if(node.nodeType === 8){
+	                    hasRender = node.nodeValue == vnode.signature
+	                    if(hasRender){
+	                        vnode.hasRender = true
+	                        break
+	                    }
 	                }
-	                parent.removeChild(node)
-	                node = startRepeat.nextSibling
+	                node = node.nextSibling
+	            }
+	            if(!hasRender){
+	                node = startRepeat.nextSibling 
+	                while (node && node !== endRepeat) {
+	                    if(!hasEffect && node.nodeType === 1){
+	                       hasEffect = node.getAttribute('ms-effect')
+	                    }
+	                    parent.removeChild(node)
+	                    node = startRepeat.nextSibling
+	                }
 	            }
 	        }
 	        if (!startRepeat.domTemplate && vnode.components[0]) {
 	            var domTemplate = fragment.cloneNode(false)
-	            componentToDom(vnode.components[0], domTemplate)
+	            if(!vnode.hasRender)
+	              componentToDom(vnode.components[0], domTemplate)
 	            startRepeat.domTemplate = domTemplate
 	        }
 	        var key = vnode.signature
@@ -3437,13 +3455,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	            } else {
 	                var newFragment = startRepeat.domTemplate.cloneNode(true)
 	                cnodes = com.nodes = avalon.slice(newFragment.childNodes)
-	                parent.insertBefore(newFragment, insertPoint.nextSibling)
+	                parent.insertBefore(newFragment,  insertPoint.nextSibling)
 	                applyEffects(com.nodes,com.children,{
 	                    hook:'onEnterDone',
 	                    staggerKey: key+'enter'
 	                })
 	            }
 	            insertPoint = cnodes[cnodes.length - 1]
+	            if(!insertPoint){
+	                break
+	            }
 	        }
 	        var entity = [], vnodes = []
 	        vnode.components.forEach(function (c) {
@@ -4179,7 +4200,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    transitionEndEvent = tran
 	}
 
-	//大致上有两种选择
+	//animationend有两个可用形态
 	//IE10+, Firefox 16+ & Opera 12.1+: animationend
 	//Chrome/Safari: webkitAnimationEnd
 	//http://blogs.msdn.com/b/davrous/archive/2011/12/06/introduction-to-css3-animat ions.aspx
@@ -4199,7 +4220,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 	if (typeof ani === "string") {
-	    supportTransition = true
+	    supportAnimation = true
 	    supportCSS = true
 	    animationEndEvent = ani
 	}

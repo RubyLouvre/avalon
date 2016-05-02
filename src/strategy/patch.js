@@ -13,6 +13,7 @@ function patch(nodes, vnodes, parent, steps) {
     for (var i = 0, vn = vnodes.length; i < vn; i++) {
         var vnode = vnodes[i]
         var node = next
+        
         //IE6-8不会生成空白的文本节点，造成虚拟DOM与真实DOM的个数不一致，需要跳过,#1333
         if(avalon.msie < 9 && !vnode.fixIESkip && vnode.nodeType === 3 && sp.test(vnode.nodeValue) && sp.test(vnode.nodeValue) ){
             continue
@@ -21,7 +22,9 @@ function patch(nodes, vnodes, parent, steps) {
         if (node)
             next = node.nextSibling
 
-        if (vnode.directive === 'for' && vnode.change) {
+        if (vnode.directive === 'for' && vnode.change ) {
+            if(!node)
+                return
             if (node.nodeType === 1) {
                 var startRepeat = document.createComment(vnode.nodeValue)
                 parent.insertBefore(startRepeat, node)

@@ -62,12 +62,13 @@ avalon.directive('for', {
             pre.components = getComponents(range.slice(1, -1), pre.signature)
             pre.repeatCount = range.length - 2
         }
+                     
+
         var quota = pre.components.length
         var nodes = current.slice(cur.start, cur.end)
         cur.endRepeat = pre.endRepeat
         cur.components = getComponents(nodes.slice(1, -1), cur.signature)
         var n = Math.max(nodes.length - 2, 0) - pre.repeatCount
-
         if (n > 0) {
             var spliceArgs = [__index__ + 1, 0]
             for (var i = 0, n = n - 1; i < n; i++) {
@@ -145,18 +146,34 @@ avalon.directive('for', {
         var fragment = document.createDocumentFragment()
         var hasEffect = false
         if (action === 'init') {
+            //在ms-widget中,这部分内容会先行被渲染出来
+            var hasRender = false
             var node = startRepeat.nextSibling
             while (node && node !== endRepeat) {
-                if(!hasEffect && node.nodeType === 1){
-                   hasEffect = node.getAttribute('ms-effect')
+                if(node.nodeType === 8){
+                    hasRender = node.nodeValue == vnode.signature
+                    if(hasRender){
+                        vnode.hasRender = true
+                        break
+                    }
                 }
-                parent.removeChild(node)
-                node = startRepeat.nextSibling
+                node = node.nextSibling
+            }
+            if(!hasRender){
+                node = startRepeat.nextSibling 
+                while (node && node !== endRepeat) {
+                    if(!hasEffect && node.nodeType === 1){
+                       hasEffect = node.getAttribute('ms-effect')
+                    }
+                    parent.removeChild(node)
+                    node = startRepeat.nextSibling
+                }
             }
         }
         if (!startRepeat.domTemplate && vnode.components[0]) {
             var domTemplate = fragment.cloneNode(false)
-            componentToDom(vnode.components[0], domTemplate)
+            if(!vnode.hasRender)
+              componentToDom(vnode.components[0], domTemplate)
             startRepeat.domTemplate = domTemplate
         }
         var key = vnode.signature
@@ -200,13 +217,16 @@ avalon.directive('for', {
             } else {
                 var newFragment = startRepeat.domTemplate.cloneNode(true)
                 cnodes = com.nodes = avalon.slice(newFragment.childNodes)
-                parent.insertBefore(newFragment, insertPoint.nextSibling)
+                parent.insertBefore(newFragment,  insertPoint.nextSibling)
                 applyEffects(com.nodes,com.children,{
                     hook:'onEnterDone',
                     staggerKey: key+'enter'
                 })
             }
             insertPoint = cnodes[cnodes.length - 1]
+            if(!insertPoint){
+                break
+            }
         }
         var entity = [], vnodes = []
         vnode.components.forEach(function (c) {

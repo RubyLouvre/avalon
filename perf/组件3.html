@@ -1,49 +1,54 @@
 <!DOCTYPE html>
 <html>
-
     <head>
         <meta charset="UTF-8">
         <title></title>
-        <script src="../dist/avalon.next.js"></script>
+        <script src="../dist/avalon.js"></script>
         <script>
-            avalon.component('ms-button', {
-                template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
-                defaults: {
-                    buttonText: "button",
-                    onInit: function(a) {
-                        console.log("onInit!!",a)
-                    },
-                    onReady: function(a) {
-                        console.log("onReady!!",a)
-                    },
-                    onViewChange: function(a) {
-                        console.log("onViewChange!!",a)
-                    },
-                    onDispose: function(a) {
-                        console.log("onDispose!!",a)
-                    }
-                },
-                soleSlot: 'buttonText'
-            })
             var vm = avalon.define({
-                $id: 'widget0',
-                config: {
-                    buttonText: '按钮'
+                $id:'test',
+                aaa:'ceshiceshi',
+                bbb:"测试",
+                pageList:[4,5,6,7],
+                config:{
+                    totalPages:33,
+                    pageSize:6
                 }
+            });
+            var tpl = '<ul class="list-unstyled">'+
+                        '<li><a href="javascript:;">首页</a></li>'+
+                        '<li><a href="javascript:;">上一页</a></li>'+
+                        '<li ms-for="el in @pageList"><a href="javascript:;">{{el}}</a></li>'+
+                        '<li><a href="javascript:;">下一页</a></li>'+
+                        '<li><a href="javascript:;">末页</a></li>'+
+                        '<li>共<span>{{@totalPages}}</span>页</li>'+
+                    '</ul>';
+            var tpl1 = tpl.replace('<li>共<span>{{@totalPages}}</span>页</li>','');
+            var defaults = {
+                totalPages:21,
+                pageSize:5
+            };
+            avalon.component('ms-pager',{
+                template:tpl,
+                defaults:avalon.mix(defaults,{
+                    pageList:[1,2,3,4,5],
+                    onViewChange:function(){
+                        console.log('viewchange!!!!')
+                    },
+                    onDispose:function(){
+                        console.log('dispose!!!!')
+                    }
+                })
             })
-            setTimeout(function() {
-                vm.config.buttonText = 'change'
-                setTimeout(function() {
-                   document.body.innerHTML = ""
-                }, 1000)
-            }, 1000)
         </script>
     </head>
-
     <body>
-        <div ms-controller='widget0'>
-            <div><wbr ms-widget="[{is:'ms-button',$id:'aaa'},@config]" /></div>
+        <div ms-controller="test">
+            {{@aaa}}
+           <ms-pager ms-widget="@config"></ms-pager>
+            <!--{{@bbb}}-->
+           
+        </ul>
         </div>
     </body>
-
 </html>
