@@ -1,9 +1,13 @@
+
+var scanTag = require('./scanTag')
+var scanText = require('./scanText')
 function scanNodes(parent, vmodel) {
     var nodes = avalon.slice(parent.childNodes)
     scanNodeArray(nodes, vmodel)
 }
 
 
+var rexpr = /{{.*}}/
 function scanNodeArray(nodes, vmodel) {
 
     for (var i = 0, node; node = nodes[i++]; ) {
@@ -20,4 +24,7 @@ function scanNodeArray(nodes, vmodel) {
 
     }
 }
+
+//收集页面上的所有指令, 放到$watcher中
+
 

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script>
+            var vm = {}
+            var userData = {}
+            Object.defineProperty(vm, "a", {
+                set:function(v){
+                    if(userData.a !== v){
+                        var old = userData.a
+                        update = true
+                    }
+                    userData.a = v 
+                    if(update){
+                        notify('a', v, old)
+                    }
+                },
+                get: function(){
+                    return userData.a 
+                }
+            })
+            function notify(path, v, old){
+               for(var i = 0, el; el = $watchers[i++];){
+                   if(el.checker[path]){
+                      var v = el.get()
+                      el.update(v)
+                   }
+               }
+            }
+             var $watchers = []
+            window.onload = function(){
+                var aaa = document.getElementById('aaa')
+                var bbb = document.getElementById('bbb')
+                $watchers.push({
+                    element: aaa,
+                    checker: {
+                        'a':1
+                    },
+                    get:function(){
+                        return vm.a
+                    },
+                    update: function(v){
+                        this.element.textContent = v
+                    }
+                },{
+                    element: bbb,
+                    checker: {
+                        'a':1
+                    },
+                    get:function(){
+                        return vm.a
+                    },
+                    update: function(v){
+                        this.element.textContent = v
+                    }
+                })
+                vm.a = 999
+                setTimeout(function(){
+                    vm.a = 992
+                },1000)
+            }
+           
+            
+        </script>
+        
+    </head>
+    <body>
+        <div>
+            <span ms-text="a" id="aaa"></span>
+            <span ms-text="a" id="bbb"></span>
+        </div>
+    </body>
+</html>
