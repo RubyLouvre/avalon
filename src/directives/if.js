@@ -11,7 +11,7 @@ avalon.directive('if', {
             'if(!ifVar){',
             vnode + '.nodeType = 8;',
             vnode + '.directive="if";',
-            vnode + 'nodeValue="ms-if"', '}'
+            vnode + '.nodeValue="ms-if"', '}'
         ]
         return ret.join('\n') + '\n'
     },

@@ -1,4 +1,4 @@
-/*! built in 2016-5-2:16 version 2.0 by 司徒正美 */
+/*! built in 2016-5-3:10 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3081,7 +3081,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            'if(!ifVar){',
 	            vnode + '.nodeType = 8;',
 	            vnode + '.directive="if";',
-	            vnode + 'nodeValue="ms-if"', '}'
+	            vnode + '.nodeValue="ms-if"', '}'
 	        ]
 	        return ret.join('\n') + '\n'
 	    },
@@ -3160,7 +3160,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (node)
 	            next = node.nextSibling
 
-	        if (vnode.directive === 'for' && vnode.change && node) {
+	        if (vnode.directive === 'for' && vnode.change ) {
+	            if(!node)
+	                return
 	            if (node.nodeType === 1) {
 	                var startRepeat = document.createComment(vnode.nodeValue)
 	                parent.insertBefore(startRepeat, node)
@@ -3680,12 +3682,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            var needUpdate = !cur.diff || cur.diff(cur, pre)
 	            cur.skipContent = !needUpdate
-
 	            var viewChangeObservers = cur.vmodel.$events.onViewChange
 	            if (viewChangeObservers && viewChangeObservers.length) {
 	                cur.afterChange = [function (dom, vnode) {
 	                        var preHTML = avalon.vdomAdaptor(pre, 'toHTML')
 	                        var curHTML = avalon.vdomAdaptor(cur, 'toHTML')
+	                        //console.log(preHTML, curHTML)
 	                        if (preHTML !== curHTML) {
 	                            cur.vmodel.$fire('onViewChange', {
 	                                type: 'viewchange',
