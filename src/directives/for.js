@@ -62,7 +62,6 @@ avalon.directive('for', {
             pre.components = getComponents(range.slice(1, -1), pre.signature)
             pre.repeatCount = range.length - 2
         }
-                     
 
         var quota = pre.components.length
         var nodes = current.slice(cur.start, cur.end)
@@ -79,7 +78,19 @@ avalon.directive('for', {
             previous.splice.apply(previous, [__index__, Math.abs(n)])
         }
         cur.action = isInit ? 'init' : 'update'
-        if (!isInit) {
+        if (isInit) {
+            /* eslint-disable no-cond-assign */
+            var oldCount = steps.count
+            var cache = cur.cache = {}
+            for (i = 0; c = cur.components[i++]; ) {
+                /* eslint-enable no-cond-assign */
+                avalon.diff(c.children, [], steps)
+                saveInCache(cache, c)
+            }
+            cur.removedComponents = {}
+            isChange = steps.count !== oldCount
+
+        } else {
             var cache = pre.cache
             var newCache = cur.cache = {}
             /* eslint-disable no-cond-assign */
@@ -102,30 +113,20 @@ avalon.directive('for', {
                         avalon.diff(c.children, p.children, steps)
                     }
                 }
-                if(!c.nodes){//这是新添加的元素
+                if (!c.nodes) {//这是新添加的元素
                     isChange = true
                     avalon.diff(c.children, [], steps)
                 }
-               
+
                 saveInCache(newCache, c)
             }
 
-            for(i in cache){
+            for (i in cache) {
                 cur.removedComponents = cache
                 isChange = true
                 break
             }
-          
-        } else {
-            /* eslint-disable no-cond-assign */
-            var cache = cur.cache = {}
-            for (i = 0; c = cur.components[i++]; ) {
-                /* eslint-enable no-cond-assign */
-                avalon.diff(c.children, [], steps)
-                saveInCache(cache, c)
-            }
-            cur.removedComponents = {}
-            isChange = true
+
         }
         pre.components.length = 0 //release memory
         delete pre.cache
@@ -143,36 +144,33 @@ avalon.directive('for', {
         var action = vnode.action
         var endRepeat = vnode.endRepeat
         var fragment = document.createDocumentFragment()
-        var hasEffect = false
         if (action === 'init') {
             //在ms-widget中,这部分内容会先行被渲染出来
             var hasRender = false
             var node = startRepeat.nextSibling
             while (node && node !== endRepeat) {
-                if(node.nodeType === 8){
+                if (node.nodeType === 8) {
                     hasRender = node.nodeValue == vnode.signature
-                    if(hasRender){
+                    if (hasRender) {
                         vnode.hasRender = true
                         break
                     }
                 }
                 node = node.nextSibling
+               
             }
-            if(!hasRender){
-                node = startRepeat.nextSibling 
+            if (!hasRender) {
+                node = startRepeat.nextSibling
                 while (node && node !== endRepeat) {
-                    if(!hasEffect && node.nodeType === 1){
-                       hasEffect = node.getAttribute('ms-effect')
-                    }
                     parent.removeChild(node)
                     node = startRepeat.nextSibling
                 }
             }
         }
+        
         if (!startRepeat.domTemplate && vnode.components[0]) {
             var domTemplate = fragment.cloneNode(false)
-            if(!vnode.hasRender)
-               componentToDom(vnode.components[0], domTemplate)
+            componentToDom(vnode.components[0], domTemplate)
             startRepeat.domTemplate = domTemplate
         }
         var key = vnode.signature
@@ -180,13 +178,13 @@ avalon.directive('for', {
             var el = vnode.removedComponents[i]
             if (el.nodes) {
                 el.nodes.forEach(function (n, k) {
-                    if (n.parentNode) {                       
-                        avalon.applyEffect(n, el.children[k],{
-                            hook:'onLeaveDone',
-                            cb:function () {
-                               n.parentNode.removeChild(n)
+                    if (n.parentNode) {
+                        avalon.applyEffect(n, el.children[k], {
+                            hook: 'onLeaveDone',
+                            cb: function () {
+                                n.parentNode.removeChild(n)
                             },
-                            staggerKey: key+'leave'
+                            staggerKey: key + 'leave'
                         })
                     }
                 })
@@ -208,18 +206,18 @@ avalon.directive('for', {
                         moveFragment.appendChild(cc)
                     }
                     parent.insertBefore(moveFragment, insertPoint.nextSibling)
-                    applyEffects(com.nodes, com.children,{
-                        hook:'onMoveDone',
-                        staggerKey: key+'move'
+                    applyEffects(com.nodes, com.children, {
+                        hook: 'onMoveDone',
+                        staggerKey: key + 'move'
                     })
                 }
-            } else if(vnode.hasRender){
+            } else if (vnode.hasRender) {
                 //添加nodes属性但不用插入节点
                 var cnodes = com.nodes = []
                 insertPoint = insertPoint.nextSibling
-                while(insertPoint && insertPoint !== vnode.endRepeat){
+                while (insertPoint && insertPoint !== vnode.endRepeat) {
                     cnodes.push(insertPoint)
-                    if(insertPoint.nodeValue === vnode.signature){
+                    if (insertPoint.nodeValue === vnode.signature) {
                         break
                     }
                     insertPoint = insertPoint.nextSibling
@@ -228,14 +226,14 @@ avalon.directive('for', {
                 //添加nodes属性并插入节点
                 var newFragment = startRepeat.domTemplate.cloneNode(true)
                 cnodes = com.nodes = avalon.slice(newFragment.childNodes)
-                parent.insertBefore(newFragment,  insertPoint.nextSibling)
-                applyEffects(com.nodes,com.children,{
-                    hook:'onEnterDone',
-                    staggerKey: key+'enter'
+                parent.insertBefore(newFragment, insertPoint.nextSibling)
+                applyEffects(com.nodes, com.children, {
+                    hook: 'onEnterDone',
+                    staggerKey: key + 'enter'
                 })
             }
             insertPoint = cnodes[cnodes.length - 1]
-            if(!insertPoint){
+            if (!insertPoint) {
                 break
             }
         }
@@ -381,8 +379,8 @@ function saveInCache(cache, component) {
         }
     }
 }
-var applyEffects = function(nodes, vnodes, opts){
-    vnodes.forEach(function(el, i){ 
+var applyEffects = function (nodes, vnodes, opts) {
+    vnodes.forEach(function (el, i) {
         avalon.applyEffect(nodes[i], vnodes[i], opts)
     })
 }
