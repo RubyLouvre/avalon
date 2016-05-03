@@ -3,10 +3,9 @@ avalon.directive('expr', {
     parse: function () {
     },
     diff: function (cur, pre, steps) {
-        cur.fixIESkip = true
+        cur.fixIESkip = !avalon.modern
         var dom = cur.dom = pre.dom
         if (cur.nodeValue !== pre.nodeValue) {
-           
             if (dom && avalon.contains(avalon.root,dom)) {
                 this.update(dom, cur)
             } else {

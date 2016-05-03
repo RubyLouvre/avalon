@@ -1,4 +1,4 @@
-/*! built in 2016-5-3:10 version 2.0 by 司徒正美 */
+/*! built in 2016-5-3:11 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -4068,10 +4068,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parse: function () {
 	    },
 	    diff: function (cur, pre, steps) {
-	        cur.fixIESkip = true
+	        cur.fixIESkip = !avalon.modern
 	        var dom = cur.dom = pre.dom
 	        if (cur.nodeValue !== pre.nodeValue) {
-	           
 	            if (dom && avalon.contains(avalon.root,dom)) {
 	                this.update(dom, cur)
 	            } else {
@@ -5659,7 +5658,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!isInit) {
 	            var cache = pre.cache
 	            var newCache = cur.cache = {}
-
 	            /* eslint-disable no-cond-assign */
 	            for (i = 0; c = cur.components[i++]; ) {
 	                /* eslint-enable no-cond-assign */
@@ -5750,7 +5748,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!startRepeat.domTemplate && vnode.components[0]) {
 	            var domTemplate = fragment.cloneNode(false)
 	            if(!vnode.hasRender)
-	              componentToDom(vnode.components[0], domTemplate)
+	               componentToDom(vnode.components[0], domTemplate)
 	            startRepeat.domTemplate = domTemplate
 	        }
 	        var key = vnode.signature
@@ -5791,7 +5789,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        staggerKey: key+'move'
 	                    })
 	                }
+	            } else if(vnode.hasRender){
+	                //添加nodes属性但不用插入节点
+	                var cnodes = com.nodes = []
+	                insertPoint = insertPoint.nextSibling
+	                while(insertPoint && insertPoint !== vnode.endRepeat){
+	                    cnodes.push(insertPoint)
+	                    if(insertPoint.nodeValue === vnode.signature){
+	                        break
+	                    }
+	                    insertPoint = insertPoint.nextSibling
+	                }
 	            } else {
+	                //添加nodes属性并插入节点
 	                var newFragment = startRepeat.domTemplate.cloneNode(true)
 	                cnodes = com.nodes = avalon.slice(newFragment.childNodes)
 	                parent.insertBefore(newFragment,  insertPoint.nextSibling)

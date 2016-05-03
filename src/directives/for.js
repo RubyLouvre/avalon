@@ -82,7 +82,6 @@ avalon.directive('for', {
         if (!isInit) {
             var cache = pre.cache
             var newCache = cur.cache = {}
-
             /* eslint-disable no-cond-assign */
             for (i = 0; c = cur.components[i++]; ) {
                 /* eslint-enable no-cond-assign */
@@ -173,7 +172,7 @@ avalon.directive('for', {
         if (!startRepeat.domTemplate && vnode.components[0]) {
             var domTemplate = fragment.cloneNode(false)
             if(!vnode.hasRender)
-              componentToDom(vnode.components[0], domTemplate)
+               componentToDom(vnode.components[0], domTemplate)
             startRepeat.domTemplate = domTemplate
         }
         var key = vnode.signature
@@ -214,7 +213,19 @@ avalon.directive('for', {
                         staggerKey: key+'move'
                     })
                 }
+            } else if(vnode.hasRender){
+                //添加nodes属性但不用插入节点
+                var cnodes = com.nodes = []
+                insertPoint = insertPoint.nextSibling
+                while(insertPoint && insertPoint !== vnode.endRepeat){
+                    cnodes.push(insertPoint)
+                    if(insertPoint.nodeValue === vnode.signature){
+                        break
+                    }
+                    insertPoint = insertPoint.nextSibling
+                }
             } else {
+                //添加nodes属性并插入节点
                 var newFragment = startRepeat.domTemplate.cloneNode(true)
                 cnodes = com.nodes = avalon.slice(newFragment.childNodes)
                 parent.insertBefore(newFragment,  insertPoint.nextSibling)
