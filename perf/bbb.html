@@ -5,10 +5,11 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../dist/avalon.js"></script>
         <script>
-            var vm1 = avalon.define({
+            var vm = avalon.define({
                 $id: "test",
                 a: 111,
-                b: 222
+                b: 222,
+                c: [1,2,3,4]
             })
         
         
@@ -21,6 +22,9 @@
     </head>
     <body>
         <div ms-controller="test">
+            <ul>
+                <li ms-for="el in @c">{{el}}</li>
+            </ul>
             <p><input ms-duplex="@a" />{{@a}}<strong ms-text="@a"></strong></p>
             <p><input ms-duplex="@b" /><span>{{@b}}</span><span ms-html="@b"></span></p>
         </div>

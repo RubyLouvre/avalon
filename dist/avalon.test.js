@@ -1,4 +1,4 @@
-/*! built in 2016-5-3:11 version 2.0 by 司徒正美 */
+/*! built in 2016-5-3:16 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1018,6 +1018,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var VElement = __webpack_require__(18)
 
 	avalon.vdomAdaptor = function (obj, method) {
+	    if(!obj){//obj在ms-for循环里面可能是null
+	        return (method === "toHTML" ? '' :
+	                avalon.avalonFragment.cloneNode(false))
+	    }
 	    switch (obj.nodeType) {
 	        case 3:
 	            return VText.prototype[method].call(obj) 
@@ -1570,8 +1574,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            '\n\tnodeType: 8,' +
 	                            '\n\ttype:"#comment",' +
 	                            '\n\tskipContent: true,' +
-	                            '\n\tsignature:' + quote(signature) + ',' +
-	                            '\n\tnodeValue:' + quote(signature + ':end') +
+	                            '\n\tsignature: ' + quote(signature) + ',' +
+	                            '\n\tnodeValue: "ms-for-end:"' +
 	                            '\n})\n'
 	                    forstack.pop()
 	                }
@@ -3150,42 +3154,44 @@ return /******/ (function(modules) { // webpackBootstrap
 	var sp = /^\s*$/
 	function patch(nodes, vnodes, parent, steps) {
 	    var next = nodes[0]
-	    if ((!next && !parent) || !steps.count ){
+	    if ((!next && !parent) || !steps.count) {
 	        return
 	    }
 	    parent = parent || next.parentNode
 	    for (var i = 0, vn = vnodes.length; i < vn; i++) {
 	        var vnode = vnodes[i]
 	        var node = next
-	        
 	        //IE6-8不会生成空白的文本节点，造成虚拟DOM与真实DOM的个数不一致，需要跳过,#1333
-	        if(avalon.msie < 9 && !vnode.fixIESkip && vnode.nodeType === 3 && sp.test(vnode.nodeValue) && sp.test(vnode.nodeValue) ){
+	        if (avalon.msie < 9 && !vnode.fixIESkip && vnode.nodeType === 3 && sp.test(vnode.nodeValue) && sp.test(vnode.nodeValue)) {
 	            continue
 	        }
-	      
-	        if (node)
-	            next = node.nextSibling
 
-	        if (vnode.directive === 'for' && vnode.change ) {
-	            if(!node)
-	                return
-	            if (node.nodeType === 1) {
-	                var startRepeat = document.createComment(vnode.nodeValue)
-	                parent.insertBefore(startRepeat, node)
-	                vnode.endRepeat = document.createComment('ms-for-end:')
-	                parent.insertBefore(vnode.endRepeat, node.nextSibling)
-	                node = startRepeat
-	            } else {//如果是注释节点
-	                if (!vnode.endRepeat) {
-	                    vnode.endRepeat = getEndRepeat(node)
+	        if (node) {
+	            next = node.nextSibling
+	        }
+	        if (vnode.directive === 'for') {
+	            if (vnode.change) {
+	                if(!node){
+	                    return
+	                }
+	                if (node.nodeType === 1) {
+	                    var startRepeat = document.createComment(vnode.nodeValue)
+	                    parent.insertBefore(startRepeat, node)
+	                    vnode.endRepeat = document.createComment('ms-for-end:')
+	                    parent.insertBefore(vnode.endRepeat, node.nextSibling)
+	                    node = startRepeat
+	                } else {//如果是注释节点
+	                    if (!vnode.endRepeat) {
+	                        vnode.endRepeat = getEndRepeat(node)
+	                    }
 	                }
 	            }
 	            next = vnode.endRepeat.nextSibling
 	        }
 
-	        //ms-repeat,ms-if, ms-widget会返回false
+	        //ms-for, ms-if, ms-widget会返回false
 	        if (false === execHooks(node, vnode, parent, steps, 'change')) {
-	            if(vnode.repeatCount){
+	            if (vnode.repeatCount) {
 	                i += vnode.repeatCount + 1 //修正索引值
 	            }
 	            execHooks(node, vnode, parent, steps, 'afterChange')
@@ -3302,7 +3308,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            pre.components = getComponents(range.slice(1, -1), pre.signature)
 	            pre.repeatCount = range.length - 2
 	        }
-	                     
 
 	        var quota = pre.components.length
 	        var nodes = current.slice(cur.start, cur.end)
@@ -3319,7 +3324,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	            previous.splice.apply(previous, [__index__, Math.abs(n)])
 	        }
 	        cur.action = isInit ? 'init' : 'update'
-	        if (!isInit) {
+	        if (isInit) {
+	            /* eslint-disable no-cond-assign */
+	            var oldCount = steps.count
+	            var cache = cur.cache = {}
+	            for (i = 0; c = cur.components[i++]; ) {
+	                /* eslint-enable no-cond-assign */
+	                avalon.diff(c.children, [], steps)
+	                saveInCache(cache, c)
+	            }
+	            cur.removedComponents = {}
+	            isChange = steps.count !== oldCount
+
+	        } else {
 	            var cache = pre.cache
 	            var newCache = cur.cache = {}
 	            /* eslint-disable no-cond-assign */
@@ -3342,30 +3359,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        avalon.diff(c.children, p.children, steps)
 	                    }
 	                }
-	                if(!c.nodes){//这是新添加的元素
+	                if (!c.nodes) {//这是新添加的元素
 	                    isChange = true
 	                    avalon.diff(c.children, [], steps)
 	                }
-	               
+
 	                saveInCache(newCache, c)
 	            }
 
-	            for(i in cache){
+	            for (i in cache) {
 	                cur.removedComponents = cache
 	                isChange = true
 	                break
 	            }
-	          
-	        } else {
-	            /* eslint-disable no-cond-assign */
-	            var cache = cur.cache = {}
-	            for (i = 0; c = cur.components[i++]; ) {
-	                /* eslint-enable no-cond-assign */
-	                avalon.diff(c.children, [], steps)
-	                saveInCache(cache, c)
-	            }
-	            cur.removedComponents = {}
-	            isChange = true
+
 	        }
 	        pre.components.length = 0 //release memory
 	        delete pre.cache
@@ -3383,36 +3390,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var action = vnode.action
 	        var endRepeat = vnode.endRepeat
 	        var fragment = document.createDocumentFragment()
-	        var hasEffect = false
 	        if (action === 'init') {
 	            //在ms-widget中,这部分内容会先行被渲染出来
 	            var hasRender = false
 	            var node = startRepeat.nextSibling
 	            while (node && node !== endRepeat) {
-	                if(node.nodeType === 8){
+	                if (node.nodeType === 8) {
 	                    hasRender = node.nodeValue == vnode.signature
-	                    if(hasRender){
+	                    if (hasRender) {
 	                        vnode.hasRender = true
 	                        break
 	                    }
 	                }
 	                node = node.nextSibling
+	               
 	            }
-	            if(!hasRender){
-	                node = startRepeat.nextSibling 
+	            if (!hasRender) {
+	                node = startRepeat.nextSibling
 	                while (node && node !== endRepeat) {
-	                    if(!hasEffect && node.nodeType === 1){
-	                       hasEffect = node.getAttribute('ms-effect')
-	                    }
 	                    parent.removeChild(node)
 	                    node = startRepeat.nextSibling
 	                }
 	            }
 	        }
+	        
 	        if (!startRepeat.domTemplate && vnode.components[0]) {
 	            var domTemplate = fragment.cloneNode(false)
-	            if(!vnode.hasRender)
-	               componentToDom(vnode.components[0], domTemplate)
+	            componentToDom(vnode.components[0], domTemplate)
 	            startRepeat.domTemplate = domTemplate
 	        }
 	        var key = vnode.signature
@@ -3420,13 +3424,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var el = vnode.removedComponents[i]
 	            if (el.nodes) {
 	                el.nodes.forEach(function (n, k) {
-	                    if (n.parentNode) {                       
-	                        avalon.applyEffect(n, el.children[k],{
-	                            hook:'onLeaveDone',
-	                            cb:function () {
-	                               n.parentNode.removeChild(n)
+	                    if (n.parentNode) {
+	                        avalon.applyEffect(n, el.children[k], {
+	                            hook: 'onLeaveDone',
+	                            cb: function () {
+	                                n.parentNode.removeChild(n)
 	                            },
-	                            staggerKey: key+'leave'
+	                            staggerKey: key + 'leave'
 	                        })
 	                    }
 	                })
@@ -3448,18 +3452,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        moveFragment.appendChild(cc)
 	                    }
 	                    parent.insertBefore(moveFragment, insertPoint.nextSibling)
-	                    applyEffects(com.nodes, com.children,{
-	                        hook:'onMoveDone',
-	                        staggerKey: key+'move'
+	                    applyEffects(com.nodes, com.children, {
+	                        hook: 'onMoveDone',
+	                        staggerKey: key + 'move'
 	                    })
 	                }
-	            } else if(vnode.hasRender){
+	            } else if (vnode.hasRender) {
 	                //添加nodes属性但不用插入节点
 	                var cnodes = com.nodes = []
 	                insertPoint = insertPoint.nextSibling
-	                while(insertPoint && insertPoint !== vnode.endRepeat){
+	                while (insertPoint && insertPoint !== vnode.endRepeat) {
 	                    cnodes.push(insertPoint)
-	                    if(insertPoint.nodeValue === vnode.signature){
+	                    if (insertPoint.nodeValue === vnode.signature) {
 	                        break
 	                    }
 	                    insertPoint = insertPoint.nextSibling
@@ -3468,14 +3472,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                //添加nodes属性并插入节点
 	                var newFragment = startRepeat.domTemplate.cloneNode(true)
 	                cnodes = com.nodes = avalon.slice(newFragment.childNodes)
-	                parent.insertBefore(newFragment,  insertPoint.nextSibling)
-	                applyEffects(com.nodes,com.children,{
-	                    hook:'onEnterDone',
-	                    staggerKey: key+'enter'
+	                parent.insertBefore(newFragment, insertPoint.nextSibling)
+	                applyEffects(com.nodes, com.children, {
+	                    hook: 'onEnterDone',
+	                    staggerKey: key + 'enter'
 	                })
 	            }
 	            insertPoint = cnodes[cnodes.length - 1]
-	            if(!insertPoint){
+	            if (!insertPoint) {
 	                break
 	            }
 	        }
@@ -3621,8 +3625,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	}
-	var applyEffects = function(nodes, vnodes, opts){
-	    vnodes.forEach(function(el, i){ 
+	var applyEffects = function (nodes, vnodes, opts) {
+	    vnodes.forEach(function (el, i) {
 	        avalon.applyEffect(nodes[i], vnodes[i], opts)
 	    })
 	}
@@ -3697,14 +3701,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        } else {
 
-	            var needUpdate = !cur.diff || cur.diff(cur, pre)
+	            var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
 	            cur.skipContent = !needUpdate
 	            var viewChangeObservers = cur.vmodel.$events.onViewChange
 	            if (viewChangeObservers && viewChangeObservers.length) {
 	                cur.afterChange = [function (dom, vnode) {
 	                        var preHTML = avalon.vdomAdaptor(pre, 'toHTML')
 	                        var curHTML = avalon.vdomAdaptor(cur, 'toHTML')
-	                        //console.log(preHTML, curHTML)
 	                        if (preHTML !== curHTML) {
 	                            cur.vmodel.$fire('onViewChange', {
 	                                type: 'viewchange',
@@ -3716,6 +3719,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        docker.renderCount++
 	                    }]
 	            }
+	            
 	        }
 	    },
 	    addDisposeMonitor: function (dom) {
@@ -3753,6 +3757,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!hasDetect) {
 	            dir.addDisposeMonitor(com)
 	        }
+	        return false
 	    }
 	})
 

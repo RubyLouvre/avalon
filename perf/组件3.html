@@ -21,7 +21,7 @@
                         '<li ms-for="el in @pageList"><a href="javascript:;">{{el}}</a></li>'+
                         '<li><a href="javascript:;">下一页</a></li>'+
                         '<li><a href="javascript:;">末页</a></li>'+
-                        '<li>共<span>{{@totalPages}}</span>页</li>'+
+                        '<li>共<span ms-on-click="@update">{{@totalPages}}</span>页</li>'+
                     '</ul>';
             var tpl1 = tpl.replace('<li>共<span>{{@totalPages}}</span>页</li>','');
             var defaults = {
@@ -37,6 +37,9 @@
                     },
                     onDispose:function(){
                         console.log('dispose!!!!')
+                    },
+                    update: function(){
+                        this.pageList = [11,22,33,44,55]
                     }
                 })
             })
