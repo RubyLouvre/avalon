@@ -15,7 +15,7 @@ var dir = avalon.directive('widget', {
             template: elem.template
         }
         var ret = [
-            'vnode' + num + '._isVoidTag = '+isVoidTag,
+            'vnode' + num + '._isVoidTag = ' + isVoidTag,
             'vnode' + num + '.props.wid = "' + wid + '"',
             'vnode' + num + '.template = ' + avalon.quote(elem.template),
             'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget'),
@@ -25,12 +25,12 @@ var dir = avalon.directive('widget', {
             'var __backup__ = __vmodel__;',
             '__vmodel__ = vnode' + num + '.vmodel;',
             'try{eval(" new function(){"+ vnode' + num + '.render +"}");',
-            '}catch(e){avalon.warn(e)','}',
+            '}catch(e){avalon.warn(e)', '}',
             'vnode' + num + ' = avalon.renderWidget(avalon.__widget[0])', '}',
             '__vmodel__ = __backup__;']
         return ret.join('\n') + '\n'
     },
-    define: function () { 
+    define: function () {
         return avalon.mediatorFactory.apply(this, arguments)
     },
     diff: function (cur, pre, steps) {
@@ -38,8 +38,8 @@ var dir = avalon.directive('widget', {
         var wid = cur.props.wid
         var docker = coms[wid]
         if (!docker.renderCount) {
-            cur.change = [this.replaceByComment]
             steps.count += 1
+            cur.change = [this.replaceByComment]
         } else if (!pre.props.resolved) {
             cur.steps = steps
             var list = cur.change || (cur.change = [])
@@ -49,7 +49,7 @@ var dir = avalon.directive('widget', {
                     cur.vmodel.$fire('onReady', {
                         type: 'ready',
                         target: dom,
-                        wid:wid,
+                        wid: wid,
                         vmodel: vnode.vmodel
                     })
                     docker.renderCount = 2
@@ -59,13 +59,13 @@ var dir = avalon.directive('widget', {
             if (cur.children.length === 0) {
                 steps.count += 1
             }
-
+            //处理模板不存在指令的情况
         } else {
-
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
             cur.skipContent = !needUpdate
             var viewChangeObservers = cur.vmodel.$events.onViewChange
             if (viewChangeObservers && viewChangeObservers.length) {
+                steps.count += 1
                 cur.afterChange = [function (dom, vnode) {
                         var preHTML = avalon.vdomAdaptor(pre, 'toHTML')
                         var curHTML = avalon.vdomAdaptor(cur, 'toHTML')
@@ -80,7 +80,7 @@ var dir = avalon.directive('widget', {
                         docker.renderCount++
                     }]
             }
-            
+
         }
     },
     addDisposeMonitor: function (dom) {

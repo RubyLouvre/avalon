@@ -1,4 +1,4 @@
-/*! built in 2016-5-3:16 version 2.0 by 司徒正美 */
+/*! built in 2016-5-3:18 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3171,7 +3171,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        if (vnode.directive === 'for') {
 	            if (vnode.change) {
-	                if(!node){
+	                if (!node) {
 	                    return
 	                }
 	                if (node.nodeType === 1) {
@@ -3185,8 +3185,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        vnode.endRepeat = getEndRepeat(node)
 	                    }
 	                }
+	                next = vnode.endRepeat.nextSibling
 	            }
-	            next = vnode.endRepeat.nextSibling
+
 	        }
 
 	        //ms-for, ms-if, ms-widget会返回false
@@ -3203,6 +3204,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        //ms-duplex
 	        execHooks(node, vnode, parent, steps, 'afterChange')
+	        if (!steps.count)
+	            break
 	    }
 	}
 
@@ -3654,7 +3657,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            template: elem.template
 	        }
 	        var ret = [
-	            'vnode' + num + '._isVoidTag = '+isVoidTag,
+	            'vnode' + num + '._isVoidTag = ' + isVoidTag,
 	            'vnode' + num + '.props.wid = "' + wid + '"',
 	            'vnode' + num + '.template = ' + avalon.quote(elem.template),
 	            'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget'),
@@ -3664,12 +3667,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            'var __backup__ = __vmodel__;',
 	            '__vmodel__ = vnode' + num + '.vmodel;',
 	            'try{eval(" new function(){"+ vnode' + num + '.render +"}");',
-	            '}catch(e){avalon.warn(e)','}',
+	            '}catch(e){avalon.warn(e)', '}',
 	            'vnode' + num + ' = avalon.renderWidget(avalon.__widget[0])', '}',
 	            '__vmodel__ = __backup__;']
 	        return ret.join('\n') + '\n'
 	    },
-	    define: function () { 
+	    define: function () {
 	        return avalon.mediatorFactory.apply(this, arguments)
 	    },
 	    diff: function (cur, pre, steps) {
@@ -3677,8 +3680,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var wid = cur.props.wid
 	        var docker = coms[wid]
 	        if (!docker.renderCount) {
-	            cur.change = [this.replaceByComment]
 	            steps.count += 1
+	            cur.change = [this.replaceByComment]
 	        } else if (!pre.props.resolved) {
 	            cur.steps = steps
 	            var list = cur.change || (cur.change = [])
@@ -3688,7 +3691,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    cur.vmodel.$fire('onReady', {
 	                        type: 'ready',
 	                        target: dom,
-	                        wid:wid,
+	                        wid: wid,
 	                        vmodel: vnode.vmodel
 	                    })
 	                    docker.renderCount = 2
@@ -3698,13 +3701,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (cur.children.length === 0) {
 	                steps.count += 1
 	            }
-
+	            //处理模板不存在指令的情况
 	        } else {
-
 	            var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
 	            cur.skipContent = !needUpdate
 	            var viewChangeObservers = cur.vmodel.$events.onViewChange
 	            if (viewChangeObservers && viewChangeObservers.length) {
+	                steps.count += 1
 	                cur.afterChange = [function (dom, vnode) {
 	                        var preHTML = avalon.vdomAdaptor(pre, 'toHTML')
 	                        var curHTML = avalon.vdomAdaptor(cur, 'toHTML')
@@ -3719,7 +3722,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        docker.renderCount++
 	                    }]
 	            }
-	            
+
 	        }
 	    },
 	    addDisposeMonitor: function (dom) {

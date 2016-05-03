@@ -23,7 +23,7 @@ function patch(nodes, vnodes, parent, steps) {
         }
         if (vnode.directive === 'for') {
             if (vnode.change) {
-                if(!node){
+                if (!node) {
                     return
                 }
                 if (node.nodeType === 1) {
@@ -37,8 +37,9 @@ function patch(nodes, vnodes, parent, steps) {
                         vnode.endRepeat = getEndRepeat(node)
                     }
                 }
+                next = vnode.endRepeat.nextSibling
             }
-            next = vnode.endRepeat.nextSibling
+
         }
 
         //ms-for, ms-if, ms-widget会返回false
@@ -55,6 +56,8 @@ function patch(nodes, vnodes, parent, steps) {
         }
         //ms-duplex
         execHooks(node, vnode, parent, steps, 'afterChange')
+        if (!steps.count)
+            break
     }
 }
 
