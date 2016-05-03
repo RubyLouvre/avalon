@@ -62,14 +62,13 @@ var dir = avalon.directive('widget', {
 
         } else {
 
-            var needUpdate = !cur.diff || cur.diff(cur, pre)
+            var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
             cur.skipContent = !needUpdate
             var viewChangeObservers = cur.vmodel.$events.onViewChange
             if (viewChangeObservers && viewChangeObservers.length) {
                 cur.afterChange = [function (dom, vnode) {
                         var preHTML = avalon.vdomAdaptor(pre, 'toHTML')
                         var curHTML = avalon.vdomAdaptor(cur, 'toHTML')
-                        //console.log(preHTML, curHTML)
                         if (preHTML !== curHTML) {
                             cur.vmodel.$fire('onViewChange', {
                                 type: 'viewchange',
