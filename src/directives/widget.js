@@ -80,6 +80,7 @@ var dir = avalon.directive('widget', {
                         docker.renderCount++
                     }]
             }
+            
         }
     },
     addDisposeMonitor: function (dom) {
@@ -117,6 +118,7 @@ var dir = avalon.directive('widget', {
         if (!hasDetect) {
             dir.addDisposeMonitor(com)
         }
+        return false
     }
 })
 
