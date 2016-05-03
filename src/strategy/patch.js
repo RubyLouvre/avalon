@@ -6,42 +6,44 @@
 var sp = /^\s*$/
 function patch(nodes, vnodes, parent, steps) {
     var next = nodes[0]
-    if ((!next && !parent) || !steps.count ){
+    if ((!next && !parent) || !steps.count) {
         return
     }
     parent = parent || next.parentNode
     for (var i = 0, vn = vnodes.length; i < vn; i++) {
         var vnode = vnodes[i]
         var node = next
-        
         //IE6-8不会生成空白的文本节点，造成虚拟DOM与真实DOM的个数不一致，需要跳过,#1333
-        if(avalon.msie < 9 && !vnode.fixIESkip && vnode.nodeType === 3 && sp.test(vnode.nodeValue) && sp.test(vnode.nodeValue) ){
+        if (avalon.msie < 9 && !vnode.fixIESkip && vnode.nodeType === 3 && sp.test(vnode.nodeValue) && sp.test(vnode.nodeValue)) {
             continue
         }
-      
-        if (node)
-            next = node.nextSibling
 
-        if (vnode.directive === 'for' && vnode.change ) {
-            if(!node)
-                return
-            if (node.nodeType === 1) {
-                var startRepeat = document.createComment(vnode.nodeValue)
-                parent.insertBefore(startRepeat, node)
-                vnode.endRepeat = document.createComment('ms-for-end:')
-                parent.insertBefore(vnode.endRepeat, node.nextSibling)
-                node = startRepeat
-            } else {//如果是注释节点
-                if (!vnode.endRepeat) {
-                    vnode.endRepeat = getEndRepeat(node)
+        if (node) {
+            next = node.nextSibling
+        }
+        if (vnode.directive === 'for') {
+            if (vnode.change) {
+                if(!node){
+                    return
+                }
+                if (node.nodeType === 1) {
+                    var startRepeat = document.createComment(vnode.nodeValue)
+                    parent.insertBefore(startRepeat, node)
+                    vnode.endRepeat = document.createComment('ms-for-end:')
+                    parent.insertBefore(vnode.endRepeat, node.nextSibling)
+                    node = startRepeat
+                } else {//如果是注释节点
+                    if (!vnode.endRepeat) {
+                        vnode.endRepeat = getEndRepeat(node)
+                    }
                 }
             }
             next = vnode.endRepeat.nextSibling
         }
 
-        //ms-repeat,ms-if, ms-widget会返回false
+        //ms-for, ms-if, ms-widget会返回false
         if (false === execHooks(node, vnode, parent, steps, 'change')) {
-            if(vnode.repeatCount){
+            if (vnode.repeatCount) {
                 i += vnode.repeatCount + 1 //修正索引值
             }
             execHooks(node, vnode, parent, steps, 'afterChange')

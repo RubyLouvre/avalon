@@ -6,6 +6,10 @@ var VComment = require('./VComment')
 var VElement = require('./VElement')
 
 avalon.vdomAdaptor = function (obj, method) {
+    if(!obj){//obj在ms-for循环里面可能是null
+        return (method === "toHTML" ? '' :
+                avalon.avalonFragment.cloneNode(false))
+    }
     switch (obj.nodeType) {
         case 3:
             return VText.prototype[method].call(obj) 

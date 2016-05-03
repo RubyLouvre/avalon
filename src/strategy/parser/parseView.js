@@ -97,8 +97,8 @@ function parseView(arr, num) {
                             '\n\tnodeType: 8,' +
                             '\n\ttype:"#comment",' +
                             '\n\tskipContent: true,' +
-                            '\n\tsignature:' + quote(signature) + ',' +
-                            '\n\tnodeValue:' + quote(signature + ':end') +
+                            '\n\tsignature: ' + quote(signature) + ',' +
+                            '\n\tnodeValue: "ms-for-end:"' +
                             '\n})\n'
                     forstack.pop()
                 }
