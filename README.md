@@ -68,3 +68,10 @@
     支持<slot name='xx'></slot>这样的DOM插槽 机制<br/>
     支持组件套组件
 14. 测试 karma start
+15.  ms-important与ms-controller对应的vm.$id一个页面上只能用一次,不能存在多个同名的ms-controller.
+     ms-important由于不继承上级的$element与$render,每次只更新它所在的区域,善用它能大大提高性能
+   ```html
+   <div ms-controller='test'>{{@aaa}}</div>
+   <div ms-controller='test'>{{@bbb}}<!--test已经使用了1次!会导致程序出错--></div>
+   <div ms-important='test'>{{@bbb}}<!--test已经使用了2次!会导致程序出错--></div>
+   ```
