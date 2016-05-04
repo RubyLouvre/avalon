@@ -1,0 +1,310 @@
+var expect = chai.expect
+function heredoc(fn) {
+    return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+            replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+}
+function fireClick(el) {
+    if (el.click) {
+        el.click()
+    } else {
+//https://developer.mozilla.org/samples/domref/dispatchEvent.html
+        var evt = document.createEvent('MouseEvents')
+        evt.initMouseEvent('click', true, true, window,
+                0, 0, 0, 0, 0, false, false, false, false, 0, null);
+        !el.dispatchEvent(evt);
+    }
+}
+describe('for', function () {
+    var body = document.body, div, vm
+    beforeEach(function () {
+        div = document.createElement('div')
+        body.appendChild(div)
+    })
+    afterEach(function () {
+        body.removeChild(div)
+        delete avalon.vmodels[vm.$id]
+    })
+
+    it('简单的一维数组循环,一维对象循环,使用注释实现循环', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='for0' >
+             <ul>
+             <li ms-for='($index, el) in @array | limitBy(4)'>{{$index}}::{{el}}</li>
+             </ul>
+             <ol>
+             <li ms-for='($key, $val) in @object'>{{$key}}::{{$val}}</li>
+             </ol>
+             <!--ms-for: ($index,el) in @array   -->
+             <p>{{el}}</p>
+             <!--ms-for-end:-->
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'for0',
+            array: [1, 2, 3, 4, 5],
+            object: {
+                a: 11,
+                b: 22,
+                c: 33,
+                d: 44,
+                e: 55
+            }
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            var lis = div.getElementsByTagName('li')
+            var ps = div.getElementsByTagName('p')
+            expect(lis[0].innerHTML).to.equal('0::1')
+            expect(lis[1].innerHTML).to.equal('1::2')
+            expect(lis[2].innerHTML).to.equal('2::3')
+            expect(lis[3].innerHTML).to.equal('3::4')
+            expect(lis[4].innerHTML).to.equal('a::11')
+            expect(lis[5].innerHTML).to.equal('b::22')
+            expect(lis[6].innerHTML).to.equal('c::33')
+            expect(lis[7].innerHTML).to.equal('d::44')
+            expect(lis[8].innerHTML).to.equal('e::55')
+            expect(ps[0].innerHTML).to.equal('1')
+            expect(ps[1].innerHTML).to.equal('2')
+            expect(ps[2].innerHTML).to.equal('3')
+            expect(ps[3].innerHTML).to.equal('4')
+            expect(ps[4].innerHTML).to.equal('5')
+            vm.array.reverse()
+            vm.array.unshift(9)
+            setTimeout(function () {
+                expect(lis[0].innerHTML).to.equal('0::9')
+                expect(lis[1].innerHTML).to.equal('1::5')
+                expect(lis[2].innerHTML).to.equal('2::4')
+                expect(lis[3].innerHTML).to.equal('3::3')
+                expect(ps[0].innerHTML).to.equal('9')
+                expect(ps[1].innerHTML).to.equal('5')
+                expect(ps[2].innerHTML).to.equal('4')
+                expect(ps[3].innerHTML).to.equal('3')
+                expect(ps[4].innerHTML).to.equal('2')
+                done()
+            })
+        })
+    })
+
+    it('双层循环,并且重复利用已有的元素节点', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='for1'>
+             <table>
+             <tr ms-for='tr in @array'>
+             <td ms-for='td in tr'>{{td}}</td>
+             </tr>
+             </table>
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'for1',
+            array: [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            var tds = div.getElementsByTagName('td')
+
+            expect(tds[0].innerHTML).to.equal('1')
+            expect(tds[1].innerHTML).to.equal('2')
+            expect(tds[2].innerHTML).to.equal('3')
+            expect(tds[3].innerHTML).to.equal('4')
+            expect(tds[4].innerHTML).to.equal('5')
+            expect(tds[5].innerHTML).to.equal('6')
+            expect(tds[6].innerHTML).to.equal('7')
+            expect(tds[7].innerHTML).to.equal('8')
+            expect(tds[8].innerHTML).to.equal('9')
+            avalon.each(tds, function (i, el) {
+                el.title = el.innerHTML
+            })
+            vm.array = [[11, 22, 33], [44, 55, 66], [77, 88, 99]]
+            setTimeout(function () {
+
+                expect(tds[0].innerHTML).to.equal('11')
+                expect(tds[1].innerHTML).to.equal('22')
+                expect(tds[2].innerHTML).to.equal('33')
+                expect(tds[3].innerHTML).to.equal('44')
+                expect(tds[4].innerHTML).to.equal('55')
+                expect(tds[5].innerHTML).to.equal('66')
+                expect(tds[6].innerHTML).to.equal('77')
+                expect(tds[7].innerHTML).to.equal('88')
+                expect(tds[8].innerHTML).to.equal('99')
+
+                expect(tds[0].title).to.equal('1')
+                expect(tds[1].title).to.equal('2')
+                expect(tds[2].title).to.equal('3')
+                expect(tds[3].title).to.equal('4')
+                expect(tds[4].title).to.equal('5')
+                expect(tds[5].title).to.equal('6')
+                expect(tds[6].title).to.equal('7')
+                expect(tds[7].title).to.equal('8')
+                expect(tds[8].title).to.equal('9')
+                done()
+            })
+        })
+    })
+    it('监听数组长度变化', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <ul ms-controller='for2'>
+             <li ms-for='el in @array'>{{el.length}}</li>
+             </ul>
+             */
+        })
+        vm = avalon.define({
+            $id: 'for2',
+            array: [[1, 2], [3, 4, 5]]
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            var lis = div.getElementsByTagName('li')
+
+            expect(lis[0].innerHTML).to.equal('2')
+            expect(lis[1].innerHTML).to.equal('3')
+
+            vm.array = [['a', "b", "c", "d"], [3, 4, 6, 7, 8]]
+            setTimeout(function () {
+
+                expect(lis[0].innerHTML).to.equal('4')
+                expect(lis[1].innerHTML).to.equal('5')
+                done()
+            })
+        })
+    })
+
+    it('添加新的对象元素', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <ul ms-controller='for3'>
+             <li ms-for='el in @array'>{{el.a}}</li>
+             </ul>
+             */
+        })
+        vm = avalon.define({
+            $id: 'for3',
+            array: [{a: 1}]
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            var lis = div.getElementsByTagName('li')
+
+            expect(lis[0].innerHTML).to.equal('1')
+
+            vm.array = [{a: 2}, {a: 3}]
+            setTimeout(function () {
+
+                expect(lis[0].innerHTML).to.equal('2')
+                expect(lis[1].innerHTML).to.equal('3')
+                done()
+            })
+        })
+    })
+
+    it('ms-if与ms-for并用', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <ul ms-controller='for4'>
+             <div class='panel' ms-for='(jj, el) in @panels' ms-if='jj === @curIndex' ms-html='el'></div>
+             </ul>
+             */
+        })
+        vm = avalon.define({
+            $id: 'for4',
+            curIndex: 0, //默认显示第一个
+            panels: ["<div>面板1</div>", "<p>面板2</p>", "<strong>面板3</strong>"]
+        })
+        avalon.scan(div, vm)
+        setTimeout(function () {
+            var ds = div.getElementsByTagName('div')
+            var prop = 'innerText' in div ? 'innerText' : 'textContent'
+            expect(ds[0][prop]).to.equal('面板1')
+            vm.curIndex = 1
+            setTimeout(function () {
+                expect(ds[0][prop]).to.equal('面板2')
+                vm.curIndex = 2
+                setTimeout(function () {
+                    expect(ds[0][prop]).to.equal('面板3')
+                    done()
+                })
+            })
+        })
+    })
+    
+     it('ms-duplex与ms-for并用', function (done) {
+          div.innerHTML = heredoc(function () {
+            /*
+            <table ms-controller="for5" border="1">
+                <tr>
+                    <td><input type="checkbox" 
+                               ms-duplex-checked="@allchecked" 
+                               data-duplex-changed="@checkAll"/>全选</td>
+                </tr>
+                <tr ms-for="($index, el) in @data" >
+                    <th><input type="checkbox" ms-duplex-checked="el.checked" data-duplex-changed="@checkOne" />{{$index}}::{{el.checked}}</th>
+                </tr>
+            </table>
+             */
+            })
+            vm = avalon.define({
+                $id: "for5",
+                data: [{checked: false}, {checked: false}, {checked: false}],
+                allchecked: false,
+                checkAll: function (e) {
+                    var checked = e.target.checked
+                    vm.data.forEach(function (el) {
+                        el.checked = checked
+                    })
+                },
+                checkOne: function (e) {
+                    var checked = e.target.checked
+                    if (checked === false) {
+                        vm.allchecked = false
+                    } else {//avalon已经为数组添加了ecma262v5的一些新方法
+                        vm.allchecked = vm.data.every(function (el) {
+                            return el.checked
+                        })
+                    }
+                }
+            })
+            avalon.scan(div, vm)
+            setTimeout(function(){
+               var ths = div.getElementsByTagName('th')
+               var inputs = div.getElementsByTagName('input')
+
+               var prop = 'innerText' in div ? 'innerText' : 'textContent'
+               expect(ths[0][prop]).to.equal('0::false')
+               expect(ths[1][prop]).to.equal('1::false')
+               expect(ths[2][prop]).to.equal('2::false')
+               fireClick(inputs[0])
+               setTimeout(function(){
+               expect(ths[0][prop]).to.equal('0::true')
+               expect(ths[1][prop]).to.equal('1::true')
+               expect(ths[2][prop]).to.equal('2::true')
+               done()
+               })
+            })
+     })
+     it('使用注释循环', function (done) {
+         div.innerHTML = heredoc(function () {
+            /*
+           <div ms-controller="for6" >
+            <!--ms-for:el in @arr -->
+            <p>{{el}}</p>
+            <!--ms-for-end:-->
+           </div>
+             */
+            })
+            vm = avalon.define({
+                $id: "for6",
+                arr:[1,2,3]
+            })
+            avalon.scan(div, vm)
+            setTimeout(function(){
+                var ps = div.getElementsByTagName('p')
+                expect(ps.length).to.equal(3)
+                done()
+            })
+     })
+})

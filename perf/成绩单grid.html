@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang='zh-cn'>
+<head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>测试</title> 
+<script src="avalon.js" type="text/javascript"></script>
+<script>
+    var $ = {}
+    //一个假的ajax
+    $.ajax = function(obj){
+        var req = [{id:4, name:"姓名4", xyx:99, email: '邮箱4'},
+        {id:5, name:"姓名5", xyx:88, email: '邮箱5'},
+        {id:6, name:"姓名6", xyx:77, email: '邮箱6'}]
+        setTimeout(function(){
+            obj.success(req)
+        })
+    }
+       //这是原数据,备份用,每次只能复制它来赋值
+        var datab = [
+                    {"id":"11","name":"\u59d3\u540daa","xyz":"987","email":"\u90ae\u7bb1x4"},
+                    {"id":"12","name":"\u59d3\u540dab","xyz":"728","email":"\u90ae\u7bb1x5"},
+                    {"id":"21","name":"\u59d3\u540dac","xyz":"647","email":"\u90ae\u7bb1x6"},
+                    {"id":"23","name":"\u59d3\u540dad","xyz":"158","email":"\u90ae\u7bb1x7"},
+                    {"id":"32","name":"\u59d3\u540dae","xyz":"145","email":"\u90ae\u7bb1x8"}
+                ]
+	var model=avalon.define({
+		$id:'test1',           
+		name:'数据联动',
+		search:'',
+		data:[],
+		datab:[],//不要影响原来的数据 ,其实这里不要也可以
+                reload:function(){
+        	$.ajax({
+        		url: "a.php",         
+		        type: "POST",
+		        dataType: "json", 
+		        success: function(req){
+		            datab = req //重载全局的数据源
+		            model.data= req.slice(0)
+		        }
+		    })//ajax结束符
+        }//change函数结束符
+    });//avalon.define结束符
+
+	model.data= datab.slice(0)
+
+	//模糊查询框监控开始--------------------- 	
+	model.$watch('search', function(a,b) {
+ 		//监控对象a为现值，b为原值
+           if(a!==''){
+                model.data = datab.slice(0).filter(function(value){
+                    if(String(value.id).indexOf(a) > -1 || String(value.name).indexOf(a) > -1){
+                        return true
+                    }else{
+                        return false
+                    }
+                })                            
+            }else{
+               model.data= datab.slice(0)
+            }
+ 	});
+    //模糊查询框监控结束------------------------
+
+//savalon.scan();
+</script>
+</head>
+
+<body ms-controller="test1">
+
+    <!-- 表格开始 -->
+	<div>
+		<table>
+			<caption>
+			  
+			模糊查询<input ms-duplex="search">
+      
+			<button type="button" ms-click=reload()>ajax后台数据</button>
+			</caption>
+			
+			
+			<thead>
+				<tr>
+					<td>序号</td>
+					<td>学号</td>
+					<td>姓名</td>
+					<td>总分</td>
+					<td>邮箱</td>
+					<td>操作</td>
+				</tr>
+			</thead>
+
+			<tbody>
+				<tr ms-repeat="data">
+				<td>{{$index+1}}</td>
+				<td>{{el.id}}</td>
+				<td>{{el.name}}</td>
+				<td>{{el.xyz}}</td>
+				<td>{{el.email}}</td>
+				<td ms-click=get(el.id+el.name+el.email)>取数</td>
+
+		      </tr>				
+	        </tbody>
+        </table>
+     </div>
+     <!-- 表格结束 -->
+
+
+</body>
+</html>

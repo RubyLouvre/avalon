@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+        <script src="../dist/avalon.modern.js"></script>
+        <script>
+            avalon.ready(function() {
+                var vm1 = window.vm1 = avalon.define({
+                    $id: 'test',
+                    aaa: 'aaaaaaaaaaaaa',
+                    bbb: 'bbbbbbbbbbbb',
+                    //分页参数配置
+                    pagerConfig: {
+                        totalPages: 9, //总共多少页
+                        pageIndex: 1, //当前第几页
+                        pageSizeList: [5, 10, 15, 20], //每页显示多少条  几个可选值
+                        pageSize: 10, //当前每页显示条数
+                        totalRows: 108, //总共多少条数据
+                        onPageChange: function(p) {
+                            console.log('在外部重写了onPageChange的方法，你现在浏览的是第 ' + p + ' 页!!!!!')
+                        },
+                    }
+                });
+                var tpl = document.querySelector('#ppp').innerHTML;
+                document.querySelector('#ppp').innerHTML = '';
+                var fn = function() {};
+                avalon.component('ms-pager', {
+                    template: tpl,
+                    defaults: {
+                        totalPages: 1, //总共多少页
+                        pageIndex: 1, //当前第几页
+                        pageSizeList: [6, 12, 18, 24, 30], //每页显示多少条  几个可选值
+                        pageSize: 6, //当前每页显示条数
+                        totalRows: 6, //总共多少条数据
+                        onPageChange: fn, //需要被重写的方法，页码变更时触发
+                        onPageSizeChange: fn, //每页数据条数变更时触发，要重写
+                        onInputPage: function() {
+                            if (this.pageIndex > this.totalPages) {
+                                this.pageIndex = this.totalPages;
+                            } else if (this.pageIndex < 1) {
+                                this.pageIndex = 1;
+                            }
+                            //          this.onPageChange(this.pageIndex);
+                        },
+                        onPrev: function() {
+                            if (this.pageIndex > 1) {
+                                --this.pageIndex;
+                                //              this.onPageChange(this.pageIndex);
+                            }
+                        },
+                        onNext: function() {
+                            if (this.pageIndex < this.totalPages) {
+                                ++this.pageIndex;
+                                //              this.onPageChange(this.pageIndex);
+                            }
+                        },
+                        onFirst: function() {
+                            if (this.pageIndex != 1) {
+                                //              this.onPageChange(this.pageIndex = 1);
+                                this.pageIndex = 1
+                            }
+                        },
+                        onLast: function() {
+                            if (this.pageIndex != this.totalPages) {
+                                //              this.onPageChange(this.pageIndex = this.totalPages);
+                                this.pageIndex = this.totalPages
+                            }
+                        },
+                        onInit: function() {
+                            console.log(this,'!');
+                            this.$watch('pageIndex', function(nju, old) {
+                                console.log(nju, old, 'watch!')
+                                this.onPageChange(this.pageIndex);
+                            })
+                        },
+                    }
+                })
+                avalon.scan(document.body);
+            })
+        </script>
+    </head>
+
+    <body>
+        <div ms-controller="test">
+            {{@aaa}}
+            <ms-pager ms-widget="@pagerConfig"></ms-pager>
+            {{@bbb}}
+        </div>
+
+        <div id="ppp">
+            <div class="pager">
+                <span class="cursor-p" ms-click="@onFirst">《</span>
+                <span class="cursor-p" ms-on-click="@onPrev">&lt;</span>
+
+                <span>第 <input type="text" ms-duplex="@pageIndex"
+                    ms-on-keypress="@onInputPage | enter"/>页/共<span>{{@totalPages}}</span>页</span>
+
+                <span class="cursor-p" ms-on-click="@onNext">&gt;</span>
+                <span class="cursor-p" ms-click="@onLast">》</span>
+                <span>
+                    <select ms-duplex="@pageSize">
+                        <option ms-for="el in @pageSizeList">{{el}}</option>
+                    </select>
+                </span>
+                <span>
+                    共检索出<span>{{@totalRows}}</span>条数据
+                </span>
+            </div>
+        </div>
+    </body>
+
+</html>

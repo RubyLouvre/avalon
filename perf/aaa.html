@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-on-mousewheel</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../dist/avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                aaa: "111",
+                cb: function(e) {
+                    vm.text = e.wheelDelta + "  " + e.type
+                },
+                bbb: '222'
+            })
+            var vm2 = avalon.define({
+                $id: 'test2',
+                ccc: '333'
+            })
+        </script>
+    </head>
+
+    <body ms-controller="test">
+        <div  id="aaa" style="background: red;width:200px;height: 200px;" >
+            {{#aaa}}
+            <div ms-important="test2" id="eee" class="kkk">
+                {{#ccc}}
+            </div>
+            {{#bbb}}
+        </div>
+    </body>
+</html>

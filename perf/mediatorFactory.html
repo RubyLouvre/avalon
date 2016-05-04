@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src='../dist/avalon.js'></script>
+        <script>
+            var vm = avalon.define({
+                $id:'test',
+                a: 111,
+                b: {
+                    e:222
+                },
+                c: 666
+            })
+           
+            var vm2 = avalon.define({
+                $id:'test2',
+                a: 333,
+                b: {
+                    e:444
+                },
+                d: 777
+            })
+            var vm4 = avalon.mediatorFactory(vm, vm2)
+            vm4.$watch('b.e', function(r){
+                console.log('---',r)
+            })
+            console.log(vm4)
+//             var vm3 = avalon.define({
+//                $id:'test3',
+//                a: 333,
+//                e: 444,
+//                f: 777
+//            })
+//            vm3.$watch('a', function(a){
+//                console.log(a,'!!!')
+//            })
+//            vm2.$watch('b', function(a){
+//                console.log(a,'!!!')
+//            })
+//            var vm4 = avalon.mediatorFactory(vm, vm2, vm3 )
+//            vm4.$watch('a',function(){
+//                console.log('add by vm4')
+//            })
+            </script>
+    </head>
+    <body>
+        <div>TODO write content</div>
+    </body>
+</html>

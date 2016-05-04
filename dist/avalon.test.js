@@ -55,6 +55,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
+	
+
 	var avalon = __webpack_require__(82) 
 
 	__webpack_require__(8)
@@ -65,7 +67,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(75)
 	__webpack_require__(100)
 
+
+	__webpack_require__(103)
+	__webpack_require__(104)
 	module.exports = avalon
+
+
 
 
 /***/ },
@@ -7391,6 +7398,45 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = mixin
 
+
+/***/ },
+/* 102 */,
+/* 103 */
+/***/ function(module, exports) {
+
+	//var avalon = require('avalon')
+
+	avalon.component('ms-button', {
+	    template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
+	    defaults: {
+	        buttonText: "button"
+	    },
+	    soleSlot: 'buttonText'
+	})
+
+/***/ },
+/* 104 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var button = __webpack_require__(103)
+	var tmpl = __webpack_require__(105)
+
+	avalon.component('ms-panel', {
+	    template: tmpl,
+	    defaults: {
+	        body: "&nbsp;&nbsp;",
+	        'ms_button': {
+	            buttonText: 'click me!'
+	        }
+	    },
+	    soleSlot: 'body'
+	})
+
+/***/ },
+/* 105 */
+/***/ function(module, exports) {
+
+	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
 
 /***/ }
 /******/ ])

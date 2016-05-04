@@ -1,0 +1,11 @@
+// mocha的入口文件
+
+process.env.modern = false
+var assert = require('assert')
+console.log("开始测试")
+require("./src/__test__")
+/*
+ssh-keygen -t rsa -f ~/.ssh/id_rsa.coding7834 -C "1669866773@qq.com"
+
+ssh-add ~/.ssh/id_rsa.coding7834
+*/

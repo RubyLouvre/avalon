@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+        <script src="../dist/avalon.modern.js"></script>
+        <script>
+            var tpl = '<div><select ms-duplex="@currentNum">' +
+                    '<option ms-for="el in @numList">{{el}}</option>' +
+                    '</select><p>{{@currentNum}}</p></div>';
+
+            avalon.component('ms-pager', {
+                template: tpl,
+                defaults: {
+                    numList: [6, 12, 18, 24, 30],
+                    currentNum: 12,
+                    onInit: function () {
+                        console.log('onInit')
+                    },
+                    onReady: function () {
+                        console.log('onReady')
+                    },
+                    onViewChange: function () {
+                        console.log('onViewChange')
+                    },
+                    onDispose: function () {
+                        console.log('onDispose')
+                    }
+                }
+
+            })
+            
+
+            var vm = avalon.define({
+                $id: 'test',
+                aaa: '测试测试',
+                click:function(){
+                    document.body.innerHTML = ''
+                }
+            })
+
+        </script>
+    </head>
+
+    <body ms-controller="test">
+        <div>{{@aaa}}</div>
+    <xmp ms-widget="{is:'ms-pager'}"></xmp>
+    <ms-pager></ms-pager>
+    <button ms-click="@click" type="button">ddd</button>
+</body>
+</html>

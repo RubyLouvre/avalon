@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.js"></script>
+        <style>
+        li{list-style: none; }
+        body{margin: 50px; background-color: #333; color: #ccc; overflow: hidden;}
+        h3{color: #fff;}
+        .animate-enter, .animate-leave {
+        transition: 500ms ease-in all;
+        position: relative;
+        display: block;
+        } 
+        .animate-enter.animate-enter-active, .animate-leave {
+        left: 0;
+        }
+        .animate-leave.animate-leave-active, .animate-enter {
+        left: 500px;
+        }
+            </style>
+        <script>
+            //500 --> 0 --> 500
+           var vm = avalon.define({
+                $id: 'test',
+                search: '',
+                action: 'enter',
+                songs: ['Sgt. Peppers Lonely Hearts Club Band',
+                        'With a Little Help from My Friends',
+                        'Lucy in the Sky with Diamonds',
+                        'Getting Better' ,
+                        'Fixing a Hole',
+                        'Shes Leaving Home',
+                        'Being for the Benefit of Mr. Kite!' ,
+                        'Within You Without You',
+                        'When Im Sixty-Four','Lovely Rita',
+                        'Good Morning Good Morning',
+                        'Sgt. Peppers Lonely Hearts Club Band (Reprise)',
+                        'A Day in the Life']
+
+            })
+               
+        </script>
+    </head>
+
+    <body >
+        <h3>Songs on The Beatles - Sgt. Pepper's Lonely Hearts Club Band (1967)</h3>
+        <div ms-controller="test">
+            <input type="text" ms-duplex="@search">
+            <button type="submit">Filter</button>
+            <ul>
+                <li ms-for="song in @songs| filterBy(@search)">
+                    {{song}}
+                </li> 
+            </ul>
+            <div ms-effect='{is:"animate",action: @action}' ms-click='@action = @action == "enter" ? "leave": "enter"'>点我有动画</div>
+        </div>
+</html>

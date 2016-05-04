@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+ 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../dist/avalon.js"></script>
+    <style>
+        .my-repeat-animation {
+            width: 400px;
+            height: 30px;
+            -webkit-animation-duration: 1s;
+            animation-duration: 1s;
+        }
+         
+        .ng-enter {
+            -webkit-animation-name: enter_animation;
+            animation-name: enter_animation;
+        }
+        .ng-enter-stagger {
+           animation-delay:300ms;
+           -webkit-animation-delay:300ms;
+        }
+        .ng-leave {
+            -webkit-animation-name: leave_animation;
+            animation-name: leave_animation;
+        }
+         
+        @keyframes enter_animation {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+         
+        @keyframes leave_animation {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+         
+        @-webkit-keyframes enter_animation {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+         
+        @-webkit-keyframes leave_animation {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+    </style>
+    <script>
+        avalon.effect("my-repeat-animation", {
+            enterClass: "ng-enter",
+            leaveClass: "ng-leave"
+        })
+        var vm = avalon.define({
+            $id: "test",
+            array: [1, 2, 3, 4],
+            getBg: function() {
+                return '#' + Math.floor(Math.random() * 16777215).toString(16);
+            },
+            add: function() {
+                vm.array.push(vm.array.length + 1)
+                vm.array.push(vm.array.length + 1)
+                vm.array.push(vm.array.length + 1)
+                vm.array.push(vm.array.length + 1)
+                vm.array.push(vm.array.length + 1)
+                vm.array.push(vm.array.length + 1)
+                vm.array.push(vm.array.length + 1)
+                vm.array.push(vm.array.length + 1)
+                vm.array.push(vm.array.length + 1)
+            },
+            value: ""
+        })
+        vm.$watch("value", function(a) {
+            if (a) {
+                vm.array.removeAll(function(el) {
+                    return el !== a
+                })
+            } else {
+                if(vm.array.length < 12)
+                  vm.add()
+            }
+        })
+    </script>
+</head>
+ 
+<body ms-controller="test">
+    <button ms-click="@add">Add</button>
+    <input placeholder="只保留" ms-duplex-number="@value" />
+    <div class="my-repeat-animation"  ms-for="item in @array" 
+         ms-css="{background:@getBg()}"
+         ms-effect="{is:'my-repeat-animation',stagger:0.3}">
+        {{item}}
+    </div>
+</body>
+ 
+</html>
