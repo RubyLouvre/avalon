@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>avalon 2</title>
+</head>
+<body ms-controller="root">
+    <h1>{{@page}}</h1>
+    <input type="button" ms-click="@change($event)" value="change page" />
+    <!-- first:  <span ms-controller="first"  ms-text="@page"></span><br>
+    second: <span ms-controller="second" ms-html="@page"></span><br> -->
+    <div ms-controller="first">
+        <h2 ms-text="@page"></h2>
+        <input type="button" ms-click="@change($event)" value="change page first" />
+        <div ms-if="@page=='first'">
+            <div ms-controller="second">
+                <h3 ms-html="@page"></h3>
+                <input type="button" ms-click="@change($event)" value="change page second" />
+                <div ms-if="@page == 'second'">
+                   only show when @page equal 'second' - {{@page}} 
+                   show kind@first - {{@kind}}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript" src="./dist/avalon.js"></script>
+<script type="text/javascript">
+    var root = avalon.define({
+        $id: 'root',
+        page: 'root',
+        level: 'root',
+        change: function() {
+            root.page = Math.random()
+        }
+    });
+    var count2 = 0
+    var first = avalon.define({
+        $id: 'first',
+        page: 'first',
+        age: 'first',
+        kind: 'first',
+        change: function () {
+            console.log('first excute ' + count2++)
+            if (first.page == 'first') {
+                first.page = 100
+            } else {
+                first.page = 'first'
+            }
+        }
+    });
+    var count = 0
+    var second = avalon.define({
+        $id: 'second',
+        page: 'second',
+        age: 'second',
+        grade: "second",
+        change: function () {
+            console.log("second excute " + count++)
+            if (second.page == 'second') {
+                second.page = 1000
+            } else {
+                second.page = 'second'
+            }
+        }
+    });
+    avalon.scan(document.body)
+</script>
+</html>

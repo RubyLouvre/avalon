@@ -6,9 +6,9 @@ avalon.batch = require('./batch')
 
 var parseView = require('./parser/parseView')
 
-function render(vtree) {
+function render(vtree, num, scan) {
     var num = num || String(new Date - 0).slice(0, 6)
-    var body = parseView(vtree, num) + '\n\nreturn vnodes' + num
+    var body = parseView(vtree, num, scan) + '\n\nreturn vnodes' + num
     var fn = Function('__vmodel__', body)
     return fn
 }

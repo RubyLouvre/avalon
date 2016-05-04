@@ -327,3 +327,19 @@ avalon.fn.unbind = function (type, fn, phase) {
     }
     return this
 }
+avalon.$$unbind = function(node) {
+    if (node.querySelectorAll) {
+        var nodes = node.querySelectorAll('[avalon-events]')
+        avalon.each(nodes, function (i, el) {
+            avalon.unbind(el)
+        })
+    } else {
+        var nodes = node.getElementsByTagName('*')
+        //IE6-7这样取所有子孙节点会混入注释节点
+        avalon.each(nodes, function (i, el) {
+            if (el.nodeType === 1 && el.getAttribute('avalon-events')) {
+                avalon.unbind(el)
+            }
+        })
+    }
+}

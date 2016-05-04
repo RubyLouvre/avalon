@@ -19,7 +19,7 @@ function wrap(a, num) {
 var rmsFor = /^\s*ms\-for:/
 var rmsForEnd = /^\s*ms\-for\-end:/
 
-function parseView(arr, num) {
+function parseView(arr, num, scan) {
     num = num || String(new Date - 0).slice(0, 5)
 
     var forstack = []
@@ -122,23 +122,34 @@ function parseView(arr, num) {
             if (!hasWidget && el.type.indexOf('-') > 0 && !el.props.resolved) {
                 el.props['ms-widget'] = '@' + el.type.replace(/-/g, "_")
             }
-
-            var hasBindings = parseBindings(el.props, num, el)
-            if (hasBindings) {
-                str += hasBindings
-            }
-            if (!el.isVoidTag) {
-                if (el.children.length) {
-                    var hasIf = el.props['ms-if']
-                    if (hasIf) {
-                        str += 'if(' +vnode+'&&'+ vnode + '.nodeType === 1 ){\n'
+            var hasBindings = '',
+                vmID = el.props['ms-controller']
+            // 支持局部rerender，ms-controller形成一个局部
+            // if scan表示直接通过avalon.scan的非嵌套ms-controller
+            if (vmID && !scan) {
+                el.scan = false
+                hasBindings = parseBindings({'ms-controller': vmID}, num, el)
+                if (hasBindings) {
+                    str += hasBindings
+                }
+            } else {
+                hasBindings = parseBindings(el.props, num, el)
+                if (hasBindings) {
+                    str += hasBindings
+                }
+                if (!el.isVoidTag) {
+                    if (el.children.length) {
+                        var hasIf = el.props['ms-if']
+                        if (hasIf) {
+                            str += 'if(' +vnode+'&&'+ vnode + '.nodeType === 1 ){\n'
+                        }
+                        str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
+                        if (hasIf) {
+                            str += '}\n'
+                        }
+                    } else {
+                        str += vnode + '.template = ' + quote(el.template) + '\n'
                     }
-                    str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
-                    if (hasIf) {
-                        str += '}\n'
-                    }
-                } else {
-                    str += vnode + '.template = ' + quote(el.template) + '\n'
                 }
             }
             str += children + '.push(' + vnode + ')\n'

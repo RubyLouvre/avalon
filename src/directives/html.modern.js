@@ -26,10 +26,7 @@ avalon.directive('html', {
         if (node.nodeType !== 1) {
             return
         }
-        var nodes = node.querySelectorAll('[avalon-events]')
-        avalon.each(nodes, function (el) {
-            avalon.unbind(el)
-        })
+        avalon.$$unbind(node)
         //添加节点
         avalon.clearHTML(node)
         var fragment = document.createDocumentFragment()

@@ -54,6 +54,11 @@ function patch(nodes, vnodes, parent, steps) {
             //处理子节点
             patch(avalon.slice(node.childNodes), vnode.children, node, steps)
         }
+        var vmID = vnode.props && vnode.props['ms-controller']
+        if (vmID) {
+            avalon.vmodels[vmID].$element = node 
+            node.vtree = [vnode]
+        }
         //ms-duplex
         execHooks(node, vnode, parent, steps, 'afterChange')
         if (!steps.count)

@@ -27,20 +27,7 @@ avalon.directive('html', {
         if (node.nodeType !== 1) {
             return
         }
-        if (node.querySelectorAll) {
-            var nodes = node.querySelectorAll('[avalon-events]')
-            avalon.each(nodes, function (el) {
-                avalon.unbind(el)
-            })
-        } else {
-            var nodes = node.getElementsByTagName('*')
-            //IE6-7这样取所有子孙节点会混入注释节点
-            avalon.each(nodes, function (el) {
-                if (el.nodeType === 1 && el.getAttribute('avalon-events')) {
-                    avalon.unbind(el)
-                }
-            })
-        }
+        avalon.$$unbind(node)
         //添加节点
         avalon.clearHTML(node)
         var fragment = document.createDocumentFragment()

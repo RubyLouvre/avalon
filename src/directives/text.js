@@ -12,6 +12,7 @@ avalon.directive('text', {
         cur.skipContent = true
         var dom = cur.dom = pre.dom
         if (curValue !== preValue) {
+            if (!cur.children[0]) cur.children[0] = {type:"#text",nodeType:3}
             cur.children[0].nodeValue = curValue
             if (dom) {
                 this.update(dom, cur)

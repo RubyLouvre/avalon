@@ -176,8 +176,10 @@ function mediatorFactory(before, after) {
         master: true
     })
     if (after.$id && before.$element) {
-        after.$element = before.$element
-        after.$render = before.$render
+        if (!after.$element) {
+            after.$element = before.$element
+            after.$render = before.$render 
+        } 
     }
     return $vmodel
 }
