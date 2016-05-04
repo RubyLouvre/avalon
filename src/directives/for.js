@@ -150,7 +150,7 @@ avalon.directive('for', {
             var node = startRepeat.nextSibling
             while (node && node !== endRepeat) {
                 if (node.nodeType === 8) {
-                    hasRender = node.nodeValue == vnode.signature
+                    hasRender = node.nodeValue === vnode.signature
                     if (hasRender) {
                         vnode.hasRender = true
                         break

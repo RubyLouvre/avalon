@@ -1,4 +1,4 @@
-/*! built in 2016-5-3:18 version 2.0 by 司徒正美 */
+/*! built in 2016-5-4:15 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1430,25 +1430,47 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var parseView = __webpack_require__(37)
 
+	avalon.important = function (elem, vid) {
+	    //如果vmodel还不存在,直接返回
+	    var wid = elem.props.wid
+	    var vm = avalon.vmodels[vid]
+	    if(!vm){
+	        return elem
+	    }else if (typeof avalon.caches[wid] === 'string') {
+	        var body = avalon.caches[wid] 
+	        //生成模板函数,并进行相关缓存
+	        body = '__vmodel__ =  avalon.vmodels[' +
+	                avalon.quote(vid) + ']\n' + body
+	        var render = Function('__vmodel__', body)
+	        var child = render()
+	        elem = avalon.caches[wid] = child[0]
+	        elem.order = 'ms-important'
+	        elem.skipAttrs = false
+	        elem.props['ms-important'] = vid
+	        elem.render = render
+	        return elem
+	    } else {
+	        elem = avalon.caches[wid]
+	        elem.skipAttrs = elem.skipContent = true
+	        return elem
+	    }
+	}
 	avalon.directive("important", {
 	    priority: 1,
 	    parse: function (binding, num, elem) {
-	        var $id = binding.expr
-	        var vm = 'vm' + num
-	        var a = 'var ' + vm + ' =  avalon.vmodels['
-	                + avalon.quote($id) + ']\n'
-	        var str = a + '__vmodel__ = ' + vm + ' || __vmodel__\n\n'
 	        delete elem.props['ms-important']
-	        num += 1
-	        var body = parseView([elem], num) + '\n\nreturn vnodes' + num
-	        var ctrl = avalon.vmodels[$id]
-	        elem.props['ms-important'] = $id
-	        ctrl.$render = Function('__vmodel__', str + body)
-	        return str
+	        var wid = elem.props.wid || (elem.props.wid = avalon.makeHashCode('w'))
+	        var fn = parseView([elem], num) + '\n\nreturn vnodes' + num
+	        //将渲染函数的某一部分存起来,渲在c方法中转换为函数
+	        avalon.caches[wid] = fn
+	        elem.isVoidTag = true
+	        return ['vnode' + num + '.props.wid = ' + avalon.quote(wid),
+	            'vnode' + num + ' = avalon.important(vnode' + num + ',' +
+	                    avalon.quote(binding.expr) + ')'].join('\n') + '\n'
+
 	    },
 	    diff: function (cur, pre, steps, name) {
 	        if (pre.props[name] !== cur.props[name]) {
-	            cur.props[name] = pre.props[name]
 	            var list = cur.change || (cur.change = [])
 	            if (avalon.Array.ensure(list, this.update)) {
 	                steps.count += 1
@@ -1456,8 +1478,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    update: function (node, vnode) {
-	        var id = node.getAttribute('ms-important')
-	        var vm = avalon.vmodels[id] || {}
+	        var vid = vnode.props['ms-important']
+	        var vm = avalon.vmodels[vid]
+	        vm.$render = vnode.render
 	        vm.$element = node
 	    }
 	})
@@ -3392,7 +3415,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var node = startRepeat.nextSibling
 	            while (node && node !== endRepeat) {
 	                if (node.nodeType === 8) {
-	                    hasRender = node.nodeValue == vnode.signature
+	                    hasRender = node.nodeValue === vnode.signature
 	                    if (hasRender) {
 	                        vnode.hasRender = true
 	                        break

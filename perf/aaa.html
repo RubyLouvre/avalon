@@ -8,18 +8,26 @@
         <script>
             var vm = avalon.define({
                 $id: "test",
-                text: "222",
+                aaa: "111",
                 cb: function(e) {
                     vm.text = e.wheelDelta + "  " + e.type
-                }
+                },
+                bbb: '222'
             })
-
+            var vm2 = avalon.define({
+                $id: 'test2',
+                ccc: '333'
+            })
         </script>
     </head>
 
     <body ms-controller="test">
-        <div  id="aaa" style="background: red;width:200px;height: 200px;" ms-on-mousewheel="#cb">
-            {{#text}}
+        <div  id="aaa" style="background: red;width:200px;height: 200px;" >
+            {{#aaa}}
+            <div ms-important="test2" id="eee" class="kkk">
+                {{#ccc}}
+            </div>
+            {{#bbb}}
         </div>
     </body>
 </html>
