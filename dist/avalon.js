@@ -1617,7 +1617,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else if (!this.isVoidTag) {
 	            if (this.children.length) {
 	                this.children.forEach(function (c) {
-	                    dom.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
+	                    c && dom.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
 	                })
 	            } else {
 	                dom.appendChild(avalon.parseHTML(this.template))
@@ -1641,7 +1641,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        str += '>'
 	        if (this.children.length) {
 	            str += this.children.map(function (c) {
-	                return avalon.vdomAdaptor(c, 'toHTML')
+	                return c ? avalon.vdomAdaptor(c, 'toHTML'): ''
 	            }).join('')
 	        } else {
 	            str += this.template
@@ -4215,7 +4215,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        avalon.clearHTML(node)
 	        var fragment = document.createDocumentFragment()
 	        vnode.children.forEach(function (c) {
-	            fragment.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
+	            c && fragment.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
 	        })
 	        node.appendChild(fragment)
 	    }
@@ -5666,6 +5666,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            pre.repeatCount = 0
 	        }
 	        if (!pre.components) {
+	            console.log("*********")
+	            console.log("*********")
+	            console.log("*********")
 	            var range = getRepeatRange(previous, __index__)//所有节点包括前后锚点
 	            pre.components = getComponents(range.slice(1, -1), pre.signature)
 	            pre.repeatCount = range.length - 2

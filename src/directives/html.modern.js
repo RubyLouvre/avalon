@@ -34,7 +34,7 @@ avalon.directive('html', {
         avalon.clearHTML(node)
         var fragment = document.createDocumentFragment()
         vnode.children.forEach(function (c) {
-            fragment.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
+            c && fragment.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
         })
     }
 })

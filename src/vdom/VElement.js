@@ -61,7 +61,7 @@ VElement.prototype = {
         } else if (!this.isVoidTag) {
             if (this.children.length) {
                 this.children.forEach(function (c) {
-                    dom.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
+                    c && dom.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
                 })
             } else {
                 dom.appendChild(avalon.parseHTML(this.template))
@@ -85,7 +85,7 @@ VElement.prototype = {
         str += '>'
         if (this.children.length) {
             str += this.children.map(function (c) {
-                return avalon.vdomAdaptor(c, 'toHTML')
+                return c ? avalon.vdomAdaptor(c, 'toHTML'): ''
             }).join('')
         } else {
             str += this.template

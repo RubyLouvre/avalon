@@ -57,11 +57,11 @@ avalon.directive('for', {
             pre.components = []
             pre.repeatCount = 0
         }
-        if (!pre.components) {
-            var range = getRepeatRange(previous, __index__)//所有节点包括前后锚点
-            pre.components = getComponents(range.slice(1, -1), pre.signature)
-            pre.repeatCount = range.length - 2
-        }
+//        if (!pre.components) {
+//            var range = getRepeatRange(previous, __index__)//所有节点包括前后锚点
+//            pre.components = getComponents(range.slice(1, -1), pre.signature)
+//            pre.repeatCount = range.length - 2
+//        }
 
         var quota = pre.components.length
         var nodes = current.slice(cur.start, cur.end)
