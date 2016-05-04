@@ -85,14 +85,28 @@ function makeAccessor(sid, spath, heirloom) {
             }
             var older = old
             old = val
-         
+
             var vm = heirloom.__vmodel__
-             
+
             if (this.$hashcode && vm) {
                 //★★确保切换到新的events中(这个events可能是来自oldProxy)               
                 if (heirloom !== vm.$events) {
                     get.heirloom = vm.$events
                 }
+                
+                var whole = get.$decompose
+                if (whole && whole[spath]) {
+                    var wvm = whole[spath]
+                    if (!wvm.$hashcode) {
+                        delete whole[spath]
+                    } else {
+                        var wpath = spath.replace(/^[^.]+\./, '')
+                        if (wpath !== spath) {
+                            $emit(wvm.$events[wpath], wvm, wpath, val, older)
+                        }
+                    }
+                }
+
                 $emit(get.heirloom[spath], vm, spath, val, older)
                 if (sid.indexOf('.*.') > 0) {//如果是item vm
                     var arr = sid.match(rtopsub)
@@ -102,15 +116,15 @@ function makeAccessor(sid, spath, heirloom) {
                         $emit(top.$events[ path ], vm, path, val, older)
                     }
                 }
-               
+
                 avalon.rerenderStart = new Date
                 var dotIndex = vm.$id.indexOf('.')
-                if(dotIndex > 0){
+                if (dotIndex > 0) {
                     avalon.batch(vm.$id.slice(0, dotIndex), true)
-                }else{
+                } else {
                     avalon.batch(vm, true)
                 }
-              
+
             }
         },
         enumerable: true,
@@ -140,9 +154,9 @@ function define(definition) {
 function arrayFactory(array, old, heirloom, options) {
     if (old && old.splice) {
         var args = [0, old.length].concat(array)
-        ++avalon.suspendUpdate 
+        ++avalon.suspendUpdate
         old.splice.apply(old, args)
-        --avalon.suspendUpdate 
+        --avalon.suspendUpdate
         return old
     } else {
         for (var i in __array__) {

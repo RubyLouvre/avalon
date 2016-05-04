@@ -121,20 +121,30 @@ function mediatorFactory(before, after) {
     var accessors = {}
     var unresolve = {}
     var heirloom = {}
-    for (var i = 0; i < arguments.length; i++) {
-        var obj = arguments[i]
+    var arr = avalon.slice(arguments)
+    for (var i = 0; i < arr.length; i++) {
+        var obj = arr[i]
         //收集所有键值对及访问器属性
+        var config
+        var configName
         for (var key in obj) {
             keys[key] = obj[key]
             var $accessors = obj.$accessors
             if ($accessors && $accessors[key]) {
-                accessors[key] = $accessors[key]
+                if (arr.indexOf(obj[key]) === -1) {
+                    accessors[key] = $accessors[key]
+                } else { //去掉vm那个配置对象
+                    config = keys[key]
+                    configName = key
+                    delete keys[key]
+                }
             } else if (typeof keys[key] !== 'function') {
                 unresolve[key] = 1
             }
         }
     }
-    if(typeof this === 'function'){
+
+    if (typeof this === 'function') {
         this(keys, unresolve)
     }
     for (key in unresolve) {
@@ -144,7 +154,7 @@ function mediatorFactory(before, after) {
         if (!isSkip(key, keys[key], empty)) {
             accessors[key] = makeAccessor(before.$id, key, heirloom)
             accessors[key].set(keys[key])
-        } 
+        }
     }
 
     var $vmodel = new Observer()
@@ -154,6 +164,15 @@ function mediatorFactory(before, after) {
         if (!accessors[key]) {//添加不可监控的属性
             $vmodel[key] = keys[key]
         }
+        //用于通过配置对象触发组件的$watch回调
+        if (configName && accessors[key] && config.hasOwnProperty(key)) {
+            var $$ = accessors[key]
+            if (!$$.get.$decompose) {
+                $$.get.$decompose = {}
+            }
+            $$.get.$decompose[configName+'.'+key] = $vmodel
+        }
+
         if (key in $$skipArray) {
             delete keys[key]
         } else {

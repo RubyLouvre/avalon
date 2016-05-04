@@ -1,4 +1,4 @@
-/*! built in 2016-5-4:16 version 2.0 by 司徒正美 */
+/*! built in 2016-5-4:18 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3322,14 +3322,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            pre.components = []
 	            pre.repeatCount = 0
 	        }
-	        if (!pre.components) {
-	            console.log("*********")
-	            console.log("*********")
-	            console.log("*********")
-	            var range = getRepeatRange(previous, __index__)//所有节点包括前后锚点
-	            pre.components = getComponents(range.slice(1, -1), pre.signature)
-	            pre.repeatCount = range.length - 2
-	        }
+	//        if (!pre.components) {
+	//            var range = getRepeatRange(previous, __index__)//所有节点包括前后锚点
+	//            pre.components = getComponents(range.slice(1, -1), pre.signature)
+	//            pre.repeatCount = range.length - 2
+	//        }
 
 	        var quota = pre.components.length
 	        var nodes = current.slice(cur.start, cur.end)
@@ -5151,14 +5148,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            var older = old
 	            old = val
-	         
+
 	            var vm = heirloom.__vmodel__
-	             
+
 	            if (this.$hashcode && vm) {
 	                //★★确保切换到新的events中(这个events可能是来自oldProxy)               
 	                if (heirloom !== vm.$events) {
 	                    get.heirloom = vm.$events
 	                }
+	                
+	                var whole = get.$decompose
+	                if (whole && whole[spath]) {
+	                    var wvm = whole[spath]
+	                    if (!wvm.$hashcode) {
+	                        delete whole[spath]
+	                    } else {
+	                        var wpath = spath.replace(/^[^.]+\./, '')
+	                        if (wpath !== spath) {
+	                            $emit(wvm.$events[wpath], wvm, wpath, val, older)
+	                        }
+	                    }
+	                }
+
 	                $emit(get.heirloom[spath], vm, spath, val, older)
 	                if (sid.indexOf('.*.') > 0) {//如果是item vm
 	                    var arr = sid.match(rtopsub)
@@ -5168,15 +5179,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        $emit(top.$events[ path ], vm, path, val, older)
 	                    }
 	                }
-	               
+
 	                avalon.rerenderStart = new Date
 	                var dotIndex = vm.$id.indexOf('.')
-	                if(dotIndex > 0){
+	                if (dotIndex > 0) {
 	                    avalon.batch(vm.$id.slice(0, dotIndex), true)
-	                }else{
+	                } else {
 	                    avalon.batch(vm, true)
 	                }
-	              
+
 	            }
 	        },
 	        enumerable: true,
@@ -5206,9 +5217,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	function arrayFactory(array, old, heirloom, options) {
 	    if (old && old.splice) {
 	        var args = [0, old.length].concat(array)
-	        ++avalon.suspendUpdate 
+	        ++avalon.suspendUpdate
 	        old.splice.apply(old, args)
-	        --avalon.suspendUpdate 
+	        --avalon.suspendUpdate
 	        return old
 	    } else {
 	        for (var i in __array__) {
@@ -7107,14 +7118,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var accessors = {}
 	    var unresolve = {}
 	    var heirloom = {}
-	    for (var i = 0; i < arguments.length; i++) {
-	        var obj = arguments[i]
+	    var arr = avalon.slice(arguments)
+	    var config
+	    var configName
+	    for (var i = 0; i < arr.length; i++) {
+	        var obj = arr[i]
 	        //收集所有键值对及访问器属性
 	        for (var key in obj) {
 	            keys[key] = obj[key]
 	            var accessor = Object.getOwnPropertyDescriptor(obj, key)
 	            if (accessor.set) {
-	                accessors[key] = accessor
+	                if (arr.indexOf(obj[key]) === -1) {
+	                    accessors[key] = accessor
+	                } else { //去掉vm那个配置对象
+	                    config = keys[key]
+	                    configName = key
+	                    delete keys[key]
+	                }
 	            } else if (typeof keys[key] !== 'function') {
 	                unresolve[key] = 1
 	            }
@@ -7138,6 +7158,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (key in keys) {
 	        if (!accessors[key]) {//添加不可监控的属性
 	            $vmodel[key] = keys[key]
+	        }
+	        if (configName && accessors[key] && config.hasOwnProperty(key)) {
+	            var $$ = accessors[key]
+	            if (!$$.get.$decompose) {
+	                $$.get.$decompose = {}
+	            }
+	            $$.get.$decompose[configName+'.'+key] = $vmodel
 	        }
 	        keys[key] = true
 	    }
