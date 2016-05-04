@@ -88,7 +88,9 @@ avalon.directive('for', {
                 saveInCache(cache, c)
             }
             cur.removedComponents = {}
-            isChange = steps.count !== oldCount
+            //如果没有孩子也要处理一下
+            isChange = cur.components.length === 0 || 
+                    steps.count !== oldCount
 
         } else {
             var cache = pre.cache

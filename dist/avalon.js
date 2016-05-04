@@ -1,4 +1,4 @@
-/*! built in 2016-5-4:15 version 2.0 by 司徒正美 */
+/*! built in 2016-5-4:16 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -5696,7 +5696,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                saveInCache(cache, c)
 	            }
 	            cur.removedComponents = {}
-	            isChange = steps.count !== oldCount
+	            //如果没有孩子也要处理一下
+	            isChange = cur.components.length === 0 || 
+	                    steps.count !== oldCount
 
 	        } else {
 	            var cache = pre.cache
