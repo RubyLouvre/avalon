@@ -1,4 +1,4 @@
-/*! built in 2016-5-4:19 version 2.0 by 司徒正美 */
+/*! built in 2016-5-4:20 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2268,7 +2268,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        cur.skipContent = true
 	        var dom = cur.dom = pre.dom
 	        if (curValue !== preValue) {
-	            cur.children[0] = cur.children[0] || {type:"#text",nodeType:3}
+	            if (!cur.children[0]) cur.children[0] = {type:"#text",nodeType:3}
 	            cur.children[0].nodeValue = curValue
 	            if (dom) {
 	                this.update(dom, cur)
@@ -6518,7 +6518,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    avalon.each(nodes, function (i, el) {
 	        avalon.unbind(el)
 	    })
-	    
 	}
 
 /***/ },

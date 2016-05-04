@@ -13,7 +13,7 @@
     "devDependencies": {
         "chai": "^1.9.1",
         "karma": "^0.13.19",
-        "webpack": "*",
+        "webpack": "^2.1.0",
         "text-loader": "0.0.1",
         "eslint-loader":"1.3.0",
         "karma-chrome-launcher": "^0.2.2",

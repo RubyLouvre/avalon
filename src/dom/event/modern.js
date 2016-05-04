@@ -276,5 +276,4 @@ avalon.$$unbind = function(node) {
     avalon.each(nodes, function (i, el) {
         avalon.unbind(el)
     })
-    
 }
