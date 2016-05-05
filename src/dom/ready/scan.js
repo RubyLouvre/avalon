@@ -12,10 +12,10 @@ function scan(nodes) {
                 avalon(elem).removeClass('ms-controller')
                 vm.$element = elem
                 var now = new Date()
-                var vtree = elem.vtree = avalon.lexer(elem.outerHTML)
+                elem.vtree = avalon.lexer(elem.outerHTML)
                 var now2 = new Date()
                 avalon.log('create primitive vtree', now2 - now)
-                vm.$render = avalon.render(vtree, null, 'scan')
+                avalon.buildRender(vm, elem.vtree, null, 'scan') // 构建$render
                 var now3 = new Date()
                 avalon.log('create template Function ', now3 - now2)
                 avalon.rerenderStart = now3

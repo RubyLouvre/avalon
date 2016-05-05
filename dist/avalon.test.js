@@ -1,4 +1,4 @@
-/*! built in 2016-5-4:20 version 2.0 by 司徒正美 */
+/*! built in 2016-5-5:14 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1383,10 +1383,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                avalon(elem).removeClass('ms-controller')
 	                vm.$element = elem
 	                var now = new Date()
-	                var vtree = elem.vtree = avalon.lexer(elem.outerHTML)
+	                elem.vtree = avalon.lexer(elem.outerHTML)
 	                var now2 = new Date()
 	                avalon.log('create primitive vtree', now2 - now)
-	                vm.$render = avalon.render(vtree, null, 'scan')
+	                avalon.buildRender(vm, elem.vtree, null, 'scan') // 构建$render
 	                var now3 = new Date()
 	                avalon.log('create template Function ', now3 - now2)
 	                avalon.rerenderStart = now3
@@ -2018,6 +2018,24 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 43 */
 /***/ function(module, exports) {
 
+	// 抽离出来公用
+	avalon.buildRender = function(vmodel, template, num, scan) {
+	    var __inheritVmodel__
+	    var render = template.join ? template : avalon.lexer(template)
+	    render = avalon.render(render, num, scan)
+	    vmodel.$$render = function(inheritVmodel) {
+	        inheritVmodel = __inheritVmodel__ = inheritVmodel || __inheritVmodel__
+	        var __vmodel__ = vmodel
+	        if(inheritVmodel) __vmodel__ = avalon.mediatorFactory(inheritVmodel, vmodel)
+	        var _vnode = render(__vmodel__)[0]
+	        _vnode.props['ms-controller'] = vmodel.$id
+	        return [__vmodel__, _vnode]
+	    }
+	    vmodel.$render = function() {
+	        return [vmodel.$$render()[1]]
+	    }   
+	}
+
 	avalon.directive('controller', {
 	    priority: 2,
 	    parse: function (binding, num, vnode) {
@@ -2037,9 +2055,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                '}\n\n\n'
 	        }
 	        var vmodel = avalon.vmodels[$id],
-	            children = vnode.children,
-	            propsCopy = avalon.mix({}, vnode.props),
-	            __inheritVmodel__
+	            children = vnode.children
 
 	        delete vnode.props['ms-controller']
 	        vnode.children = []
@@ -2048,24 +2064,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        vnode.props['ms-controller'] = $id
 	        vnode.children = children
-	        vmodel.$$render = function(inheritVmodel) {
-	            inheritVmodel = __inheritVmodel__ = inheritVmodel || __inheritVmodel__
-	            var __vmodel__ = vmodel
-	            if(inheritVmodel) __vmodel__ = avalon.mediatorFactory(inheritVmodel, vmodel)
-	            var render = avalon.lexer(template)
-	            render = avalon.render(render, num) 
-	            var _vnode = render(__vmodel__)[0]
-	            vmodel.$render = function() {
-	                return [vmodel.$$render()[1]]
-	            }   
-	            _vnode.props['ms-controller'] = $id
-	            return [__vmodel__, _vnode]
-	        }
+	        avalon.buildRender(vmodel, template, num)
 	        return a +
 	            'if (' + vm + ') {\n' +
-	            '\tif (' + vm + '.$element) {\n' + 
-	            '\t\tavalon.$$unbind(' + vm + '.$element)\n' + 
-	            '\t}\n' + 
 	            '\tvar tmp = ' + vm + '.$$render(__vmodel__)\n' + 
 	            '\t__vmodel__ = tmp[0]\n' +
 	            '\tvnode' + num + ' = tmp[1]\n' +
@@ -3170,6 +3171,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (!element) {
 	                    element = avalon.vdomAdaptor(vnode, 'toDOM')
 	                    vnode.dom = element
+	                    var props = vnode.props
+	                    // 事件这个漏网之鱼
+	                    for (var prop in props) {
+	                        if (prop.match(/ms\-on/g)) {
+	                            var fun = props[prop]
+	                            if (typeof fun == 'function') {
+	                                element._ms_context_ = vnode.onVm
+	                                avalon.bind(element, prop.split('-')[2], fun)
+	                            }
+	                        }
+	                    }
+	                    if (vnode.onVm) delete vnode.onVm
 	                }
 	                parent.replaceChild(element, node)
 	                if (vnode.steps.count) {
