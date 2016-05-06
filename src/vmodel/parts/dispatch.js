@@ -20,7 +20,12 @@ function adjustVm(vm, expr) {
     }
     return other || vm
 }
-
+function toRegExp(expr) {
+    var arr = expr.split('.')
+    return new RegExp("^" + arr.map(function (el) {
+        return el === '*' ? '(?:[^.]+)' : el
+    }).join('\\.') + '$', 'i')
+}
 
 function $watch(expr, callback) {
     var vm = $watch.adjust(this, expr)
@@ -29,6 +34,11 @@ function $watch(expr, callback) {
     if (vm !== this) {
         this.$events[expr] = list
     }
+    if(expr.indexOf('.*') > 0 || expr === '*'){
+        console.log(toRegExp(expr))
+        list.reg = list.reg || toRegExp(expr)
+    }
+    
     avalon.Array.ensure(list, callback)
 
     return function () {

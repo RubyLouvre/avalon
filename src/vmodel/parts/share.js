@@ -64,7 +64,7 @@ function modelAdaptor(definition, old, heirloom, options) {
 }
 $$midway.modelAdaptor = modelAdaptor
 
-var rtopsub = /([^.]+)\.(.+)/
+
 function makeAccessor(sid, spath, heirloom) {
     var old = NaN
     function get() {
@@ -92,29 +92,16 @@ function makeAccessor(sid, spath, heirloom) {
                 if (heirloom !== vm.$events) {
                     get.heirloom = vm.$events
                 }
-
-                var whole = get.$decompose
-                if (whole && whole[spath]) {
-                    var wvm = whole[spath]
-                    if (!wvm.$hashcode) {
-                        delete whole[spath]
-                    } else {
-                        var wpath = spath.replace(/^[^.]+\./, '')
-                        if (wpath !== spath) {
-                            $emit(wvm.$events[wpath], wvm, wpath, val, older)
-                        }
-                    }
+                //如果这个属性是组件配置对象中的属性,那么它需要触发组件的回调
+                emitWidget(get.$decompose, spath, val, older)
+                //触发普通属性的回调
+                if (spath.indexOf('*') === -1) {
+                    $emit(get.heirloom[spath], vm, spath, val, older)
                 }
-
-                $emit(get.heirloom[spath], vm, spath, val, older)
-                if (sid.indexOf('.*.') > 0) {//如果是item vm
-                    var arr = sid.match(rtopsub)
-                    var top = avalon.vmodels[ arr[1] ]
-                    if (top) {
-                        var path = arr[2]
-                        $emit(top.$events[ path ], vm, path, val, older)
-                    }
-                }
+                //如果这个属性是数组元素上的属性
+                emitElement(sid, vm, spath, val, older)
+                //如果这个属性存在通配符
+                emitWildcard(get.heirloom, vm, spath, val, older)
 
                 avalon.rerenderStart = new Date
                 var dotIndex = vm.$id.indexOf('.')
@@ -128,6 +115,42 @@ function makeAccessor(sid, spath, heirloom) {
         },
         enumerable: true,
         configurable: true
+    }
+}
+
+var rtopsub = /([^.]+)\.(.+)/
+function emitElement(sid, vm, spath, val, older) {
+    if (sid.indexOf('.*.') > 0) {
+        var arr = sid.match(rtopsub)
+        var top = avalon.vmodels[ arr[1] ]
+        if (top) {
+            var path = arr[2]
+            $emit(top.$events[ path ], vm, spath, val, older)
+        }
+    }
+}
+
+function emitWidget(whole, spath, val, older) {
+    if (whole && whole[spath]) {
+        var wvm = whole[spath]
+        if (!wvm.$hashcode) {
+            delete whole[spath]
+        } else {
+            var wpath = spath.replace(/^[^.]+\./, '')
+            if (wpath !== spath) {
+                $emit(wvm.$events[wpath], wvm, wpath, val, older)
+            }
+        }
+    }
+}
+
+function emitWildcard(obj, vm, spath, val, older) {
+    for (var i in obj) {
+        var list = obj[i]
+        var reg = list.reg
+        if (reg && reg.test(spath)) {
+            $emit(list, vm, spath, val, older)
+        }
     }
 }
 

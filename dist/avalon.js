@@ -1,4 +1,4 @@
-/*! built in 2016-5-6:11 version 2.0 by 司徒正美 */
+/*! built in 2016-5-7:1 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3833,7 +3833,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var bottom = vnode.bottom //位于下方的顶层vm
 	        var mediator = vnode.mediator //新合成的mediator vm
 	        bottom.$element = top && top.$element || node
-	        vnode.top = vnode.mediator = vnode.bottom = void 0
+	        vnode.top = vnode.mediator = vnode.bottom = 0
 	        if (!bottom.$render) {
 	            var topRender = top.$render
 	            if (!topRender.$id) {
@@ -5523,11 +5523,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    element = avalon.vdomAdaptor(vnode, 'toDOM')
 	                    vnode.dom = element
 	                    var props = vnode.props
-	                    // 事件这个漏网之鱼
-	                    for (var prop in props) {
+	                    for (var prop in props) {//如果一开始是隐藏,那么事件会没有绑上
 	                        if (prop.match(/ms\-on/g)) {
 	                            var fun = props[prop]
-	                            if (typeof fun == 'function') {
+	                            if (typeof fun === 'function') {
 	                                element._ms_context_ = vnode.onVm
 	                                avalon.bind(element, prop.split('-')[2], fun)
 	                            }
@@ -7172,7 +7171,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if(_vtree){
 	               dom = vm.$render.dom
 	               vtree = [_vtree]
-	               console.log(_vtree, dom)
 	            }
 	        }
 	        avalon.diff(vtree, dom.vtree || [], steps)
@@ -7676,12 +7674,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        hashcode: makeHashCode('$'),
 	        master: true
 	    })
-	//    if (after.$id && before.$element) {
-	//        if (!after.$element) {
-	//            after.$element = before.$element
-	//            after.$render = before.$render 
-	//        } 
-	//    }
+
 	    return $vmodel
 	}
 
@@ -7945,7 +7938,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	$$midway.modelAdaptor = modelAdaptor
 
-	var rtopsub = /([^.]+)\.(.+)/
+
 	function makeAccessor(sid, spath, heirloom) {
 	    var old = NaN
 	    function get() {
@@ -7973,29 +7966,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (heirloom !== vm.$events) {
 	                    get.heirloom = vm.$events
 	                }
-
-	                var whole = get.$decompose
-	                if (whole && whole[spath]) {
-	                    var wvm = whole[spath]
-	                    if (!wvm.$hashcode) {
-	                        delete whole[spath]
-	                    } else {
-	                        var wpath = spath.replace(/^[^.]+\./, '')
-	                        if (wpath !== spath) {
-	                            $emit(wvm.$events[wpath], wvm, wpath, val, older)
-	                        }
-	                    }
+	                //如果这个属性是组件配置对象中的属性,那么它需要触发组件的回调
+	                emitWidget(get.$decompose, spath, val, older)
+	                //触发普通属性的回调
+	                if (spath.indexOf('*') === -1) {
+	                    $emit(get.heirloom[spath], vm, spath, val, older)
 	                }
-
-	                $emit(get.heirloom[spath], vm, spath, val, older)
-	                if (sid.indexOf('.*.') > 0) {//如果是item vm
-	                    var arr = sid.match(rtopsub)
-	                    var top = avalon.vmodels[ arr[1] ]
-	                    if (top) {
-	                        var path = arr[2]
-	                        $emit(top.$events[ path ], vm, path, val, older)
-	                    }
-	                }
+	                //如果这个属性是数组元素上的属性
+	                emitElement(sid, vm, spath, val, older)
+	                //如果这个属性存在通配符
+	                emitWildcard(get.heirloom, vm, spath, val, older)
 
 	                avalon.rerenderStart = new Date
 	                var dotIndex = vm.$id.indexOf('.')
@@ -8009,6 +7989,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	        },
 	        enumerable: true,
 	        configurable: true
+	    }
+	}
+
+	var rtopsub = /([^.]+)\.(.+)/
+	function emitElement(sid, vm, spath, val, older) {
+	    if (sid.indexOf('.*.') > 0) {
+	        var arr = sid.match(rtopsub)
+	        var top = avalon.vmodels[ arr[1] ]
+	        if (top) {
+	            var path = arr[2]
+	            $emit(top.$events[ path ], vm, spath, val, older)
+	        }
+	    }
+	}
+
+	function emitWidget(whole, spath, val, older) {
+	    if (whole && whole[spath]) {
+	        var wvm = whole[spath]
+	        if (!wvm.$hashcode) {
+	            delete whole[spath]
+	        } else {
+	            var wpath = spath.replace(/^[^.]+\./, '')
+	            if (wpath !== spath) {
+	                $emit(wvm.$events[wpath], wvm, wpath, val, older)
+	            }
+	        }
+	    }
+	}
+
+	function emitWildcard(obj, vm, spath, val, older) {
+	    for (var i in obj) {
+	        var list = obj[i]
+	        var reg = list.reg
+	        if (reg && reg.test(spath)) {
+	            $emit(list, vm, spath, val, older)
+	        }
 	    }
 	}
 
@@ -8148,7 +8164,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    return other || vm
 	}
-
+	function toRegExp(expr) {
+	    var arr = expr.split('.')
+	    return new RegExp("^" + arr.map(function (el) {
+	        return el === '*' ? '(?:[^.]+)' : el
+	    }).join('\\.') + '$', 'i')
+	}
 
 	function $watch(expr, callback) {
 	    var vm = $watch.adjust(this, expr)
@@ -8157,6 +8178,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (vm !== this) {
 	        this.$events[expr] = list
 	    }
+	    if(expr.indexOf('.*') > 0 || expr === '*'){
+	        console.log(toRegExp(expr))
+	        list.reg = list.reg || toRegExp(expr)
+	    }
+	    
 	    avalon.Array.ensure(list, callback)
 
 	    return function () {

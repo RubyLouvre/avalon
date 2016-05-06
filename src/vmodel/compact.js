@@ -186,12 +186,7 @@ function mediatorFactory(before, after) {
         hashcode: makeHashCode('$'),
         master: true
     })
-//    if (after.$id && before.$element) {
-//        if (!after.$element) {
-//            after.$element = before.$element
-//            after.$render = before.$render 
-//        } 
-//    }
+
     return $vmodel
 }
 

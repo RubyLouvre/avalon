@@ -11,7 +11,12 @@
                 b: 222,
                 c: [1,2,3,4]
             })
-        
+            vm.$watch('a', function(neo, old, name){
+                console.log(neo, old, name)
+            })
+            vm.$watch('*', function(neo, old, name){
+                console.log(neo, old, name, '!')
+            })
         
         </script>
         <style>
@@ -25,8 +30,8 @@
             <ul>
                 <li ms-for="el in @c">{{el}}</li>
             </ul>
-            <p><input ms-duplex="@a" />{{@a}}<strong ms-text="@a"></strong></p>
-            <p><input ms-duplex="@b" /><span>{{@b}}</span><span ms-html="@b"></span></p>
+<!--            <p><input ms-duplex="@a" />{{@a}}<strong ms-text="@a"></strong></p>
+            <p><input ms-duplex="@b" /><span>{{@b}}</span><span ms-html="@b"></span></p>-->
         </div>
     </body>
 </html>
