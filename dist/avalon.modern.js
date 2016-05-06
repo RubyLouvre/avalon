@@ -3267,11 +3267,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            //处理子节点
 	            patch(avalon.slice(node.childNodes), vnode.children, node, steps)
 	        }
-	//        var vmID = vnode.props && vnode.props['ms-controller']
-	//        if (vmID) {
-	//            avalon.vmodels[vmID].$element = node 
-	//            node.vtree = [vnode]
-	//        }
+	        // ms-if=false内的ms-controller无法正确的关联dom
+	        var vmID = vnode.props && vnode.props['ms-controller']
+	        if (vmID && node) {
+	            var vm = avalon.vmodels[vmID]
+	            if (vm.$render) vm.$render.dom = node
+	        }
 	        //ms-duplex
 	        execHooks(node, vnode, parent, steps, 'afterChange')
 	        if (!steps.count)
@@ -4714,8 +4715,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * ------------------------------------------------------------
 	 */
 	var emptyArr = []
-	var emptyObj = {
-	    children: [], props: {}
+	// 防止被引用
+	var emptyObj = function() {
+	    return {
+	        children: [], props: {}
+	    }
 	}
 	var directives = avalon.directives
 	var rbinding = __webpack_require__(40).binding
@@ -4725,7 +4729,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return
 	    for (var i = 0; i < current.length; i++) {
 	        var cur = current[i]
-	        var pre = previous[i] || emptyObj
+	        var pre = previous[i] || emptyObj()
 	        switch (cur.nodeType) {
 	            case 3:
 	                if (!cur.skipContent) {
@@ -4758,7 +4762,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var match = name.match(rbinding)
 	                var type = match && match[1]
 	                if (directives[type]) {
-	                    directives[type].diff(current, previous || emptyObj, steps, name)
+	                    directives[type].diff(current, previous || emptyObj(), steps, name)
 	                }
 	                return name
 	            })
@@ -7284,12 +7288,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        hashcode: makeHashCode("$"),
 	        master: true
 	    })
-	    if (after.$id && before.$element) {
-	        if (!after.$element) {
-	            after.$element = before.$element
-	            after.$render = before.$render 
-	        } 
-	    }
+	    // if (after.$id && before.$element) {
+	    //     if (!after.$element) {
+	    //         after.$element = before.$element
+	    //         after.$render = before.$render 
+	    //     } 
+	    // }
 	    return $vmodel
 	}
 
