@@ -1,4 +1,4 @@
-/*! built in 2016-5-5:14 version 2.0 by 司徒正美 */
+/*! built in 2016-5-6:0 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1386,7 +1386,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                elem.vtree = avalon.lexer(elem.outerHTML)
 	                var now2 = new Date()
 	                avalon.log('create primitive vtree', now2 - now)
-	                avalon.buildRender(vm, elem.vtree, null, 'scan') // 构建$render
+	                vm.$render = avalon.render(elem.vtree)
+	            //    avalon.buildRender(vm, elem.vtree, null, 'scan') // 构建$render
 	                var now3 = new Date()
 	                avalon.log('create template Function ', now3 - now2)
 	                avalon.rerenderStart = now3
@@ -1626,13 +1627,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                vmID = el.props['ms-controller']
 	            // 支持局部rerender，ms-controller形成一个局部
 	            // if scan表示直接通过avalon.scan的非嵌套ms-controller
-	            if (vmID && !scan) {
-	                el.scan = false
-	                hasBindings = parseBindings({'ms-controller': vmID}, num, el)
-	                if (hasBindings) {
-	                    str += hasBindings
-	                }
-	            } else {
+	//            if (vmID && !scan) {
+	//                el.scan = false
+	//                hasBindings = parseBindings({'ms-controller': vmID}, num, el)
+	//                if (hasBindings) {
+	//                    str += hasBindings
+	//                }
+	//            } else {
 	                hasBindings = parseBindings(el.props, num, el)
 	                if (hasBindings) {
 	                    str += hasBindings
@@ -1651,7 +1652,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        str += vnode + '.template = ' + quote(el.template) + '\n'
 	                    }
 	                }
-	            }
+	  //          }
 	            str += children + '.push(' + vnode + ')\n'
 	        }
 
@@ -2019,61 +2020,74 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	// 抽离出来公用
-	avalon.buildRender = function(vmodel, template, num, scan) {
-	    var __inheritVmodel__
-	    var render = template.join ? template : avalon.lexer(template)
-	    render = avalon.render(render, num, scan)
-	    vmodel.$$render = function(inheritVmodel) {
-	        inheritVmodel = __inheritVmodel__ = inheritVmodel || __inheritVmodel__
-	        var __vmodel__ = vmodel
-	        if(inheritVmodel) __vmodel__ = avalon.mediatorFactory(inheritVmodel, vmodel)
-	        var _vnode = render(__vmodel__)[0]
-	        _vnode.props['ms-controller'] = vmodel.$id
-	        return [__vmodel__, _vnode]
+
+	avalon.skipController = function (fast, vm, iv) {
+	   
+	    if (fast) {
+	        var id = vm.$render ? vm.$render.$id : vm.$id
+	      console.log(fast, vm.$render.$id, iv)
+	        if (fast.length > id.length) {
+	            return fast.indexOf(id+';;') === 0 ? false : true
+	        }
+	        return id.indexOf(fast) === 0 ? false : true
 	    }
-	    vmodel.$render = function() {
-	        return [vmodel.$$render()[1]]
-	    }   
+	    return false
 	}
 
 	avalon.directive('controller', {
 	    priority: 2,
-	    parse: function (binding, num, vnode) {
-	        var vm = 'vm' + num,
-	            $id = binding.expr,
-	            isObject = /\{.+\}/.test($id),
-	            a = 'var ' + vm + ' =  avalon.vmodels[' + avalon.quote($id) + ']\n',
-	            b = 'var ' + vm + ' = ' + $id + '\n'
-	        if (!(vnode.scan === false) || isObject) {
-	            return (isObject ? b : a) +
-	                'if(' + vm + '){\n' +
-	                '\tif(__vmodel__){\n' +
-	                '\t\t__vmodel__ = avalon.mediatorFactory(__vmodel__, ' + vm + ')\n' +
-	                '\t}else{\n' +
-	                '\t\t__vmodel__ = ' + vm + '\n' +
-	                '\t}\n' +
-	                '}\n\n\n'
-	        }
-	        var vmodel = avalon.vmodels[$id],
-	            children = vnode.children
-
-	        delete vnode.props['ms-controller']
-	        vnode.children = []
-
-	        var template = avalon.vdomAdaptor(vnode, 'toHTML')
-
-	        vnode.props['ms-controller'] = $id
-	        vnode.children = children
-	        avalon.buildRender(vmodel, template, num)
-	        return a +
-	            'if (' + vm + ') {\n' +
-	            '\tvar tmp = ' + vm + '.$$render(__vmodel__)\n' + 
-	            '\t__vmodel__ = tmp[0]\n' +
-	            '\tvnode' + num + ' = tmp[1]\n' +
-	            '}\n'
+	    parse: function (binding, num, elem) {
+	        var id = avalon.quote(binding.expr)
+	        delete elem.props['ms-controller']
+	        var vm = 'vm' + num
+	        var ret = [
+	            'if(!vnodes' + num + '.vm){ vnodes' + num + '.vm = __vmodel__}',
+	            '__vmodel__ = vnodes' + num + '.vm || __vmodel__',
+	            'vnode' + num + '.props["ms-controller"] = ' + id + ';',
+	            'var ' + vm + ' = avalon.vmodels[' + id + ']',
+	            'if(!' + vm + '){return }',
+	            'vnode' + num + '.cur = ' + vm,
+	            ' if(__vmodel__){',
+	            'vnode' + num + '.top = __vmodel__',
+	            'var __id__ = __vmodel__.$id+ "_" + ' + id,
+	            "__vmodel__ = avalon.caches[__id__] || (avalon.caches[__id__] = avalon.mediatorFactory(__vmodel__," + vm + '))',
+	            '}else{',
+	            '__vmodel__ = ' + vm,
+	            '}',
+	            'if(avalon.skipController(__fast__, vnode' + num + '.cur,' + id + ')){return}'
+	        ]
+	        return ret.join('\n') + '\n'
 	    },
-	    diff: avalon.noop,
-	    update:avalon.noop
+	    diff: function (cur, pre, steps, name) {
+	        if (pre.props[name] !== cur.props[name]) {
+	            var list = cur.change || (cur.change = [])
+	            if (avalon.Array.ensure(list, this.update)) {
+	                steps.count += 1
+	            }
+	        }
+	    },
+	    update: function (node, vnode) {
+	        var vm = vnode.cur
+	        var top = vnode.top
+	        vm.$element = top && top.$element || node
+	        delete vnode.top
+	        delete vnode.cur
+	        if (!vm.$render) {
+	            var $$render = top.$render
+	            if (!$$render.$id) {
+	                $$render.$id = top.$id
+	            }
+	            function render() {
+	                return  $$render(0, render.$id)
+	            }
+	            render.$id = $$render.$id + ',,' + vm.$id
+	            render.dom = node
+	            console.log(render.$id, '-----',vm.$)
+	            vm.$render = render
+	        }
+
+
+	    }
 	})
 
 
@@ -3270,11 +3284,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            //处理子节点
 	            patch(avalon.slice(node.childNodes), vnode.children, node, steps)
 	        }
-	        var vmID = vnode.props && vnode.props['ms-controller']
-	        if (vmID) {
-	            avalon.vmodels[vmID].$element = node 
-	            node.vtree = [vnode]
-	        }
+	//        var vmID = vnode.props && vnode.props['ms-controller']
+	//        if (vmID) {
+	//            avalon.vmodels[vmID].$element = node 
+	//            node.vtree = [vnode]
+	//        }
 	        //ms-duplex
 	        execHooks(node, vnode, parent, steps, 'afterChange')
 	        if (!steps.count)
@@ -4346,7 +4360,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function render(vtree, num, scan) {
 	    var num = num || String(new Date - 0).slice(0, 6)
 	    var body = parseView(vtree, num, scan) + '\n\nreturn vnodes' + num
-	    var fn = Function('__vmodel__', body)
+	    var fn = Function('__vmodel__','__fast__', body)
 	    return fn
 	}
 	avalon.render = render
@@ -4796,7 +4810,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.suspendUpdate = 0
 	var isBatchingUpdates = false
 	function batchUpdate(id, immediate) {
-	    var vm = typeof id === 'string' ?  avalon.vmodels[id]||{} : id
+	    var vm = typeof id === 'string' ? avalon.vmodels[id] || {} : id
 	    if (dirtyTrees[id]) {
 	        avalon.Array.ensure(needRenderIds, id)
 	    } else {
@@ -4815,9 +4829,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    flushUpdate(function () {
 	        isBatchingUpdates = true
 	        var vtree = vm.$render()
-	        var steps = {count:0}
+	        var steps = {count: 0}
+	        if (vm.$render.dom) {
+	            console.log(vtree, vm.$id)
+	           var _vtree = findVdom(vtree, vm.$id)
+	            console.log(_vtree,'!!!!!!!!!!')
+	            if(_vtree){
+	               dom = vm.$render.dom
+	               vtree = [_vtree]
+	            }
+	        }
 	        avalon.diff(vtree, dom.vtree || [], steps)
-	        patch([dom], vtree, null, steps )
+	        patch([ dom], vtree, null, steps)
 	        steps.count = 0
 	        dom.vtree = vtree
 	        isBatchingUpdates = false
@@ -4832,7 +4855,20 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	}
-
+	function findVdom(array, id) {
+	    for (var i = 0, el; el = array[i++]; ) {
+	        if (el.nodeType === 1) {
+	            if (el.props['ms-controller'] === id) {
+	                return el
+	            } else if (el.children) {
+	                var find = findVdom(el.children, id)
+	                if(find){
+	                    return find
+	                }
+	            }
+	        }
+	    }
+	}
 	function flushUpdate(callback, immediate ) {
 	    if (immediate) {
 	        callback()
@@ -5207,13 +5243,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            old = val
 
 	            var vm = heirloom.__vmodel__
-
 	            if (this.$hashcode && vm) {
 	                //★★确保切换到新的events中(这个events可能是来自oldProxy)               
 	                if (heirloom !== vm.$events) {
 	                    get.heirloom = vm.$events
 	                }
-	                
+
 	                var whole = get.$decompose
 	                if (whole && whole[spath]) {
 	                    var wvm = whole[spath]
@@ -7392,7 +7427,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    hideProperty($vmodel, '$track', Object.keys(keys).sort().join(';;'))
 	    if (options.master === true) {
 	        hideProperty($vmodel, '$element', null)
-	        hideProperty($vmodel, '$render', 1)
+	        hideProperty($vmodel, '$render', 0)
 	        makeFire($vmodel, heirloom)
 	    }
 	}
@@ -7448,7 +7483,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 105 */
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
+	module.exports = "<ms-panel>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</ms-panel>"
 
 /***/ }
 /******/ ])

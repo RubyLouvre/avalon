@@ -126,13 +126,13 @@ function parseView(arr, num, scan) {
                 vmID = el.props['ms-controller']
             // 支持局部rerender，ms-controller形成一个局部
             // if scan表示直接通过avalon.scan的非嵌套ms-controller
-            if (vmID && !scan) {
-                el.scan = false
-                hasBindings = parseBindings({'ms-controller': vmID}, num, el)
-                if (hasBindings) {
-                    str += hasBindings
-                }
-            } else {
+//            if (vmID && !scan) {
+//                el.scan = false
+//                hasBindings = parseBindings({'ms-controller': vmID}, num, el)
+//                if (hasBindings) {
+//                    str += hasBindings
+//                }
+//            } else {
                 hasBindings = parseBindings(el.props, num, el)
                 if (hasBindings) {
                     str += hasBindings
@@ -151,7 +151,7 @@ function parseView(arr, num, scan) {
                         str += vnode + '.template = ' + quote(el.template) + '\n'
                     }
                 }
-            }
+  //          }
             str += children + '.push(' + vnode + ')\n'
         }
 

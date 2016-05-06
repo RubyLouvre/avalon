@@ -4,59 +4,43 @@
         <title>ms-repeat</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
-        <script src="dist/avalon.js" ></script>
+        <script src="./dist/avalon.js" ></script>
         <script>
-            function getDatas() {
-                var data = []
-                for (var i = 0; i < 100; i++) {
-                    data.push({
-                        name: "lily" + i,
-                        age: i,
-                        selected: i%3 ? false: true,
-                        salary: i * 100,
-                        operate : i % 5 ? 0 : 1,
-                        busy : !i%3 && !i%5 ? 0 : 1
-                    });
-                }
 
-                return data;
-            };
 
-            var vmodel = avalon.define("main", function(vm) {
-                vm.list = getDatas();
-                vm.refresh = function() {
-                    vmodel.list.clear();
-                    vmodel.list.pushArray(getDatas());
-                };
-                vm.show = function(u) {
-                    alert("unit is " + u);
-                };
-                vm.checkOne = function() {
-                    alert(checked);
-                };
-            });
+         var vm =  avalon.define({
+                $id: 'aaa',
+                bbb: 444,
+                aaa: 111
+            })
+          var vm2 =  avalon.define({
+                $id: 'bbb',
+                bbb: 222,
+                ddd: 777
+            })
+            avalon.define({
+                $id: 'ccc',
+                ccc: 333
+            })
+             avalon.define({
+                $id: 'ddd',
+                ddd: 333
+            })
         </script>
     </head>
     <body>
         <h3>测试内存问题</h3>
-        <div ms-controller="main">
-            <div>
-                <button ms-on-click="refresh">刷新</button>
-                <ul style="width: 800px;list-style: none;">
-                    <table ms-repeat-item="list">
-                        <tr>
-                            <td>
-                                <input type="checkbox" ms-duplex-checked="row.selected" data-duplex-changed="checkOne"></input>
-                            </td>
-                            <td width=100 ms-text="item.name"></td>
-                            <td width=100 ms-text="item.age"></td>
-                            <td width=100 ms-text="item.selected"></td>
-                            <td width=100 ms-text="item.salary"></td>
-                            <td width=100 ms-text="item.operate"></td>
-                            <td width=100 ms-text="item.busy"></td>
-                        </tr>
-                    </table>
-                </ul>
+        
+        <div ms-controller="aaa">
+            <p>{{@aaa}}</p>
+            <div ms-controller="bbb">
+                <div>{{@bbb}}</div>
+                <div ms-controller="ddd">
+                     <div>{{@ddd}}</div>
+                </div>
+            </div>
+            <div ms-controller="ccc">
+                {{@ccc}}
             </div>
         </div>
     </body>
