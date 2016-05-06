@@ -6,6 +6,7 @@ module.exports = function (config) {
             {pattern: 'node_modules/chai/chai.js', include: true},
             'dist/avalon.test.js',
             'karma/directives/text.js',
+            'karma/directives/controller.js',
             'karma/directives/expr.js',
             'karma/directives/text.js',
             'karma/directives/class.js',
