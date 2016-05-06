@@ -164,12 +164,12 @@ if (avalon.window.Proxy) {
         }
         
         
-        if (_after.$id && before.$element) {
-            if (!_after.$element) {
-                _after.$element = before.$element
-                _after.$render = before.$render 
-            } 
-        }
+        // if (_after.$id && before.$element) {
+        //     if (!_after.$element) {
+        //         _after.$element = before.$element
+        //         _after.$render = before.$render 
+        //     } 
+        // }
         return makeObserver(vm, heirloom, {}, {}, {
             id: before.$id,
             hashcode: makeHashCode('$'),

@@ -54,11 +54,12 @@ function patch(nodes, vnodes, parent, steps) {
             //处理子节点
             patch(avalon.slice(node.childNodes), vnode.children, node, steps)
         }
-//        var vmID = vnode.props && vnode.props['ms-controller']
-//        if (vmID) {
-//            avalon.vmodels[vmID].$element = node 
-//            node.vtree = [vnode]
-//        }
+        // ms-if=false内的ms-controller无法正确的关联dom
+        var vmID = vnode.props && vnode.props['ms-controller']
+        if (vmID && node) {
+            var vm = avalon.vmodels[vmID]
+            if (vm.$render) vm.$render.dom = node
+        }
         //ms-duplex
         execHooks(node, vnode, parent, steps, 'afterChange')
         if (!steps.count)
