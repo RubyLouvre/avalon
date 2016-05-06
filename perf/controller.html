@@ -6,23 +6,21 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
         <script src="./dist/avalon.js" ></script>
         <script>
-
-
-         var vm =  avalon.define({
+            var vm = avalon.define({
                 $id: 'aaa',
                 bbb: 444,
                 aaa: 111
             })
-          var vm2 =  avalon.define({
+            var vm2 = avalon.define({
                 $id: 'bbb',
                 bbb: 222,
                 ddd: 777
             })
-            avalon.define({
+            var vm3 = avalon.define({
                 $id: 'ccc',
                 ccc: 333
             })
-             avalon.define({
+            var vm4 = avalon.define({
                 $id: 'ddd',
                 ddd: 333
             })
@@ -30,13 +28,13 @@
     </head>
     <body>
         <h3>测试内存问题</h3>
-        
+
         <div ms-controller="aaa">
             <p>{{@aaa}}</p>
             <div ms-controller="bbb">
                 <div>{{@bbb}}</div>
                 <div ms-controller="ddd">
-                     <div>{{@ddd}}</div>
+                    <div>{{@ddd}}</div>
                 </div>
             </div>
             <div ms-controller="ccc">

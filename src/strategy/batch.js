@@ -32,12 +32,10 @@ function batchUpdate(id, immediate) {
 
     flushUpdate(function () {
         isBatchingUpdates = true
-        var vtree = vm.$render()
+        var vtree = vm.$render() || []
         var steps = {count: 0}
         if (vm.$render.dom) {
-            console.log(vtree, vm.$id)
            var _vtree = findVdom(vtree, vm.$id)
-            console.log(_vtree,'!!!!!!!!!!')
             if(_vtree){
                dom = vm.$render.dom
                vtree = [_vtree]

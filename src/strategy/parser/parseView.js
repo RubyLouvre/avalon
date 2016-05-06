@@ -9,7 +9,7 @@ var r = require('../../seed/regexp')
 var rident = r.ident
 var rsp = r.sp
 function wrapDelimiter(expr) {
-    return rident.test(expr) ? expr : parseExpr(expr,'text')
+    return rident.test(expr) ? expr : parseExpr(expr, 'text')
 }
 
 function wrap(a, num) {
@@ -59,7 +59,7 @@ function parseView(arr, num, scan) {
         } else if (el.nodeType === 8) {
             var nodeValue = el.nodeValue
             if (rmsFor.test(nodeValue)) {// 处理ms-for指令
-                if(nodeValue.indexOf('ms-for:') !== 0){
+                if (nodeValue.indexOf('ms-for:') !== 0) {
                     avalon.error('ms-for指令前不能有空格')
                 }
                 var signature = el.signature
@@ -81,7 +81,7 @@ function parseView(arr, num, scan) {
 
             } else if (rmsForEnd.test(nodeValue)) {
                 var signature = forstack[forstack.length - 1]
-                if(nodeValue.indexOf('ms-for-end:') !== 0){
+                if (nodeValue.indexOf('ms-for-end:') !== 0) {
                     avalon.error('ms-for-end指令前不能有空格')
                 }
                 str += children + '.push({' +
@@ -122,49 +122,43 @@ function parseView(arr, num, scan) {
             if (!hasWidget && el.type.indexOf('-') > 0 && !el.props.resolved) {
                 el.props['ms-widget'] = '@' + el.type.replace(/-/g, "_")
             }
-            var hasBindings = '',
-                vmID = el.props['ms-controller']
-            // 支持局部rerender，ms-controller形成一个局部
-            // if scan表示直接通过avalon.scan的非嵌套ms-controller
-//            if (vmID && !scan) {
-//                el.scan = false
-//                hasBindings = parseBindings({'ms-controller': vmID}, num, el)
-//                if (hasBindings) {
-//                    str += hasBindings
-//                }
-//            } else {
-                hasBindings = parseBindings(el.props, num, el)
-                if (hasBindings) {
-                    str += hasBindings
-                }
-                if (!el.isVoidTag) {
-                    if (el.children.length) {
-                        var hasIf = el.props['ms-if']
-                        if (hasIf) {
-                            str += 'if(' +vnode+'&&'+ vnode + '.nodeType === 1 ){\n'
-                        }
-                        str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
-                        if (hasIf) {
-                            str += '}\n'
-                        }
-                    } else {
-                        str += vnode + '.template = ' + quote(el.template) + '\n'
+            var hasBindings = ''
+            var vmID = el.props['ms-controller']
+
+            hasBindings = parseBindings(el.props, num, el)
+            if (hasBindings) {
+                str += hasBindings
+            }
+            if (!el.isVoidTag) {
+                if (el.children.length) {
+                    var hasIf = el.props['ms-if']
+                    if (hasIf) {
+                        str += 'if(' + vnode + '&&' + vnode + '.nodeType === 1 ){\n'
                     }
+                    str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
+                    if (hasIf) {
+                        str += '}\n'
+                    }
+                } else {
+                    str += vnode + '.template = ' + quote(el.template) + '\n'
                 }
-  //          }
+            }
             str += children + '.push(' + vnode + ')\n'
+            if (vmID) {//闭合ms-controller指令中avalon.skipController分支
+                str += '}'
+            }
         }
 
     }
     return str
 }
-avalon.htmlFactory = function(str, num){
-  var vtree = avalon.lexer(str+"")
-  avalon.__html = []
-  var render =  parseView(vtree, num) + '\nreturn (avalon.__html = vnodes' + num + ')'
-  return {
-    render: render
-  }
+avalon.htmlFactory = function (str, num) {
+    var vtree = avalon.lexer(str + "")
+    avalon.__html = []
+    var render = parseView(vtree, num) + '\nreturn (avalon.__html = vnodes' + num + ')'
+    return {
+        render: render
+    }
 }
 
 module.exports = parseView
