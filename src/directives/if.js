@@ -35,6 +35,18 @@ avalon.directive('if', {
                 if (!element) {
                     element = avalon.vdomAdaptor(vnode, 'toDOM')
                     vnode.dom = element
+                    var props = vnode.props
+                    // 事件这个漏网之鱼
+                    for (var prop in props) {
+                        if (prop.match(/ms\-on/g)) {
+                            var fun = props[prop]
+                            if (typeof fun == 'function') {
+                                element._ms_context_ = vnode.onVm
+                                avalon.bind(element, prop.split('-')[2], fun)
+                            }
+                        }
+                    }
+                    if (vnode.onVm) delete vnode.onVm
                 }
                 parent.replaceChild(element, node)
                 if (vnode.steps.count) {

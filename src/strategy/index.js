@@ -9,7 +9,7 @@ var parseView = require('./parser/parseView')
 function render(vtree, num, scan) {
     var num = num || String(new Date - 0).slice(0, 6)
     var body = parseView(vtree, num, scan) + '\n\nreturn vnodes' + num
-    var fn = Function('__vmodel__', body)
+    var fn = Function('__vmodel__','__fast__', body)
     return fn
 }
 avalon.render = render

@@ -1,5 +1,5 @@
 require('./important')
-require('./controller')
+require('./controller2')
 //处理属性样式
 require('./attr.modern')
 require('./css')

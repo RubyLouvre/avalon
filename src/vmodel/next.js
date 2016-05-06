@@ -199,7 +199,7 @@ if (avalon.window.Proxy) {
         $vmodel.$events = heirloom
         if (options.master === true) {
             $vmodel.$element = null
-            $vmodel.$render = 1
+            $vmodel.$render = 0
             $vmodel.$fire = $fire
             $vmodel.$watch = $watch
             heirloom.__vmodel__ = $vmodel

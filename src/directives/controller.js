@@ -1,3 +1,21 @@
+// 抽离出来公用
+avalon.buildRender = function(vmodel, template, num, scan) {
+    var __inheritVmodel__
+    var render = template.join ? template : avalon.lexer(template)
+    render = avalon.render(render, num, scan)
+    vmodel.$$render = function(inheritVmodel) {
+        inheritVmodel = __inheritVmodel__ = inheritVmodel || __inheritVmodel__
+        var __vmodel__ = vmodel
+        if(inheritVmodel) __vmodel__ = avalon.mediatorFactory(inheritVmodel, vmodel)
+        var _vnode = render(__vmodel__)[0]
+        _vnode.props['ms-controller'] = vmodel.$id
+        return [__vmodel__, _vnode]
+    }
+    vmodel.$render = function() {
+        return [vmodel.$$render()[1]]
+    }   
+}
+
 avalon.directive('controller', {
     priority: 2,
     parse: function (binding, num, vnode) {
@@ -17,9 +35,7 @@ avalon.directive('controller', {
                 '}\n\n\n'
         }
         var vmodel = avalon.vmodels[$id],
-            children = vnode.children,
-            propsCopy = avalon.mix({}, vnode.props),
-            __inheritVmodel__
+            children = vnode.children
 
         delete vnode.props['ms-controller']
         vnode.children = []
@@ -28,24 +44,9 @@ avalon.directive('controller', {
 
         vnode.props['ms-controller'] = $id
         vnode.children = children
-        vmodel.$$render = function(inheritVmodel) {
-            inheritVmodel = __inheritVmodel__ = inheritVmodel || __inheritVmodel__
-            var __vmodel__ = vmodel
-            if(inheritVmodel) __vmodel__ = avalon.mediatorFactory(inheritVmodel, vmodel)
-            var render = avalon.lexer(template)
-            render = avalon.render(render, num) 
-            var _vnode = render(__vmodel__)[0]
-            vmodel.$render = function() {
-                return [vmodel.$$render()[1]]
-            }   
-            _vnode.props['ms-controller'] = $id
-            return [__vmodel__, _vnode]
-        }
+        avalon.buildRender(vmodel, template, num)
         return a +
             'if (' + vm + ') {\n' +
-            '\tif (' + vm + '.$element) {\n' + 
-            '\t\tavalon.$$unbind(' + vm + '.$element)\n' + 
-            '\t}\n' + 
             '\tvar tmp = ' + vm + '.$$render(__vmodel__)\n' + 
             '\t__vmodel__ = tmp[0]\n' +
             '\tvnode' + num + ' = tmp[1]\n' +

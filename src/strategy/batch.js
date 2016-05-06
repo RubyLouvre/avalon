@@ -14,7 +14,7 @@ var needRenderIds = []
 avalon.suspendUpdate = 0
 var isBatchingUpdates = false
 function batchUpdate(id, immediate) {
-    var vm = typeof id === 'string' ?  avalon.vmodels[id]||{} : id
+    var vm = typeof id === 'string' ? avalon.vmodels[id] || {} : id
     if (dirtyTrees[id]) {
         avalon.Array.ensure(needRenderIds, id)
     } else {
@@ -33,9 +33,18 @@ function batchUpdate(id, immediate) {
     flushUpdate(function () {
         isBatchingUpdates = true
         var vtree = vm.$render()
-        var steps = {count:0}
+        var steps = {count: 0}
+        if (vm.$render.dom) {
+            console.log(vtree, vm.$id)
+           var _vtree = findVdom(vtree, vm.$id)
+            console.log(_vtree,'!!!!!!!!!!')
+            if(_vtree){
+               dom = vm.$render.dom
+               vtree = [_vtree]
+            }
+        }
         avalon.diff(vtree, dom.vtree || [], steps)
-        patch([dom], vtree, null, steps )
+        patch([ dom], vtree, null, steps)
         steps.count = 0
         dom.vtree = vtree
         isBatchingUpdates = false
@@ -50,7 +59,20 @@ function batchUpdate(id, immediate) {
 
 
 }
-
+function findVdom(array, id) {
+    for (var i = 0, el; el = array[i++]; ) {
+        if (el.nodeType === 1) {
+            if (el.props['ms-controller'] === id) {
+                return el
+            } else if (el.children) {
+                var find = findVdom(el.children, id)
+                if(find){
+                    return find
+                }
+            }
+        }
+    }
+}
 function flushUpdate(callback, immediate ) {
     if (immediate) {
         callback()
