@@ -1,4 +1,4 @@
-/*! built in 2016-5-4:20 version 2.0 by 司徒正美 */
+/*! built in 2016-5-4:22 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2434,6 +2434,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	avalon.clearHTML = function (node) {
+	    avalon.$$unbind(node)
 	    node.textContent = ''
 	    while (node.lastChild) {
 	        node.removeChild(node.lastChild)
@@ -2988,21 +2989,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    return this
 	}
-	avalon.$$unbind = function(node) {
-	    if (node.querySelectorAll) {
-	        var nodes = node.querySelectorAll('[avalon-events]')
-	        avalon.each(nodes, function (i, el) {
+	avalon.$$unbind = function (node) {
+	    var nodes = node.getElementsByTagName('*')
+	    //IE6-7这样取所有子孙节点会混入注释节点
+	    avalon.each(nodes, function (i, el) {
+	        if (el.nodeType === 1 && el.getAttribute('avalon-events')) {
 	            avalon.unbind(el)
-	        })
-	    } else {
-	        var nodes = node.getElementsByTagName('*')
-	        //IE6-7这样取所有子孙节点会混入注释节点
-	        avalon.each(nodes, function (i, el) {
-	            if (el.nodeType === 1 && el.getAttribute('avalon-events')) {
-	                avalon.unbind(el)
-	            }
-	        })
-	    }
+	        }
+	    })
 	}
 
 /***/ },
@@ -4258,7 +4252,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (node.nodeType !== 1) {
 	            return
 	        }
-	        avalon.$$unbind(node)
 	        //添加节点
 	        avalon.clearHTML(node)
 	        var fragment = document.createDocumentFragment()

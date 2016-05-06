@@ -86,6 +86,7 @@ avalon.innerHTML = function (node, html) {
 }
 
 avalon.clearHTML = function (node) {
+    avalon.$$unbind(node)
     node.textContent = ''
     while (node.lastChild) {
         node.removeChild(node.lastChild)

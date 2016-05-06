@@ -1,4 +1,4 @@
-/*! built in 2016-5-4:20 version 2.0 by 司徒正美 */
+/*! built in 2016-5-4:22 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2326,7 +2326,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (node.nodeType !== 1) {
 	            return
 	        }
-	        avalon.$$unbind(node)
 	        //添加节点
 	        avalon.clearHTML(node)
 	        var fragment = document.createDocumentFragment()
@@ -6226,9 +6225,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	avalon.clearHTML = function (node) {
-	    avalon.each(node.getElementsByTagName('*'), function (i, el) {
-	        avalon.unbind(el)
-	    })
+	    avalon.$$unbind(node)
 	    node.textContent = ''
 	    while (node.lastChild) {
 	        node.removeChild(node.lastChild)

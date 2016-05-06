@@ -27,7 +27,6 @@ avalon.directive('html', {
         if (node.nodeType !== 1) {
             return
         }
-        avalon.$$unbind(node)
         //添加节点
         avalon.clearHTML(node)
         var fragment = document.createDocumentFragment()
