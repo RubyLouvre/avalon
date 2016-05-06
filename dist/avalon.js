@@ -1,4 +1,4 @@
-/*! built in 2016-5-6:11 version 2.0 by 司徒正美 */
+/*! built in 2016-5-6:14 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3833,7 +3833,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var bottom = vnode.bottom //位于下方的顶层vm
 	        var mediator = vnode.mediator //新合成的mediator vm
 	        bottom.$element = top && top.$element || node
-	        vnode.top = vnode.mediator = vnode.bottom = void 0
+	        vnode.top = vnode.mediator = vnode.bottom = 0
 	        if (!bottom.$render) {
 	            var topRender = top.$render
 	            if (!topRender.$id) {
@@ -5523,11 +5523,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    element = avalon.vdomAdaptor(vnode, 'toDOM')
 	                    vnode.dom = element
 	                    var props = vnode.props
-	                    // 事件这个漏网之鱼
-	                    for (var prop in props) {
+	                    for (var prop in props) {//如果一开始是隐藏,那么事件会没有绑上
 	                        if (prop.match(/ms\-on/g)) {
 	                            var fun = props[prop]
-	                            if (typeof fun == 'function') {
+	                            if (typeof fun === 'function') {
 	                                element._ms_context_ = vnode.onVm
 	                                avalon.bind(element, prop.split('-')[2], fun)
 	                            }
@@ -5621,11 +5620,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            //处理子节点
 	            patch(avalon.slice(node.childNodes), vnode.children, node, steps)
 	        }
-	//        var vmID = vnode.props && vnode.props['ms-controller']
-	//        if (vmID) {
-	//            avalon.vmodels[vmID].$element = node 
-	//            node.vtree = [vnode]
-	//        }
+	        // ms-if=false内的ms-controller无法正确的关联dom
+	        var vmID = vnode.props && vnode.props['ms-controller']
+	        if (vmID && node) {
+	            var vm = avalon.vmodels[vmID]
+	            if (vm.$render) vm.$render.dom = node
+	        }
 	        //ms-duplex
 	        execHooks(node, vnode, parent, steps, 'afterChange')
 	        if (!steps.count)
@@ -7068,8 +7068,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * ------------------------------------------------------------
 	 */
 	var emptyArr = []
-	var emptyObj = {
-	    children: [], props: {}
+	// 防止被引用
+	var emptyObj = function() {
+	    return {
+	        children: [], props: {}
+	    }
 	}
 	var directives = avalon.directives
 	var rbinding = __webpack_require__(40).binding
@@ -7079,7 +7082,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return
 	    for (var i = 0; i < current.length; i++) {
 	        var cur = current[i]
-	        var pre = previous[i] || emptyObj
+	        var pre = previous[i] || emptyObj()
 	        switch (cur.nodeType) {
 	            case 3:
 	                if (!cur.skipContent) {
@@ -7112,7 +7115,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var match = name.match(rbinding)
 	                var type = match && match[1]
 	                if (directives[type]) {
-	                    directives[type].diff(current, previous || emptyObj, steps, name)
+	                    directives[type].diff(current, previous || emptyObj(), steps, name)
 	                }
 	                return name
 	            })
@@ -7172,7 +7175,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if(_vtree){
 	               dom = vm.$render.dom
 	               vtree = [_vtree]
-	               console.log(_vtree, dom)
 	            }
 	        }
 	        avalon.diff(vtree, dom.vtree || [], steps)

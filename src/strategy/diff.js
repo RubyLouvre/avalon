@@ -5,8 +5,11 @@
  * ------------------------------------------------------------
  */
 var emptyArr = []
-var emptyObj = {
-    children: [], props: {}
+// 防止被引用
+var emptyObj = function() {
+    return {
+        children: [], props: {}
+    }
 }
 var directives = avalon.directives
 var rbinding = require('../seed/regexp').binding
@@ -16,7 +19,7 @@ function diff(current, previous, steps) {
         return
     for (var i = 0; i < current.length; i++) {
         var cur = current[i]
-        var pre = previous[i] || emptyObj
+        var pre = previous[i] || emptyObj()
         switch (cur.nodeType) {
             case 3:
                 if (!cur.skipContent) {
@@ -49,7 +52,7 @@ function diffProps(current, previous, steps) {
                 var match = name.match(rbinding)
                 var type = match && match[1]
                 if (directives[type]) {
-                    directives[type].diff(current, previous || emptyObj, steps, name)
+                    directives[type].diff(current, previous || emptyObj(), steps, name)
                 }
                 return name
             })
