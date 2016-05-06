@@ -4,6 +4,17 @@ function heredoc(fn) {
             replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
 }
 
+function fireClick(el) {
+    if (el.click) {
+        el.click()
+    } else {
+//https://developer.mozilla.org/samples/domref/dispatchEvent.html
+        var evt = document.createEvent('MouseEvents')
+        evt.initMouseEvent('click', true, true, window,
+                0, 0, 0, 0, 0, false, false, false, false, 0, null);
+        !el.dispatchEvent(evt);
+    }
+}
 
 describe('widget', function () {
     var body = document.body, div, vm
@@ -246,6 +257,44 @@ describe('widget', function () {
 
         })
 
+    });
+    
+    it ('操作组件vm来更新组件的界面', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller="widget5">
+             <xmp ms-widget='{is:"ms-pager"}'></xmp>
+             {{@bb}}
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'widget5',
+            bb: '其他内容'
+        });
+        avalon.component('ms-pager', {
+            template: '<div><strong>{{@totalPages}}</strong><button ms-click="@xx" type="button">++</button></div>',
+            defaults: {
+                totalPages: 21,
+                xx: function () {
+                    this.totalPages += 1;
+                }
+            }
+        })
+        avalon.scan(div)
+        setTimeout(function(){
+            var button = div.getElementsByTagName('button')[0]
+            var strong = div.getElementsByTagName('strong')[0]
+            expect(strong.innerHTML).to.be.equal('21')
+            fireClick(button)
+            expect(strong.innerHTML).to.be.equal('22')
+            fireClick(button)
+            expect(strong.innerHTML).to.be.equal('23')
+            fireClick(button)
+            expect(strong.innerHTML).to.be.equal('24')
+            done()
+        })
+        
     })
 
 })
