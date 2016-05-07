@@ -1,4 +1,4 @@
-/*! built in 2016-5-7:12 version 2.0 by 司徒正美 */
+/*! built in 2016-5-7:14 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3753,7 +3753,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var coms = avalon.resolvedComponents
 	        var wid = cur.props.wid
 	        var docker = coms[wid]
-	        if (!docker.renderCount) {
+	        if (!docker || !docker.renderCount) {
 	            steps.count += 1
 	            cur.change = [this.replaceByComment]
 	        } else if (!pre.props.resolved) {
