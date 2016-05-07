@@ -3,6 +3,7 @@
 基于avalon1.6内部版本研发出来，兼容IE6及各种山寨浏览器,
 视浏览器的支持情况使用VBScript/Descriptors/Proxy创建vm,
 以求取最高的性能
+###[avalon2官网](http://avalonjs.coding.me/)
 
 <img src='https://github.com/RubyLouvre/avalon/blob/master/structure.jpg'/>
 
