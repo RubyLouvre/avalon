@@ -99,7 +99,7 @@ function makeAccessor(sid, spath, heirloom) {
                     $emit(get.heirloom[spath], vm, spath, val, older)
                 }
                 //如果这个属性是数组元素上的属性
-                emitElement(sid, vm, spath, val, older)
+                emitArray(sid, vm, spath, val, older)
                 //如果这个属性存在通配符
                 emitWildcard(get.heirloom, vm, spath, val, older)
 
@@ -119,7 +119,7 @@ function makeAccessor(sid, spath, heirloom) {
 }
 
 var rtopsub = /([^.]+)\.(.+)/
-function emitElement(sid, vm, spath, val, older) {
+function emitArray(sid, vm, spath, val, older) {
     if (sid.indexOf('.*.') > 0) {
         var arr = sid.match(rtopsub)
         var top = avalon.vmodels[ arr[1] ]
@@ -145,12 +145,15 @@ function emitWidget(whole, spath, val, older) {
 }
 
 function emitWildcard(obj, vm, spath, val, older) {
-    for (var i in obj) {
-        var list = obj[i]
-        var reg = list.reg
-        if (reg && reg.test(spath)) {
-            $emit(list, vm, spath, val, older)
-        }
+    if (obj.__fuzzy__) {
+        obj.__fuzzy__.replace(avalon.rword, function (expr) {
+            var list = obj[expr]
+            var reg = list.reg
+            if (reg && reg.test(spath)) {
+                $emit(list, vm, spath, val, older)
+            }
+            return expr
+        })
     }
 }
 
@@ -222,7 +225,6 @@ var __array__ = {
             if (index > this.length) {
                 throw Error(index + 'set方法的第一个参数不能大于原数组长度')
             }
-            this.notify('*', val, this[index], true)
             this.splice(index, 1, val)
         }
     },

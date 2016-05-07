@@ -20,25 +20,39 @@ function adjustVm(vm, expr) {
     }
     return other || vm
 }
+
 function toRegExp(expr) {
     var arr = expr.split('.')
     return new RegExp("^" + arr.map(function (el) {
         return el === '*' ? '(?:[^.]+)' : el
     }).join('\\.') + '$', 'i')
 }
+function addFuzzy(add, obj, expr) {
+    if (add) {
+        if (obj.__fuzzy__) {
+            if (obj.__fuzzy__.indexOf(',' + expr) === -1) {
+                obj.__fuzzy__ += ',' + expr
+            }
+        } else {
+            obj.__fuzzy__ = expr
+        }
+    }
+}
 
 function $watch(expr, callback) {
-    var vm = $watch.adjust(this, expr)
+    var fuzzy = expr.indexOf('.*') > 0 || expr === '*'
+    var vm = fuzzy ? this : $watch.adjust(this, expr)
     var hive = vm.$events
     var list = hive[expr] || (hive[expr] = [])
-    if (vm !== this) {
-        this.$events[expr] = list
-    }
-    if(expr.indexOf('.*') > 0 || expr === '*'){
-        console.log(toRegExp(expr))
+    if (fuzzy) {
         list.reg = list.reg || toRegExp(expr)
     }
-    
+    addFuzzy(fuzzy, hive, expr)
+    if (vm !== this) {
+        addFuzzy(fuzzy, this.$events, expr)
+        this.$events[expr] = list
+    }
+
     avalon.Array.ensure(list, callback)
 
     return function () {

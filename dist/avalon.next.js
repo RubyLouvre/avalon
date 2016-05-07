@@ -1,4 +1,4 @@
-/*! built in 2016-5-7:1 version 2.0 by 司徒正美 */
+/*! built in 2016-5-7:12 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -5241,7 +5241,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    $emit(get.heirloom[spath], vm, spath, val, older)
 	                }
 	                //如果这个属性是数组元素上的属性
-	                emitElement(sid, vm, spath, val, older)
+	                emitArray(sid, vm, spath, val, older)
 	                //如果这个属性存在通配符
 	                emitWildcard(get.heirloom, vm, spath, val, older)
 
@@ -5261,7 +5261,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	var rtopsub = /([^.]+)\.(.+)/
-	function emitElement(sid, vm, spath, val, older) {
+	function emitArray(sid, vm, spath, val, older) {
 	    if (sid.indexOf('.*.') > 0) {
 	        var arr = sid.match(rtopsub)
 	        var top = avalon.vmodels[ arr[1] ]
@@ -5287,12 +5287,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function emitWildcard(obj, vm, spath, val, older) {
-	    for (var i in obj) {
-	        var list = obj[i]
-	        var reg = list.reg
-	        if (reg && reg.test(spath)) {
-	            $emit(list, vm, spath, val, older)
-	        }
+	    if (obj.__fuzzy__) {
+	        obj.__fuzzy__.replace(avalon.rword, function (expr) {
+	            var list = obj[expr]
+	            var reg = list.reg
+	            if (reg && reg.test(spath)) {
+	                $emit(list, vm, spath, val, older)
+	            }
+	            return expr
+	        })
 	    }
 	}
 
@@ -5364,7 +5367,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (index > this.length) {
 	                throw Error(index + 'set方法的第一个参数不能大于原数组长度')
 	            }
-	            this.notify('*', val, this[index], true)
 	            this.splice(index, 1, val)
 	        }
 	    },
@@ -5432,25 +5434,39 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    return other || vm
 	}
+
 	function toRegExp(expr) {
 	    var arr = expr.split('.')
 	    return new RegExp("^" + arr.map(function (el) {
 	        return el === '*' ? '(?:[^.]+)' : el
 	    }).join('\\.') + '$', 'i')
 	}
+	function addFuzzy(add, obj, expr) {
+	    if (add) {
+	        if (obj.__fuzzy__) {
+	            if (obj.__fuzzy__.indexOf(',' + expr) === -1) {
+	                obj.__fuzzy__ += ',' + expr
+	            }
+	        } else {
+	            obj.__fuzzy__ = expr
+	        }
+	    }
+	}
 
 	function $watch(expr, callback) {
-	    var vm = $watch.adjust(this, expr)
+	    var fuzzy = expr.indexOf('.*') > 0 || expr === '*'
+	    var vm = fuzzy ? this : $watch.adjust(this, expr)
 	    var hive = vm.$events
 	    var list = hive[expr] || (hive[expr] = [])
-	    if (vm !== this) {
-	        this.$events[expr] = list
-	    }
-	    if(expr.indexOf('.*') > 0 || expr === '*'){
-	        console.log(toRegExp(expr))
+	    if (fuzzy) {
 	        list.reg = list.reg || toRegExp(expr)
 	    }
-	    
+	    addFuzzy(fuzzy, hive, expr)
+	    if (vm !== this) {
+	        addFuzzy(fuzzy, this.$events, expr)
+	        this.$events[expr] = list
+	    }
+
 	    avalon.Array.ensure(list, callback)
 
 	    return function () {
