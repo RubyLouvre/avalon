@@ -19,7 +19,7 @@ var browser = {
     avalonFragment: null
 }
 
-if (window.window === window) {
+if(window.location && window.navigator && window.window){
     var document = window.document
     browser.document = document
     browser.modern = window.dispatchEvent
@@ -30,5 +30,6 @@ if (window.window === window) {
         browser.msie = document.documentMode || (window.XMLHttpRequest ? 7 : 6)
     }
 }
+
 
 module.exports = browser

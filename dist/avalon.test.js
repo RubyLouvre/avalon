@@ -1,4 +1,4 @@
-/*! built in 2016-5-7:14 version 2.0 by 司徒正美 */
+/*! built in 2016-5-7:19 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -172,7 +172,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    avalonFragment: null
 	}
 
-	if (window.window === window) {
+	if(window.location && window.navigator && window.window){
 	    var document = window.document
 	    browser.document = document
 	    browser.modern = window.dispatchEvent
@@ -183,6 +183,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        browser.msie = document.documentMode || (window.XMLHttpRequest ? 7 : 6)
 	    }
 	}
+
 
 	module.exports = browser
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
