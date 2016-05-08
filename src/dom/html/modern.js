@@ -29,12 +29,10 @@ var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)
 
 var rhtml = /<|&#?\w+;/
 var htmlCache = new Cache(128)
-var tempateTag = avalon.document.createElement('template')
-var htmlHook
-
-if (/HTMLTemplateElement/.test(tempateTag)) {
-    htmlHook = tempateTag
-} else {
+var templateHook = avalon.document.createElement('template')
+var templateHook
+if (!/HTMLTemplateElement/.test(templateHook)) {
+    templateHook = null
     avalon.shadowCopy(tagHooks, svgHooks)
 }
 
@@ -53,22 +51,24 @@ avalon.parseHTML = function (html) {
         return hasCache.cloneNode(true)
     }
     var tag = (rtagName.exec(html) || ['', ''])[1].toLowerCase()
-
     var wrapper = svgHooks[tag], firstChild
-    if (wrapper) {
+    if (wrapper) {//svgHooks
         wrapper.innerHTML = html
-        //使用innerHTML生成的script节点不会发出请求与执行text属性
-        fixScript(wrapper)
-    } else if (htmlHook) {
-        htmlHook.innerHTML = html
-        wrapper = htmlHook.content
-    } else {
+    } else if (templateHook) {//templateHook
+        templateHook.innerHTML = html
+        wrapper = templateHook.content
+    } else {//tagHooks
         wrapper = tagHooks[tag] || tagHooks._default
         wrapper.innerHTML = html
-        fixScript(wrapper)
     }
-    while (firstChild = wrapper.firstChild) { // 将wrapper上的节点转移到文档碎片上！
-        fragment.appendChild(firstChild)
+    //使用innerHTML生成的script节点不会发出请求与执行text属性
+    fixScript(wrapper)
+    if (templateHook) {
+        fragment = wrapper
+    } else {// 将wrapper上的节点转移到文档碎片上！
+        while (firstChild = wrapper.firstChild) {
+            fragment.appendChild(firstChild)
+        }
     }
     if (html.length < 1024) {
         htmlCache.put(html, fragment.cloneNode(true))
