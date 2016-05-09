@@ -1,4 +1,4 @@
-/*! built in 2016-5-10:0 version 2.0 by 司徒正美 */
+/*! built in 2016-5-10:1 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3758,8 +3758,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            cur.change = [this.replaceByComment]
 	        } else if (!pre.props.resolved) {
 	            cur.steps = steps
-	            var list = cur.change || (cur.change = [])
-	            avalon.Array.ensure(list, this.replaceByComponent)
+	            cur.change = [this.replaceByComponent]
+	            steps.count += 1
 	            cur.afterChange = [
 	                function (dom, vnode) {
 	                    cur.vmodel.$fire('onReady', {

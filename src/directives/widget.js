@@ -42,8 +42,8 @@ var dir = avalon.directive('widget', {
             cur.change = [this.replaceByComment]
         } else if (!pre.props.resolved) {
             cur.steps = steps
-            var list = cur.change || (cur.change = [])
-            avalon.Array.ensure(list, this.replaceByComponent)
+            cur.change = [this.replaceByComponent]
+            steps.count += 1
             cur.afterChange = [
                 function (dom, vnode) {
                     cur.vmodel.$fire('onReady', {
