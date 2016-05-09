@@ -1,4 +1,4 @@
-/*! built in 2016-5-8:22 version 2.0 by 司徒正美 */
+/*! built in 2016-5-10:0 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -4913,7 +4913,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var optionMixin = {}
 	        function mixinHooks(option, index) {
 	            for (var k in option) {
-	                var v = option[k]
+	                try{
+	                   var v = option[k]
+	                }catch(e){
+	                    continue
+	                }
 	                if (componentEvents[k]) {
 	                    if (k in optionMixin) {
 	                        optionMixin[k].push(v)

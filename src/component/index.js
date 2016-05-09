@@ -36,7 +36,11 @@ avalon.component = function (name, definition) {
         var optionMixin = {}
         function mixinHooks(option, index) {
             for (var k in option) {
-                var v = option[k]
+                try{
+                   var v = option[k]
+                }catch(e){
+                    continue
+                }
                 if (componentEvents[k]) {
                     if (k in optionMixin) {
                         optionMixin[k].push(v)
