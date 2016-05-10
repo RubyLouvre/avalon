@@ -86,6 +86,7 @@ function lexer(text, curDeep, maxDeep) {
                     if (sp && sp.nodeType === 3 && rsp.test(sp.nodeValue)) {
                         nodes.pop()
                     }
+                    getForTemplate(nodes)
                 }
             }
         }
@@ -156,6 +157,24 @@ function lexer(text, curDeep, maxDeep) {
         maps = {}
     }
     return nodes
+}
+
+function getForTemplate(nodes){
+    var i = 1, el, k = nodes.length, ret = []
+    while(el = nodes[--k]){
+        if(el.nodeType === 8){
+            if(rspAfterForStart.test(el.nodeValue)){
+                i -= 1
+            }else if(rspBeforeForEnd.test(el.nodeValue)){
+                i += 1
+            }
+            if(i === 0){
+                break
+            }
+        }
+        ret.push(avalon.vdomAdaptor(el, 'toHTML'))
+    }
+    return el.template = ret.reverse().join('')
 }
 
 //用于创建适配某一种标签的正则表达式
@@ -248,18 +267,20 @@ function modifyProps(node, innerHTML, nodes, curDeep, maxDeep) {
         if (forExpr) {
             var cb = node.props['data-for-rendered']
             var cid = cb+':cb'
+            delete node.props['ms-for']
             nodes.push({
                 nodeType: 8,
                 type: '#comment',
                 nodeValue: 'ms-for:' + forExpr,
                 signature: makeHashCode('for'),
-                cid: cid
+                cid: cid,
+                template: avalon.vdomAdaptor(node, 'toHTML')
             })
+            
             if(cb && !avalon.caches[cid]){
                 avalon.caches[cid] = Function('return '+ avalon.parseExpr(cb, 'on'))()  
             }
-         
-            delete node.props['ms-for']
+           
             nodes.push(node)
             node = {
                 nodeType: 8,

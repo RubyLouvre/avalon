@@ -8,6 +8,8 @@ var rforSplit = /\s*,\s*/
 var rforAs = /\s+as\s+([$\w]+)/
 var rident = require('../seed/regexp').ident
 var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
+var forCache = new Cache(128)
+
 avalon._each = function (obj, fn) {
     if (Array.isArray(obj)) {
         for (var i = 0; i < obj.length; i++) {
@@ -24,6 +26,7 @@ avalon._each = function (obj, fn) {
         }
     }
 }
+var map = {}
 avalon.directive('for', {
     priority: 3,
     parse: function (el, num) {
@@ -57,11 +60,6 @@ avalon.directive('for', {
             pre.components = []
             pre.repeatCount = 0
         }
-//        if (!pre.components) {
-//            var range = getRepeatRange(previous, __index__)//所有节点包括前后锚点
-//            pre.components = getComponents(range.slice(1, -1), pre.signature)
-//            pre.repeatCount = range.length - 2
-//        }
 
         var quota = pre.components.length
         var nodes = current.slice(cur.start, cur.end)
@@ -89,7 +87,7 @@ avalon.directive('for', {
             }
             cur.removedComponents = {}
             //如果没有孩子也要处理一下
-            isChange = cur.components.length === 0 || 
+            isChange = cur.components.length === 0 ||
                     steps.count !== oldCount
 
         } else {
@@ -159,7 +157,7 @@ avalon.directive('for', {
                     }
                 }
                 node = node.nextSibling
-               
+
             }
             if (!hasRender) {
                 node = startRepeat.nextSibling
@@ -169,11 +167,11 @@ avalon.directive('for', {
                 }
             }
         }
-        
-        if (!startRepeat.domTemplate && vnode.components[0]) {
-            var domTemplate = fragment.cloneNode(false)
-            componentToDom(vnode.components[0], domTemplate)
-            startRepeat.domTemplate = domTemplate
+
+        var uuid = vnode.template
+        var domTemplate = forCache.get(uuid)
+        if (!domTemplate) {
+            domTemplate = forCache.put(uuid, avalon.parseHTML(uuid))
         }
         var key = vnode.signature
         for (var i in vnode.removedComponents) {
@@ -226,7 +224,8 @@ avalon.directive('for', {
                 }
             } else {
                 //添加nodes属性并插入节点
-                var newFragment = startRepeat.domTemplate.cloneNode(true)
+                var newFragment = domTemplate.cloneNode(true)
+                newFragment.appendChild(document.createComment(vnode.signature))
                 cnodes = com.nodes = avalon.slice(newFragment.childNodes)
                 parent.insertBefore(newFragment, insertPoint.nextSibling)
                 applyEffects(com.nodes, com.children, {
@@ -277,24 +276,7 @@ function getRepeatRange(nodes, i) {
     }
     return ret
 }
-var forCache = new Cache(128)
-function componentToDom(com, fragment, cur) {
-    for (var i = 0, c; c = com.children[i++]; ) {
-        if (c.nodeType === 1) {
-            cur = avalon.vdomAdaptor(c, 'toDOM')
-        } else {
-            var expr = c.type + '#' + c.nodeValue
-            var node = forCache.get(expr)
-            if (!node) {
-                node = avalon.vdomAdaptor(c, 'toDOM')
-                forCache.put(expr, node)
-            }
-            cur = node.cloneNode(true)
-        }
-        fragment.appendChild(cur)
-    }
-    return fragment
-}
+
 
 //将要循环的节点根据锚点元素再分成一个个更大的单元,用于diff
 function getComponents(nodes, signature) {

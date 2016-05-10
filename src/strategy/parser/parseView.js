@@ -73,6 +73,7 @@ function parseView(arr, num, scan) {
                         '\n\tcid:' + quote(el.cid) + ',' +
                         '\n\tstart:' + children + '.length,' +
                         '\n\tsignature:' + quote(signature) + ',' +
+                        '\n\ttemplate:' + quote(el.template) + ',' +
                         '\n\tnodeValue:' + quote(nodeValue) +
                         '\n}\n'
                 str += children + '.push(' + signature + ')\n'
