@@ -15,15 +15,16 @@ avalon.suspendUpdate = 0
 var isBatchingUpdates = false
 function batchUpdate(id, immediate) {
     var vm = typeof id === 'string' ? avalon.vmodels[id] || {} : id
+    id = vm.$id
     if (dirtyTrees[id]) {
         avalon.Array.ensure(needRenderIds, id)
     } else {
         dirtyTrees[id] = true
     }
+  
     if (avalon.suspendUpdate > 0 || typeof vm.$render !== 'function' || !vm.$element || isBatchingUpdates) {
         return
     }
-
     if (!document.nodeName)//如果是在mocha等测试环境中立即返回
         return
 
@@ -34,6 +35,7 @@ function batchUpdate(id, immediate) {
         isBatchingUpdates = true
         var vtree = vm.$render() || []
         var steps = {count: 0}
+      
         if (vm.$render.dom) {
            var _vtree = findVdom(vtree, vm.$id)
             if(_vtree){
