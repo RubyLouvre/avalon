@@ -44,11 +44,13 @@ avalon.directive('controller', {
         }
     },
     update: function (node, vnode) {
-        
         var top = vnode.top //位于上方的顶层vm或mediator vm
         var bottom = vnode.bottom //位于下方的顶层vm
         var mediator = vnode.mediator //新合成的mediator vm
-        bottom.$element = top && top.$element || node
+        if(!(top && bottom)){
+            return
+        }
+        bottom.$element =  (top && top.$element) || node
         vnode.top = vnode.mediator = vnode.bottom = 0
         if (!bottom.$render) {
             var topRender = top.$render
@@ -59,7 +61,7 @@ avalon.directive('controller', {
                 return topRender(0, bottomRender.$id)
             }
             bottom.$render = bottomRender
-            bottomRender.dom = node //方便以后更换扫描起点
+            bottomRender.dom = bottom.$element  //方便以后更换扫描起点
             bottomRender.$id = topRender.$id + ';;' + bottom.$id
             if(mediator){
                mediator.$render = bottomRender
