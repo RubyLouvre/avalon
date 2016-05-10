@@ -1,5 +1,3 @@
-
-var skipArray = require('../vmodel/parts/skipArray')
 var disposeDetectStrategy = require('../component/disposeDetectStrategy')
 var patch = require('../strategy/patch')
 
@@ -42,8 +40,10 @@ var dir = avalon.directive('widget', {
             cur.change = [this.replaceByComment]
         } else if (!pre.props.resolved) {
             cur.steps = steps
-            cur.change = [this.replaceByComponent]
-            steps.count += 1
+            var list = cur.change || (cur.change = [])
+            if(avalon.Array.ensure(list, this.replaceByComponent)){
+                 steps.count += 1
+            }
             cur.afterChange = [
                 function (dom, vnode) {
                     cur.vmodel.$fire('onReady', {
