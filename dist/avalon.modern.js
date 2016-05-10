@@ -1,4 +1,4 @@
-/*! built in 2016-5-10:1 version 2.0 by 司徒正美 */
+/*! built in 2016-5-10:11 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1377,11 +1377,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                avalon(elem).removeClass('ms-controller')
 	                vm.$element = elem
 	                var now = new Date()
-	                elem.vtree = avalon.lexer(elem.outerHTML)
+	                //IE6-8下元素的outerHTML前面会有空白
+	                elem.vtree = avalon.lexer(elem.outerHTML.trim())
 	                var now2 = new Date()
 	                avalon.log('create primitive vtree', now2 - now)
 	                vm.$render = avalon.render(elem.vtree)
-	            //    avalon.buildRender(vm, elem.vtree, null, 'scan') // 构建$render
 	                var now3 = new Date()
 	                avalon.log('create template Function ', now3 - now2)
 	                avalon.rerenderStart = now3
@@ -2053,11 +2053,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    update: function (node, vnode) {
-	        
 	        var top = vnode.top //位于上方的顶层vm或mediator vm
 	        var bottom = vnode.bottom //位于下方的顶层vm
 	        var mediator = vnode.mediator //新合成的mediator vm
-	        bottom.$element = top && top.$element || node
+	        if(!(top && bottom)){
+	            return
+	        }
+	        bottom.$element =  (top && top.$element) || node
 	        vnode.top = vnode.mediator = vnode.bottom = 0
 	        if (!bottom.$render) {
 	            var topRender = top.$render
@@ -2068,7 +2070,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return topRender(0, bottomRender.$id)
 	            }
 	            bottom.$render = bottomRender
-	            bottomRender.dom = node //方便以后更换扫描起点
+	            bottomRender.dom = bottom.$element  //方便以后更换扫描起点
 	            bottomRender.$id = topRender.$id + ';;' + bottom.$id
 	            if(mediator){
 	               mediator.$render = bottomRender
@@ -3714,8 +3716,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 66 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
-	var skipArray = __webpack_require__(67)
 	var disposeDetectStrategy = __webpack_require__(68)
 	var patch = __webpack_require__(64)
 
@@ -3758,8 +3758,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            cur.change = [this.replaceByComment]
 	        } else if (!pre.props.resolved) {
 	            cur.steps = steps
-	            cur.change = [this.replaceByComponent]
-	            steps.count += 1
+	            var list = cur.change || (cur.change = [])
+	            if(avalon.Array.ensure(list, this.replaceByComponent)){
+	                 steps.count += 1
+	            }
 	            cur.afterChange = [
 	                function (dom, vnode) {
 	                    cur.vmodel.$fire('onReady', {
@@ -4799,15 +4801,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	var isBatchingUpdates = false
 	function batchUpdate(id, immediate) {
 	    var vm = typeof id === 'string' ? avalon.vmodels[id] || {} : id
+	    id = vm.$id
 	    if (dirtyTrees[id]) {
 	        avalon.Array.ensure(needRenderIds, id)
 	    } else {
 	        dirtyTrees[id] = true
 	    }
+	  
 	    if (avalon.suspendUpdate > 0 || typeof vm.$render !== 'function' || !vm.$element || isBatchingUpdates) {
 	        return
 	    }
-
 	    if (!document.nodeName)//如果是在mocha等测试环境中立即返回
 	        return
 
@@ -4818,6 +4821,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        isBatchingUpdates = true
 	        var vtree = vm.$render() || []
 	        var steps = {count: 0}
+	      
 	        if (vm.$render.dom) {
 	           var _vtree = findVdom(vtree, vm.$id)
 	            if(_vtree){
@@ -4912,11 +4916,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var optionMixin = {}
 	        function mixinHooks(option, index) {
 	            for (var k in option) {
-	                try{
+	                  if(!option.hasOwnProperty(k))
+	                      continue
 	                   var v = option[k]
-	                }catch(e){
-	                    continue
-	                }
 	                if (componentEvents[k]) {
 	                    if (k in optionMixin) {
 	                        optionMixin[k].push(v)

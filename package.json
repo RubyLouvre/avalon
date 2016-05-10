@@ -21,7 +21,6 @@
         "karma-firefox-launcher": "^0.1.7",
         "karma-junit-reporter": "^0.3.8",
         "karma-mocha": "^0.1.8",
-        "karma-phantomjs-launcher": "^0.2.3",
         "mocha": "^1.21.4"
     },
     "bugs": {
