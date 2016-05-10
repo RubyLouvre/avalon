@@ -1,4 +1,4 @@
-/*! built in 2016-5-10:14 version 2.0 by 司徒正美 */
+/*! built in 2016-5-10:16 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1754,6 +1754,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (filters.length) {
 	            filters.push('if($event.$return){\n\treturn;\n}')
 	        }
+	        if(!avalon.modern){
+	            body = body.replace(/__vmodel__\.([^(]+)\(([^)]*)\)/,function(a, b, c){
+	                return '__vmodel__.'+b+".call(__vmodel__"+ (/\S/.test(c) ? ','+c: "")+")"
+	            })
+	        }
 	        ret = ['function self($event){',
 	            'try{',
 	            '\tvar __vmodel__ = this;',
@@ -2487,7 +2492,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var markID = __webpack_require__(6).getLongID
-
+	var Cache = __webpack_require__(26)
+	var eventCache = new Cache(128)
 	var quote = avalon.quote
 
 	//Ref: http://developers.whatwg.org/webappapis.html#event-handler-idl-attributes
@@ -2509,8 +2515,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var pid = quote(binding.name)
 	       
 	        if (canCache) {
-	            var fn = Function('return ' + avalon.parseExpr(binding, 'on'))()
-	            var uuid = markID(fn)
+	            var key = binding.expr
+	            var fn = eventCache.get(key)
+	            if(!fn){
+	                var fn = Function('return ' + avalon.parseExpr(binding, 'on'))()
+	                var uuid = markID(fn)
+	               eventCache.put(key, fn)
+	            }
 	            avalon.eventListeners[uuid] = fn
 	            return vmDefine + 'vnode' + num + '.props[' + pid +
 	                    '] = avalon.eventListeners.' + uuid + '\n'
