@@ -1,4 +1,4 @@
-/*! built in 2016-5-10:13 version 2.0 by 司徒正美 */
+/*! built in 2016-5-10:14 version 2.0 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1713,7 +1713,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var svg = avalon.document.createElementNS(svgns, 'svg')
 
 	    svg.innerHTML = '<circle fill="red" />'
-
+	  //IE9-11,firefox,ios7,8的chrome不支持SVG元素的innerHTML,outerHTML属性
 	    if (!/^\[object SVG\w*Element\]$/.test(svg.firstChild)) {
 	        function createSVG(node, parent) {
 	            /* jshint ignore:start */
@@ -1734,10 +1734,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            /* jshint ignore:end */
 	        }
-	        //IE9-11,firefox不支持SVG元素的innerHTML,outerHTML属性
+	       
 	        Object.defineProperties(SVGElement.prototype, {
 	            outerHTML: {
-	                enumerable: true,
 	                configurable: true,
 	                get: outerHTML,
 	                set: function (html) {
@@ -1755,7 +1754,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            },
 	            innerHTML: {
-	                enumerable: true,
 	                configurable: true,
 	                get: function () {
 	                    var s = this.outerHTML

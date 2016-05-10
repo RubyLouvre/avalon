@@ -23,7 +23,7 @@ var svgns = 'http://www.w3.org/2000/svg'
 var svg = avalon.document.createElementNS(svgns, 'svg')
 
 svg.innerHTML = '<circle fill="red" />'
-
+//IE9-11,firefox,ios7,8的chrome不支持SVG元素的innerHTML,outerHTML属性
 if (!/^\[object SVG\w*Element\]$/.test(svg.firstChild)) {
     function createSVG(node, parent) {
         /* jshint ignore:start */
@@ -44,10 +44,8 @@ if (!/^\[object SVG\w*Element\]$/.test(svg.firstChild)) {
         }
         /* jshint ignore:end */
     }
-    //IE9-11,firefox不支持SVG元素的innerHTML,outerHTML属性
     Object.defineProperties(SVGElement.prototype, {
         outerHTML: {
-            enumerable: true,
             configurable: true,
             get: outerHTML,
             set: function (html) {
@@ -65,7 +63,6 @@ if (!/^\[object SVG\w*Element\]$/.test(svg.firstChild)) {
             }
         },
         innerHTML: {
-            enumerable: true,
             configurable: true,
             get: function () {
                 var s = this.outerHTML
