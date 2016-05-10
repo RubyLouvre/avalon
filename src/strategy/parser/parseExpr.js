@@ -89,6 +89,9 @@ function parseExpr(str, category) {
         if (filters.length) {
             filters.push('if($event.$return){\n\treturn;\n}')
         }
+        body = body.replace(/__vmodel__\.([^(]+)\(([^)]*)\)/,function(a, b, c){
+            return '__vmodel__.'+b+".call(__vmodel__"+ (/\S/.test(c) ? ','+c: "")+")"
+        })
         ret = ['function self($event){',
             'try{',
             '\tvar __vmodel__ = this;',
