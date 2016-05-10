@@ -128,6 +128,9 @@ function mediatorFactory(before, after) {
         var config
         var configName
         for (var key in obj) {
+            if(!obj.hasOwnProperty(key)){
+                continue
+            }
             keys[key] = obj[key]
             var $accessors = obj.$accessors
             if ($accessors && $accessors[key]) {
