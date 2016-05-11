@@ -14,6 +14,7 @@ function parseBindings(props, num, elem) {
     var bindings = []
     var skip = 'ms-skip' in props
     var ret = ''
+    var uniq = {}
     for (var i in props) {
         var value = props[i], match
 
@@ -44,9 +45,10 @@ function parseBindings(props, num, elem) {
                     binding.name += '-' + order
                     binding.priority += param.charCodeAt(0) * 100 + order
                 }
-
-                bindings.push(binding)
-
+                if(!uniq[binding.name]){
+                    uniq[binding.name] = 1
+                    bindings.push(binding)
+                }
             }
         } else {
             //IE6-8下关键字不能直接当做对象的键名，需要用引号括起来
