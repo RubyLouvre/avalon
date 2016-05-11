@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.test.js"></script>
+        <script>
+
+            var vm = avalon.define({
+                $id: 'widget0',
+                config: {
+                    buttonText: '按钮',
+                    onInit: function (a) {
+                        console.log("onInit!!")
+                    },
+                    onReady: function (a) {
+                        console.log("onReady!!")
+                    },
+                    onViewChange: function () {
+                        console.log("onViewChange!!")
+                    },
+                    onDispose: function () {
+                        console.log("onDispose!!")
+                    }
+                }
+            })
+            setTimeout(function () {
+                vm.config.buttonText = 'change'
+                setTimeout(function () {
+                    document.body.innerHTML = ""
+                }, 1000)
+            }, 1000)
+
+        </script>
+    </head>
+
+    <body>
+        <div ms-controller='widget0' >
+            <div><wbr ms-widget="[{is:'ms-button'},@config]"/></div>
+        </div>
+    </body>
+</html>

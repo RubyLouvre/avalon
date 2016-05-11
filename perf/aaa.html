@@ -1,33 +1,62 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>ms-on-mousewheel</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
-        <script src="../dist/avalon.js"></script>
-        <script>
-            var vm = avalon.define({
-                $id: "test",
-                aaa: "111",
-                cb: function(e) {
-                    vm.text = e.wheelDelta + "  " + e.type
-                },
-                bbb: '222'
-            })
-            var vm2 = avalon.define({
-                $id: 'test2',
-                ccc: '333'
-            })
-        </script>
-    </head>
-
-    <body ms-controller="test">
-        <div  id="aaa" style="background: red;width:200px;height: 200px;" >
-            {{#aaa}}
-            <div ms-important="test2" id="eee" class="kkk">
-                {{#ccc}}
-            </div>
-            {{#bbb}}
-        </div>
-    </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>demo</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+  <style type="text/css">
+  .wraper{width: 300px;height: 100px;position: relative;margin: 150px auto;}
+  .inner{width: 300px;height: 100px;background: #AA0707;color: #fff;font-size: 36px;line-height: 100px;text-align: center;}
+  #j_canvas{position: absolute;left: 0;top: 0;}
+  </style>
+</head>
+<body>
+  <div class="wraper">
+    <div class="inner">恭喜您中奖</div>
+    <canvas id="j_canvas" width="300" height="100"></canvas>
+  </div>
+  <script type="text/javascript">
+  var scratchGame = (function(){
+    var target = document.getElementById('j_canvas'),
+      ctx = target.getContext('2d'),
+      w = target.width,
+      h = target.height,
+      radius = 15,
+      target_offset_x = target.getBoundingClientRect().left,
+      target_offset_y = target.getBoundingClientRect().top,
+      isTouch = false;	
+    return{
+      init:function(){
+        ctx.fillStyle = '#999';
+        ctx.fillRect(0, 0,w,h);
+        //属性设置或返回如何将一个源（新的）图像绘制到目标（已有）的图像上。
+        ctx.globalCompositeOperation = 'destination-out';
+        // 事件
+        target.addEventListener('touchstart', this.eventDown,false);
+        target.addEventListener('touchmove', this.eventMove,false);
+        target.addEventListener('touchend', this.eventUp,false);
+      },
+      eventDown:function(e){
+        e.preventDefault();
+        isTouch = true;
+      },
+      eventUp:function(e){
+        e.preventDefault();
+        isTouch = false;
+      },
+      eventMove:function(e){
+        e.preventDefault();
+        if(!isTouch||!e.touches.length) return;
+        var touch = e.touches[0],
+          x = touch.pageX - target_offset_x,
+          y = touch.pageY - target_offset_y;
+        ctx.beginPath(); 
+        ctx.arc(x,y, radius, 0, Math.PI*2, true);  
+        ctx.fill();				
+      }
+    }
+  })();
+  scratchGame.init();
+  </script>
+</body>
 </html>

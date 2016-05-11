@@ -4,39 +4,43 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
         <script src="../dist/avalon.js" ></script>
-        <script>
-            var vm = avalon.define({
-                $id: 'aaa',
-                bbb: 444,
-                aaa: 111
-            })
-            var vm2 = avalon.define({
-                $id: 'bbb',
-                bbb: 222,
-                ddd: 777
-            })
-            var vm3 = avalon.define({
-                $id: 'ccc',
-                ccc: 333
-            })
-            var vm4 = avalon.define({
-                $id: 'ddd',
-                ddd: 333
-            })
-        </script>
+      
     </head>
     <body>
-        <div ms-controller="aaa">
-            <p>{{@aaa}}</p>
-            <div ms-controller="bbb">
-                <div>{{@bbb}}</div>
-                <div ms-controller="ddd">
-                    <div>{{@ddd}}</div>
-                </div>
-            </div>
-            <div ms-controller="ccc">
-                {{@ccc}}
-            </div>
-        </div>
+        <script>
+            var vv = avalon.define({
+                $id: "duplex1",
+                data: [{checked: false}, {checked: false}, {checked: false}],
+                allchecked: false,
+                checkAll: function (e) {
+                    var checked = e.target.checked
+                    vv.data.forEach(function (el) {
+                        el.checked = checked
+                    })
+                },
+                checkOne: function (e) {
+                    var checked = e.target.checked
+                    if (checked === false) {
+                        vv.allchecked = false
+                    } else {//avalon已经为数组添加了ecma262v5的一些新方法
+                        vv.allchecked = vv.data.every(function (el) {
+                            return el.checked
+                        })
+                    }
+                }
+            })
+        </script>
+        <blockquote ms-controller="duplex1">
+            <table border="1">
+                <tr>
+                    <td><input type="checkbox" 
+                               ms-duplex-checked="@allchecked" 
+                               data-duplex-changed="@checkAll"/>全选</td>
+                </tr>
+                <tr ms-for="($index, el) in @data">
+                    <td><input type="checkbox" ms-duplex-checked="el.checked" data-duplex-changed="@checkOne" />{{$index}}::{{el.checked}}</td>
+                </tr>
+            </table>
+        </blockquote>
     </body>
 </html>

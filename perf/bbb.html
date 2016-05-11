@@ -1,37 +1,52 @@
+<!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title></title>
         <script src="../dist/avalon.js"></script>
         <script>
+            var tpl = '<div><select ms-duplex="@currentNum">' +
+                    '<option ms-for="el in @numList">{{el}}</option>' +
+                    '</select><p>{{@currentNum}}</p></div>';
+
+            avalon.component('ms-pager', {
+                template: tpl,
+                defaults: {
+                    numList: [6, 12, 18, 24, 30],
+                    currentNum: 12,
+                    onInit: function () {
+                        console.log('onInit')
+                    },
+                    onReady: function () {
+                        console.log('onReady')
+                    },
+                    onViewChange: function () {
+                        console.log('onViewChange')
+                    },
+                    onDispose: function () {
+                        console.log('onDispose')
+                    }
+                }
+
+            })
+
+
             var vm = avalon.define({
-                $id: "test",
-                a: 111,
-                b: 222,
-                c: [1,2,3,4]
+                $id: 'test',
+                aaa: '测试测试',
+                click:function(){
+                    console.log('---')
+                    avalon.clearHTML(document.body)
+                }
             })
-            vm.$watch('a', function(neo, old, name){
-                console.log(neo, old, name)
-            })
-            vm.$watch('*', function(neo, old, name){
-                console.log(neo, old, name, '!')
-            })
-        
+
         </script>
-        <style>
-            .ms-controller{
-                display:none;
-            }
-        </style>
     </head>
-    <body>
-        <div ms-controller="test">
-            <ul>
-                <li ms-for="el in @c">{{el}}</li>
-            </ul>
-<!--            <p><input ms-duplex="@a" />{{@a}}<strong ms-text="@a"></strong></p>
-            <p><input ms-duplex="@b" /><span>{{@b}}</span><span ms-html="@b"></span></p>-->
-        </div>
-    </body>
+
+    <body ms-controller="test">
+        <div>{{@aaa}}</div>
+    <xmp ms-widget="{is:'ms-pager'}"></xmp>
+    <!--111-->
+    <button ms-click="@click" type="button">ddd</button>
+</body>
 </html>

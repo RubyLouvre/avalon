@@ -1,4 +1,4 @@
-/*! built in 2016-5-11:13 version 2.01 by 司徒正美 */
+/*! built in 2016-5-11:22 version 2.01 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3073,7 +3073,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    equalto: {
 	        message: '密码输入不一致',
 	        get: function (value, field, next) {
-	            var id = String(field.data.equalto).slice(1)
+	            var id = String(field.data.equalto).slice(1)//去掉#
 	            var other = avalon(document.getElementById(id)).val() || ""
 	            next(value === other)
 	            return value
@@ -3759,24 +3759,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else if (!pre.props.resolved) {
 	            cur.steps = steps
 	            var list = cur.change || (cur.change = [])
-	            if(avalon.Array.ensure(list, this.replaceByComponent)){
-	                 steps.count += 1
-	            }
-	            cur.afterChange = [
-	                function (dom, vnode) {
-	                    cur.vmodel.$fire('onReady', {
-	                        type: 'ready',
-	                        target: dom,
-	                        wid: wid,
-	                        vmodel: vnode.vmodel
-	                    })
-	                    docker.renderCount = 2
-	                }
-	            ]
-	            //处理模板不存在指令的情况
-	            if (cur.children.length === 0) {
+	            if (avalon.Array.ensure(list, this.replaceByComponent)) {
 	                steps.count += 1
 	            }
+	            
+	            function fireReady(dom, vnode) {
+	                cur.vmodel.$fire('onReady', {
+	                    type: 'ready',
+	                    target: dom,
+	                    wid: wid,
+	                    vmodel: vnode.vmodel
+	                })
+	                docker.renderCount = 2
+	            }
+	            list = cur.afterChange || (cur.afterChange = [])
+	            if (avalon.Array.ensure(list, fireReady)) {
+	                steps.count += 1
+	            }
+
+
 	            //处理模板不存在指令的情况
 	        } else {
 	            var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
@@ -5317,7 +5318,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        avalon.warn('vm.$id must be specified')
 	    }
 	    if (avalon.vmodels[$id]) {
-	        throw Error('error:[', $id, '] had defined!')
+	        throw Error('error:['+ $id+ '] had defined!')
 	    }
 	    var vm = $$midway.masterFactory(definition, {}, {
 	        pathname: '',

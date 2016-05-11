@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head ms-controller="head-vm">
+    <title>测试</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <script src="../dist/avalon.js"></script>
+    <script>
+      var tpl = '<ms-thumbs>'+
+                '  <div>'+
+                '    <div>'+
+                '      <img ms-attr="{src:@logoMapId}" />'+
+                '      <p>{{@title}}</p>'+
+                '    </div>'+
+                '    <div>'+
+                '      <p><span>{{@sponsor}}</span></p>'+
+                '      <p><span>{{@startTime | date("M月d日 hh:mm")}}</span></p>'+
+                '      <p><span>{{@online}}</span></p>'+
+                '    </div>'+
+                '    <div>'+
+                '      <img ms-attr="{src:@qrSmall}" />'+
+                '      <p>扫码用手机看</p>'+
+                '      <div><img ms-attr="{src:@qrBig}" /></div>'+
+                '    </div>'+
+                '  </div>'+
+                '</ms-thumbs>'
+      avalon.component('ms-thumbs', {
+        template: tpl,
+        defaults: {
+          title : '会议标题',//标题
+          logoMapId : './src/asset/images/enterprise-logo.png',
+          qrSmall : './src/asset/images/enterprise-logo.png',
+          qrBig : './src/asset/images/enterprise-logo.png',
+          sponsor : '主办方',//主办人
+          startTime : '1462502548211',//开始时间
+          online : '213412'//在线人数
+        }
+      })
+
+      var vm = avalon.define({
+        $id: 'widget',
+        config: {
+          title : 'XXX产品发布会',//标题
+          logoMapId : './src/asset/images/enterprise-logo.png',
+          qrSmall : './src/asset/images/erweima-small.png',
+          qrBig : './src/asset/images/erweima-big.png',
+          sponsor : 'IBM',//主办人
+          startTime : '1465544749211',//开始时间
+          online : '216412'//在线人数
+        }
+      })
+    </script>
+  </head>
+
+  <body>
+    <div id="box" ms-controller='widget' >
+      <xmp ms-widget="[{is:'ms-thumbs'},@config]"></xmp>
+    </div>
+  </body>
+</html>

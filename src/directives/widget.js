@@ -41,24 +41,25 @@ var dir = avalon.directive('widget', {
         } else if (!pre.props.resolved) {
             cur.steps = steps
             var list = cur.change || (cur.change = [])
-            if(avalon.Array.ensure(list, this.replaceByComponent)){
-                 steps.count += 1
-            }
-            cur.afterChange = [
-                function (dom, vnode) {
-                    cur.vmodel.$fire('onReady', {
-                        type: 'ready',
-                        target: dom,
-                        wid: wid,
-                        vmodel: vnode.vmodel
-                    })
-                    docker.renderCount = 2
-                }
-            ]
-            //处理模板不存在指令的情况
-            if (cur.children.length === 0) {
+            if (avalon.Array.ensure(list, this.replaceByComponent)) {
                 steps.count += 1
             }
+            
+            function fireReady(dom, vnode) {
+                cur.vmodel.$fire('onReady', {
+                    type: 'ready',
+                    target: dom,
+                    wid: wid,
+                    vmodel: vnode.vmodel
+                })
+                docker.renderCount = 2
+            }
+            list = cur.afterChange || (cur.afterChange = [])
+            if (avalon.Array.ensure(list, fireReady)) {
+                steps.count += 1
+            }
+
+
             //处理模板不存在指令的情况
         } else {
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)

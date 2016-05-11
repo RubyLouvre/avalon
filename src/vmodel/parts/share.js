@@ -164,7 +164,7 @@ function define(definition) {
         avalon.warn('vm.$id must be specified')
     }
     if (avalon.vmodels[$id]) {
-        throw Error('error:[', $id, '] had defined!')
+        throw Error('error:['+ $id+ '] had defined!')
     }
     var vm = $$midway.masterFactory(definition, {}, {
         pathname: '',
