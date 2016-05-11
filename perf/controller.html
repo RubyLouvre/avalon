@@ -1,69 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>scan widget</title>
-    <script src="../dist/avalon.js"></script>
-</head>
-<body>
-<div ms-controller="root">
+<html>
+    <head>
+        <title>ms-validate</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../dist/avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+                aaa: "",
+                bbb: '',
+                ccc: '',
+                validate: {
+                    onError: function (reasons) {
+                        reasons.forEach(function (reason) {
+                            console.log(reason.getMessage())
+                        })
+                    },
+                    onValidateAll: function (reasons) {
+                        if (reasons.length) {
+                            console.log('有表单没有通过')
+                        } else {
+                            console.log('全部通过')
+                        }
+                    }
+                }
+            })
 
-    <!-- 按钮放在这里 @title 有渲染失败 -->
-    <button ms-click="@onClick">Change Title</button>
+        </script>
+    </head>
 
-    <h3>{{@title}}</h3>
-
-    <ms-xx></ms-xx>
-
-    <h2>
-        {{@title}}
-    </h2>
-
-    <!-- 按钮放在这里 事件初始化失败  -->
-    <button ms-click="@onClick">Change Title</button>
-
-</div>
-<script type="text/tpls" id="ms-xx">
-<ms-xx>
-   <div class="sidebar-header header-cover">
-        <!-- Top bar -->
-        <div class="top-bar"></div>
-        <!-- Sidebar toggle button -->
-        <button type="button" class="sidebar-toggle">
-            <i class="zmdi zmdi-menu">{{@name}}</i>
-        </button>
-        <!-- Sidebar brand image -->
-        <div class="sidebar-image">
-            <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/53474/atom_profile_01.jpg">
-        </div>
-        <!-- Sidebar brand name -->
-        <a data-toggle="user-base-dropdown" class="sidebar-brand" href="javascript:;" ms-click="@toggleMenu">
-            <span>{{@name}}</span>
-            <b class="caret"></b>
-        </a>
-     </div>
-</ms-xx>
-</script>
-<script>
-    (function (doc) {
-        // ms-xx component
-        avalon.component('ms-xx', {
-            template: doc.getElementById('ms-xx').innerHTML,
-            defaults: {
-                name: 'test vm name'
-            }
-        });
-
-        // root vm
-        var vmRoot = avalon.define({
-            $id: 'root',
-            title: 'initialize title',
-            onClick: function() {
-                alert('yet clicked');
-                this.title = 'Changed Title';
-            }
-        });
-    })(document);
-</script>
-</body>
+    <body ms-controller="test">
+        <form ms-validate="@validate">
+            <p><input ms-duplex="@aaa" placeholder="username"
+                      ms-rules='{required:true,chs:true}' >{{@aaa}}</p>
+            <p><input type="password" id="pw" placeholder="password"
+                      ms-rules='{required:true}' 
+                      ms-duplex="@bbb" /></p>
+            <p><input type="password" 
+                   ms-rules='{required:true,equalto:"pw"}' placeholder="再填一次"
+                   ms-duplex="@ccc | change" /></p>
+            <p><input type="submit" value="submit"/></p>
+        </form>
+    </body>
 </html>

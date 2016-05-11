@@ -57,7 +57,7 @@ avalon.shadowCopy(avalon.validators, {
     equalto: {
         message: '密码输入不一致',
         get: function (value, field, next) {
-            var id = String(field.data.equalto).slice(1)//去掉#
+            var id = String(field.data.equalto)
             var other = avalon(document.getElementById(id)).val() || ""
             next(value === other)
             return value
