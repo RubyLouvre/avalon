@@ -228,7 +228,7 @@ function clipOuterHTML(matchText, type) {
 
 function modifyProps(node, innerHTML, nodes, curDeep, maxDeep) {
     var type = node.type
-    if (node.props['ms-skip']) {
+    if ('ms-skip' in node.props) {
         node.skipContent = true
     } else {
         switch (type) {

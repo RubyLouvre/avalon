@@ -1,4 +1,4 @@
-/*! built in 2016-5-11:22 version 2.01 by 司徒正美 */
+/*! built in 2016-5-12:1 version 2.01 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -4579,7 +4579,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function modifyProps(node, innerHTML, nodes, curDeep, maxDeep) {
 	    var type = node.type
-	    if (node.props['ms-skip']) {
+	    if ('ms-skip' in node.props) {
 	        node.skipContent = true
 	    } else {
 	        switch (type) {
@@ -7546,7 +7546,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 105 */
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
+	module.exports = "<ms-panel>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</ms-panel>"
 
 /***/ }
 /******/ ])
