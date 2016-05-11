@@ -1,43 +1,22 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>测试</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <script src="../dist/avalon.js"></script>
-    <script>
-      var tmpl = '<ms-thumbs>'+
-                   '<div>'+
-                     '<img ms-attr="{src:@thumbSrc}" />'+
-                     '<img ms-attr="{src:@thumbSrc}" />'+
-                    
-                   '</div>'+
-                 '</ms-thumbs>';
-      avalon.component('ms-thumbs', {
-        template: tmpl,
-        defaults: {
-          thumbSrc: './src/asset/images/enterprise-logo.png',
-          space: ''
-        }
-      })
- //'<span>{{@space}}</span>'+
-      var vm = avalon.define({
-        $id: 'widget',
-        config: {
-          thumbSrc: './src/asset/images/doctor-photo.png'
-        }
-      })
-      //vm更新后显示正常
-      setTimeout(function(){
-        vm.config.thumbSrc = './src/asset/images/enterprise-logo.png';
-      },2000)
+    <head>
+        <title>first example</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: "test",
+               arr: ["a","b"]
+            })
+        </script>
+    </head>
 
-    </script>
-  </head>
-
-  <body>
-    <div ms-controller='widget' >
-      <xmp ms-widget="[{is:'ms-thumbs'},@config]"></xmp>
-    </div>
-  </body>
+    <body ms-controller="test">
+       <!--ms-for:aaa in @arr-->
+       <p>{{aaa}}</p>
+       <hr>
+       <!--ms-for-end:-->
+    </body>
 </html>
