@@ -59,8 +59,6 @@ var dir = avalon.directive('widget', {
                 steps.count += 1
             }
 
-
-            //处理模板不存在指令的情况
         } else {
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
             cur.skipContent = !needUpdate

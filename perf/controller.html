@@ -1,46 +1,69 @@
-<!DOCTYPE HTML>
-<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
-        <script src="../dist/avalon.js" ></script>
-      
-    </head>
-    <body>
-        <script>
-            var vv = avalon.define({
-                $id: "duplex1",
-                data: [{checked: false}, {checked: false}, {checked: false}],
-                allchecked: false,
-                checkAll: function (e) {
-                    var checked = e.target.checked
-                    vv.data.forEach(function (el) {
-                        el.checked = checked
-                    })
-                },
-                checkOne: function (e) {
-                    var checked = e.target.checked
-                    if (checked === false) {
-                        vv.allchecked = false
-                    } else {//avalon已经为数组添加了ecma262v5的一些新方法
-                        vv.allchecked = vv.data.every(function (el) {
-                            return el.checked
-                        })
-                    }
-                }
-            })
-        </script>
-        <blockquote ms-controller="duplex1">
-            <table border="1">
-                <tr>
-                    <td><input type="checkbox" 
-                               ms-duplex-checked="@allchecked" 
-                               data-duplex-changed="@checkAll"/>全选</td>
-                </tr>
-                <tr ms-for="($index, el) in @data">
-                    <td><input type="checkbox" ms-duplex-checked="el.checked" data-duplex-changed="@checkOne" />{{$index}}::{{el.checked}}</td>
-                </tr>
-            </table>
-        </blockquote>
-    </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>scan widget</title>
+    <script src="../dist/avalon.js"></script>
+</head>
+<body>
+<div ms-controller="root">
+
+    <!-- 按钮放在这里 @title 有渲染失败 -->
+    <button ms-click="@onClick">Change Title</button>
+
+    <h3>{{@title}}</h3>
+
+    <ms-xx></ms-xx>
+
+    <h2>
+        {{@title}}
+    </h2>
+
+    <!-- 按钮放在这里 事件初始化失败  -->
+    <button ms-click="@onClick">Change Title</button>
+
+</div>
+<script type="text/tpls" id="ms-xx">
+<ms-xx>
+   <div class="sidebar-header header-cover">
+        <!-- Top bar -->
+        <div class="top-bar"></div>
+        <!-- Sidebar toggle button -->
+        <button type="button" class="sidebar-toggle">
+            <i class="zmdi zmdi-menu">{{@name}}</i>
+        </button>
+        <!-- Sidebar brand image -->
+        <div class="sidebar-image">
+            <img src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/53474/atom_profile_01.jpg">
+        </div>
+        <!-- Sidebar brand name -->
+        <a data-toggle="user-base-dropdown" class="sidebar-brand" href="javascript:;" ms-click="@toggleMenu">
+            <span>{{@name}}</span>
+            <b class="caret"></b>
+        </a>
+     </div>
+</ms-xx>
+</script>
+<script>
+    (function (doc) {
+        // ms-xx component
+        avalon.component('ms-xx', {
+            template: doc.getElementById('ms-xx').innerHTML,
+            defaults: {
+                name: 'test vm name'
+            }
+        });
+
+        // root vm
+        var vmRoot = avalon.define({
+            $id: 'root',
+            title: 'initialize title',
+            onClick: function() {
+                alert('yet clicked');
+                this.title = 'Changed Title';
+            }
+        });
+    })(document);
+</script>
+</body>
 </html>
