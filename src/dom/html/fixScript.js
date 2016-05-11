@@ -4,7 +4,8 @@ var scriptTypes = avalon.oneObject(['', 'text/javascript', 'text/ecmascript',
     'application/ecmascript', 'application/javascript'])
 
 function fixScript(wrapper) {
-    var els = wrapper.getElementsByTagName('script')
+    var els = typeof  wrapper.querySelectorAll !== 'undefined'?
+       wrapper.querySelectorAll('script'): wrapper.getElementsByTagName('script')
     if (els.length) {
         for (var i = 0, el; el = els[i++]; ) {
             if (scriptTypes[el.type]) {
