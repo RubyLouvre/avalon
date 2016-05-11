@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.5.6 built in 2016.4.27
+ avalon.shim.js 1.5.6 built in 2016.5.11
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -217,112 +217,110 @@ if (!noop.bind) {
         }
     }
 }
-;(function () {
-    var ap = Array.prototype
-    var __slice = ap.slice
-    try {
-        // Can't be used with DOM elements in IE < 9
-        __slice.call(document.documentElement)
-    } catch (e) { // Fails in IE < 9
-        // This will work for genuine arrays, array-like objects,
-        // NamedNodeMap (attributes, entities, notations),
-        // NodeList (e.g., getElementsByTagName), HTMLCollection (e.g., childNodes),
-        // and will not fail on other DOM objects (as do DOM elements in IE < 9)
-        ap.slice = function (begin, end) {
-            // IE < 9 gets unhappy with an undefined end argument
-            end = (typeof end !== 'undefined') ? end : this.length
 
-            // For native Array objects, we use the native slice function
-            if (Array.isArray(this)) {
-                return __slice.call(this, begin, end)
-            }
+var __slice = ap.slice
+try {
+    // Can't be used with DOM elements in IE < 9
+    __slice.call(document.documentElement)
+} catch (e) { // Fails in IE < 9
+    // This will work for genuine arrays, array-like objects,
+    // NamedNodeMap (attributes, entities, notations),
+    // NodeList (e.g., getElementsByTagName), HTMLCollection (e.g., childNodes),
+    // and will not fail on other DOM objects (as do DOM elements in IE < 9)
+    aslice = ap.slice = function (begin, end) {
+        // IE < 9 gets unhappy with an undefined end argument
+        end = (typeof end !== 'undefined') ? end : this.length
 
-            // For array like object we handle it ourselves.
-            var i, cloned = [],
-                    size, len = this.length
+        // For native Array objects, we use the native slice function
+        if (Array.isArray(this)) {
+            return __slice.call(this, begin, end)
+        }
 
-            // Handle negative value for "begin"
-            var start = begin || 0
-            start = (start >= 0) ? start : len + start
+        // For array like object we handle it ourselves.
+        var i, cloned = [],
+                size, len = this.length
 
-            // Handle negative value for "end"
-            var upTo = (end) ? end : len
-            if (end < 0) {
-                upTo = len + end
-            }
+        // Handle negative value for "begin"
+        var start = begin || 0
+        start = (start >= 0) ? start : len + start
 
-            // Actual expected size of the slice
-            size = upTo - start
+        // Handle negative value for "end"
+        var upTo = (end) ? end : len
+        if (end < 0) {
+            upTo = len + end
+        }
 
-            if (size > 0) {
-                cloned = new Array(size)
-                if (this.charAt) {
-                    for (i = 0; i < size; i++) {
-                        cloned[i] = this.charAt(start + i)
-                    }
-                } else {
-                    for (i = 0; i < size; i++) {
-                        cloned[i] = this[start + i]
-                    }
+        // Actual expected size of the slice
+        size = upTo - start
+
+        if (size > 0) {
+            cloned = new Array(size)
+            if (this.charAt) {
+                for (i = 0; i < size; i++) {
+                    cloned[i] = this.charAt(start + i)
+                }
+            } else {
+                for (i = 0; i < size; i++) {
+                    cloned[i] = this[start + i]
                 }
             }
-
-            return cloned
-        }
-    }
-
-    function iterator(vars, body, ret) {
-        var fun = 'for(var ' + vars + 'i=0,n = this.length; i < n; i++){' +
-                body.replace('_', '((i in this) && fn.call(scope,this[i],i,this))') +
-                '}' + ret
-        /* jshint ignore:start */
-        return Function('fn,scope', fun)
-        /* jshint ignore:end */
-    }
-
-
-    if (!/\[native code\]/.test(ap.map)) {
-        var shim = {
-            //定位操作，返回数组中第一个等于给定参数的元素的索引值。
-            indexOf: function (item, index) {
-                var n = this.length,
-                        i = ~~index
-                if (i < 0)
-                    i += n
-                for (; i < n; i++)
-                    if (this[i] === item)
-                        return i
-                return -1
-            },
-            //定位操作，同上，不过是从后遍历。
-            lastIndexOf: function (item, index) {
-                var n = this.length,
-                        i = index == null ? n - 1 : index
-                if (i < 0)
-                    i = Math.max(0, n + i)
-                for (; i >= 0; i--)
-                    if (this[i] === item)
-                        return i
-                return -1
-            },
-            //迭代操作，将数组的元素挨个儿传入一个函数中执行。Prototype.js的对应名字为each。
-            forEach: iterator('', '_', ''),
-            //迭代类 在数组中的每个项上运行一个函数，如果此函数的值为真，则此元素作为新数组的元素收集起来，并返回新数组
-            filter: iterator('r=[],j=0,', 'if(_)r[j++]=this[i]', 'return r'),
-            //收集操作，将数组的元素挨个儿传入一个函数中执行，然后把它们的返回值组成一个新数组返回。Prototype.js的对应名字为collect。
-            map: iterator('r=[],', 'r[i]=_', 'return r'),
-            //只要数组中有一个元素满足条件（放进给定函数返回true），那么它就返回true。Prototype.js的对应名字为any。
-            some: iterator('', 'if(_)return true', 'return false'),
-            //只有数组中的元素都满足条件（放进给定函数返回true），它才返回true。Prototype.js的对应名字为all。
-            every: iterator('', 'if(!_)return false', 'return true')
         }
 
-        for (var i in shim) {
-            ap[i] = shim[i]
-        }
+        return cloned
+    }
+}
+
+function iterator(vars, body, ret) {
+    var fun = 'for(var ' + vars + 'i=0,n = this.length; i < n; i++){' +
+            body.replace('_', '((i in this) && fn.call(scope,this[i],i,this))') +
+            '}' + ret
+    /* jshint ignore:start */
+    return Function('fn,scope', fun)
+    /* jshint ignore:end */
+}
+
+
+if (!/\[native code\]/.test(ap.map)) {
+    var shim = {
+        //定位操作，返回数组中第一个等于给定参数的元素的索引值。
+        indexOf: function (item, index) {
+            var n = this.length,
+                    i = ~~index
+            if (i < 0)
+                i += n
+            for (; i < n; i++)
+                if (this[i] === item)
+                    return i
+            return -1
+        },
+        //定位操作，同上，不过是从后遍历。
+        lastIndexOf: function (item, index) {
+            var n = this.length,
+                    i = index == null ? n - 1 : index
+            if (i < 0)
+                i = Math.max(0, n + i)
+            for (; i >= 0; i--)
+                if (this[i] === item)
+                    return i
+            return -1
+        },
+        //迭代操作，将数组的元素挨个儿传入一个函数中执行。Prototype.js的对应名字为each。
+        forEach: iterator('', '_', ''),
+        //迭代类 在数组中的每个项上运行一个函数，如果此函数的值为真，则此元素作为新数组的元素收集起来，并返回新数组
+        filter: iterator('r=[],j=0,', 'if(_)r[j++]=this[i]', 'return r'),
+        //收集操作，将数组的元素挨个儿传入一个函数中执行，然后把它们的返回值组成一个新数组返回。Prototype.js的对应名字为collect。
+        map: iterator('r=[],', 'r[i]=_', 'return r'),
+        //只要数组中有一个元素满足条件（放进给定函数返回true），那么它就返回true。Prototype.js的对应名字为any。
+        some: iterator('', 'if(_)return true', 'return false'),
+        //只有数组中的元素都满足条件（放进给定函数返回true），它才返回true。Prototype.js的对应名字为all。
+        every: iterator('', 'if(!_)return false', 'return true')
     }
 
-})();
+    for (var i in shim) {
+        ap[i] = shim[i]
+    }
+}
+
 
 /*********************************************************************
  *                 avalon的静态方法定义区                              *
