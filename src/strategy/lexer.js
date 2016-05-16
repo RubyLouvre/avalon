@@ -353,9 +353,6 @@ function handleProps(str, props) {
                         replace(ramp, '&').
                         replace(rquote, '"')
             }
-            if(value.indexOf("??") !== -1){
-                value = value.replace(rfill, fill)
-            }
         }
         props[name] = value
     })

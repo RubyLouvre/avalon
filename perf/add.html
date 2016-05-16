@@ -1,21 +1,51 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>first example</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../dist/avalon.js"></script>
-        <script>
-            var vm = avalon.define({
-                $id: "test",
-                name: "司徒正美"
-            })
-        </script>
-    </head>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>SPA</title>
+    <script src="../dist/avalon.js"></script>
+    <script>
+        avalon.component('ms-pager',{
+            template:'<div><input type="text" ms-duplex-number="@num"/><button ms-on-click="@onPlus">+++</button></div>',
+            defaults:{
+                num:1,
+                onPlus:function(){
+                    this.num++;
+                }
+            }
+        });
+        var tpl ='<div><h4>{{@title}}</h4><h5>{{@random}}</h5><button ms-on-click="@onChangeTitle">点击改变title</button><button ms-on-click="@onRandom">获取随机数</button></div>';
+        avalon.component('ms-header',{
+            template:tpl,
+            defaults:{
+                title:"这是标题",
+                random:0,
+                onChangeTitle:function(){
+                    this.title = '改变了title'+(new Date-0);
+                },
+                onRandom:function(){
+                    this.random = Math.floor(Math.random()*100)
+                }
+            }
+        });
 
-    <body ms-controller="test">
-        <blockquote ms-skip>
-        <div ms-css="name">xxx</div>
-        </blockquote>
-    </body>
+        var vm = avalon.define({
+            $id:'test',
+            tpl:''
+        })
+        window.addEventListener('hashchange',function(e){
+            var hash = e.newURL.split('#/')[1];
+            vm.tpl = '<'+hash+' ms-widget=\"{$id:"'+hash+'",cached: true}\"></'+hash+'>'
+        })
+    </script>
+</head>
+<body ms-controller="test">
+    <ul>
+        <li><a href="#/ms-header">ms-header</a></li>
+        <li><a href="#/ms-pager">ms-pager</a></li>
+    </ul>
+    <div style="background-color:#f0f0f0;" ms-html="@tpl">
+
+    </div>
+</body>
 </html>

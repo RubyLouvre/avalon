@@ -1,4 +1,4 @@
-/*! built in 2016-5-12:1 version 2.01 by 司徒正美 */
+/*! built in 2016-5-17:0 version 2.01 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -4908,15 +4908,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var node = name //node为页面上节点对应的虚拟DOM
 	        var topVm = definition
 	        var wid = node.props.wid
-	        //如果组件模板已经定
-	        var placeholder = {
-	            nodeType: 8,
-	            type: '#comment',
-	            directive: 'widget',
-	            props: {'ms-widget': wid},
-	            nodeValue: 'ms-widget placeholder'
-	        }
-
 	        //处理ms-widget的参数
 	        var optionMixin = {}
 	        function mixinHooks(option, index) {
@@ -4938,8 +4929,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var options = node.props['ms-widget'] || {}
 	        options = Array.isArray(options) ? options : [options]
 	        options.forEach(mixinHooks)
-
-	        var tagName = node.type.indexOf('-') > 0 ? node.type : optionMixin.is
+	        if(optionMixin.cached){
+	            var cachedVm = avalon.vmodels[optionMixin.$id]
+	            if(cachedVm){
+	                for(var i in resolvedComponents){
+	                    var re = resolvedComponents[i]
+	                    if(re.vmodel === cachedVm){
+	                        if(i !== wid){
+	                            delete resolvedComponents[wid]
+	                        }
+	                        wid = i
+	                        break
+	                    }
+	                }
+	            }
+	        }
+	      
 	        var docker = resolvedComponents[wid]
 	        if (!docker) {
 	            resolvedComponents[wid] = node
@@ -4948,7 +4953,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //如果此组件的实例已经存在,那么重新渲染
 	        if (docker.render) {
 	            return docker
-	        } else if (!avalon.components[tagName]) {
+	        } 
+	        var tagName = node.type.indexOf('-') > 0 ? node.type : optionMixin.is
+	        var placeholder = {
+	            nodeType: 8,
+	            type: '#comment',
+	            directive: 'widget',
+	            props: {'ms-widget': wid},
+	            nodeValue: 'ms-widget placeholder'
+	        }
+	        if (!avalon.components[tagName]) {
 	            //如果组件还没有定义,那么返回一个注释节点占位
 	            return placeholder
 	        } else {
@@ -4972,7 +4986,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (vtree.length > 1) {
 	                avalon.error('组件必须用一个元素包起来')
 	            }
-
 	            var widgetNode = vtree[0]
 	            widgetNode.props.resolved = true
 	            if (widgetNode.type !== tagName) {
