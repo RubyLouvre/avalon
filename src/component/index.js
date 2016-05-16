@@ -47,16 +47,9 @@ avalon.component = function (name, definition) {
         if(optionMixin.cached){
             var cachedVm = avalon.vmodels[optionMixin.$id]
             if(cachedVm){
-                for(var i in resolvedComponents){
-                    var re = resolvedComponents[i]
-                    if(re.vmodel === cachedVm){
-                        if(i !== wid){
-                            delete resolvedComponents[wid]
-                        }
-                        wid = i
-                        break
-                    }
-                }
+                var _wid =  cachedVm.$events.__wid__ 
+                delete resolvedComponents[wid]
+                wid = _wid    
             }
         }
       
@@ -102,7 +95,6 @@ avalon.component = function (name, definition) {
                 avalon.error('组件必须用一个元素包起来')
             }
             var widgetNode = vtree[0]
-            widgetNode.props.resolved = true
             if (widgetNode.type !== tagName) {
                 avalon.warn('模板容器标签最好为' + tagName)
             }
@@ -152,6 +144,7 @@ avalon.component = function (name, definition) {
             var num = num || String(new Date - 0).slice(0, 6)
             var render = parseView(vtree, num) + '\nreturn (avalon.__widget = vnodes' + num + ');\n'
             vmodel.$render = topVm.$render
+            vmodel.$events.__wid__ = wid
             //触发onInit回调
             vmodel.$fire('onInit', {
                 type: 'init',
@@ -164,6 +157,7 @@ avalon.component = function (name, definition) {
                 diff: diff,
                 render: render,
                 vmodel: vmodel,
+                cached: !!optionMixin.cached,
                 placeholder: placeholder
             })
             return docker

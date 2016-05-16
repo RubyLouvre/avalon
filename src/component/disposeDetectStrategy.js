@@ -113,17 +113,20 @@ function fireDisposeHook(el) {
     if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
         var wid = el.getAttribute('wid')
         var docker = avalon.resolvedComponents[ wid ]
-        if (docker && docker.vmodel) {
+        if (docker && docker.vmodel && docker.cached !== true) {
             var vm = docker.vmodel
             docker.vmodel.$fire("onDispose", {
                 type: 'dispose',
                 target: el,
                 vmodel: vm
             })
+          
             vm.$element = null
             vm.$hashcode = false
+
             delete docker.vmodel
             delete avalon.resolvedComponents[ wid ]
+          
             return false
         }
     }
