@@ -23,15 +23,6 @@ avalon.component = function (name, definition) {
         var node = name //node为页面上节点对应的虚拟DOM
         var topVm = definition
         var wid = node.props.wid
-        //如果组件模板已经定
-        var placeholder = {
-            nodeType: 8,
-            type: '#comment',
-            directive: 'widget',
-            props: {'ms-widget': wid},
-            nodeValue: 'ms-widget placeholder'
-        }
-
         //处理ms-widget的参数
         var optionMixin = {}
         function mixinHooks(option, index) {
@@ -53,8 +44,15 @@ avalon.component = function (name, definition) {
         var options = node.props['ms-widget'] || {}
         options = Array.isArray(options) ? options : [options]
         options.forEach(mixinHooks)
-
-        var tagName = node.type.indexOf('-') > 0 ? node.type : optionMixin.is
+        if(optionMixin.cached){
+            var cachedVm = avalon.vmodels[optionMixin.$id]
+            if(cachedVm){
+                var _wid =  cachedVm.$events.__wid__ 
+                delete resolvedComponents[wid]
+                wid = _wid    
+            }
+        }
+      
         var docker = resolvedComponents[wid]
         if (!docker) {
             resolvedComponents[wid] = node
@@ -63,7 +61,16 @@ avalon.component = function (name, definition) {
         //如果此组件的实例已经存在,那么重新渲染
         if (docker.render) {
             return docker
-        } else if (!avalon.components[tagName]) {
+        } 
+        var tagName = node.type.indexOf('-') > 0 ? node.type : optionMixin.is
+        var placeholder = {
+            nodeType: 8,
+            type: '#comment',
+            directive: 'widget',
+            props: {'ms-widget': wid},
+            nodeValue: 'ms-widget placeholder'
+        }
+        if (!avalon.components[tagName]) {
             //如果组件还没有定义,那么返回一个注释节点占位
             return placeholder
         } else {
@@ -87,9 +94,7 @@ avalon.component = function (name, definition) {
             if (vtree.length > 1) {
                 avalon.error('组件必须用一个元素包起来')
             }
-
             var widgetNode = vtree[0]
-            widgetNode.props.resolved = true
             if (widgetNode.type !== tagName) {
                 avalon.warn('模板容器标签最好为' + tagName)
             }
@@ -139,6 +144,7 @@ avalon.component = function (name, definition) {
             var num = num || String(new Date - 0).slice(0, 6)
             var render = parseView(vtree, num) + '\nreturn (avalon.__widget = vnodes' + num + ');\n'
             vmodel.$render = topVm.$render
+            vmodel.$events.__wid__ = wid
             //触发onInit回调
             vmodel.$fire('onInit', {
                 type: 'init',
@@ -151,6 +157,7 @@ avalon.component = function (name, definition) {
                 diff: diff,
                 render: render,
                 vmodel: vmodel,
+                cached: !!optionMixin.cached,
                 placeholder: placeholder
             })
             return docker

@@ -1,36 +1,51 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>first example</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../dist/avalon.js"></script>
-        <script>
-            var vm = avalon.define({
-                $id: "test",
-                name: "司徒正美"
-            })
-        </script>
-    </head>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>SPA</title>
+    <script src="../dist/avalon.js"></script>
+    <script>
+        avalon.component('ms-pager',{
+            template:'<div><input type="text" ms-duplex-number="@num"/><button ms-on-click="@onPlus">+++</button></div>',
+            defaults:{
+                num:1,
+                onPlus:function(){
+                    this.num++;
+                }
+            }
+        });
+        var tpl ='<div><h4>{{@title}}</h4><h5>{{@random}}</h5><button ms-on-click="@onChangeTitle">点击改变title</button><button ms-on-click="@onRandom">获取随机数</button></div>';
+        avalon.component('ms-header',{
+            template:tpl,
+            defaults:{
+                title:"这是标题",
+                random:0,
+                onChangeTitle:function(){
+                    this.title = '改变了title'+(new Date-0);
+                },
+                onRandom:function(){
+                    this.random = Math.floor(Math.random()*100)
+                }
+            }
+        });
 
-    <body ms-controller="test">
-        <input ms-duplex="@name">
-        <p>Hello,{{@name}}!</p>
-        <svg width="200" height="250" id="aa">
-  <rect x="10" y="10" width="30" height="30" stroke="black" fill="transparent" stroke-width="5"/>
-  <rect x="60" y="10" rx="10" ry="10" width="30" height="30" stroke="black" fill="transparent" stroke-width="5"/>
+        var vm = avalon.define({
+            $id:'test',
+            tpl:''
+        })
+        window.addEventListener('hashchange',function(e){
+            var hash = e.newURL.split('#/')[1];
+            vm.tpl = '<'+hash+' ms-widget=\"{$id:"'+hash+'",cached: true}\"></'+hash+'>'
+        })
+    </script>
+</head>
+<body ms-controller="test">
+    <ul>
+        <li><a href="#/ms-header">ms-header</a></li>
+        <li><a href="#/ms-pager">ms-pager</a></li>
+    </ul>
+    <div style="background-color:#f0f0f0;" ms-html="@tpl">
 
-  <circle cx="25" cy="75" r="20" stroke="red" fill="transparent" stroke-width="5"/>
-  <ellipse cx="75" cy="75" rx="20" ry="5" stroke="red" fill="transparent" stroke-width="5"/>
-
-  <line x1="10" x2="50" y1="110" y2="150" stroke="orange" fill="transparent" stroke-width="5"/>
-  <polyline points="60 110 65 120 70 115 75 130 80 125 85 140 90 135 95 150 100 145"
-      stroke="orange" fill="transparent" stroke-width="5"/>
-
-  <polygon points="50 160 55 180 70 180 60 190 65 205 50 195 35 205 40 190 30 180 45 180"
-      stroke="green" fill="transparent" stroke-width="5"/>
-
-  <path d="M20,230 Q40,205 50,230 T90,230" fill="none" stroke="blue" stroke-width="5"/>
-</svg>
-    </body>
+    </div>
+</body>
 </html>
