@@ -1,4 +1,4 @@
-/*! built in 2016-5-17:10 version 2.01 by 司徒正美 */
+/*! built in 2016-5-17:13 version 2.01 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -333,7 +333,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	})
 
-	var uuid = 1
+	var UUID = 1
 	module.exports = {
 	    //生成事件回调的UUID(用户通过ms-on指令)
 	    avalon: avalon,
@@ -342,7 +342,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    //生成事件回调的UUID(用户通过avalon.bind)
 	    getShortID: function (fn) {
-	        return fn.uuid || (fn.uuid = '_' + (++uuid))
+	        return fn.uuid || (fn.uuid = '_' + (++UUID))
 	    }
 	}
 
@@ -3347,8 +3347,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var patch = __webpack_require__(64)
-	var Cache = __webpack_require__(26)
-
 	var rforPrefix = /ms-for\:\s*/
 	var rforLeft = /^\s*\(\s*/
 	var rforRight = /\s*\)\s*$/
@@ -3356,8 +3354,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rforAs = /\s+as\s+([$\w]+)/
 	var rident = __webpack_require__(40).ident
 	var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
-	var forCache = new Cache(128)
-
 	avalon._each = function (obj, fn) {
 	    if (Array.isArray(obj)) {
 	        for (var i = 0; i < obj.length; i++) {
@@ -3516,11 +3512,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 
-	        var uuid = vnode.template
-	        var domTemplate = forCache.get(uuid)
-	        if (!domTemplate) {
-	            domTemplate = forCache.put(uuid, avalon.parseHTML(uuid))
-	        }
+	        var domTemplate = avalon.parseHTML(vnode.template)
+	      
 	        var key = vnode.signature
 	        for (var i in vnode.removedComponents) {
 	            var el = vnode.removedComponents[i]
@@ -3763,7 +3756,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!docker || !docker.renderCount) {
 	            steps.count += 1
 	            cur.change = [this.replaceByComment]
-	        } else if (!pre.props.resolved && docker.renderCount < 2) {
+	        } else if (docker.renderCount && docker.renderCount < 2) {//!pre.props.resolved
 	            cur.steps = steps
 	            var list = cur.change || (cur.change = [])
 	            if (avalon.Array.ensure(list, this.replaceByComponent)) {

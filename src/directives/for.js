@@ -1,6 +1,4 @@
 var patch = require('../strategy/patch')
-var Cache = require('../seed/cache')
-
 var rforPrefix = /ms-for\:\s*/
 var rforLeft = /^\s*\(\s*/
 var rforRight = /\s*\)\s*$/
@@ -8,8 +6,6 @@ var rforSplit = /\s*,\s*/
 var rforAs = /\s+as\s+([$\w]+)/
 var rident = require('../seed/regexp').ident
 var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
-var forCache = new Cache(128)
-
 avalon._each = function (obj, fn) {
     if (Array.isArray(obj)) {
         for (var i = 0; i < obj.length; i++) {
@@ -168,11 +164,8 @@ avalon.directive('for', {
             }
         }
 
-        var uuid = vnode.template
-        var domTemplate = forCache.get(uuid)
-        if (!domTemplate) {
-            domTemplate = forCache.put(uuid, avalon.parseHTML(uuid))
-        }
+        var domTemplate = avalon.parseHTML(vnode.template)
+      
         var key = vnode.signature
         for (var i in vnode.removedComponents) {
             var el = vnode.removedComponents[i]

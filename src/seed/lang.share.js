@@ -138,7 +138,7 @@ avalon.shadowCopy(avalon, {
     }
 })
 
-var uuid = 1
+var UUID = 1
 module.exports = {
     //生成事件回调的UUID(用户通过ms-on指令)
     avalon: avalon,
@@ -147,6 +147,6 @@ module.exports = {
     },
     //生成事件回调的UUID(用户通过avalon.bind)
     getShortID: function (fn) {
-        return fn.uuid || (fn.uuid = '_' + (++uuid))
+        return fn.uuid || (fn.uuid = '_' + (++UUID))
     }
 }

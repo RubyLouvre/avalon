@@ -71,7 +71,6 @@ describe('controller', function () {
             expect(!!cdiv).to.equal(false)
 
             done()
-            debugger
         })
     })
 
@@ -88,8 +87,13 @@ describe('controller', function () {
             expect(h2.innerHTML).to.equal(first.page)
             expect(h3.innerHTML).to.equal(second.page)
             expect(!!cdiv).to.equal(false)
-
-            done()
+            setTimeout(function(){
+                div.innerHTML = ""
+                delete avalon.vmodels.first
+                delete avalon.vmodels.second
+                done()
+            })
+           
         })
     })
 })

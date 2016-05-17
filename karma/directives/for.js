@@ -274,15 +274,15 @@ describe('for', function () {
                var inputs = div.getElementsByTagName('input')
 
                var prop = 'innerText' in div ? 'innerText' : 'textContent'
-               expect(ths[0][prop]).to.equal('0::false')
-               expect(ths[1][prop]).to.equal('1::false')
-               expect(ths[2][prop]).to.equal('2::false')
-               fireClick(inputs[0])
+                expect(ths[0][prop]).to.equal('0::false')
+                expect(ths[1][prop]).to.equal('1::false')
+                expect(ths[2][prop]).to.equal('2::false')
+                fireClick(inputs[0])
                setTimeout(function(){
-               expect(ths[0][prop]).to.equal('0::true')
-               expect(ths[1][prop]).to.equal('1::true')
-               expect(ths[2][prop]).to.equal('2::true')
-               done()
+                    expect(ths[0][prop]).to.equal('0::true')
+                    expect(ths[1][prop]).to.equal('1::true')
+                    expect(ths[2][prop]).to.equal('2::true')
+                    done()
                })
             })
      })
@@ -290,21 +290,24 @@ describe('for', function () {
          div.innerHTML = heredoc(function () {
             /*
            <div ms-controller="for6" >
-            <!--ms-for:el in @arr -->
+            <!--ms-for:el in @forlist -->
             <p>{{el}}</p>
             <!--ms-for-end:-->
            </div>
              */
             })
-            vm = avalon.define({
+           
+            var vm2 = avalon.define({
                 $id: "for6",
-                arr:[1,2,3]
+                forlist:[1,2,3]
             })
-            avalon.scan(div, vm)
+            avalon.scan(div, vm2)
             setTimeout(function(){
                 var ps = div.getElementsByTagName('p')
                 expect(ps.length).to.equal(3)
+            
                 done()
-            })
+                delete avalon.vmodels.for6
+            },300)
      })
 })

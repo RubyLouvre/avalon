@@ -38,7 +38,7 @@ var dir = avalon.directive('widget', {
         if (!docker || !docker.renderCount) {
             steps.count += 1
             cur.change = [this.replaceByComment]
-        } else if (!pre.props.resolved && docker.renderCount < 2) {
+        } else if (docker.renderCount && docker.renderCount < 2) {//!pre.props.resolved
             cur.steps = steps
             var list = cur.change || (cur.change = [])
             if (avalon.Array.ensure(list, this.replaceByComponent)) {

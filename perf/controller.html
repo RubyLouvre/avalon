@@ -6,41 +6,19 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
         <script src="../dist/avalon.js"></script>
         <script>
-            var vm = avalon.define({
-                $id: "test",
-                aaa: "",
-                bbb: '',
-                ccc: '',
-                validate: {
-                    onError: function (reasons) {
-                        reasons.forEach(function (reason) {
-                            console.log(reason.getMessage())
-                        })
-                    },
-                    onValidateAll: function (reasons) {
-                        if (reasons.length) {
-                            console.log('有表单没有通过')
-                        } else {
-                            console.log('全部通过')
-                        }
-                    }
-                }
+       vm = avalon.define({
+                $id: "for6",
+                arr:[1,2,3]
             })
 
         </script>
     </head>
 
-    <body ms-controller="test">
-        <form ms-validate="@validate">
-            <p><input ms-duplex="@aaa" placeholder="username"
-                      ms-rules='{required:true,chs:true}' >{{@aaa}}</p>
-            <p><input type="password" id="pw" placeholder="password"
-                      ms-rules='{required:true}' 
-                      ms-duplex="@bbb" /></p>
-            <p><input type="password" 
-                   ms-rules='{required:true,equalto:"pw"}' placeholder="再填一次"
-                   ms-duplex="@ccc | change" /></p>
-            <p><input type="submit" value="submit"/></p>
-        </form>
+    <body >
+         <div ms-controller="for6" >
+            <!--ms-for:el in @arr -->
+            <p>{{el}}</p>
+            <!--ms-for-end:-->
+           </div>
     </body>
 </html>
