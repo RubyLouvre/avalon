@@ -1,4 +1,4 @@
-/*! built in 2016-5-17:0 version 2.01 by 司徒正美 */
+/*! built in 2016-5-17:10 version 2.01 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -6107,13 +6107,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!docker || !docker.renderCount) {
 	            steps.count += 1
 	            cur.change = [this.replaceByComment]
-	        } else if (!pre.props.resolved) {
+	        } else if (!pre.props.resolved && docker.renderCount < 2) {
 	            cur.steps = steps
 	            var list = cur.change || (cur.change = [])
 	            if (avalon.Array.ensure(list, this.replaceByComponent)) {
 	                steps.count += 1
 	            }
-	            
 	            function fireReady(dom, vnode) {
 	                cur.vmodel.$fire('onReady', {
 	                    type: 'ready',
@@ -6229,7 +6228,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (byRewritePrototype.execute) {
 	        return
 	    }
-	    
+
 	    byRewritePrototype.execute = true
 	    var p = Node.prototype
 	    var _removeChild = p.removeChild
@@ -6314,8 +6313,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
 	        var wid = el.getAttribute('wid')
 	        var docker = avalon.resolvedComponents[ wid ]
-	        if (docker && docker.vmodel) {
-	            var vm = docker.vmodel
+	        var vm = docker.vmodel
+	        docker.vmodel.$fire("onDetach", {
+	            type: 'detach',
+	            target: el,
+	            vmodel: vm
+	        })
+	        if (docker && docker.vmodel && docker.cached !== true) {
 	            docker.vmodel.$fire("onDispose", {
 	                type: 'dispose',
 	                target: el,
@@ -6325,12 +6329,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            vm.$hashcode = false
 	            delete docker.vmodel
 	            delete avalon.resolvedComponents[ wid ]
-	            return false
 	        }
+	        return false
 	    }
 	}
 
-	function fireDisposedComponents (nodes) {
+	function fireDisposedComponents(nodes) {
 	    for (var i = 0, el; el = nodes[i++]; ) {
 	        fireDisposeHook(el)
 	    }
@@ -6432,8 +6436,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.effects = {}
 	//这里定义CSS动画
+
+
 	avalon.effect = function (name, definition) {
-	    avalon.effects[name] = definition
+	    avalon.effects[name] = definition || {}
 	    if (support.css) {
 	        if (!definition.enterClass) {
 	            definition.enterClass = name + '-enter'
@@ -6558,7 +6564,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.applyEffect = function(node, vnode, opts){
 	    var cb = opts.cb
 	    var hook = opts.hook
-	    var curEffect = vnode.nodeType === 1 && vnode.props['ms-effect']
+	    var curEffect = vnode.props && vnode.props['ms-effect']
 	    if(curEffect && !avalon.document.hidden ){
 	        var old = curEffect[hook]
 	        if(cb){
@@ -7235,15 +7241,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	var VText = __webpack_require__(16)
-	var outerTags = avalon.oneObject('wbr,xmp,template')
 	var parseView = __webpack_require__(37)
 	var resolvedComponents = avalon.resolvedComponents
+	var componentContainers = {wbr:1, xmp:1, template: 1}
+	var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose,onDetach')
 	var skipWidget = {'ms-widget': 1, widget: 1, resolved: 1}
-	var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose')
-	var moreSkip = avalon.mix({
+
+	var needDel = avalon.mix({
 	    is: 1,
 	    diff: 1,
-	    define: 1
+	    define: 1,
+	    cached: 1
 	}, componentEvents)
 	avalon.document.createElement('slot')
 
@@ -7282,16 +7290,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if(optionMixin.cached){
 	            var cachedVm = avalon.vmodels[optionMixin.$id]
 	            if(cachedVm){
-	                for(var i in resolvedComponents){
-	                    var re = resolvedComponents[i]
-	                    if(re.vmodel === cachedVm){
-	                        if(i !== wid){
-	                            delete resolvedComponents[wid]
-	                        }
-	                        wid = i
-	                        break
-	                    }
-	                }
+	                var _wid =  cachedVm.$events.__wid__ 
+	                delete resolvedComponents[wid]
+	                wid = _wid    
 	            }
 	        }
 	      
@@ -7318,7 +7319,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else {
 	            var type = node.type
 	            //判定用户传入的标签名是否符合规格
-	            if (!outerTags[type] && !isCustomTag(type)) {
+	            if (!componentContainers[type] && !isCustomTag(type)) {
 	                avalon.warn(type + '不合适做组件的标签')
 	            }
 	            //将用户声明组件用的自定义标签(或xmp.template)的template转换成虚拟DOM
@@ -7337,7 +7338,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                avalon.error('组件必须用一个元素包起来')
 	            }
 	            var widgetNode = vtree[0]
-	            widgetNode.props.resolved = true
 	            if (widgetNode.type !== tagName) {
 	                avalon.warn('模板容器标签最好为' + tagName)
 	            }
@@ -7367,7 +7367,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            mixinHooks(defaults, false)
 	            var defineArgs = [topVm, defaults].concat(options)
 	            var vmodel = define.apply(function (a, b) {
-	                for (var k in moreSkip) {
+	                for (var k in needDel) {
 	                    delete a[k]
 	                    delete b[k]
 	                }
@@ -7387,6 +7387,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var num = num || String(new Date - 0).slice(0, 6)
 	            var render = parseView(vtree, num) + '\nreturn (avalon.__widget = vnodes' + num + ');\n'
 	            vmodel.$render = topVm.$render
+	            vmodel.$events.__wid__ = wid
 	            //触发onInit回调
 	            vmodel.$fire('onInit', {
 	                type: 'init',
@@ -7399,6 +7400,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                diff: diff,
 	                render: render,
 	                vmodel: vmodel,
+	                cached: !!optionMixin.cached,
 	                placeholder: placeholder
 	            })
 	            return docker

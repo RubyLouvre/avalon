@@ -1,14 +1,16 @@
 
 var VText = require('../vdom/VText')
-var outerTags = avalon.oneObject('wbr,xmp,template')
 var parseView = require('../strategy/parser/parseView')
 var resolvedComponents = avalon.resolvedComponents
+var componentContainers = {wbr:1, xmp:1, template: 1}
+var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose,onDetach')
 var skipWidget = {'ms-widget': 1, widget: 1, resolved: 1}
-var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose')
-var moreSkip = avalon.mix({
+
+var needDel = avalon.mix({
     is: 1,
     diff: 1,
-    define: 1
+    define: 1,
+    cached: 1
 }, componentEvents)
 avalon.document.createElement('slot')
 
@@ -76,7 +78,7 @@ avalon.component = function (name, definition) {
         } else {
             var type = node.type
             //判定用户传入的标签名是否符合规格
-            if (!outerTags[type] && !isCustomTag(type)) {
+            if (!componentContainers[type] && !isCustomTag(type)) {
                 avalon.warn(type + '不合适做组件的标签')
             }
             //将用户声明组件用的自定义标签(或xmp.template)的template转换成虚拟DOM
@@ -124,7 +126,7 @@ avalon.component = function (name, definition) {
             mixinHooks(defaults, false)
             var defineArgs = [topVm, defaults].concat(options)
             var vmodel = define.apply(function (a, b) {
-                for (var k in moreSkip) {
+                for (var k in needDel) {
                     delete a[k]
                     delete b[k]
                 }

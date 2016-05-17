@@ -38,13 +38,12 @@ var dir = avalon.directive('widget', {
         if (!docker || !docker.renderCount) {
             steps.count += 1
             cur.change = [this.replaceByComment]
-        } else if (!pre.props.resolved) {
+        } else if (!pre.props.resolved && docker.renderCount < 2) {
             cur.steps = steps
             var list = cur.change || (cur.change = [])
             if (avalon.Array.ensure(list, this.replaceByComponent)) {
                 steps.count += 1
             }
-            
             function fireReady(dom, vnode) {
                 cur.vmodel.$fire('onReady', {
                     type: 'ready',
