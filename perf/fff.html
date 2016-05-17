@@ -7,87 +7,17 @@
         <script>
     var vm = avalon.define({
         $id: "test",
-        array: [1, 2, 3],
-        d: 888,
-        arr: [{
-                a: 1
-            }, {
-                a: 2
-            }, {
-                a: 3
-            }],
-        obj: {
-            a: 1,
-            b: 2
-        },
-        a: {
-            b: {
-                c: {
-                    d: 33
-                }
-            }
-        }
+        array: [{a: 1},{a: 2}]
     })
-    var expect = function (a) {
-        return {
-            to: {
-                be: function (b) {
-                    console.log(a == b)
-                }
-            }
-
-        }
-    }
-
-    vm.$watch("array.length", function (a, b, name) {
-        console.log('第一组 数组长度', name)
-    })
-    vm.$watch("arr.*.a", function (a, b, name) {
-        expect(a).to.be(99)
-        expect(b).to.be(1)
-        console.log('第二组 数组元素属性(模糊匹配, 不知道哪个元素变化)', name)
-    })
-    vm.$watch("obj.a", function (a, b, name) {
-        expect(a).to.be(111)
-        expect(b).to.be(1)
-        console.log('第三组 属性的属性', name)
-    })
-
-    vm.$watch("obj.*", function (a, b, name) {
-        expect(a).to.be(111)
-        expect(b).to.be(1)
-        console.log('第四组 属性的属性(模糊匹配)', name)
-    })
-
-    vm.$watch("a.b.c.d", function (a, b, name) {
-        expect(a).to.be(88)
-        expect(b).to.be(33)
-        console.log('第五组 属性的属性的属性', name)
-    })
-    vm.$watch("a.*.c.d", function (a, b, name) {
-        expect(a).to.be(88)
-        expect(b).to.be(33)
-        console.log('第六组 属性的属性的属性(模糊匹配)', name)
-    })
-    vm.$watch("*", function (a, b, name) {
-        expect(a).to.be(999)
-        expect(b).to.be(888)
-        console.log('第七组 第一层对象的任意属性(模糊匹配)', name)
-    })
-    setTimeout(function () {
-        vm.array.set(1, 6)
-        vm.array.push(99)
-        vm.arr[0].a = 99
-        vm.obj.a = 111
-        vm.a.b.c.d = 88
-        vm.d = 999
-    }, 100)
+   
 
         </script>
     </head>
 
     <body>
-
+        <ul ms-controller='test'>
+            <li ms-for='el in @array'>{{el.a}}</li>
+        </ul>
     </body>
 
 </html>

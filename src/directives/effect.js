@@ -90,8 +90,10 @@ function callNextAnimation() {
 
 avalon.effects = {}
 //这里定义CSS动画
+
+
 avalon.effect = function (name, definition) {
-    avalon.effects[name] = definition
+    avalon.effects[name] = definition || {}
     if (support.css) {
         if (!definition.enterClass) {
             definition.enterClass = name + '-enter'
@@ -216,7 +218,7 @@ function createAction(action) {
 avalon.applyEffect = function(node, vnode, opts){
     var cb = opts.cb
     var hook = opts.hook
-    var curEffect = vnode.nodeType === 1 && vnode.props['ms-effect']
+    var curEffect = vnode.props && vnode.props['ms-effect']
     if(curEffect && !avalon.document.hidden ){
         var old = curEffect[hook]
         if(cb){
