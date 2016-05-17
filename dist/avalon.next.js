@@ -3964,17 +3964,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var wid = el.getAttribute('wid')
 	        var docker = avalon.resolvedComponents[ wid ]
 	        var vm = docker.vmodel
-	        docker.vmodel.$fire("onDetach", {
-	            type: 'detach',
+	        var cached = !!docker.cached 
+	        docker.vmodel.$fire("onDispose", {
+	            type: 'dispose',
 	            target: el,
-	            vmodel: vm
+	            vmodel: vm,
+	            cached: cached
 	        })
-	        if (docker && docker.vmodel && docker.cached !== true) {
-	            docker.vmodel.$fire("onDispose", {
-	                type: 'dispose',
-	                target: el,
-	                vmodel: vm
-	            })
+	        if (docker && docker.vmodel && !cached) {
 	            vm.$element = null
 	            vm.$hashcode = false
 	            delete docker.vmodel
@@ -4894,7 +4891,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var parseView = __webpack_require__(37)
 	var resolvedComponents = avalon.resolvedComponents
 	var componentContainers = {wbr:1, xmp:1, template: 1}
-	var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose,onDetach')
+	var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose')
 	var skipWidget = {'ms-widget': 1, widget: 1, resolved: 1}
 
 	var needDel = avalon.mix({

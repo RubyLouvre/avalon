@@ -3,7 +3,7 @@ var VText = require('../vdom/VText')
 var parseView = require('../strategy/parser/parseView')
 var resolvedComponents = avalon.resolvedComponents
 var componentContainers = {wbr:1, xmp:1, template: 1}
-var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose,onDetach')
+var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose')
 var skipWidget = {'ms-widget': 1, widget: 1, resolved: 1}
 
 var needDel = avalon.mix({
