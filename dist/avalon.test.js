@@ -1,4 +1,4 @@
-/*! built in 2016-5-17:13 version 2.01 by 司徒正美 */
+/*! built in 2016-5-17:23 version 2.01 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -4815,7 +4815,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        dirtyTrees[id] = true
 	    }
 	  
-	    if (avalon.suspendUpdate > 0 || typeof vm.$render !== 'function' || !vm.$element || isBatchingUpdates) {
+	    if ( typeof vm.$render !== 'function' || !vm.$element || isBatchingUpdates) {
 	        return
 	    }
 	    if (!document.nodeName)//如果是在mocha等测试环境中立即返回
@@ -5251,7 +5251,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            old = val
 
 	            var vm = heirloom.__vmodel__
-	            if (this.$hashcode && vm) {
+	            if (this.$hashcode && vm && !avalon.suspendUpdate) {
 	                //★★确保切换到新的events中(这个events可能是来自oldProxy)               
 	                if (heirloom !== vm.$events) {
 	                    get.heirloom = vm.$events
@@ -7551,7 +7551,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 105 */
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
+	module.exports = "<ms-panel>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</ms-panel>"
 
 /***/ }
 /******/ ])
