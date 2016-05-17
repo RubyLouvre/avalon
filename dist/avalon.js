@@ -7579,7 +7579,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	$$midway.masterFactory = masterFactory
 	var addAccessors = __webpack_require__(81)
-
+	var empty = {}
 	function slaveFactory(before, after, heirloom, options) {
 	    var keys = {}
 	    var skips = {}
@@ -7591,8 +7591,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (key in after) {
 	        if ($$skipArray[key])
 	            continue
-	        keys[key] = true
-	        if (!isSkip(key, after[key], {})) {
+	        keys[key] = true//包括可监控与不可监控的
+	        if (!isSkip(key, after[key], empty)) {
 	            if (resue[key]) {
 	                accessors[key] = resue[key]
 	            } else {
@@ -7602,6 +7602,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        } else {
 	            skips[key] = after[key]
+	            delete after[key]
 	        }
 	    }
 
@@ -7612,7 +7613,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    for (key in skips) {
 	        $vmodel[key] = skips[key]
-	        delete after[key]
 	    }
 
 	    makeObserver($vmodel, heirloom, keys, accessors, options)
@@ -7621,7 +7621,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	$$midway.slaveFactory = slaveFactory
-	var empty = {}
+
 	function mediatorFactory(before, after) {
 	    var keys = {}, key
 	    var accessors = {}

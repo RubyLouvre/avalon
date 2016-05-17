@@ -7236,6 +7236,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	$$midway.masterFactory = masterFactory
 
+	var empty = {}
 	function slaveFactory(before, after, heirloom, options) {
 	    var keys = {}
 	    var accessors = {}
@@ -7246,7 +7247,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if ($$skipArray[key])
 	            continue
 	        keys[key] = after[key]
-	        if (!isSkip(key, after[key], {})) {
+	        if (!isSkip(key, after[key], empty)) {
 	            var accessor = Object.getOwnPropertyDescriptor(before, key)
 	            if (accessor && accessor.get) {
 	                accessors[key] = accessor
@@ -7278,7 +7279,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	$$midway.slaveFactory = slaveFactory
-	var empty = {}
+
 	function mediatorFactory(before, after) {
 	    var keys = {}
 	    var accessors = {}
