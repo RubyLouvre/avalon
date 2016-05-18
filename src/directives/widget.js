@@ -65,8 +65,7 @@ var dir = avalon.directive('widget', {
             if (viewChangeObservers && viewChangeObservers.length) {
                 steps.count += 1
                 cur.afterChange = [function (dom, vnode) {
-                        var preHTML = pre.outerHTML || 
-                                avalon.vdomAdaptor(pre, 'toHTML')
+                        var preHTML = pre.outerHTML
                         var curHTML = cur.outerHTML || 
                                 (cur.outerHTML = avalon.vdomAdaptor(cur, 'toHTML'))
                         if (preHTML !== curHTML) {
@@ -109,6 +108,7 @@ var dir = avalon.directive('widget', {
             hasDetect = true
         }
         var com = avalon.vdomAdaptor(node, 'toDOM')
+        node.ouerHTML = avalon.vdomAdaptor(node, 'toHTML')
         if (dom) {
             parent.replaceChild(com, dom)
         } else {

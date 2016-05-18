@@ -5,19 +5,30 @@
         <title></title>
         <script src="../dist/avalon.js"></script>
         <script>
-    var vm = avalon.define({
-        $id: "test",
-        array: [{a: 1},{a: 2}]
-    })
-   
-
+            avalon.define({
+                $id: "selectBy",
+                obj: {a: 'aaa', b: 'bbb', c: 'ccc', d: 'ddd', e: 'eee'},
+                grid: [{a: 1, b: 2, c: 3}, {c: 11, b: 22, a: 33}, {b: 23, a: 44}],
+                defaults: {
+                    a:'@@@',
+                    b:'$$$',
+                    c:'###'
+                }
+            })
         </script>
     </head>
 
     <body>
-        <ul ms-controller='test'>
-            <li ms-for='el in @array'>{{el.a}}</li>
-        </ul>
+        <div ms-controller='selectBy'>
+            <ul>
+                <li ms-for='el in @obj | selectBy(["c","a","b"])'>{{el}}</li>
+            </ul>
+            <table border='1' width='200'>
+                <tr ms-for="tr in @grid">
+                    <td ms-for="td in tr | selectBy(['a','b','c'],@defaults)">{{td}}</td>
+                </tr>
+            </table>
+        </div>
     </body>
 
 </html>
