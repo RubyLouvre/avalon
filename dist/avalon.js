@@ -1,4 +1,4 @@
-/*! built in 2016-5-18:14 version 2.01 by 司徒正美 */
+/*! built in 2016-5-19:0 version 2.01 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -5399,13 +5399,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return value
 	        }
 	    },
-	    digits: function (value, field, next) {//整数
-	        next(/^\-?\d+$/.test(value))
-	        return value
+	    digits: {
+	        message: '必须整数',
+	        get: function (value, field, next) {//整数
+	            next(/^\-?\d+$/.test(value))
+	            return value
+	        }
 	    },
-	    number: function (value, field, next) {//数值
-	        next(isFinite(value))
-	        return value
+	    number: {
+	        message: '必须数字',
+	        get: function (value, field, next) {//数值
+	            next(isFinite(value))
+	            return value
+	        }
 	    },
 	    required: {
 	        message: '必须填写',
