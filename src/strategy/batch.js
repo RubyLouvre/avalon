@@ -22,7 +22,7 @@ function batchUpdate(id, immediate) {
         dirtyTrees[id] = true
     }
   
-    if (avalon.suspendUpdate > 0 || typeof vm.$render !== 'function' || !vm.$element || isBatchingUpdates) {
+    if ( typeof vm.$render !== 'function' || !vm.$element || isBatchingUpdates) {
         return
     }
     if (!document.nodeName)//如果是在mocha等测试环境中立即返回
