@@ -6086,7 +6086,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            '__vmodel__ = vnode' + num + '.vmodel;',
 	            'try{eval(" new function(){"+ vnode' + num + '.render +"}");',
 	            '}catch(e){avalon.warn(e)', '}',
-	            'vnode' + num + ' = avalon.renderWidget(avalon.__widget[0])', '}',
+	            'vnode' + num + ' = avalon.renderComponent(avalon.__widget[0])', '}',
 	            '__vmodel__ = __backup__;']
 	        return ret.join('\n') + '\n'
 	    },
@@ -6100,7 +6100,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!docker || !docker.renderCount) {
 	            steps.count += 1
 	            cur.change = [this.replaceByComment]
-	        } else if (docker.renderCount && docker.renderCount < 2) {//!pre.props.resolved
+	        } else if (docker.renderCount && docker.renderCount < 2) {
 	            cur.steps = steps
 	            var list = cur.change || (cur.change = [])
 	            if (avalon.Array.ensure(list, this.replaceByComponent)) {
@@ -6127,8 +6127,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (viewChangeObservers && viewChangeObservers.length) {
 	                steps.count += 1
 	                cur.afterChange = [function (dom, vnode) {
-	                        var preHTML = avalon.vdomAdaptor(pre, 'toHTML')
-	                        var curHTML = avalon.vdomAdaptor(cur, 'toHTML')
+	                        var preHTML = pre.outerHTML || 
+	                                avalon.vdomAdaptor(pre, 'toHTML')
+	                        var curHTML = cur.outerHTML || 
+	                                (cur.outerHTML = avalon.vdomAdaptor(cur, 'toHTML'))
 	                        if (preHTML !== curHTML) {
 	                            cur.vmodel.$fire('onViewChange', {
 	                                type: 'viewchange',
@@ -7235,7 +7237,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var resolvedComponents = avalon.resolvedComponents
 	var componentContainers = {wbr:1, xmp:1, template: 1}
 	var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose')
-	var skipWidget = {'ms-widget': 1, widget: 1, resolved: 1}
 
 	var needDel = avalon.mix({
 	    is: 1,
@@ -7333,7 +7334,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            //将用户标签中的属性合并到组件标签的属性里
 	            for (var k in docker.props) {
-	                if (!skipWidget[k]) {
+	                if(k !== 'ms-widget'){
 	                    widgetNode.props[k] = docker.props[k]
 	                }
 	            }
@@ -7404,9 +7405,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return type.length > 3 && type.indexOf('-') > 0 &&
 	            ralphabet.test(type.charAt(0) + type.slice(-1))
 	}
-	avalon.renderWidget = function (widgetNode) {
+	avalon.renderComponent = function (widgetNode) {
 	    var docker = avalon.resolvedComponents[widgetNode.props.wid]
-	    widgetNode.order = 'ms-widget;;' + widgetNode.order
+	    var order = widgetNode.order
+	    
+	    widgetNode.order = order ? 
+	        'ms-widget;;' + order : 'ms-widget'
 	    if (!isComponentReady(widgetNode)) {
 	        return docker.placeholder
 	    }
