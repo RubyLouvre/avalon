@@ -24,7 +24,7 @@ var dir = avalon.directive('widget', {
             '__vmodel__ = vnode' + num + '.vmodel;',
             'try{eval(" new function(){"+ vnode' + num + '.render +"}");',
             '}catch(e){avalon.warn(e)', '}',
-            'vnode' + num + ' = avalon.renderWidget(avalon.__widget[0])', '}',
+            'vnode' + num + ' = avalon.renderComponent(avalon.__widget[0])', '}',
             '__vmodel__ = __backup__;']
         return ret.join('\n') + '\n'
     },
@@ -38,7 +38,7 @@ var dir = avalon.directive('widget', {
         if (!docker || !docker.renderCount) {
             steps.count += 1
             cur.change = [this.replaceByComment]
-        } else if (docker.renderCount && docker.renderCount < 2) {//!pre.props.resolved
+        } else if (docker.renderCount && docker.renderCount < 2) {
             cur.steps = steps
             var list = cur.change || (cur.change = [])
             if (avalon.Array.ensure(list, this.replaceByComponent)) {
@@ -65,8 +65,10 @@ var dir = avalon.directive('widget', {
             if (viewChangeObservers && viewChangeObservers.length) {
                 steps.count += 1
                 cur.afterChange = [function (dom, vnode) {
-                        var preHTML = avalon.vdomAdaptor(pre, 'toHTML')
-                        var curHTML = avalon.vdomAdaptor(cur, 'toHTML')
+                        var preHTML = pre.outerHTML || 
+                                avalon.vdomAdaptor(pre, 'toHTML')
+                        var curHTML = cur.outerHTML || 
+                                (cur.outerHTML = avalon.vdomAdaptor(cur, 'toHTML'))
                         if (preHTML !== curHTML) {
                             cur.vmodel.$fire('onViewChange', {
                                 type: 'viewchange',
