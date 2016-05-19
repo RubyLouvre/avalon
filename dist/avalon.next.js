@@ -2116,11 +2116,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    propMap[name.toLowerCase()] = name
 	})
 
-
 	var anomaly = ['accessKey,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan',
 	    'dateTime,defaultValue,contentEditable,frameBorder,longDesc,maxLength,'+
 	    'marginWidth,marginHeight,rowSpan,tabIndex,useMap,vSpace,valueType,vAlign'
 	].join(',')
+
 	anomaly.replace(/\w+/g, function (name) {
 	    propMap[name.toLowerCase()] = name
 	})
