@@ -12,7 +12,7 @@ function attrUpdate(node, vnode) {
     if (attrs) {
         for (var attrName in attrs) {
             var val = attrs[attrName]
-            // switch
+            // 处理路径属性
             if (attrName === 'href' || attrName === 'src') {
                 if (!node.hasAttribute) {
                     val = String(val).replace(ramp, '&') //处理IE67自动转义的问题
@@ -24,6 +24,7 @@ function attrUpdate(node, vnode) {
                     parent.replaceChild(comment, node)
                     parent.replaceChild(node, comment)
                 }
+                //处理HTML5 data-*属性
             } else if (attrName.indexOf('data-') === 0) {
                 node.setAttribute(attrName, val)
 
@@ -37,7 +38,7 @@ function attrUpdate(node, vnode) {
                     //会影响到样式,需要进一步处理
                 }
 
-                if (val === false ) {
+                if (val === false ) {//移除属性
                     node.removeAttribute(propName)
                     continue
                 }

@@ -39,13 +39,19 @@ avalon.shadowCopy(avalon.validators, {
             return value
         }
     },
-    digits: function (value, field, next) {//整数
-        next(/^\-?\d+$/.test(value))
-        return value
+    digits: {
+        message: '必须整数',
+        get: function (value, field, next) {//整数
+            next(/^\-?\d+$/.test(value))
+            return value
+        }
     },
-    number: function (value, field, next) {//数值
-        next(isFinite(value))
-        return value
+    number: {
+        message: '必须数字',
+        get: function (value, field, next) {//数值
+            next(isFinite(value))
+            return value
+        }
     },
     required: {
         message: '必须填写',

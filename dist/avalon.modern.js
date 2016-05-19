@@ -1,4 +1,4 @@
-/*! built in 2016-5-17:23 version 2.01 by 司徒正美 */
+/*! built in 2016-5-19:10 version 2.01 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -825,7 +825,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    array.sort(function (left, right) {
 	        var a = left.order
 	        var b = right.order
-	        if(Number.isNaN(a) && Number.isNaN(b)){
+	        if (Number.isNaN(a) && Number.isNaN(b)) {
 	            return 0
 	        }
 	        return a === b ? 0 : a > b ? order : -order
@@ -840,29 +840,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    })
 	}
+
 	function filterBy(array, search) {
 	    var type = avalon.type(array)
 	    if (type !== 'array' && type !== 'object')
 	        throw 'filterBy只能处理对象或数组'
 	    var args = avalon.slice(arguments, 2)
-	    if (typeof search === 'function') {
+	    var stype = avalon.type(search)
+	    if (stype === 'function') {
 	        var criteria = search
-	    } else if (typeof search === 'string') {
-	        if(search.trim() === ''){
-	           criteria = function(){
-	               return false
-	           }
-	        }else{
-	           args.unshift(new RegExp(avalon.escapeRegExp(search), 'i'))
-	           criteria = containKey
+	    } else if (stype === 'string' || stype === 'number' ) {
+	        if (search === '') {
+	            return array
+	        } else {
+	            var reg = new RegExp(avalon.escapeRegExp(search), 'i')
+	            criteria = function(el){
+	                return reg.test(el)
+	            }
 	        }
-	        
 	    } else {
-	        throw search + '必须是字符串或函数'
+	        return array
 	    }
 
-	    array = convertArray(array).filter(function (el) {
-	         return !!criteria.apply(el, [el.value].concat(args))
+	    array = convertArray(array).filter(function (el, i) {
+	         return !!criteria.apply(el, [el.value,i].concat(args) )
 	    })
 	    var isArray = type === 'array'
 	    var target = isArray ? [] : {}
@@ -879,46 +880,53 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (avalon.isObject(data) && !Array.isArray(data)) {
 	        var target = []
 	        return recovery(target, array, function (name) {
-	            target.push(data.hasOwnProperty(name) ? data[name] : defaults ? defaults[name]: '' )
+	            target.push(data.hasOwnProperty(name) ? data[name] : defaults ? defaults[name] : '')
 	        })
 	    } else {
-	        throw 'selectBy只支持对象'
+	        return data
 	    }
 	}
 
-	Number.isNaN = Number.isNaN || function(a){
+	Number.isNaN = Number.isNaN || function (a) {
 	    return a !== a
 	}
 
 	function limitBy(input, limit, begin) {
+	    var type = avalon.type(input)
+	    if (type !== 'array' && type !== 'object')
+	        throw 'filterBy只能处理对象或数组'
+	    //尝试将limit转换数值
 	    if (Math.abs(Number(limit)) === Infinity) {
-	        limit = Number(limit);
+	        limit = Number(limit)
 	    } else {
-	        limit = parseInt(limit,10)
+	        limit = parseInt(limit, 10)
 	    }
-	    if (Number.isNaN(limit))
+	    //转换不了返回
+	    if (Number.isNaN(limit)) {
 	        return input
-
-	    if (typeof input === 'number')
-	        input = input + ''
-	    if ((!Array.isArray(input)) && (typeof input !== 'string'))
-	        return input
-
+	    }
+	    //将目标转换为数组
+	    if (type === 'object') {
+	        input = convertArray(input)
+	    }
+	    limit = Math.min(input.length, limit)
 	    begin = (!begin || Number.isNaN(begin)) ? 0 : ~~begin
-	  
-	    
-	    begin = (begin < 0) ? Math.max(0, input.length + begin) : begin
-	    if (limit >= 0) {
-	        input = input.slice(begin, begin + limit)
-	    } else {
-	        if (begin === 0) {
-	            input = input.slice(limit, input.length)
-	        } else {
-	            input = input.slice(Math.max(0, begin + limit), begin);
-	        }
+	    if (begin < 0) {
+	        begin = Math.max(0, input.length + begin)
 	    }
 
-	    return recovery(input, [])
+	    var data = []
+	    for (var i = begin; i < limit; i++) {
+	        data.push(input[i])
+	    }
+	    var isArray = type === 'array'
+	    if (isArray) {
+	        return data
+	    }
+	    var target = {}
+	    return recovery(target, data, function (el) {
+	        target[el.key] = el.value
+	    })
 	}
 
 	function recovery(ret, array, callback) {
@@ -928,21 +936,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return ret
 	}
 
-	function containKey(a, reg) {
-	    if (avalon.isPlainObject(a)) {
-	        for (var k in a) {
-	            if (reg.test(a[k]))
-	                return true
-	        }
-	    } else if (Array.isArray(a)) {
-	        return a.some(function (b) {
-	            return reg.test(b)
-	        })
-	    } else if (a !== null) {
-	        return reg.test(a)
-	    }
-	    return false
-	}
 
 	function convertArray(array) {
 	    var ret = [], i = 0
@@ -2094,12 +2087,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 46 */
 /***/ function(module, exports) {
 
-	var bools = ['autofocus,autoplay,async,allowTransparency,checked,controls',
-	    'declare,disabled,defer,defaultChecked,defaultSelected,',
-	    'isMap,loop,multiple,noHref,noResize,noShade',
-	    'open,readOnly,selected'
-	].join(',')
-
 	var propMap = {//不规则的属性名映射
 	    'accept-charset': 'acceptCharset',
 	    'char': 'ch',
@@ -2118,15 +2105,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	contenteditable='true'
 	contenteditable='false'
 	 */
+	var bools = ['autofocus,autoplay,async,allowTransparency,checked,controls',
+	    'declare,disabled,defer,defaultChecked,defaultSelected,',
+	    'isMap,loop,multiple,noHref,noResize,noShade',
+	    'open,readOnly,selected'
+	].join(',')
+
 	bools.replace(/\w+/g, function (name) {
 	    propMap[name.toLowerCase()] = name
 	})
 
-
 	var anomaly = ['accessKey,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan',
-	    'dateTime,defaultValue,contentEditable,frameBorder,longDesc,maxLength,marginWidth,marginHeight',
-	    'rowSpan,tabIndex,useMap,vSpace,valueType,vAlign'
+	    'dateTime,defaultValue,contentEditable,frameBorder,longDesc,maxLength,'+
+	    'marginWidth,marginHeight,rowSpan,tabIndex,useMap,vSpace,valueType,vAlign'
 	].join(',')
+
 	anomaly.replace(/\w+/g, function (name) {
 	    propMap[name.toLowerCase()] = name
 	})
@@ -3055,13 +3048,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return value
 	        }
 	    },
-	    digits: function (value, field, next) {//整数
-	        next(/^\-?\d+$/.test(value))
-	        return value
+	    digits: {
+	        message: '必须整数',
+	        get: function (value, field, next) {//整数
+	            next(/^\-?\d+$/.test(value))
+	            return value
+	        }
 	    },
-	    number: function (value, field, next) {//数值
-	        next(isFinite(value))
-	        return value
+	    number: {
+	        message: '必须数字',
+	        get: function (value, field, next) {//数值
+	            next(isFinite(value))
+	            return value
+	        }
 	    },
 	    required: {
 	        message: '必须填写',
@@ -3735,7 +3734,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            '__vmodel__ = vnode' + num + '.vmodel;',
 	            'try{eval(" new function(){"+ vnode' + num + '.render +"}");',
 	            '}catch(e){avalon.warn(e)', '}',
-	            'vnode' + num + ' = avalon.renderWidget(avalon.__widget[0])', '}',
+	            'vnode' + num + ' = avalon.renderComponent(avalon.__widget[0])', '}',
 	            '__vmodel__ = __backup__;']
 	        return ret.join('\n') + '\n'
 	    },
@@ -3749,7 +3748,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!docker || !docker.renderCount) {
 	            steps.count += 1
 	            cur.change = [this.replaceByComment]
-	        } else if (docker.renderCount && docker.renderCount < 2) {//!pre.props.resolved
+	        } else if (docker.renderCount && docker.renderCount < 2) {
 	            cur.steps = steps
 	            var list = cur.change || (cur.change = [])
 	            if (avalon.Array.ensure(list, this.replaceByComponent)) {
@@ -3776,8 +3775,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (viewChangeObservers && viewChangeObservers.length) {
 	                steps.count += 1
 	                cur.afterChange = [function (dom, vnode) {
-	                        var preHTML = avalon.vdomAdaptor(pre, 'toHTML')
-	                        var curHTML = avalon.vdomAdaptor(cur, 'toHTML')
+	                        var preHTML = pre.outerHTML
+	                        var curHTML = cur.outerHTML || 
+	                                (cur.outerHTML = avalon.vdomAdaptor(cur, 'toHTML'))
 	                        if (preHTML !== curHTML) {
 	                            cur.vmodel.$fire('onViewChange', {
 	                                type: 'viewchange',
@@ -3818,6 +3818,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            hasDetect = true
 	        }
 	        var com = avalon.vdomAdaptor(node, 'toDOM')
+	        node.ouerHTML = avalon.vdomAdaptor(node, 'toHTML')
 	        if (dom) {
 	            parent.replaceChild(com, dom)
 	        } else {
@@ -4884,7 +4885,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var resolvedComponents = avalon.resolvedComponents
 	var componentContainers = {wbr:1, xmp:1, template: 1}
 	var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose')
-	var skipWidget = {'ms-widget': 1, widget: 1, resolved: 1}
 
 	var needDel = avalon.mix({
 	    is: 1,
@@ -4982,7 +4982,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            //将用户标签中的属性合并到组件标签的属性里
 	            for (var k in docker.props) {
-	                if (!skipWidget[k]) {
+	                if(k !== 'ms-widget'){
 	                    widgetNode.props[k] = docker.props[k]
 	                }
 	            }
@@ -5053,9 +5053,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return type.length > 3 && type.indexOf('-') > 0 &&
 	            ralphabet.test(type.charAt(0) + type.slice(-1))
 	}
-	avalon.renderWidget = function (widgetNode) {
+	avalon.renderComponent = function (widgetNode) {
 	    var docker = avalon.resolvedComponents[widgetNode.props.wid]
-	    widgetNode.order = 'ms-widget;;' + widgetNode.order
+	    var order = widgetNode.order
+	    
+	    widgetNode.order = order ? 
+	        'ms-widget;;' + order : 'ms-widget'
 	    if (!isComponentReady(widgetNode)) {
 	        return docker.placeholder
 	    }

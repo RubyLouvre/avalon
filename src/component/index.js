@@ -4,7 +4,6 @@ var parseView = require('../strategy/parser/parseView')
 var resolvedComponents = avalon.resolvedComponents
 var componentContainers = {wbr:1, xmp:1, template: 1}
 var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose')
-var skipWidget = {'ms-widget': 1, widget: 1, resolved: 1}
 
 var needDel = avalon.mix({
     is: 1,
@@ -102,7 +101,7 @@ avalon.component = function (name, definition) {
             }
             //将用户标签中的属性合并到组件标签的属性里
             for (var k in docker.props) {
-                if (!skipWidget[k]) {
+                if(k !== 'ms-widget'){
                     widgetNode.props[k] = docker.props[k]
                 }
             }
@@ -173,9 +172,12 @@ function isCustomTag(type) {
     return type.length > 3 && type.indexOf('-') > 0 &&
             ralphabet.test(type.charAt(0) + type.slice(-1))
 }
-avalon.renderWidget = function (widgetNode) {
+avalon.renderComponent = function (widgetNode) {
     var docker = avalon.resolvedComponents[widgetNode.props.wid]
-    widgetNode.order = 'ms-widget;;' + widgetNode.order
+    var order = widgetNode.order
+    
+    widgetNode.order = order ? 
+        'ms-widget;;' + order : 'ms-widget'
     if (!isComponentReady(widgetNode)) {
         return docker.placeholder
     }
