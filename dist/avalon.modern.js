@@ -1,4 +1,4 @@
-/*! built in 2016-5-19:0 version 2.01 by 司徒正美 */
+/*! built in 2016-5-19:10 version 2.01 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2087,12 +2087,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 46 */
 /***/ function(module, exports) {
 
-	var bools = ['autofocus,autoplay,async,allowTransparency,checked,controls',
-	    'declare,disabled,defer,defaultChecked,defaultSelected,',
-	    'isMap,loop,multiple,noHref,noResize,noShade',
-	    'open,readOnly,selected'
-	].join(',')
-
 	var propMap = {//不规则的属性名映射
 	    'accept-charset': 'acceptCharset',
 	    'char': 'ch',
@@ -2111,14 +2105,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	contenteditable='true'
 	contenteditable='false'
 	 */
+	var bools = ['autofocus,autoplay,async,allowTransparency,checked,controls',
+	    'declare,disabled,defer,defaultChecked,defaultSelected,',
+	    'isMap,loop,multiple,noHref,noResize,noShade',
+	    'open,readOnly,selected'
+	].join(',')
+
 	bools.replace(/\w+/g, function (name) {
 	    propMap[name.toLowerCase()] = name
 	})
 
 
 	var anomaly = ['accessKey,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan',
-	    'dateTime,defaultValue,contentEditable,frameBorder,longDesc,maxLength,marginWidth,marginHeight',
-	    'rowSpan,tabIndex,useMap,vSpace,valueType,vAlign'
+	    'dateTime,defaultValue,contentEditable,frameBorder,longDesc,maxLength,'+
+	    'marginWidth,marginHeight,rowSpan,tabIndex,useMap,vSpace,valueType,vAlign'
 	].join(',')
 	anomaly.replace(/\w+/g, function (name) {
 	    propMap[name.toLowerCase()] = name
