@@ -28,7 +28,8 @@ function byRewritePrototype() {
     if (byRewritePrototype.execute) {
         return
     }
-
+//https://www.web-tinker.com/article/20618.html?utm_source=tuicool&utm_medium=referral
+//IE6-8虽然暴露了Element.prototype,但无法重写已有的DOM API
     byRewritePrototype.execute = true
     var p = Node.prototype
     function rewite(name, fn) {

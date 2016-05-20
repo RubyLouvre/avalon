@@ -1,4 +1,4 @@
-/*! built in 2016-5-21:2 version 2.02 by 司徒正美 */
+/*! built in 2016-5-20:22 version 2.02 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -71,7 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 104:
 /***/ function(module, exports, __webpack_require__) {
 
-	/*! built in 2016-5-21:2 version 2.02 by 司徒正美 */
+	/*! built in 2016-5-20:22 version 2.02 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -6325,7 +6325,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		    if (byRewritePrototype.execute) {
 		        return
 		    }
-
+		//https://www.web-tinker.com/article/20618.html?utm_source=tuicool&utm_medium=referral
+		//IE6-8虽然暴露了Element.prototype,但无法重写已有的DOM API
 		    byRewritePrototype.execute = true
 		    var p = Node.prototype
 		    function rewite(name, fn) {
@@ -6399,7 +6400,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                clearInterval(checkID)
 		                checkID = 0
 		            }
-		        }, 1000)
+		        }, 700)
 		    }
 		}
 
@@ -8600,7 +8601,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 107:
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</ms-panel>"
+	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
 
 /***/ }
 
