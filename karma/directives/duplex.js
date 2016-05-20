@@ -28,10 +28,13 @@ describe('duplex', function () {
         }
     })
     it('数据转换', function (done) {
+        avalon.filters.limit = function(str,a){
+            return String(str).slice(0, a)
+        }
         div.innerHTML = heredoc(function () {
             /*
              <div ms-controller='duplex1' >
-             <input ms-duplex-string='@aaa|limitBy(4)'><span>{{@aaa}}</span>
+             <input ms-duplex-string='@aaa|limit(4)'><span>{{@aaa}}</span>
              <input ms-duplex-number='@bbb' ><span>{{@bbb}}</span>
              <input ms-duplex-boolean='@ccc' ><span>{{@ccc}}</span>
              <input ms-duplex-checked='@ddd' type='radio' ><span>{{@ddd}}</span>

@@ -32,15 +32,20 @@
                 },
                 allChecked: false,
                 checkOne: function () {//点击UI列表的checkbox时                  
-                    this.allChecked = this.todos.every(function (val) {
+                  
+                    var a = this.todos.every(function (val) {
                         return val.completed
                     })
+                    console.log(a, "checkOne",this.allChecked)
+                    this.allChecked = a
                 },
                 checkAll: function (e) {
                     var target = e.target
+                    var checked = target.checked
                     this.todos.forEach(function (el) {
                         el.completed = target.checked
                     })
+                    this.allChecked = checked
                 }
             })
 
