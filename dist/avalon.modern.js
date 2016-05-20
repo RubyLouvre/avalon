@@ -1,4 +1,4 @@
-/*! built in 2016-5-20:15 version 2.01 by 司徒正美 */
+/*! built in 2016-5-20:16 version 2.01 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3347,11 +3347,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rforAs = /\s+as\s+([$\w]+)/
 	var rident = __webpack_require__(40).ident
 	var update = __webpack_require__(43)
-
+	var Cache = __webpack_require__(26)
+	var loopCache = new Cache(600)
 	var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
-	function getTrackKey(item){
-	     var type = typeof item
-	     return item && type === 'object' ? item.$hashcode : type + item
+	function getTrackKey(item) {
+	    var type = typeof item
+	    return item && type === 'object' ? item.$hashcode : type + item
 	}
 
 	avalon._each = function (obj, fn) {
@@ -3369,32 +3370,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	}
-	var loopMap = {}
-	function getLoopValue(object){
-	    if(Array.isArray(object)){
-	        return object.length+"|"+object.map(getTrackKey).join(';;')
-	    }else{
+
+	function getLoopValue(object) {
+	    if (Array.isArray(object)) {
+	        return object.length + "|" + object.map(getTrackKey).join(';;')
+	    } else {
 	        var size = 0
 	        var arr = []
-	        for(var i in object){
-	            if(object.hasOwnProperty(i)){
+	        for (var i in object) {
+	            if (object.hasOwnProperty(i)) {
 	                size++
 	                arr.push(i)
 	            }
 	        }
-	        return size+"|"+arr.join(';;')
+	        return size + "|" + arr.join(';;')
 	    }
 	}
 
-	avalon._checkLoopChange = function(key, obj){
+	avalon._checkLoopChange = function (key, obj) {
 	    var cur = getLoopValue(obj)
-	    if(!(key in loopMap)){
-	       loopMap[key] = cur
-	       return true
-	    }
-	    if(cur !== loopMap[key]){
-	         loopMap[key] = cur
-	         return true
+	    var old = loopCache.get(key)
+	    if (typeof old !== 'string' || cur !== old) {
+	        loopCache.put(key, cur)
+	        return true
 	    }
 	    return false
 	}
@@ -3414,7 +3412,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var arr = str.replace(rforPrefix, '').split(' in ')
 	        var assign = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
-	        var isChange = el.signature+'.hasChange = avalon._checkLoopChange("'+el.signature+'", loop' + num + ')\n'
+	        var isChange = el.signature + '.hasChange = avalon._checkLoopChange("' + el.signature + '", loop' + num + ')\n'
 
 	        var alias = aliasAs ? 'var ' + aliasAs + ' = loop' + num + '\n' : ''
 	        var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
@@ -3422,7 +3420,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            kv.unshift('$key')
 	        }
 	        //分别创建isArray, ____n, ___i, ___v, ___trackKey变量
-	        return assign +isChange+ alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n'
+	        return assign + isChange + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n'
 
 	    },
 	    diff: function (current, previous, steps, __index__) {
@@ -3542,7 +3540,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        var domTemplate = avalon.parseHTML(vnode.template)
-	      
+
 	        var key = vnode.signature
 	        for (var i in vnode.removedComponents) {
 	            var el = vnode.removedComponents[i]
