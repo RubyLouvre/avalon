@@ -1,5 +1,6 @@
 
 var attrUpdate = require('../dom/attr/compact')
+var update = require('./_update')
 
 avalon.directive('attr', {
     parse: function (binding, num) {
@@ -28,11 +29,8 @@ avalon.directive('attr', {
                     cur.changeAttr = patch
                 }
             }
-            if (cur.changeAttr) {
-                var list = cur.change || (cur.change = [])
-                if(avalon.Array.ensure(list, this.update)){
-                   steps.count += 1
-                }
+            if (cur.changeAttr) { 
+                update(cur, this.update, steps, 'attr' )
             }
         } else {
             cur.props[name] = p

@@ -44,5 +44,5 @@ var plugins = {
 }
 kernel.plugins = plugins
 kernel.plugins['interpolate'](['{{', '}}'])
-
+//kernel.showDiff = true
 kernel.debug = true

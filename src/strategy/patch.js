@@ -22,7 +22,7 @@ function patch(nodes, vnodes, parent, steps) {
             next = node.nextSibling
         }
         if (vnode.directive === 'for') {
-            if (vnode.change) {
+            if (vnode.hasChange) {
                 if (!node) {
                     return
                 }
@@ -42,9 +42,7 @@ function patch(nodes, vnodes, parent, steps) {
                 }
                 next = vnode.endRepeat.nextSibling
             }
-
         }
-
         //ms-for, ms-if, ms-widget会返回false
         if (false === execHooks(node, vnode, parent, steps, 'change')) {
             if (vnode.repeatCount) {

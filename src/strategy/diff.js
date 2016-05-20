@@ -27,9 +27,14 @@ function diff(current, previous, steps) {
                 }
                 break
             case 8:
-                if (cur.directive === 'for') {
-                    i = directives['for'].diff(current, previous, steps, i)
-                } else if (cur.directive) {//if widget
+                if (cur.directive === 'for' ) {
+                   if(cur.hasChange){
+                       i = directives['for'].diff(current, previous, steps, i)
+                   }else{
+                       avalon.shadowCopy(cur, previous[i])
+                       delete cur.hasChange
+                   }
+                } else if (cur.directive ) {//if widget
                     directives[cur.directive].diff(cur, pre, steps)
                 }
                 break

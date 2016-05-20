@@ -1,4 +1,5 @@
 
+var update = require('./_update')
 
 avalon.directive('css', {
     parse: function (binding, num) {
@@ -7,7 +8,7 @@ avalon.directive('css', {
     diff: function (cur, pre, steps, name) {
         var a = cur.props[name]
         var p = pre.props[name]
-        if ( Object(a) === a) {
+        if (Object(a) === a) {
             if (Array.isArray(a)) {
                 a = cur.props[name] = avalon.mix.apply({}, a)
             }
@@ -27,10 +28,7 @@ avalon.directive('css', {
                 }
             }
             if (cur.changeStyle) {
-                var list = cur.change || (cur.change = [])
-                if(avalon.Array.ensure(list, this.update)){
-                   steps.count += 1
-                }
+                update(cur, this.update, steps, 'css')
             }
         } else {
             cur.props[name] = p

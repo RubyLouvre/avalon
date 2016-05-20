@@ -1,4 +1,6 @@
 // 抽离出来公用
+var update = require('./_update')
+
 avalon.skipController = function (fast, vm, iv) {
     if (fast) {
         var id = vm.$render ? vm.$render.$id : vm.$id
@@ -37,10 +39,8 @@ avalon.directive('controller', {
     },
     diff: function (cur, pre, steps, name) {
         if (pre.props[name] !== cur.props[name]) {
-            var list = cur.change || (cur.change = [])
-            if (avalon.Array.ensure(list, this.update)) {
-                steps.count += 1
-            }
+            console.log('controller',steps)
+            update(cur, this.update, steps, 'controller' )
         }
     },
     update: function (node, vnode) {
