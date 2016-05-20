@@ -1,3 +1,5 @@
+var update = require('./_update')
+
 var dir = avalon.directive('validate', {
 //验证单个表单元素
     parse: function (binding, num) {
@@ -19,10 +21,8 @@ var dir = avalon.directive('validate', {
                 }
             }
             validator.fields = validator.fields || []
-            var list = cur.change || (cur.change = [])
-            if (avalon.Array.ensure(list, this.update)) {
-                steps.count += 1
-            }
+            update(cur, this.update, steps, 'validate' )
+
         }
     },
     update: function (node, vnode) {

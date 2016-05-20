@@ -1,5 +1,6 @@
 var support = require('../effect/index')
 var Cache = require('../seed/cache')
+var update = require('./_update')
 
 avalon.directive('effect', {
     priority: 5,
@@ -23,10 +24,8 @@ avalon.directive('effect', {
         if (Object(curObj) === curObj) {
             var preObj = pre.props[name]
             if ( Object(preObj) !== preObj || diffObj(curObj, preObj ))  {
-                var list = cur.afterChange = cur.afterChange || []
-                if(avalon.Array.ensure(list, this.update)){
-                   steps.count += 1
-                }
+                update(cur, this.update, steps, 'effect', 'afterChange')
+
             }
         }
     },

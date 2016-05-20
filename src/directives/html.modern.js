@@ -1,3 +1,4 @@
+var update = require('./_update')
 
 avalon.directive('html', {
     parse: function (binding, num) {
@@ -14,12 +15,7 @@ avalon.directive('html', {
         var preValue = pre.props[name]
         cur.skipContent = false
         if (curValue !== preValue) {
-            if (cur.props[name] !== preValue) {
-                var list = cur.change || (cur.change = [])
-                if (avalon.Array.ensure(list, this.update)) {
-                    steps.count += 1
-                }
-            }
+            update(cur, this.update, steps, 'html' )
         }
     },
     update: function (node, vnode) {

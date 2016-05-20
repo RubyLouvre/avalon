@@ -1,5 +1,6 @@
 var disposeDetectStrategy = require('../component/disposeDetectStrategy')
 var patch = require('../strategy/patch')
+var update = require('./_update')
 
 //插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
 var dir = avalon.directive('widget', {
@@ -40,10 +41,8 @@ var dir = avalon.directive('widget', {
             cur.change = [this.replaceByComment]
         } else if (docker.renderCount && docker.renderCount < 2) {
             cur.steps = steps
-            var list = cur.change || (cur.change = [])
-            if (avalon.Array.ensure(list, this.replaceByComponent)) {
-                steps.count += 1
-            }
+            update(cur, this.replaceByComponent, steps, 'widget' )
+
             function fireReady(dom, vnode) {
                 cur.vmodel.$fire('onReady', {
                     type: 'ready',
@@ -53,10 +52,7 @@ var dir = avalon.directive('widget', {
                 })
                 docker.renderCount = 2
             }
-            list = cur.afterChange || (cur.afterChange = [])
-            if (avalon.Array.ensure(list, fireReady)) {
-                steps.count += 1
-            }
+            update(cur, fireReady, steps, 'widget', 'afterChange' )
 
         } else {
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)

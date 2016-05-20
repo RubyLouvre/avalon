@@ -1,4 +1,5 @@
 var parseView = require('../strategy/parser/parseView')
+var update = require('./_update')
 
 avalon.important = function (elem, vid) {
     //如果vmodel还不存在,直接返回
@@ -41,10 +42,7 @@ avalon.directive("important", {
     },
     diff: function (cur, pre, steps, name) {
         if (pre.props[name] !== cur.props[name]) {
-            var list = cur.change || (cur.change = [])
-            if (avalon.Array.ensure(list, this.update)) {
-                steps.count += 1
-            }
+            update(cur, this.update, steps, 'important' )
         }
     },
     update: function (node, vnode) {

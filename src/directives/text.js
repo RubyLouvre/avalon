@@ -1,4 +1,6 @@
 var rident = require('../seed/regexp').ident
+var update = require('./_update')
+
 avalon.directive('text', {
     parse: function (binding, num, vnode) {
         vnode.children = [{type: '#text', nodeType: 3, nodeValue: ''}]
@@ -17,10 +19,7 @@ avalon.directive('text', {
             if (dom) {
                 this.update(dom, cur)
             } else {
-                var list = cur.change || (cur.change = [])
-                if(avalon.Array.ensure(list, this.update)){
-                   steps.count += 1
-                }
+                update(cur, this.update, steps, 'text' )
             }
         }
         pre.dom = null

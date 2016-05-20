@@ -1,3 +1,4 @@
+var update = require('./_update')
 
 avalon.directive('expr', {
     parse: function () {
@@ -9,10 +10,7 @@ avalon.directive('expr', {
             if (dom && avalon.contains(avalon.root,dom)) {
                 this.update(dom, cur)
             } else {
-                var list = cur.change || (cur.change = [])
-                if(avalon.Array.ensure(list, this.update)){
-                    steps.count += 1
-                }   
+                update(cur, this.update, steps, 'expr' )
             }
         }
         pre.dom = null

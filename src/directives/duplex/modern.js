@@ -5,6 +5,8 @@ var newField = require('./newField')
 var initField = require('./bindEvents.modern')
 var updateField = require('./updateField.modern')
 var addField = require('./addField')
+var update = require('../_update')
+
 var evaluatorPool = require('../../strategy/parser/evaluatorPool')
 
 avalon.directive('duplex', {
@@ -52,9 +54,7 @@ avalon.directive('duplex', {
 
         if (!isEqual) {
             field.modelValue = value
-            var afterChange = cur.afterChange || (cur.afterChange = [])
-            avalon.Array.ensure(afterChange, this.update)
-            steps.count += 1
+            update(cur, this.update, steps, 'duplex', 'afterChange')
         }
     },
     update: function (node, vnode) {

@@ -1,13 +1,11 @@
+var update = require('./_update')
 
 avalon.directive('expr', {
     parse: function () {
     },
     diff: function (cur, pre, steps) {
         if (cur.nodeValue !== pre.nodeValue) {
-            var list = cur.change || (cur.change = [])
-            if (avalon.Array.ensure(list, this.update)) {
-                steps.count += 1
-            }
+            update(cur, this.update, steps, 'expr' )
         }
     },
     update: function (node, vnode, parent) {

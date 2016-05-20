@@ -1,5 +1,6 @@
 var patch = require('../strategy/patch')
-var uniqueID = 1
+var update = require('./_update')
+
 //ms-imporant ms-controller ms-for ms-widget ms-effect ms-if   ...
 avalon.directive('if', {
     priority: 6,
@@ -18,11 +19,7 @@ avalon.directive('if', {
     diff: function (cur, pre, steps) {
         cur.dom = pre.dom
         if (cur.nodeType !== pre.nodeType) {
-            var list = cur.change || (cur.change = [])
-            if (avalon.Array.ensure(list, this.update)) {
-                steps.count += 1
-                cur.steps = steps
-            }
+            update(cur, this.update, steps, 'if' )
         }
     },
     update: function (node, vnode, parent) {

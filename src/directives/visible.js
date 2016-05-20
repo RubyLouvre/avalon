@@ -1,3 +1,4 @@
+var update = require('./_update')
 
 var none = 'none'
 function parseDisplay(elem, val) {
@@ -31,10 +32,7 @@ avalon.directive('visible', {
         var c = cur.props[name] = !!cur.props[name]
         cur.displayValue = pre.displayValue
         if (c !== pre.props[name]) {
-            var list = cur.change || (cur.change = [])
-            if(avalon.Array.ensure(list, this.update)){
-                steps.count += 1
-            }
+            update(cur, this.update, steps, 'visible' )
         }
     },
     update: function (node, vnode) {
