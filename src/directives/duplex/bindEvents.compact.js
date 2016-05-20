@@ -101,8 +101,11 @@ function initControl(cur) {
                             events.DOMAutoComplete = updateModel
                         }
                     }
-                    events.compositionstart = openComposition
-                    events.compositionend = closeComposition
+                    if(!avalon.msie){
+                    //https://github.com/RubyLouvre/avalon/issues/1368#issuecomment-220503284
+                        events.compositionstart = openComposition
+                        events.compositionend = closeComposition
+                    }
 
                 }
             }

@@ -51,8 +51,11 @@ function initControl(cur) {
                 events.change = updateModel
             } else {
                 events.input = updateModel
-                events.compositionstart = openComposition
-                events.compositionend = closeComposition
+                if(!avalon.msie){
+                //https://github.com/RubyLouvre/avalon/issues/1368#issuecomment-220503284
+                    events.compositionstart = openComposition
+                    events.compositionend = closeComposition
+                }
             }
             break
     }

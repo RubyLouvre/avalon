@@ -1,4 +1,4 @@
-/*! built in 2016-5-20:14 version 2.01 by 司徒正美 */
+/*! built in 2016-5-20:15 version 2.01 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -80,6 +80,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	global.avalon = avalon
+	if(typeof window !== 'undefined'){
+	    window.avalon = avalon
+	}
 
 	avalon.init = function (el) {
 	    this[0] = this.element = el
@@ -7050,8 +7053,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                events.change = updateModel
 	            } else {
 	                events.input = updateModel
-	                events.compositionstart = openComposition
-	                events.compositionend = closeComposition
+	                if(!avalon.msie){
+	                //https://github.com/RubyLouvre/avalon/issues/1368#issuecomment-220503284
+	                    events.compositionstart = openComposition
+	                    events.compositionend = closeComposition
+	                }
 	            }
 	            break
 	    }

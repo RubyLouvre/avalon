@@ -4,6 +4,9 @@ function avalon(el) {
 }
 
 global.avalon = avalon
+if(typeof window !== 'undefined'){
+    window.avalon = avalon
+}
 
 avalon.init = function (el) {
     this[0] = this.element = el
