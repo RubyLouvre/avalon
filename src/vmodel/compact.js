@@ -73,7 +73,7 @@ function masterFactory(definition, heirloom, options) {
 
 $$midway.masterFactory = masterFactory
 var addAccessors = require('./parts/addAccessors')
-
+var empty = {}
 function slaveFactory(before, after, heirloom, options) {
     var keys = {}
     var skips = {}
@@ -85,8 +85,8 @@ function slaveFactory(before, after, heirloom, options) {
     for (key in after) {
         if ($$skipArray[key])
             continue
-        keys[key] = true
-        if (!isSkip(key, after[key], {})) {
+        keys[key] = true//包括可监控与不可监控的
+        if (!isSkip(key, after[key], empty)) {
             if (resue[key]) {
                 accessors[key] = resue[key]
             } else {
@@ -96,6 +96,7 @@ function slaveFactory(before, after, heirloom, options) {
             }
         } else {
             skips[key] = after[key]
+            delete after[key]
         }
     }
 
@@ -106,7 +107,6 @@ function slaveFactory(before, after, heirloom, options) {
 
     for (key in skips) {
         $vmodel[key] = skips[key]
-        delete after[key]
     }
 
     makeObserver($vmodel, heirloom, keys, accessors, options)
@@ -115,7 +115,7 @@ function slaveFactory(before, after, heirloom, options) {
 }
 
 $$midway.slaveFactory = slaveFactory
-var empty = {}
+
 function mediatorFactory(before, after) {
     var keys = {}, key
     var accessors = {}

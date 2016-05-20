@@ -57,6 +57,8 @@ avalon.directive('class', {
         }
     },
     update: function (node, vnode) {
+        if(!node || node.nodeType !==1)
+            return
         var classEvent = vnode.classEvent
         if (classEvent) {
             for (var i in classEvent) {
@@ -75,7 +77,7 @@ avalon.directive('class', {
             if (value === void 0)
                 return
             if (type === 'class') {
-                setClass(node, vnode)
+                node && setClass(node, vnode)
             } else {
                 var oldType = node.getAttribute('change-'+type)
                 if (oldType) {

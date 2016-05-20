@@ -71,6 +71,7 @@ function masterFactory(definition, heirloom, options) {
 }
 $$midway.masterFactory = masterFactory
 
+var empty = {}
 function slaveFactory(before, after, heirloom, options) {
     var keys = {}
     var accessors = {}
@@ -81,7 +82,7 @@ function slaveFactory(before, after, heirloom, options) {
         if ($$skipArray[key])
             continue
         keys[key] = after[key]
-        if (!isSkip(key, after[key], {})) {
+        if (!isSkip(key, after[key], empty)) {
             var accessor = Object.getOwnPropertyDescriptor(before, key)
             if (accessor && accessor.get) {
                 accessors[key] = accessor
@@ -113,7 +114,7 @@ function slaveFactory(before, after, heirloom, options) {
 }
 
 $$midway.slaveFactory = slaveFactory
-var empty = {}
+
 function mediatorFactory(before, after) {
     var keys = {}
     var accessors = {}
