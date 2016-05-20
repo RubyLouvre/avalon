@@ -19,6 +19,7 @@ avalon.directive('if', {
     diff: function (cur, pre, steps) {
         cur.dom = pre.dom
         if (cur.nodeType !== pre.nodeType) {
+            cur.steps = steps
             update(cur, this.update, steps, 'if' )
         }
     },

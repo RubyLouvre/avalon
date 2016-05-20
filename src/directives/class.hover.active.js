@@ -1,6 +1,7 @@
 //根据VM的属性值或表达式的值切换类名，ms-class='xxx yyy zzz:flag'
 //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
 var markID = require('../seed/lang.share').getLongID
+var update = require('./_update')
 
 var directives = avalon.directives
 avalon.directive('class', {
@@ -48,15 +49,13 @@ avalon.directive('class', {
             return
         }
         className = cur.props[name] = className.trim().replace(/\s+/, ' ')
-        if (!preValue || preValue !== className) {
+        if (preValue !== className) {
             cur['change-' + type] = className
-            var list = cur.change || (cur.change = [])
-            if (avalon.Array.ensure(list, this.update)) {
-                steps.count += 1
-            }
+            update(cur, this.update, steps, type )
         }
     },
     update: function (node, vnode) {
+   
         if(!node || node.nodeType !==1)
             return
         var classEvent = vnode.classEvent
