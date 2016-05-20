@@ -81,7 +81,7 @@ var dir = avalon.directive('widget', {
     addDisposeMonitor: function (dom) {
         if (window.chrome && window.MutationEvent) {
             disposeDetectStrategy.byMutationEvent(dom)
-        } else if (Object.defineProperty && window.Node) {
+        } else if (avalon.modern && typeof window.Node === 'function') {
             disposeDetectStrategy.byRewritePrototype(dom)
         } else {
             disposeDetectStrategy.byPolling(dom)

@@ -6,6 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../dist/avalon.test.js"></script>
         <script>
+            document.createElement('ms-button')
             /*
              <ms-button>这是标签里面的TEXT</ms-button>
              <ms-button ms-widget='{buttonText:"这是属性中的TEXT"}'></ms-button>
@@ -16,6 +17,7 @@
             btn: '这是VM中的TEXT',
             dispose: function(e){
               var el =  e.target
+              console.log(el.parentNode.parentNode.nodeName)
               el.parentNode.parentNode.innerHTML = ""
             }
         })
@@ -27,7 +29,7 @@
               <ms-button>这是标签里面的TEXT</ms-button>
              <ms-button ms-widget='{buttonText:"这是属性中的TEXT"}'></ms-button>
              <ms-button></ms-button>
-             <p><button type ms-click='@dispose'>dispose</button></p>
+             <p><button type="button" ms-click='@dispose'>dispose</button></p>
         </div>
 </body>
 </html>

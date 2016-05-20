@@ -1,4 +1,4 @@
-/*! built in 2016-5-20:22 version 2.02 by 司徒正美 */
+/*! built in 2016-5-21:2 version 2.02 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -71,7 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 104:
 /***/ function(module, exports, __webpack_require__) {
 
-	/*! built in 2016-5-20:22 version 2.02 by 司徒正美 */
+	/*! built in 2016-5-21:2 version 2.02 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -6249,7 +6249,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    addDisposeMonitor: function (dom) {
 		        if (window.chrome && window.MutationEvent) {
 		            disposeDetectStrategy.byMutationEvent(dom)
-		        } else if (Object.defineProperty && window.Node) {
+		        } else if (avalon.modern && typeof window.Node === 'function') {
 		            disposeDetectStrategy.byRewritePrototype(dom)
 		        } else {
 		            disposeDetectStrategy.byPolling(dom)
@@ -6327,67 +6327,72 @@ return /******/ (function(modules) { // webpackBootstrap
 		    }
 
 		    byRewritePrototype.execute = true
-		    var p = Element.prototype
-		    var _removeChild = p.removeChild
-		    p.removeChild = function (a, b) {
-		        _removeChild.call(this, a, b)
+		    var p = Node.prototype
+		    function rewite(name, fn) {
+		        var cb = p[name]
+		        p[name] = function (a, b) {
+		            return  fn.call(this, cb, a, b)
+		        }
+		    }
+		    rewite('removeChild', function (fn, a, b) {
+		        fn.call(this, a, b)
 		        if (a.nodeType === 1) {
 		            setTimeout(function () {
 		                fireDisposeHook(a)
 		            })
 		        }
 		        return a
-		    }
-		    var _replaceChild = p.replaceChild
-		    p.replaceChild = function (a, b) {
-		        _replaceChild.call(this, a, b)
+		    })
+
+		    rewite('replaceChild', function (fn, a, b) {
+		        fn.call(this, a, b)
 		        if (a.nodeType === 1) {
 		            setTimeout(function () {
 		                fireDisposeHook(a)
 		            })
 		        }
 		        return a
-		    }
-		    var _innerHTML = p.innerHTML
-		    p.innerHTML = function (html) {
+		    })
+
+		    rewite('innerHTML', function (fn, html) {
 		        var all = this.getElementsByTagName('*')
-		        _innerHTML.call(this, html)
+		        fn.call(this, html)
 		        fireDisposedComponents(all)
-		    }
-		    var _appendChild = p.appendChild
-		    p.appendChild = function (a) {
-		        _appendChild.call(this, a)
+		    })
+
+		    rewite('appendChild', function (fn, a) {
+		        fn.call(this, a)
 		        if (a.nodeType === 1 && this.nodeType === 11) {
 		            setTimeout(function () {
 		                fireDisposeHook(a)
 		            })
 		        }
 		        return a
-		    }
-		    var _insertBefore = p.insertBefore
-		    p.insertBefore = function (a) {
-		        _insertBefore.call(this, a)
+		    })
+
+		    rewite('insertBefore', function (fn, a) {
+		        fn.call(this, a)
 		        if (a.nodeType === 1 && this.nodeType === 11) {
 		            setTimeout(function () {
 		                fireDisposeHook(a)
 		            })
 		        }
 		        return a
-		    }
+		    })
 		}
 
-
-		//用于IE6,7
+		//用于IE6~8
 		var checkDisposeNodes = []
 		var checkID = 0
 		function byPolling(dom) {
 		    avalon.Array.ensure(checkDisposeNodes, dom)
 		    if (!checkID) {
 		        checkID = setInterval(function () {
-		            for (var i = 0, el; el = checkDisposeNodes[i++]; ) {
+		            for (var i = 0, el; el = checkDisposeNodes[i]; ) {
 		                if (false === fireDisposeHook(el)) {
 		                    avalon.Array.removeAt(checkDisposeNodes, i)
-		                    --i
+		                } else {
+		                    i++
 		                }
 		            }
 		            if (checkDisposeNodes.length == 0) {
@@ -6411,7 +6416,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        var wid = el.getAttribute('wid')
 		        var docker = avalon.resolvedComponents[ wid ]
 		        var vm = docker.vmodel
-		        var cached = !!docker.cached 
+		        var cached = !!docker.cached
 		        docker.vmodel.$fire("onDispose", {
 		            type: 'dispose',
 		            target: el,
@@ -8595,7 +8600,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 107:
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
+	module.exports = "<ms-panel>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</ms-panel>"
 
 /***/ }
 

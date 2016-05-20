@@ -30,57 +30,61 @@ function byRewritePrototype() {
     }
 
     byRewritePrototype.execute = true
-    var p = Element.prototype
-    var _removeChild = p.removeChild
-    p.removeChild = function (a, b) {
-        _removeChild.call(this, a, b)
+    var p = Node.prototype
+    function rewite(name, fn) {
+        var cb = p[name]
+        p[name] = function (a, b) {
+            return  fn.call(this, cb, a, b)
+        }
+    }
+    rewite('removeChild', function (fn, a, b) {
+        fn.call(this, a, b)
         if (a.nodeType === 1) {
             setTimeout(function () {
                 fireDisposeHook(a)
             })
         }
         return a
-    }
-    var _replaceChild = p.replaceChild
-    p.replaceChild = function (a, b) {
-        _replaceChild.call(this, a, b)
+    })
+
+    rewite('replaceChild', function (fn, a, b) {
+        fn.call(this, a, b)
         if (a.nodeType === 1) {
             setTimeout(function () {
                 fireDisposeHook(a)
             })
         }
         return a
-    }
-    var _innerHTML = p.innerHTML
-    p.innerHTML = function (html) {
+    })
+
+    rewite('innerHTML', function (fn, html) {
         var all = this.getElementsByTagName('*')
-        _innerHTML.call(this, html)
+        fn.call(this, html)
         fireDisposedComponents(all)
-    }
-    var _appendChild = p.appendChild
-    p.appendChild = function (a) {
-        _appendChild.call(this, a)
+    })
+
+    rewite('appendChild', function (fn, a) {
+        fn.call(this, a)
         if (a.nodeType === 1 && this.nodeType === 11) {
             setTimeout(function () {
                 fireDisposeHook(a)
             })
         }
         return a
-    }
-    var _insertBefore = p.insertBefore
-    p.insertBefore = function (a) {
-        _insertBefore.call(this, a)
+    })
+
+    rewite('insertBefore', function (fn, a) {
+        fn.call(this, a)
         if (a.nodeType === 1 && this.nodeType === 11) {
             setTimeout(function () {
                 fireDisposeHook(a)
             })
         }
         return a
-    }
+    })
 }
 
-
-//用于IE6,7
+//用于IE6~8
 var checkDisposeNodes = []
 var checkID = 0
 function byPolling(dom) {
@@ -88,11 +92,11 @@ function byPolling(dom) {
     if (!checkID) {
         checkID = setInterval(function () {
             for (var i = 0, el; el = checkDisposeNodes[i]; ) {
-              if (false === fireDisposeHook(el)) {
-                avalon.Array.removeAt(checkDisposeNodes, i)
-              }else{
-                i++
-              }
+                if (false === fireDisposeHook(el)) {
+                    avalon.Array.removeAt(checkDisposeNodes, i)
+                } else {
+                    i++
+                }
             }
             if (checkDisposeNodes.length == 0) {
                 clearInterval(checkID)
