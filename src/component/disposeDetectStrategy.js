@@ -30,7 +30,7 @@ function byRewritePrototype() {
     }
 
     byRewritePrototype.execute = true
-    var p = Node.prototype
+    var p = Element.prototype
     var _removeChild = p.removeChild
     p.removeChild = function (a, b) {
         _removeChild.call(this, a, b)

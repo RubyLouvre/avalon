@@ -4,24 +4,30 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../dist/avalon.js"></script>
+        <script src="../dist/avalon.test.js"></script>
         <script>
-      avalon.component('ms-button', {
-          template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
-          defaults: {
-              buttonText: "button"//指定插入点的默认值
-          },
-          soleSlot: 'buttonText'//指定插入点的名字
-      })
-      avalon.define({
-          $id:'test',
-          aaa: "按钮"
-      })
+            /*
+             <ms-button>这是标签里面的TEXT</ms-button>
+             <ms-button ms-widget='{buttonText:"这是属性中的TEXT"}'></ms-button>
+             <ms-button></ms-button>
+             */
+           vm = avalon.define({
+            $id: 'widget0',
+            btn: '这是VM中的TEXT',
+            dispose: function(e){
+              var el =  e.target
+              el.parentNode.parentNode.innerHTML = ""
+            }
+        })
       </script>
 </head>
 <body>
-    <div ms-controller='test'>
-        <ms-button>{{@aaa}}</ms-button>
-    </div>
+        <div ms-controller='widget0' >
+             <xmp ms-widget="{is:'ms-button'}">{{@btn}}</xmp>
+              <ms-button>这是标签里面的TEXT</ms-button>
+             <ms-button ms-widget='{buttonText:"这是属性中的TEXT"}'></ms-button>
+             <ms-button></ms-button>
+             <p><button type ms-click='@dispose'>dispose</button></p>
+        </div>
 </body>
 </html>

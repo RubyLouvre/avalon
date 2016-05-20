@@ -39,7 +39,6 @@ avalon.directive('controller', {
     },
     diff: function (cur, pre, steps, name) {
         if (pre.props[name] !== cur.props[name]) {
-            console.log('controller',steps)
             update(cur, this.update, steps, 'controller' )
         }
     },
