@@ -2,6 +2,7 @@ var markID = require('../seed/lang.share').getLongID
 var Cache = require('../seed/cache')
 var eventCache = new Cache(128)
 var quote = avalon.quote
+var update = require('./_update')
 
 //Ref: http://developers.whatwg.org/webappapis.html#event-handler-idl-attributes
 // The assumption is that future DOM event attribute names will begin with
@@ -41,7 +42,7 @@ avalon.directive('on', {
       
         var fn0 = cur.props[name]
         var fn1 = (pre.props || {})[name]
-        if ( fn0 !== fn1  ) {
+        if ( fn0 +''!== fn1+''  ) {
             var match = name.match(revent)
             var type = match[1]
             var search = type + ':' + markID(fn0)
@@ -52,11 +53,7 @@ avalon.directive('on', {
                 cur.removeEvents = cur.removeEvents || {}
                 cur.removeEvents[type + ':' + fn1.uuid] = fn1
             }
-
-            var list = cur.change || (cur.change = [])
-            if(avalon.Array.ensure(list, this.update)){
-                steps.count += 1
-            }
+            update(cur, this.update, steps, 'on' )
             
         }
     },
