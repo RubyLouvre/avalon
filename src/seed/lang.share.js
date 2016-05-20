@@ -27,7 +27,7 @@ avalon.shadowCopy(avalon, {
             return a === 'true'
         }
     },
-    version: "2.01",
+    version: "2.02",
     slice: function (nodes, start, end) {
         return _slice.call(nodes, start, end)
     },

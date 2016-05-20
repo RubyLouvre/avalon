@@ -1,4 +1,4 @@
-/*! built in 2016-5-20:16 version 2.01 by 司徒正美 */
+/*! built in 2016-5-20:16 version 2.02 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -218,7 +218,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return a === 'true'
 	        }
 	    },
-	    version: "2.01",
+	    version: "2.02",
 	    slice: function (nodes, start, end) {
 	        return _slice.call(nodes, start, end)
 	    },
