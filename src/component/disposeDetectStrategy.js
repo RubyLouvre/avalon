@@ -102,7 +102,7 @@ function byPolling(dom) {
                 clearInterval(checkID)
                 checkID = 0
             }
-        }, 1000)
+        }, 700)
     }
 }
 
