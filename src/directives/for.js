@@ -5,14 +5,20 @@ var rforRight = /\s*\)\s*$/
 var rforSplit = /\s*,\s*/
 var rforAs = /\s+as\s+([$\w]+)/
 var rident = require('../seed/regexp').ident
+var update = require('./_update')
+
 var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
+function getTrackKey(item){
+     var type = typeof item
+     return item && type === 'object' ? item.$hashcode : type + item
+}
+
 avalon._each = function (obj, fn) {
     if (Array.isArray(obj)) {
         for (var i = 0; i < obj.length; i++) {
             var item = obj[i]
-            var type = typeof item
-            var key = item && type === 'object' ? item.$hashcode : type + item
-            fn(i, obj[i], key)
+            var key = getTrackKey(item)
+            fn(i, item, key)
         }
     } else {
         for (var i in obj) {
@@ -22,7 +28,36 @@ avalon._each = function (obj, fn) {
         }
     }
 }
-var map = {}
+var loopMap = {}
+function getLoopValue(object){
+    if(Array.isArray(object)){
+        return object.length+"|"+object.map(getTrackKey).join(';;')
+    }else{
+        var size = 0
+        var arr = []
+        for(var i in object){
+            if(object.hasOwnProperty(i)){
+                size++
+                arr.push(i)
+            }
+        }
+        return size+"|"+arr.join(';;')
+    }
+}
+
+avalon._checkLoopChange = function(key, obj){
+    var cur = getLoopValue(obj)
+    if(!(key in loopMap)){
+       loopMap[key] = cur
+       return true
+    }
+    if(cur !== loopMap[key]){
+         loopMap[key] = cur
+         return true
+    }
+    return false
+}
+
 avalon.directive('for', {
     priority: 3,
     parse: function (el, num) {
@@ -35,15 +70,18 @@ avalon.directive('for', {
             }
             return ''
         })
+
         var arr = str.replace(rforPrefix, '').split(' in ')
         var assign = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
+        var isChange = el.signature+'.hasChange = avalon._checkLoopChange("'+el.signature+'", loop' + num + ')\n'
+
         var alias = aliasAs ? 'var ' + aliasAs + ' = loop' + num + '\n' : ''
         var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
         if (kv.length === 1) {//确保avalon._each的回调有三个参数
             kv.unshift('$key')
         }
         //分别创建isArray, ____n, ___i, ___v, ___trackKey变量
-        return assign + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n'
+        return assign +isChange+ alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n'
 
     },
     diff: function (current, previous, steps, __index__) {
@@ -127,10 +165,8 @@ avalon.directive('for', {
         pre.components.length = 0 //release memory
         delete pre.cache
         if (isChange) {
-            var list = cur.change || (cur.change = [])
-            avalon.Array.ensure(list, this.update)
             cur.steps = steps
-            steps.count += 1
+            update(cur, this.update, steps, 'for')
         }
 
         return __index__ + nodes.length - 1
