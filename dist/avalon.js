@@ -1,4 +1,4 @@
-/*! built in 2016-5-21:12 version 2.02 by 司徒正美 */
+/*! built in 2016-5-21:19 version 2.02 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -64,7 +64,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(35)
 	__webpack_require__(71)
 	__webpack_require__(75)
-	__webpack_require__(76)
+	__webpack_require__(77)
 
 	module.exports = avalon
 
@@ -2259,7 +2259,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 	function getWindow(node) {
-	    return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView || node.parentWindow : false;
+	    return node.window || node.defaultView || node.parentWindow || false
 	}
 
 /***/ },
@@ -2790,11 +2790,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (rneedSmooth.test(type)) {
 	                    var curr = +new Date()
 	                    if (curr - last > 16) {
-	                        fn.call(vm || elem, event)
+	                        var ret = fn.call(vm || elem, event)
 	                        last = curr
 	                    }
 	                } else {
-	                    fn.call(vm || elem, event)
+	                   ret = fn.call(vm || elem, event)
+	                }
+	                if(ret === false){
+	                    event.preventDefault()
+	                    event.stopPropagation()
 	                }
 	            }
 	        }
@@ -3528,7 +3532,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return '__vmodel__.'+b+".call(__vmodel__"+ (/\S/.test(c) ? ','+c: "")+")"
 	            })
 	        }
-	        ret = ['function self($event){',
+	        ret = ['function ms_on($event){',
 	            'try{',
 	            '\tvar __vmodel__ = this;',
 	            '\t' + body,
@@ -7274,6 +7278,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var VText = __webpack_require__(16)
 	var parseView = __webpack_require__(37)
 	var resolvedComponents = avalon.resolvedComponents
+	var skipArray = __webpack_require__(76)
+
 	var componentContainers = {wbr: 1, xmp: 1, template: 1}
 	var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose')
 
@@ -7367,6 +7373,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    delete b[k]
 	                }
 	            }, defineArgs)
+	            if(!avalon.modern){//增强对IE的兼容
+	                for(var i in vmodel){
+	                    if(skipArray[i] && typeof vmodel[i] === 'function'){
+	                       vmodel[i] = vmodel[i].bind(vmodel)
+	                    }
+	                }
+	            }
 	            vmodel.$id = $id
 	            vmodel.$element = topVm.$element
 	            avalon.vmodels[$id] = vmodel
@@ -7559,6 +7572,22 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 76 */
+/***/ function(module, exports) {
+
+	/**
+	 * 
+	$$skipArray:是系统级通用的不可监听属性
+	$skipArray: 是当前对象特有的不可监听属性
+
+	 不同点是
+	 $$skipArray被hasOwnProperty后返回false
+	 $skipArray被hasOwnProperty后返回true
+	 */
+
+	module.exports = avalon.oneObject('$id,$render,$track,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,__proxy__,__data__,__const__')
+
+/***/ },
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -7568,7 +7597,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * ------------------------------------------------------------
 	 */
 
-	var share = __webpack_require__(77)
+	var share = __webpack_require__(78)
 
 	var isSkip = share.isSkip
 	var toJson = share.toJson
@@ -7854,10 +7883,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	//使用这个AJAX库 https://github.com/matthew-andrews/isomorphic-fetch
 
 /***/ },
-/* 77 */
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var share = __webpack_require__(78)
+	var share = __webpack_require__(79)
 	var canHideProperty = __webpack_require__(81)
 	var makeFire = share.makeFire
 	function toJson(val) {
@@ -7947,12 +7976,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 78 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var $$midway = {}
-	var $$skipArray = __webpack_require__(79)
+	var $$skipArray = __webpack_require__(76)
 	var dispatch = __webpack_require__(80)
 	var $emit = dispatch.$emit
 	var $watch = dispatch.$watch
@@ -8219,22 +8248,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 79 */
-/***/ function(module, exports) {
-
-	/**
-	 * 
-	$$skipArray:是系统级通用的不可监听属性
-	$skipArray: 是当前对象特有的不可监听属性
-
-	 不同点是
-	 $$skipArray被hasOwnProperty后返回false
-	 $skipArray被hasOwnProperty后返回true
-	 */
-
-	module.exports = avalon.oneObject('$id,$render,$track,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,__proxy__,__data__,__const__')
-
-/***/ },
 /* 80 */
 /***/ function(module, exports) {
 
@@ -8359,7 +8372,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	var canHideProperty = __webpack_require__(81)
-	var $$skipArray = __webpack_require__(79)
+	var $$skipArray = __webpack_require__(76)
 
 
 	var defineProperties = Object.defineProperties

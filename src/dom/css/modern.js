@@ -241,5 +241,5 @@ avalon.each({
 })
 
 function getWindow(node) {
-    return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView : false
+    return node.window || node.defaultView || false
 }

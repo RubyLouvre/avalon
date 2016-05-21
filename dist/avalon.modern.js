@@ -1,4 +1,4 @@
-/*! built in 2016-5-21:12 version 2.02 by 司徒正美 */
+/*! built in 2016-5-21:19 version 2.02 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -62,8 +62,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(85)
 	__webpack_require__(94)
 	__webpack_require__(71)
-	__webpack_require__(75)
-	__webpack_require__(101)
+	__webpack_require__(103)
+	__webpack_require__(104)
 
 	module.exports = avalon
 
@@ -1754,7 +1754,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return '__vmodel__.'+b+".call(__vmodel__"+ (/\S/.test(c) ? ','+c: "")+")"
 	            })
 	        }
-	        ret = ['function self($event){',
+	        ret = ['function ms_on($event){',
 	            'try{',
 	            '\tvar __vmodel__ = this;',
 	            '\t' + body,
@@ -3739,284 +3739,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 67 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var disposeDetectStrategy = __webpack_require__(68)
-	var patch = __webpack_require__(65)
-	var update = __webpack_require__(43)
-
-	//插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
-	var dir = avalon.directive('widget', {
-	    priority: 4,
-	    parse: function (binding, num, elem) {
-	        var isVoidTag = !!elem.isVoidTag
-	        elem.isVoidTag = true
-	        var wid = elem.props.wid || (elem.props.wid = avalon.makeHashCode('w'))
-	        avalon.resolvedComponents[wid] = {
-	            props: avalon.shadowCopy({}, elem.props),
-	            template: elem.template
-	        }
-	        var ret = [
-	            'vnode' + num + '._isVoidTag = ' + isVoidTag,
-	            'vnode' + num + '.props.wid = "' + wid + '"',
-	            'vnode' + num + '.template = ' + avalon.quote(elem.template),
-	            'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget'),
-	            'vnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)',
-	            'if(typeof vnode' + num + '.render === "string"){',
-	            'avalon.__widget = [];',
-	            'var __backup__ = __vmodel__;',
-	            '__vmodel__ = vnode' + num + '.vmodel;',
-	            'try{eval(" new function(){"+ vnode' + num + '.render +"}");',
-	            '}catch(e){avalon.warn(e)', '}',
-	            'vnode' + num + ' = avalon.renderComponent(avalon.__widget[0])', '}',
-	            '__vmodel__ = __backup__;']
-	        return ret.join('\n') + '\n'
-	    },
-	    define: function () {
-	        return avalon.mediatorFactory.apply(this, arguments)
-	    },
-	    diff: function (cur, pre, steps) {
-	        var coms = avalon.resolvedComponents
-	        var wid = cur.props.wid
-	        var docker = coms[wid]
-	        if (!docker || !docker.renderCount) {
-	            steps.count += 1
-	            cur.change = [this.replaceByComment]
-	        } else if (docker.renderCount && docker.renderCount < 2) {
-	            cur.steps = steps
-	            update(cur, this.replaceByComponent, steps, 'widget' )
-
-	            function fireReady(dom, vnode) {
-	                cur.vmodel.$fire('onReady', {
-	                    type: 'ready',
-	                    target: dom,
-	                    wid: wid,
-	                    vmodel: vnode.vmodel
-	                })
-	                docker.renderCount = 2
-	            }
-	            update(cur, fireReady, steps, 'widget', 'afterChange' )
-
-	        } else {
-	            var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
-	            cur.skipContent = !needUpdate
-	            var viewChangeObservers = cur.vmodel.$events.onViewChange
-	            if (viewChangeObservers && viewChangeObservers.length) {
-	                steps.count += 1
-	                cur.afterChange = [function (dom, vnode) {
-	                        var preHTML = pre.outerHTML
-	                        var curHTML = cur.outerHTML || 
-	                                (cur.outerHTML = avalon.vdomAdaptor(cur, 'toHTML'))
-	                        if (preHTML !== curHTML) {
-	                            cur.vmodel.$fire('onViewChange', {
-	                                type: 'viewchange',
-	                                target: dom,
-	                                wid: wid,
-	                                vmodel: vnode.vmodel
-	                            })
-	                        }
-	                        docker.renderCount++
-	                    }]
-	            }
-
-	        }
-	    },
-	    addDisposeMonitor: function (dom) {
-	        if (window.chrome && window.MutationEvent) {
-	            disposeDetectStrategy.byMutationEvent(dom)
-	        } else if (avalon.modern && typeof window.Node === 'function') {
-	            disposeDetectStrategy.byRewritePrototype(dom)
-	        } else {
-	            disposeDetectStrategy.byPolling(dom)
-	        }
-	    },
-	    replaceByComment: function (dom, node, parent) {
-	        var comment = document.createComment(node.nodeValue)
-	        if (dom) {
-	            parent.replaceChild(comment, dom)
-	        } else {
-	            parent.appendChild(comment)
-	        }
-	    },
-	    replaceByComponent: function (dom, node, parent) {
-	        var hasDdash = node.type.indexOf('-') > 0
-	        var hasDetect = false
-	        if (hasDdash && document.registerElement) {
-	            //必须在自定义标签实例化时,注册它
-	            disposeDetectStrategy.byCustomElement(node.type)
-	            hasDetect = true
-	        }
-	        var com = avalon.vdomAdaptor(node, 'toDOM')
-	        node.ouerHTML = avalon.vdomAdaptor(node, 'toHTML')
-	        if (dom) {
-	            parent.replaceChild(com, dom)
-	        } else {
-	            parent.appendChild(com)
-	        }
-	        patch([com], [node], parent, node.steps)
-	        if (!hasDetect) {
-	            dir.addDisposeMonitor(com)
-	        }
-	        return false
-	    }
-	})
-
-
-
-
-	// http://www.besteric.com/2014/11/16/build-blog-mirror-site-on-gitcafe/
-
-/***/ },
-/* 68 */
-/***/ function(module, exports) {
-
-	//用于chrome, safari
-	var tags = {}
-	function byCustomElement(name) {
-	    if (tags[name])
-	        return
-	    tags[name] = true
-	    var prototype = Object.create(HTMLElement.prototype)
-	    prototype.detachedCallback = function () {
-	        var dom = this
-	        setTimeout(function () {
-	            fireDisposeHook(dom)
-	        })
-	    }
-	    document.registerElement(name, prototype)
-	}
-
-	//http://stackoverflow.com/questions/11425209/are-dom-mutation-observers-slower-than-dom-mutation-events
-	//http://stackoverflow.com/questions/31798816/simple-mutationobserver-version-of-domnoderemovedfromdocument
-	function byMutationEvent(dom) {
-	    dom.addEventListener("DOMNodeRemovedFromDocument", function () {
-	        setTimeout(function () {
-	            fireDisposeHook(dom)
-	        })
-	    })
-	}
-	//用于IE8+, firefox
-	function byRewritePrototype() {
-	    if (byRewritePrototype.execute) {
-	        return
-	    }
-	//https://www.web-tinker.com/article/20618.html?utm_source=tuicool&utm_medium=referral
-	//IE6-8虽然暴露了Element.prototype,但无法重写已有的DOM API
-	    byRewritePrototype.execute = true
-	    var p = Node.prototype
-	    function rewite(name, fn) {
-	        var cb = p[name]
-	        p[name] = function (a, b) {
-	            return  fn.call(this, cb, a, b)
-	        }
-	    }
-	    rewite('removeChild', function (fn, a, b) {
-	        fn.call(this, a, b)
-	        if (a.nodeType === 1) {
-	            setTimeout(function () {
-	                fireDisposeHook(a)
-	            })
-	        }
-	        return a
-	    })
-
-	    rewite('replaceChild', function (fn, a, b) {
-	        fn.call(this, a, b)
-	        if (a.nodeType === 1) {
-	            setTimeout(function () {
-	                fireDisposeHook(a)
-	            })
-	        }
-	        return a
-	    })
-
-	    rewite('innerHTML', function (fn, html) {
-	        var all = this.getElementsByTagName('*')
-	        fn.call(this, html)
-	        fireDisposedComponents(all)
-	    })
-
-	    rewite('appendChild', function (fn, a) {
-	        fn.call(this, a)
-	        if (a.nodeType === 1 && this.nodeType === 11) {
-	            setTimeout(function () {
-	                fireDisposeHook(a)
-	            })
-	        }
-	        return a
-	    })
-
-	    rewite('insertBefore', function (fn, a) {
-	        fn.call(this, a)
-	        if (a.nodeType === 1 && this.nodeType === 11) {
-	            setTimeout(function () {
-	                fireDisposeHook(a)
-	            })
-	        }
-	        return a
-	    })
-	}
-
-	//用于IE6~8
-	var checkDisposeNodes = []
-	var checkID = 0
-	function byPolling(dom) {
-	    avalon.Array.ensure(checkDisposeNodes, dom)
-	    if (!checkID) {
-	        checkID = setInterval(function () {
-	            for (var i = 0, el; el = checkDisposeNodes[i]; ) {
-	                if (false === fireDisposeHook(el)) {
-	                    avalon.Array.removeAt(checkDisposeNodes, i)
-	                } else {
-	                    i++
-	                }
-	            }
-	            if (checkDisposeNodes.length == 0) {
-	                clearInterval(checkID)
-	                checkID = 0
-	            }
-	        }, 700)
-	    }
-	}
-
-
-	module.exports = {
-	    byPolling: byPolling,
-	    byMutationEvent: byMutationEvent,
-	    byCustomElement: byCustomElement,
-	    byRewritePrototype: byRewritePrototype
-	}
-
-	function fireDisposeHook(el) {
-	    if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
-	        var wid = el.getAttribute('wid')
-	        var docker = avalon.resolvedComponents[ wid ]
-	        var vm = docker.vmodel
-	        var cached = !!docker.cached
-	        docker.vmodel.$fire("onDispose", {
-	            type: 'dispose',
-	            target: el,
-	            vmodel: vm,
-	            cached: cached
-	        })
-	        if (docker && docker.vmodel && !cached) {
-	            vm.$element = null
-	            vm.$hashcode = false
-	            delete docker.vmodel
-	            delete avalon.resolvedComponents[ wid ]
-	        }
-	        return false
-	    }
-	}
-
-	function fireDisposedComponents(nodes) {
-	    for (var i = 0, el; el = nodes[i++]; ) {
-	        fireDisposeHook(el)
-	    }
-	}
-
-/***/ },
+/* 67 */,
+/* 68 */,
 /* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -4916,305 +4640,31 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 75 */
-/***/ function(module, exports, __webpack_require__) {
+/* 75 */,
+/* 76 */
+/***/ function(module, exports) {
 
-	
-	var VText = __webpack_require__(16)
-	var parseView = __webpack_require__(37)
-	var resolvedComponents = avalon.resolvedComponents
-	var componentContainers = {wbr: 1, xmp: 1, template: 1}
-	var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose')
+	/**
+	 * 
+	$$skipArray:是系统级通用的不可监听属性
+	$skipArray: 是当前对象特有的不可监听属性
 
-	var needDel = avalon.mix({
-	    is: 1,
-	    diff: 1,
-	    define: 1,
-	    cached: 1
-	}, componentEvents)
-	avalon.document.createElement('slot')
+	 不同点是
+	 $$skipArray被hasOwnProperty后返回false
+	 $skipArray被hasOwnProperty后返回true
+	 */
 
-	avalon.component = function (name, definition) {
-	    //这是定义组件的分支,并将列队中的同类型对象移除
-	    if (typeof name === 'string') {
-	        if (!avalon.components[name]) {
-	            avalon.components[name] = definition
-	        }//这里没有返回值
-	    } else {
-
-	        var root = name //root为页面上节点对应的虚拟DOM
-	        var topVm = definition
-	        var wid = root.props.wid
-	        //处理ms-widget的参数
-	        var finalOptions = {}
-	        var options = root.props['ms-widget'] || {}
-	        options = Array.isArray(options) ? options : [options]
-	        options.forEach(function (option, index) {
-	            mixinHooks(finalOptions, option, index)
-	        })
-	        if (finalOptions.cached) {
-	            var cachedVm = avalon.vmodels[finalOptions.$id]
-	            if (cachedVm) {
-	                var _wid = cachedVm.$events.__wid__
-	                delete resolvedComponents[wid]
-	                wid = _wid
-	            }
-	        }
-
-	        var docker = resolvedComponents[wid]
-	        if (!docker) {
-	            resolvedComponents[wid] = root
-	            docker = root
-	        }
-	        //如果此组件的实例已经存在,那么重新渲染
-	        if (docker.render) {
-	            return docker
-	        }
-	        var componentName = root.type.indexOf('-') > 0 ?
-	                root.type : finalOptions.is
-	        var placeholder = {
-	            nodeType: 8,
-	            type: '#comment',
-	            directive: 'widget',
-	            props: {'ms-widget': wid},
-	            nodeValue: 'ms-widget placeholder'
-	        }
-	        if (!avalon.components[componentName]) {
-	            //如果组件还没有定义,那么返回一个注释节点占位
-	            return placeholder
-	        } else {
-	            //=======对用户的自定义标签进行处理===========
-	            var type = root.type
-	            //判定用户传入的标签名是否符合规格
-	            if (!componentContainers[type] && !isCustomTag(type)) {
-	                avalon.warn(type + '不合适做组件的标签')
-	            }
-	            //将用户声明组件用的自定义标签(或xmp.template)的template转换成虚拟DOM
-	            if (type === 'xmp' || type === 'template' || root.children.length === 0) {
-	                root.children = avalon.lexer(docker.template)
-	            }
-	            //对于IE6-8,需要对自定义标签进行hack
-	            definition = avalon.components[componentName]
-	            if (!avalon.modern && !definition.fixTag) {
-	                avalon.document.createElement(componentName)
-	                definition.fixTag = 1
-	            }
-
-	            //开始构建组件的vm的配置对象
-	            var diff = finalOptions.diff
-	            var define = finalOptions.define
-	            define = define || avalon.directives.widget.define
-	            var $id = finalOptions.$id || 
-	                    avalon.makeHashCode(componentName.replace(/-/g, '_'))
-
-	            var defaults = definition.defaults
-	            mixinHooks(finalOptions, defaults, false)
-	            var defineArgs = [topVm, defaults].concat(options)
-	            var vmodel = define.apply(function (a, b) {
-	                for (var k in needDel) {
-	                    delete a[k]
-	                    delete b[k]
-	                }
-	            }, defineArgs)
-	            vmodel.$id = $id
-	            vmodel.$element = topVm.$element
-	            avalon.vmodels[$id] = vmodel
-	            var finalTemplate = definition.template.trim()
-	            if (typeof definition.getTemplate === 'function') {
-	                finalTemplate = definition.getTemplate(vmodel, finalTemplate)
-	            }
-
-	            //对组件内置的template转换成虚拟DOM
-	            var vtree = avalon.lexer(finalTemplate)
-	            if (vtree.length > 1) {
-	                avalon.error('组件必须用一个元素包起来')
-	            }
-	            var componentRoot = vtree[0]
-
-	            //将用户标签中的属性合并到组件标签的属性里
-	            for (var k in docker.props) {
-	                if (k !== 'ms-widget') {
-	                    componentRoot.props[k] = docker.props[k]
-	                }
-	            }
-
-	            //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
-	            if (definition.soleSlot) {
-	                var slots = {}
-	                var slotName = definition.soleSlot
-	                slots[slotName] = /\S/.test(docker.template) ? root.children : 
-	                        new VText('{{@' + slotName + '}}')
-	                mergeTempale(vtree, slots)
-	            } else if (!root.isVoidTag) {
-	                insertSlots(vtree, root, definition.soleSlot)
-	            }
-
-	            for (k in componentEvents) {
-	                if (finalOptions[k]) {
-	                    finalOptions[k].forEach(function (fn) {
-	                        vmodel.$watch(k, fn)
-	                    })
-	                }
-	            }
-
-	            //生成组件的render
-	            var num = num || String(new Date - 0).slice(0, 6)
-	            var render = parseView(vtree, num) +
-	                    '\nreturn (avalon.__widget = vnodes' + num + ');\n'
-	            vmodel.$render = topVm.$render
-	            vmodel.$events.__wid__ = wid
-	            //触发onInit回调
-	            vmodel.$fire('onInit', {
-	                type: 'init',
-	                vmodel: vmodel,
-	                wid: wid,
-	                target: null
-	            })
-
-	            avalon.shadowCopy(docker, {
-	                diff: diff,
-	                render: render,
-	                vmodel: vmodel,
-	                cached: !!finalOptions.cached,
-	                placeholder: placeholder
-	            })
-	            return docker
-	        }
-	    }
-	}
-
-	var ralphabet = /^[a-z]+$/
-
-	function isCustomTag(type) {
-	    return type.length > 3 && type.indexOf('-') > 0 &&
-	            ralphabet.test(type.charAt(0) + type.slice(-1))
-	}
-	avalon.renderComponent = function (root) {
-	    var docker = avalon.resolvedComponents[root.props.wid]
-	    var order = root.order
-
-	    root.order = order ?
-	            'ms-widget;;' + order : 'ms-widget'
-	    if (!isComponentReady(root)) {
-	        return docker.placeholder
-	    }
-	    if (!docker.renderCount) {
-	        docker.renderCount = 1
-	    }
-	    root.props['ms-widget'] = docker.props['ms-widget']
-	    root.vmodel = docker.vmodel
-	    root.diff = docker.diff
-	    //移除skipAttrs,以便进行diff
-	    delete root.skipAttrs
-	    return root
-	}
-
-	function mixinHooks(target, option, index) {
-	    for (var k in option) {
-	        if (!option.hasOwnProperty(k))
-	            continue
-	        var v = option[k]
-	        if (componentEvents[k]) {
-	            if (k in target) {
-	                target[k].push(v)
-	            } else {
-	                target[k] = [option[k]]
-	            }
-	        } else if (isFinite(index)) {
-	            target[k] = v
-	        }
-	    }
-	}
-
-	function isComponentReady(vnode) {
-	    var isReady = true
-	    try {
-	        hasUnresolvedComponent(vnode)
-	    } catch (e) {
-	        isReady = false
-	    }
-	    return isReady
-	}
-
-	function hasUnresolvedComponent(vnode) {
-	    vnode.children.forEach(function (el) {
-	        if (el.nodeType === 8 && el.props) {
-	            if ('ms-widget' in el.props) {
-	                throw 'unresolved'
-	            }
-	        } else if (el.children) {
-	            hasUnresolvedComponent(el)
-	        }
-	    })
-	}
-
-	function insertSlots(vtree, node, soleSlot) {
-	    var slots = {}
-	    if (soleSlot) {
-	        slots[soleSlot] = node.children
-	    } else {
-	        node.children.forEach(function (el) {
-	            if (el.nodeType === 1) {
-	                var name = el.props.slot || 'default'
-	                if (slots[name]) {
-	                    slots[name].push(el)
-	                } else {
-	                    slots[name] = [el]
-	                }
-	            }
-	        })
-	    }
-	    mergeTempale(vtree, slots)
-	}
-
-	function mergeTempale(vtree, slots) {
-	    for (var i = 0, node; node = vtree[i++]; ) {
-	        if (node.nodeType === 1) {
-	            if (node.type === 'slot') {
-	                var name = node.props.name || 'default'
-	                if (slots[name]) {
-	                    var s = slots[name]
-	                    vtree.splice.apply(vtree, [i - 1, 1].concat(s))
-	                    if (s.length === 1 && s[0].nodeType === 3) {
-	                        removeEmptyText(vtree)
-	                    }
-	                }
-	            } else {
-	                mergeTempale(node.children, slots)
-	            }
-	        }
-	    }
-
-	    return vtree
-	}
-
-	function removeEmptyText(nodes) {
-	    //如果定义组件时,slot元素两旁有大片空白,且slot元素又是被一个文本节点替代时,需要合并这三个文本节点
-	    for (var i = 0, el; el = nodes[i]; i++) {
-	        if (el.skipContent === false && el.nodeType === 3) {
-	            var pre = nodes[i - 1]
-	            var next = nodes[i + 1]
-	            if (pre && pre.nodeType === 3 && !/\S/.test(pre.nodeValue)) {
-	                avalon.Array.remove(nodes, pre)
-	                --i
-	            }
-	            if (next && next.nodeType === 3 && !/\S/.test(next.nodeValue)) {
-	                avalon.Array.remove(nodes, next)
-	            }
-	        }
-	    }
-	}
-
+	module.exports = avalon.oneObject('$id,$render,$track,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,__proxy__,__data__,__const__')
 
 /***/ },
-/* 76 */,
 /* 77 */,
-/* 78 */
+/* 78 */,
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var $$midway = {}
-	var $$skipArray = __webpack_require__(79)
+	var $$skipArray = __webpack_require__(76)
 	var dispatch = __webpack_require__(80)
 	var $emit = dispatch.$emit
 	var $watch = dispatch.$watch
@@ -5479,22 +4929,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    makeAccessor: makeAccessor,
 	    modelAdaptor: modelAdaptor
 	}
-
-/***/ },
-/* 79 */
-/***/ function(module, exports) {
-
-	/**
-	 * 
-	$$skipArray:是系统级通用的不可监听属性
-	$skipArray: 是当前对象特有的不可监听属性
-
-	 不同点是
-	 $$skipArray被hasOwnProperty后返回false
-	 $skipArray被hasOwnProperty后返回true
-	 */
-
-	module.exports = avalon.oneObject('$id,$render,$track,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,__proxy__,__data__,__const__')
 
 /***/ },
 /* 80 */
@@ -6240,7 +5674,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 	function getWindow(node) {
-	    return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView : false
+	    return node.window || node.defaultView || false
 	}
 
 /***/ },
@@ -6491,7 +5925,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	var reventNames = /[^\s\?]+/g
-	var last = +new Date()
+	var last = Date.now()
 	var typeRegExp = {}
 	function collectHandlers(elem, type, handlers) {
 	    var value = elem.getAttribute('avalon-events')
@@ -6539,11 +5973,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (rneedSmooth.test(type)) {
 	                    var curr = +new Date()
 	                    if (curr - last > 16) {
-	                        fn.call(vm || elem, event)
+	                        var ret = fn.call(vm || elem, event)
 	                        last = curr
 	                    }
 	                } else {
-	                    fn.call(vm || elem, event)
+	                   ret = fn.call(vm || elem, event)
+	                }
+	                if(ret === false){
+	                    event.preventDefault()
+	                    event.stopPropagation()
 	                }
 	            }
 	        }
@@ -6755,7 +6193,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(64)
 	__webpack_require__(66)
 
-	__webpack_require__(67)
+	__webpack_require__(101)
 	__webpack_require__(69)
 
 /***/ },
@@ -7212,13 +6650,539 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 101 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var disposeDetectStrategy = __webpack_require__(102)
+	var patch = __webpack_require__(65)
+	var update = __webpack_require__(43)
+
+	//插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
+	var dir = avalon.directive('widget', {
+	    priority: 4,
+	    parse: function (binding, num, elem) {
+	        var isVoidTag = !!elem.isVoidTag
+	        elem.isVoidTag = true
+	        var wid = elem.props.wid || (elem.props.wid = avalon.makeHashCode('w'))
+	        avalon.resolvedComponents[wid] = {
+	            props: avalon.shadowCopy({}, elem.props),
+	            template: elem.template
+	        }
+	        var ret = [
+	            'vnode' + num + '._isVoidTag = ' + isVoidTag,
+	            'vnode' + num + '.props.wid = "' + wid + '"',
+	            'vnode' + num + '.template = ' + avalon.quote(elem.template),
+	            'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget'),
+	            'vnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)',
+	            'if(typeof vnode' + num + '.render === "string"){',
+	            'avalon.__widget = [];',
+	            'var __backup__ = __vmodel__;',
+	            '__vmodel__ = vnode' + num + '.vmodel;',
+	            'try{eval(" new function(){"+ vnode' + num + '.render +"}");',
+	            '}catch(e){avalon.warn(e)', '}',
+	            'vnode' + num + ' = avalon.renderComponent(avalon.__widget[0])', '}',
+	            '__vmodel__ = __backup__;']
+	        return ret.join('\n') + '\n'
+	    },
+	    define: function () {
+	        return avalon.mediatorFactory.apply(this, arguments)
+	    },
+	    diff: function (cur, pre, steps) {
+	        var coms = avalon.resolvedComponents
+	        var wid = cur.props.wid
+	        var docker = coms[wid]
+	        if (!docker || !docker.renderCount) {
+	            steps.count += 1
+	            cur.change = [this.replaceByComment]
+	        } else if (docker.renderCount && docker.renderCount < 2) {
+	            cur.steps = steps
+	            update(cur, this.replaceByComponent, steps, 'widget')
+
+	            function fireReady(dom, vnode) {
+	                cur.vmodel.$fire('onReady', {
+	                    type: 'ready',
+	                    target: dom,
+	                    wid: wid,
+	                    vmodel: vnode.vmodel
+	                })
+	                docker.renderCount = 2
+	            }
+	            update(cur, fireReady, steps, 'widget', 'afterChange')
+
+	        } else {
+	            var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
+	            cur.skipContent = !needUpdate
+	            var viewChangeObservers = cur.vmodel.$events.onViewChange
+	            if (viewChangeObservers && viewChangeObservers.length) {
+	                steps.count += 1
+	                cur.afterChange = [function (dom, vnode) {
+	                        var preHTML = pre.outerHTML
+	                        var curHTML = cur.outerHTML ||
+	                                (cur.outerHTML = avalon.vdomAdaptor(cur, 'toHTML'))
+	                        if (preHTML !== curHTML) {
+	                            cur.vmodel.$fire('onViewChange', {
+	                                type: 'viewchange',
+	                                target: dom,
+	                                wid: wid,
+	                                vmodel: vnode.vmodel
+	                            })
+	                        }
+	                        docker.renderCount++
+	                    }]
+	            }
+
+	        }
+	    },
+	    addDisposeMonitor: function (dom) {
+	        disposeDetectStrategy.byRewritePrototype(dom)
+	    },
+	    replaceByComment: function (dom, node, parent) {
+	        var comment = document.createComment(node.nodeValue)
+	        if (dom) {
+	            parent.replaceChild(comment, dom)
+	        } else {
+	            parent.appendChild(comment)
+	        }
+	    },
+	    replaceByComponent: function (dom, node, parent) {
+	        var hasDdash = node.type.indexOf('-') > 0
+	        var hasDetect = false
+	        if (hasDdash && document.registerElement) {
+	            //必须在自定义标签实例化时,注册它
+	            disposeDetectStrategy.byCustomElement(node.type)
+	            hasDetect = true
+	        }
+	        var com = avalon.vdomAdaptor(node, 'toDOM')
+	        node.ouerHTML = avalon.vdomAdaptor(node, 'toHTML')
+	        if (dom) {
+	            parent.replaceChild(com, dom)
+	        } else {
+	            parent.appendChild(com)
+	        }
+	        patch([com], [node], parent, node.steps)
+	        if (!hasDetect) {
+	            dir.addDisposeMonitor(com)
+	        }
+	        return false
+	    }
+	})
+
+
+
+/***/ },
+/* 102 */
+/***/ function(module, exports) {
+
+	//用于chrome, safari
+	var tags = {}
+	function byCustomElement(name) {
+	    if (tags[name])
+	        return
+	    tags[name] = true
+	    var prototype = Object.create(HTMLElement.prototype)
+	    prototype.detachedCallback = function () {
+	        var dom = this
+	        setTimeout(function () {
+	            fireDisposeHook(dom)
+	        })
+	    }
+	    document.registerElement(name, prototype)
+	}
+
+
+	//用于IE9+, firefox
+	function byRewritePrototype() {
+	    if (byRewritePrototype.execute) {
+	        return
+	    }
+	//https://www.web-tinker.com/article/20618.html?utm_source=tuicool&utm_medium=referral
+	//IE6-8虽然暴露了Element.prototype,但无法重写已有的DOM API
+	    byRewritePrototype.execute = true
+	    var p = Node.prototype
+	    function rewite(name, fn) {
+	        var cb = p[name]
+	        p[name] = function (a, b) {
+	            return  fn.call(this, cb, a, b)
+	        }
+	    }
+	    rewite('removeChild', function (fn, a, b) {
+	        fn.call(this, a, b)
+	        if (a.nodeType === 1) {
+	            setTimeout(function () {
+	                fireDisposeHook(a)
+	            })
+	        }
+	        return a
+	    })
+
+	    rewite('replaceChild', function (fn, a, b) {
+	        fn.call(this, a, b)
+	        if (a.nodeType === 1) {
+	            setTimeout(function () {
+	                fireDisposeHook(a)
+	            })
+	        }
+	        return a
+	    })
+
+	    rewite('innerHTML', function (fn, html) {
+	        var all = this.getElementsByTagName('*')
+	        fn.call(this, html)
+	        fireDisposedComponents(all)
+	    })
+
+	    rewite('appendChild', function (fn, a) {
+	        fn.call(this, a)
+	        if (a.nodeType === 1 && this.nodeType === 11) {
+	            setTimeout(function () {
+	                fireDisposeHook(a)
+	            })
+	        }
+	        return a
+	    })
+
+	    rewite('insertBefore', function (fn, a) {
+	        fn.call(this, a)
+	        if (a.nodeType === 1 && this.nodeType === 11) {
+	            setTimeout(function () {
+	                fireDisposeHook(a)
+	            })
+	        }
+	        return a
+	    })
+	}
+
+
+
+	module.exports = {
+	    byCustomElement: byCustomElement,
+	    byRewritePrototype: byRewritePrototype
+	}
+
+	function fireDisposeHook(el) {
+	    if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
+	        var wid = el.getAttribute('wid')
+	        var docker = avalon.resolvedComponents[ wid ]
+	        var vm = docker.vmodel
+	        var cached = !!docker.cached
+	        docker.vmodel.$fire("onDispose", {
+	            type: 'dispose',
+	            target: el,
+	            vmodel: vm,
+	            cached: cached
+	        })
+	        if (docker && docker.vmodel && !cached) {
+	            vm.$element = null
+	            vm.$hashcode = false
+	            delete docker.vmodel
+	            delete avalon.resolvedComponents[ wid ]
+	        }
+	        return false
+	    }
+	}
+
+	function fireDisposedComponents(nodes) {
+	    for (var i = 0, el; el = nodes[i++]; ) {
+	        fireDisposeHook(el)
+	    }
+	}
+
+/***/ },
+/* 103 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	var VText = __webpack_require__(16)
+	var parseView = __webpack_require__(37)
+	var resolvedComponents = avalon.resolvedComponents
+
+	var componentContainers = {wbr: 1, xmp: 1, template: 1}
+	var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose')
+
+	var needDel = avalon.mix({
+	    is: 1,
+	    diff: 1,
+	    define: 1,
+	    cached: 1
+	}, componentEvents)
+	avalon.document.createElement('slot')
+
+	avalon.component = function (name, definition) {
+	    //这是定义组件的分支,并将列队中的同类型对象移除
+	    if (typeof name === 'string') {
+	        if (!avalon.components[name]) {
+	            avalon.components[name] = definition
+	        }//这里没有返回值
+	    } else {
+
+	        var root = name //root为页面上节点对应的虚拟DOM
+	        var topVm = definition
+	        var wid = root.props.wid
+	        //处理ms-widget的参数
+	        var finalOptions = {}
+	        var options = root.props['ms-widget'] || {}
+	        options = Array.isArray(options) ? options : [options]
+	        options.forEach(function (option, index) {
+	            mixinHooks(finalOptions, option, index)
+	        })
+	        if (finalOptions.cached) {
+	            var cachedVm = avalon.vmodels[finalOptions.$id]
+	            if (cachedVm) {
+	                var _wid = cachedVm.$events.__wid__
+	                delete resolvedComponents[wid]
+	                wid = _wid
+	            }
+	        }
+
+	        var docker = resolvedComponents[wid]
+	        if (!docker) {
+	            resolvedComponents[wid] = root
+	            docker = root
+	        }
+	        //如果此组件的实例已经存在,那么重新渲染
+	        if (docker.render) {
+	            return docker
+	        }
+	        var componentName = root.type.indexOf('-') > 0 ?
+	                root.type : finalOptions.is
+	        var placeholder = {
+	            nodeType: 8,
+	            type: '#comment',
+	            directive: 'widget',
+	            props: {'ms-widget': wid},
+	            nodeValue: 'ms-widget placeholder'
+	        }
+	        if (!avalon.components[componentName]) {
+	            //如果组件还没有定义,那么返回一个注释节点占位
+	            return placeholder
+	        } else {
+	            //=======对用户的自定义标签进行处理===========
+	            var type = root.type
+	            //判定用户传入的标签名是否符合规格
+	            if (!componentContainers[type] && !isCustomTag(type)) {
+	                avalon.warn(type + '不合适做组件的标签')
+	            }
+	            //将用户声明组件用的自定义标签(或xmp.template)的template转换成虚拟DOM
+	            if (type === 'xmp' || type === 'template' || root.children.length === 0) {
+	                root.children = avalon.lexer(docker.template)
+	            }
+	            definition = avalon.components[componentName]
+	         
+	            //开始构建组件的vm的配置对象
+	            var diff = finalOptions.diff
+	            var define = finalOptions.define
+	            define = define || avalon.directives.widget.define
+	            var $id = finalOptions.$id || 
+	                    avalon.makeHashCode(componentName.replace(/-/g, '_'))
+
+	            var defaults = definition.defaults
+	            mixinHooks(finalOptions, defaults, false)
+	            var defineArgs = [topVm, defaults].concat(options)
+	            var vmodel = define.apply(function (a, b) {
+	                for (var k in needDel) {
+	                    delete a[k]
+	                    delete b[k]
+	                }
+	            }, defineArgs)
+
+	            vmodel.$id = $id
+	            vmodel.$element = topVm.$element
+	            avalon.vmodels[$id] = vmodel
+	            var finalTemplate = definition.template.trim()
+	            if (typeof definition.getTemplate === 'function') {
+	                finalTemplate = definition.getTemplate(vmodel, finalTemplate)
+	            }
+
+	            //对组件内置的template转换成虚拟DOM
+	            var vtree = avalon.lexer(finalTemplate)
+	            if (vtree.length > 1) {
+	                avalon.error('组件必须用一个元素包起来')
+	            }
+	            var componentRoot = vtree[0]
+
+	            //将用户标签中的属性合并到组件标签的属性里
+	            for (var k in docker.props) {
+	                if (k !== 'ms-widget') {
+	                    componentRoot.props[k] = docker.props[k]
+	                }
+	            }
+
+	            //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
+	            if (definition.soleSlot) {
+	                var slots = {}
+	                var slotName = definition.soleSlot
+	                slots[slotName] = /\S/.test(docker.template) ? root.children : 
+	                        new VText('{{@' + slotName + '}}')
+	                mergeTempale(vtree, slots)
+	            } else if (!root.isVoidTag) {
+	                insertSlots(vtree, root, definition.soleSlot)
+	            }
+
+	            for (k in componentEvents) {
+	                if (finalOptions[k]) {
+	                    finalOptions[k].forEach(function (fn) {
+	                        vmodel.$watch(k, fn)
+	                    })
+	                }
+	            }
+
+	            //生成组件的render
+	            var num = num || String(new Date - 0).slice(0, 6)
+	            var render = parseView(vtree, num) +
+	                    '\nreturn (avalon.__widget = vnodes' + num + ');\n'
+	            vmodel.$render = topVm.$render
+	            vmodel.$events.__wid__ = wid
+	            //触发onInit回调
+	            vmodel.$fire('onInit', {
+	                type: 'init',
+	                vmodel: vmodel,
+	                wid: wid,
+	                target: null
+	            })
+
+	            avalon.shadowCopy(docker, {
+	                diff: diff,
+	                render: render,
+	                vmodel: vmodel,
+	                cached: !!finalOptions.cached,
+	                placeholder: placeholder
+	            })
+	            return docker
+	        }
+	    }
+	}
+
+	var ralphabet = /^[a-z]+$/
+
+	function isCustomTag(type) {
+	    return type.length > 3 && type.indexOf('-') > 0 &&
+	            ralphabet.test(type.charAt(0) + type.slice(-1))
+	}
+	avalon.renderComponent = function (root) {
+	    var docker = avalon.resolvedComponents[root.props.wid]
+	    var order = root.order
+
+	    root.order = order ?
+	            'ms-widget;;' + order : 'ms-widget'
+	    if (!isComponentReady(root)) {
+	        return docker.placeholder
+	    }
+	    if (!docker.renderCount) {
+	        docker.renderCount = 1
+	    }
+	    root.props['ms-widget'] = docker.props['ms-widget']
+	    root.vmodel = docker.vmodel
+	    root.diff = docker.diff
+	    //移除skipAttrs,以便进行diff
+	    delete root.skipAttrs
+	    return root
+	}
+
+	function mixinHooks(target, option, index) {
+	    for (var k in option) {
+	        if (!option.hasOwnProperty(k))
+	            continue
+	        var v = option[k]
+	        if (componentEvents[k]) {
+	            if (k in target) {
+	                target[k].push(v)
+	            } else {
+	                target[k] = [option[k]]
+	            }
+	        } else if (isFinite(index)) {
+	            target[k] = v
+	        }
+	    }
+	}
+
+	function isComponentReady(vnode) {
+	    var isReady = true
+	    try {
+	        hasUnresolvedComponent(vnode)
+	    } catch (e) {
+	        isReady = false
+	    }
+	    return isReady
+	}
+
+	function hasUnresolvedComponent(vnode) {
+	    vnode.children.forEach(function (el) {
+	        if (el.nodeType === 8 && el.props) {
+	            if ('ms-widget' in el.props) {
+	                throw 'unresolved'
+	            }
+	        } else if (el.children) {
+	            hasUnresolvedComponent(el)
+	        }
+	    })
+	}
+
+	function insertSlots(vtree, node, soleSlot) {
+	    var slots = {}
+	    if (soleSlot) {
+	        slots[soleSlot] = node.children
+	    } else {
+	        node.children.forEach(function (el) {
+	            if (el.nodeType === 1) {
+	                var name = el.props.slot || 'default'
+	                if (slots[name]) {
+	                    slots[name].push(el)
+	                } else {
+	                    slots[name] = [el]
+	                }
+	            }
+	        })
+	    }
+	    mergeTempale(vtree, slots)
+	}
+
+	function mergeTempale(vtree, slots) {
+	    for (var i = 0, node; node = vtree[i++]; ) {
+	        if (node.nodeType === 1) {
+	            if (node.type === 'slot') {
+	                var name = node.props.name || 'default'
+	                if (slots[name]) {
+	                    var s = slots[name]
+	                    vtree.splice.apply(vtree, [i - 1, 1].concat(s))
+	                    if (s.length === 1 && s[0].nodeType === 3) {
+	                        removeEmptyText(vtree)
+	                    }
+	                }
+	            } else {
+	                mergeTempale(node.children, slots)
+	            }
+	        }
+	    }
+
+	    return vtree
+	}
+
+	function removeEmptyText(nodes) {
+	    //如果定义组件时,slot元素两旁有大片空白,且slot元素又是被一个文本节点替代时,需要合并这三个文本节点
+	    for (var i = 0, el; el = nodes[i]; i++) {
+	        if (el.skipContent === false && el.nodeType === 3) {
+	            var pre = nodes[i - 1]
+	            var next = nodes[i + 1]
+	            if (pre && pre.nodeType === 3 && !/\S/.test(pre.nodeValue)) {
+	                avalon.Array.remove(nodes, pre)
+	                --i
+	            }
+	            if (next && next.nodeType === 3 && !/\S/.test(next.nodeValue)) {
+	                avalon.Array.remove(nodes, next)
+	            }
+	        }
+	    }
+	}
+
+
+/***/ },
+/* 104 */
+/***/ function(module, exports, __webpack_require__) {
+
 	/**
 	 * ------------------------------------------------------------
 	 * avalon基于纯净的Object.defineProperties的vm工厂 
 	 * masterFactory,slaveFactory,mediatorFactory, ArrayFactory
 	 * ------------------------------------------------------------
 	 */
-	var share = __webpack_require__(102)
+	var share = __webpack_require__(105)
 	var isSkip = share.isSkip
 	var $$midway = share.$$midway
 	var $$skipArray = share.$$skipArray
@@ -7483,10 +7447,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 102 */
+/* 105 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var share = __webpack_require__(78)
+	var share = __webpack_require__(79)
 	var makeFire = share.makeFire
 
 	function toJson(val) {

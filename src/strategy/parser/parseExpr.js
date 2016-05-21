@@ -94,7 +94,7 @@ function parseExpr(str, category) {
                 return '__vmodel__.'+b+".call(__vmodel__"+ (/\S/.test(c) ? ','+c: "")+")"
             })
         }
-        ret = ['function self($event){',
+        ret = ['function ms_on($event){',
             'try{',
             '\tvar __vmodel__ = this;',
             '\t' + body,

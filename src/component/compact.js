@@ -2,6 +2,8 @@
 var VText = require('../vdom/VText')
 var parseView = require('../strategy/parser/parseView')
 var resolvedComponents = avalon.resolvedComponents
+var skipArray = require('../vmodel/parts/skipArray')
+
 var componentContainers = {wbr: 1, xmp: 1, template: 1}
 var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose')
 
@@ -95,6 +97,13 @@ avalon.component = function (name, definition) {
                     delete b[k]
                 }
             }, defineArgs)
+            if(!avalon.modern){//增强对IE的兼容
+                for(var i in vmodel){
+                    if(skipArray[i] && typeof vmodel[i] === 'function'){
+                       vmodel[i] = vmodel[i].bind(vmodel)
+                    }
+                }
+            }
             vmodel.$id = $id
             vmodel.$element = topVm.$element
             avalon.vmodels[$id] = vmodel

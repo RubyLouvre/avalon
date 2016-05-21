@@ -1,4 +1,4 @@
-var disposeDetectStrategy = require('../component/dispose.compact')
+var disposeDetectStrategy = require('../component/dispose.modern')
 var patch = require('../strategy/patch')
 var update = require('./_update')
 
@@ -41,7 +41,7 @@ var dir = avalon.directive('widget', {
             cur.change = [this.replaceByComment]
         } else if (docker.renderCount && docker.renderCount < 2) {
             cur.steps = steps
-            update(cur, this.replaceByComponent, steps, 'widget' )
+            update(cur, this.replaceByComponent, steps, 'widget')
 
             function fireReady(dom, vnode) {
                 cur.vmodel.$fire('onReady', {
@@ -52,7 +52,7 @@ var dir = avalon.directive('widget', {
                 })
                 docker.renderCount = 2
             }
-            update(cur, fireReady, steps, 'widget', 'afterChange' )
+            update(cur, fireReady, steps, 'widget', 'afterChange')
 
         } else {
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
@@ -62,7 +62,7 @@ var dir = avalon.directive('widget', {
                 steps.count += 1
                 cur.afterChange = [function (dom, vnode) {
                         var preHTML = pre.outerHTML
-                        var curHTML = cur.outerHTML || 
+                        var curHTML = cur.outerHTML ||
                                 (cur.outerHTML = avalon.vdomAdaptor(cur, 'toHTML'))
                         if (preHTML !== curHTML) {
                             cur.vmodel.$fire('onViewChange', {
@@ -79,13 +79,7 @@ var dir = avalon.directive('widget', {
         }
     },
     addDisposeMonitor: function (dom) {
-        if (window.chrome && window.MutationEvent) {
-            disposeDetectStrategy.byMutationEvent(dom)
-        } else if (avalon.modern && typeof window.Node === 'function') {
-            disposeDetectStrategy.byRewritePrototype(dom)
-        } else {
-            disposeDetectStrategy.byPolling(dom)
-        }
+        disposeDetectStrategy.byRewritePrototype(dom)
     },
     replaceByComment: function (dom, node, parent) {
         var comment = document.createComment(node.nodeValue)
@@ -118,7 +112,3 @@ var dir = avalon.directive('widget', {
     }
 })
 
-
-
-
-// http://www.besteric.com/2014/11/16/build-blog-mirror-site-on-gitcafe/
