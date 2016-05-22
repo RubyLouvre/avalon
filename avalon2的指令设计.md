@@ -61,7 +61,7 @@
 ```
  ms-class="{ 'class-a': @isA, 'class-b': @isB }"
  ms-class="[ @aObject, @bObject ]"
- ms-class="[ @aString, @isB ? @bString : '']"
+ ms-class="[ @aString, @isB && @bString]"
  ms-class="@classString"
 ```
 可使用过滤器，为元素添加一组类名，当类名发生变动时，以前添加的类名会被移除。 有对象及数组两种形式。数组应该为一个字符串数组，且元素不能为空字符串。
@@ -103,31 +103,50 @@ ms-click="@fn"
 ### ms-effect
 可使用过滤器，结合其他指令使用动画效果
 
-### ms-widget
+
+### ms-validate
+只用于form元素上
+```javascript
+ms-validate="@obj"
 ```
+
+
+### ms-rules
+```javascript
+ms-rules="@obj"
+```
+
+### ms-widget
+```javascript
 ms-widget="@obj"
 ms-widget="{title: @ddd, $id: "sss"}"
 ms-widget="[@obj1, @obj2 ,{$id: 'item' + i }]"
 ```
+
 ms-widget的值可以为页面上一个临时对象,也可以是一个数组,或者指向vm中的一个对象属性
 在内部发现是一个数组,会进行合并,保证只有一个对象(下称配置对象)
 此配置对象应有$id, type这两个固定配置项
 $id为组件vm的$id, type为组件的类型 
 
+
+
+
+```html
+<div ms-widget="{$id: @id, is:'panel',other:@param1}"></div>
 ```
-<div ms-widget="{$id: @id, type:'panel',other:@param1}"></div>
-```
-如果元素为自定义元素那么,就不需要写type
+
+如果元素为自定义元素那么,就不需要写is
+
 ```
 <ms-panel ms-widget="{$id: @id,other:@param1}"></ms-panel>
 ```
 
 ```
-ms-attr="{xxx:yyy}"--> props[ms-attr] = fn
-ms-text   --> 检测template children 与 update
-ms-html   --> 检测template children 与 update
-ms-duplex --> 检测DOM的update
-ms-on     --> 检测DOM的update
+    ms-attr="{xxx:yyy}"--> props[ms-attr] = fn
+    ms-text   --> 检测template children 与 update
+    ms-html   --> 检测template children 与 update
+    ms-duplex --> 检测DOM的update
+    ms-on     --> 检测DOM的update
 ```
 
 
@@ -141,10 +160,11 @@ ms-on     --> 检测DOM的update
 | ms-hover      | 布尔对象或字符串数组    | yes |
 | ms-active     | 布尔对象或字符串数组    | yes |
 | ms-on         | 函数                | yes |
-| ms-effect     | 对象或对象数组        | no |
-| ms-widget     | 对象或对象数组        | half |
+| ms-effect     | 对象或对象数组        | yes |
+| ms-widget     | 对象或对象数组        | yes |
+| ms-validate    | 对象或对象数组        | yes |
+| ms-rules    | 对象或对象数组           | yes |
 | if指令        |     合法JS代码        | yes |
 | for指令       | 类PHP的特殊语法        | yes |
 | forEnd指令    | 空指令（仅表示结束）     | yes|
-| js指令        |  合法JS代码            | yes|
 
