@@ -81,15 +81,18 @@ ms-css="[@styleObject,@styleObject2]"
 可使用过滤器，功能类似于之前的ms-css，用于设置元素的样式
 
 ### ms-on
-```
+
+```javascript
 ms-click="@fn"
 ms-on-click-0=" @toggle = !@toggle"
 ms-on-keydown="@xxx |stop"
 ms-click="@fn"
 ```
-可使用特定的过滤器(stop, prevent, up,down,right, left, esc,tab, enter,space,del),绑事事件回调
 
-```
+可使用特定的过滤器(stop, prevent, up,down,right, left, esc,tab, enter,space,del),
+绑事事件回调
+
+
 可使用过滤器，将vm中的某个字任串属性转换成HTML节点，插入到目标元素底下，
 
 ### ms-duplex
