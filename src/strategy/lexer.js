@@ -31,7 +31,7 @@ var rleftSp = r.leftSp
 var rstring = r.string
 
 
-var rbind = avalon.config.rbind
+var config = avalon.config
 
 
 var maps = {}
@@ -59,7 +59,7 @@ function lexer(text, curDeep, maxDeep) {
     } else {
         curDeep = curDeep + 1
     }
-    if (curDeep >= maxDeep && !rbind.test(text)) {
+    if (curDeep >= maxDeep && !config.rbind.test(text)) {
         return nodes
     }
     if (!curDeep) {

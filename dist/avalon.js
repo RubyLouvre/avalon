@@ -1,4 +1,4 @@
-/*! built in 2016-5-21:19 version 2.02 by 司徒正美 */
+/*! built in 2016-5-23:17 version 2.02 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3270,7 +3270,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var parseExpr = __webpack_require__(38)
 	var parseBindings = __webpack_require__(41)
 	var parseDelimiter = __webpack_require__(42)
-	var rexpr = avalon.config.rexpr
+	var config = avalon.config
 	var quote = avalon.quote
 	var makeHashCode = avalon.makeHashCode
 	var r = __webpack_require__(40)
@@ -3299,7 +3299,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var el = arr[i]
 	        if (el.nodeType === 3) {
 	            str += 'var ' + vnode + ' = {type:"#text",nodeType:3,skipContent:true}\n'
-	            var hasDelimiter = rexpr.test(el.nodeValue)
+	            var hasDelimiter = config.rexpr.test(el.nodeValue)
 
 	            if (hasDelimiter) {
 	                var array = parseDelimiter(el.nodeValue)
@@ -3737,13 +3737,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var rline = /\r?\n/g
 	var r = __webpack_require__(40)
+	var config = avalon.config
 
 	function parseDelimiter(str) {
 	    var tokens = [],
 	            value, start = 0,
 	            stop
 	    do {
-	        stop = str.indexOf(avalon.config.openTag, start)
+	        stop = str.indexOf(config.openTag, start)
 	        if (stop === -1) {
 	            break
 	        }
@@ -3756,8 +3757,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                expr: value
 	            })
 	        }
-	        start = stop + avalon.config.openTag.length
-	        stop = str.indexOf(avalon.config.closeTag, start)
+	        start = stop + config.openTag.length
+	        stop = str.indexOf(config.closeTag, start)
 	        if (stop === -1) {
 	            break
 	        }
@@ -6762,7 +6763,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rstring = r.string
 
 
-	var rbind = avalon.config.rbind
+	var config = avalon.config
 
 
 	var maps = {}
@@ -6790,7 +6791,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } else {
 	        curDeep = curDeep + 1
 	    }
-	    if (curDeep >= maxDeep && !rbind.test(text)) {
+	    if (curDeep >= maxDeep && !config.rbind.test(text)) {
 	        return nodes
 	    }
 	    if (!curDeep) {

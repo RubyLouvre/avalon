@@ -2,7 +2,7 @@
 var parseExpr = require('./parseExpr')
 var parseBindings = require('./parseBindings')
 var parseDelimiter = require('./parseDelimiter')
-var rexpr = avalon.config.rexpr
+var config = avalon.config
 var quote = avalon.quote
 var makeHashCode = avalon.makeHashCode
 var r = require('../../seed/regexp')
@@ -31,7 +31,7 @@ function parseView(arr, num, scan) {
         var el = arr[i]
         if (el.nodeType === 3) {
             str += 'var ' + vnode + ' = {type:"#text",nodeType:3,skipContent:true}\n'
-            var hasDelimiter = rexpr.test(el.nodeValue)
+            var hasDelimiter = config.rexpr.test(el.nodeValue)
 
             if (hasDelimiter) {
                 var array = parseDelimiter(el.nodeValue)
