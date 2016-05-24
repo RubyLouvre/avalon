@@ -88,7 +88,7 @@ avalon.component = function (name, definition) {
             var $id = finalOptions.$id || 
                     avalon.makeHashCode(componentName.replace(/-/g, '_'))
 
-            var defaults = definition.defaults
+            var defaults = avalon.mix(true,{},definition.defaults)
             mixinHooks(finalOptions, defaults, false)
             var defineArgs = [topVm, defaults].concat(options)
             var vmodel = define.apply(function (a, b) {

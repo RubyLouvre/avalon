@@ -1,4 +1,4 @@
-/*! built in 2016-5-23:17 version 2.02 by 司徒正美 */
+/*! built in 2016-5-24:11 version 2.02 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -7365,7 +7365,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var $id = finalOptions.$id || 
 	                    avalon.makeHashCode(componentName.replace(/-/g, '_'))
 
-	            var defaults = definition.defaults
+	            var defaults = avalon.mix(true,{},definition.defaults)
 	            mixinHooks(finalOptions, defaults, false)
 	            var defineArgs = [topVm, defaults].concat(options)
 	            var vmodel = define.apply(function (a, b) {
