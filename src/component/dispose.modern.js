@@ -6,16 +6,12 @@ function byCustomElement(name) {
     tags[name] = true
     var prototype = Object.create(HTMLElement.prototype)
     prototype.detachedCallback = function () {
-        var dom = this
-        setTimeout(function () {
-            fireDisposeHook(dom)
-        })
+        fireDisposeHookDelay(this)
     }
     document.registerElement(name, prototype)
 }
 
-
-//用于IE9+, firefox
+//用于IE8+, firefox
 function byRewritePrototype() {
     if (byRewritePrototype.execute) {
         return
@@ -33,9 +29,7 @@ function byRewritePrototype() {
     rewite('removeChild', function (fn, a, b) {
         fn.call(this, a, b)
         if (a.nodeType === 1) {
-            setTimeout(function () {
-                fireDisposeHook(a)
-            })
+            fireDisposeHookDelay(a)
         }
         return a
     })
@@ -43,9 +37,7 @@ function byRewritePrototype() {
     rewite('replaceChild', function (fn, a, b) {
         fn.call(this, a, b)
         if (a.nodeType === 1) {
-            setTimeout(function () {
-                fireDisposeHook(a)
-            })
+            fireDisposeHookDelay(a)
         }
         return a
     })
@@ -59,9 +51,7 @@ function byRewritePrototype() {
     rewite('appendChild', function (fn, a) {
         fn.call(this, a)
         if (a.nodeType === 1 && this.nodeType === 11) {
-            setTimeout(function () {
-                fireDisposeHook(a)
-            })
+            fireDisposeHookDelay(a)
         }
         return a
     })
@@ -69,9 +59,7 @@ function byRewritePrototype() {
     rewite('insertBefore', function (fn, a) {
         fn.call(this, a)
         if (a.nodeType === 1 && this.nodeType === 11) {
-            setTimeout(function () {
-                fireDisposeHook(a)
-            })
+            fireDisposeHookDelay(a)
         }
         return a
     })
@@ -104,6 +92,11 @@ function fireDisposeHook(el) {
         }
         return false
     }
+}
+function fireDisposeHookDelay(a){
+    setTimeout(function () {
+        fireDisposeHook(a)
+    },4)
 }
 
 function fireDisposedComponents(nodes) {

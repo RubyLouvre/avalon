@@ -7,11 +7,14 @@
         <script src="../dist/avalon.js"></script>
         <script>
            avalon.component('ms-aaa', {
-               template: '<div>{{@aaa}}<ul><li ms-for="el in @bbb">{{el}}</li></ul></div>',
+               template: '<div ms-css="{width:@w,backgroundColor:\"#1ba9ba\"}">{{@aaa}}<ul><li ms-for="el in @bbb">{{el}}</li></ul></div>',
                defaults: {
                    aaa: "组件",
                    bbb: [1,2,3],
-                   ddd: 2
+                   w: 100,
+                   onReady: function(){
+                       this.w = document.body.clientWidth * 0.3
+                   }
                }
            })
             vm = avalon.define({

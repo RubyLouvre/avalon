@@ -1,4 +1,4 @@
-/*! built in 2016-5-24:11 version 2.02 by 司徒正美 */
+/*! built in 2016-5-24:16 version 2.02 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -850,9 +850,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 	kernel.plugins = plugins
-	kernel.plugins['interpolate'](['{{', '}}'])
-	//kernel.showDiff = true
-	kernel.debug = true
+	avalon.config({
+	    interpolate: ['{{', '}}'],
+	    debug: true
+	})
 
 
 /***/ },
@@ -3233,7 +3234,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return elem
 	    }
 	}
-	avalon.directive("important", {
+	avalon.directive('important', {
 	    priority: 1,
 	    parse: function (binding, num, elem) {
 	        delete elem.props['ms-important']
@@ -3445,16 +3446,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rstring = __webpack_require__(40).string
 	var rfill = /\?\?\d+/g
 	var brackets = /\(([^)]*)\)/
-	var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|#)(?=\w)/g
-	var rhandleName = /^(?:\@|\#)[$\w]+$/
+
 	var rshortCircuit = /\|\|/g
 	var rpipeline = /\|(?=\w)/
 	var ruselessSp = /\s*(\.|\|)\s*/g
 	var wrapDuplex = function(arr){
 	    return '(function(){ return ' +arr.join('\n')+'})();\n'
 	}
-	function parseExpr(str, category) {
+	var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=\w)/g
+	var rhandleName = /^(?:\@|##)[$\w]+$/i
 
+	function parseExpr(str, category) {
 	    var binding = {}
 	    category = category || 'other'
 	    if (typeof str === 'object') {
@@ -3489,7 +3491,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            replace(rshortCircuit, dig).//移除所有短路或
 	            replace(ruselessSp, '$1').//移除. |两端空白
 	            split(rpipeline) //使用管道符分离所有过滤器及表达式的正体
-
 	//还原body
 	    var body = input.shift().replace(rfill, fill).trim()
 	    if (category === 'on' && rhandleName.test(body)) {
@@ -3532,6 +3533,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return '__vmodel__.'+b+".call(__vmodel__"+ (/\S/.test(c) ? ','+c: "")+")"
 	            })
 	        }
+	        console.log(body)
 	        ret = ['function ms_on($event){',
 	            'try{',
 	            '\tvar __vmodel__ = this;',
@@ -4432,7 +4434,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	// 'on' and be composed of only English letters.
 	var revent = /^ms-on-([a-z]+)/ 
 	var rfilters = /\|.+/g
-	var rvar = /([@$]?\w+)/g
+	var rvar = /((?:@|$|##)?\w+)/g
 	var rstring = __webpack_require__(40).string
 	//基于事件代理的高性能事件绑定
 	avalon.directive('on', {
@@ -4440,7 +4442,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parse: function (binding, num) {
 	        var vars = binding.expr.replace(rstring, ' ').replace(rfilters, '').match(rvar)
 	        var canCache = vars.every(function (el) {
-	            return el.charAt(0) === '@' || el.charAt(0) === '#' || el === '$event'
+	            return el.charAt(0) === '@' || el.slice(0,2) === '##' || el === '$event'
 	        })
 	        var vmDefine = 'vnode' + num + '.onVm = __vmodel__\n'
 	        var pid = quote(binding.name)
@@ -6235,10 +6237,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    tags[name] = true
 	    var prototype = Object.create(HTMLElement.prototype)
 	    prototype.detachedCallback = function () {
-	        var dom = this
-	        setTimeout(function () {
-	            fireDisposeHook(dom)
-	        })
+	        fireDisposeHookDelay(this)
 	    }
 	    document.registerElement(name, prototype)
 	}
@@ -6247,9 +6246,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	//http://stackoverflow.com/questions/31798816/simple-mutationobserver-version-of-domnoderemovedfromdocument
 	function byMutationEvent(dom) {
 	    dom.addEventListener("DOMNodeRemovedFromDocument", function () {
-	        setTimeout(function () {
-	            fireDisposeHook(dom)
-	        })
+	        fireDisposeHookDelay(dom)
 	    })
 	}
 	//用于IE8+, firefox
@@ -6270,9 +6267,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    rewite('removeChild', function (fn, a, b) {
 	        fn.call(this, a, b)
 	        if (a.nodeType === 1) {
-	            setTimeout(function () {
-	                fireDisposeHook(a)
-	            })
+	            fireDisposeHookDelay(a)
 	        }
 	        return a
 	    })
@@ -6280,9 +6275,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    rewite('replaceChild', function (fn, a, b) {
 	        fn.call(this, a, b)
 	        if (a.nodeType === 1) {
-	            setTimeout(function () {
-	                fireDisposeHook(a)
-	            })
+	            fireDisposeHookDelay(a)
 	        }
 	        return a
 	    })
@@ -6296,9 +6289,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    rewite('appendChild', function (fn, a) {
 	        fn.call(this, a)
 	        if (a.nodeType === 1 && this.nodeType === 11) {
-	            setTimeout(function () {
-	                fireDisposeHook(a)
-	            })
+	            fireDisposeHookDelay(a)
 	        }
 	        return a
 	    })
@@ -6306,9 +6297,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    rewite('insertBefore', function (fn, a) {
 	        fn.call(this, a)
 	        if (a.nodeType === 1 && this.nodeType === 11) {
-	            setTimeout(function () {
-	                fireDisposeHook(a)
-	            })
+	            fireDisposeHookDelay(a)
 	        }
 	        return a
 	    })
@@ -6365,7 +6354,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return false
 	    }
 	}
-
+	function fireDisposeHookDelay(a){
+	    setTimeout(function () {
+	        fireDisposeHook(a)
+	    },4)
+	}
 	function fireDisposedComponents(nodes) {
 	    for (var i = 0, el; el = nodes[i++]; ) {
 	        fireDisposeHook(el)

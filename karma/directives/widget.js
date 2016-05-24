@@ -101,7 +101,7 @@ describe('widget', function () {
                 setTimeout(function () {
                     expect(index).to.equal(4)
                     done()
-                })
+                },1200)
             })
         })
     })

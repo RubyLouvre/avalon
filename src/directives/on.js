@@ -9,7 +9,7 @@ var update = require('./_update')
 // 'on' and be composed of only English letters.
 var revent = /^ms-on-([a-z]+)/ 
 var rfilters = /\|.+/g
-var rvar = /([@$]?\w+)/g
+var rvar = /((?:@|$|##)?\w+)/g
 var rstring = require('../seed/regexp').string
 //基于事件代理的高性能事件绑定
 avalon.directive('on', {
@@ -17,7 +17,7 @@ avalon.directive('on', {
     parse: function (binding, num) {
         var vars = binding.expr.replace(rstring, ' ').replace(rfilters, '').match(rvar)
         var canCache = vars.every(function (el) {
-            return el.charAt(0) === '@' || el.charAt(0) === '#' || el === '$event'
+            return el.charAt(0) === '@' || el.slice(0,2) === '##' || el === '$event'
         })
         var vmDefine = 'vnode' + num + '.onVm = __vmodel__\n'
         var pid = quote(binding.name)
