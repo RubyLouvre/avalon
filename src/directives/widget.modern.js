@@ -90,13 +90,7 @@ var dir = avalon.directive('widget', {
         }
     },
     replaceByComponent: function (dom, node, parent) {
-        var hasDdash = node.type.indexOf('-') > 0
-        var hasDetect = false
-        if (hasDdash && document.registerElement) {
-            //必须在自定义标签实例化时,注册它
-            disposeDetectStrategy.byCustomElement(node.type)
-            hasDetect = true
-        }
+       
         var com = avalon.vdomAdaptor(node, 'toDOM')
         node.ouerHTML = avalon.vdomAdaptor(node, 'toHTML')
         if (dom) {
@@ -105,9 +99,9 @@ var dir = avalon.directive('widget', {
             parent.appendChild(com)
         }
         patch([com], [node], parent, node.steps)
-        if (!hasDetect) {
-            dir.addDisposeMonitor(com)
-        }
+        
+        dir.addDisposeMonitor(com)
+       
         return false
     }
 })

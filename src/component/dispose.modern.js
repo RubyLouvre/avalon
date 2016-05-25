@@ -1,15 +1,3 @@
-//用于chrome, safari
-var tags = {}
-function byCustomElement(name) {
-    if (tags[name])
-        return
-    tags[name] = true
-    var prototype = Object.create(HTMLElement.prototype)
-    prototype.detachedCallback = function () {
-        fireDisposeHookDelay(this)
-    }
-    document.registerElement(name, prototype)
-}
 
 //用于IE8+, firefox
 function byRewritePrototype() {
@@ -68,7 +56,6 @@ function byRewritePrototype() {
 
 
 module.exports = {
-    byCustomElement: byCustomElement,
     byRewritePrototype: byRewritePrototype
 }
 

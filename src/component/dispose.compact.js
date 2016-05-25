@@ -1,15 +1,4 @@
-//用于chrome, safari
-var tags = {}
-function byCustomElement(name) {
-    if (tags[name])
-        return
-    tags[name] = true
-    var prototype = Object.create(HTMLElement.prototype)
-    prototype.detachedCallback = function () {
-        fireDisposeHookDelay(this)
-    }
-    document.registerElement(name, prototype)
-}
+
 
 //http://stackoverflow.com/questions/11425209/are-dom-mutation-observers-slower-than-dom-mutation-events
 //http://stackoverflow.com/questions/31798816/simple-mutationobserver-version-of-domnoderemovedfromdocument
@@ -98,7 +87,6 @@ function byPolling(dom) {
 module.exports = {
     byPolling: byPolling,
     byMutationEvent: byMutationEvent,
-    byCustomElement: byCustomElement,
     byRewritePrototype: byRewritePrototype
 }
 

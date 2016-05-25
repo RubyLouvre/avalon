@@ -1,4 +1,4 @@
-/*! built in 2016-5-25:17 version 2.02 by 司徒正美 */
+/*! built in 2016-5-25:19 version 2.02 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -6746,13 +6746,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    replaceByComponent: function (dom, node, parent) {
-	        var hasDdash = node.type.indexOf('-') > 0
-	        var hasDetect = false
-	        if (hasDdash && document.registerElement) {
-	            //必须在自定义标签实例化时,注册它
-	            disposeDetectStrategy.byCustomElement(node.type)
-	            hasDetect = true
-	        }
+	       
 	        var com = avalon.vdomAdaptor(node, 'toDOM')
 	        node.ouerHTML = avalon.vdomAdaptor(node, 'toHTML')
 	        if (dom) {
@@ -6761,9 +6755,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            parent.appendChild(com)
 	        }
 	        patch([com], [node], parent, node.steps)
-	        if (!hasDetect) {
-	            dir.addDisposeMonitor(com)
-	        }
+	        
+	        dir.addDisposeMonitor(com)
+	       
 	        return false
 	    }
 	})
@@ -6774,19 +6768,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 102 */
 /***/ function(module, exports) {
 
-	//用于chrome, safari
-	var tags = {}
-	function byCustomElement(name) {
-	    if (tags[name])
-	        return
-	    tags[name] = true
-	    var prototype = Object.create(HTMLElement.prototype)
-	    prototype.detachedCallback = function () {
-	        fireDisposeHookDelay(this)
-	    }
-	    document.registerElement(name, prototype)
-	}
-
+	
 	//用于IE8+, firefox
 	function byRewritePrototype() {
 	    if (byRewritePrototype.execute) {
@@ -6844,7 +6826,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	module.exports = {
-	    byCustomElement: byCustomElement,
 	    byRewritePrototype: byRewritePrototype
 	}
 
