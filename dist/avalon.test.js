@@ -1,4 +1,4 @@
-/*! built in 2016-5-25:19 version 2.02 by 司徒正美 */
+/*! built in 2016-5-25:20 version 2.02 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -71,7 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 107:
 /***/ function(module, exports, __webpack_require__) {
 
-	/*! built in 2016-5-25:18 version 2.02 by 司徒正美 */
+	/*! built in 2016-5-25:20 version 2.02 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -6216,6 +6216,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		            steps.count += 1
 		            cur.change = [this.replaceByComment]
 		        } else if (docker.renderCount && docker.renderCount < 2) {
+		            //https://github.com/RubyLouvre/avalon/issues/1390
+		            //当第一次渲染组件时,当组件的儿子为元素,而xmp容器里面只有文本时,就会出错
+		            pre.children = []
 		            cur.steps = steps
 		            update(cur, this.replaceByComponent, steps, 'widget' )
 
