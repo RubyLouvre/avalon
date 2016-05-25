@@ -1,4 +1,4 @@
-/*! built in 2016-5-24:16 version 2.02 by 司徒正美 */
+/*! built in 2016-5-25:16 version 2.02 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3533,7 +3533,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return '__vmodel__.'+b+".call(__vmodel__"+ (/\S/.test(c) ? ','+c: "")+")"
 	            })
 	        }
-	        console.log(body)
 	        ret = ['function ms_on($event){',
 	            'try{',
 	            '\tvar __vmodel__ = this;',
@@ -5821,7 +5820,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    steps.count !== oldCount
 
 	        } else {
-	            var cache = pre.cache
+	            var cache = pre.cache 
+	            if(!cache)
+	                return
 	            var newCache = cur.cache = {}
 	            /* eslint-disable no-cond-assign */
 	            for (i = 0; c = cur.components[i++]; ) {

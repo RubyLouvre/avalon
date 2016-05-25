@@ -12,8 +12,10 @@
                    aaa: "组件",
                    bbb: [1,2,3],
                    w: 100,
-                   onReady: function(){
-                       this.w = document.body.clientWidth * 0.3
+                   onReady: function(e){
+                       setTimeout(function(){
+                           e.vmodel.w = document.body.clientWidth * 0.3
+                       },3000)
                    }
                }
            })

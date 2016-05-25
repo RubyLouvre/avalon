@@ -123,7 +123,9 @@ avalon.directive('for', {
                     steps.count !== oldCount
 
         } else {
-            var cache = pre.cache
+            var cache = pre.cache 
+            if(!cache)
+                return
             var newCache = cur.cache = {}
             /* eslint-disable no-cond-assign */
             for (i = 0; c = cur.components[i++]; ) {
