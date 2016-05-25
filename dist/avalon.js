@@ -1,4 +1,4 @@
-/*! built in 2016-5-25:20 version 2.02 by 司徒正美 */
+/*! built in 2016-5-25:21 version 2.02 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -7355,7 +7355,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }, defineArgs)
 	            if(!avalon.modern){//增强对IE的兼容
 	                for(var i in vmodel){
-	                    if(skipArray[i] && typeof vmodel[i] === 'function'){
+	                    if(!skipArray[i] && typeof vmodel[i] === 'function'){
 	                       vmodel[i] = vmodel[i].bind(vmodel)
 	                    }
 	                }

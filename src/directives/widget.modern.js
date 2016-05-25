@@ -41,6 +41,9 @@ var dir = avalon.directive('widget', {
             cur.change = [this.replaceByComment]
         } else if (docker.renderCount && docker.renderCount < 2) {
             cur.steps = steps
+            //https://github.com/RubyLouvre/avalon/issues/1390
+            //当第一次渲染组件时,当组件的儿子为元素,而xmp容器里面只有文本时,就会出错
+            pre.children = []
             update(cur, this.replaceByComponent, steps, 'widget')
 
             function fireReady(dom, vnode) {

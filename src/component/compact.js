@@ -99,7 +99,7 @@ avalon.component = function (name, definition) {
             }, defineArgs)
             if(!avalon.modern){//增强对IE的兼容
                 for(var i in vmodel){
-                    if(skipArray[i] && typeof vmodel[i] === 'function'){
+                    if(!skipArray[i] && typeof vmodel[i] === 'function'){
                        vmodel[i] = vmodel[i].bind(vmodel)
                     }
                 }
