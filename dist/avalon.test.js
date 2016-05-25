@@ -1,4 +1,4 @@
-/*! built in 2016-5-21:12 version 2.02 by 司徒正美 */
+/*! built in 2016-5-25:20 version 2.02 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -57,10 +57,10 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var avalon = __webpack_require__(104)
+	var avalon = __webpack_require__(107)
 
-	__webpack_require__(105)
-	__webpack_require__(106)
+	__webpack_require__(108)
+	__webpack_require__(109)
 	module.exports = avalon
 
 
@@ -68,10 +68,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 
-/***/ 104:
+/***/ 107:
 /***/ function(module, exports, __webpack_require__) {
 
-	/*! built in 2016-5-21:3 version 2.03 by 司徒正美 */
+	/*! built in 2016-5-25:20 version 2.02 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -137,7 +137,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		__webpack_require__(35)
 		__webpack_require__(71)
 		__webpack_require__(75)
-		__webpack_require__(76)
+		__webpack_require__(77)
 
 		module.exports = avalon
 
@@ -749,7 +749,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return a === 'true'
 		        }
 		    },
-		    version: "2.03",
+		    version: "2.02",
 		    slice: function (nodes, start, end) {
 		        return _slice.call(nodes, start, end)
 		    },
@@ -923,9 +923,10 @@ return /******/ (function(modules) { // webpackBootstrap
 		    }
 		}
 		kernel.plugins = plugins
-		kernel.plugins['interpolate'](['{{', '}}'])
-		//kernel.showDiff = true
-		kernel.debug = true
+		avalon.config({
+		    interpolate: ['{{', '}}'],
+		    debug: true
+		})
 
 
 	/***/ },
@@ -2332,7 +2333,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		})
 
 		function getWindow(node) {
-		    return node.window && node.document ? node : node.nodeType === 9 ? node.defaultView || node.parentWindow : false;
+		    return node.window || node.defaultView || node.parentWindow || false
 		}
 
 	/***/ },
@@ -2863,11 +2864,15 @@ return /******/ (function(modules) { // webpackBootstrap
 		                if (rneedSmooth.test(type)) {
 		                    var curr = +new Date()
 		                    if (curr - last > 16) {
-		                        fn.call(vm || elem, event)
+		                        var ret = fn.call(vm || elem, event)
 		                        last = curr
 		                    }
 		                } else {
-		                    fn.call(vm || elem, event)
+		                   ret = fn.call(vm || elem, event)
+		                }
+		                if(ret === false){
+		                    event.preventDefault()
+		                    event.stopPropagation()
 		                }
 		            }
 		        }
@@ -3302,7 +3307,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        return elem
 		    }
 		}
-		avalon.directive("important", {
+		avalon.directive('important', {
 		    priority: 1,
 		    parse: function (binding, num, elem) {
 		        delete elem.props['ms-important']
@@ -3339,7 +3344,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		var parseExpr = __webpack_require__(38)
 		var parseBindings = __webpack_require__(41)
 		var parseDelimiter = __webpack_require__(42)
-		var rexpr = avalon.config.rexpr
+		var config = avalon.config
 		var quote = avalon.quote
 		var makeHashCode = avalon.makeHashCode
 		var r = __webpack_require__(40)
@@ -3368,7 +3373,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        var el = arr[i]
 		        if (el.nodeType === 3) {
 		            str += 'var ' + vnode + ' = {type:"#text",nodeType:3,skipContent:true}\n'
-		            var hasDelimiter = rexpr.test(el.nodeValue)
+		            var hasDelimiter = config.rexpr.test(el.nodeValue)
 
 		            if (hasDelimiter) {
 		                var array = parseDelimiter(el.nodeValue)
@@ -3514,16 +3519,17 @@ return /******/ (function(modules) { // webpackBootstrap
 		var rstring = __webpack_require__(40).string
 		var rfill = /\?\?\d+/g
 		var brackets = /\(([^)]*)\)/
-		var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|#)(?=\w)/g
-		var rhandleName = /^(?:\@|\#)[$\w]+$/
+
 		var rshortCircuit = /\|\|/g
 		var rpipeline = /\|(?=\w)/
 		var ruselessSp = /\s*(\.|\|)\s*/g
 		var wrapDuplex = function(arr){
 		    return '(function(){ return ' +arr.join('\n')+'})();\n'
 		}
-		function parseExpr(str, category) {
+		var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=\w)/g
+		var rhandleName = /^(?:\@|##)[$\w]+$/i
 
+		function parseExpr(str, category) {
 		    var binding = {}
 		    category = category || 'other'
 		    if (typeof str === 'object') {
@@ -3558,7 +3564,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		            replace(rshortCircuit, dig).//移除所有短路或
 		            replace(ruselessSp, '$1').//移除. |两端空白
 		            split(rpipeline) //使用管道符分离所有过滤器及表达式的正体
-
 		//还原body
 		    var body = input.shift().replace(rfill, fill).trim()
 		    if (category === 'on' && rhandleName.test(body)) {
@@ -3601,7 +3606,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                return '__vmodel__.'+b+".call(__vmodel__"+ (/\S/.test(c) ? ','+c: "")+")"
 		            })
 		        }
-		        ret = ['function self($event){',
+		        ret = ['function ms_on($event){',
 		            'try{',
 		            '\tvar __vmodel__ = this;',
 		            '\t' + body,
@@ -3806,13 +3811,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		var rline = /\r?\n/g
 		var r = __webpack_require__(40)
+		var config = avalon.config
 
 		function parseDelimiter(str) {
 		    var tokens = [],
 		            value, start = 0,
 		            stop
 		    do {
-		        stop = str.indexOf(avalon.config.openTag, start)
+		        stop = str.indexOf(config.openTag, start)
 		        if (stop === -1) {
 		            break
 		        }
@@ -3825,8 +3831,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		                expr: value
 		            })
 		        }
-		        start = stop + avalon.config.openTag.length
-		        stop = str.indexOf(avalon.config.closeTag, start)
+		        start = stop + config.openTag.length
+		        stop = str.indexOf(config.closeTag, start)
 		        if (stop === -1) {
 		            break
 		        }
@@ -4500,7 +4506,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		// 'on' and be composed of only English letters.
 		var revent = /^ms-on-([a-z]+)/ 
 		var rfilters = /\|.+/g
-		var rvar = /([@$]?\w+)/g
+		var rvar = /((?:@|$|##)?\w+)/g
 		var rstring = __webpack_require__(40).string
 		//基于事件代理的高性能事件绑定
 		avalon.directive('on', {
@@ -4508,7 +4514,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    parse: function (binding, num) {
 		        var vars = binding.expr.replace(rstring, ' ').replace(rfilters, '').match(rvar)
 		        var canCache = vars.every(function (el) {
-		            return el.charAt(0) === '@' || el.charAt(0) === '#' || el === '$event'
+		            return el.charAt(0) === '@' || el.slice(0,2) === '##' || el === '$event'
 		        })
 		        var vmDefine = 'vnode' + num + '.onVm = __vmodel__\n'
 		        var pid = quote(binding.name)
@@ -5887,7 +5893,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		                    steps.count !== oldCount
 
 		        } else {
-		            var cache = pre.cache
+		            var cache = pre.cache 
+		            if(!cache)
+		                return
 		            var newCache = cur.cache = {}
 		            /* eslint-disable no-cond-assign */
 		            for (i = 0; c = cur.components[i++]; ) {
@@ -6208,6 +6216,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		            steps.count += 1
 		            cur.change = [this.replaceByComment]
 		        } else if (docker.renderCount && docker.renderCount < 2) {
+		            //https://github.com/RubyLouvre/avalon/issues/1390
+		            //当第一次渲染组件时,当组件的儿子为元素,而xmp容器里面只有文本时,就会出错
+		            pre.children = []
 		            cur.steps = steps
 		            update(cur, this.replaceByComponent, steps, 'widget' )
 
@@ -6264,13 +6275,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		    },
 		    replaceByComponent: function (dom, node, parent) {
-		        var hasDdash = node.type.indexOf('-') > 0
-		        var hasDetect = false
-		        if (hasDdash && document.registerElement) {
-		            //必须在自定义标签实例化时,注册它
-		            disposeDetectStrategy.byCustomElement(node.type)
-		            hasDetect = true
-		        }
+		      
 		        var com = avalon.vdomAdaptor(node, 'toDOM')
 		        node.ouerHTML = avalon.vdomAdaptor(node, 'toHTML')
 		        if (dom) {
@@ -6279,9 +6284,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		            parent.appendChild(com)
 		        }
 		        patch([com], [node], parent, node.steps)
-		        if (!hasDetect) {
-		            dir.addDisposeMonitor(com)
-		        }
+		       
+		        dir.addDisposeMonitor(com)
+
 		        return false
 		    }
 		})
@@ -6295,29 +6300,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* 68 */
 	/***/ function(module, exports) {
 
-		//用于chrome, safari
-		var tags = {}
-		function byCustomElement(name) {
-		    if (tags[name])
-		        return
-		    tags[name] = true
-		    var prototype = Object.create(HTMLElement.prototype)
-		    prototype.detachedCallback = function () {
-		        var dom = this
-		        setTimeout(function () {
-		            fireDisposeHook(dom)
-		        })
-		    }
-		    document.registerElement(name, prototype)
-		}
+		
 
 		//http://stackoverflow.com/questions/11425209/are-dom-mutation-observers-slower-than-dom-mutation-events
 		//http://stackoverflow.com/questions/31798816/simple-mutationobserver-version-of-domnoderemovedfromdocument
 		function byMutationEvent(dom) {
 		    dom.addEventListener("DOMNodeRemovedFromDocument", function () {
-		        setTimeout(function () {
-		            fireDisposeHook(dom)
-		        })
+		        fireDisposeHookDelay(dom)
 		    })
 		}
 		//用于IE8+, firefox
@@ -6338,9 +6327,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    rewite('removeChild', function (fn, a, b) {
 		        fn.call(this, a, b)
 		        if (a.nodeType === 1) {
-		            setTimeout(function () {
-		                fireDisposeHook(a)
-		            })
+		            fireDisposeHookDelay(a)
 		        }
 		        return a
 		    })
@@ -6348,9 +6335,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    rewite('replaceChild', function (fn, a, b) {
 		        fn.call(this, a, b)
 		        if (a.nodeType === 1) {
-		            setTimeout(function () {
-		                fireDisposeHook(a)
-		            })
+		            fireDisposeHookDelay(a)
 		        }
 		        return a
 		    })
@@ -6364,9 +6349,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    rewite('appendChild', function (fn, a) {
 		        fn.call(this, a)
 		        if (a.nodeType === 1 && this.nodeType === 11) {
-		            setTimeout(function () {
-		                fireDisposeHook(a)
-		            })
+		            fireDisposeHookDelay(a)
 		        }
 		        return a
 		    })
@@ -6374,9 +6357,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    rewite('insertBefore', function (fn, a) {
 		        fn.call(this, a)
 		        if (a.nodeType === 1 && this.nodeType === 11) {
-		            setTimeout(function () {
-		                fireDisposeHook(a)
-		            })
+		            fireDisposeHookDelay(a)
 		        }
 		        return a
 		    })
@@ -6408,7 +6389,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		module.exports = {
 		    byPolling: byPolling,
 		    byMutationEvent: byMutationEvent,
-		    byCustomElement: byCustomElement,
 		    byRewritePrototype: byRewritePrototype
 		}
 
@@ -6433,7 +6413,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		        return false
 		    }
 		}
-
+		function fireDisposeHookDelay(a){
+		    setTimeout(function () {
+		        fireDisposeHook(a)
+		    },4)
+		}
 		function fireDisposedComponents(nodes) {
 		    for (var i = 0, el; el = nodes[i++]; ) {
 		        fireDisposeHook(el)
@@ -6831,7 +6815,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		var rstring = r.string
 
 
-		var rbind = avalon.config.rbind
+		var config = avalon.config
 
 
 		var maps = {}
@@ -6859,7 +6843,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    } else {
 		        curDeep = curDeep + 1
 		    }
-		    if (curDeep >= maxDeep && !rbind.test(text)) {
+		    if (curDeep >= maxDeep && !config.rbind.test(text)) {
 		        return nodes
 		    }
 		    if (!curDeep) {
@@ -7347,6 +7331,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		var VText = __webpack_require__(16)
 		var parseView = __webpack_require__(37)
 		var resolvedComponents = avalon.resolvedComponents
+		var skipArray = __webpack_require__(76)
+
 		var componentContainers = {wbr: 1, xmp: 1, template: 1}
 		var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose')
 
@@ -7431,7 +7417,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            var $id = finalOptions.$id || 
 		                    avalon.makeHashCode(componentName.replace(/-/g, '_'))
 
-		            var defaults = definition.defaults
+		            var defaults = avalon.mix(true,{},definition.defaults)
 		            mixinHooks(finalOptions, defaults, false)
 		            var defineArgs = [topVm, defaults].concat(options)
 		            var vmodel = define.apply(function (a, b) {
@@ -7440,6 +7426,13 @@ return /******/ (function(modules) { // webpackBootstrap
 		                    delete b[k]
 		                }
 		            }, defineArgs)
+		            if(!avalon.modern){//增强对IE的兼容
+		                for(var i in vmodel){
+		                    if(skipArray[i] && typeof vmodel[i] === 'function'){
+		                       vmodel[i] = vmodel[i].bind(vmodel)
+		                    }
+		                }
+		            }
 		            vmodel.$id = $id
 		            vmodel.$element = topVm.$element
 		            avalon.vmodels[$id] = vmodel
@@ -7632,6 +7625,22 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	/***/ },
 	/* 76 */
+	/***/ function(module, exports) {
+
+		/**
+		 * 
+		$$skipArray:是系统级通用的不可监听属性
+		$skipArray: 是当前对象特有的不可监听属性
+
+		 不同点是
+		 $$skipArray被hasOwnProperty后返回false
+		 $skipArray被hasOwnProperty后返回true
+		 */
+
+		module.exports = avalon.oneObject('$id,$render,$track,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,__proxy__,__data__,__const__')
+
+	/***/ },
+	/* 77 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		/**
@@ -7641,7 +7650,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		 * ------------------------------------------------------------
 		 */
 
-		var share = __webpack_require__(77)
+		var share = __webpack_require__(78)
 
 		var isSkip = share.isSkip
 		var toJson = share.toJson
@@ -7927,10 +7936,10 @@ return /******/ (function(modules) { // webpackBootstrap
 		//使用这个AJAX库 https://github.com/matthew-andrews/isomorphic-fetch
 
 	/***/ },
-	/* 77 */
+	/* 78 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var share = __webpack_require__(78)
+		var share = __webpack_require__(79)
 		var canHideProperty = __webpack_require__(81)
 		var makeFire = share.makeFire
 		function toJson(val) {
@@ -8020,12 +8029,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 78 */
+	/* 79 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		
 		var $$midway = {}
-		var $$skipArray = __webpack_require__(79)
+		var $$skipArray = __webpack_require__(76)
 		var dispatch = __webpack_require__(80)
 		var $emit = dispatch.$emit
 		var $watch = dispatch.$watch
@@ -8292,22 +8301,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 	/***/ },
-	/* 79 */
-	/***/ function(module, exports) {
-
-		/**
-		 * 
-		$$skipArray:是系统级通用的不可监听属性
-		$skipArray: 是当前对象特有的不可监听属性
-
-		 不同点是
-		 $$skipArray被hasOwnProperty后返回false
-		 $skipArray被hasOwnProperty后返回true
-		 */
-
-		module.exports = avalon.oneObject('$id,$render,$track,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,__proxy__,__data__,__const__')
-
-	/***/ },
 	/* 80 */
 	/***/ function(module, exports) {
 
@@ -8432,7 +8425,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		
 		var canHideProperty = __webpack_require__(81)
-		var $$skipArray = __webpack_require__(79)
+		var $$skipArray = __webpack_require__(76)
 
 
 		var defineProperties = Object.defineProperties
@@ -8561,7 +8554,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 
-/***/ 105:
+/***/ 108:
 /***/ function(module, exports) {
 
 	//var avalon = require('avalon')
@@ -8569,21 +8562,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.component('ms-button', {
 	    template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
 	    defaults: {
-	        buttonText: "button",
-	        onDispose: function(){
-	          avalon.log('button被销毁')   
-	        }
+	        buttonText: "button"
 	    },
 	    soleSlot: 'buttonText'
 	})
 
 /***/ },
 
-/***/ 106:
+/***/ 109:
 /***/ function(module, exports, __webpack_require__) {
 
-	var button = __webpack_require__(105)
-	var tmpl = __webpack_require__(107)
+	var button = __webpack_require__(108)
+	var tmpl = __webpack_require__(110)
 
 	avalon.component('ms-panel', {
 	    template: tmpl,
@@ -8598,10 +8588,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 
-/***/ 107:
+/***/ 110:
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
+	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
 
 /***/ }
 

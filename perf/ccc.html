@@ -55,8 +55,8 @@
             })
             var vm = avalon.define({
                 $id: 'effect',
-                toggle:true
-          
+                toggle:true,
+                ddd: 'dfd'
             })
 
 
@@ -64,8 +64,8 @@
     </head>
     <body>
         <div ms-controller='effect' >
-            <div ms-visible='@toggle' ms-effect='{is:"fade",action:@toggle?"enter":"leave"}' class="ani">
-                ccc
+            <div ms-visible='@toggle' ms-class="{width: '\&\#dfsf;'}" ms-effect='{is:"fade",action:@toggle?"enter":"leave"}' class="ani">
+                {{#ddd}}
             </div>
             <div ms-if='@toggle' ms-effect='{is:"zoom",action:@toggle?"enter":"leave"}' class="ani">
                 ddd

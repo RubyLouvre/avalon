@@ -1,12 +1,13 @@
 var rline = /\r?\n/g
 var r = require('../../seed/regexp')
+var config = avalon.config
 
 function parseDelimiter(str) {
     var tokens = [],
             value, start = 0,
             stop
     do {
-        stop = str.indexOf(avalon.config.openTag, start)
+        stop = str.indexOf(config.openTag, start)
         if (stop === -1) {
             break
         }
@@ -19,8 +20,8 @@ function parseDelimiter(str) {
                 expr: value
             })
         }
-        start = stop + avalon.config.openTag.length
-        stop = str.indexOf(avalon.config.closeTag, start)
+        start = stop + config.openTag.length
+        stop = str.indexOf(config.closeTag, start)
         if (stop === -1) {
             break
         }

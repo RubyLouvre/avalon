@@ -26,7 +26,7 @@ avalon.important = function (elem, vid) {
         return elem
     }
 }
-avalon.directive("important", {
+avalon.directive('important', {
     priority: 1,
     parse: function (binding, num, elem) {
         delete elem.props['ms-important']

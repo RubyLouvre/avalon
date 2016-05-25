@@ -9,7 +9,7 @@ avalon1与avalon2的异同
 | 绑定属性的处理   | 扫描后删除           | 扫描后还留着|
 | 循环指令      | ms-repeat,ms-each,ms-with   | ms-for |
 | 循环指令的语法      | ms-repeat-el='array'    | ms-for="el in @array" |
-| 如何辩别指令中的vm属性    | avalon自行进行语法抽取    | 强制在前面带@或#符号 |
+| 如何辩别指令中的vm属性    | avalon自行进行语法抽取    | 强制在前面带@或##符号 |
 | 垃圾回收    | 密封舱机制，负责清空订阅者数组  | 由于不保存绑定对象，没有CG的烦恼 |
 | 性能   | 一般，但能撑起上万个指令，瓶颈取决于绑定对象的所占内存|   原来的5倍以上，瓶颈取决于虚拟DOM的规模|
 | 最复杂的指令   | ms-repeat|   ms-duplex |
@@ -27,7 +27,6 @@ avalon1与avalon2的异同
 | class指令    | ms-class='xxx: toggle'       | ms-class＝’Array|Object|String‘ 用法变了|
 | visible指令       | ms-visible       | ms-visible |
 | 过滤器    | 只能用于innerText中的{{}}及ms-text, ms-html  | 数量琳琅满目，所有指令都支持|
-| js指令        |  没有            | 新增|
 | 模板指令      |  ms-include          | 移除，由于后端无法实现等价功能 |
 | 事件指令      |  普通的事件绑定         | 能支持事件代理的都用事件代理 |
 | 数据验证      |  使用oniui的validation |使用内置的ms-validate,ms-duplex,ms-rules|

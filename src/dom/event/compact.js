@@ -132,11 +132,15 @@ function dispatch(event) {
                 if (rneedSmooth.test(type)) {
                     var curr = +new Date()
                     if (curr - last > 16) {
-                        fn.call(vm || elem, event)
+                        var ret = fn.call(vm || elem, event)
                         last = curr
                     }
                 } else {
-                    fn.call(vm || elem, event)
+                   ret = fn.call(vm || elem, event)
+                }
+                if(ret === false){
+                    event.preventDefault()
+                    event.stopPropagation()
                 }
             }
         }

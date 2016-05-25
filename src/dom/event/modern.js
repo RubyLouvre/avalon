@@ -77,7 +77,7 @@ avalon.unbind = function (elem, type, fn) {
 }
 
 var reventNames = /[^\s\?]+/g
-var last = +new Date()
+var last = Date.now()
 var typeRegExp = {}
 function collectHandlers(elem, type, handlers) {
     var value = elem.getAttribute('avalon-events')
@@ -125,11 +125,15 @@ function dispatch(event) {
                 if (rneedSmooth.test(type)) {
                     var curr = +new Date()
                     if (curr - last > 16) {
-                        fn.call(vm || elem, event)
+                        var ret = fn.call(vm || elem, event)
                         last = curr
                     }
                 } else {
-                    fn.call(vm || elem, event)
+                   ret = fn.call(vm || elem, event)
+                }
+                if(ret === false){
+                    event.preventDefault()
+                    event.stopPropagation()
                 }
             }
         }

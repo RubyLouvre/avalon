@@ -1,26 +1,10 @@
-//用于chrome, safari
-var tags = {}
-function byCustomElement(name) {
-    if (tags[name])
-        return
-    tags[name] = true
-    var prototype = Object.create(HTMLElement.prototype)
-    prototype.detachedCallback = function () {
-        var dom = this
-        setTimeout(function () {
-            fireDisposeHook(dom)
-        })
-    }
-    document.registerElement(name, prototype)
-}
+
 
 //http://stackoverflow.com/questions/11425209/are-dom-mutation-observers-slower-than-dom-mutation-events
 //http://stackoverflow.com/questions/31798816/simple-mutationobserver-version-of-domnoderemovedfromdocument
 function byMutationEvent(dom) {
     dom.addEventListener("DOMNodeRemovedFromDocument", function () {
-        setTimeout(function () {
-            fireDisposeHook(dom)
-        })
+        fireDisposeHookDelay(dom)
     })
 }
 //用于IE8+, firefox
@@ -41,9 +25,7 @@ function byRewritePrototype() {
     rewite('removeChild', function (fn, a, b) {
         fn.call(this, a, b)
         if (a.nodeType === 1) {
-            setTimeout(function () {
-                fireDisposeHook(a)
-            })
+            fireDisposeHookDelay(a)
         }
         return a
     })
@@ -51,9 +33,7 @@ function byRewritePrototype() {
     rewite('replaceChild', function (fn, a, b) {
         fn.call(this, a, b)
         if (a.nodeType === 1) {
-            setTimeout(function () {
-                fireDisposeHook(a)
-            })
+            fireDisposeHookDelay(a)
         }
         return a
     })
@@ -67,9 +47,7 @@ function byRewritePrototype() {
     rewite('appendChild', function (fn, a) {
         fn.call(this, a)
         if (a.nodeType === 1 && this.nodeType === 11) {
-            setTimeout(function () {
-                fireDisposeHook(a)
-            })
+            fireDisposeHookDelay(a)
         }
         return a
     })
@@ -77,9 +55,7 @@ function byRewritePrototype() {
     rewite('insertBefore', function (fn, a) {
         fn.call(this, a)
         if (a.nodeType === 1 && this.nodeType === 11) {
-            setTimeout(function () {
-                fireDisposeHook(a)
-            })
+            fireDisposeHookDelay(a)
         }
         return a
     })
@@ -111,7 +87,6 @@ function byPolling(dom) {
 module.exports = {
     byPolling: byPolling,
     byMutationEvent: byMutationEvent,
-    byCustomElement: byCustomElement,
     byRewritePrototype: byRewritePrototype
 }
 
@@ -136,7 +111,11 @@ function fireDisposeHook(el) {
         return false
     }
 }
-
+function fireDisposeHookDelay(a){
+    setTimeout(function () {
+        fireDisposeHook(a)
+    },4)
+}
 function fireDisposedComponents(nodes) {
     for (var i = 0, el; el = nodes[i++]; ) {
         fireDisposeHook(el)

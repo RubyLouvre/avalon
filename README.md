@@ -5,6 +5,10 @@
 以求取最高的性能
 ###[avalon2官网](http://avalonjs.coding.me/)
 
+```javascript
+npm install avalon2
+```
+
 <img src='https://github.com/RubyLouvre/avalon/blob/master/structure.jpg'/>
 
 主要特征如下：

@@ -7,16 +7,17 @@ var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\
 var rstring = require('../../seed/regexp').string
 var rfill = /\?\?\d+/g
 var brackets = /\(([^)]*)\)/
-var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|#)(?=\w)/g
-var rhandleName = /^(?:\@|\#)[$\w]+$/
+
 var rshortCircuit = /\|\|/g
 var rpipeline = /\|(?=\w)/
 var ruselessSp = /\s*(\.|\|)\s*/g
 var wrapDuplex = function(arr){
     return '(function(){ return ' +arr.join('\n')+'})();\n'
 }
-function parseExpr(str, category) {
+var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=\w)/g
+var rhandleName = /^(?:\@|##)[$\w]+$/i
 
+function parseExpr(str, category) {
     var binding = {}
     category = category || 'other'
     if (typeof str === 'object') {
@@ -51,7 +52,6 @@ function parseExpr(str, category) {
             replace(rshortCircuit, dig).//移除所有短路或
             replace(ruselessSp, '$1').//移除. |两端空白
             split(rpipeline) //使用管道符分离所有过滤器及表达式的正体
-
 //还原body
     var body = input.shift().replace(rfill, fill).trim()
     if (category === 'on' && rhandleName.test(body)) {
@@ -94,7 +94,7 @@ function parseExpr(str, category) {
                 return '__vmodel__.'+b+".call(__vmodel__"+ (/\S/.test(c) ? ','+c: "")+")"
             })
         }
-        ret = ['function self($event){',
+        ret = ['function ms_on($event){',
             'try{',
             '\tvar __vmodel__ = this;',
             '\t' + body,
