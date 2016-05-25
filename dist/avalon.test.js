@@ -1,4 +1,4 @@
-/*! built in 2016-5-25:16 version 2.02 by 司徒正美 */
+/*! built in 2016-5-25:17 version 2.02 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -71,7 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 107:
 /***/ function(module, exports, __webpack_require__) {
 
-	/*! built in 2016-5-25:16 version 2.02 by 司徒正美 */
+	/*! built in 2016-5-25:17 version 2.02 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -7642,7 +7642,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 110:
 /***/ function(module, exports) {
 
-	module.exports = "<ms-panel>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</ms-panel>"
+	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
 
 /***/ }
 
