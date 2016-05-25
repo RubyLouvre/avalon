@@ -1,4 +1,4 @@
-/*! built in 2016-5-25:21 version 2.02 by 司徒正美 */
+/*! built in 2016-5-25:21 version 2.03 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -71,7 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 107:
 /***/ function(module, exports, __webpack_require__) {
 
-	/*! built in 2016-5-25:20 version 2.02 by 司徒正美 */
+	/*! built in 2016-5-25:21 version 2.04 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -749,7 +749,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return a === 'true'
 		        }
 		    },
-		    version: "2.02",
+		    version: "2.04",
 		    slice: function (nodes, start, end) {
 		        return _slice.call(nodes, start, end)
 		    },
@@ -7429,7 +7429,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		            if(!avalon.modern){//增强对IE的兼容
 		                for(var i in vmodel){
 		                    if(!skipArray[i] && typeof vmodel[i] === 'function'){
-	                                console.log(i)
 		                       vmodel[i] = vmodel[i].bind(vmodel)
 		                    }
 		                }
@@ -7482,7 +7481,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		            vmodel.$render = topVm.$render
 		            vmodel.$events.__wid__ = wid
 		            //触发onInit回调
-	                    console.log('111111',vmodel)
 		            vmodel.$fire('onInit', {
 		                type: 'init',
 		                vmodel: vmodel,
@@ -8381,12 +8379,10 @@ return /******/ (function(modules) { // webpackBootstrap
 		 * @returns {undefined}
 		 */
 		function $emit(list, vm, path, a, b, i) {
-	            console.log(list)
 		    if (list && list.length) {
 		        try {
 		            for (i = i || list.length - 1; i >= 0; i--) {
 		                var callback = list[i]
-	                        console.log(vm)
 		                callback.call(vm, a, b, path)
 		            }
 		        } catch (e) {
