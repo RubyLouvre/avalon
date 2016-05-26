@@ -1,4 +1,4 @@
-/*! built in 2016-5-26:10 version 2.03 by 司徒正美 */
+/*! built in 2016-5-26:12 version 2.03 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -71,7 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 107:
 /***/ function(module, exports, __webpack_require__) {
 
-	/*! built in 2016-5-26:10 version 2.03 by 司徒正美 */
+	/*! built in 2016-5-26:12 version 2.03 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -3183,7 +3183,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/***/ function(module, exports) {
 
 		var scanStatistics = 0
-		function scan(nodes) {
+		function scan(nodes, fn) {
 		    for (var i = 0, elem; elem = nodes[i++]; ) {
 		        if (elem.nodeType === 1) {
 		            var $id = getController(elem)
@@ -3205,9 +3205,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		                avalon.log('create template Function ', now3 - now2)
 		                avalon.rerenderStart = now3
 		                avalon.batch($id, true)
-
+		                console.log(typeof fn)
 		            } else if (!$id) {
-		                scan(elem.childNodes)
+		                scan(elem.childNodes, fn)
 		            }
 		        }
 		    }
@@ -3228,12 +3228,12 @@ return /******/ (function(modules) { // webpackBootstrap
 		        target.appendChild(keep)
 		    }
 		}
-		module.exports = avalon.scan = function (a) {
+		module.exports = avalon.scan = function (a, fn) {
 		    if (!a || !a.nodeType) {
 		        avalon.warn('[avalon.scan] first argument must be element , documentFragment, or document')
 		        return
 		    }
-		    scan([a])
+		    scan([a], fn)
 		    if (scanStatistics === 0) {
 		        avalon.warn('[avalon.scan] your nodes must has "ms-controller" attribute')
 		    }

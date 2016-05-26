@@ -6,34 +6,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../dist/avalon.js"></script>
         <script>
-           avalon.component('ms-aaa', {
-               template: '<div ms-css="{width:@w,backgroundColor:\"#1ba9ba\"}">{{@aaa}}<ul><li ms-for="el in @bbb">{{el}}</li></ul></div>',
-               defaults: {
-                   aaa: "组件",
-                   bbb: [1,2,3],
-                   w: 100,
-                   onReady: function(e){
-                       setTimeout(function(){
-                           e.vmodel.w = document.body.clientWidth * 0.3
-                       },3000)
-                   }
-               }
-           })
-            vm = avalon.define({
-            $id: 'widget0',
-            bbb2: [2,3,4],
-            ccc: 333,
-            change: function(){
-                this.bbb2 = [9,8,7]
-            }
+          vm = avalon.define({
+            $id: 'html',
+            a: '<p ms-html="@b">xxx</p>',
+            b: '<b title="yyy">zzz</b><a>xxx</a>',
+            c: '<i>司徒正美</i>'
         })
       </script>
 </head>
 <body>
-        <div ms-controller='widget0' >
-            <ms-aaa ms-widget="{bbb:@bbb2}"></ms-aaa>
-            <ms-aaa ms-widget="{eee: 333}"></ms-aaa>
-            <div ms-click="@change">change widget 1</div>
-        </div>
+        <div ms-controller='html' ms-html='@a' >111
+             </div>
 </body>
 </html>
