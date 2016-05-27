@@ -1,4 +1,4 @@
-var Recognizer = require('./Recognizer')
+var Recognizer = require('./recognizer')
 
 var pinchRecognizer = {
     events: ['pinchstart', 'pinch', 'pinchin', 'pinchuot', 'pinchend'],

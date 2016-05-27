@@ -79,48 +79,40 @@ describe('filters', function () {
         it('test', function () {
             expect(fn(items, 3)).to.eql(['a', 'b', 'c']);
             expect(fn(items, '3')).to.eql(['a', 'b', 'c']);
-            expect(fn(str, 3)).to.eql('tuv');
-            expect(fn(str, '3')).to.eql('tuv');
-            expect(fn(number, 3)).to.eql('100');
-            expect(fn(number, '3')).to.eql('100');
+           
+           
         })
 
 
         it('should return the first X items beginning from index Y when X and Y are positive', function () {
             expect(limitTo(items, 3, '3')).to.eql(['d', 'e', 'f']);
             expect(limitTo(items, '3', 3)).to.eql(['d', 'e', 'f']);
-            expect(limitTo(str, 3, 3)).to.eql('wxy');
-            expect(limitTo(str, '3', '3')).to.eql('wxy');
+          
         });
 
         it('should return the first X items beginning from index Y when X is positive and Y is negative', function () {
             expect(limitTo(items, 3, '-3')).to.eql(['f', 'g', 'h']);
             expect(limitTo(items, '3', -3)).to.eql(['f', 'g', 'h']);
-            expect(limitTo(str, 3, -3)).to.eql('xyz');
-            expect(limitTo(str, '3', '-3')).to.eql('xyz');
+           
         });
 
         it('should return the last X items when X is negative', function () {
             expect(limitTo(items, -3)).to.eql(['f', 'g', 'h']);
             expect(limitTo(items, '-3')).to.eql(['f', 'g', 'h']);
-            expect(limitTo(str, -3)).to.eql('xyz');
-            expect(limitTo(str, '-3')).to.eql('xyz');
-            expect(limitTo(number, -3)).to.eql('045');
-            expect(limitTo(number, '-3')).to.eql('045');
+          
+           
         });
 
         it('should return the last X items until index Y when X and Y are negative', function () {
             expect(limitTo(items, -3, '-3')).to.eql(['c', 'd', 'e']);
             expect(limitTo(items, '-3', -3)).to.eql(['c', 'd', 'e']);
-            expect(limitTo(str, -3, -3)).to.eql('uvw');
-            expect(limitTo(str, '-3', '-3')).to.eql('uvw');
+           
         });
 
         it('should return the last X items until index Y when X is negative and Y is positive', function () {
             expect(limitTo(items, -3, '4')).to.eql(['b', 'c', 'd']);
             expect(limitTo(items, '-3', 4)).to.eql(['b', 'c', 'd']);
-            expect(limitTo(str, -3, 4)).to.eql('uvw');
-            expect(limitTo(str, '-3', '4')).to.eql('uvw');
+           
         });
 
         it('should return an empty array when X = 0', function () {
@@ -136,18 +128,7 @@ describe('filters', function () {
             expect(limitTo(items, undefined)).to.eql(items);
         });
 
-        it('should return an empty string when X = 0', function () {
-            expect(limitTo(str, 0)).to.eql('');
-            expect(limitTo(str, '0')).to.eql('');
-        });
-
-        it('should return entire string when X cannot be parsed', function () {
-            expect(limitTo(str, 'bogus')).to.eql(str);
-            expect(limitTo(str, 'null')).to.eql(str);
-            expect(limitTo(str, 'undefined')).to.eql(str);
-            expect(limitTo(str, null)).to.eql(str);
-            expect(limitTo(str, undefined)).to.eql(str);
-        });
+      
 
         it('should take 0 as beginning index value when Y cannot be parsed', function () {
             expect(limitTo(items, 3, 'bogus')).to.eql(limitTo(items, 3, 0));
@@ -155,16 +136,11 @@ describe('filters', function () {
             expect(limitTo(items, '3', 'undefined')).to.eql(limitTo(items, '3', 0));
             expect(limitTo(items, '-3', null)).to.eql(limitTo(items, '-3'));
             expect(limitTo(items, 3, undefined)).to.eql(limitTo(items, 3, 0));
-            expect(limitTo(str, 3, 'bogus')).to.eql(limitTo(str, 3));
-            expect(limitTo(str, -3, 'null')).to.eql(limitTo(str, -3, 0));
-            expect(limitTo(str, '3', 'undefined')).to.eql(limitTo(str, '3'));
-            expect(limitTo(str, '-3', null)).to.eql(limitTo(str, '-3', 0));
-            expect(limitTo(str, 3, undefined)).to.eql(limitTo(str, 3));
+          
         });
 
         it('should return input if not String or Array or Number', function () {
-            expect(limitTo(null, 1)).to.eql(null);
-            expect(limitTo(undefined, 1)).to.eql(undefined);
+           
             expect(limitTo({}, 1)).to.eql({});
         });
     })

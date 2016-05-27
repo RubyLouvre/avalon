@@ -1,4 +1,4 @@
-/*! built in 2016-5-26:12 version 2.03 by 司徒正美 */
+/*! built in 2016-5-27:14 version 2.03 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -899,7 +899,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function limitBy(input, limit, begin) {
 	    var type = avalon.type(input)
 	    if (type !== 'array' && type !== 'object')
-	        throw 'filterBy只能处理对象或数组'
+	        throw 'limitBy只能处理对象或数组'
 	    //尝试将limit转换数值
 	    if (Math.abs(Number(limit)) === Infinity) {
 	        limit = Number(limit)
@@ -5361,21 +5361,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	
-	var rbrace = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/
 	avalon.parseJSON = JSON.parse
-
-	function parseData(data) {
-	    try {
-	        if (typeof data === 'object')
-	            return data
-	        data = data === 'true' ? true :
-	                data === 'false' ? false :
-	                data === 'null' ? null : +data + '' === data ? +data : rbrace.test(data) ? JSON.parse(data) : data
-	    } catch (e) {
-	    }
-	    return data
-	}
-
 
 	avalon.fn.attr = function (name, value) {
 	    if (arguments.length === 2) {
@@ -5386,51 +5372,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-	avalon.fn.data = function (name, value) {
-	    name = 'data-' + avalon.hyphen(name || '')
-	    switch (arguments.length) {
-	        case 2:
-	            this.attr(name, value)
-	            return this
-	        case 1:
-	            var val = this.attr(name)
-	            return parseData(val)
-	        case 0:
-	            var ret = {}
-	            avalon.each(this[0].attributes, function (i, attr) {
-	                if (attr) {
-	                    name = attr.name
-	                    if (!name.indexOf('data-')) {
-	                        name = avalon.camelize(name.slice(5))
-	                        ret[name] = parseData(attr.value)
-	                    }
-	                }
-	            })
-	            return ret
-	    }
-	}
 
-
-	if (avalon.root.dataset) {
-	    avalon.fn.data = function (name, val) {
-	        name = name && avalon.camelize(name)
-	        var dataset = this[0].dataset
-	        switch (arguments.length) {
-	            case 2:
-	                dataset[name] = val
-	                return this
-	            case 1:
-	                val = dataset[name]
-	                return parseData(val)
-	            case 0:
-	                var ret = {}
-	                for (name in dataset) {
-	                    ret[name] = parseData(dataset[name])
-	                }
-	                return ret
-	        }
-	    }
-	}
 
 
 

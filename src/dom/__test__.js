@@ -26,7 +26,6 @@ describe('测试dom模块', function () {
     })
     describe('data', function () {
         it('test', function () {
-            expect(avalon.fn.data).to.be.a('function')
             expect(avalon.fn.attr).to.be.a('function')
         })
     })

@@ -1,4 +1,4 @@
-var Recognizer = require('./Recognizer')
+var Recognizer = require('./recognizer')
 
 var dragRecognizer = {
     events: ['dragstart', 'drag', 'dragend'],

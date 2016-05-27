@@ -87,7 +87,7 @@ Number.isNaN = Number.isNaN || function (a) {
 function limitBy(input, limit, begin) {
     var type = avalon.type(input)
     if (type !== 'array' && type !== 'object')
-        throw 'filterBy只能处理对象或数组'
+        throw 'limitBy只能处理对象或数组'
     //尝试将limit转换数值
     if (Math.abs(Number(limit)) === Infinity) {
         limit = Number(limit)
