@@ -231,83 +231,106 @@ describe('for', function () {
             })
         })
     })
-    
-     it('ms-duplex与ms-for并用', function (done) {
-          div.innerHTML = heredoc(function () {
-            /*
-            <table ms-controller="for5" border="1">
-                <tr>
-                    <td><input type="checkbox" 
-                               ms-duplex-checked="@allchecked" 
-                               data-duplex-changed="@checkAll"/>全选</td>
-                </tr>
-                <tr ms-for="($index, el) in @data" >
-                    <th><input type="checkbox" ms-duplex-checked="el.checked" data-duplex-changed="@checkOne" />{{$index}}::{{el.checked}}</th>
-                </tr>
-            </table>
-             */
-            })
-            vm = avalon.define({
-                $id: "for5",
-                data: [{checked: false}, {checked: false}, {checked: false}],
-                allchecked: false,
-                checkAll: function (e) {
-                    var checked = e.target.checked
-                    vm.data.forEach(function (el) {
-                        el.checked = checked
-                    })
-                },
-                checkOne: function (e) {
-                    var checked = e.target.checked
-                    if (checked === false) {
-                        vm.allchecked = false
-                    } else {//avalon已经为数组添加了ecma262v5的一些新方法
-                        vm.allchecked = vm.data.every(function (el) {
-                            return el.checked
-                        })
-                    }
-                }
-            })
-            avalon.scan(div, vm)
-            setTimeout(function(){
-               var ths = div.getElementsByTagName('th')
-               var inputs = div.getElementsByTagName('input')
 
-               var prop = 'innerText' in div ? 'innerText' : 'textContent'
-                expect(ths[0][prop]).to.equal('0::false')
-                expect(ths[1][prop]).to.equal('1::false')
-                expect(ths[2][prop]).to.equal('2::false')
-                fireClick(inputs[0])
-               setTimeout(function(){
-                    expect(ths[0][prop]).to.equal('0::true')
-                    expect(ths[1][prop]).to.equal('1::true')
-                    expect(ths[2][prop]).to.equal('2::true')
-                    done()
-               })
-            })
-     })
-     it('使用注释循环', function (done) {
-         div.innerHTML = heredoc(function () {
+    it('ms-duplex与ms-for并用', function (done) {
+        div.innerHTML = heredoc(function () {
             /*
-           <div ms-controller="for6" >
-            <!--ms-for:el in @forlist -->
-            <p>{{el}}</p>
-            <!--ms-for-end:-->
-           </div>
+             <table ms-controller="for5" border="1">
+             <tr>
+             <td><input type="checkbox" 
+             ms-duplex-checked="@allchecked" 
+             data-duplex-changed="@checkAll"/>全选</td>
+             </tr>
+             <tr ms-for="($index, el) in @data" >
+             <th><input type="checkbox" ms-duplex-checked="el.checked" data-duplex-changed="@checkOne" />{{$index}}::{{el.checked}}</th>
+             </tr>
+             </table>
              */
-            })
-           
-            var vm2 = avalon.define({
-                $id: "for6",
-                forlist:[1,2,3]
-            })
-            avalon.scan(div, vm2)
-            setTimeout(function(){
-                var ps = div.getElementsByTagName('p')
-                expect(ps.length).to.equal(3)
-            
+        })
+        vm = avalon.define({
+            $id: "for5",
+            data: [{checked: false}, {checked: false}, {checked: false}],
+            allchecked: false,
+            checkAll: function (e) {
+                var checked = e.target.checked
+                vm.data.forEach(function (el) {
+                    el.checked = checked
+                })
+            },
+            checkOne: function (e) {
+                var checked = e.target.checked
+                if (checked === false) {
+                    vm.allchecked = false
+                } else {//avalon已经为数组添加了ecma262v5的一些新方法
+                    vm.allchecked = vm.data.every(function (el) {
+                        return el.checked
+                    })
+                }
+            }
+        })
+        avalon.scan(div, vm)
+        setTimeout(function () {
+            var ths = div.getElementsByTagName('th')
+            var inputs = div.getElementsByTagName('input')
+
+            var prop = 'innerText' in div ? 'innerText' : 'textContent'
+            expect(ths[0][prop]).to.equal('0::false')
+            expect(ths[1][prop]).to.equal('1::false')
+            expect(ths[2][prop]).to.equal('2::false')
+            fireClick(inputs[0])
+            setTimeout(function () {
+                expect(ths[0][prop]).to.equal('0::true')
+                expect(ths[1][prop]).to.equal('1::true')
+                expect(ths[2][prop]).to.equal('2::true')
                 done()
-                delete avalon.vmodels.for6
-            },300)
-     })
+            })
+        })
+    })
+    it('使用注释循环', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller="for6" >
+             <!--ms-for:el in @forlist -->
+             <p>{{el}}</p>
+             <!--ms-for-end:-->
+             </div>
+             */
+        })
+
+        avalon.define({
+            $id: "for6",
+            forlist: [1, 2, 3]
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            var ps = div.getElementsByTagName('p')
+            expect(ps.length).to.equal(3)
+
+            done()
+            delete avalon.vmodels.for6
+        }, 300)
+    })
+    
+    it('数组循环+对象循环', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <table ms-controller="for7" >
+             <tr ms-for="el in @list">
+             <td ms-for="elem in el">{{elem}}</td>
+             </tr>
+             </table>
+             */
+        })
+        avalon.define({
+            $id: 'for7',
+            list: [{a: 1, b: 2, c: 3}, {a: 1, b: 2, c: 3}, {a: 1, b: 2, c: 3}]
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            var tds = div.getElementsByTagName('td')
+            expect(tds.length).to.equal(9)
+            done()
+            delete avalon.vmodels.for7
+        }, 300)
+    })
 })

@@ -1,4 +1,4 @@
-/*! built in 2016-5-27:15 version 2.03 by 司徒正美 */
+/*! built in 2016-5-28:2 version 2.05 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -218,7 +218,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return a === 'true'
 	        }
 	    },
-	    version: "2.03",
+	    version: "2.05",
 	    slice: function (nodes, start, end) {
 	        return _slice.call(nodes, start, end)
 	    },
@@ -3255,7 +3255,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            next = node.nextSibling
 	        }
 	        if (vnode.directive === 'for') {
-	            if (vnode.hasChange) {
+	            
+	            if (vnode.forDiff) {
 	                if (!node) {
 	                    return
 	                }
@@ -3371,31 +3372,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-	function getLoopValue(object) {
-	    if (Array.isArray(object)) {
-	        return object.length + "|" + object.map(getTrackKey).join(';;')
+	function getEnumText(enume) {
+	    if (Array.isArray(enume)) {
+	        return enume.length + '|' + enume.map(getTrackKey).join(';;')
 	    } else {
 	        var size = 0
 	        var arr = []
-	        for (var i in object) {
-	            if (object.hasOwnProperty(i)) {
+	        for (var i in enume) {
+	            if (enume.hasOwnProperty(i)) {
 	                size++
-	                arr.push(i)
+	                arr.push(i+'*'+enume[i])
 	            }
 	        }
-	        return size + "|" + arr.join(';;')
+	        return size + '|' + arr.join(';;')
 	    }
 	}
 
-	avalon._checkLoopChange = function (key, obj) {
-	    var cur = getLoopValue(obj)
-	    var old = loopCache.get(key)
-	    if (typeof old !== 'string' || cur !== old) {
-	        loopCache.put(key, cur)
-	        return true
-	    }
-	    return false
+	function getCompareText(vnode){
+	    var text = getEnumText(vnode.enume)
+	    vnode.compareText = text
 	}
+
+
 
 	avalon.directive('for', {
 	    priority: 3,
@@ -3409,24 +3407,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            return ''
 	        })
-
 	        var arr = str.replace(rforPrefix, '').split(' in ')
 	        var assign = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
-	        var isChange = el.signature + '.hasChange = avalon._checkLoopChange("' + el.signature + '", loop' + num + ')\n'
-
+	        var enume = el.signature+'.enume = loop' + num + '\n';
 	        var alias = aliasAs ? 'var ' + aliasAs + ' = loop' + num + '\n' : ''
 	        var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
 	        if (kv.length === 1) {//确保avalon._each的回调有三个参数
 	            kv.unshift('$key')
 	        }
 	        //分别创建isArray, ____n, ___i, ___v, ___trackKey变量
-	        return assign + isChange + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n'
+	        return assign + enume + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n'
 
 	    },
 	    diff: function (current, previous, steps, __index__) {
 	        var cur = current[__index__]
 	        var pre = previous[__index__] || {}
-
+	        getCompareText(cur)
+	        if(cur.compareText === pre.compareText){
+	            return 
+	        }
+	        cur.forDiff = true
+	        
 	        var isInit = !('directive' in pre)
 	        var isChange = false, i, c, p
 	        if (isInit) {
@@ -3618,7 +3619,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var cb = avalon.caches[vnode.cid]
 	        if (cb) {
 	            cb.call(vnode.vmodel, {
-	                type: "rendered",
+	                type: 'rendered',
 	                target: startRepeat,
 	                endRepeat: endRepeat,
 	                signature: vnode.signature
@@ -4504,12 +4505,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	                break
 	            case 8:
 	                if (cur.directive === 'for' ) {
-	                   if(cur.hasChange){
-	                       i = directives['for'].diff(current, previous, steps, i)
-	                   }else{
-	                       avalon.shadowCopy(cur, previous[i])
-	                       delete cur.hasChange
-	                   }
+	                    var forDiff = directives['for'].diff(current, previous, steps, i)
+	                    if(typeof forDiff === 'number'){
+	                        i = forDiff
+	                    }else{
+	                        var preState = previous[i] || {}
+	                        avalon.shadowCopy(cur, preState)
+	                        delete cur.forDiff
+	                       // delete preState.enume
+	                    }
+
 	                } else if (cur.directive ) {//if widget
 	                    directives[cur.directive].diff(cur, pre, steps)
 	                }

@@ -22,7 +22,8 @@ function patch(nodes, vnodes, parent, steps) {
             next = node.nextSibling
         }
         if (vnode.directive === 'for') {
-            if (vnode.hasChange) {
+            
+            if (vnode.forDiff) {
                 if (!node) {
                     return
                 }

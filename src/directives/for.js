@@ -30,31 +30,28 @@ avalon._each = function (obj, fn) {
     }
 }
 
-function getLoopValue(object) {
-    if (Array.isArray(object)) {
-        return object.length + "|" + object.map(getTrackKey).join(';;')
+function getEnumText(enume) {
+    if (Array.isArray(enume)) {
+        return enume.length + '|' + enume.map(getTrackKey).join(';;')
     } else {
         var size = 0
         var arr = []
-        for (var i in object) {
-            if (object.hasOwnProperty(i)) {
+        for (var i in enume) {
+            if (enume.hasOwnProperty(i)) {
                 size++
-                arr.push(i)
+                arr.push(i+'*'+enume[i])
             }
         }
-        return size + "|" + arr.join(';;')
+        return size + '|' + arr.join(';;')
     }
 }
 
-avalon._checkLoopChange = function (key, obj) {
-    var cur = getLoopValue(obj)
-    var old = loopCache.get(key)
-    if (typeof old !== 'string' || cur !== old) {
-        loopCache.put(key, cur)
-        return true
-    }
-    return false
+function getCompareText(vnode){
+    var text = getEnumText(vnode.enume)
+    vnode.compareText = text
 }
+
+
 
 avalon.directive('for', {
     priority: 3,
@@ -68,24 +65,27 @@ avalon.directive('for', {
             }
             return ''
         })
-
         var arr = str.replace(rforPrefix, '').split(' in ')
         var assign = 'var loop' + num + ' = ' + avalon.parseExpr(arr[1]) + '\n'
-        var isChange = el.signature + '.hasChange = avalon._checkLoopChange("' + el.signature + '", loop' + num + ')\n'
-
+        var enume = el.signature+'.enume = loop' + num + '\n';
         var alias = aliasAs ? 'var ' + aliasAs + ' = loop' + num + '\n' : ''
         var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
         if (kv.length === 1) {//确保avalon._each的回调有三个参数
             kv.unshift('$key')
         }
         //分别创建isArray, ____n, ___i, ___v, ___trackKey变量
-        return assign + isChange + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n'
+        return assign + enume + alias + 'avalon._each(loop' + num + ', function(' + kv + ', traceKey){\n'
 
     },
     diff: function (current, previous, steps, __index__) {
         var cur = current[__index__]
         var pre = previous[__index__] || {}
-
+        getCompareText(cur)
+        if(cur.compareText === pre.compareText){
+            return 
+        }
+        cur.forDiff = true
+        
         var isInit = !('directive' in pre)
         var isChange = false, i, c, p
         if (isInit) {
@@ -277,7 +277,7 @@ avalon.directive('for', {
         var cb = avalon.caches[vnode.cid]
         if (cb) {
             cb.call(vnode.vmodel, {
-                type: "rendered",
+                type: 'rendered',
                 target: startRepeat,
                 endRepeat: endRepeat,
                 signature: vnode.signature
