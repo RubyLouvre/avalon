@@ -6,10 +6,10 @@ function effectFactory() {
 
 var applyEffect = function (el, dir/*[before, [after, [opts]]]*/) {
     var args = aslice.call(arguments, 0)
-    if (typeof args[2] !== "function") {
+    if (typeof args[2] !== 'function') {
         args.splice(2, 0, noop)
     }
-    if (typeof args[3] !== "function") {
+    if (typeof args[3] !== 'function') {
         args.splice(3, 0, noop)
     }
     var before = args[2]

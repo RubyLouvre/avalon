@@ -8,14 +8,14 @@ var supportAnimation = false
 var supportCSS = false
 var transitionEndEvent
 var animationEndEvent
-var transitionDuration = avalon.cssName("transition-duration")
-var animationDuration = avalon.cssName("animation-duration")
+var transitionDuration = avalon.cssName('transition-duration')
+var animationDuration = avalon.cssName('animation-duration')
 
 var checker = {
-    'TransitionEvent': 'transitionend',
-    'WebKitTransitionEvent': 'webkitTransitionEnd',
-    'OTransitionEvent': 'oTransitionEnd',
-    'otransitionEvent': 'otransitionEnd'
+    TransitionEvent: 'transitionend',
+    WebKitTransitionEvent: 'webkitTransitionEnd',
+    OTransitionEvent: 'oTransitionEnd',
+    otransitionEvent: 'otransitionEnd'
 }
 var window = avalon.window
 var tran
@@ -32,7 +32,7 @@ for (var name in checker) {
     } catch (e) {
     }
 }
-if (typeof tran === "string") {
+if (typeof tran === 'string') {
     supportTransition = true
     supportCSS = true
     transitionEndEvent = tran
@@ -43,7 +43,7 @@ if (typeof tran === "string") {
 //Chrome/Safari: webkitAnimationEnd
 //http://blogs.msdn.com/b/davrous/archive/2011/12/06/introduction-to-css3-animat ions.aspx
 //IE10也可以使用MSAnimationEnd监听，但是回调里的事件 type依然为animationend
-//  el.addEventListener("MSAnimationEnd", function(e) {
+//  el.addEventListener('MSAnimationEnd', function(e) {
 //     alert(e.type)// animationend！！！
 // })
 checker = {
@@ -57,7 +57,7 @@ for (name in checker) {
         break;
     }
 }
-if (typeof ani === "string") {
+if (typeof ani === 'string') {
     supportAnimation = true
     supportCSS = true
     animationEndEvent = ani

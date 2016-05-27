@@ -37,14 +37,14 @@ function toInt(str) {
 }
 
 function padNumber(num, digits, trim) {
-    var neg = ""
+    var neg = ''
     if (num < 0) {
         neg = '-'
         num = -num
     }
-    num = "" + num
+    num = '' + num
     while (num.length < digits)
-        num = "0" + num
+        num = '0' + num
     if (trim)
         num = num.substr(num.length - digits)
     return neg + num
@@ -151,7 +151,7 @@ function dateFilter(date, format) {
                     tzHour = toInt(symbol + c)
                     tzMin = toInt(symbol + d)
                 }
-                return ""
+                return ''
             })
 
             dateArray[3] -= tzHour
@@ -161,10 +161,10 @@ function dateFilter(date, format) {
             date = oDate
         }
     }
-    if (typeof date === "number") {
+    if (typeof date === 'number') {
         date = new Date(date)
     }
-    if (avalon.type(date) !== "date") {
+    if (avalon.type(date) !== 'date') {
         return
     }
     while (format) {
@@ -187,49 +187,49 @@ function dateFilter(date, format) {
 
 var locate = {
     AMPMS: {
-        0: "上午",
-        1: "下午"
+        0: '上午',
+        1: '下午'
     },
     DAY: {
-        0: "星期日",
-        1: "星期一",
-        2: "星期二",
-        3: "星期三",
-        4: "星期四",
-        5: "星期五",
-        6: "星期六"
+        0: '星期日',
+        1: '星期一',
+        2: '星期二',
+        3: '星期三',
+        4: '星期四',
+        5: '星期五',
+        6: '星期六'
     },
     MONTH: {
-        0: "1月",
-        1: "2月",
-        2: "3月",
-        3: "4月",
-        4: "5月",
-        5: "6月",
-        6: "7月",
-        7: "8月",
-        8: "9月",
-        9: "10月",
-        10: "11月",
-        11: "12月"
+        0: '1月',
+        1: '2月',
+        2: '3月',
+        3: '4月',
+        4: '5月',
+        5: '6月',
+        6: '7月',
+        7: '8月',
+        8: '9月',
+        9: '10月',
+        10: '11月',
+        11: '12月'
     },
     SHORTDAY: {
-        "0": "周日",
-        "1": "周一",
-        "2": "周二",
-        "3": "周三",
-        "4": "周四",
-        "5": "周五",
-        "6": "周六"
+        '0': '周日',
+        '1': '周一',
+        '2': '周二',
+        '3': '周三',
+        '4': '周四',
+        '5': '周五',
+        '6': '周六'
     },
-    fullDate: "y年M月d日EEEE",
-    longDate: "y年M月d日",
-    medium: "yyyy-M-d H:mm:ss",
-    mediumDate: "yyyy-M-d",
-    mediumTime: "H:mm:ss",
-    "short": "yy-M-d ah:mm",
-    shortDate: "yy-M-d",
-    shortTime: "ah:mm"
+    fullDate: 'y年M月d日EEEE',
+    longDate: 'y年M月d日',
+    medium: 'yyyy-M-d H:mm:ss',
+    mediumDate: 'yyyy-M-d',
+    mediumTime: 'H:mm:ss',
+    'short': 'yy-M-d ah:mm',
+    shortDate: 'yy-M-d',
+    shortTime: 'ah:mm'
 }
 locate.SHORTMONTH = locate.MONTH
 dateFilter.locate = locate
