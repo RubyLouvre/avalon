@@ -52,9 +52,6 @@ module.exports = avalon.scan = function (a, fn) {
         return
     }
     scan([a], fn)
-    if (scanStatistics === 0) {
-        avalon.warn('[avalon.scan] your nodes must has "ms-controller" attribute')
-    }
     scanStatistics = 0
 }
 

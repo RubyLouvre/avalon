@@ -1415,9 +1415,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return
 	    }
 	    scan([a], fn)
-	    if (scanStatistics === 0) {
-	        avalon.warn('[avalon.scan] your nodes must has "ms-controller" attribute')
-	    }
 	    scanStatistics = 0
 	}
 
