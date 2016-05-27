@@ -71,7 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 107:
 /***/ function(module, exports, __webpack_require__) {
 
-	/*! built in 2016-5-28:2 version 2.05 by 司徒正美 */
+	/*! built in 2016-5-28:2 version 2.06 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -291,7 +291,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return a === 'true'
 		        }
 		    },
-		    version: "2.05",
+		    version: "2.06",
 		    slice: function (nodes, start, end) {
 		        return _slice.call(nodes, start, end)
 		    },

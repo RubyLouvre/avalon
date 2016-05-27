@@ -31,13 +31,7 @@ function diff(current, previous, steps) {
                     var forDiff = directives['for'].diff(current, previous, steps, i)
                     if(typeof forDiff === 'number'){
                         i = forDiff
-                    }else{
-                        var preState = previous[i] || {}
-                        avalon.shadowCopy(cur, preState)
-                        delete cur.forDiff
-                       // delete preState.enume
                     }
-
                 } else if (cur.directive ) {//if widget
                     directives[cur.directive].diff(cur, pre, steps)
                 }

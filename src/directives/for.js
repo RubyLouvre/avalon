@@ -6,8 +6,7 @@ var rforSplit = /\s*,\s*/
 var rforAs = /\s+as\s+([$\w]+)/
 var rident = require('../seed/regexp').ident
 var update = require('./_update')
-var Cache = require('../seed/cache')
-var loopCache = new Cache(600)
+
 var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
 function getTrackKey(item) {
     var type = typeof item
@@ -81,7 +80,10 @@ avalon.directive('for', {
         var cur = current[__index__]
         var pre = previous[__index__] || {}
         getCompareText(cur)
+        delete pre.forDiff
         if(cur.compareText === pre.compareText){
+            delete pre.enume
+            avalon.shadowCopy(cur, pre)
             return 
         }
         cur.forDiff = true

@@ -3349,8 +3349,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rforAs = /\s+as\s+([$\w]+)/
 	var rident = __webpack_require__(40).ident
 	var update = __webpack_require__(43)
-	var Cache = __webpack_require__(26)
-	var loopCache = new Cache(600)
+
 	var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
 	function getTrackKey(item) {
 	    var type = typeof item
@@ -3424,7 +3423,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var cur = current[__index__]
 	        var pre = previous[__index__] || {}
 	        getCompareText(cur)
+	        delete pre.forDiff
 	        if(cur.compareText === pre.compareText){
+	            delete pre.enume
+	            avalon.shadowCopy(cur, pre)
 	            return 
 	        }
 	        cur.forDiff = true
@@ -4509,13 +4511,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    var forDiff = directives['for'].diff(current, previous, steps, i)
 	                    if(typeof forDiff === 'number'){
 	                        i = forDiff
-	                    }else{
-	                        var preState = previous[i] || {}
-	                        avalon.shadowCopy(cur, preState)
-	                        delete cur.forDiff
-	                       // delete preState.enume
 	                    }
-
 	                } else if (cur.directive ) {//if widget
 	                    directives[cur.directive].diff(cur, pre, steps)
 	                }
