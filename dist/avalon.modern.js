@@ -1,4 +1,4 @@
-/*! built in 2016-5-28:2 version 2.06 by 司徒正美 */
+/*! built in 2016-5-29:1 version 2.06 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1674,7 +1674,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var wrapDuplex = function(arr){
 	    return '(function(){ return ' +arr.join('\n')+'})();\n'
 	}
-	var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=\w)/g
+	var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
 	var rhandleName = /^(?:\@|##)[$\w]+$/i
 
 	function parseExpr(str, category) {
