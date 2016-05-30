@@ -120,6 +120,7 @@ function mediatorFactory(before, after) {
     var accessors = {}
     var unresolve = {}
     var heirloom = {}
+    var $skipArray ={}
     var arr = avalon.slice(arguments)
     var config
     var configName
@@ -128,6 +129,11 @@ function mediatorFactory(before, after) {
         //收集所有键值对及访问器属性
         for (var key in obj) {
             keys[key] = obj[key]
+            if(key === '$skipArray' && Array.isArray(obj.$skipArray)){
+                obj.$skipArray.forEach(function(el){
+                    $skipArray[el] = 1
+                })
+            }
             var accessor = Object.getOwnPropertyDescriptor(obj, key)
             if (accessor.set) {
                 if (arr.indexOf(obj[key]) === -1) {
@@ -148,7 +154,7 @@ function mediatorFactory(before, after) {
     for (key in unresolve) {
         if ($$skipArray[key] || accessors[key])
             continue
-        if (!isSkip(key, keys[key], empty)) {
+        if (!isSkip(key, keys[key], $skipArray)) {
             accessors[key] = makeAccessor(before.$id + '.' + key, key, heirloom)
             accessors[key].set(keys[key])
         }
@@ -176,12 +182,7 @@ function mediatorFactory(before, after) {
         hashcode: makeHashCode("$"),
         master: true
     })
-    // if (after.$id && before.$element) {
-    //     if (!after.$element) {
-    //         after.$element = before.$element
-    //         after.$render = before.$render 
-    //     } 
-    // }
+
     return $vmodel
 }
 
