@@ -67,7 +67,6 @@ avalon.directive('on', {
             listener = vnode.addEvents[key]
             avalon.bind(node, type, listener)
         }
-        vnode.dom = node
         delete vnode.addEvents
     }
 })
