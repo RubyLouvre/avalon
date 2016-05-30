@@ -44,8 +44,8 @@ var dir = avalon.directive('widget', {
             //当第一次渲染组件时,当组件的儿子为元素,而xmp容器里面只有文本时,就会出错
             pre.children = []
             cur.steps = steps
+            fixRepeatAction(cur.children)
             update(cur, this.replaceByComponent, steps, 'widget' )
-
             function fireReady(dom, vnode) {
                 cur.vmodel.$fire('onReady', {
                     type: 'ready',
@@ -56,7 +56,6 @@ var dir = avalon.directive('widget', {
                 docker.renderCount = 2
             }
             update(cur, fireReady, steps, 'widget', 'afterChange' )
-
         } else {
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
             cur.skipContent = !needUpdate
@@ -99,7 +98,6 @@ var dir = avalon.directive('widget', {
         }
     },
     replaceByComponent: function (dom, node, parent) {
-      
         var com = avalon.vdomAdaptor(node, 'toDOM')
         node.ouerHTML = avalon.vdomAdaptor(node, 'toHTML')
         if (dom) {
@@ -115,7 +113,16 @@ var dir = avalon.directive('widget', {
     }
 })
 
-
+function fixRepeatAction(nodes){
+    for(var i = 0,el; el = nodes[i++];){
+        if(el.directive === 'for'  ){
+            el.fixAction = true
+        }
+        if(el.children){
+            fixRepeatAction(el.children)
+        }
+    }
+}
 
 
 // http://www.besteric.com/2014/11/16/build-blog-mirror-site-on-gitcafe/
