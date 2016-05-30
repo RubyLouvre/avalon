@@ -1,4 +1,4 @@
-/*! built in 2016-5-29:1 version 2.06 by 司徒正美 */
+/*! built in 2016-5-30:11 version 2.06 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -57,10 +57,10 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var avalon = __webpack_require__(107)
+	var avalon = __webpack_require__(115)
 
-	__webpack_require__(108)
-	__webpack_require__(109)
+	__webpack_require__(116)
+	__webpack_require__(117)
 	module.exports = avalon
 
 
@@ -68,10 +68,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 
-/***/ 107:
+/***/ 115:
 /***/ function(module, exports, __webpack_require__) {
 
-	/*! built in 2016-5-28:2 version 2.06 by 司徒正美 */
+	/*! built in 2016-5-30:11 version 2.06 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -1747,7 +1747,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		var wrapDuplex = function(arr){
 		    return '(function(){ return ' +arr.join('\n')+'})();\n'
 		}
-		var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=\w)/g
+		var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
 		var rhandleName = /^(?:\@|##)[$\w]+$/i
 
 		function parseExpr(str, category) {
@@ -2362,15 +2362,16 @@ return /******/ (function(modules) { // webpackBootstrap
 		        var curValue = cur.props[name]
 		        var preValue = pre.props[name]
 		        cur.children = pre.children
-		        cur.skipContent = true
 		        var dom = cur.dom = pre.dom
-		        if (curValue !== preValue) {
-		            if (!cur.children[0]) cur.children[0] = {type:"#text",nodeType:3}
+		        cur.skipContent = true
+		        if (curValue !== preValue || cur.children.length === 0) {
+		            if (!cur.children[0])
+		                cur.children[0] = {type: "#text", nodeType: 3}
 		            cur.children[0].nodeValue = curValue
 		            if (dom) {
 		                this.update(dom, cur)
 		            } else {
-		                update(cur, this.update, steps, 'text' )
+		                update(cur, this.update, steps, 'text')
 		            }
 		        }
 		        pre.dom = null
@@ -2475,7 +2476,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        } else if (avalon.isObject(curValue)) {
 		            //处理布尔对象
 		            className = processBooleanObject(curValue)
-		        } else if (curValue) {
+		        } else if(curValue !== false && curValue !== null && curValue !== void 0) {
 		            //处理其他真值，如字符串，数字
 		            className = String(curValue)
 		        }
@@ -2577,9 +2578,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		//Ref: http://developers.whatwg.org/webappapis.html#event-handler-idl-attributes
 		// The assumption is that future DOM event attribute names will begin with
 		// 'on' and be composed of only English letters.
-		var revent = /^ms-on-([a-z]+)/ 
+		var revent = /^ms-on-([a-z]+)/
 		var rfilters = /\|.+/g
-		var rvar = /((?:@|$|##)?\w+)/g
+		var rvar = /((?:\@|\$|\#\#)?\w+)/g
 		var rstring = __webpack_require__(40).string
 		//基于事件代理的高性能事件绑定
 		avalon.directive('on', {
@@ -2587,18 +2588,18 @@ return /******/ (function(modules) { // webpackBootstrap
 		    parse: function (binding, num) {
 		        var vars = binding.expr.replace(rstring, ' ').replace(rfilters, '').match(rvar)
 		        var canCache = vars.every(function (el) {
-		            return el.charAt(0) === '@' || el.slice(0,2) === '##' || el === '$event'
+		            return el.charAt(0) === '@' || el.slice(0, 2) === '##' || el === '$event'
 		        })
 		        var vmDefine = 'vnode' + num + '.onVm = __vmodel__\n'
 		        var pid = quote(binding.name)
-		       
+
 		        if (canCache) {
 		            var key = binding.expr
 		            var fn = eventCache.get(key)
-		            if(!fn){
+		            if (!fn) {
 		                var fn = Function('return ' + avalon.parseExpr(binding, 'on'))()
 		                var uuid = markID(fn)
-		               eventCache.put(key, fn)
+		                eventCache.put(key, fn)
 		            }
 		            avalon.eventListeners[uuid] = fn
 		            return vmDefine + 'vnode' + num + '.props[' + pid +
@@ -2609,41 +2610,35 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		    },
 		    diff: function (cur, pre, steps, name) {
-		      
-		        var fn0 = cur.props[name]
-		        var fn1 = (pre.props || {})[name]
-		        if ( fn0 +''!== fn1+''  ) {
+		        var cFn = cur.props[name]
+		        var pFn = (pre.props || {})[name]
+		        if (cFn !== pFn) {
+		            if (typeof pFn === 'function' && typeof cFn === 'function') {
+		                var pid = pFn.uuid
+		                cFn.uuid = pid
+		                avalon.eventListeners[ pid ] = cFn
+		                return
+		            }
 		            var match = name.match(revent)
 		            var type = match[1]
-		            var search = type + ':' + markID(fn0)
+		            var search = type + ':' + markID(cFn)
 		            cur.addEvents = cur.addEvents || {}
-		            cur.addEvents[search] = fn0
-
-		            if (typeof fn1 === 'function') {
-		                cur.removeEvents = cur.removeEvents || {}
-		                cur.removeEvents[type + ':' + fn1.uuid] = fn1
-		            }
-		            update(cur, this.update, steps, 'on' )
-		            
+		            cur.addEvents[search] = cFn
+		            update(cur, this.update, steps, 'on')
 		        }
 		    },
 		    update: function (node, vnode) {
-		        if(!node || node.nodeType > 1) //在循环绑定中，这里为null
-		          return
+		        if (!node || node.nodeType > 1) //在循环绑定中，这里为null
+		            return
 		        var key, type, listener
 		        node._ms_context_ = vnode.onVm
 		        delete vnode.onVm
-		        for (key in vnode.removeEvents) {
-		            type = key.split(':').shift()
-		            listener = vnode.removeEvents[key]
-		            avalon.unbind(node, type, listener)
-		        }
-		        delete vnode.removeEvents
 		        for (key in vnode.addEvents) {
 		            type = key.split(':').shift()
 		            listener = vnode.addEvents[key]
 		            avalon.bind(node, type, listener)
 		        }
+		        vnode.dom = node
 		        delete vnode.addEvents
 		    }
 		})
@@ -7294,6 +7289,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    var accessors = {}
 		    var unresolve = {}
 		    var heirloom = {}
+		    var $skipArray ={}
 		    var arr = avalon.slice(arguments)
 		    var config
 		    var configName
@@ -7302,6 +7298,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		        //收集所有键值对及访问器属性
 		        for (var key in obj) {
 		            keys[key] = obj[key]
+		            if(key === '$skipArray' && Array.isArray(obj.$skipArray)){
+		                obj.$skipArray.forEach(function(el){
+		                    $skipArray[el] = 1
+		                })
+		            }
 		            var accessor = Object.getOwnPropertyDescriptor(obj, key)
 		            if (accessor.set) {
 		                if (arr.indexOf(obj[key]) === -1) {
@@ -7322,7 +7323,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    for (key in unresolve) {
 		        if ($$skipArray[key] || accessors[key])
 		            continue
-		        if (!isSkip(key, keys[key], empty)) {
+		        if (!isSkip(key, keys[key], $skipArray)) {
 		            accessors[key] = makeAccessor(before.$id + '.' + key, key, heirloom)
 		            accessors[key].set(keys[key])
 		        }
@@ -7350,12 +7351,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        hashcode: makeHashCode("$"),
 		        master: true
 		    })
-		    // if (after.$id && before.$element) {
-		    //     if (!after.$element) {
-		    //         after.$element = before.$element
-		    //         after.$render = before.$render 
-		    //     } 
-		    // }
+
 		    return $vmodel
 		}
 
@@ -7531,7 +7527,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 
-/***/ 108:
+/***/ 116:
 /***/ function(module, exports) {
 
 	//var avalon = require('avalon')
@@ -7546,11 +7542,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 
-/***/ 109:
+/***/ 117:
 /***/ function(module, exports, __webpack_require__) {
 
-	var button = __webpack_require__(108)
-	var tmpl = __webpack_require__(110)
+	var button = __webpack_require__(116)
+	var tmpl = __webpack_require__(118)
 
 	avalon.component('ms-panel', {
 	    template: tmpl,
@@ -7565,7 +7561,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 
-/***/ 110:
+/***/ 118:
 /***/ function(module, exports) {
 
 	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
