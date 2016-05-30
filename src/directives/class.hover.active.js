@@ -13,6 +13,8 @@ avalon.directive('class', {
         var type = name.slice(3)
         var curValue = cur.props[name]
         var preValue = pre.props[name]
+        if(preValue === void 0)
+            preValue = ''
         if (!pre.classEvent) {
             var classEvent = {}
             if (type === 'hover') {//在移出移入时切换类名
@@ -45,7 +47,7 @@ avalon.directive('class', {
             //处理其他真值，如字符串，数字
             className = String(curValue)
         }
-        if(className === avalon.noop){
+        if(className === avalon.noop ){
             return
         }
         className = cur.props[name] = className.trim().replace(/\s+/, ' ')
