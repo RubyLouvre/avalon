@@ -26,17 +26,16 @@ function fix(dest, src) {
 }
 
 
-function getAll(el) {
-    if (el.getElementsByTagName) {
-        return el.getElementsByTagName('*')
-    } else {
-        return el.querySelectorAll('*')
-    }
+function getAll(context) {
+    return typeof context.getElementsByTagName !== "undefined" ?
+            context.getElementsByTagName("*") :
+            typeof context.querySelectorAll !== "undefined" ?
+            context.querySelectorAll("*") : []
 }
 
 function fixCloneNode(src) {
     var target = src.cloneNode(true)
-    if(avalon.modern)
+    if (avalon.modern)
         return target
     var t = getAll(target)
     var s = getAll(src)
