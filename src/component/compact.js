@@ -37,8 +37,10 @@ avalon.component = function (name, definition) {
             var cachedVm = avalon.vmodels[finalOptions.$id]
             if (cachedVm) {
                 var _wid = cachedVm.$events.__wid__
-                delete resolvedComponents[wid]
-                wid = _wid
+                if(wid !== _wid){
+                   delete resolvedComponents[wid]
+                   wid = _wid
+                }
             }
         }
 
