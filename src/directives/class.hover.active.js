@@ -41,7 +41,7 @@ avalon.directive('class', {
         } else if (avalon.isObject(curValue)) {
             //处理布尔对象
             className = processBooleanObject(curValue)
-        } else if (curValue) {
+        } else if(curValue !== false && curValue !== null && curValue !== void 0) {
             //处理其他真值，如字符串，数字
             className = String(curValue)
         }
