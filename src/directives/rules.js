@@ -1,8 +1,8 @@
 avalon.directive('rules', {
-    parse: function (binding, num) {
+     parse: function (cur, pre, binding) {
         var rules = binding.expr
         if (/{.+}/.test(rules)) {
-            return 'vnode' + num + '.props["ms-rules"] = ' + avalon.parseExpr(binding) + ';\n'
+           cur.props[binding.name] = avalon.parseExpr(binding)
         }
     },
     diff: avalon.noop

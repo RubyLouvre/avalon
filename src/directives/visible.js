@@ -25,9 +25,6 @@ function parseDisplay(elem, val) {
 avalon.parseDisplay = parseDisplay
 
 avalon.directive('visible', {
-    parse: function (binding, num) {
-        return 'vnode' + num + '.props["ms-visible"] = ' + avalon.parseExpr(binding) + ';\n'
-    },
     diff: function (cur, pre, steps, name) {
         var c = cur.props[name] = !!cur.props[name]
         cur.displayValue = pre.displayValue

@@ -25,11 +25,13 @@ avalon.directive('controller', {
             'var mediator = __vmodel__',
             '}else{',
             '__vmodel__ = topVm || bottomVm',
-            '}'].join('\n')+'\n\n'
+            '}',
+            'if(!avalon.skipController(__fast__, bottomVm)){ '
+        ].join('\n') + '\n\n'
         cur.mediator = 'mediator'
-        cur.top = 'topVm'
+        cur.vmodel = 'topVm'
         cur.bottom = 'bottomVm'
-        pre.$append = '\n\n})(__vmodel__)'
+        pre.$append = '}\n\n})(__vmodel__)'
     },
     diff: function (cur, pre, steps, name) {
         if (pre.props[name] !== cur.props[name]) {
@@ -37,14 +39,14 @@ avalon.directive('controller', {
         }
     },
     update: function (node, vnode) {
-        var top = vnode.top //位于上方的顶层vm或mediator vm
+        var top = vnode.vmodel //位于上方的顶层vm或mediator vm
         var bottom = vnode.bottom //位于下方的顶层vm
         var mediator = vnode.mediator //新合成的mediator vm
         if (!(top && bottom)) {
             return
         }
         bottom.$element = (top && top.$element) || node
-        vnode.top = vnode.mediator = vnode.bottom = 0
+        vnode.mediator = vnode.bottom = 0
         if (!bottom.$render) {
             var topRender = top.$render
             if (!topRender.$id) {

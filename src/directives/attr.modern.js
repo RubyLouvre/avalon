@@ -3,9 +3,6 @@ var attrUpdate = require('../dom/attr/modern')
 var update = require('./_update')
 
 avalon.directive('attr', {
-    parse: function (binding, num) {
-        return 'vnode' + num + '.props["ms-attr"] = ' + avalon.parseExpr(binding) + ';\n'
-    },
     diff: function (cur, pre, steps, name) {
         var a = cur.props[name]
         var p = pre.props[name]

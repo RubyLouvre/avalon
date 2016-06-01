@@ -10,6 +10,7 @@ function initControl(cur) {
     var field = cur.field
     field.update = updateModel
     field.updateCaret = setCaret
+    field.vmodel = cur.vmodel
     field.get = cur.props['data-duplex-get']
     field.set = cur.props['data-duplex-set']
     var format = cur.props['data-duplex-format']
@@ -18,7 +19,7 @@ function initControl(cur) {
             return format(field.vmodel, v)
         })
     }
-    field.vmodel = cur.duplexVm
+    
 
     var events = field.events = {}
     //添加需要监听的事件

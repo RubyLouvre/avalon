@@ -2,9 +2,6 @@
 var update = require('./_update')
 
 avalon.directive('css', {
-    parse: function (binding, num) {
-        return 'vnode' + num + '.props["ms-css"] = ' + avalon.parseExpr(binding) + ';\n'
-    },
     diff: function (cur, pre, steps, name) {
         var a = cur.props[name]
         var p = pre.props[name]

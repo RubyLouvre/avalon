@@ -5,10 +5,6 @@ var update = require('./_update')
 
 var directives = avalon.directives
 avalon.directive('class', {
-    parse: function (binding, num) {
-        //必须是布尔对象或字符串数组
-        return 'vnode' + num + '.props["' + binding.name + '"] = ' + avalon.parseExpr(binding) + ';\n'
-    },
     diff: function (cur, pre, steps, name) {
         var type = name.slice(3)
         var curValue = cur.props[name]
@@ -43,12 +39,11 @@ avalon.directive('class', {
         } else if (avalon.isObject(curValue)) {
             //处理布尔对象
             className = processBooleanObject(curValue)
-        } else if(curValue !== false && curValue !== null && curValue !== void 0) {
+        } else if(curValue || curValue === 0) {
             //处理其他真值，如字符串，数字
             className = String(curValue)
-        }
-        if(className === avalon.noop ){
-            return
+        }else if(!curValue){
+            className = ''
         }
         className = cur.props[name] = className.trim().replace(/\s+/, ' ')
         if (preValue !== className) {

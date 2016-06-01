@@ -4,23 +4,20 @@ var update = require('./_update')
 //ms-imporant ms-controller ms-for ms-widget ms-effect ms-if   ...
 avalon.directive('if', {
     priority: 6,
-    parse: function (binding, num) {
-        var vnode = 'vnode' + num
-        var ret = [
-            'var ifVar = ' + avalon.parseExpr(binding, 'if'),
-            vnode + '.props["ms-if"] = ifVar;',
-            'if(!ifVar){',
-            vnode + '.nodeType = 8;',
-            vnode + '.directive="if";',
-            vnode + '.nodeValue="ms-if"', '}'
-        ]
-        return ret.join('\n') + '\n'
+    parse: function (cur, pre, binding) {
+        pre.$prepend = (pre.$prepend || '') + 'var varIf = ' + avalon.parseExpr(binding) +
+                "\nif(varIf){\n"
+        var old = pre.$append || ''
+        pre.$append = '}else{\n\n' +
+                'vnodes.push({\nnodeType: 8,\ndirective:"if",\n' +
+                'type: "#comment",\nnodeValue:"ms-if"\n})' +
+                '\n}' + old
     },
     diff: function (cur, pre, steps) {
         cur.dom = pre.dom
         if (cur.nodeType !== pre.nodeType) {
             cur.steps = steps
-            update(cur, this.update, steps, 'if' )
+            update(cur, this.update, steps, 'if')
         }
     },
     update: function (node, vnode, parent) {
@@ -43,7 +40,8 @@ avalon.directive('if', {
                             }
                         }
                     }
-                    if (vnode.onVm) delete vnode.onVm
+                    if (vnode.onVm)
+                        delete vnode.onVm
                 }
                 parent.replaceChild(element, node)
                 if (vnode.steps.count) {

@@ -2,37 +2,44 @@
 var valueHijack = require('./valueHijack')
 
 var newField = require('./newField')
-var initField = require('./bindEvents.compact')
+var bindEvents = require('./bindEvents.compact')
 var updateField = require('./updateField.compact')
 var addField = require('./addField')
 var update = require('../_update')
 var evaluatorPool = require('../../strategy/parser/evaluatorPool')
 avalon.directive('duplex', {
     priority: 2000,
-    parse: function (binding, num, vnode) {
+    parse: function (cur, pre, binding) {
         var id = binding.expr
-        newField(binding, vnode)
-        avalon.caches[id] = vnode.field
-        var ret = 'vnode' + num + '.duplexVm = __vmodel__;\n' +
-                'vnode' + num + '.props["ms-duplex"] = ' + avalon.quote(id) + ';\n' +
-                'vnode' + num + '.props["data-duplex-get"] = ' + evaluatorPool.get('duplex:' + id) +'\n'+
-                'vnode' + num + '.props["data-duplex-set"] = ' + evaluatorPool.get('duplex:set:' + id)+'\n'
+        newField(binding, pre)
+        avalon.caches[id] = pre.field
+        cur.vmodel = '__vmodel__'
+        var type = pre.props.type
+        if(type){
+            cur.props.type = avalon.quote(type)
+        }
+        cur.props['ms-duplex'] = avalon.quote(id)
+        cur.props['data-duplex-get'] = evaluatorPool.get('duplex:' + id)
+        cur.props['data-duplex-set'] = evaluatorPool.get('duplex:set:' + id)
+
         var format = evaluatorPool.get('duplex:format:' + id)
         if (format) {
-            ret += 'vnode' + num + '.props["data-duplex-format"] = ' + format
+           cur.props['data-duplex-format'] = format
         }
-        return ret
     },
     diff: function (cur, pre, steps) {
         var duplexID = cur.props["ms-duplex"]
         cur.field = pre.field || avalon.mix( {}, avalon.caches[duplexID])
         var field = cur.field
         if (!field.set) {
-            initField(cur)
+            bindEvents(cur)
         }
 
-        cur.duplexVm = null
-        var value = cur.props.value = field.get(field.vmodel)
+        var value = field.get(field.vmodel)
+        if(cur.type !== 'select' && cur.props.type !== 'checkbox')
+            cur.props.value = value
+
+        //var value = cur.props.value = field.get(field.vmodel)
 
         if (cur.type === 'select' && !cur.children.length) {
             avalon.Array.merge(cur.children, avalon.lexer(cur.template, 0, 2))
@@ -54,7 +61,7 @@ avalon.directive('duplex', {
         if (!isEqual) {
             field.modelValue = value
             update(cur, this.update, steps, 'duplex', 'afterChange')
-  
+
         }
     },
     update: function (node, vnode) {

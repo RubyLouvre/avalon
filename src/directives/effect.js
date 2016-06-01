@@ -4,9 +4,6 @@ var update = require('./_update')
 
 avalon.directive('effect', {
     priority: 5,
-    parse: function (binding, num) {
-        return 'vnode' + num + '.props["ms-effect"] = ' + avalon.parseExpr(binding) + ';\n'
-    },
     diff: function (cur, pre, steps, name) {
         var curObj = cur.props[name]
         if(typeof curObj === 'string'){

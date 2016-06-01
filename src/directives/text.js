@@ -2,17 +2,18 @@ var rident = require('../seed/regexp').ident
 var update = require('./_update')
 
 avalon.directive('text', {
-    parse: function (binding, num, vnode) {
-        vnode.children = [{type: '#text', nodeType: 3, nodeValue: ''}]
+    parse: function (cur, pre, binding) {
+        cur.children = '[]'
+        cur.skipContent = true
         var val = rident.test(binding.expr) ? binding.expr : avalon.parseExpr(binding)
-        return 'vnode' + num + '.props["ms-text"] =' + val + '\n'
+        cur.props[binding.name] = val
     },
     diff: function (cur, pre, steps, name) {
         var curValue = cur.props[name]
         var preValue = pre.props[name]
         cur.children = pre.children
         var dom = cur.dom = pre.dom
-        cur.skipContent = true
+
         if (curValue !== preValue || cur.children.length === 0) {
             if (!cur.children[0])
                 cur.children[0] = {type: "#text", nodeType: 3}

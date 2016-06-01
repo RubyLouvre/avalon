@@ -1,19 +1,32 @@
 var update = require('./_update')
+var parseView = require('../strategy/parser/parseView2')
+var cache = {}
+avalon.htmlFactory2 = function (str) {
+    if (cache[str]) {
+        return cache[str]
+    } else {
+        var vtree = avalon.lexer(str + "")
+        return  (cache[str] = '(function(){' + parseView(vtree) + '})();')
+    }
+}
 
 avalon.directive('html', {
-    parse: function (binding, num) {
-        var ret = ["var htmlId =  " + avalon.parseExpr(binding),
-            'vnode' + num + '.props["ms-html"]  = htmlId;',
-            'vnode' + num + '.props.skipContent  = true;',
-            'var obj  = avalon.htmlFactory(htmlId,' + num + ');',
-            'try{eval(" new function(){"+ obj.render +"}")}catch(e){};',
-            'vnode' + num + '.children = avalon.__html;']
-        return ret.join('\n') + '\n'
+   parse: function (cur, pre, binding) {
+           if (!pre.isVoidTag) {
+            //将渲染函数的某一部分存起来,渲在c方法中转换为函数
+            cur.props[binding.name] = avalon.parseExpr(binding)
+            cur.children = '[]'
+           // avalon.parseExpr(binding)
+            pre.$append = '\nvar el = vnodes[vnodes.length-1];\n' +
+                    'var HTMLRaw =  el.props["ms-html"];;\n' +
+                    'var HTMLParsed = avalon.htmlFactory2(HTMLRaw);\n' +
+                    'try{eval("el.children = " + HTMLParsed )}catch(e){};\n'
+        }
     },
     diff: function (cur, pre, steps, name) {
         var curValue = cur.props[name]
         var preValue = pre.props[name]
-        cur.skipContent = false
+        //cur.skipContent = false
         if (curValue !== preValue) {
             update(cur, this.update, steps, 'html' )
         }

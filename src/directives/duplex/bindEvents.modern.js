@@ -16,7 +16,7 @@ function initControl(cur) {
         })
     }
 
-    field.vmodel = cur.duplexVm
+    field.vmodel = cur.vmodel
 
     var events = field.events = {}
 //添加需要监听的事件

@@ -2,9 +2,6 @@ var update = require('./_update')
 
 var dir = avalon.directive('validate', {
 //验证单个表单元素
-    parse: function (binding, num) {
-        return 'vnode' + num + '.props["ms-validate"] = ' + avalon.parseExpr(binding) + ';\n'
-    },
     diff: function (cur, pre, steps, name) {
         var validator = cur.props[name]
         var p = pre.props[name]
