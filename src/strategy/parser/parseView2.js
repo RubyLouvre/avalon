@@ -44,7 +44,7 @@ function fixKey(k) {
 }
 
 function add(a) {
-    return 'vnodes.push(' + a + ')'
+    return 'vnodes.push(' + a + ');'
 }
 function parseNode(pre, forstack) {
     var directives = avalon.directives
@@ -55,67 +55,55 @@ function parseNode(pre, forstack) {
             return stringifyNode(pre)
         }
     } else if (pre.nodeType === 1) {
+        var props = pre.props
         if (pre.type.indexOf('ms-') === 0) {
-            if (!pre.props['ms-widget']) {
-                pre.props['ms-widget'] = '{is:' + quote(pre.type) + '}'
+            if (!props['ms-widget']) {
+                props['ms-widget'] = '{is:' + quote(pre.type) + '}'
             }
         }
 
-        var cur = {//用于生成高质量的虚拟节点
+        var cur = {
             props: {},
             type: pre.type,
             nodeType: 1,
             template: ''
         }
-        var props = pre.props
-        if (props['ms-important']) {
-            directives.important.parse(cur, pre, {
-                expr: props['ms-important']
-            })
-            return ''
-        } else if (props['ms-controller']) {
-            directives.controller.parse(cur, pre, {
-                expr: props['ms-controller']
-            })
-        }
-        //ms-for在laxer阶段已经变成注释节点
-        if (props['ms-widget']) {
-            directives['widget'].parse(cur, pre, {
-                expr: props['ms-widget'],
-                name: 'ms-widget'
-            })
-
-            return  add(stringifyTag(cur))
-        }
 
         var bindings = parseBindings(cur, props)
-        bindings.forEach(function (b) {
+        if (!bindings.length) {
+            cur.skipAttrs = true
+        }
+        cur.order = bindings.map(function (b) {
+            //将ms-*的值变成函数,并赋给cur.props[ms-*]
+            //如果涉及到修改结构,则在pre添加$append,$prepend
             directives[b.type].parse(cur, pre, b)
-        })
+            return b.name
+        }).join(';;')
+
+
         if (pre.isVoidTag) {
             cur.isVoidTag = true
         } else {
-            if (cur.skip || cur.skipContent) {
-                cur.template = pre.template
-            }
-            var pChildren = pre.children
             if (!('children' in cur)) {
+                var pChildren = pre.children
                 if (pChildren.length) {
-                    cur.children = '(function(){' + parseNodes(pre.children) + '})()'
+                    cur.children = '(function(){' + parseNodes(pChildren) + '})()'
                 } else {
                     cur.template = pre.template
                     cur.children = '[]'
                 }
             }
         }
+        
+        if (bindings.name === 'imporant')
+            return ''
 
-
-        //我们在cur添加vmodel,children等后来添加的属性,属性值都应该是字符串
-        //然后在pre上添加$append, $prepend等改变
-        //收集cur上的属性parseNodes流程的分支
+       
         return add(stringifyTag(cur, {
-            vmodel: 1
-
+            vmodel: 1,
+            bottom: 1,
+            top: 1,
+            mediator: 1
         }))
 
     } else if (pre.nodeType === 8) {
@@ -130,7 +118,6 @@ function parseNode(pre, forstack) {
                 vmodel: '__vmodel__'
             }, pre)
             directives['for'].parse(cur, pre, pre)
-
 
             return add(stringifyTag(cur, {
                 vmodel: 1
@@ -168,7 +155,6 @@ function parseNode(pre, forstack) {
             return stringifyNode(pre)
         }
     }
-
 }
 
 
