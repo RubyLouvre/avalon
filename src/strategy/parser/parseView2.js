@@ -92,28 +92,29 @@ function parseNode(pre, forstack) {
         bindings.forEach(function (b) {
             directives[b.type].parse(cur, pre, b)
         })
-
-        if (cur.skip || cur.skipContent) {
-            cur.template = quote(pre.template)
-        }
-        var pChildren = pre.children
-        if (!('children' in cur) && !pre.isVoidTag) {
-            if (pChildren.length) {
-                cur.children = '(function(){' + parseNodes(pre.children) + '})()'
-            } else {
-                cur.template = quote(pre.template)
-                cur.children = '[]'
+        if (pre.isVoidTag) {
+            cur.isVoidTag = true
+        } else {
+            if (cur.skip || cur.skipContent) {
+                cur.template = pre.template
+            }
+            var pChildren = pre.children
+            if (!('children' in cur)) {
+                if (pChildren.length) {
+                    cur.children = '(function(){' + parseNodes(pre.children) + '})()'
+                } else {
+                    cur.template = pre.template
+                    cur.children = '[]'
+                }
             }
         }
+
 
         //我们在cur添加vmodel,children等后来添加的属性,属性值都应该是字符串
         //然后在pre上添加$append, $prepend等改变
         //收集cur上的属性parseNodes流程的分支
-        return add(stringifyTag(cur,{
-            vmodel: 1,
-            'data-duplex-set':1,
-            'data-duplex-get':1,
-            'data-duplex-format':1
+        return add(stringifyTag(cur, {
+            vmodel: 1
 
         }))
 
@@ -125,9 +126,7 @@ function parseNode(pre, forstack) {
             }
             forstack.push(pre)
             var cur = avalon.mix({
-                skipContent: true,
                 directive: 'for',
-              //  start: 'vnodes.length',
                 vmodel: '__vmodel__'
             }, pre)
             directives['for'].parse(cur, pre, pre)
@@ -147,7 +146,6 @@ function parseNode(pre, forstack) {
             pre.$append = stringifyNode({
                 nodeType: 8,
                 type: '#comment',
-                skipContent: true,
                 nodeValue: signature,
                 key: 'traceKey'
             }, {key: 1}) + '\n' //结束循环
@@ -157,7 +155,6 @@ function parseNode(pre, forstack) {
                         stringifyNode({
                             nodeType: 8,
                             type: "#comment",
-                            skipContent: true,
                             signature: signature,
                             nodeValue: "ms-for-end:"
                         }) + '\n'
@@ -201,7 +198,7 @@ function stringifyTag(obj, noQuote) {
             for (var k in obj.props) {
                 var kv = obj.props[k]
                 if (typeof kv === 'string' && (
-                        k.slice(0,3) !== 'ms-' &&
+                        k.slice(0, 3) !== 'ms-' &&
                         kv.indexOf('(function()') == -1)) {
                     kv = quote(kv)
                 }
