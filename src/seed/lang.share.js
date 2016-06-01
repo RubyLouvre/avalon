@@ -5,6 +5,9 @@ var rhashcode = /\d\.\d{4}/
 var rescape = /[-.*+?^${}()|[\]\/\\]/g
 
 var _slice = [].slice
+function defaultParse(cur, pre, binding) {
+       cur.props[binding.name] = avalon.parseExpr(binding)
+}
 avalon.shadowCopy(avalon, {
     caches: {}, //avalon2.0 新增
     vmodels: {},
@@ -59,6 +62,7 @@ avalon.shadowCopy(avalon, {
         }
     },
     directive: function (name, definition) {
+        definition.parse = definition.parse || defaultParse
         return this.directives[name] = definition
     },
     isObject: function (a) {//1.6新增
