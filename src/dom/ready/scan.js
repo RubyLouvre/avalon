@@ -56,5 +56,5 @@ module.exports = avalon.scan = function (a, fn) {
 }
 
 function getController(a) {
-    return a.getAttribute('ms-controller')
+    return a.getAttribute('ms-controller') || a.getAttribute('ms-important')
 }
