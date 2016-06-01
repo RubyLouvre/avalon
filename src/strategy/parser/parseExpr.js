@@ -12,7 +12,7 @@ var rshortCircuit = /\|\|/g
 var rpipeline = /\|(?=\w)/
 var ruselessSp = /\s*(\.|\|)\s*/g
 var wrapDuplex = function(arr){
-    return '(function(){ return ' +arr.join('\n')+'})();\n'
+    return '(function(){ return ' +arr.join('\n')+'})()\n'
 }
 var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
 var rhandleName = /^(?:\@|##)[$\w]+$/i
