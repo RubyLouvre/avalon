@@ -1,76 +1,30 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
+        <title>first example</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
         <script src="../dist/avalon.js"></script>
-        <script src="//cdn.bootcss.com/jquery/3.0.0-beta1/jquery.js"></script>
-        <style>
-            .ani{
-                width:100px;
-                height:100px;
-                background: #ff6e6e;
-            }
-            .fade-enter, .fade-leave {
-                -webkit-transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.5s;
-                -moz-transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.5s;
-                -o-transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.5s;
-                transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.5s;
-            }
-
-            .fade-enter {
-                opacity:0;
-            }
-
-            .fade-enter-active {
-                opacity:1;
-            }
-
-            .fade-leave {
-               opacity:1;
-            }
-
-            .fade-leave-active {
-               opacity:0;
-            }
-
-
-        </style>
-        <script>
-            avalon.effect('fade', {})
-            avalon.effect('zoom', {
-                enter: function(el, done){
-                    
-                    $(el).css({width:0,height:0}).animate({
-                        width:200,height:200
-                    },1000,done)
-                },
-                leave: function(el, done){
-                    console.log('dddd')
-                    $(el).animate({
-                        width:0,height:0
-                    },1000,done)
-                }
-            })
-            var vm = avalon.define({
-                $id: 'effect',
-                toggle:true,
-                ddd: 'dfd'
-            })
-
-
-        </script>
     </head>
     <body>
-        <div ms-controller='effect' >
-            <div ms-visible='@toggle' ms-class="{width: '\&\#dfsf;'}" ms-effect='{is:"fade",action:@toggle?"enter":"leave"}' class="ani">
-                {{#ddd}}
+
+        <script>
+
+
+           var vm = avalon.define({
+                $id:'test',
+                aaa: 111,
+                arr: [1,2,3],
+                ddd: '<b>{{@aaa}}</b>',
+                toggle: true
+            })
+        </script>
+
+        <div ms-controller='test'>         
+            <div ms-for='el in @arr' ms-if='@toggle' ms-html='el'>
+                <span>333</span>
             </div>
-            <div ms-if='@toggle' ms-effect='{is:"zoom",action:@toggle?"enter":"leave"}' class="ani">
-                ddd
-            </div>
-            <p><button type="button" ms-click="@toggle = !@toggle">click</button></p>
         </div>
+
     </body>
-</html>
+</html>  

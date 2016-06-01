@@ -1,109 +1,38 @@
 <!DOCTYPE html>
 <html>
-<head ms-controller="head-vm">
-  <title>测试</title>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <script src="../dist/avalon.js"></script>
-  <style>
-    *{margin:0;padding: 0}
-    ul,li{list-style: none;}
-    .tabs{
-      font-size:0;
-      z-index: 10;
-    }
-    #box{padding: 100px;}
-    .tab{
-      display: inline-block;
-      font-size:14px;
-      height: 30px;
-      line-height:30px;
-      width: 80px;
-      text-align: center;
-      margin-right: 6px;
-      border:1px solid #5b5b5b;
-      cursor: pointer;
-    }
-    .tab.current{
-      background:#e6e6e6;
-      color: #666;
-      font-weight:800;
-      border-bottom: 1px solid #e6e6e6;
-    }
-    .panel{
-      width: 300px;
-      margin-top: -1px;
-      border:1px solid #5b5b5b;
-      height:100px;
-      padding: 10px;
-      background:#e6e6e6;
-    }
-  </style>
-  <script>
-    var tmpl = '<div class="tab-item">' +
-               '<ul class="tabs">' +
-               '<li ms-for="($index, tab) in @tabs" ms-class="[\'tab\', {\'current\':$index == @currentTab} ]" ms-click="@onChangeTab($index)" >' +
-               '<p ms-text="tab.name"></p>' +
-               '</li>' +
-               '</ul>' +
-               '<div class="panel" ms-html="@tpl"></div>' +
-               '</div>'
-    avalon.component('ms-tabs', {
-      template: tmpl,
-      defaults: {
-        tabs:[
-          {
-            name:'111',
-            component:''
-          },
-          {
-            name:'222',
-            component:''
-          },
-          {
-            name:'333',
-            component:''
-          }
-        ],
-        tpl:'',
-        currentTab:0,
-        onChangeTab:function(index){
-          this.currentTab = index;
-          this.tpl = '<p>'+ this.tabs[index].name +'</p>';
-        },
-        onInit:function(){
-          var index = this.currentTab;
-          this.onChangeTab(index);
-        }
-      }
-    })
+    <head ms-controller="head-vm">
+        <title>测试</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <script src="../dist/avalon.js"></script>
+        <style>
+            .selected{
+                background:red;
+            }
+        </style>
+        <script>
 
-    var vm = avalon.define({
-      $id: 'widget',
-      config: {
-        tabs:[
-          {
-            name:'标签一',
-            component:''
-          },
-          {
-            name:'标签二',
-            component:''
-          },
-          {
-            name:'标签三',
-            component:''
-          }
-        ],
-        currentTab:2
-      }
-    })
-  </script>
-</head>
+            avalon.component('ms-tabs', {
+                template: '<div ms-click="@onClick"><ul><li ms-for="el in @array" ms-class="{selected: el == @selected}">{{el}}</li></ul></div>',
+                defaults: {
+                    array: [1, 2, 3, 4],
+                    selected: 2,
+                    onClick: function () {
+                        this.array = [2, 3, 4, 5, 6]
+                    }
+                }
+            })
 
-<body>
-<div id="box" ms-controller='widget' >
-  <xmp ms-widget="[{is:'ms-tabs'},@config]"></xmp>
-</div>
-</body>
+            var vm = avalon.define({
+                $id: 'widget'
+
+            })
+        </script>
+    </head>
+
+    <body>
+        <div id="box" ms-controller='widget' >
+            <xmp ms-widget="[{is:'ms-tabs'}]"></xmp>
+        </div>
+    </body>
 </html>

@@ -1,0 +1,34 @@
+
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+        <script src="../dist/avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                gg:44,
+                aaa: '<b>333</b><b>{{@gg}}</b>',
+                arr: [11,22,33],
+                toggle: false,
+                alert: function(){
+                    console.log(this.toggle)
+                }
+            })
+            //        
+        </script>
+        <style>
+            .selected{
+                background:red;
+            }
+        </style>
+    </head>
+    <body ms-controller="test" ms-attr="{title:@gg}" >
+        <input ms-duplex='@gg'/>{{@gg}}
+        <p ms-for='el in @arr'>{{el}}</p>
+        <div ms-if='@toggle'><span>2222</span></div>999<div ms-html="@aaa" ms-click="@alert"></div>
+
+    </body>
+</html>

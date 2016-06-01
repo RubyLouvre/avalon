@@ -6,16 +6,21 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../dist/avalon.js"></script>
         <script>
-          vm = avalon.define({
-            $id: 'html',
-            a: '<p ms-html="@b">xxx</p>',
-            b: '<b title="yyy">zzz</b><a>xxx</a>',
-            c: '<i>司徒正美</i>'
-        })
-      </script>
-</head>
-<body>
-        <div ms-controller='html' ms-html='@a' >111
-             </div>
-</body>
+            var vm = avalon.define({
+                $id: 'test',
+                aaa: 111
+            })
+        </script>
+        <style>
+            .active{
+                background: #a9ea00;
+            }
+        </style>
+    </head>
+    <body ms-controller="test">
+        <div>
+            <input ms-duplex="@aaa" ms-attr="{title: @aaa}"  />{{@aaa}}
+            
+        </div>
+    </body>
 </html>
