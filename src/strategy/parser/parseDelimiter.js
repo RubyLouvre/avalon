@@ -39,7 +39,7 @@ function parseDelimiter(str) {
     var lastText = value.replace(r.rightSp, '')
     if (lastText) { //}} 右边的文本
         tokens.push({
-            expr: lastText
+            expr: lastText.replace(/^\s+$/,' ')
         })
     }
     return tokens
