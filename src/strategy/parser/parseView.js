@@ -43,16 +43,14 @@ function fixKey(k) {
     return (rneedQuote.test(k) || keyMap[k]) ? quote(k) : k
 }
 
-function add(a) {
-    return 'vnodes.push(' + a + ');'
-}
-function parseNode(pre, forstack) {
+
+function parseNode(pre, forstack, logic) {
     var directives = avalon.directives
     if (pre.nodeType === 3) {
         if (config.rexpr.test(pre.nodeValue)) {
             return add(stringifyText(pre))
         } else {
-            return stringifyNode(pre)
+            return addTag(pre)
         }
     } else if (pre.nodeType === 1) {
         var props = pre.props
@@ -68,18 +66,17 @@ function parseNode(pre, forstack) {
             nodeType: 1,
             template: ''
         }
-
         var bindings = parseBindings(cur, props)
         if (!bindings.length) {
             cur.skipAttrs = true
         }
+
         cur.order = bindings.map(function (b) {
             //将ms-*的值变成函数,并赋给cur.props[ms-*]
             //如果涉及到修改结构,则在pre添加$append,$prepend
             directives[b.type].parse(cur, pre, b)
             return b.name
         }).join(';;')
-
         if (pre.isVoidTag) {
             cur.isVoidTag = true
         } else {
@@ -93,16 +90,12 @@ function parseNode(pre, forstack) {
                 }
             }
         }
-        
-        if (bindings.name === 'imporant')
+
+        if (bindings.type === 'important') {
             return ''
-       
-        return add(stringifyTag(cur, {
-            vmodel: 1,
-            bottom: 1,
-            top: 1,
-            mediator: 1
-        }))
+        }
+
+        return addTag(cur)
 
     } else if (pre.nodeType === 8) {
         var nodeValue = pre.nodeValue
@@ -117,9 +110,7 @@ function parseNode(pre, forstack) {
             }, pre)
             directives['for'].parse(cur, pre, pre)
 
-            return add(stringifyTag(cur, {
-                vmodel: 1
-            }))
+            return addTag(cur)
 
         } else if (rmsForEnd.test(nodeValue)) {
             var node = forstack[forstack.length - 1]
@@ -128,16 +119,16 @@ function parseNode(pre, forstack) {
                 avalon.error('ms-for-end指令前不能有空格')
             }
 
-            pre.$append = stringifyNode({
+            pre.$append = addTag({
                 nodeType: 8,
                 type: '#comment',
                 nodeValue: signature,
                 key: 'traceKey'
-            }, {key: 1}) + '\n' //结束循环
+            }) + '\n' //结束循环
                     + "\n})"
             if (forstack.length) {
                 pre.$append += "\n" + signature + '.end =' +
-                        stringifyNode({
+                        addTag({
                             nodeType: 8,
                             type: "#comment",
                             signature: signature,
@@ -147,15 +138,15 @@ function parseNode(pre, forstack) {
             }
             return ''
         } else if (nodeValue.indexOf('ms-js:') === 0) {//插入普通JS代码
-            return stringifyNode(pre)
+            return addTag(pre)
             //str += parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
         } else {
-            return stringifyNode(pre)
+            return addTag(pre)
         }
     }
 }
 
-
+avalon.parseNode = parseNode
 function stringifyText(el) {
     var array = parseDelimiter(el.nodeValue)//返回一个数组
     var nodeValue = ''
@@ -173,7 +164,7 @@ function stringifyText(el) {
 module.exports = parseNodes
 
 
-function stringifyTag(obj, noQuote) {
+function stringifyTag(obj) {
     var arr1 = []
 //字符不用东西包起来就变成变量
     for (var i in obj) {
@@ -181,9 +172,7 @@ function stringifyTag(obj, noQuote) {
             var arr2 = []
             for (var k in obj.props) {
                 var kv = obj.props[k]
-                if (typeof kv === 'string' && (
-                        k.slice(0, 3) !== 'ms-' &&
-                        kv.indexOf('(function()') == -1) && kv.charAt(0) !='"') {
+                if (typeof kv === 'string') {
                     kv = quote(kv)
                 }
                 arr2.push(fixKey(k) + ': ' + kv)
@@ -191,26 +180,29 @@ function stringifyTag(obj, noQuote) {
             arr1.push('\tprops: {' + arr2.join(',\n') + '}')
         } else {
             var v = obj[i]
-            if (typeof v === 'string' && i !== 'children') {
-                v = noQuote && noQuote[i] ? v : quote(v)
+            if (typeof v === 'string') {
+                v = quoted[i] ? quote(v) : v
             }
+
             arr1.push(fixKey(i) + ':' + v)
         }
     }
     return '{\n' + arr1.join(',\n') + '}'
 }
-
-function stringifyNode(obj, skip) {
-    var arr = []
-    skip = skip || {}
-    for (var i in obj) {
-        if (obj.hasOwnProperty(i)) {
-            if (skip[i]) {
-                arr.push('\t' + fixKey(i) + ': ' + obj[i])
-            } else {
-                arr.push('\t' + fixKey(i) + ': ' + quote(obj[i]))
-            }
-        }
-    }
-    return add('{\n' + arr.join(',\n') + '}')
+var quoted = {
+    type: 1,
+    template: 1,
+    innerHTML: 1,
+    outerHTML: 1,
+    order: 1,
+    nodeValue: 1,
+    directive: 1,
+    signature: 1,
+    cid: 1
+}
+function add(a) {
+    return 'vnodes.push(' + a + ');'
+}
+function addTag(obj) {
+    return add(stringifyTag(obj))
 }

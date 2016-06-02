@@ -3,15 +3,15 @@ var update = require('./_update')
 var dir = avalon.directive('validate', {
 //验证单个表单元素
     diff: function (cur, pre, steps, name) {
-        var validator = cur.props[name]
-        var p = pre.props[name]
+        var validator = cur[name]
+        var p = pre[name]
         if (p && p.onError && p.addField) {
-            cur.props[name] = p
+            cur[name] = p
         } else if (Object(validator) === validator) {
             if(validator.$id){//转换为普通对象
                 validator = validator.$model
             }
-            cur.props[name] = validator
+            cur[name] = validator
             for(var name in dir.defaults){
                 if(!validator[name]){
                     validator[name] = dir.defaults[name]
@@ -23,7 +23,7 @@ var dir = avalon.directive('validate', {
         }
     },
     update: function (node, vnode) {
-        var validator = vnode.props['ms-validate']
+        var validator = vnode['ms-validate']
         node._ms_validator_ = validator
         validator.element = node
         node.setAttribute("novalidate", "novalidate");

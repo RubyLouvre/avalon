@@ -2,7 +2,7 @@ avalon.directive('rules', {
      parse: function (cur, pre, binding) {
         var rules = binding.expr
         if (/{.+}/.test(rules)) {
-           cur.props[binding.name] = avalon.parseExpr(binding)
+           cur[binding.name] = avalon.parseExpr(binding)
         }
     },
     diff: avalon.noop

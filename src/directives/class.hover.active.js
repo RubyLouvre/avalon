@@ -7,8 +7,8 @@ var directives = avalon.directives
 avalon.directive('class', {
     diff: function (cur, pre, steps, name) {
         var type = name.slice(3)
-        var curValue = cur.props[name]
-        var preValue = pre.props[name]
+        var curValue = cur[name]
+        var preValue = pre[name]
         if(preValue === void 0)
             preValue = ''
         if (!pre.classEvent) {
@@ -45,14 +45,13 @@ avalon.directive('class', {
         }else if(!curValue){
             className = ''
         }
-        className = cur.props[name] = className.trim().replace(/\s+/, ' ')
+        className = cur[name] = className.trim().replace(/\s+/, ' ')
         if (preValue !== className) {
             cur['change-' + type] = className
             update(cur, this.update, steps, type )
         }
     },
     update: function (node, vnode) {
-   
         if(!node || node.nodeType !==1)
             return
         var classEvent = vnode.classEvent
@@ -116,7 +115,7 @@ function abandonClass(e) {
 
 function setClass(node, vnode) {
     var old = node.getAttribute('old-change-class') || ''
-    var neo = vnode.props['ms-class']
+    var neo = vnode['ms-class']
     avalon(node).removeClass(old).addClass(neo)
     node.setAttribute('old-change-class', neo)
 }

@@ -1,7 +1,7 @@
 var update = require('./_update')
 var parseView = require('../strategy/parser/parseView')
 var cache = {}
-avalon.htmlFactory2 = function (str) {
+avalon.htmlFactory = function (str) {
     if (cache[str]) {
         return cache[str]
     } else {
@@ -13,19 +13,19 @@ avalon.directive('html', {
     parse: function (cur, pre, binding) {
         if (!pre.isVoidTag) {
             //将渲染函数的某一部分存起来,渲在c方法中转换为函数
-            cur.props[binding.name] = avalon.parseExpr(binding)
+            cur[binding.name] = avalon.parseExpr(binding)
             delete pre.children
             cur.children = '[]'
            // avalon.parseExpr(binding)
             pre.$append =  '\nvar el = vnodes[vnodes.length-1];\n' +
-                    'var HTMLRaw =  el.props["ms-html"];;\n' +
-                    'var HTMLParsed = avalon.htmlFactory2(HTMLRaw);\n' +
+                    'var HTMLRaw =  el["ms-html"];;\n' +
+                    'var HTMLParsed = avalon.htmlFactory(HTMLRaw);\n' +
                     'try{eval("el.children = " + HTMLParsed )}catch(e){};\n' + (pre.$append || '') 
         }
     },
     diff: function (cur, pre, steps, name) {
-        var curValue = cur.props[name]
-        var preValue = (pre.props || {})[name]
+        var curValue = cur[name]
+        var preValue = pre[name]
 
         if (curValue !== preValue) {
             update(cur, this.update, steps, 'html')

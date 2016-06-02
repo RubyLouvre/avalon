@@ -20,7 +20,6 @@ avalon.directive('on', {
             return el.charAt(0) === '@' || el.slice(0, 2) === '##' || el === '$event'
         })
         cur.vmodel = '__vmodel__'
-
         if (canCache) {
             var key = binding.expr
             var fn = eventCache.get(key)
@@ -29,17 +28,17 @@ avalon.directive('on', {
                 var uuid = markID(fn)
                 eventCache.put(key, fn)
             }
+            
             avalon.eventListeners[uuid] = fn
-            cur.props[binding.name] = 'avalon.eventListeners.' + uuid
-
+            cur[binding.name] = 'avalon.eventListeners.' + uuid
         } else {//如果闭包引用其他变量
-            cur.props[binding.name] = avalon.parseExpr(binding, 'on')
+            cur[binding.name] = avalon.parseExpr(binding, 'on')
 
         }
     },
     diff: function (cur, pre, steps, name) {
-        var cFn = cur.props[name]
-        var pFn = (pre.props || {})[name]
+        var cFn = cur[name]
+        var pFn = pre[name]
         if (cFn !== pFn) {
             if (typeof pFn === 'function' && typeof cFn === 'function') {
                 var pid = pFn.uuid
@@ -60,7 +59,6 @@ avalon.directive('on', {
             return
         var key, type, listener
         node._ms_context_ = vnode.vmodel
-      //  delete vnode.vmodel
         for (key in vnode.addEvents) {
             type = key.split(':').shift()
             listener = vnode.addEvents[key]

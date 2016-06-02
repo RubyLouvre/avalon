@@ -1,7 +1,7 @@
 
 module.exports = function addField(node, vnode) {
     var field = vnode.field
-    var rules = vnode.props['ms-rules']
+    var rules = vnode['ms-rules']
     if (rules && !field.validator) {
         while (node && node.nodeType === 1) {
             var validator = node._ms_validator_

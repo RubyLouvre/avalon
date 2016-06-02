@@ -5,21 +5,21 @@ var update = require('./_update')
 avalon.directive('effect', {
     priority: 5,
     diff: function (cur, pre, steps, name) {
-        var curObj = cur.props[name]
+        var curObj = cur[name]
         if(typeof curObj === 'string'){
             var is = curObj
-            curObj = cur.props[name] = {
+            curObj = cur[name] = {
                 is: is
             }
            
         }else if (Array.isArray(curObj)) {
-            curObj = cur.props[name] = avalon.mix.apply({}, curObj)
+            curObj = cur[name] = avalon.mix.apply({}, curObj)
         }
     
         curObj.action = curObj.action || 'enter'
        
         if (Object(curObj) === curObj) {
-            var preObj = pre.props[name]
+            var preObj = pre[name]
             if ( Object(preObj) !== preObj || diffObj(curObj, preObj ))  {
                 update(cur, this.update, steps, 'effect', 'afterChange')
 
@@ -31,7 +31,7 @@ avalon.directive('effect', {
             return
         }
         dom.animating = true
-        var localeOption = vnode.props['ms-effect']
+        var localeOption = vnode['ms-effect']
         var type = localeOption.is
         option = option || {}
         if(!type){//如果没有指定类型
@@ -214,7 +214,7 @@ function createAction(action) {
 avalon.applyEffect = function(node, vnode, opts){
     var cb = opts.cb
     var hook = opts.hook
-    var curEffect = vnode.props && vnode.props['ms-effect']
+    var curEffect = vnode['ms-effect']
     if(curEffect && !avalon.document.hidden ){
         var old = curEffect[hook]
         if(cb){

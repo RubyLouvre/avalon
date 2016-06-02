@@ -6,7 +6,7 @@ var rescape = /[-.*+?^${}()|[\]\/\\]/g
 
 var _slice = [].slice
 function defaultParse(cur, pre, binding) {
-       cur.props[binding.name] = avalon.parseExpr(binding)
+       cur[binding.name] = avalon.parseExpr(binding)
 }
 avalon.shadowCopy(avalon, {
     caches: {}, //avalon2.0 新增

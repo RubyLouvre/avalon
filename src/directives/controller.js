@@ -15,11 +15,13 @@ avalon.skipController = function (fast, vm, iv) {
 avalon.directive('controller', {
     priority: 2,
     parse: function (cur, pre, binding) {
-        var $id = avalon.quote(binding.expr)
-        delete pre.props['ms-controller']
-        cur.props['ms-controller'] = $id
+        var $id = binding.expr
+        var quoted = avalon.quote($id)
+        var name = binding.name
+        cur[name] = quoted
+        // cur.props[name] = $id
         pre.$prepend = ['(function(topVm){',
-            'var bottomVm = avalon.vmodels[' + $id + ']',
+            'var bottomVm = avalon.vmodels[' + quoted + ']',
             'if(bottomVm && topVm){',
             '__vmodel__ =  avalon.mediatorFactory(topVm, bottomVm)',
             'var mediator = __vmodel__',
@@ -34,7 +36,7 @@ avalon.directive('controller', {
         pre.$append = '}\n\n})(__vmodel__)'
     },
     diff: function (cur, pre, steps, name) {
-        if (pre.props[name] !== cur.props[name]) {
+        if (pre[name] !== cur[name]) {
             update(cur, this.update, steps, 'controller')
         }
     },

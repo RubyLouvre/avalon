@@ -6,11 +6,11 @@ avalon.directive('text', {
         cur.children = '[]'
         cur.skipContent = true
         var val = rident.test(binding.expr) ? binding.expr : avalon.parseExpr(binding)
-        cur.props[binding.name] = val
+        cur[binding.name] = val
     },
     diff: function (cur, pre, steps, name) {
-        var curValue = cur.props[name]
-        var preValue = pre.props[name]
+        var curValue = cur[name]
+        var preValue = pre[name]
         cur.children = pre.children
         var dom = cur.dom = pre.dom
 
@@ -28,7 +28,7 @@ avalon.directive('text', {
         return false
     },
     update: function (node, vnode) {
-        var nodeValue = vnode.props['ms-text']
+        var nodeValue = vnode['ms-text']
         if ('textContent' in node) {
             node.textContent = nodeValue + ''
         } else {

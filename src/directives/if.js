@@ -18,7 +18,7 @@ avalon.directive('if', {
         if (cur.nodeType !== pre.nodeType) {
             cur.steps = steps
             if(cur.nodeType === 8){
-               cur.props = pre.props
+               cur['ms-effect'] = pre['ms-effect']
             }
             update(cur, this.update, steps, 'if')
         }
@@ -33,18 +33,16 @@ avalon.directive('if', {
                 if (!element) {
                     element = avalon.vdomAdaptor(vnode, 'toDOM')
                     vnode.dom = element
-                    var props = vnode.props
-                    for (var prop in props) {//如果一开始是隐藏,那么事件会没有绑上
-                        if (prop.match(/ms\-on/g)) {
-                            var fun = props[prop]
-                            if (typeof fun === 'function') {
-                                element._ms_context_ = vnode.onVm
-                                avalon.bind(element, prop.split('-')[2], fun)
+                    for (var prop in vnode) {//如果一开始是隐藏,那么事件会没有绑上
+                        if (prop.indexOf('ms-on') === 0) {
+                            var fn = vnode[prop]
+                            if (typeof fn === 'function') {
+                                element._ms_context_ = vnode.vmodel
+                                avalon.bind(element, prop.split('-')[2], fn)
                             }
                         }
                     }
-                    if (vnode.onVm)
-                        delete vnode.onVm
+                    
                 }
                 parent.replaceChild(element, node)
                 if (vnode.steps.count) {

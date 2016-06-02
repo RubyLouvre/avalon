@@ -7,15 +7,15 @@ var dir = avalon.directive('widget', {
     priority: 4,
     parse: function (cur, pre, binding) {
 
-        var wid = avalon.makeHashCode('w')
+        var wid = pre.props.wid || avalon.makeHashCode('w')
         avalon.resolvedComponents[wid] = {
             props: avalon.shadowCopy({}, pre.props),
             template: pre.template,
         }
-        cur.props.wid = wid
+        cur.wid = avalon.quote(wid)
         cur.template = pre.template
         cur.children = '[]'
-        cur.props[binding.name] = avalon.parseExpr(binding)
+        cur[binding.name] = avalon.parseExpr(binding)
         var old = pre.$append || ''
         pre.$append = [
             'var curIndex = vnodes.length - 1',
@@ -24,7 +24,7 @@ var dir = avalon.directive('widget', {
             'var docker =  avalon.component(el, __vmodel__)',
             'if(docker && docker.render){',
             'try{eval("avalon.renderComponent( " + docker.render +",vnodes, curIndex)")',
-            '}catch(e){avalon.log(e)}',
+            '}catch(e){avalon.log(docker.render)}',
             '}',
             '}'
         ].join('\n ') + old
@@ -34,7 +34,7 @@ var dir = avalon.directive('widget', {
     },
     diff: function (cur, pre, steps) {
         var coms = avalon.resolvedComponents
-        var wid = cur.props.wid
+        var wid = cur.wid
         var docker = coms[wid]
         if (!docker || !docker.renderCount) {
             steps.count += 1

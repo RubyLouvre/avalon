@@ -47,16 +47,16 @@ function parseBindings(cur, props) {
             cur.props[i] = props[i]
         }
     }
-
-
     bindings.sort(byPriority)
+    
     var ret = []
     for (var k = 0, el; el = bindings[k++]; ) {
-        var name = el.name
-        ret.name = name
+        var type = el.type
+        ret.type = type
         ret.push(el)
-        if (name === 'important' || name === 'widget') {
-            break
+        
+        if (type === 'important' || type === 'widget') {
+               break
         }
     }
     return ret

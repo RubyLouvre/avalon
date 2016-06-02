@@ -4,11 +4,11 @@ var update = require('./_update')
 
 avalon.directive('attr', {
     diff: function (cur, pre, steps, name) {
-        var a = cur.props[name]
-        var p = pre.props[name]
+        var a = cur[name]
+        var p = pre[name]
         if (a && typeof a === 'object') {
             if (Array.isArray(a)) {
-                a = cur.props[name] = avalon.mix.apply({}, a)
+                a = cur[name] = avalon.mix.apply({}, a)
             }
             if (typeof p !== 'object') {
                 cur.changeAttr = a
@@ -25,15 +25,14 @@ avalon.directive('attr', {
                     cur.changeAttr = patch
                 }
             }
-            if (cur.changeAttr) { 
+            if (cur.changeAttr) {
                 update(cur, this.update, steps, 'attr' )
             }
         } else {
-            cur.props[name] = p
+            cur[name] = p
         }
         pre.changeAttr = null
     },
     //dom, vnode
     update: attrUpdate
 })
-

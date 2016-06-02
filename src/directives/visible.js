@@ -26,14 +26,14 @@ avalon.parseDisplay = parseDisplay
 
 avalon.directive('visible', {
     diff: function (cur, pre, steps, name) {
-        var c = cur.props[name] = !!cur.props[name]
+        var c = cur[name] = !!cur[name]
         cur.displayValue = pre.displayValue
         if (c !== pre.props[name]) {
             update(cur, this.update, steps, 'visible' )
         }
     },
     update: function (node, vnode) {
-        var show = vnode.props['ms-visible']
+        var show = vnode['ms-visible']
         var display = node.style.display
         var value
         if (show) {

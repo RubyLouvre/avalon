@@ -18,7 +18,7 @@ avalon.component = function (name, definition) {
         }//这里没有返回值
     } else {
         var root = name //root为页面上节点对应的虚拟DOM
-        var wid = root.props.wid
+        var wid = root.wid
         var docker = resolvedComponents[wid]
         if(docker &&docker.render){
             avalon.log("立即返回")
@@ -26,7 +26,7 @@ avalon.component = function (name, definition) {
         }
         var topVm = definition
         var finalOptions = {}
-        var options = [].concat( root.props['ms-widget'] || [] )
+        var options = [].concat( root['ms-widget'] || [] )
         options.forEach(function (option, index) {
             //收集里面的事件
             mixinHooks(finalOptions, option, index)
@@ -70,7 +70,7 @@ avalon.component = function (name, definition) {
             nodeType: 8,
             type: '#comment',
             directive: 'widget',
-            props: {'ms-widget': wid},
+            'ms-widget': wid,
             nodeValue: 'ms-widget placeholder'
         }
         if (!avalon.components[componentName]) {
@@ -204,7 +204,7 @@ avalon.renderComponent = function (root, nodes, index) {
     if(root){
         root = root[0] || absent
     }
-    var docker = avalon.resolvedComponents[root.props.wid]
+    var docker = avalon.resolvedComponents[root.wid]
     
     if (!isComponentReady(root)) {
         nodes[index] = docker.placeholder
@@ -216,7 +216,7 @@ avalon.renderComponent = function (root, nodes, index) {
     if (!docker.renderCount) {
         docker.renderCount = 1
     }
-    root.props['ms-widget'] = docker.props['ms-widget']
+    root.props['ms-widget'] = docker['ms-widget']
     root.vmodel = docker.vmodel
     root.diff = docker.diff
     //移除skipAttrs,以便进行diff
