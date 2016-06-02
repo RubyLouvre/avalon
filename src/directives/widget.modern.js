@@ -17,12 +17,15 @@ var dir = avalon.directive('widget', {
         cur.props[binding.name] = avalon.parseExpr(binding)
         var old = pre.$append || ''
         pre.$append = [
-                'var curIndex = vnodes.length - 1',
-                'var el = vnodes[curIndex]',
-                'var docker =  avalon.component(el, __vmodel__)' ,
-                'if(docker && docker.render){' ,
-                'try{eval("avalon.renderComponent( " + docker.render +",vnodes, curIndex)")}catch(e){console.log(e)}',
-                '}'
+            'var curIndex = vnodes.length - 1',
+            'var el = vnodes[curIndex]',
+            'if(el.nodeType === 1){',
+            'var docker =  avalon.component(el, __vmodel__)',
+            'if(docker && docker.render){',
+            'try{eval("avalon.renderComponent( " + docker.render +",vnodes, curIndex)")',
+            '}catch(e){avalon.log(e)}',
+            '}',
+            '}'
         ].join('\n ') + old
     },
     define: function () {

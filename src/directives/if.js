@@ -17,6 +17,9 @@ avalon.directive('if', {
         cur.dom = pre.dom
         if (cur.nodeType !== pre.nodeType) {
             cur.steps = steps
+            if(cur.nodeType === 8){
+               cur.props = pre.props
+            }
             update(cur, this.update, steps, 'if')
         }
     },

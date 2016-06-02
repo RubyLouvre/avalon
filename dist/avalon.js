@@ -1,4 +1,4 @@
-/*! built in 2016-6-2:19 version 2.06 by 司徒正美 */
+/*! built in 2016-6-2:20 version 2.06 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -5518,6 +5518,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        cur.dom = pre.dom
 	        if (cur.nodeType !== pre.nodeType) {
 	            cur.steps = steps
+	            if(cur.nodeType === 8){
+	               cur.props = pre.props
+	            }
 	            update(cur, this.update, steps, 'if')
 	        }
 	    },
@@ -6082,9 +6085,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	//插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
 	var dir = avalon.directive('widget', {
 	    priority: 4,
-	    parse: function (cur,  pre, binding) {
+	    parse: function (cur, pre, binding) {
 
-	        var wid =  avalon.makeHashCode('w')
+	        var wid = avalon.makeHashCode('w')
 	        avalon.resolvedComponents[wid] = {
 	            props: avalon.shadowCopy({}, pre.props),
 	            template: pre.template,
@@ -6095,12 +6098,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        cur.props[binding.name] = avalon.parseExpr(binding)
 	        var old = pre.$append || ''
 	        pre.$append = [
-	                'var curIndex = vnodes.length - 1',
-	                'var el = vnodes[curIndex]',
-	                'var docker =  avalon.component(el, __vmodel__)' ,
-	                'if(docker && docker.render){' ,
-	                'try{eval("avalon.renderComponent( " + docker.render +",vnodes, curIndex)")}catch(e){console.log(e)}',
-	                '}'
+	            'var curIndex = vnodes.length - 1',
+	            'var el = vnodes[curIndex]',
+	            'if(el.nodeType === 1){',
+	            'var docker =  avalon.component(el, __vmodel__)',
+	            'if(docker && docker.render){',
+	            'try{eval("avalon.renderComponent( " + docker.render +",vnodes, curIndex)")',
+	            '}catch(e){avalon.log(e)}',
+	            '}',
+	            '}'
 	        ].join('\n ') + old
 	    },
 	    define: function () {
@@ -6119,7 +6125,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            pre.children = []
 	            cur.steps = steps
 	            fixRepeatAction(cur.children)
-	            update(cur, this.replaceByComponent, steps, 'widget' )
+	            update(cur, this.replaceByComponent, steps, 'widget')
 	            function fireReady(dom, vnode) {
 	                cur.vmodel.$fire('onReady', {
 	                    type: 'ready',
@@ -6129,7 +6135,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                })
 	                docker.renderCount = 2
 	            }
-	            update(cur, fireReady, steps, 'widget', 'afterChange' )
+	            update(cur, fireReady, steps, 'widget', 'afterChange')
 	        } else {
 	            var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
 	            cur.skipContent = !needUpdate
@@ -6187,12 +6193,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	})
 
-	function fixRepeatAction(nodes){
-	    for(var i = 0,el; el = nodes[i++];){
-	        if(el.directive === 'for'  ){
+	function fixRepeatAction(nodes) {
+	    for (var i = 0, el; el = nodes[i++]; ) {
+	        if (el.directive === 'for') {
 	            el.fixAction = true
 	        }
-	        if(el.children){
+	        if (el.children) {
 	            fixRepeatAction(el.children)
 	        }
 	    }

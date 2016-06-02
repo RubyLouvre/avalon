@@ -5,9 +5,9 @@ var update = require('./_update')
 //插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
 var dir = avalon.directive('widget', {
     priority: 4,
-    parse: function (cur,  pre, binding) {
+    parse: function (cur, pre, binding) {
 
-        var wid =  avalon.makeHashCode('w')
+        var wid = avalon.makeHashCode('w')
         avalon.resolvedComponents[wid] = {
             props: avalon.shadowCopy({}, pre.props),
             template: pre.template,
@@ -18,12 +18,15 @@ var dir = avalon.directive('widget', {
         cur.props[binding.name] = avalon.parseExpr(binding)
         var old = pre.$append || ''
         pre.$append = [
-                'var curIndex = vnodes.length - 1',
-                'var el = vnodes[curIndex]',
-                'var docker =  avalon.component(el, __vmodel__)' ,
-                'if(docker && docker.render){' ,
-                'try{eval("avalon.renderComponent( " + docker.render +",vnodes, curIndex)")}catch(e){console.log(e)}',
-                '}'
+            'var curIndex = vnodes.length - 1',
+            'var el = vnodes[curIndex]',
+            'if(el.nodeType === 1){',
+            'var docker =  avalon.component(el, __vmodel__)',
+            'if(docker && docker.render){',
+            'try{eval("avalon.renderComponent( " + docker.render +",vnodes, curIndex)")',
+            '}catch(e){avalon.log(e)}',
+            '}',
+            '}'
         ].join('\n ') + old
     },
     define: function () {
@@ -42,7 +45,7 @@ var dir = avalon.directive('widget', {
             pre.children = []
             cur.steps = steps
             fixRepeatAction(cur.children)
-            update(cur, this.replaceByComponent, steps, 'widget' )
+            update(cur, this.replaceByComponent, steps, 'widget')
             function fireReady(dom, vnode) {
                 cur.vmodel.$fire('onReady', {
                     type: 'ready',
@@ -52,7 +55,7 @@ var dir = avalon.directive('widget', {
                 })
                 docker.renderCount = 2
             }
-            update(cur, fireReady, steps, 'widget', 'afterChange' )
+            update(cur, fireReady, steps, 'widget', 'afterChange')
         } else {
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
             cur.skipContent = !needUpdate
@@ -110,12 +113,12 @@ var dir = avalon.directive('widget', {
     }
 })
 
-function fixRepeatAction(nodes){
-    for(var i = 0,el; el = nodes[i++];){
-        if(el.directive === 'for'  ){
+function fixRepeatAction(nodes) {
+    for (var i = 0, el; el = nodes[i++]; ) {
+        if (el.directive === 'for') {
             el.fixAction = true
         }
-        if(el.children){
+        if (el.children) {
             fixRepeatAction(el.children)
         }
     }

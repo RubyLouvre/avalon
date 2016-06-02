@@ -1,4 +1,4 @@
-/*! built in 2016-6-2:19 version 2.06 by 司徒正美 */
+/*! built in 2016-6-2:20 version 2.06 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3192,6 +3192,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        cur.dom = pre.dom
 	        if (cur.nodeType !== pre.nodeType) {
 	            cur.steps = steps
+	            if(cur.nodeType === 8){
+	               cur.props = pre.props
+	            }
 	            update(cur, this.update, steps, 'if')
 	        }
 	    },
@@ -6617,12 +6620,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        cur.props[binding.name] = avalon.parseExpr(binding)
 	        var old = pre.$append || ''
 	        pre.$append = [
-	                'var curIndex = vnodes.length - 1',
-	                'var el = vnodes[curIndex]',
-	                'var docker =  avalon.component(el, __vmodel__)' ,
-	                'if(docker && docker.render){' ,
-	                'try{eval("avalon.renderComponent( " + docker.render +",vnodes, curIndex)")}catch(e){console.log(e)}',
-	                '}'
+	            'var curIndex = vnodes.length - 1',
+	            'var el = vnodes[curIndex]',
+	            'if(el.nodeType === 1){',
+	            'var docker =  avalon.component(el, __vmodel__)',
+	            'if(docker && docker.render){',
+	            'try{eval("avalon.renderComponent( " + docker.render +",vnodes, curIndex)")',
+	            '}catch(e){avalon.log(e)}',
+	            '}',
+	            '}'
 	        ].join('\n ') + old
 	    },
 	    define: function () {
