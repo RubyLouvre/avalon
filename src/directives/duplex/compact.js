@@ -14,21 +14,18 @@ avalon.directive('duplex', {
         newField(binding, pre)
         avalon.caches[id] = pre.field
         cur.vmodel = '__vmodel__'
-        var type = pre.props.type
-        if(type){
-            cur.props.type = avalon.quote(type)
-        }
-        cur.props['ms-duplex'] = avalon.quote(id)
-        cur.props['data-duplex-get'] = evaluatorPool.get('duplex:' + id)
-        cur.props['data-duplex-set'] = evaluatorPool.get('duplex:set:' + id)
+        
+        cur['ms-duplex'] = avalon.quote(id)
+        cur['data-duplex-get'] = evaluatorPool.get('duplex:' + id)
+        cur['data-duplex-set'] = evaluatorPool.get('duplex:set:' + id)
 
         var format = evaluatorPool.get('duplex:format:' + id)
         if (format) {
-           cur.props['data-duplex-format'] = format
+           cur['data-duplex-format'] = format
         }
     },
     diff: function (cur, pre, steps) {
-        var duplexID = cur.props["ms-duplex"]
+        var duplexID = cur["ms-duplex"]
         cur.field = pre.field || avalon.mix( {}, avalon.caches[duplexID])
         var field = cur.field
         if (!field.set) {

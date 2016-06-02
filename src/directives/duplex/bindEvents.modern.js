@@ -7,9 +7,9 @@ function initControl(cur) {
     var field = cur.field
     field.update = updateModel
     field.updateCaret = setCaret
-    field.get = cur.props['data-duplex-get']
-    field.set = cur.props['data-duplex-set']
-    var format = cur.props['data-duplex-format']
+    field.get = cur['data-duplex-get']
+    field.set = cur['data-duplex-set']
+    var format = cur['data-duplex-format']
     if (format) {
         field.formatters.push(function (v) {
             return format(field.vmodel, v)
