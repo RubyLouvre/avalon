@@ -21,7 +21,6 @@ function batchUpdate(id, immediate) {
     } else {
         dirtyTrees[id] = true
     }
-  
     if ( typeof vm.$render !== 'function' || !vm.$element || isBatchingUpdates) {
         return
     }
@@ -43,15 +42,18 @@ function batchUpdate(id, immediate) {
                vtree = [_vtree]
             }
         }
+      //  dirtyTrees[vm.$id] = true
         avalon.diff(vtree, dom.vtree || [], steps)
-        patch([ dom], vtree, null, steps)
+      
+        patch([ dom ], vtree, null, steps)
         steps.count = 0
         dom.vtree = vtree
+       
         isBatchingUpdates = false
         avalon.log('rerender', vm.$id, new Date - avalon.rerenderStart)
         delete dirtyTrees[id]
         for (var i in dirtyTrees) {//更新其他子树
-            batchUpdate(i, true)
+            batchUpdate(i, true,'for in')
             break
         }
 

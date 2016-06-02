@@ -13,7 +13,7 @@ text = text.replace(/version\s*\:\s*([^,]+)/, function (a, b) {
 
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')
 var now = new Date
-var snow = now.getFullYear()+'-'+ (now.getMonth()+1) + 
+var snow = now.getFullYear()+'-'+ (now.getMonth()+1) +
         '-'+ now.getDate()+':'+ now.getHours()
 module.exports = {
     entry: {
@@ -21,6 +21,7 @@ module.exports = {
         'avalon.modern': './src/avalon.modern',
         'avalon.test': './src/avalon.test',
         'avalon.next': './src/avalon.next'
+      //  'avalon.pager': './src/pager'
     },
     output: {
         path: path.join(__dirname, 'dist'),

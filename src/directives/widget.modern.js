@@ -5,29 +5,25 @@ var update = require('./_update')
 //插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
 var dir = avalon.directive('widget', {
     priority: 4,
-    parse: function (binding, num, elem) {
-        var isVoidTag = !!elem.isVoidTag
-        elem.isVoidTag = true
-        var wid = elem.props.wid || (elem.props.wid = avalon.makeHashCode('w'))
+    parse: function (cur, pre, binding) {
+        var wid =  avalon.makeHashCode('w')
         avalon.resolvedComponents[wid] = {
-            props: avalon.shadowCopy({}, elem.props),
-            template: elem.template
+            props: avalon.shadowCopy({}, pre.props),
+            template: pre.template,
         }
-        var ret = [
-            'vnode' + num + '._isVoidTag = ' + isVoidTag,
-            'vnode' + num + '.props.wid = "' + wid + '"',
-            'vnode' + num + '.template = ' + avalon.quote(elem.template),
-            'vnode' + num + '.props["ms-widget"] = ' + avalon.parseExpr(binding, 'widget'),
-            'vnode' + num + ' = avalon.component(vnode' + num + ', __vmodel__)',
-            'if(typeof vnode' + num + '.render === "string"){',
-            'avalon.__widget = [];',
-            'var __backup__ = __vmodel__;',
-            '__vmodel__ = vnode' + num + '.vmodel;',
-            'try{eval(" new function(){"+ vnode' + num + '.render +"}");',
-            '}catch(e){avalon.warn(e)', '}',
-            'vnode' + num + ' = avalon.renderComponent(avalon.__widget[0])', '}',
-            '__vmodel__ = __backup__;']
-        return ret.join('\n') + '\n'
+        cur.props.wid = wid
+        cur.template = pre.template
+        cur.children = '[]'
+        cur.props[binding.name] = avalon.parseExpr(binding)
+        var old = pre.$append || ''
+        pre.$append = [
+                'var curIndex = vnodes.length - 1',
+                'var el = vnodes[curIndex]',
+                'var docker =  avalon.component(el, __vmodel__)' ,
+                'if(docker && docker.render){' ,
+                'try{eval("avalon.renderComponent( " + docker.render +",vnodes, curIndex)")}catch(e){console.log(e)}',
+                '}'
+        ].join('\n ') + old
     },
     define: function () {
         return avalon.mediatorFactory.apply(this, arguments)

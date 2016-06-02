@@ -1,19 +1,14 @@
 
 var VText = require('../vdom/VText')
-var parseView = require('../strategy/parser/parseView')
+var parseView = require('../strategy/parser/parseView2')
 var resolvedComponents = avalon.resolvedComponents
 var skipArray = require('../vmodel/parts/skipArray')
 
 var componentContainers = {wbr: 1, xmp: 1, template: 1}
-var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose')
+var events = 'onInit,onReady,onViewChange,onDispose'
+var componentEvents = avalon.oneObject(events)
+var protected = events.split(',').concat('is','diff','define','cached')
 
-var needDel = avalon.mix({
-    is: 1,
-    diff: 1,
-    define: 1,
-    cached: 1
-}, componentEvents)
-avalon.document.createElement('slot')
 
 avalon.component = function (name, definition) {
     //这是定义组件的分支,并将列队中的同类型对象移除
@@ -22,17 +17,34 @@ avalon.component = function (name, definition) {
             avalon.components[name] = definition
         }//这里没有返回值
     } else {
-
         var root = name //root为页面上节点对应的虚拟DOM
-        var topVm = definition
         var wid = root.props.wid
-        //处理ms-widget的参数
+        var docker = resolvedComponents[wid]
+        if(docker &&docker.render){
+            avalon.log("立即返回")
+            return docker
+        }
+        var topVm = definition
         var finalOptions = {}
-        var options = root.props['ms-widget'] || {}
-        options = Array.isArray(options) ? options : [options]
+        var options = [].concat( root.props['ms-widget'] || [] )
         options.forEach(function (option, index) {
+            //收集里面的事件
             mixinHooks(finalOptions, option, index)
         })
+        //得到组件的is类型 
+        var componentName = root.type.indexOf('-') > 0 ?
+                root.type : finalOptions.is
+       //得到组件在顶层vm的配置对象名   
+        var configName = componentName.replace(/-/g, '_')
+        if(topVm.hasOwnProperty(configName) && 
+                typeof topVm[configName] === 'object'){
+            //如果定义了,那么全部舍弃
+            finalOptions = {}
+            options = [topVm[configName]]
+            mixinHooks(finalOptions, topVm[configName], 0)
+            protected = [configName].concat(protected)
+         }
+       
         if (finalOptions.cached) {
             var cachedVm = avalon.vmodels[finalOptions.$id]
             if (cachedVm) {
@@ -44,7 +56,7 @@ avalon.component = function (name, definition) {
             }
         }
 
-        var docker = resolvedComponents[wid]
+        docker = resolvedComponents[wid]
         if (!docker) {
             resolvedComponents[wid] = root
             docker = root
@@ -53,8 +65,7 @@ avalon.component = function (name, definition) {
         if (docker.render) {
             return docker
         }
-        var componentName = root.type.indexOf('-') > 0 ?
-                root.type : finalOptions.is
+       
         var placeholder = {
             nodeType: 8,
             type: '#comment',
@@ -87,18 +98,23 @@ avalon.component = function (name, definition) {
             var diff = finalOptions.diff
             var define = finalOptions.define
             define = define || avalon.directives.widget.define
-            var $id = finalOptions.$id || 
-                    avalon.makeHashCode(componentName.replace(/-/g, '_'))
+            
+            var $id = finalOptions.$id ||
+                    avalon.makeHashCode(configName)
 
             var defaults = avalon.mix(true,{},definition.defaults)
+            
             mixinHooks(finalOptions, defaults, false)
-            var defineArgs = [topVm, defaults].concat(options)
+            
+            defineArgs = [topVm, defaults].concat(options)
+           
             var vmodel = define.apply(function (a, b) {
-                for (var k in needDel) {
+                protected.forEach(function(k){
                     delete a[k]
                     delete b[k]
-                }
+                })
             }, defineArgs)
+            
             if(!avalon.modern){//增强对IE的兼容
                 for(var i in vmodel){
                     if(!skipArray[i] && typeof vmodel[i] === 'function'){
@@ -113,14 +129,14 @@ avalon.component = function (name, definition) {
             if (typeof definition.getTemplate === 'function') {
                 finalTemplate = definition.getTemplate(vmodel, finalTemplate)
             }
-
             //对组件内置的template转换成虚拟DOM
             var vtree = avalon.lexer(finalTemplate)
             if (vtree.length > 1) {
                 avalon.error('组件必须用一个元素包起来')
             }
             var componentRoot = vtree[0]
-
+            //  必须指定wid
+            componentRoot.props.wid = wid
             //将用户标签中的属性合并到组件标签的属性里
             for (var k in docker.props) {
                 if (k !== 'ms-widget') {
@@ -132,7 +148,7 @@ avalon.component = function (name, definition) {
             if (definition.soleSlot) {
                 var slots = {}
                 var slotName = definition.soleSlot
-                slots[slotName] = /\S/.test(docker.template) ? root.children : 
+                slots[slotName] = /\S/.test(docker.template) ? root.children :
                         new VText('{{@' + slotName + '}}')
                 mergeTempale(vtree, slots)
             } else if (!root.isVoidTag) {
@@ -146,11 +162,13 @@ avalon.component = function (name, definition) {
                     })
                 }
             }
-
+            
             //生成组件的render
-            var num = num || String(new Date - 0).slice(0, 6)
-            var render = parseView(vtree, num) +
-                    '\nreturn (avalon.__widget = vnodes' + num + ');\n'
+            var render = '(function(__vmodel__){'+
+                    parseView(vtree) + 
+                    '})(docker.vmodel)'
+             
+         
             vmodel.$render = topVm.$render
             vmodel.$events.__wid__ = wid
             //触发onInit回调
@@ -179,15 +197,22 @@ function isCustomTag(type) {
     return type.length > 3 && type.indexOf('-') > 0 &&
             ralphabet.test(type.charAt(0) + type.slice(-1))
 }
-avalon.renderComponent = function (root) {
+var absent = {
+    props: {}
+}
+avalon.renderComponent = function (root, nodes, index) {
+    if(root){
+        root = root[0] || absent
+    }
     var docker = avalon.resolvedComponents[root.props.wid]
+    
+    if (!isComponentReady(root)) {
+        nodes[index] = docker.placeholder
+        return 
+    }
     var order = root.order
-
     root.order = order ?
             'ms-widget;;' + order : 'ms-widget'
-    if (!isComponentReady(root)) {
-        return docker.placeholder
-    }
     if (!docker.renderCount) {
         docker.renderCount = 1
     }
@@ -196,7 +221,7 @@ avalon.renderComponent = function (root) {
     root.diff = docker.diff
     //移除skipAttrs,以便进行diff
     delete root.skipAttrs
-    return root
+    nodes[index] = root
 }
 
 function mixinHooks(target, option, index) {

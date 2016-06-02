@@ -17,7 +17,8 @@
                     console.log(this.toggle)
                 }
             })
-            //        
+            //   
+            //
         </script>
         <style>
             .selected{
@@ -26,9 +27,10 @@
         </style>
     </head>
     <body ms-controller="test" ms-attr="{title:@gg}" >
+       
         <input ms-duplex='@gg'/>{{@gg}}
         <p ms-for='el in @arr'>{{el}}</p>
-        <div ms-if='@toggle'><span>2222</span></div>999<div ms-html="@aaa" ms-click="@alert"></div>
-
+        <div ms-html="@aaa" ></div>
+<div ms-if='@toggle'><span>2222</span></div>999
     </body>
 </html>

@@ -1,5 +1,5 @@
-require('./important2')
-require('./controller2')
+require('./important')
+require('./controller')
 //处理属性样式
 require('./attr')
 
@@ -11,16 +11,16 @@ require('./text')
 require('./html')
 ////需要用到事件的
 require('./class.hover.active')
-require('./on2')
+require('./on')
 require('./duplex/compact')
 require('./validate')
 require('./rules')
 //
 ////处理逻辑
 require('./if')
-require('./for2')
+require('./for')
 //
-require('./widget2')
+require('./widget')
 require('./effect')
 //优先级 ms-important, ms-controller, ms-for, ms-widget, ms-effect, ms-if
 //.......

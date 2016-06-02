@@ -6,10 +6,22 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../dist/avalon.js"></script>
         <script>
-            var vm = avalon.define({
-                $id: 'test',
-                aaa: 111
-            })
+        var root = avalon.define({
+        $id  : 'root',
+        page : 'root',
+        level: 'root',
+    });
+    var first = avalon.define({
+        $id : 'first',
+        page: 'first',
+        kind: 'first',
+    });
+    var second = avalon.define({
+        $id  : 'second',
+        page : 'second',
+        grade: "second",
+    });
+
         </script>
         <style>
             .active{
@@ -17,10 +29,18 @@
             }
         </style>
     </head>
-    <body ms-controller="test">
-        <div>
-            <input ms-duplex="@aaa" ms-attr="{title: @aaa}"  />{{@aaa}}
-            
-        </div>
+    <body >
+         <div ms-controller="root">
+                <h1>{{@page}}</h1>
+                <div ms-controller="first">
+                    <h2 ms-text="@page"></h2>
+                    <div ms-if="@page=='first'">
+                        <div ms-controller="second">
+                            <h3 ms-html="@page"></h3>
+                            <div ms-if="@page == 'second'" id="cdiv">{{@level}}-{{@page}}-{{@kind}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
     </body>
 </html>
