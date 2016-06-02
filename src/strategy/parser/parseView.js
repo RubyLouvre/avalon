@@ -80,7 +80,6 @@ function parseNode(pre, forstack) {
             return b.name
         }).join(';;')
 
-
         if (pre.isVoidTag) {
             cur.isVoidTag = true
         } else {
@@ -97,7 +96,6 @@ function parseNode(pre, forstack) {
         
         if (bindings.name === 'imporant')
             return ''
-
        
         return add(stringifyTag(cur, {
             vmodel: 1,
@@ -185,7 +183,7 @@ function stringifyTag(obj, noQuote) {
                 var kv = obj.props[k]
                 if (typeof kv === 'string' && (
                         k.slice(0, 3) !== 'ms-' &&
-                        kv.indexOf('(function()') == -1)) {
+                        kv.indexOf('(function()') == -1) && kv.charAt(0) !='"') {
                     kv = quote(kv)
                 }
                 arr2.push(fixKey(k) + ': ' + kv)

@@ -1,4 +1,4 @@
-/*! built in 2016-6-2:14 version 2.06 by 司徒正美 */
+/*! built in 2016-6-2:15 version 2.06 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3306,7 +3306,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return b.name
 	        }).join(';;')
 
-
 	        if (pre.isVoidTag) {
 	            cur.isVoidTag = true
 	        } else {
@@ -3323,7 +3322,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        
 	        if (bindings.name === 'imporant')
 	            return ''
-
 	       
 	        return add(stringifyTag(cur, {
 	            vmodel: 1,
@@ -3411,7 +3409,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var kv = obj.props[k]
 	                if (typeof kv === 'string' && (
 	                        k.slice(0, 3) !== 'ms-' &&
-	                        kv.indexOf('(function()') == -1)) {
+	                        kv.indexOf('(function()') == -1) && kv.charAt(0) !='"') {
 	                    kv = quote(kv)
 	                }
 	                arr2.push(fixKey(k) + ': ' + kv)
@@ -6799,6 +6797,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    children: []
 	                }
 	                node = modifyProps(node, innerHTML, nodes, curDeep, maxDeep)
+	                
 	            }
 	        }
 
@@ -6819,7 +6818,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    children: [],
 	                    isVoidTag: true
 	                }
-	                modifyProps(node, '', nodes, curDeep, maxDeep)
+	                node = modifyProps(node, '', nodes, curDeep, maxDeep)
 	            }
 	        }
 
@@ -6964,7 +6963,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	           
 	            nodes.push(node)
-	            node = {
+	            return {
 	                nodeType: 8,
 	                skipContent: true,
 	                type: '#comment',

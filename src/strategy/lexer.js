@@ -117,6 +117,7 @@ function lexer(text, curDeep, maxDeep) {
                     children: []
                 }
                 node = modifyProps(node, innerHTML, nodes, curDeep, maxDeep)
+                
             }
         }
 
@@ -137,7 +138,7 @@ function lexer(text, curDeep, maxDeep) {
                     children: [],
                     isVoidTag: true
                 }
-                modifyProps(node, '', nodes, curDeep, maxDeep)
+                node = modifyProps(node, '', nodes, curDeep, maxDeep)
             }
         }
 
@@ -282,7 +283,7 @@ function modifyProps(node, innerHTML, nodes, curDeep, maxDeep) {
             }
            
             nodes.push(node)
-            node = {
+            return {
                 nodeType: 8,
                 skipContent: true,
                 type: '#comment',

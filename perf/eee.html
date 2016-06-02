@@ -7,15 +7,16 @@
         <title></title>
         <script src="../dist/avalon.js"></script>
         <script>
-            avalon.component('ms-list',{
-                template: '<div><input type="checkbox" ms-for="el in @list" ms-duplex-number="el" ms-attr="{value:el}"/></div>'
-                ,defaults: {
-                    list: [1,2,3,4]
+            avalon.component('ms-list', {
+                template: '<div><input type="checkbox" ms-for="el in @list" ms-duplex-number="@selected" ms-attr="{value:el}"/></div>'
+                , defaults: {
+                    selected: [1, 2],
+                    list: [1, 2, 3, 4]
                 }
             })
             var vm = avalon.define({
-                $id: 'test'
-               
+                $id: 'test',
+                list2: [3, 4, 5, 2, 8]
             })
             //   
             //
@@ -28,5 +29,6 @@
     </head>
     <body ms-controller="test" >
     <ms-list></ms-list>
-    </body>
+    <ms-list ms-widget="{list:@list2}"></ms-list>
+</body>
 </html>
