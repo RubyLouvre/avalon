@@ -1,4 +1,4 @@
-/*! built in 2016-6-2:12 version 2.06 by 司徒正美 */
+/*! built in 2016-6-2:14 version 2.06 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -5803,13 +5803,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var uuid = getShortID(fn)
 	        var key = type + ':' + uuid
 	        var hook = eventHooks[type]
-	        if (hook) {
-	            type = hook.type
-	            if (hook.fix) {
-	                fn = hook.fix(elem, fn)
-	                fn.uuid = uuid + '0'
+	        type = hook.type || type
+	        if (hook.fix) {
+	            var newfn = hook.fix(elem, fn)
+	            if (newfn !== fn) {
+	                newfn.uuid = uuid + '0'
+	                fn = newfn
 	            }
-	            key = type + ':' + fn.uuid
 	        }
 	        avalon.eventListeners[fn.uuid] = fn
 	        if (value.indexOf(type + ':') === -1) {//同一种事件只绑定一次
@@ -5871,8 +5871,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var value = elem.getAttribute('avalon-events')
 	    if (value && (elem.disabled !== true || type !== 'click')) {
 	        var uuids = []
-	        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type+'\\:([^?\s]+)','g'))
-	        value.replace(reg, function(a, b){
+	        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type + '\\:([^?\s]+)', 'g'))
+	        value.replace(reg, function (a, b) {
 	            uuids.push(b)
 	            return a
 	        })
@@ -5884,7 +5884,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	    elem = elem.parentNode
-	    if (elem && elem.getAttribute && canBubbleUp[type]) {
+	    var g = avalon.gestureEvents || {}
+	    if (elem && elem.getAttribute && (canBubbleUp[type] || g[type])) {
 	        collectHandlers(elem, type, handlers)
 	    }
 
@@ -5917,9 +5918,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        last = curr
 	                    }
 	                } else {
-	                   ret = fn.call(vm || elem, event)
+	                    ret = fn.call(vm || elem, event)
 	                }
-	                if(ret === false){
+	                if (ret === false) {
 	                    event.preventDefault()
 	                    event.stopPropagation()
 	                }
@@ -6063,7 +6064,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    return this
 	}
-	avalon.$$unbind = function(node) {
+	avalon.$$unbind = function (node) {
 	    var nodes = node.querySelectorAll('[avalon-events]')
 	    avalon.each(nodes, function (i, el) {
 	        avalon.unbind(el)

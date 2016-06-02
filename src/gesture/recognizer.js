@@ -29,7 +29,7 @@ function iOSversion() {
 
 var deviceIsAndroid = ua.indexOf('android') > 0
 var deviceIsIOS = iOSversion()
-
+avalon.gestureEvents = {}
 var Recognizer = avalon.gestureHooks = {
     isAndroid: ua.indexOf('android') > 0,
     isIOS: iOSversion(),
@@ -145,8 +145,9 @@ var Recognizer = avalon.gestureHooks = {
             document.removeEventListener('touchcancel', cancel)
 
         }
-
+        
         recognizer.events.forEach(function (eventName) {
+            avalon.gestureEvents[eventName] = 1
             avalon.eventHooks[eventName] = {
                 fix: function (el, fn) {
                     if (!el['touch-' + name]) {

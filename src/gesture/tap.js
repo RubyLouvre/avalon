@@ -5,7 +5,6 @@ var supportPointer = !!navigator.pointerEnabled || !!navigator.msPointerEnabled
 if (supportPointer) { 
   root.style.msTouchAction = root.style.touchAction = 'none'
 }
-
 var tapRecognizer = {
   events: ['tap'],
   touchBoundary: 10,
@@ -205,7 +204,6 @@ var tapRecognizer = {
       return true
     }
 
-
     tapRecognizer.lastTime = now
 
     var startTime = tapRecognizer.startTime
@@ -255,4 +253,4 @@ var tapRecognizer = {
   }
 }
 
-Recognizer.add("tap", tapRecognizer)
+Recognizer.add('tap', tapRecognizer)

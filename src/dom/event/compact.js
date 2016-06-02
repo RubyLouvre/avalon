@@ -13,6 +13,9 @@ if (!W3C) {
     delete canBubbleUp.select
 }
 
+//canBubbleUp.touchstart = 1
+//canBubbleUp.touchstart = 1
+//canBubbleUp.touchstart = 1
 
 var eventHooks = avalon.eventHooks
 /*绑定事件*/
@@ -25,10 +28,13 @@ avalon.bind = function (elem, type, fn) {
         var key = type + ':' + uuid
         var hook = eventHooks[type]
         if (hook) {
-            type = hook.type
+            type = hook.type|| type
             if (hook.fix) {
-                fn = hook.fix(elem, fn)
-                fn.uuid = uuid + '0'
+                var newfn = hook.fix(elem, fn)
+                if(newfn !== fn){
+                    newfn.uuid = uuid + '0'
+                    fn = newfn
+                }
             }
             key = type + ':' + fn.uuid
         }
@@ -92,6 +98,7 @@ function collectHandlers(elem, type, handlers) {
     if (value && (elem.disabled !== true || type !== 'click')) {
         var uuids = []
         var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type + '\\:([^?\s]+)', 'g'))
+       
         value.replace(reg, function (a, b) {
             uuids.push(b)
             return a
@@ -104,7 +111,8 @@ function collectHandlers(elem, type, handlers) {
         }
     }
     elem = elem.parentNode
-    if (elem && elem.getAttribute && canBubbleUp[type]) {
+    var g = avalon.gestureEvents || {}
+    if (elem && elem.getAttribute && (canBubbleUp[type] || g[type])) {
         collectHandlers(elem, type, handlers)
     }
 

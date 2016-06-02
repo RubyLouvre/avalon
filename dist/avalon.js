@@ -1,4 +1,4 @@
-/*! built in 2016-6-2:12 version 2.06 by 司徒正美 */
+/*! built in 2016-6-2:14 version 2.06 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2638,6 +2638,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    delete canBubbleUp.select
 	}
 
+	//canBubbleUp.touchstart = 1
+	//canBubbleUp.touchstart = 1
+	//canBubbleUp.touchstart = 1
 
 	var eventHooks = avalon.eventHooks
 	/*绑定事件*/
@@ -2650,10 +2653,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var key = type + ':' + uuid
 	        var hook = eventHooks[type]
 	        if (hook) {
-	            type = hook.type
+	            type = hook.type|| type
 	            if (hook.fix) {
-	                fn = hook.fix(elem, fn)
-	                fn.uuid = uuid + '0'
+	                var newfn = hook.fix(elem, fn)
+	                if(newfn !== fn){
+	                    newfn.uuid = uuid + '0'
+	                    fn = newfn
+	                }
 	            }
 	            key = type + ':' + fn.uuid
 	        }
@@ -2717,6 +2723,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (value && (elem.disabled !== true || type !== 'click')) {
 	        var uuids = []
 	        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type + '\\:([^?\s]+)', 'g'))
+	       
 	        value.replace(reg, function (a, b) {
 	            uuids.push(b)
 	            return a
@@ -2729,7 +2736,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	    elem = elem.parentNode
-	    if (elem && elem.getAttribute && canBubbleUp[type]) {
+	    var g = avalon.gestureEvents || {}
+	    if (elem && elem.getAttribute && (canBubbleUp[type] || g[type])) {
 	        collectHandlers(elem, type, handlers)
 	    }
 
