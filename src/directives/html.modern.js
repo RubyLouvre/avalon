@@ -1,5 +1,5 @@
 var update = require('./_update')
-var parseView = require('../strategy/parser/parseView2')
+var parseView = require('../strategy/parser/parseView')
 var cache = {}
 avalon.htmlFactory2 = function (str) {
     if (cache[str]) {

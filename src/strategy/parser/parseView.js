@@ -8,158 +8,211 @@ var makeHashCode = avalon.makeHashCode
 var r = require('../../seed/regexp')
 var rident = r.ident
 var rsp = r.sp
+var rneedQuote = /[W-]/
+var keyMap = require('./keyMap')
+var rmsFor = /^\s*ms\-for:/
+var rmsForEnd = /^\s*ms\-for\-end:/
 function wrapDelimiter(expr) {
     return rident.test(expr) ? expr : parseExpr(expr, 'text')
 }
 
-function wrap(a, num) {
-    return '(function(){\n\n' + a + '\n\nreturn vnodes' + num + '\n})();\n'
+avalon.parseNodes = parseNodes
+function parseNodes(array) {
+    //ms-important， ms-controller ， ms-for 不可复制，省得死循环
+    //ms-important --> ms-controller --> ms-for --> ms-widget --> ms-effect --> ms-if
+    var buffer = ['\nvar vnodes = [];']
+    var forstack = []
+    for (var i = 0, el; el = array[i++]; ) {
+        var vnode = parseNode(el, forstack)
+        if (el.$prepend) {
+            buffer.push(el.$prepend)
+        }
+        if (vnode) {
+            buffer.push(vnode + '\n')
+        }
+        if (el.$append) {
+            buffer.push(el.$append)
+        }
+    }
+    buffer.push('return vnodes\n')
+    return buffer.join('\n')
 }
 
-var rmsFor = /^\s*ms\-for:/
-var rmsForEnd = /^\s*ms\-for\-end:/
 
-function parseView(arr, num, scan) {
-    num = num || String(new Date - 0).slice(0, 5)
+function fixKey(k) {
+    return (rneedQuote.test(k) || keyMap[k]) ? quote(k) : k
+}
 
-    var forstack = []
-    var hasIf = false
-    var children = 'vnodes' + num
-    var vnode = 'vnode' + num
-    var str = 'var ' + children + ' = []\n'
-    for (var i = 0; i < arr.length; i++) {
-        var el = arr[i]
-        if (el.nodeType === 3) {
-            str += 'var ' + vnode + ' = {type:"#text",nodeType:3,skipContent:true}\n'
-            var hasDelimiter = config.rexpr.test(el.nodeValue)
-
-            if (hasDelimiter) {
-                var array = parseDelimiter(el.nodeValue)
-                if (array.length === 1) {
-                    var a = parseExpr(array[0].expr)
-                    str += vnode + '.nodeValue = ' + wrapDelimiter(array[0].expr) + '\n'
-                } else {
-                    a = array.map(function (el) {
-                        return el.type ? wrapDelimiter(el.expr) : quote(el.expr)
-                    }).join(' + ')
-                    str += vnode + '.nodeValue = String(' + a + ')\n'
-                }
-                str += vnode + '.fixIESkip = true\n'
-                /* jshint ignore:start */
-                str += vnode + '.skipContent = false\n'
-            } else {
-                if (rsp.test(el.nodeValue)) {
-                    str += vnode + '.nodeValue = "\\n"\n'
-                } else {
-                    str += vnode + '.nodeValue = ' + quote(el.nodeValue) + '\n'
-                }
-            }
-            str += children + '.push(' + vnode + ')\n'
-            continue
-        } else if (el.nodeType === 8) {
-            var nodeValue = el.nodeValue
-            if (rmsFor.test(nodeValue)) {// 处理ms-for指令
-                if (nodeValue.indexOf('ms-for:') !== 0) {
-                    avalon.error('ms-for指令前不能有空格')
-                }
-                var signature = el.signature
-                forstack.push(signature)
-                str += '\nvar ' + signature + ' = {' +
-                        '\n\tnodeType:8,' +
-                        '\n\ttype:"#comment",' +
-                        '\n\tvmodel:__vmodel__,' +
-                        '\n\tdirective:"for",' +
-                        '\n\tskipContent:false,' +
-                        '\n\tcid:' + quote(el.cid) + ',' +
-                        '\n\tstart:' + children + '.length,' +
-                        '\n\tsignature:' + quote(signature) + ',' +
-                        '\n\ttemplate:' + quote(el.template) + ',' +
-                        '\n\tnodeValue:' + quote(nodeValue) +
-                        '\n}\n'
-                str += children + '.push(' + signature + ')\n'
-
-                str += avalon.directives['for'].parse(el, num)
-
-            } else if (rmsForEnd.test(nodeValue)) {
-                var signature = forstack[forstack.length - 1]
-                if (nodeValue.indexOf('ms-for-end:') !== 0) {
-                    avalon.error('ms-for-end指令前不能有空格')
-                }
-                str += children + '.push({' +
-                        '\n\tnodeType: 8,' +
-                        '\n\ttype:"#comment",' +
-                        '\n\tskipContent: true,' +
-                        '\n\tnodeValue:' + quote(signature) + ',' +
-                        '\n\tkey:traceKey\n})\n'
-                str += '\n})\n' //结束循环
-                if (forstack.length) {
-                    var signature = forstack[forstack.length - 1]
-                    str += signature + '.end =' + children + '.push({' +
-                            '\n\tnodeType: 8,' +
-                            '\n\ttype:"#comment",' +
-                            '\n\tskipContent: true,' +
-                            '\n\tsignature: ' + quote(signature) + ',' +
-                            '\n\tnodeValue: "ms-for-end:"' +
-                            '\n})\n'
-                    forstack.pop()
-                }
-            } else if (nodeValue.indexOf('ms-js:') === 0) {//插入普通JS代码
-                str += parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
-            } else {
-                str += children + '.push(' + quote(el) + ')\n\n\n'
-            }
-            continue
-        } else { //处理元素节点
-
-            str += 'var ' + vnode + ' = {' +
-                    '\n\tnodeType:1,' +
-                    '\n\ttype: ' + quote(el.type) + ',' +
-                    '\n\tprops:{},' +
-                    '\n\tchildren: [],' +
-                    '\n\tisVoidTag: ' + !!el.isVoidTag + ',' +
-                    '\n\ttemplate: ""}\n'
-
-            var hasWidget = el.props['ms-widget']
-            if (!hasWidget && el.type.indexOf('-') > 0 && !el.props.resolved) {
-                el.props['ms-widget'] = '@' + el.type.replace(/-/g, "_")
-            }
-            var hasBindings = ''
-            var vmID = el.props['ms-controller']
-
-            hasBindings = parseBindings(el.props, num, el)
-            if (hasBindings) {
-                str += hasBindings
-            }
-            if (!el.isVoidTag) {
-                if (el.children.length) {
-                    var hasIf = el.props['ms-if']
-                    if (hasIf) {
-                        str += 'if(' + vnode + '&&' + vnode + '.nodeType === 1 ){\n'
-                    }
-                    str += vnode + '.children = ' + wrap(parseView(el.children, num), num) + '\n'
-                    if (hasIf) {
-                        str += '}\n'
-                    }
-                } else {
-                    str += vnode + '.template = ' + quote(el.template) + '\n'
-                }
-            }
-            str += children + '.push(' + vnode + ')\n'
-            if (vmID) {//闭合ms-controller指令中avalon.skipController分支
-                str += '}'
+function add(a) {
+    return 'vnodes.push(' + a + ');'
+}
+function parseNode(pre, forstack) {
+    var directives = avalon.directives
+    if (pre.nodeType === 3) {
+        if (config.rexpr.test(pre.nodeValue)) {
+            return add(stringifyText(pre))
+        } else {
+            return stringifyNode(pre)
+        }
+    } else if (pre.nodeType === 1) {
+        var props = pre.props
+        if (pre.type.indexOf('ms-') === 0) {
+            if (!props['ms-widget']) {
+                props['ms-widget'] = '{is:' + quote(pre.type) + '}'
             }
         }
 
-    }
-    return str
-}
-avalon.htmlFactory = function (str, num) {
-    var vtree = avalon.lexer(str + "")
-    avalon.__html = []
-    var render = parseView(vtree, num) + '\nreturn (avalon.__html = vnodes' + num + ')'
-    return {
-        render: render
+        var cur = {
+            props: {},
+            type: pre.type,
+            nodeType: 1,
+            template: ''
+        }
+
+        var bindings = parseBindings(cur, props)
+        if (!bindings.length) {
+            cur.skipAttrs = true
+        }
+        cur.order = bindings.map(function (b) {
+            //将ms-*的值变成函数,并赋给cur.props[ms-*]
+            //如果涉及到修改结构,则在pre添加$append,$prepend
+            directives[b.type].parse(cur, pre, b)
+            return b.name
+        }).join(';;')
+
+
+        if (pre.isVoidTag) {
+            cur.isVoidTag = true
+        } else {
+            if (!('children' in cur)) {
+                var pChildren = pre.children
+                if (pChildren.length) {
+                    cur.children = '(function(){' + parseNodes(pChildren) + '})()'
+                } else {
+                    cur.template = pre.template
+                    cur.children = '[]'
+                }
+            }
+        }
+        
+        if (bindings.name === 'imporant')
+            return ''
+
+       
+        return add(stringifyTag(cur, {
+            vmodel: 1,
+            bottom: 1,
+            top: 1,
+            mediator: 1
+        }))
+
+    } else if (pre.nodeType === 8) {
+        var nodeValue = pre.nodeValue
+        if (rmsFor.test(nodeValue)) {// 处理ms-for指令
+            if (nodeValue.indexOf('ms-for:') !== 0) {
+                avalon.error('ms-for指令前不能有空格')
+            }
+            forstack.push(pre)
+            var cur = avalon.mix({
+                directive: 'for',
+                vmodel: '__vmodel__'
+            }, pre)
+            directives['for'].parse(cur, pre, pre)
+
+            return add(stringifyTag(cur, {
+                vmodel: 1
+            }))
+
+        } else if (rmsForEnd.test(nodeValue)) {
+            var node = forstack[forstack.length - 1]
+            var signature = node.signature
+            if (nodeValue.indexOf('ms-for-end:') !== 0) {
+                avalon.error('ms-for-end指令前不能有空格')
+            }
+
+            pre.$append = stringifyNode({
+                nodeType: 8,
+                type: '#comment',
+                nodeValue: signature,
+                key: 'traceKey'
+            }, {key: 1}) + '\n' //结束循环
+                    + "\n})"
+            if (forstack.length) {
+                pre.$append += "\n" + signature + '.end =' +
+                        stringifyNode({
+                            nodeType: 8,
+                            type: "#comment",
+                            signature: signature,
+                            nodeValue: "ms-for-end:"
+                        }) + '\n'
+                forstack.pop()
+            }
+            return ''
+        } else if (nodeValue.indexOf('ms-js:') === 0) {//插入普通JS代码
+            return stringifyNode(pre)
+            //str += parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
+        } else {
+            return stringifyNode(pre)
+        }
     }
 }
 
-module.exports = parseView
+
+function stringifyText(el) {
+    var array = parseDelimiter(el.nodeValue)//返回一个数组
+    var nodeValue = ''
+    if (array.length === 1) {
+        nodeValue = wrapDelimiter(array[0].expr)
+    } else {
+        var token = array.map(function (el) {
+            return el.type ? wrapDelimiter(el.expr) : quote(el.expr)
+        }).join(' + ')
+        nodeValue = 'String(' + token + ')'
+    }
+    return '{\ntype: "#text",\nnodeType:3,\nfixIESkip: true,\nnodeValue: ' + nodeValue + '\n}'
+}
+
+module.exports = parseNodes
+
+
+function stringifyTag(obj, noQuote) {
+    var arr1 = []
+//字符不用东西包起来就变成变量
+    for (var i in obj) {
+        if (i === 'props') {
+            var arr2 = []
+            for (var k in obj.props) {
+                var kv = obj.props[k]
+                if (typeof kv === 'string' && (
+                        k.slice(0, 3) !== 'ms-' &&
+                        kv.indexOf('(function()') == -1)) {
+                    kv = quote(kv)
+                }
+                arr2.push(fixKey(k) + ': ' + kv)
+            }
+            arr1.push('\tprops: {' + arr2.join(',\n') + '}')
+        } else {
+            var v = obj[i]
+            if (typeof v === 'string' && i !== 'children') {
+                v = noQuote && noQuote[i] ? v : quote(v)
+            }
+            arr1.push(fixKey(i) + ':' + v)
+        }
+    }
+    return '{\n' + arr1.join(',\n') + '}'
+}
+
+function stringifyNode(obj, skip) {
+    var arr = []
+    skip = skip || {}
+    for (var i in obj) {
+        if (obj.hasOwnProperty(i)) {
+            if (skip[i]) {
+                arr.push('\t' + fixKey(i) + ': ' + obj[i])
+            } else {
+                arr.push('\t' + fixKey(i) + ': ' + quote(obj[i]))
+            }
+        }
+    }
+    return add('{\n' + arr.join(',\n') + '}')
+}

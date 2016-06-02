@@ -4081,12 +4081,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var parseView = __webpack_require__(37)
 
-	function render(vtree, num, scan) {
-	    var num = num || String(new Date - 0).slice(0, 6)
-	    //var body = parseView(vtree, num, scan) + '\n\nreturn vnodes' + num
+	function render(vtree) {
 	    var body = parseView(vtree) 
 	    var fn = Function('__vmodel__','__fast__', body)
-	   
 	    return fn
 	}
 	avalon.render = render

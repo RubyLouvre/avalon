@@ -1,6 +1,6 @@
 
 var VText = require('../vdom/VText')
-var parseView = require('../strategy/parser/parseView2')
+var parseView = require('../strategy/parser/parseView')
 var resolvedComponents = avalon.resolvedComponents
 var skipArray = require('../vmodel/parts/skipArray')
 
