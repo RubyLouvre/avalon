@@ -13,16 +13,15 @@ avalon.bind = function (elem, type, fn) {
         //如果是使用ms-on-*绑定的回调,其uuid格式为e12122324,
         //如果是使用bind方法绑定的回调,其uuid格式为_12
         var uuid = getShortID(fn)
-        var key = type + ':' + uuid
         var hook = eventHooks[type]
-        type = hook.type || type
-        if (hook.fix) {
-            var newfn = hook.fix(elem, fn)
-            if (newfn !== fn) {
-                newfn.uuid = uuid + '0'
-                fn = newfn
+        if(hook){
+            type = hook.type || type
+            if (hook.fix) {
+                fn = hook.fix(elem, fn)
+                fn.uuid = uuid
             }
         }
+        var key = type + ':' + uuid
         avalon.eventListeners[fn.uuid] = fn
         if (value.indexOf(type + ':') === -1) {//同一种事件只绑定一次
             if (canBubbleUp[type] || focusBlur[type]) {
