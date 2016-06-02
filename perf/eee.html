@@ -7,15 +7,15 @@
         <title></title>
         <script src="../dist/avalon.js"></script>
         <script>
-            var vm = avalon.define({
-                $id: 'test',
-                gg:44,
-                aaa: '<b>333</b><b>{{@gg}}</b>',
-                arr: [11,22,33],
-                toggle: false,
-                alert: function(){
-                    console.log(this.toggle)
+            avalon.component('ms-list',{
+                template: '<div><input type="checkbox" ms-for="el in @list" ms-duplex-number="el" ms-attr="{value:el}"/></div>'
+                ,defaults: {
+                    list: [1,2,3,4]
                 }
+            })
+            var vm = avalon.define({
+                $id: 'test'
+               
             })
             //   
             //
@@ -26,11 +26,7 @@
             }
         </style>
     </head>
-    <body ms-controller="test" ms-attr="{title:@gg}" >
-       
-        <input ms-duplex='@gg'/>{{@gg}}
-        <p ms-for='el in @arr'>{{el}}</p>
-        <div ms-html="@aaa" ></div>
-<div ms-if='@toggle'><span>2222</span></div>999
+    <body ms-controller="test" >
+    <ms-list></ms-list>
     </body>
 </html>

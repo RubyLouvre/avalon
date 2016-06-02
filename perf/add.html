@@ -1,24 +1,116 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <title>SPA</title>
-    <script src="../dist/avalon.test.js"></script>
-    <script>
-        vm = avalon.define({
-            $id: 'widget2',
-            panelBody: '这是面板的内容',
-            aaa: {
-                ms_button: {
-                    buttonText: "vm中的值"
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>first example</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">         
+        <script src="../dist/avalon.js"></script>
+    </head>
+    <body>
+
+
+
+ <script>
+        function heredoc(fn) {
+            return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+                    replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+        }
+
+        var tmplWeekSelector=heredoc(function(){
+        /*
+<div style="display:inline-block;width:360px; " class="input frequency" ms-attr="{id:@name+'div'}">
+    <style>
+        .frequency input {            
+            margin-left:5px;
+        }
+    </style> 
+
+    <label ms-for="(i,v) in @data"  >
+        <input type="checkbox" class="item" ms-attr="{id:@name+'_freq'+v.value, value:v.value}" ms-duplex-checked="v.checked" data-duplex-changed="@onChange()" />{{v.text}} 
+    </label>
+
+    <label><input type="checkbox" ms-attr="{id:@name+'_freqAll'}" ms-duplex-checked="@dataAll.checked" data-duplex-changed="@onChangeAll()" />{{@dataAll.text}}</label>
+    <input type="hidden" ms-attr="{id:@name, name:@name}" ms-duplex="@frequency" value="127" />
+</div>
+        */
+        }); 
+
+        avalon.log(tmplWeekSelector);
+
+        //added by alanthinker
+        avalon.component('ms-weekselector' /*组件名称必须小写*/, {
+            template: tmplWeekSelector,
+            defaults: { 
+                name: 'myFreq',
+                divIdSelector: function(){
+                    return "#"+this.name+'div';
+                },
+                frequency: 127,
+                data:avalon.mix(true, [], [
+                    {value:0, text:'日', checked:false},
+                    {value:1, text:'一', checked:false},
+                    {value:2, text:'二', checked:false},
+                    {value:3, text:'三', checked:false},
+                    {value:4, text:'四', checked:false},
+                    {value:5, text:'五', checked:false},
+                    {value:6, text:'六', checked:false} 
+                    ]),
+                dataAll:{text:'全选',checked:false},  
+                onChange: function () {             
+                    avalon.log("onChange");
+                    var self=this;                  
+                    var freq = 0;
+                    avalon.each(self.data,function(i,v){        
+                        if (v.checked) { 
+                            freq |= (1 << v.value);
+                        }
+                    }); 
+                    self.frequency=freq;
+                    avalon.log(self.frequency);
+                },
+                onChangeAll: function () {
+                    avalon.log("onChangeAll");
+                    var self=this;
+                    avalon.each(self.data,function(i,v){                     
+                        v.checked=self.dataAll.checked;
+                    });
+                    self.onChange();
+                },
+                onReady: function () {       
+                    avalon.log("onReady");
+                    var self=this;
+                    if (self.frequency == 127) {
+                        self.dataAll.checked = true;
+                    }  
+                    avalon.each(self.data,function(i,v){        
+                         if ( ((1 << v.value) & self.frequency) != 0) {
+                            v.checked = true;
+                        }
+                    }); 
+                    $("#"+self.name+"").val(self.frequency);                     
+                },
+                onViewChange:function(ev){
+                    avalon.log("onViewChange");
+                    avalon.log(ev);
                 }
             }
         })
+
+        var vm = avalon.define({
+            $id: 'widget',
+            testData: {name:"myFFF",frequency:3} ,
+            testData2: {name:"myFFF2",frequency:9} 
+        })
+
     </script>
-</head>
-<body >
-    <div ms-controller='widget2' >
-       <xmp ms-widget="[{is:'ms-panel'}, @aaa]" style='border:1px solid red;display:block'>{{@panelBody}}</xmp>
+
+    <div id="box" ms-controller='widget'>         
+            <ms-weekselector ms-widget="@testData"></ms-weekselector>    
+            <div>frequency:{{@testData.frequency}}</div>          
+
+             <ms-weekselector ms-widget="@testData2"></ms-weekselector>    
+            <div>frequency:{{@testData2.frequency}}</div>          
     </div>
-</body>
-</html>
+
+    </body>
+</html>  

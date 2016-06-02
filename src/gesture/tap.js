@@ -125,7 +125,7 @@ var tapRecognizer = {
 
   findType: function(targetElement) {
     // 安卓chrome浏览器上，模拟的 click 事件不能让 select 打开，故使用 mousedown 事件
-    return s.deviceIsAndroid && targetElement.tagName.toLowerCase() === 'select' ?
+    return Recognizer.isAndroid && targetElement.tagName.toLowerCase() === 'select' ?
       'mousedown' : 'click'
   },
   sendClick: function(targetElement, event) {
