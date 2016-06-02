@@ -4,7 +4,7 @@
         <title>first example</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-        <script src="../dist/avalon.js"></script>
+        <script src="../dist/avalon.test.js"></script>
     </head>
     <body>
 
@@ -13,15 +13,15 @@
 
            var vm = avalon.define({
                 $id:'test',
-                aaa: 111,
-                arr: [1,2,3],
-                ddd: '<b>{{@aaa}}</b>',
-                toggle: true
+                aaa:111,
+                bbb: function(e){
+                    console.log('------')
+                }
             })
         </script>
 
         <div ms-controller='test'>         
-            <div ms-for='el in @arr' ms-if='@toggle' ms-html='el'>
+            <div ms-on-tap="@bbb">
                 <span>333</span>
             </div>
         </div>
