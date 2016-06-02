@@ -1,4 +1,4 @@
-/*! built in 2016-6-2:15 version 2.06 by 司徒正美 */
+/*! built in 2016-6-2:19 version 2.06 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -333,6 +333,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	})
+
+	if(typeof performance !== 'undefined' && performance.now){
+	    avalon.makeHashCode = function (prefix) {
+	        prefix = prefix || 'avalon'
+	        return (prefix + performance.now()).replace('.', '')
+	    }
+	}
 
 	var UUID = 1
 	module.exports = {
@@ -5800,16 +5807,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //如果是使用ms-on-*绑定的回调,其uuid格式为e12122324,
 	        //如果是使用bind方法绑定的回调,其uuid格式为_12
 	        var uuid = getShortID(fn)
-	        var key = type + ':' + uuid
 	        var hook = eventHooks[type]
-	        type = hook.type || type
-	        if (hook.fix) {
-	            var newfn = hook.fix(elem, fn)
-	            if (newfn !== fn) {
-	                newfn.uuid = uuid + '0'
-	                fn = newfn
+	        if(hook){
+	            type = hook.type || type
+	            if (hook.fix) {
+	                fn = hook.fix(elem, fn)
+	                fn.uuid = uuid
 	            }
 	        }
+	        var key = type + ':' + uuid
 	        avalon.eventListeners[fn.uuid] = fn
 	        if (value.indexOf(type + ':') === -1) {//同一种事件只绑定一次
 	            if (canBubbleUp[type] || focusBlur[type]) {
