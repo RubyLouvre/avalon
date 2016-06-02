@@ -142,6 +142,13 @@ avalon.shadowCopy(avalon, {
     }
 })
 
+if(typeof performance !== 'undefined' && performance.now){
+    avalon.makeHashCode = function (prefix) {
+        prefix = prefix || 'avalon'
+        return (prefix + performance.now()).replace('.', '')
+    }
+}
+
 var UUID = 1
 module.exports = {
     //生成事件回调的UUID(用户通过ms-on指令)

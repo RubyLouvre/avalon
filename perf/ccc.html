@@ -4,27 +4,24 @@
         <title>first example</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-        <script src="../dist/avalon.test.js"></script>
+        <script src="../dist/avalon.js"></script>
     </head>
     <body>
 
         <script>
 
 
-           var vm = avalon.define({
-                $id:'test',
-                aaa:111,
-                bbb: function(e){
-                    console.log('------')
-                }
-            })
+           vm = avalon.define({
+            $id: 'html2',
+            a: 111,
+            b: 222
+        })
         </script>
 
-        <div ms-controller='test'>         
-            <div ms-on-tap="@bbb">
-                <span>333</span>
+          <div ms-controller="html2">
+            <p><input ms-duplex="@a" />{{@a}}<strong ms-text="@a"></strong></p>
+            <p><input ms-duplex="@b" /><span>{{@b}}</span><span ms-html="@b"></span></p>
             </div>
-        </div>
 
     </body>
 </html>  
