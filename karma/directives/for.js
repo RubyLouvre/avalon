@@ -333,4 +333,27 @@ describe('for', function () {
             delete avalon.vmodels.for7
         }, 300)
     })
+    it('ms-for+ms-text', function (done) {
+        //https://github.com/RubyLouvre/avalon/issues/1422
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller="for8" >
+             <p ms-for="el in @list">{{el}}</p>
+             <strong>{{@kk}}</strong>
+             </div>
+             */
+        })
+         avalon.define({
+            $id: 'for8',
+            list: [],
+            kk: 22
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            var el = div.getElementsByTagName('strong')[0]
+            expect(el.innerHTML.trim()).to.equal(22)
+            done()
+            delete avalon.vmodels.for8
+        }, 300)
+    })
 })

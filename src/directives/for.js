@@ -106,8 +106,10 @@ avalon.directive('for', {
         //2.0.7不需要cur.start
         var nodes = current.slice(__index__, cur.end)
         cur.items = nodes.slice(1, -1)
+       
         prepareCompare(cur.items, cur)
         delete pre.forDiff
+       
         if (cur.compareText === pre.compareText) {
             avalon.shadowCopy(cur, pre)
             return
@@ -123,7 +125,6 @@ avalon.directive('for', {
         }
 
         var quota = pre.components.length
-
         cur.endRepeat = pre.endRepeat
 
         var n = Math.max(nodes.length - 2, 0) - pre.repeatCount
@@ -192,7 +193,6 @@ avalon.directive('for', {
         delete pre.cache
         delete pre.items
         update(cur, this.update, steps, 'for')
-
         return __index__ + nodes.length - 1
 
     },
@@ -271,6 +271,8 @@ avalon.directive('for', {
         var oldCount = steps.count
         vnode.repeatCount = items.length
         avalon.diff(items, vnode.prevItems, steps)
+        
+       
         if (steps.count !== oldCount) {
             patch(entity, items, parent, steps)
         }

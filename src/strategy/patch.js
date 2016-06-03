@@ -46,7 +46,7 @@ function patch(nodes, vnodes, parent, steps) {
         }
         //ms-for, ms-if, ms-widget会返回false
         if (false === execHooks(node, vnode, parent, steps, 'change')) {
-            if (vnode.repeatCount) {
+            if (typeof vnode.repeatCount === 'number') {
                 i += vnode.repeatCount + 1 //修正索引值
             }
             execHooks(node, vnode, parent, steps, 'afterChange')

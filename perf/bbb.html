@@ -5,16 +5,12 @@
     <head>
         <meta charset="UTF-8">
         <title></title>
-        <script src="../dist/avalon.test.js"></script>
+        <script src="../dist/avalon.js"></script>
         <script>
             var vm = avalon.define({
                 $id: 'test',
-                gg:44,
-                ddd: {
-                   onReady: function(e){
-                       console.log(e)
-                   }
-                }
+                arr: [],
+                ddd: '333'
 
             })
         </script>
@@ -25,7 +21,9 @@
         </style>
     </head>
     <body ms-controller="test" >
-      <ms-button ms-widget="@ddd">{{@gg}}</ms-button>
+        <p ms-for="el in @arr">{{el}}</p>
 
-    </body>
+        <p>{{@ddd}}</p>
+
+</body>
 </html>
