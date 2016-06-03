@@ -1,19 +1,18 @@
 var updateModelMethods = {
     input: function (prop) {//处理单个value值处理
-        var field = this
+        var data = this
         prop = prop || 'value'
-        var rawValue = field.element[prop]
+        var rawValue = data.element[prop]
 
-        var formatedValue = field.format(rawValue)
-
-        if (formatedValue !== field.viewValue) {
-            var parsedValue = parseValue(field, formatedValue)
-            if (parsedValue !== field.modelValue) {
-                field.set(field.vmodel, parsedValue)
-                callback(field)
+        var formatedValue = data.format(data.vmodel, rawValue)
+        if (formatedValue !== data.viewValue) {
+            var parsedValue = parseValue(data, formatedValue)
+            if (parsedValue !== data.modelValue) {
+                data.set(data.vmodel, parsedValue)
+                callback(data)
             }
-            field.formatedValue = formatedValue
-            field.element[prop] = formatedValue
+            data.formatedValue = formatedValue
+            data.element[prop] = formatedValue
         }
 
         //vm.aaa = '1234567890'
@@ -21,44 +20,44 @@ var updateModelMethods = {
 
     },
     radio: function () {
-        var field = this
-        if (field.isChecked) {
-            var val = field.modelValue = !field.modelValue
-            field.set(field.vmodel, val)
-            callback(field)
+        var data = this
+        if (data.isChecked) {
+            var val = data.modelValue = !data.modelValue
+            data.set(data.vmodel, val)
+            callback(data)
         } else {
-            updateModelMethods.input.call(field)
+            updateModelMethods.input.call(data)
         }
     },
     checkbox: function () {
-        var field = this
-        var array = field.modelValue
+        var data = this
+        var array = data.modelValue
         if (!Array.isArray(array)) {
             avalon.warn('ms-duplex应用于checkbox上要对应一个数组')
             array = [array]
         }
-        var method = field.element.checked ? 'ensure' : 'remove'
+        var method = data.element.checked ? 'ensure' : 'remove'
         if (array[method]) {
-            var val = field.parse(field.element.value)
+            var val = parseValue(data, data.element.value)
             array[method](val)
-            callback(field)
+            callback(data)
         }
 
     },
     select: function () {
-        var field = this
-        var val = avalon(field.element).val() //字符串或字符串数组
+        var data = this
+        var val = avalon(data.element).val() //字符串或字符串数组
         if (val + '' !== this.modelValue + '') {
             if (Array.isArray(val)) { //转换布尔数组或其他
                 val = val.map(function (v) {
-                    return parseValue(field, v)
+                    return parseValue(data, v)
                 })
             } else {
-                val = parseValue(field, val)
+                val = parseValue(data, val)
             }
-            field.modelValue = val
-            field.set(field.vmodel, val)
-            callback(field)
+            data.modelValue = val
+            data.set(data.vmodel, val)
+            callback(data)
         }
     },
     contenteditable: function () {
@@ -66,21 +65,24 @@ var updateModelMethods = {
     }
 }
 
-function callback(field) {
-    if (field.validator) {
-        avalon.directives.validate.validate(field, false)
+function callback(data) {
+    if (data.validator) {
+        avalon.directives.validate.validate(data, false)
     }
-    if (field.callback) {
-        field.callback.call(field.vmodel, {
+    if (data.callback) {
+        data.callback.call(data.vmodel, {
             type: 'changed',
-            target: field.element
+            target: data.element
         })
     }
 }
 
-function parseValue(filed, val) {
-    for (var i = 0, fn; fn = filed.parsers[i++]; ) {
-        val = fn.call(filed, val)
+function parseValue(data, val) {
+    for (var i = 0, k; k = data.parser[i++]; ) {
+        var fn = avalon.parsers[k]
+        if(fn){
+          val = fn.call(data, val)
+        }
     }
     return val
 }
