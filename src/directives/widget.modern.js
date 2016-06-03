@@ -5,26 +5,27 @@ var update = require('./_update')
 //插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
 var dir = avalon.directive('widget', {
     priority: 4,
-    parse: function (cur, pre, binding) {
-        var wid =  avalon.makeHashCode('w')
+      parse: function (cur, pre, binding) {
+
+        var wid = pre.props.wid || avalon.makeHashCode('w')
         avalon.resolvedComponents[wid] = {
             props: avalon.shadowCopy({}, pre.props),
             template: pre.template,
         }
-        cur.props.wid = wid
+        cur.wid = avalon.quote(wid)
         cur.template = pre.template
         cur.children = '[]'
-        cur.props[binding.name] = avalon.parseExpr(binding)
+        cur[binding.name] = avalon.parseExpr(binding)
         var old = pre.$append || ''
         pre.$append = [
             'var curIndex = vnodes.length - 1',
             'var el = vnodes[curIndex]',
             'if(el.nodeType === 1){',
-            'var docker =  avalon.component(el, __vmodel__)',
+            'var docker =  avalon.component(el, __vmodel__,'+cur.wid+')',
             'if(docker && docker.render){',
-            'try{eval("avalon.renderComponent( " + docker.render +",vnodes, curIndex)")',
-            '}catch(e){avalon.log(e)}',
-            '}',
+            'try{eval("avalon.renderComponent( " + docker.render +",vnodes, curIndex,\''+wid+'\')")',
+            '}catch(e){avalon.log(e,"render widget error")}',
+            '}else{vnodes[curIndex] = docker}',
             '}'
         ].join('\n ') + old
     },
@@ -33,7 +34,7 @@ var dir = avalon.directive('widget', {
     },
     diff: function (cur, pre, steps) {
         var coms = avalon.resolvedComponents
-        var wid = cur.props.wid
+        var wid = cur.wid
         var docker = coms[wid]
         if (!docker || !docker.renderCount) {
             steps.count += 1

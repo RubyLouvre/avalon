@@ -114,7 +114,6 @@ avalon.directive('duplex', {
                     }
                 }, 30)
             }
-             console.log(vnode)  
             if (data.viewValue !== vnode.viewValue) {
                 data.modelValue = vnode.modelValue //原始数据
                 

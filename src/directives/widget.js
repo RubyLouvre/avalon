@@ -21,11 +21,11 @@ var dir = avalon.directive('widget', {
             'var curIndex = vnodes.length - 1',
             'var el = vnodes[curIndex]',
             'if(el.nodeType === 1){',
-            'var docker =  avalon.component(el, __vmodel__)',
+            'var docker =  avalon.component(el, __vmodel__,'+cur.wid+')',
             'if(docker && docker.render){',
-            'try{eval("avalon.renderComponent( " + docker.render +",vnodes, curIndex)")',
-            '}catch(e){avalon.log(docker.render)}',
-            '}',
+            'try{eval("avalon.renderComponent( " + docker.render +",vnodes, curIndex,\''+wid+'\')")',
+            '}catch(e){avalon.log(e,"render widget error")}',
+            '}else{vnodes[curIndex] = docker}',
             '}'
         ].join('\n ') + old
     },

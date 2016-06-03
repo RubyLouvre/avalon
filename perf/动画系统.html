@@ -20,7 +20,7 @@
                 },
                 soleSlot: 'buttonText'
             })
-            try {
+          
                 avalon.effect('zoom', {
                     enter: function (el, done) {
 
@@ -34,9 +34,7 @@
                         }, 1000, done)
                     }
                 })
-            } catch (e) {
-console.log(e)
-            }
+           
 
             var vm = avalon.define({
                 $id: "test",
