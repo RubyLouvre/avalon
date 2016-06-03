@@ -6,7 +6,7 @@
 
 require('./shim/modern')
 require('./class/modern')
-require('./data/modern')
+require('./attr/modern')
 require('./css/modern')
 require('./val/modern')
 require('./html/modern')

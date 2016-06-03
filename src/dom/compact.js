@@ -6,7 +6,7 @@
  */
 require('./shim/compact')
 require('./class/compact')
-require('./data/compact')
+require('./attr/compact')
 require('./css/compact')
 require('./val/compact')
 require('./html/compact')
