@@ -59,7 +59,8 @@ avalon.directive('if', {
                     cb: function () {
                         var comment = node._ms_if_ ||
                                 (node._ms_if_ = document.createComment(vnode.nodeValue))
-
+                        delete vnode['ms-effect']
+                        //去掉注释节点临时添加的动画效果
                         parent.replaceChild(comment, node)
                     }
                 })
