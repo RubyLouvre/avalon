@@ -108,7 +108,6 @@ function lexer(text, curDeep, maxDeep) {
 
                 var innerHTML = outerHTML.slice(match[0].length,
                         (type.length + 3) * -1) //抽取innerHTML
-
                 node = {
                     nodeType: 1,
                     type: type,
@@ -260,16 +259,13 @@ function modifyProps(node, innerHTML, nodes, curDeep, maxDeep) {
             case 'option':
                 node.children.push(new VText(trimHTML(node.template)))
                 break
-            default:
-
-                if (!node.isVoidTag) {
-                    var childs = lexer(innerHTML, curDeep, maxDeep)
-                    node.children = childs
-                    if (type === 'table') {
-                        addTbody(node.children)
-                    }
-                }
-                break
+        }
+        if (!node.isVoidTag) {
+            var childs = lexer(innerHTML, curDeep, maxDeep)
+            node.children = childs
+            if (type === 'table') {
+                addTbody(node.children)
+            }
         }
         var forExpr = node.props['ms-for']
         if (forExpr) {
