@@ -10,25 +10,28 @@ var componentEvents = avalon.oneObject(events)
 var protected = events.split(',').concat('is','diff','define','cached')
 
 
-avalon.component = function (name, definition) {
+var unresolvedComponent = {
+    nodeType: 8,
+    type: "#comment",
+    directive: 'widget',
+    nodeValue: 'unresolved component placeholder'
+}
+avalon.component = function (name, definition, wid) {
     //这是定义组件的分支,并将列队中的同类型对象移除
-    if (typeof name === 'string') {
+    if (typeof wid !== 'string') {
         if (!avalon.components[name]) {
             avalon.components[name] = definition
         }//这里没有返回值
     } else {
         var root = name //root为页面上节点对应的虚拟DOM
-        var wid = root.props.wid
         var docker = resolvedComponents[wid]
-        if(docker &&docker.render){
+        if (docker && docker.render) {
             avalon.log("立即返回")
             return docker
         }
         var topVm = definition
         var finalOptions = {}
-         //将ms-widget的内容先变成一个数组,再合成一个对象
-        var options = [].concat( root.props['ms-widget'] || [] )
-       
+        var options = [].concat(root['ms-widget'] || [])
         options.forEach(function (option, index) {
             //收集里面的事件
             mixinHooks(finalOptions, option, index)
@@ -36,47 +39,40 @@ avalon.component = function (name, definition) {
         //得到组件的is类型 
         var componentName = root.type.indexOf('-') > 0 ?
                 root.type : finalOptions.is
-       //得到组件在顶层vm的配置对象名   
+        //得到组件在顶层vm的配置对象名   
         var configName = componentName.replace(/-/g, '_')
-        if(avalon.isObject(topVm[configName])){
+        if (topVm.hasOwnProperty(configName) &&
+                typeof topVm[configName] === 'object') {
             //如果定义了,那么全部舍弃
             finalOptions = {}
             options = [topVm[configName]]
             mixinHooks(finalOptions, topVm[configName], 0)
             protected = [configName].concat(protected)
-         }
-       
+        }
         if (finalOptions.cached) {
             var cachedVm = avalon.vmodels[finalOptions.$id]
             if (cachedVm) {
                 var _wid = cachedVm.$events.__wid__
-                if(wid !== _wid){
-                   delete resolvedComponents[wid]
-                   wid = _wid
+                if (wid !== _wid) {
+                    delete resolvedComponents[wid]
+                    wid = _wid
                 }
             }
         }
-
         docker = resolvedComponents[wid]
         if (!docker) {
             resolvedComponents[wid] = root
             docker = root
         }
+
         //如果此组件的实例已经存在,那么重新渲染
         if (docker.render) {
             return docker
         }
-       
-        var placeholder = {
-            nodeType: 8,
-            type: '#comment',
-            directive: 'widget',
-            props: {'ms-widget': wid},
-            nodeValue: 'ms-widget placeholder'
-        }
+
         if (!avalon.components[componentName]) {
             //如果组件还没有定义,那么返回一个注释节点占位
-            return placeholder
+            return unresolvedComponent
         } else {
             //=======对用户的自定义标签进行处理===========
             var type = root.type
@@ -91,29 +87,28 @@ avalon.component = function (name, definition) {
             
             definition = avalon.components[componentName]
             
-
             //开始构建组件的vm的配置对象
             var diff = finalOptions.diff
             var define = finalOptions.define
             define = define || avalon.directives.widget.define
-            
+
             var $id = finalOptions.$id ||
                     avalon.makeHashCode(configName)
 
-            var defaults = avalon.mix(true,{},definition.defaults)
-            
+            var defaults = avalon.mix(true, {}, definition.defaults)
+
             mixinHooks(finalOptions, defaults, false)
-            
+
             defineArgs = [topVm, defaults].concat(options)
-           
+
             var vmodel = define.apply(function (a, b) {
-                protected.forEach(function(k){
+                protected.forEach(function (k) {
                     delete a[k]
                     delete b[k]
                 })
             }, defineArgs)
+
             
-   
             vmodel.$id = $id
             vmodel.$element = topVm.$element
             avalon.vmodels[$id] = vmodel
@@ -146,7 +141,6 @@ avalon.component = function (name, definition) {
             } else if (!root.isVoidTag) {
                 insertSlots(vtree, root, definition.soleSlot)
             }
-
             for (k in componentEvents) {
                 if (finalOptions[k]) {
                     finalOptions[k].forEach(function (fn) {
@@ -154,13 +148,13 @@ avalon.component = function (name, definition) {
                     })
                 }
             }
-            
+
             //生成组件的render
-            var render = '(function(__vmodel__){'+
-                    parseView(vtree) + 
+            var render = '(function(__vmodel__){' +
+                    parseView(vtree) +
                     '})(docker.vmodel)'
-             
-         
+
+
             vmodel.$render = topVm.$render
             vmodel.$events.__wid__ = wid
             //触发onInit回调
@@ -175,42 +169,38 @@ avalon.component = function (name, definition) {
                 diff: diff,
                 render: render,
                 vmodel: vmodel,
-                cached: !!finalOptions.cached,
-                placeholder: placeholder
+                cached: !!finalOptions.cached
             })
             return docker
         }
     }
 }
-
-var ralphabet = /^[a-z]+$/
+//必须以字母开头,结尾以字母或数字结束,中间至少出现一次"-",
+//并且不能大写字母,特殊符号,"_","$",汉字
+var rcustomTag = /^[a-z]([a-z\d]+\-)+[a-z\d]+$/
 
 function isCustomTag(type) {
-    return type.length > 3 && type.indexOf('-') > 0 &&
-            ralphabet.test(type.charAt(0) + type.slice(-1))
+    return rcustomTag.test(type)
 }
-var absent = {
-    props: {}
-}
-avalon.renderComponent = function (root, nodes, index) {
-    if(root){
-        root = root[0] || absent
-    }
-    var docker = avalon.resolvedComponents[root.props.wid]
+
+avalon.renderComponent = function (root, nodes, index, wid) {
+    root = root && root.length ? root[0] : unresolvedComponent
     
+    var docker = avalon.resolvedComponents[wid]
     if (!isComponentReady(root)) {
-        nodes[index] = docker.placeholder
-        return 
+        return nodes[index] = unresolvedComponent
     }
-    var order = root.order
-    root.order = order ?
-            'ms-widget;;' + order : 'ms-widget'
+
     if (!docker.renderCount) {
         docker.renderCount = 1
     }
-    root.props['ms-widget'] = docker.props['ms-widget']
-    root.vmodel = docker.vmodel
+    
+    root.wid = wid
     root.diff = docker.diff
+    root.vmodel = docker.vmodel
+    root.props['ms-widget'] = docker['ms-widget']
+    root.order = ['ms-widget'].
+            concat((root.order || '').split(';;')).join(';;')
     //移除skipAttrs,以便进行diff
     delete root.skipAttrs
     nodes[index] = root
@@ -245,8 +235,8 @@ function isComponentReady(vnode) {
 
 function hasUnresolvedComponent(vnode) {
     vnode.children.forEach(function (el) {
-        if (el.nodeType === 8 && el.props) {
-            if ('ms-widget' in el.props) {
+        if (el.nodeType === 8) {
+            if (el === unresolvedComponent) {
                 throw 'unresolved'
             }
         } else if (el.children) {
