@@ -54,10 +54,10 @@ console.log(e)
     </head>
     <body ms-controller="test" >
         <div ms-for="el in @arr">
-            <div class='ani'
+            <p class='ani'
                  ms-if="@toggle"
                  ms-widget='{is:"ms-button"}'
-                 ms-effect="{is:'zoom'}">{{@aaa}}</div>
+                 ms-effect="{is:'zoom'}">{{@aaa}}</p>
         </div>
         <button  ms-on-click="@toggle = !@toggle " >点我 </button >
     </body>

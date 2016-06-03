@@ -247,6 +247,11 @@ function modifyProps(node, innerHTML, nodes, curDeep, maxDeep) {
                 if (!node.props.type) {
                     node.props.type = 'text'
                 }
+           case 'select':
+                if(node.props.hasOwnProperty('multiple')){
+                   node.props.multiple = 'multiple' 
+                   node.multiple = true
+                }
             case 'xmp':
                 node.children.push(new VText(node.template))
                 break

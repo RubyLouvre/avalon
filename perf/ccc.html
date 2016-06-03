@@ -11,17 +11,21 @@
         <script>
 
 
-           vm = avalon.define({
-            $id: 'html2',
-            a: 111,
-            b: 222
-        })
+            vm = avalon.define({
+                $id: 'html2',
+                ccc: ['111','222']
+            })
         </script>
 
-          <div ms-controller="html2">
-            <p><input ms-duplex="@a" />{{@a}}<strong ms-text="@a"></strong></p>
-            <p><input ms-duplex="@b" /><span>{{@b}}</span><span ms-html="@b"></span></p>
-            </div>
+        <div ms-controller="html2">
+            <p>
+                <input type="checkbox" value="111" ms-duplex="@ccc"/>
+                <input type="checkbox" value="222" ms-duplex="@ccc"/>
+                <input type="checkbox" value="333" ms-duplex="@ccc"/>
+                <input type="checkbox" value="444" ms-duplex="@ccc"/>
+                {{@ccc}}
+            </p>
+        </div>
 
     </body>
 </html>  

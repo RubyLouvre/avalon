@@ -12,7 +12,7 @@ require('./html')
 ////需要用到事件的
 require('./class.hover.active')
 require('./on')
-require('./duplex/compact')
+require('./duplex2/compact')
 require('./validate')
 require('./rules')
 //

@@ -111,20 +111,20 @@ function parseExpr(str, category) {
             'try{',
             'return ' + body + '\n',
             '}catch(e){',
-            quoteError(str, category),
+            quoteError(str, category).replace('parse','get'),
             '}',
             '}']
-        evaluatorPool.put('duplex:' + cacheID,wrapDuplex(getterBody))
+        evaluatorPool.put('duplex:' + cacheID, getterBody.join('\n'))
         //给vm同步某个属性
         var setterBody = [
             'function (__vmodel__,__value__){',
             'try{',
             '\t' + body + ' = __value__',
             '}catch(e){',
-            quoteError(str, category),
+            quoteError(str, category).replace('parse','set'),
             '}',
             '}']
-        evaluatorPool.put('duplex:set:' + cacheID, wrapDuplex(setterBody))
+        evaluatorPool.put('duplex:set:' + cacheID, setterBody.join('\n'))
         //对某个值进行格式化
         if (input.length) {
             var formatBody = [
@@ -133,12 +133,12 @@ function parseExpr(str, category) {
                 filters.join('\n'),
                 'return __value__\n',
                 '}catch(e){',
-                quoteError(str, category),
+                quoteError(str, category).replace('parse','format'),
                 '}',
                 '}']
-            evaluatorPool.put('duplex:format:' + cacheID, wrapDuplex(formatBody))
+            evaluatorPool.put('duplex:format:' + cacheID, formatBody.join('\n'))
         }
-        return
+        return  evaluatorPool.get('duplex:' + cacheID)
     } else {
         ret = [
             '(function(){',
