@@ -11,9 +11,7 @@ var brackets = /\(([^)]*)\)/
 var rshortCircuit = /\|\|/g
 var rpipeline = /\|(?=\w)/
 var ruselessSp = /\s*(\.|\|)\s*/g
-var wrapDuplex = function(arr){
-    return '(function(){ return ' +arr.join('\n')+'})()\n'
-}
+
 var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
 var rhandleName = /^(?:\@|##)[$\w]+$/i
 
@@ -145,7 +143,7 @@ function parseExpr(str, category) {
             'try{',
             'var __value__ = ' + body,
             ( category === 'text'? 
-            'return __value__ == null ? "" :__value__': 
+            'return avalon.parsers.string(__value__)': 
             'return __value__'),
             '}catch(e){',
             quoteError(str, category),

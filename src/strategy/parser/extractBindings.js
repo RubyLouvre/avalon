@@ -2,7 +2,7 @@ var directives = avalon.directives
 var rbinding = require('../../seed/regexp').binding
 var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
 
-function parseBindings(cur, props) {
+function extractBindings(cur, props) {
     var bindings = []
     var skip = 'ms-skip' in props
     var uniq = {}
@@ -48,13 +48,13 @@ function parseBindings(cur, props) {
         }
     }
     bindings.sort(byPriority)
-    
+
     var ret = []
     for (var k = 0, el; el = bindings[k++]; ) {
         var type = el.type
         ret.type = type
         ret.push(el)
-        
+
         if (type === 'important' || type === 'widget') {
                break
         }
@@ -66,4 +66,4 @@ function byPriority(a, b) {
     return a.priority - b.priority
 }
 
-module.exports = parseBindings
+module.exports = extractBindings

@@ -1,22 +1,28 @@
 
 var parseExpr = require('./parseExpr')
-var parseBindings = require('./parseBindings')
+var extractBindings = require('./extractBindings')
 var parseDelimiter = require('./parseDelimiter')
+var stringify = require('./stringify')
 var config = avalon.config
 var quote = avalon.quote
 var makeHashCode = avalon.makeHashCode
 var r = require('../../seed/regexp')
 var rident = r.ident
 var rsp = r.sp
-var rneedQuote = /[W-]/
-var keyMap = require('./keyMap')
+
 var rmsFor = /^\s*ms\-for:/
 var rmsForEnd = /^\s*ms\-for\-end:/
 function wrapDelimiter(expr) {
     return rident.test(expr) ? expr : parseExpr(expr, 'text')
 }
 
-avalon.parseNodes = parseNodes
+function add(a) {
+    return 'vnodes.push(' + a + ');'
+}
+function addTag(obj) {
+    return add(stringify(obj))
+}
+
 function parseNodes(array) {
     //ms-important， ms-controller ， ms-for 不可复制，省得死循环
     //ms-important --> ms-controller --> ms-for --> ms-widget --> ms-effect --> ms-if
@@ -38,10 +44,6 @@ function parseNodes(array) {
     return buffer.join('\n')
 }
 
-
-function fixKey(k) {
-    return (rneedQuote.test(k) || keyMap[k]) ? quote(k) : k
-}
 
 
 function parseNode(pre, forstack, logic) {
@@ -66,7 +68,7 @@ function parseNode(pre, forstack, logic) {
             nodeType: 1,
             template: ''
         }
-        var bindings = parseBindings(cur, props)
+        var bindings = extractBindings(cur, props)
         if (!bindings.length) {
             cur.skipAttrs = true
         }
@@ -76,7 +78,9 @@ function parseNode(pre, forstack, logic) {
             //如果涉及到修改结构,则在pre添加$append,$prepend
             directives[b.type].parse(cur, pre, b)
             return b.name
+
         }).join(';;')
+
         if (pre.isVoidTag) {
             cur.isVoidTag = true
         } else {
@@ -146,7 +150,7 @@ function parseNode(pre, forstack, logic) {
     }
 }
 
-avalon.parseNode = parseNode
+
 function stringifyText(el) {
     var array = parseDelimiter(el.nodeValue)//返回一个数组
     var nodeValue = ''
@@ -162,47 +166,3 @@ function stringifyText(el) {
 }
 
 module.exports = parseNodes
-
-
-function stringifyTag(obj) {
-    var arr1 = []
-//字符不用东西包起来就变成变量
-    for (var i in obj) {
-        if (i === 'props') {
-            var arr2 = []
-            for (var k in obj.props) {
-                var kv = obj.props[k]
-                if (typeof kv === 'string') {
-                    kv = quote(kv)
-                }
-                arr2.push(fixKey(k) + ': ' + kv)
-            }
-            arr1.push('\tprops: {' + arr2.join(',\n') + '}')
-        } else {
-            var v = obj[i]
-            if (typeof v === 'string') {
-                v = quoted[i] ? quote(v) : v
-            }
-
-            arr1.push(fixKey(i) + ':' + v)
-        }
-    }
-    return '{\n' + arr1.join(',\n') + '}'
-}
-var quoted = {
-    type: 1,
-    template: 1,
-    innerHTML: 1,
-    outerHTML: 1,
-    order: 1,
-    nodeValue: 1,
-    directive: 1,
-    signature: 1,
-    cid: 1
-}
-function add(a) {
-    return 'vnodes.push(' + a + ');'
-}
-function addTag(obj) {
-    return add(stringifyTag(obj))
-}
