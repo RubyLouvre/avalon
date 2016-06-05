@@ -80,7 +80,14 @@ function parseNode(pre, forstack, logic) {
             return b.name
 
         }).join(';;')
-
+        if(pre.directive === 'widget'){
+            cur.order = cur.order  ? 'ms-widget;;'+cur.order : 'ms-widget'
+            cur.directive = 'widget'
+            cur.local ='__local__'
+            cur.vmodel = '__vmodel__'
+            cur.renderCount = 1
+            cur.wid = avalon.quote(pre.props.wid)
+        }
         if (pre.isVoidTag) {
             cur.isVoidTag = true
         } else {
