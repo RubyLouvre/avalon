@@ -10,10 +10,11 @@ var dir = avalon.directive('widget', {
         var wid = pre.props.wid || avalon.makeHashCode('w')
 
         cur.wid = avalon.quote(wid)
+        cur.directive = 'widget'
         cur.template = pre.template
         cur.children = '[]'
         cur[binding.name] = avalon.parseExpr(binding)
-        
+
         var old = pre.$append || ''
         pre.$append = [
             'var curIndex = vnodes.length - 1',
@@ -48,14 +49,14 @@ var dir = avalon.directive('widget', {
                     wid: wid,
                     vmodel: vnode.vmodel
                 })
-                 cur.renderCount = 2
+                cur.renderCount = 2
             }
             avalon.log('第一次渲染组件')
             update(cur, fireReady, steps, 'widget', 'afterChange')
         } else {
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
             cur.skipContent = !needUpdate
-            if(pre.wid && cur.wid !== pre.wid){
+            if (pre.wid && cur.wid !== pre.wid) {
                 delete avalon.scopes[pre.wid]
                 delete avalon.vodels[pre.wid]
             }
@@ -74,7 +75,6 @@ var dir = avalon.directive('widget', {
                                 vmodel: vnode.vmodel
                             })
                         }
-                        docker.renderCount++
                     }]
             }
 
@@ -97,33 +97,21 @@ var dir = avalon.directive('widget', {
             parent.appendChild(comment)
         }
     },
-    replaceByComponent: function (dom, node, parent) {
-        var com = avalon.vdomAdaptor(node, 'toDOM')
-        node.ouerHTML = avalon.vdomAdaptor(node, 'toHTML')
+    replaceByComponent: function (dom, vdom, parent) {
+        var com = avalon.vdomAdaptor(vdom, 'toDOM')
+        vdom.ouerHTML = avalon.vdomAdaptor(vdom, 'toHTML')
         if (dom) {
             parent.replaceChild(com, dom)
         } else {
             parent.appendChild(com)
         }
-        patch([com], [node], parent, node.steps)
-     
-        var vm = node.vmodel
-        var scope = avalon.scopes[vm.wid]
-        if (!scope) {
-            avalon.scopes[vm.$id] = {
-                vmodel: vm,
-                render: vm.$render,
-                dom: com,
-                renderCount: 1,
-                local: node.local
-            }
-            com.$element = com
-            com.vtree = [node]
-        } else {
-            scope.local = node.local
-            scope.renderCount++
-        }
+        patch([com], [vdom], parent, vdom.steps)
 
+        var vm = vdom.vmodel
+
+        vm.$element = com
+        com.vtree = [vdom]
+      
         dir.addDisposeMonitor(com)
 
         return false
