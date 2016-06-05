@@ -95,10 +95,6 @@ function parseNode(pre, forstack, logic) {
             }
         }
 
-//        if (bindings.type === 'important') {
-//            return ''
-//        }
-
         return addTag(cur)
 
     } else if (pre.nodeType === 8) {

@@ -6,7 +6,6 @@ function extractBindings(cur, props) {
     var bindings = []
     var skip = 'ms-skip' in props
     var uniq = {}
-    var isBreak
     for (var i in props) {
         var value = props[i], match
 
@@ -54,7 +53,6 @@ function extractBindings(cur, props) {
         var type = el.type
         ret.type = type
         ret.push(el)
-//type === 'important' ||
         if ( type === 'widget') {
                break
         }

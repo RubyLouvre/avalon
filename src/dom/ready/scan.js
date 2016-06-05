@@ -17,6 +17,14 @@ function scan(nodes, fn) {
                 var now2 = new Date()
                 avalon.log('create primitive vtree', now2 - now)
                 vm.$render = avalon.render(elem.vtree)
+                avalon.scopes[vm.$id] = {
+                    vmodel: vm,
+                    local: {},
+                    dom: elem,
+                    render: vm.$render
+                }
+                
+                
                 var now3 = new Date()
                 avalon.log('create template Function ', now3 - now2)
                 avalon.rerenderStart = now3

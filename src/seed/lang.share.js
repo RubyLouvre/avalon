@@ -18,6 +18,7 @@ avalon.shadowCopy(avalon, {
     eventHooks: {},
     eventListeners: {},
     validators: {},
+    scopes: {},
     cssHooks: cssHooks,
     parsers: {
         number: function (a) {
