@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src='../dist/avalon.js'>
+        </script>
+        <script>
+           var vm1 =  avalon.define({
+                $id: "aaa",
+                aaa: 111
+            })
+            var vm2 = avalon.define({
+                $id: 'bbb',
+                bbb: 222
+            })
+            var vm3 = avalon.define({
+                $id: 'ccc',
+                ccc: 333
+            })
+            /*
+             * 
+             * 
+             */
+        </script>
+    </head>
+    <body ms-important='aaa'>
+        <div>{{@aaa}}</div>
+        <div ms-important='bbb'>
+             <div>{{@bbb}}</div>
+             
+        </div>
+         <div ms-important='ccc'>
+             <div>{{@ccc}}</div>
+        </div>
+    </body>
+</html>

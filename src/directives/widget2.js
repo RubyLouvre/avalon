@@ -48,14 +48,13 @@ var dir = avalon.directive('widget', {
                     wid: wid,
                     vmodel: vnode.vmodel
                 })
-                // cur.renderCount = 2
+                 cur.renderCount = 2
             }
-            console.log('第一次渲染组件')
+            avalon.log('第一次渲染组件')
             update(cur, fireReady, steps, 'widget', 'afterChange')
         } else {
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
             cur.skipContent = !needUpdate
-           fixRepeatAction(cur.children)
             var viewChangeObservers = cur.vmodel.$events.onViewChange
             if (viewChangeObservers && viewChangeObservers.length) {
                 steps.count += 1

@@ -13,12 +13,15 @@
         <script>
 
             avalon.component('ms-tabs', {
-                template: '<div ms-click="@onClick"><ul><li ms-for="el in @array" ms-class="{selected: el == @selected}">{{el}}</li></ul></div>',
+                template: '<div ms-click="@onClick"><ul><li ms-for="($index,el) in @array" ms-class="{selected: $index == @selected}">{{el}}</li></ul></div>',
                 defaults: {
                     array: [1, 2, 3, 4],
                     selected: 2,
                     onClick: function () {
-                        this.array = [2, 3, 4, 5, 6]
+                       
+                        this.selected = ~~((4-0) * Math.random() + 0)
+                         console.log(this.selected)
+                       // this.array = [2, 3, 4, 5, 6]
                     }
                 }
             })
@@ -32,7 +35,7 @@
 
     <body>
         <div id="box" ms-controller='widget' >
-            <xmp ms-widget="[{is:'ms-tabs'}]"></xmp>
+            <xmp ms-widget="[{is:'ms-tabs'}]" class='eee'>55</xmp>
         </div>
     </body>
 </html>

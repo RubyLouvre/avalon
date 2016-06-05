@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head >
+        <title>测试</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <script src="../dist/avalon.js"></script>
+                <script type="text/javascript" src="//cdn.bootcss.com/jquery/2.1.0/jquery.js"></script>
+
+        <style>
+            .selected{
+                background:red;
+            }
+            #ani{
+                background:beige;
+            }
+        </style>
+        <script>
+
+            avalon.effect('zoom', {
+                enter: function (el, done) {
+                    $(el).css({width: 0, height: 0}).animate({
+                        width: 100, height: 100
+                    }, 1000, done)
+                },
+                leave: function (el, done) {
+                    $(el).animate({
+                        width: 0, height: 0
+                    }, 1000, done)
+                }
+            })
+            var vm = avalon.define({
+                $id: 'aaa',
+                arr: [1, 2, 3, 4],
+                toggle: true,
+                click: function(){
+                    this.toggle = !this.toggle
+                }
+            })
+            // <p ms-for="el in @arr" ms-if="@toggle">{{el}}</p>
+        </script>
+    </head>
+
+    <body>
+        <div id="box" ms-controller='aaa' >
+           
+            <p><button type='button' ms-click='@click'>click</button></p>
+            <p id='ani' ms-if="@toggle" ms-effect="{is:'zoom',action:(@toggle?'enter':'leave')}" >333</p>
+        </div>
+    </body>
+</html>
