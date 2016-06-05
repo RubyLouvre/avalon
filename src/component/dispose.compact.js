@@ -93,7 +93,7 @@ module.exports = {
 function fireDisposeHook(el) {
     if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
         var wid = el.getAttribute('wid')
-        var docker = avalon.resolvedComponents[ wid ]
+        var docker = avalon.scopes[ wid ]
         if(!docker)
             return
         var vm = docker.vmodel
@@ -108,7 +108,7 @@ function fireDisposeHook(el) {
             vm.$element = null
             vm.$hashcode = false
             delete docker.vmodel
-            delete avalon.resolvedComponents[ wid ]
+            delete avalon.scopes[ wid ]
         }
         return false
     }
