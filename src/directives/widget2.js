@@ -59,6 +59,7 @@ var dir = avalon.directive('widget', {
                 delete avalon.scopes[pre.wid]
                 delete avalon.vodels[pre.wid]
             }
+           
             var viewChangeObservers = cur.vmodel.$events.onViewChange
             if (viewChangeObservers && viewChangeObservers.length) {
                 steps.count += 1
@@ -107,10 +108,12 @@ var dir = avalon.directive('widget', {
         patch([com], [vdom], parent, vdom.steps)
 
         var vm = vdom.vmodel
-
+        var scope = avalon.scopes[vm.$id]
+      
+        scope.dom = com
         vm.$element = com
         com.vtree = [vdom]
-      
+
         dir.addDisposeMonitor(com)
 
         return false

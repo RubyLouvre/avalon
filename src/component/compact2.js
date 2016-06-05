@@ -178,15 +178,16 @@ function replaceByComponent(vdom, vm, vnodes, index) {
     }
 
     var wid = vm.$id
-    if (avalon.scopes[wid]) {
+    var scope = avalon.scopes[wid]
+    if (scope) {
+        vdom.renderCount = ++scope.renderCount
         avalon.scopes[wid].dom.vtree = vdom.nodes = [vdom]
     } else {
-        vdom.renderCount = 1
         var scope = {
             vmodel: vm,
             render: vm.$render,
-            renderCount: 1,
             local: vdom.local,
+            renderCount: 1,
             nodes: [vdom]
         }
         avalon.scopes[wid] = scope
