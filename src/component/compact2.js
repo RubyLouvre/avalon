@@ -56,15 +56,14 @@ avalon.component = function (name, definition) {
         var cachedVm = avalon.vmodels[finalOptions.$id]
 
         var docker = cachedVm && avalon.scopes[cachedVm.$id]
-        console.log(wid, avalon.scopes, '--------')
         if (docker) {
             return docker.dom.vtree
         }
-        var cacheScope = avalon.scopes[wid]
-        if (cacheScope) {
-            var ret = cacheScope.render(cacheScope.vmodel, cacheScope.local)
+        docker = avalon.scopes[wid]
+        if (docker) {
+            var ret = docker.render(docker.vmodel, docker.local)
             if (ret[0]) {
-                return renderComponent(ret[0], cacheScope.vmodel, nodes, index)
+                return replaceByComponent(ret[0], docker.vmodel, nodes, index)
             }
         }
 
@@ -160,20 +159,19 @@ avalon.component = function (name, definition) {
         var render = avalon.render(vtree)
 
         vmodel.$render = render
-        var ret = render(vmodel, root.local)
-        if (Array.isArray(ret)) {
-            var vdom = ret[0]
-            vdom.diff = diff
-            renderComponent(vdom, vmodel, nodes, index)
-
-        } else {
-            nodes[index] = unresolvedComponent
+        try {
+            var ret = render(vmodel, root.local)
+        } catch (e) {
+            ret = [unresolvedComponent]
         }
-
+        var vdom = ret[0]
+        vdom.diff = diff
+        replaceByComponent(vdom, vmodel, nodes, index)
 
     }
 }
-function renderComponent(vdom, vm, vnodes, index) {
+
+function replaceByComponent(vdom, vm, vnodes, index) {
 
     if (!isComponentReady(vdom)) {
         return vnodes[index] = unresolvedComponent
@@ -203,8 +201,6 @@ var rcustomTag = /^[a-z]([a-z\d]+\-)+[a-z\d]+$/
 function isCustomTag(type) {
     return rcustomTag.test(type)
 }
-
-
 
 function mixinHooks(target, option, index) {
     for (var k in option) {
