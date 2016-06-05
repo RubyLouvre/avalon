@@ -7,7 +7,7 @@ var skipArray = require('../vmodel/parts/skipArray')
 var componentContainers = {wbr: 1, xmp: 1, template: 1}
 var events = 'onInit,onReady,onViewChange,onDispose'
 var componentEvents = avalon.oneObject(events)
-var protected = events.split(',').concat('is', 'diff', 'define', 'cached')
+var protected = events.split(',').concat('is', 'diff', 'define')
 
 var unresolvedComponent = {
     nodeType: 8,
