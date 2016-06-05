@@ -21,21 +21,13 @@ function batchUpdate(id, immediate) {
         dirtyTrees[id] = true
     }
     var scope = avalon.scopes[id]
-
     if (!scope || isBatchingUpdates || !document.nodeName) {
         return
     }
     var dom = scope.dom
     var steps = {count: 0}
-
     var vtree = scope.render(scope.synth || scope.vmodel, scope.local)
-    if (scope.renderCount) {//处理组件,方便其能diff
-        var com = vtree[0]
-        com.directive = 'widget'
-        com.order = ["ms-widget"].
-                concat((com.order || "").split(";;")).join(";;")
-    }
-
+   
     isBatchingUpdates = true
     avalon.diff(vtree, dom.vtree || [], steps)
     patch([dom], vtree, null, steps)

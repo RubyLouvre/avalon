@@ -51,7 +51,6 @@ var dir = avalon.directive('widget', {
                 })
                 cur.renderCount = 2
             }
-            avalon.log('第一次渲染组件')
             update(cur, fireReady, steps, 'widget', 'afterChange')
         } else {
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)

@@ -37,6 +37,11 @@ avalon.component = function (name, definition) {
         //得到组件的is类型 
         var componentName = root.type.indexOf('-') > 0 ?
                 root.type : finalOptions.is
+        if (!avalon.components[componentName]) {
+            return nodes[index] = unresolvedComponent
+        }
+
+
         //得到组件在顶层vm的配置对象名   
         var configName = componentName.replace(/-/g, '_')
         if (topVm.hasOwnProperty(configName) &&
@@ -47,12 +52,20 @@ avalon.component = function (name, definition) {
             mixinHooks(finalOptions, topVm[configName], 0)
             protected = [configName].concat(protected)
         }
-      
+
         var cachedVm = avalon.vmodels[finalOptions.$id]
-      
+
         var docker = cachedVm && avalon.scopes[cachedVm.$id]
+        console.log(wid, avalon.scopes, '--------')
         if (docker) {
             return docker.dom.vtree
+        }
+        var cacheScope = avalon.scopes[wid]
+        if (cacheScope) {
+            var ret = cacheScope.render(cacheScope.vmodel, cacheScope.local)
+            if (ret[0]) {
+                return renderComponent(ret[0], cacheScope.vmodel, nodes, index)
+            }
         }
 
 
@@ -82,7 +95,6 @@ avalon.component = function (name, definition) {
         var $id = finalOptions.$id || wid
 
         var defaults = avalon.mix(true, {}, definition.defaults)
-
         mixinHooks(finalOptions, defaults, false)
 
         defineArgs = [topVm, defaults].concat(options)
@@ -101,9 +113,8 @@ avalon.component = function (name, definition) {
                 }
             }
         }
-        vmodel.$id = $id
 
-        avalon.vmodels[$id] = vmodel
+        vmodel.$id = $id
         //开始构建组件的虚拟DOM
         var finalTemplate = definition.template.trim()
         if (typeof definition.getTemplate === 'function') {
@@ -117,6 +128,7 @@ avalon.component = function (name, definition) {
         var componentRoot = vtree[0]
         //  必须指定wid
 
+        avalon.vmodels[$id] = vmodel
         componentRoot.props.wid = $id
         //将用户标签中的属性合并到组件标签的属性里
         for (var k in root.props) {
@@ -129,7 +141,7 @@ avalon.component = function (name, definition) {
         if (definition.soleSlot) {
             var slots = {}
             var slotName = definition.soleSlot
-            slots[slotName] = /\S/.test(docker.template) ? root.children :
+            slots[slotName] = /\S/.test(root.template) ? root.children :
                     new VText('{{@' + slotName + '}}')
             mergeTempale(vtree, slots)
         } else if (!root.isVoidTag) {
@@ -142,30 +154,47 @@ avalon.component = function (name, definition) {
                 })
             }
         }
+        // 必须加这个,方便在parseView.js开挂
+        vtree[0].directive = 'widget'
 
         var render = avalon.render(vtree)
+
+        vmodel.$render = render
         var ret = render(vmodel, root.local)
         if (Array.isArray(ret)) {
-            var com = ret[0]
-            com.directive = 'widget'
-            com.order = ["ms-widget"].
-                    concat((com.order || "").split(";;")).join(";;")
-            if (!isComponentReady(com)) {
-                return nodes[index] = unresolvedComponent
-            }
-            vmodel.$render = render
-            com.local = root.local
-            com.vmodel = vmodel
-            com.diff = diff
-            com.renderCount = avalon.scopes[wid] ? avalon.scopes[wid] : 1
-            nodes[index] = com
-            delete com.skipAttrs
+            var vdom = ret[0]
+            vdom.diff = diff
+            renderComponent(vdom, vmodel, nodes, index)
+
         } else {
             nodes[index] = unresolvedComponent
         }
 
 
     }
+}
+function renderComponent(vdom, vm, vnodes, index) {
+
+    if (!isComponentReady(vdom)) {
+        return vnodes[index] = unresolvedComponent
+    }
+
+    var wid = vm.$id
+    if (avalon.scopes[wid]) {
+        avalon.scopes[wid].dom.vtree = vdom.nodes = [vdom]
+    } else {
+        vdom.renderCount = 1
+        var scope = {
+            vmodel: vm,
+            render: vm.$render,
+            renderCount: 1,
+            local: vdom.local,
+            nodes: [vdom]
+        }
+        avalon.scopes[wid] = scope
+    }
+    vnodes[index] = vdom
+
 }
 //必须以字母开头,结尾以字母或数字结束,中间至少出现一次"-",
 //并且不能大写字母,特殊符号,"_","$",汉字

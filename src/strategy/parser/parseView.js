@@ -87,6 +87,7 @@ function parseNode(pre, forstack, logic) {
             cur.vmodel = '__vmodel__'
             cur.renderCount = 1
             cur.wid = avalon.quote(pre.props.wid)
+            delete cur.skipAttrs
         }
         if (pre.isVoidTag) {
             cur.isVoidTag = true
