@@ -14,7 +14,7 @@ var needRenderIds = []
 avalon.suspendUpdate = 0
 var isBatchingUpdates = false
 function batchUpdate(id, immediate) {
-   
+
     if (dirtyTrees[id]) {
         avalon.Array.ensure(needRenderIds, id)
     } else {
@@ -29,9 +29,15 @@ function batchUpdate(id, immediate) {
     var steps = {count: 0}
 
     var vtree = scope.render(scope.synth || scope.vmodel, scope.local)
+    if (scope.renderCount) {//处理组件,方便其能diff
+        var com = vtree[0]
+        com.directive = 'widget'
+        com.order = ["ms-widget"].
+                concat((com.order || "").split(";;")).join(";;")
+    }
+
     isBatchingUpdates = true
     avalon.diff(vtree, dom.vtree || [], steps)
-
     patch([dom], vtree, null, steps)
     steps.count = 0
     dom.vtree = vtree
