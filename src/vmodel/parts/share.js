@@ -87,6 +87,7 @@ function makeAccessor(sid, spath, heirloom) {
             old = val
 
             var vm = heirloom.__vmodel__
+            //console.log(vm)
             if (this.$hashcode && vm && !avalon.suspendUpdate) {
                 //★★确保切换到新的events中(这个events可能是来自oldProxy)               
                 if (heirloom !== vm.$events) {
@@ -108,7 +109,7 @@ function makeAccessor(sid, spath, heirloom) {
                 if (dotIndex > 0) {
                     avalon.batch(vm.$id.slice(0, dotIndex), true)
                 } else {
-                    avalon.batch(vm, true)
+                    avalon.batch(vm.$id, true)
                 }
 
             }
@@ -197,7 +198,7 @@ function arrayFactory(array, old, heirloom, options) {
                 vm.$fire(path, b, c)
                 if (!d && !avalon.suspendUpdate) {
                     avalon.rerenderStart = new Date
-                    avalon.batch(vm, true)
+                    avalon.batch(vm.$id, true)
                 }
             }
         }

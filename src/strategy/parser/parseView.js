@@ -95,9 +95,9 @@ function parseNode(pre, forstack, logic) {
             }
         }
 
-        if (bindings.type === 'important') {
-            return ''
-        }
+//        if (bindings.type === 'important') {
+//            return ''
+//        }
 
         return addTag(cur)
 

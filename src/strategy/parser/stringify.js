@@ -37,7 +37,7 @@ function stringify(obj) {
                 }
                 arr2.push(fixKey(k) + ': ' + kv)
             }
-            arr1.push('\tprops: {' + arr2.join(',\n') + '}')
+            arr1.push('props: {' + arr2.join(',\n') + '}')
         } else {
             var v = obj[i]
             if (typeof v === 'string') {

@@ -1,4 +1,4 @@
-require('./important')
+require('./important2')
 require('./controller')
 //处理属性样式
 require('./attr')

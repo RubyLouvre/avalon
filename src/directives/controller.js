@@ -1,17 +1,6 @@
 // 抽离出来公用
 var update = require('./_update')
 
-avalon.skipController = function (fast, vm, iv) {
-    if (fast) {
-        var id = vm.$render ? vm.$render.$id : vm.$id
-        if (fast.length > id.length) {
-            return fast.indexOf(id + ';;') !== 0
-        }
-        return id.indexOf(fast) !== 0
-    }
-    return false
-}
-
 avalon.directive('controller', {
     priority: 2,
     parse: function (cur, pre, binding) {
@@ -19,49 +8,73 @@ avalon.directive('controller', {
         var quoted = avalon.quote($id)
         var name = binding.name
         cur[name] = quoted
+
+        // 'if(!avalon.skipController(__fast__, bottomVm)){ '
         // cur.props[name] = $id
-        pre.$prepend = ['(function(topVm){',
-            'var bottomVm = avalon.vmodels[' + quoted + ']',
-            'if(bottomVm && topVm){',
-            '__vmodel__ =  avalon.mediatorFactory(topVm, bottomVm)',
-            'var mediator = __vmodel__',
+        pre.$prepend = ['(function(__vmodel__){',
+            'var __top__ = __vmodel__',
+            'var __present__ = avalon.vmodels[' + quoted + ']',
+            'if(__present__ && __top__ && __present__ !== __top__){',
+            'var __synth__ =  avalon.mediatorFactory(__vmodel__, __present__)',
+            'var __vmodel__ = __synth__',
             '}else{',
-            '__vmodel__ = topVm || bottomVm',
+            '__vmodel__ = __top__ || __present__',
             '}',
-            'if(!avalon.skipController(__fast__, bottomVm)){ '
+            '/*controller:' + $id + '*/',
         ].join('\n') + '\n\n'
-        cur.mediator = 'mediator'
-        cur.vmodel = 'topVm'
-        cur.bottom = 'bottomVm'
-        pre.$append = '}\n\n})(__vmodel__)'
+        cur.synth = '__synth__'
+        cur.local = '__local__'
+        cur.top = '__top__'
+        cur.present = '__present__'
+        pre.$append = '/*controller:' + $id + '*/\n})(__vmodel__)'
     },
     diff: function (cur, pre, steps, name) {
         if (pre[name] !== cur[name]) {
             update(cur, this.update, steps, 'controller')
         }
     },
-    update: function (node, vnode) {
-        var top = vnode.vmodel //位于上方的顶层vm或mediator vm
-        var bottom = vnode.bottom //位于下方的顶层vm
-        var mediator = vnode.mediator //新合成的mediator vm
-        if (!(top && bottom)) {
-            return
+    update: function (node, vnode, important) {
+        var top = vnode.top //位于上方的顶层vm或mediator vm
+        var present = vnode.present
+        var synth = vnode.synth
+        if (top === present) {
+            if (top === void 0) {
+                //如果变动是来自某个顶层vm的下方vm,那么在avalon.batch里
+                //只会为render传入synth,top,present都为undefined
+                return
+            }
+            var scope = avalon.scopes[top.$id]
+
+            if (scope &&
+                    (!important || important.fast)) {
+                //如果vm在位于顶层,那么在domReady的第一次scan中已经注册到scopes
+                return
+            }
         }
-        bottom.$element = (top && top.$element) || node
-        vnode.mediator = vnode.bottom = 0
-        if (!bottom.$render) {
-            var topRender = top.$render
-            if (!topRender.$id) {
-                topRender.$id = top.$id
+
+        if (top && present) {
+            var str = (top.$render + "")
+            var splitText = '/*controller:' + present.$id + '*/'
+            var start = str.indexOf(splitText) + splitText.length
+            var end = str.lastIndexOf(splitText)
+            var effective = str.slice(start, end)
+            var local = vnode.local || {}
+            var vars = []
+            for (var i in local) {
+                vars.push('var ' + i + ' = __local__[' + avalon.quote(i) + ']')
             }
-            function bottomRender() {
-                return topRender(0, bottomRender.$id)
-            }
-            bottom.$render = bottomRender
-            bottomRender.dom = bottom.$element  //方便以后更换扫描起点
-            bottomRender.$id = topRender.$id + ';;' + bottom.$id
-            if (mediator) {
-                mediator.$render = bottomRender
+            vars.push('var vnodes = []')
+            var body = vars.join('\n') + effective + '\nreturn vnodes'
+            var render = avalon.render(body)
+            synth.$render = present.$render = render
+            synth.$element = present.$element = node
+            avalon.scopes[present.$id] = {
+                vmodel: present,
+                synth: synth,
+                local: local,
+                dom: node,
+                render: render,
+                fast: 'important'
             }
         }
     }

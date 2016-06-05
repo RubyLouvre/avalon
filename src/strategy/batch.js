@@ -14,67 +14,32 @@ var needRenderIds = []
 avalon.suspendUpdate = 0
 var isBatchingUpdates = false
 function batchUpdate(id, immediate) {
-    var vm = typeof id === 'string' ? avalon.vmodels[id] || {} : id
-    id = vm.$id
+   
     if (dirtyTrees[id]) {
         avalon.Array.ensure(needRenderIds, id)
     } else {
         dirtyTrees[id] = true
     }
-    if ( typeof vm.$render !== 'function' || !vm.$element || isBatchingUpdates) {
+    var scope = avalon.scopes[id]
+
+    if (!scope || isBatchingUpdates || !document.nodeName) {
         return
     }
-    if (!document.nodeName)//如果是在mocha等测试环境中立即返回
-        return
+    var dom = scope.dom
+    var steps = {count: 0}
 
+    var vtree = scope.render(scope.synth || scope.vmodel, scope.local)
+    isBatchingUpdates = true
+    avalon.diff(vtree, dom.vtree || [], steps)
 
-    var dom = vm.$element
+    patch([dom], vtree, null, steps)
+    steps.count = 0
+    dom.vtree = vtree
 
-    flushUpdate(function () {
-        isBatchingUpdates = true
-        var vtree = vm.$render() || []
-        var steps = {count: 0}
-      
-        if (vm.$render.dom) {
-           var _vtree = findVdom(vtree, vm.$id)
-            if(_vtree){
-               dom = vm.$render.dom
-               vtree = [_vtree]
-            }
-        }
-      //  dirtyTrees[vm.$id] = true
-        avalon.diff(vtree, dom.vtree || [], steps)
-      
-        patch([ dom ], vtree, null, steps)
-        steps.count = 0
-        dom.vtree = vtree
-       
-        isBatchingUpdates = false
-        avalon.log('rerender', vm.$id, new Date - avalon.rerenderStart)
-        delete dirtyTrees[id]
-        for (var i in dirtyTrees) {//更新其他子树
-            batchUpdate(i, true,'for in')
-            break
-        }
-
-    }, immediate)
-
+    isBatchingUpdates = false
 
 }
-function findVdom(array, id) {
-    for (var i = 0, el; el = array[i++]; ) {
-        if (el.nodeType === 1) {
-            if (el.props['ms-controller'] === id) {
-                return el
-            } else if (el.children) {
-                var find = findVdom(el.children, id)
-                if(find){
-                    return find
-                }
-            }
-        }
-    }
-}
+
 function flushUpdate(callback, immediate ) {
     if (immediate) {
         callback()

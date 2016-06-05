@@ -54,8 +54,8 @@ function extractBindings(cur, props) {
         var type = el.type
         ret.type = type
         ret.push(el)
-
-        if (type === 'important' || type === 'widget') {
+//type === 'important' ||
+        if ( type === 'widget') {
                break
         }
     }
