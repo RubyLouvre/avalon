@@ -26,7 +26,7 @@ avalon.directive('controller', {
         cur.local = '__local__'
         cur.top = '__top__'
         cur.present = '__present__'
-        pre.$append = '/*controller:' + $id + '*/\n})(__vmodel__)'
+        pre.$append = '/*controller:' + $id + '*/\n})(__vmodel__);'
     },
     diff: function (cur, pre, steps, name) {
         if (pre[name] !== cur[name]) {
