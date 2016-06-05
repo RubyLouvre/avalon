@@ -33,7 +33,7 @@ avalon.directive('controller', {
             update(cur, this.update, steps, 'controller')
         }
     },
-    update: function (node, vnode, important) {
+    update: function (node, vnode, parent, important) {
         var top = vnode.top //位于上方的顶层vm或mediator vm
         var present = vnode.present
         var synth = vnode.synth

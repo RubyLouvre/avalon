@@ -30,7 +30,7 @@ avalon.directive('important', {
             update(cur, this.update, steps, 'controller')
         }
     },
-    update: function (node, vnode) {
-       avalon.directives.controller.update(node, vnode, "important")
+    update: function (node, vnode,parent) {
+       avalon.directives.controller.update(node, vnode, parent, 'important')
     }
 })
