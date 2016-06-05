@@ -13,6 +13,7 @@ var dir = avalon.directive('widget', {
         cur.template = pre.template
         cur.children = '[]'
         cur[binding.name] = avalon.parseExpr(binding)
+        
         var old = pre.$append || ''
         pre.$append = [
             'var curIndex = vnodes.length - 1',
@@ -20,7 +21,6 @@ var dir = avalon.directive('widget', {
             'if(el.nodeType === 1){',
             'el.local = __local__',
             'el.vmodel = __vmodel__',
-            //  'el.wid = '+ avalon.quote(wid),
             'avalon.component(el, vnodes, curIndex,' + cur.wid + ')',
             '}'
         ].join('\n ') + old
@@ -55,6 +55,10 @@ var dir = avalon.directive('widget', {
         } else {
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
             cur.skipContent = !needUpdate
+            if(pre.wid && cur.wid !== pre.wid){
+                delete avalon.scopes[pre.wid]
+                delete avalon.vodels[pre.wid]
+            }
             var viewChangeObservers = cur.vmodel.$events.onViewChange
             if (viewChangeObservers && viewChangeObservers.length) {
                 steps.count += 1
@@ -113,8 +117,8 @@ var dir = avalon.directive('widget', {
                 renderCount: 1,
                 local: node.local
             }
+            com.$element = com
             com.vtree = [node]
-            //console.log(avalon.scopes[vm.$id].render+"")
         } else {
             scope.local = node.local
             scope.renderCount++

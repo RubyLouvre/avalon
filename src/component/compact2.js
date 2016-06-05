@@ -33,6 +33,7 @@ avalon.component = function (name, definition) {
             //收集里面的事件
             mixinHooks(finalOptions, option, index)
         })
+
         //得到组件的is类型 
         var componentName = root.type.indexOf('-') > 0 ?
                 root.type : finalOptions.is
@@ -45,6 +46,13 @@ avalon.component = function (name, definition) {
             options = [topVm[configName]]
             mixinHooks(finalOptions, topVm[configName], 0)
             protected = [configName].concat(protected)
+        }
+      
+        var cachedVm = avalon.vmodels[finalOptions.$id]
+      
+        var docker = cachedVm && avalon.scopes[cachedVm.$id]
+        if (docker) {
+            return docker.dom.vtree
         }
 
 
@@ -72,7 +80,6 @@ avalon.component = function (name, definition) {
         define = define || avalon.directives.widget.define
 
         var $id = finalOptions.$id || wid
-        //avalon.makeHashCode(configName)
 
         var defaults = avalon.mix(true, {}, definition.defaults)
 
@@ -110,7 +117,7 @@ avalon.component = function (name, definition) {
         var componentRoot = vtree[0]
         //  必须指定wid
 
-        componentRoot.props.wid = wid
+        componentRoot.props.wid = $id
         //将用户标签中的属性合并到组件标签的属性里
         for (var k in root.props) {
             if (k !== 'ms-widget') {
@@ -148,10 +155,9 @@ avalon.component = function (name, definition) {
             }
             vmodel.$render = render
             com.local = root.local
-           
             com.vmodel = vmodel
-    
-            com.renderCount = avalon.scopes[wid] ?avalon.scopes[wid]: 1
+            com.diff = diff
+            com.renderCount = avalon.scopes[wid] ? avalon.scopes[wid] : 1
             nodes[index] = com
             delete com.skipAttrs
         } else {

@@ -27,7 +27,8 @@
             })
 
             var vm = avalon.define({
-                $id: 'widget'
+                $id: 'widget',
+                ddd:11
 
             })
         </script>
@@ -35,7 +36,8 @@
 
     <body>
         <div id="box" ms-controller='widget' >
-            <xmp ms-widget="[{is:'ms-tabs'}]" class='eee'>55</xmp>
+            <div>{{@ddd}}</div>
+            <xmp ms-widget="[{is:'ms-tabs',$id:'jjj'}]" class='eee'>55</xmp>
         </div>
     </body>
 </html>
