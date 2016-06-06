@@ -1,4 +1,4 @@
-/*! built in 2016-6-6:17 version 2.06 by 司徒正美 */
+/*! built in 2016-6-6:19 version 2.06 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3700,27 +3700,22 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var update = __webpack_require__(38)
 	var parseView = __webpack_require__(47)
-	var cache = {}
-	avalon.htmlFactory = function (str) {
-	    if (cache[str]) {
-	        return cache[str]
-	    } else {
-	        var vtree = avalon.lexer(str + "")
-	        return  (cache[str] = '(function(){' + parseView(vtree) + '})();')
-	    }
+
+	avalon.htmlFactory = function (str, vm, local) {
+	    var vtree = avalon.lexer(str + "")
+	    var e = avalon.render(vtree)
+	    return  e(vm, local)
 	}
+
 	avalon.directive('html', {
 	    parse: function (cur, pre, binding) {
 	        if (!pre.isVoidTag) {
 	            //将渲染函数的某一部分存起来,渲在c方法中转换为函数
 	            cur[binding.name] = avalon.parseExpr(binding)
 	            delete pre.children
+	            cur.children = 'avalon.htmlFactory(' + avalon.parseExpr(binding) + ',__vmodel__,__local__)'
+	        }else{
 	            cur.children = '[]'
-	           // avalon.parseExpr(binding)
-	            pre.$append =  '\nvar el = vnodes[vnodes.length-1];\n' +
-	                    'var HTMLRaw =  el["ms-html"];;\n' +
-	                    'var HTMLParsed = avalon.htmlFactory(HTMLRaw);\n' +
-	                    'try{eval("el.children = " + HTMLParsed )}catch(e){};\n' + (pre.$append || '') 
 	        }
 	    },
 	    diff: function (cur, pre, steps, name) {
@@ -5748,18 +5743,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return ''
 	        })
 	        var arr = str.replace(rforPrefix, '').split(' in ')
-	        var assign = 'var loop = '+avalon.parseExpr(arr[1])+' \n'
-	        var assign2 = 'var '+ pre.signature+' = vnodes[vnodes.length-1]\n'
+	        var assign = 'var loop = ' + avalon.parseExpr(arr[1]) + ' \n'
+	        var assign2 = 'var ' + pre.signature + ' = vnodes[vnodes.length-1]\n'
 	        var alias = aliasAs ? 'var ' + aliasAs + ' = loop\n' : ''
 	        var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
+
 	        if (kv.length === 1) {//确保avalon._each的回调有三个参数
 	            kv.unshift('$key')
 	        }
 	        kv.push('traceKey')
-	        
+	        var quote = avalon.quote
+	        var localArr = [quote(kv[0]) + ':' + kv[0], quote(kv[1]) + ':' + kv[1]]
+	        if (aliasAs) {
+	            localArr.push(quote(aliasAs) + ':loop')
+	        }
+	        var lll = '{' + localArr.join(',\n') + '}'
 	        //分别创建isArray, ____n, ___i, ___v, ___trackKey变量
 	        //https://www.w3.org/TR/css3-animations/#animationiteration
-	        pre.$append =  assign + assign2 + alias + 'avalon._each(loop,function(' + kv.join(', ') + '){\n'
+	        pre.$append = assign + assign2 + alias + 'avalon._each(loop,function('
+	                + kv.join(', ') + '){\n' +
+	                '__local__ = avalon.mix(__local__, ' + lll + ')\n'
 
 	    },
 	    diff: function (current, previous, steps, __index__) {
@@ -5768,10 +5771,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //2.0.7不需要cur.start
 	        var nodes = current.slice(__index__, cur.end)
 	        cur.items = nodes.slice(1, -1)
-	       
+
 	        prepareCompare(cur.items, cur)
 	        delete pre.forDiff
-	       
+
 	        if (cur.compareText === pre.compareText) {
 	            avalon.shadowCopy(cur, pre)
 	            return
@@ -5804,11 +5807,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (isInit) {
 	            /* eslint-disable no-cond-assign */
 	            var cache = cur.cache = {}
-	            for (i = 0; c = cur.components[i];i++ ) {
+	            for (i = 0; c = cur.components[i]; i++) {
 	                /* eslint-enable no-cond-assign */
 	                saveInCache(cache, c)
-	                c.action =  'enter'
-	                if(cur.fixAction){
+	                c.action = 'enter'
+	                if (cur.fixAction) {
 	                    c.action = 'move'
 	                    c.domIndex = i
 	                }
@@ -5933,8 +5936,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var oldCount = steps.count
 	        vnode.repeatCount = items.length
 	        avalon.diff(items, vnode.prevItems, steps)
-	        
-	       
+
+
 	        if (steps.count !== oldCount) {
 	            patch(entity, items, parent, steps)
 	        }
