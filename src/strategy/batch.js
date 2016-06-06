@@ -27,14 +27,22 @@ function batchUpdate(id, immediate) {
     var dom = scope.dom
     var steps = {count: 0}
     var vtree = scope.render(scope.synth || scope.vmodel, scope.local)
-   
+
     isBatchingUpdates = true
     avalon.diff(vtree, dom.vtree || [], steps)
     patch([dom], vtree, null, steps)
     steps.count = 0
     dom.vtree = vtree
-
+    delete dirtyTrees[id]
     isBatchingUpdates = false
+    var id = needRenderIds.shift()
+    if (id) {
+      return  batchUpdate(id, true)
+    }
+    for (var i in dirtyTrees) {
+        batchUpdate(i, true)
+        break
+    }
 
 }
 

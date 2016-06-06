@@ -28,7 +28,7 @@ describe('duplex', function () {
         }
     })
     it('数据转换', function (done) {
-        avalon.filters.limit = function(str,a){
+        avalon.filters.limit = function (str, a) {
             return String(str).slice(0, a)
         }
         div.innerHTML = heredoc(function () {
@@ -193,8 +193,49 @@ describe('duplex', function () {
              <option>
              ddd
              </option>
-             </select><input ms-duplex='@aaa'><span>{{@aaa}}</span> 
-             <select ms-duplex-number='@bbb' multiple='true'>
+             <input ms-duplex="@aaa"><span>{{@aaa}}</span>
+             </div>
+             */
+        })
+        var vm = avalon.define({
+            $id: 'duplex5',
+            aaa: "ccc"
+
+        })
+        avalon.scan(div, vm)
+        setTimeout(function () {
+            var options = div.getElementsByTagName('option')
+            var inputs = div.getElementsByTagName('input')
+            var spans = div.getElementsByTagName('span')
+            
+            expect(options[0].selected+"1").to.equal(false+"1")
+            expect(options[1].selected+"2").to.equal(false+"2")
+            expect(options[2].selected+"3").to.equal(true+"3")
+            expect(options[3].selected).to.equal(false)
+
+            expect(spans[0].innerHTML).to.equal('ccc')
+            expect(inputs[0].value).to.equal('ccc')
+            inputs[0].value = 'bbb'
+            avalon.fireDom(div.getElementsByTagName('select')[0],'change')
+            setTimeout(function () {
+//                expect(options[0].selected).to.equal(false)
+//                expect(options[1].selected).to.equal(true)
+//                expect(options[2].selected).to.equal(false)
+//                expect(options[3].selected).to.equal(false)
+//                expect(spans[0].innerHTML).to.equal('bbb')
+              
+                done()
+            })
+
+
+
+        }, 80)
+    })
+    it('select3', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='duplex6' >
+             <select ms-duplex-number='@arr' multiple='true'>
              <option>
              111
              </option>
@@ -208,42 +249,33 @@ describe('duplex', function () {
              444
              </option>
              </select>
+             <p>{{@arr}}</p>
              </div>
              */
         })
         var vm = avalon.define({
-            $id: 'duplex5',
-            aaa: "ccc",
-            bbb: [111, 444]
+            $id: 'duplex6',
+            arr: [111, 444]
         })
         avalon.scan(div, vm)
         setTimeout(function () {
+
             var options = div.getElementsByTagName('option')
-            var inputs = div.getElementsByTagName('input')
-            var spans = div.getElementsByTagName('span')
-            expect(options[2].selected).to.equal(true)
-            expect(options[4].selected).to.equal(true)
-            expect(options[5].selected).to.equal(false)
-            expect(options[6].selected).to.equal(false)
-            expect(options[7].selected).to.equal(true)
-            expect(spans[0].innerHTML).to.equal('ccc')
-            expect(inputs[0].value).to.equal('ccc')
-            inputs[0].value = 'bbb'
-            options[4].selected = false
-            options[5].selected = true
-            options[6].selected = true
-            options[7].selected = false
-            avalon.fireDom(div.getElementsByTagName('select')[1],'change')
-            setTimeout(function () {
-                expect(options[2].selected).to.equal(false)
-                expect(options[1].selected).to.equal(true)
-                expect(spans[0].innerHTML).to.equal('bbb')
-                expect(vm.bbb.concat()).to.eql([222,333])
+            var ps = div.getElementsByTagName('p')
+            expect(options[0].selected).to.equal(true)
+            expect(options[1].selected).to.equal(false)
+            expect(options[2].selected).to.equal(false)
+            expect(options[3].selected).to.equal(true)
+            options[0].selected = false
+            options[1].selected = true
+            options[2].selected = true
+            options[3].selected = false
+            avalon.fireDom(div.getElementsByTagName('select')[0],'change')
+             setTimeout(function () {
+                expect(vm.arr.concat()).to.eql([222, 333])
+                expect(ps[0].innerHTML).to.eql([222, 333]+"")
                 done()
-            })
-
-
-
-        }, 80)
+             })
+        },100)
     })
 })
