@@ -101,7 +101,7 @@ module.exports = {
 }
 function inDomTree(el) {
     while (el) {
-        if (el.nodeType === 10) {
+        if (el.nodeType === 9) {
             return true
         }
         el = el.parentNode
