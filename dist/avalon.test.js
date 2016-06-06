@@ -57,7 +57,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var avalon = __webpack_require__(111)
+	var avalon = __webpack_require__(107)
 	//require('./gesture/tap')
 	__webpack_require__(108)
 	__webpack_require__(109)
@@ -68,48 +68,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 
-/***/ 108:
-/***/ function(module, exports) {
-
-	//var avalon = require('avalon')
-
-	avalon.component('ms-button', {
-	    template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
-	    defaults: {
-	        buttonText: "button"
-	    },
-	    soleSlot: 'buttonText'
-	})
-
-/***/ },
-
-/***/ 109:
-/***/ function(module, exports, __webpack_require__) {
-
-	var button = __webpack_require__(108)
-	var tmpl = __webpack_require__(110)
-
-	avalon.component('ms-panel', {
-	    template: tmpl,
-	    defaults: {
-	        body: "&nbsp;&nbsp;",
-	        'ms_button': {
-	            buttonText: 'click me!'
-	        }
-	    },
-	    soleSlot: 'body'
-	})
-
-/***/ },
-
-/***/ 110:
-/***/ function(module, exports) {
-
-	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
-
-/***/ },
-
-/***/ 111:
+/***/ 107:
 /***/ function(module, exports, __webpack_require__) {
 
 	/*! built in 2016-6-6:17 version 2.06 by 司徒正美 */
@@ -4842,7 +4801,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		            old = val
 
 		            var vm = heirloom.__vmodel__
-		            //console.log(vm)
 		            if (this.$hashcode && vm && !avalon.suspendUpdate) {
 		                //★★确保切换到新的events中(这个events可能是来自oldProxy)               
 		                if (heirloom !== vm.$events) {
@@ -7603,6 +7561,47 @@ return /******/ (function(modules) { // webpackBootstrap
 	/******/ ])
 	});
 	;
+
+/***/ },
+
+/***/ 108:
+/***/ function(module, exports) {
+
+	//var avalon = require('avalon')
+
+	avalon.component('ms-button', {
+	    template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
+	    defaults: {
+	        buttonText: "button"
+	    },
+	    soleSlot: 'buttonText'
+	})
+
+/***/ },
+
+/***/ 109:
+/***/ function(module, exports, __webpack_require__) {
+
+	var button = __webpack_require__(108)
+	var tmpl = __webpack_require__(110)
+
+	avalon.component('ms-panel', {
+	    template: tmpl,
+	    defaults: {
+	        body: "&nbsp;&nbsp;",
+	        'ms_button': {
+	            buttonText: 'click me!'
+	        }
+	    },
+	    soleSlot: 'body'
+	})
+
+/***/ },
+
+/***/ 110:
+/***/ function(module, exports) {
+
+	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
 
 /***/ }
 
