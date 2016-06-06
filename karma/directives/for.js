@@ -253,6 +253,7 @@ describe('for', function () {
             allchecked: false,
             checkAll: function (e) {
                 var checked = e.target.checked
+                console.log(checked)
                 vm.data.forEach(function (el) {
                     el.checked = checked
                 })
@@ -283,7 +284,7 @@ describe('for', function () {
                 expect(ths[1][prop]).to.equal('1::true')
                 expect(ths[2][prop]).to.equal('2::true')
                 done()
-            })
+            },100)
         })
     })
     it('使用注释循环', function (done) {
@@ -351,7 +352,7 @@ describe('for', function () {
         avalon.scan(div)
         setTimeout(function () {
             var el = div.getElementsByTagName('strong')[0]
-            expect(el.innerHTML.trim()).to.equal(22)
+            expect(el.innerHTML.trim()).to.equal('22')
             done()
             delete avalon.vmodels.for8
         }, 300)

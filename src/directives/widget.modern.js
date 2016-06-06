@@ -5,27 +5,24 @@ var update = require('./_update')
 //插入点机制,组件的模板中有一些slot元素,用于等待被外面的元素替代
 var dir = avalon.directive('widget', {
     priority: 4,
-      parse: function (cur, pre, binding) {
+    parse: function (cur, pre, binding) {
 
         var wid = pre.props.wid || avalon.makeHashCode('w')
-        avalon.resolvedComponents[wid] = {
-            props: avalon.shadowCopy({}, pre.props),
-            template: pre.template,
-        }
+
         cur.wid = avalon.quote(wid)
+        cur.directive = 'widget'
         cur.template = pre.template
         cur.children = '[]'
         cur[binding.name] = avalon.parseExpr(binding)
+
         var old = pre.$append || ''
         pre.$append = [
             'var curIndex = vnodes.length - 1',
             'var el = vnodes[curIndex]',
             'if(el.nodeType === 1){',
-            'var docker =  avalon.component(el, __vmodel__,'+cur.wid+')',
-            'if(docker && docker.render){',
-            'try{eval("avalon.renderComponent( " + docker.render +",vnodes, curIndex,\''+wid+'\')")',
-            '}catch(e){avalon.log(e,"render widget error")}',
-            '}else{vnodes[curIndex] = docker}',
+            'el.local = __local__',
+            'el.vmodel = __vmodel__',
+            'avalon.component(el, vnodes, curIndex,' + cur.wid + ')',
             '}'
         ].join('\n ') + old
     },
@@ -33,20 +30,18 @@ var dir = avalon.directive('widget', {
         return avalon.mediatorFactory.apply(this, arguments)
     },
     diff: function (cur, pre, steps) {
-        var coms = avalon.resolvedComponents
+
         var wid = cur.wid
-        var docker = coms[wid]
-        if (!docker || !docker.renderCount) {
+        if (cur.nodeType === 8) {
             steps.count += 1
             cur.change = [this.replaceByComment]
-        } else if (docker.renderCount && docker.renderCount < 2) {
-            cur.steps = steps
+        } else if (cur.renderCount && cur.renderCount < 2) {
             //https://github.com/RubyLouvre/avalon/issues/1390
             //当第一次渲染组件时,当组件的儿子为元素,而xmp容器里面只有文本时,就会出错
             pre.children = []
+            cur.steps = steps
             fixRepeatAction(cur.children)
             update(cur, this.replaceByComponent, steps, 'widget')
-
             function fireReady(dom, vnode) {
                 cur.vmodel.$fire('onReady', {
                     type: 'ready',
@@ -54,13 +49,17 @@ var dir = avalon.directive('widget', {
                     wid: wid,
                     vmodel: vnode.vmodel
                 })
-                docker.renderCount = 2
+                cur.renderCount = 2
             }
             update(cur, fireReady, steps, 'widget', 'afterChange')
-
         } else {
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
             cur.skipContent = !needUpdate
+            if (pre.wid && cur.wid !== pre.wid) {
+                delete avalon.scopes[pre.wid]
+                delete avalon.vmodels[pre.wid]
+            }
+
             var viewChangeObservers = cur.vmodel.$events.onViewChange
             if (viewChangeObservers && viewChangeObservers.length) {
                 steps.count += 1
@@ -76,14 +75,15 @@ var dir = avalon.directive('widget', {
                                 vmodel: vnode.vmodel
                             })
                         }
-                        docker.renderCount++
                     }]
             }
 
         }
     },
     addDisposeMonitor: function (dom) {
+
         disposeDetectStrategy.byRewritePrototype(dom)
+
     },
     replaceByComment: function (dom, node, parent) {
         var comment = document.createComment(node.nodeValue)
@@ -93,30 +93,35 @@ var dir = avalon.directive('widget', {
             parent.appendChild(comment)
         }
     },
-    replaceByComponent: function (dom, node, parent) {
-       
-        var com = avalon.vdomAdaptor(node, 'toDOM')
-        node.ouerHTML = avalon.vdomAdaptor(node, 'toHTML')
+    replaceByComponent: function (dom, vdom, parent) {
+        var com = avalon.vdomAdaptor(vdom, 'toDOM')
+        vdom.ouerHTML = avalon.vdomAdaptor(vdom, 'toHTML')
         if (dom) {
             parent.replaceChild(com, dom)
         } else {
             parent.appendChild(com)
         }
-        patch([com], [node], parent, node.steps)
-        
+        patch([com], [vdom], parent, vdom.steps)
+
+        var vm = vdom.vmodel
+        var scope = avalon.scopes[vm.$id]
+
+        scope.dom = com
+        vm.$element = com
+        com.vtree = [vdom]
+
         dir.addDisposeMonitor(com)
-       
+
         return false
     }
 })
 
-
-function fixRepeatAction(nodes){
-    for(var i = 0,el; el = nodes[i++];){
-        if(el.directive === 'for'  ){
+function fixRepeatAction(nodes) {
+    for (var i = 0, el; el = nodes[i++]; ) {
+        if (el.directive === 'for') {
             el.fixAction = true
         }
-        if(el.children){
+        if (el.children) {
             fixRepeatAction(el.children)
         }
     }

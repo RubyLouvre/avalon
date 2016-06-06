@@ -171,7 +171,7 @@ describe('widget', function () {
         });
 
         avalon.component('ms-section', {
-            template: '<ms-section><blockquote ms-attr="{title:@text}">{{@text}}</blockquote></ms-section>',
+            template: '<section><blockquote ms-attr="{title:@text}">{{@text}}</blockquote></section>',
             defaults: {
                 text: 'default'
             }

@@ -57,7 +57,7 @@ var dir = avalon.directive('widget', {
             cur.skipContent = !needUpdate
             if (pre.wid && cur.wid !== pre.wid) {
                 delete avalon.scopes[pre.wid]
-                delete avalon.vodels[pre.wid]
+                delete avalon.vmodels[pre.wid]
             }
            
             var viewChangeObservers = cur.vmodel.$events.onViewChange

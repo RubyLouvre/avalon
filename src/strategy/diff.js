@@ -60,7 +60,7 @@ function diffProps(current, previous, steps) {
                 return name
             })
         } catch (e) {
-            avalon.log(current, previous, e,e.message, 'diffProps error')
+            avalon.log(e, e.message, 'diffProps error')
         }
     }
     

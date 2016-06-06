@@ -27,6 +27,7 @@ avalon.component = function (name, definition) {
         var index = arguments[2]
         var wid = arguments[3]
         var topVm = root.vmodel
+        console.log(root)
         var finalOptions = {}
         var options = [].concat(root['ms-widget'] || [])
         options.forEach(function (option, index) {
@@ -53,13 +54,8 @@ avalon.component = function (name, definition) {
             protected = [configName].concat(protected)
         }
 
-        var cachedVm = avalon.vmodels[finalOptions.$id]
 
-        var docker = cachedVm && avalon.scopes[cachedVm.$id]
-        if (docker) {
-            return docker.dom.vtree
-        }
-        docker = avalon.scopes[wid]
+        var docker = avalon.scopes[finalOptions.$id] || avalon.scopes[wid]
         if (docker) {
             var ret = docker.render(docker.vmodel, docker.local)
             if (ret[0]) {
@@ -95,7 +91,6 @@ avalon.component = function (name, definition) {
 
         var defaults = avalon.mix(true, {}, definition.defaults)
         mixinHooks(finalOptions, defaults, false)
-
         defineArgs = [topVm, defaults].concat(options)
 
         var vmodel = define.apply(function (a, b) {
@@ -124,18 +119,18 @@ avalon.component = function (name, definition) {
         if (vtree.length > 1) {
             avalon.error('组件必须用一个元素包起来')
         }
+        
         var componentRoot = vtree[0]
-        //  必须指定wid
-
+      
         avalon.vmodels[$id] = vmodel
-        componentRoot.props.wid = $id
-        //将用户标签中的属性合并到组件标签的属性里
-        for (var k in root.props) {
-            if (k !== 'ms-widget') {
-                componentRoot.props[k] = root.props[k]
-            }
-        }
+       
 
+       //将用户标签中的属性合并到组件标签的属性里
+        avalon.mix(componentRoot.props, root.props)
+        //  必须指定wid
+        componentRoot.props.wid = $id
+        //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
+        
         //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
         if (definition.soleSlot) {
             var slots = {}
@@ -146,13 +141,20 @@ avalon.component = function (name, definition) {
         } else if (!root.isVoidTag) {
             insertSlots(vtree, root, definition.soleSlot)
         }
-        for (k in componentEvents) {
-            if (finalOptions[k]) {
-                finalOptions[k].forEach(function (fn) {
-                    vmodel.$watch(k, fn)
+        for (var e in componentEvents) {
+            if (finalOptions[e]) {
+                finalOptions[e].forEach(function (fn) {
+                    vmodel.$watch(e, fn)
                 })
             }
         }
+        //触发onInit回调
+        vmodel.$fire('onInit', {
+            type: 'init',
+            vmodel: vmodel,
+            wid: wid,
+            target: null
+        })
         // 必须加这个,方便在parseView.js开挂
         vtree[0].directive = 'widget'
 
