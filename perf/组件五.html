@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>TODO supply a title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src='../dist/avalon.test.js'></script>
+    <script>
+   var   vm = avalon.define({
+           $id: 'aaa',
+           body: '这是面板的内容',
+           aaa: {
+              "ms_button": {
+                   buttonText: "vm中的值3"
+               }
+           }
+       })
+     /*   "ms-button": {
+                   buttonText: "vm中的值3"
+               }*/
+    </script>
+  </head>
+  <body>
+    <div ms-controller='aaa' >
+       <xmp ms-widget="[{is:'ms-panel'}, @aaa]" style='border:1px solid red;display:block'></xmp>
+    </div>
+</html>

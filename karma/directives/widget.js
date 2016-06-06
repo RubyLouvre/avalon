@@ -61,50 +61,7 @@ describe('widget', function () {
 
     })
 
-    it('lifecycle', function (done) {
-        div.innerHTML = heredoc(function () {
-            /*
-             <div ms-controller='widget1' >
-             <div><wbr ms-widget="[{is:'ms-button'},@config]"/></div>
-             </div>
-             */
-        })
-        var index = 0
-        vm = avalon.define({
-            $id: 'widget1',
-            config: {
-                buttonText: '按钮',
-                onInit: function (e) {
-                    expect(e.type).to.equal('init')
-                    ++index
-                },
-                onReady: function (e) {
-                    expect(e.type).to.equal('ready')
-                    ++index
-                },
-                onViewChange: function (e) {
-                    expect(e.type).to.equal('viewchange')
-                    ++index
-                },
-                onDispose: function (e) {
-                    expect(e.type).to.equal('dispose')
-                    ++index
-                }
-            }
-        })
-        avalon.scan(div)
-        setTimeout(function () {
-            expect(index).to.equal(2)
-            vm.config.buttonText = 'change'
-            setTimeout(function () {
-                div.innerHTML = ""
-                setTimeout(function () {
-                    expect(index).to.equal(4)
-                    done()
-                },1200)
-            })
-        })
-    })
+   
 
     it('通过更新配置对象修改组件界面', function (done) {
         div.innerHTML = heredoc(function () {
@@ -258,7 +215,58 @@ describe('widget', function () {
         })
 
     });
-    
+     it('lifecycle', function (done) {
+        var testDiv = document.createElement('div')
+        document.body.appendChild(testDiv)
+        testDiv.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='widget1' >
+             <div><wbr ms-widget="[{is:'ms-button'},@config]"/></div>
+             </div>
+             */
+        })
+        var index = 0
+        vm = avalon.define({
+            $id: 'widget1',
+            config: {
+                buttonText: '按钮',
+                onInit: function (e) {
+                    expect(e.type).to.equal('init')
+                    ++index
+                    console.log('1111')
+                },
+                onReady: function (e) {
+                    expect(e.type).to.equal('ready')
+                    ++index
+                    console.log('2222')
+                },
+                onViewChange: function (e) {
+                    expect(e.type).to.equal('viewchange')
+                    console.log('3333')
+                    ++index
+                },
+                onDispose: function (e) {
+                    console.log('4444')
+                    expect(e.type).to.equal('dispose')
+                    ++index
+                }
+            }
+        })
+        avalon.scan(testDiv)
+        setTimeout(function () {
+            expect(index+"!").to.equal(2+"!")
+            
+            vm.config.buttonText = 'change'
+            setTimeout(function () {
+                testDiv.innerHTML = ""
+                setTimeout(function () {
+                    expect(index).to.equal(4)
+                    document.body.removeChild(testDiv)
+                    done()
+                },120)
+            },120)
+        },120)
+    })
     it ('操作组件vm来更新组件的界面', function (done) {
         div.innerHTML = heredoc(function () {
             /*

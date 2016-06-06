@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.js"></script>
+        <script>
+            avalon.component('ms-pager', {
+            template: '<div><strong>{{@totalPages}}</strong><button ms-click="@xx" type="button">++</button></div>',
+            defaults: {
+                totalPages: 21,
+                xx: function () {
+                    this.totalPages += 1;
+                    console.log('----',this.totalPages)
+                }
+            }
+        })
+            vm = avalon.define({
+            $id: 'widget5',
+            bb: '其他内容'
+        });
+        </script>
+    </head>
+    <body>
+         <div ms-controller="widget5">
+             <xmp ms-widget='{is:"ms-pager"}'></xmp>
+             {{@bb}}
+             </div>
+    </body>
+</html>

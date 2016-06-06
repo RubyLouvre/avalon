@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.js"></script>
+        <script>
+              avalon.filters.limit = function(str,a){
+            return String(str).slice(0, a)
+        }
+        vm = avalon.define({
+            $id: 'duplex2',
+            aaa: [333],
+            ddd: '12345',
+            eee: "ccc",
+            bbb: [111, 444],
+            textarea: "aaa",
+            block: 'BBB'
+        })
+        </script>
+
+    </head>
+    <body>
+        <div ms-controller='duplex2' >
+           <input ms-duplex-string='@ddd|limit(4)'><span>{{@ddd}}</span>
+
+             <input ms-duplex-number='@aaa' value='111' type='checkbox'>
+             <input ms-duplex-number='@aaa' value='222' type='checkbox'>
+             <input ms-duplex-number='@aaa' value='333' type='checkbox'>
+             
+          
+           
+             <select ms-duplex='@eee'>
+             <option>
+             aaa
+             </option>
+             <option>
+             bbb
+             </option>
+             <option>
+             ccc
+             </option>
+             <option>
+             ddd
+             </option>
+             </select>
+             <input ms-duplex='@eee'><span>{{@eee}}</span> 
+             <select ms-duplex-number='@bbb' multiple='true'>
+             <option>
+             111
+             </option>
+             <option>
+             222
+             </option>
+             <option>
+             333
+             </option>
+             <option>
+             444
+             </option>
+             </select>
+             <p>{{@bbb}}</p>
+             
+              <textarea ms-duplex='@textarea | uppercase'></textarea>
+             <blockquote ms-duplex='@block | lowercase' contenteditable='true'><div>2222</div></blockquote>
+         
+        </div>
+    </body>
+</html>

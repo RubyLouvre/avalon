@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.test.js"></script>
+        <script>
+            var index = 0
+            vm = avalon.define({
+                $id: 'widget1',
+                config: {
+                    buttonText: '按钮',
+                    onInit: function (e) {
+                        avalon.log('init')
+                        ++index
+                    },
+                    onReady: function (e) {
+                        avalon.log('ready')
+                        ++index
+                    },
+                    onViewChange: function (e) {
+                        avalon.log('viewchange')
+                        ++index
+                    },
+                    onDispose: function (e) {
+                        avalon.log('dispose')
+                        ++index
+                    }
+                }
+            })
+            var vm2 = avalon.define({
+                $id: 'widget2',
+                panelBody: '这是面板的内容',
+                aaa: {
+                    ms_button: {
+                        buttonText: "vm中的值"
+                    }
+                }
+            })
+            setTimeout(function () {
+                console.log(index)
+                vm2.panelBody = '新页面'
+                vm.config.buttonText = 'change'
+                vm2.aaa.ms_button.buttonText = "新按钮"
+                setTimeout(function () {
+                    console.log(index)
+                    document.getElementById('aaa').innerHTML = ''
+                    setTimeout(function () {
+                        console.log(index)
+                       
+                    }, 120)
+                })
+            }, 500)
+        </script>
+    </head>
+    <body>
+        <div>
+        <div ms-controller='widget1' id="aaa" >
+            <div><wbr ms-widget="[{is:'ms-button'},@config]"/></div>
+        </div>
+        </div>
+        <div ms-controller='widget2' >
+             <xmp ms-widget="[{is:'ms-panel'}, @aaa]" style='border:1px solid red;display:block'>{{@panelBody}}</xmp>
+        </div>
+    </body>
+</html>
