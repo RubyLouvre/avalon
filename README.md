@@ -51,7 +51,7 @@ npm install avalon2
    <!--ms-for-end:-->
 
    ```
-   上面的`@`符合是用来标识此变量或方法是来自vm的,此外为了防止与.NET的razor引擎相冲突,也可以使用`##`符合
+   上面的`@`符号是用来标识此变量或方法是来自vm的,此外为了防止与.NET的razor引擎相冲突,也可以使用`##`符合
    for指令拥有4个数组(或对象)过滤器(selectBy,orderBy,limitBy,filterBy) 
 
 	+ selectBy(keyList)用于取代 data-with-sorted,从一个对象取得指定的属性值
