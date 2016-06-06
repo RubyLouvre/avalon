@@ -7,7 +7,7 @@ var skipArray = require('../vmodel/parts/skipArray')
 var componentContainers = {wbr: 1, xmp: 1, template: 1}
 var events = 'onInit,onReady,onViewChange,onDispose'
 var componentEvents = avalon.oneObject(events)
-var protected = events.split(',').concat('is', 'diff', 'define', 'cached')
+var protected = events.split(',').concat('is', 'diff', 'define')
 
 var unresolvedComponent = {
     nodeType: 8,
@@ -15,29 +15,33 @@ var unresolvedComponent = {
     directive: 'widget',
     nodeValue: 'unresolved component placeholder'
 }
-avalon.component = function (name, definition, wid) {
+avalon.component = function (name, definition) {
     //这是定义组件的分支,并将列队中的同类型对象移除
-    if (typeof wid !== 'string') {
+    if (arguments.length < 4) {
         if (!avalon.components[name]) {
             avalon.components[name] = definition
         }//这里没有返回值
     } else {
-        var root = name //root为页面上节点对应的虚拟DOM
-        var docker = resolvedComponents[wid]
-        if (docker && docker.render) {
-            avalon.log("立即返回")
-            return docker
-        }
-        var topVm = definition
+        var root = arguments[0]
+        var nodes = arguments[1]
+        var index = arguments[2]
+        var wid = arguments[3]
+        var topVm = root.vmodel
         var finalOptions = {}
         var options = [].concat(root['ms-widget'] || [])
         options.forEach(function (option, index) {
             //收集里面的事件
             mixinHooks(finalOptions, option, index)
         })
+
         //得到组件的is类型 
         var componentName = root.type.indexOf('-') > 0 ?
                 root.type : finalOptions.is
+        if (!avalon.components[componentName]) {
+            return nodes[index] = unresolvedComponent
+        }
+
+
         //得到组件在顶层vm的配置对象名   
         var configName = componentName.replace(/-/g, '_')
         if (topVm.hasOwnProperty(configName) &&
@@ -48,141 +52,149 @@ avalon.component = function (name, definition, wid) {
             mixinHooks(finalOptions, topVm[configName], 0)
             protected = [configName].concat(protected)
         }
-        if (finalOptions.cached) {
-            var cachedVm = avalon.vmodels[finalOptions.$id]
-            if (cachedVm) {
-                var _wid = cachedVm.$events.__wid__
-                if (wid !== _wid) {
-                    delete resolvedComponents[wid]
-                    wid = _wid
+
+
+        var docker = avalon.scopes[finalOptions.$id] || avalon.scopes[wid]
+        if (docker) {
+            var ret = docker.render(docker.vmodel, docker.local)
+            if (ret[0]) {
+                return replaceByComponent(ret[0], docker.vmodel, nodes, index)
+            }
+        }
+
+
+        var type = root.type
+        //判定用户传入的标签名是否符合规格
+        if (!componentContainers[type] && !isCustomTag(type)) {
+            avalon.warn(type + '不合适做组件的标签')
+        }
+
+        //将用户声明组件用的自定义标签(或xmp.template)的template转换成虚拟DOM
+        if (type === 'xmp' || type === 'template' || root.children.length === 0) {
+            root.children = avalon.lexer(root.template)
+        }
+
+        //对于IE6-8,需要对自定义标签进行hack
+        definition = avalon.components[componentName]
+        if (!avalon.modern && !definition.fixTag) {
+            avalon.document.createElement(componentName)
+            definition.fixTag = 1
+        }
+
+        //开始构建组件的vm的配置对象
+        var diff = finalOptions.diff
+        var define = finalOptions.define
+        define = define || avalon.directives.widget.define
+
+        var $id = finalOptions.$id || wid
+
+        var defaults = avalon.mix(true, {}, definition.defaults)
+        mixinHooks(finalOptions, defaults, false)
+        defineArgs = [topVm, defaults].concat(options)
+
+        var vmodel = define.apply(function (a, b) {
+            protected.forEach(function (k) {
+                delete a[k]
+                delete b[k]
+            })
+        }, defineArgs)
+
+        if (!avalon.modern) {//增强对IE的兼容
+            for (var i in vmodel) {
+                if (!skipArray[i] && typeof vmodel[i] === 'function') {
+                    vmodel[i] = vmodel[i].bind(vmodel)
                 }
             }
         }
-        docker = resolvedComponents[wid]
-        if (!docker) {
-            resolvedComponents[wid] = root
-            docker = root
+
+        vmodel.$id = $id
+        //开始构建组件的虚拟DOM
+        var finalTemplate = definition.template.trim()
+        if (typeof definition.getTemplate === 'function') {
+            finalTemplate = definition.getTemplate(vmodel, finalTemplate)
         }
-
-        //如果此组件的实例已经存在,那么重新渲染
-        if (docker.render) {
-            return docker
+        //对组件内置的template转换成虚拟DOM
+        var vtree = avalon.lexer(finalTemplate)
+        if (vtree.length > 1) {
+            avalon.error('组件必须用一个元素包起来')
         }
+        
+        var componentRoot = vtree[0]
+      
+        avalon.vmodels[$id] = vmodel
+       
 
-        if (!avalon.components[componentName]) {
-            //如果组件还没有定义,那么返回一个注释节点占位
-            return unresolvedComponent
-        } else {
-            //=======对用户的自定义标签进行处理===========
-            var type = root.type
-            //判定用户传入的标签名是否符合规格
-            if (!componentContainers[type] && !isCustomTag(type)) {
-                avalon.warn(type + '不合适做组件的标签')
-            }
-            //将用户声明组件用的自定义标签(或xmp.template)的template转换成虚拟DOM
-            if (type === 'xmp' || type === 'template' || root.children.length === 0) {
-                root.children = avalon.lexer(docker.template)
-            }
-            //对于IE6-8,需要对自定义标签进行hack
-            definition = avalon.components[componentName]
-            if (!avalon.modern && !definition.fixTag) {
-                avalon.document.createElement(componentName)
-                definition.fixTag = 1
-            }
-
-            //开始构建组件的vm的配置对象
-            var diff = finalOptions.diff
-            var define = finalOptions.define
-            define = define || avalon.directives.widget.define
-
-            var $id = finalOptions.$id ||
-                    avalon.makeHashCode(configName)
-
-            var defaults = avalon.mix(true, {}, definition.defaults)
-
-            mixinHooks(finalOptions, defaults, false)
-
-            defineArgs = [topVm, defaults].concat(options)
-
-            var vmodel = define.apply(function (a, b) {
-                protected.forEach(function (k) {
-                    delete a[k]
-                    delete b[k]
+       //将用户标签中的属性合并到组件标签的属性里
+        avalon.mix(componentRoot.props, root.props)
+        //  必须指定wid
+        componentRoot.props.wid = $id
+        //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
+        
+        //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
+        if (definition.soleSlot) {
+            var slots = {}
+            var slotName = definition.soleSlot
+            slots[slotName] = /\S/.test(root.template) ? root.children :
+                    new VText('{{@' + slotName + '}}')
+            mergeTempale(vtree, slots)
+        } else if (!root.isVoidTag) {
+            insertSlots(vtree, root, definition.soleSlot)
+        }
+        for (var e in componentEvents) {
+            if (finalOptions[e]) {
+                finalOptions[e].forEach(function (fn) {
+                    vmodel.$watch(e, fn)
                 })
-            }, defineArgs)
-
-            if (!avalon.modern) {//增强对IE的兼容
-                for (var i in vmodel) {
-                    if (!skipArray[i] && typeof vmodel[i] === 'function') {
-                        vmodel[i] = vmodel[i].bind(vmodel)
-                    }
-                }
             }
-            vmodel.$id = $id
-            vmodel.$element = topVm.$element
-            avalon.vmodels[$id] = vmodel
-            var finalTemplate = definition.template.trim()
-            if (typeof definition.getTemplate === 'function') {
-                finalTemplate = definition.getTemplate(vmodel, finalTemplate)
-            }
-            //对组件内置的template转换成虚拟DOM
-            var vtree = avalon.lexer(finalTemplate)
-            if (vtree.length > 1) {
-                avalon.error('组件必须用一个元素包起来')
-            }
-            var componentRoot = vtree[0]
-            //  必须指定wid
-            componentRoot.props.wid = wid
-            //将用户标签中的属性合并到组件标签的属性里
-            for (var k in docker.props) {
-                if (k !== 'ms-widget') {
-                    componentRoot.props[k] = docker.props[k]
-                }
-            }
-
-            //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
-            if (definition.soleSlot) {
-                var slots = {}
-                var slotName = definition.soleSlot
-                slots[slotName] = /\S/.test(docker.template) ? root.children :
-                        new VText('{{@' + slotName + '}}')
-                mergeTempale(vtree, slots)
-            } else if (!root.isVoidTag) {
-                insertSlots(vtree, root, definition.soleSlot)
-            }
-            for (k in componentEvents) {
-                if (finalOptions[k]) {
-                    finalOptions[k].forEach(function (fn) {
-                        vmodel.$watch(k, fn)
-                    })
-                }
-            }
-
-            //生成组件的render
-            var render = '(function(__vmodel__){' +
-                    parseView(vtree) +
-                    '})(docker.vmodel)'
-
-
-            vmodel.$render = topVm.$render
-            vmodel.$events.__wid__ = wid
-            //触发onInit回调
-            vmodel.$fire('onInit', {
-                type: 'init',
-                vmodel: vmodel,
-                wid: wid,
-                target: null
-            })
-
-            avalon.shadowCopy(docker, {
-                diff: diff,
-                render: render,
-                vmodel: vmodel,
-                cached: !!finalOptions.cached
-            })
-            return docker
         }
+        //触发onInit回调
+        vmodel.$fire('onInit', {
+            type: 'init',
+            vmodel: vmodel,
+            wid: wid,
+            target: null
+        })
+        // 必须加这个,方便在parseView.js开挂
+        vtree[0].directive = 'widget'
+
+        var render = avalon.render(vtree)
+
+        vmodel.$render = render
+        try {
+            var ret = render(vmodel, root.local)
+        } catch (e) {
+            ret = [unresolvedComponent]
+        }
+        var vdom = ret[0]
+        vdom.diff = diff
+        replaceByComponent(vdom, vmodel, nodes, index)
+
     }
+}
+
+function replaceByComponent(vdom, vm, vnodes, index) {
+
+    if (!isComponentReady(vdom)) {
+        return vnodes[index] = unresolvedComponent
+    }
+
+    var wid = vm.$id
+    var scope = avalon.scopes[wid]
+    if (scope) {
+        vdom.renderCount = ++scope.renderCount
+        avalon.scopes[wid].dom.vtree = vdom.nodes = [vdom]
+    } else {
+        var scope = {
+            vmodel: vm,
+            render: vm.$render,
+            local: vdom.local,
+            renderCount: 1,
+            nodes: [vdom]
+        }
+        avalon.scopes[wid] = scope
+    }
+    vnodes[index] = vdom
+
 }
 //必须以字母开头,结尾以字母或数字结束,中间至少出现一次"-",
 //并且不能大写字母,特殊符号,"_","$",汉字
@@ -190,29 +202,6 @@ var rcustomTag = /^[a-z]([a-z\d]+\-)+[a-z\d]+$/
 
 function isCustomTag(type) {
     return rcustomTag.test(type)
-}
-
-avalon.renderComponent = function (root, nodes, index, wid) {
-    root = root && root.length ? root[0] : unresolvedComponent
-    
-    
-    if (!isComponentReady(root)) {
-        return nodes[index] = unresolvedComponent
-    }
-    var docker = avalon.resolvedComponents[wid]
-    if (!docker.renderCount) {
-        docker.renderCount = 1
-    }
-    
-    root.wid = wid
-    root.diff = docker.diff
-    root.vmodel = docker.vmodel
-    root.props['ms-widget'] = docker['ms-widget']
-    root.order = ['ms-widget'].
-            concat((root.order || '').split(';;')).join(';;')
-    //移除skipAttrs,以便进行diff
-    delete root.skipAttrs
-    nodes[index] = root
 }
 
 function mixinHooks(target, option, index) {

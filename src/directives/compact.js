@@ -12,7 +12,7 @@ require('./html')
 ////需要用到事件的
 require('./class.hover.active')
 require('./on')
-require('./duplex2/compact')
+require('./duplex/compact')
 require('./validate')
 require('./rules')
 //
@@ -20,7 +20,7 @@ require('./rules')
 require('./if')
 require('./for')
 //
-require('./widget2')
+require('./widget')
 require('./effect')
 //优先级 ms-important, ms-controller, ms-for, ms-widget, ms-effect, ms-if
 //.......

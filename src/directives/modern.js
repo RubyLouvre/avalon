@@ -11,7 +11,7 @@ require('./html')
 //需要用到事件的
 require('./class.hover.active')
 require('./on')
-require('./duplex2/modern')
+require('./duplex/modern')
 require('./validate')
 require('./rules')
 
