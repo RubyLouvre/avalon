@@ -3,16 +3,16 @@ var updateModelMethods = {
         var data = this
         prop = prop || 'value'
         var rawValue = data.element[prop]
-
         var formatedValue = data.format(data.vmodel, rawValue)
-        if (formatedValue !== data.viewValue) {
-            var parsedValue = parseValue(data, formatedValue)
-            if (parsedValue !== data.modelValue) {
-                data.set(data.vmodel, parsedValue)
-                callback(data)
-            }
+        if (formatedValue !== rawValue) {
             data.formatedValue = formatedValue
             data.element[prop] = formatedValue
+        }
+        
+        var parsedValue = data.parse(formatedValue)
+        if (parsedValue !== data.modelValue) {
+            data.set(data.vmodel, parsedValue)
+            callback(data)
         }
 
         //vm.aaa = '1234567890'
@@ -37,8 +37,9 @@ var updateModelMethods = {
             array = [array]
         }
         var method = data.element.checked ? 'ensure' : 'remove'
+        
         if (array[method]) {
-            var val = parseValue(data, data.element.value)
+            var val = data.parse(data.element.value)
             array[method](val)
             callback(data)
         }
@@ -50,10 +51,10 @@ var updateModelMethods = {
         if (val + '' !== this.modelValue + '') {
             if (Array.isArray(val)) { //转换布尔数组或其他
                 val = val.map(function (v) {
-                    return parseValue(data, v)
+                    return data.parse(v)
                 })
             } else {
-                val = parseValue(data, val)
+                val = data.parse(val)
             }
             data.modelValue = val
             data.set(data.vmodel, val)
@@ -77,14 +78,6 @@ function callback(data) {
     }
 }
 
-function parseValue(data, val) {
-    for (var i = 0, k; k = data.parser[i++]; ) {
-        var fn = avalon.parsers[k]
-        if(fn){
-          val = fn.call(data, val)
-        }
-    }
-    return val
-}
+
 
 module.exports = updateModelMethods

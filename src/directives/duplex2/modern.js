@@ -24,10 +24,11 @@ avalon.directive('duplex', {
         var parser = binding.param, dtype
         var isChecked = false
          parser = parser ?
-            '[' + parser.split('-').forEach(function(a){
+            '[' + parser.split('-').map(function(a){
                 if(a === 'checked'){
                     isChecked = true
                 }
+                return avalon.quote(a)
             }) + ']': '[]'
        
         if (rcheckedType.test(etype) && isChecked) {
@@ -102,6 +103,7 @@ avalon.directive('duplex', {
             var data = node.__ms_duplex__
             data.format = vnode.duplexFormat
             data.set = vnode.duplexSetter
+            data.parse = parseValue
             addValidateField(node, vnode)
             if (!avalon.msie && updateModelByValue === false && !node.valueHijack) {
                 //chrome 42及以下版本需要这个hack
@@ -117,6 +119,13 @@ avalon.directive('duplex', {
 
             if (data.viewValue !== vnode.viewValue) {
                 data.modelValue = vnode.modelValue //原始数据
+                if(!Array.isArray(vnode.modelValue)){
+                    var parsedValue = data.parse( vnode.viewValue)
+                    if(parsedValue !== data.modelValue){
+                        data.set(data.vmodel, parsedValue)
+                    }
+                }
+                
                 data.viewValue = vnode.viewValue  //被过滤器处理的数据
                 data.element = node
                 updateView[data.type].call(data)
@@ -131,6 +140,16 @@ avalon.directive('duplex', {
 
     }
 })
+
+function parseValue( val) {
+    for (var i = 0, k; k = this.parser[i++]; ) {
+        var fn = avalon.parsers[k]
+        if (fn) {
+            val = fn.call(this, val)
+        }
+    }
+    return val
+}
 /*
  vm[ms-duplex]  →  原始modelValue →  格式化后比较   →   输出页面
     ↑                                                ↓
