@@ -65,6 +65,7 @@ avalon.directive('duplex', {
         cur.duplexSetter = evaluatorPool.get('duplex:set:' + expr)
         var format = evaluatorPool.get('duplex:format:' + expr)
         var changed = cur.props['data-duplex-changed']
+        cur.callback = changed ? avalon.parseExpr(changed,'on'):'avalon.noop'
         cur.duplexFormat = format || 'function(vm, a){return a}'
         cur.duplexData = stringify({
             type: dtype, //这个决定绑定什么事件
@@ -105,7 +106,7 @@ avalon.directive('duplex', {
             data.format = vnode.duplexFormat
             data.set = vnode.duplexSetter
             data.parse = parseValue
-         
+            data.callback = vnode.callback
             addValidateField(node, vnode)
             if (!avalon.msie && updateModelByValue === false && !node.valueHijack) {
                 //chrome 42及以下版本需要这个hack

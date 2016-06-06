@@ -66,6 +66,7 @@ avalon.directive('duplex', {
         cur.duplexSetter = evaluatorPool.get('duplex:set:' + expr)
         var format = evaluatorPool.get('duplex:format:' + expr)
         var changed = cur.props['data-duplex-changed']
+        cur.callback = changed ? avalon.parseExpr(changed,'on'):'avalon.noop'
         cur.duplexFormat = format || 'function(vm, a){return a}'
         cur.duplexData = stringify({
             type: dtype, //这个决定绑定什么事件
@@ -103,6 +104,7 @@ avalon.directive('duplex', {
             var data = node.__ms_duplex__
             data.format = vnode.duplexFormat
             data.set = vnode.duplexSetter
+            data.callback = vnode.callback
             data.parse = parseValue
             addValidateField(node, vnode)
             if (!avalon.msie && updateModelByValue === false && !node.valueHijack) {
