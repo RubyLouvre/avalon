@@ -8,7 +8,6 @@ var dir = avalon.directive('widget', {
     parse: function (cur, pre, binding) {
 
         var wid = pre.props.wid || avalon.makeHashCode('w')
-
         cur.wid = avalon.quote(wid)
         cur.directive = 'widget'
         cur.template = pre.template
@@ -17,12 +16,12 @@ var dir = avalon.directive('widget', {
 
         var old = pre.$append || ''
         pre.$append = [
-            'var curIndex = vnodes.length - 1',
-            'var el = vnodes[curIndex]',
-            'if(el.nodeType === 1){',
-            'el.local = __local__',
-            'el.vmodel = __vmodel__',
-            'avalon.component(el, vnodes, curIndex,' + cur.wid + ')',
+            'var il1492 = vnodes.length - 1',
+            'var el1492 = vnodes[il1492]',
+            'if(el1492.nodeType === 1){',
+            'el1492.local = __local__',
+            'el1492.vmodel = __vmodel__',
+            'avalon.component(el1492, vnodes, il1492,' + cur.wid + ')',
             '}'
         ].join('\n ') + old
     },

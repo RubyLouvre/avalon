@@ -94,8 +94,6 @@ avalon.component = function (name, definition) {
             })
         }, defineArgs)
 
-
-
         vmodel.$id = $id
         //开始构建组件的虚拟DOM
         var finalTemplate = definition.template.trim()
@@ -144,7 +142,7 @@ avalon.component = function (name, definition) {
         })
         // 必须加这个,方便在parseView.js开挂
         vtree[0].directive = 'widget'
-        var render = avalon.render(vtree)
+        var render = avalon.render(vtree,root.local)
 
         vmodel.$render = render
         try {

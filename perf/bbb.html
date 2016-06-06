@@ -4,39 +4,28 @@
         <meta charset="UTF-8">
         <title>Title</title>
     </head>
-    <body ms-controller="page">
-        <div id="div">
-            <ul>
-                <li ms-for="el in @current.friends">
-                    <p ms-for="item in el">{{item.name}}</p>
-                </li>
-            </ul>
-            <button ms-click="@click | prevent">change</button>
-        </div>
-        <script src="../dist/avalon.js"></script>
+    <body >
+
+        <script src="../dist/avalon.test.js"></script>
         <script>
-       var data = [{
-            name: "zs",
-            friends: [[{name: 'ls22'}, {name: 'ls44'}, {name: 'ls55'}]]
-        }, {
-            name: "zs",
-            friends: [
-                [{name: 'ls1'}, {name: 'ls2'}, {name: 'ls3'}],
-                [{name: 'ls1'}, {name: 'ls2'}, {name: 'ls3'}]
-            ]
-        }]
-var vm = avalon.define({
-    $id: 'page',
-    array: [], //avalon.mix(true, [], data),
-    current: {},
-    click: function(){
-        this.current =avalon.mix(true, {}, data[1])
-    }
-})
-vm.current = avalon.mix(true, {}, data[0])
+
+            var vm = avalon.define({
+                $id: 'page',
+                array: [{name: 'ls1'}, {name: 'ls2'}, {name: 'ls3'}],
+                getId: function (el) {
+                    console.log(el)
+                    return el.name + "_id"
+                }
+            })
 
 
 
         </script>
+        <div ms-controller="page">
+            <p ms-for="el in @array">
+                <ms-button ms-widget="{$id:@getId(el)}">{{el.name}}</ms-button>
+            </p>
+
+        </div>
     </body>
 </html>

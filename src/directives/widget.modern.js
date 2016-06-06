@@ -17,12 +17,12 @@ var dir = avalon.directive('widget', {
 
         var old = pre.$append || ''
         pre.$append = [
-            'var curIndex = vnodes.length - 1',
-            'var el = vnodes[curIndex]',
-            'if(el.nodeType === 1){',
-            'el.local = __local__',
-            'el.vmodel = __vmodel__',
-            'avalon.component(el, vnodes, curIndex,' + cur.wid + ')',
+            'var il1492 = vnodes.length - 1',
+            'var el1492 = vnodes[il1492]',
+            'if(el1492.nodeType === 1){',
+            'el1492.local = __local__',
+            'el1492.vmodel = __vmodel__',
+            'avalon.component(el1492, vnodes, il1492,' + cur.wid + ')',
             '}'
         ].join('\n ') + old
     },
@@ -55,7 +55,7 @@ var dir = avalon.directive('widget', {
 
             update(cur, fireReady, steps, 'widget', 'afterChange')
         } else {
-             scope.renderCount ++
+            scope.renderCount++
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
             cur.skipContent = !needUpdate
             if (pre.wid && cur.wid !== pre.wid) {
@@ -85,9 +85,9 @@ var dir = avalon.directive('widget', {
         }
     },
     addDisposeMonitor: function (dom) {
-        
+
         disposeDetectStrategy.byRewritePrototype(dom)
-        
+
     },
     replaceByComment: function (dom, node, parent) {
         var comment = document.createComment(node.nodeValue)

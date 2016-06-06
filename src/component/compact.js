@@ -153,9 +153,9 @@ avalon.component = function (name, definition) {
         })
         // 必须加这个,方便在parseView.js开挂
         vtree[0].directive = 'widget'
-        var render = avalon.render(vtree)
-
+        var render = avalon.render(vtree,root.local)    
         vmodel.$render = render
+
         try {
             var ret = render(vmodel, root.local)
         } catch (e) {

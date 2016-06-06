@@ -4171,11 +4171,18 @@ return /******/ (function(modules) { // webpackBootstrap
 		// dispatch与patch 为内置模块
 		var parseView = __webpack_require__(47)
 
-		function render(vtree) {
+		function render(vtree, local) {
 		    var _body = Array.isArray(vtree) ? parseView(vtree) : vtree
-		    var body = '__local__ = __local__ || {};\n'+
-		               'var __present__, __top__,__synth__;\n'+ _body
-		    var fn = Function('__vmodel__','__local__' ,body)
+		    var _local = []
+		    if (local) {
+		        for (var i in local) {
+		            _local.push('var ' + i + ' = __local__['+avalon.quote(i)+']')
+		        }
+		    }
+		    var body = '__local__ = __local__ || {};\n' +
+		            'var __present__, __top__,__synth__;\n' +
+		            _local.join(';\n') + _body
+		    var fn = Function('__vmodel__', '__local__', body)
 		    return fn
 		}
 		avalon.render = render
@@ -6691,12 +6698,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		        var old = pre.$append || ''
 		        pre.$append = [
-		            'var curIndex = vnodes.length - 1',
-		            'var el = vnodes[curIndex]',
-		            'if(el.nodeType === 1){',
-		            'el.local = __local__',
-		            'el.vmodel = __vmodel__',
-		            'avalon.component(el, vnodes, curIndex,' + cur.wid + ')',
+		            'var il1492 = vnodes.length - 1',
+		            'var el1492 = vnodes[il1492]',
+		            'if(el1492.nodeType === 1){',
+		            'el1492.local = __local__',
+		            'el1492.vmodel = __vmodel__',
+		            'avalon.component(el1492, vnodes, il1492,' + cur.wid + ')',
 		            '}'
 		        ].join('\n ') + old
 		    },
@@ -6729,7 +6736,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		            update(cur, fireReady, steps, 'widget', 'afterChange')
 		        } else {
-		             scope.renderCount ++
+		            scope.renderCount++
 		            var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
 		            cur.skipContent = !needUpdate
 		            if (pre.wid && cur.wid !== pre.wid) {
@@ -6759,9 +6766,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		    },
 		    addDisposeMonitor: function (dom) {
-		        
+
 		        disposeDetectStrategy.byRewritePrototype(dom)
-		        
+
 		    },
 		    replaceByComment: function (dom, node, parent) {
 		        var comment = document.createComment(node.nodeValue)
@@ -7025,8 +7032,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		            })
 		        }, defineArgs)
 
-
-
 		        vmodel.$id = $id
 		        //开始构建组件的虚拟DOM
 		        var finalTemplate = definition.template.trim()
@@ -7075,7 +7080,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        })
 		        // 必须加这个,方便在parseView.js开挂
 		        vtree[0].directive = 'widget'
-		        var render = avalon.render(vtree)
+		        var render = avalon.render(vtree,root.local)
 
 		        vmodel.$render = render
 		        try {
