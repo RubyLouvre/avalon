@@ -252,8 +252,8 @@ describe('widget', function () {
                 setTimeout(function () {
                     expect(hookIndex).to.be.equal(4)
                     done()
-                })
-            })
+                },120)
+            }, 120)
 
         })
 

@@ -11,7 +11,6 @@ var updateModelByEvent = require('./updateModelByEvent.modern')
 var updateModelByValue = require('./updateModelByValue')
 var updateModel = require('./updateModelHandle')
 var updateView = require('./updateView.modern')
-
 var addValidateField = require('./addValidateField')
 
 
@@ -49,7 +48,7 @@ avalon.directive('duplex', {
         }
         var isChanged = false, debounceTime = 0
         //判定是否使用了 change debounce 过滤器
-        if (dtype === 'input'|| dtype === 'contenteditable') {
+        if (dtype === 'input' || dtype === 'contenteditable') {
             if (rchangeFilter.test(expr)) {
                 isChanged = true
             }
@@ -70,6 +69,7 @@ avalon.directive('duplex', {
         cur.duplexFormat = format || 'function(vm, a){return a}'
         cur.duplexData = stringify({
             type: dtype, //这个决定绑定什么事件
+            isChecked: isChecked,
             isChanged: isChanged, //这个决定同步的频数
             parser: parser, //用于转换原始的视图数据
             callback: changed ? avalon.parseExpr(binding, 'on') : 'avalon.noop',
@@ -82,10 +82,11 @@ avalon.directive('duplex', {
         var curValue = cur.modelValue
         var preValue = pre.modelValue
         var viewValue = cur.duplexFormat(cur.vmodel, curValue)
+        
         if (String(viewValue) !==
                 String(cur.duplexFormat(cur.vmodel, preValue))) {
-            cur.props.type = pre.props.type
             cur.viewValue = viewValue
+            
             if (cur.type === 'select' && !cur.children.length) {
                 avalon.Array.merge(cur.children, avalon.lexer(cur.template, 0, 2))
                 genVirtualSelectChildren(cur, viewValue)
@@ -104,11 +105,12 @@ avalon.directive('duplex', {
             var data = node.__ms_duplex__
             data.format = vnode.duplexFormat
             data.set = vnode.duplexSetter
-            data.callback = vnode.callback
             data.parse = parseValue
+            data.callback = vnode.callback
             addValidateField(node, vnode)
             if (!avalon.msie && updateModelByValue === false && !node.valueHijack) {
                 //chrome 42及以下版本需要这个hack
+             
                 node.valueHijack = updateModel
                 var intervalID = setInterval(function () {
                     if (!avalon.contains(avalon.root, node)) {
@@ -118,7 +120,8 @@ avalon.directive('duplex', {
                     }
                 }, 30)
             }
-
+         
+ 
             if (data.viewValue !== vnode.viewValue) {
                 data.modelValue = vnode.modelValue //原始数据
                 if(!Array.isArray(vnode.modelValue)){
@@ -128,10 +131,10 @@ avalon.directive('duplex', {
                     }
                 }
                 
+                                
                 data.viewValue = vnode.viewValue  //被过滤器处理的数据
                 data.element = node
                 updateView[data.type].call(data)
-
                 if (node.caret) {
                     var pos = data.caretPos
                     pos && data.setCaret(node, pos.start, pos.end)
@@ -152,9 +155,9 @@ function parseValue( val) {
     }
     return val
 }
+
 /*
  vm[ms-duplex]  →  原始modelValue →  格式化后比较   →   输出页面
     ↑                                                ↓
  比较modelValue  ←  parsed后得到modelValue  ← 格式化后比较 ←  原始viewValue
  */
-

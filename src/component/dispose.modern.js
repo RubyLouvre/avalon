@@ -29,12 +29,18 @@ function byRewritePrototype() {
         }
         return a
     })
-
-    rewite('innerHTML', function (fn, html) {
-        var all = this.getElementsByTagName('*')
-        fn.call(this, html)
+    //访问器属性需要用getOwnPropertyDescriptor处理
+    var ep = Element.prototype
+    function newSetter(html) {
+        var all = avalon.slice(this.getElementsByTagName('*'))
+        oldSetter.call(this, html)
         fireDisposedComponents(all)
-    })
+    }
+    var obj = Object.getOwnPropertyDescriptor(ep, 'innerHTML')
+    var oldSetter = obj.set
+    obj.set = newSetter
+    Object.defineProperty(ep, 'innerHTML', obj)
+
 
     rewite('appendChild', function (fn, a) {
         fn.call(this, a)
@@ -59,11 +65,21 @@ module.exports = {
     byRewritePrototype: byRewritePrototype
 }
 
+function inDomTree(el) {
+    while (el) {
+        if (el.nodeType === 10) {
+            return true
+        }
+        el = el.parentNode
+    }
+    return false
+}
+
 function fireDisposeHook(el) {
-    if (el.nodeType === 1 && el.getAttribute('wid') && !avalon.contains(avalon.root, el)) {
+    if (el.nodeType === 1 && el.getAttribute('wid') && !inDomTree(el)) {
         var wid = el.getAttribute('wid')
         var docker = avalon.scopes[ wid ]
-        if(!docker)
+        if (!docker)
             return
         var vm = docker.vmodel
         docker.vmodel.$fire("onDispose", {
@@ -81,10 +97,10 @@ function fireDisposeHook(el) {
         return false
     }
 }
-function fireDisposeHookDelay(a){
+function fireDisposeHookDelay(a) {
     setTimeout(function () {
         fireDisposeHook(a)
-    },4)
+    }, 4)
 }
 
 function fireDisposedComponents(nodes) {

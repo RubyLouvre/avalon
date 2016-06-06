@@ -30,14 +30,15 @@ var dir = avalon.directive('widget', {
         return avalon.mediatorFactory.apply(this, arguments)
     },
     diff: function (cur, pre, steps) {
-
         var wid = cur.wid
+        var scope = avalon.scopes[wid]
         if (cur.nodeType === 8) {
             steps.count += 1
             cur.change = [this.replaceByComment]
-        } else if (cur.renderCount && cur.renderCount < 2) {
+        } else if (scope && scope.renderCount === 1) {
             //https://github.com/RubyLouvre/avalon/issues/1390
             //当第一次渲染组件时,当组件的儿子为元素,而xmp容器里面只有文本时,就会出错
+            scope.renderCount = 2
             pre.children = []
             cur.steps = steps
             fixRepeatAction(cur.children)
@@ -49,17 +50,20 @@ var dir = avalon.directive('widget', {
                     wid: wid,
                     vmodel: vnode.vmodel
                 })
-                cur.renderCount = 2
+
             }
+
             update(cur, fireReady, steps, 'widget', 'afterChange')
         } else {
+             scope.renderCount ++
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
             cur.skipContent = !needUpdate
             if (pre.wid && cur.wid !== pre.wid) {
+
                 delete avalon.scopes[pre.wid]
                 delete avalon.vmodels[pre.wid]
             }
-           
+
             var viewChangeObservers = cur.vmodel.$events.onViewChange
             if (viewChangeObservers && viewChangeObservers.length) {
                 steps.count += 1
@@ -98,18 +102,21 @@ var dir = avalon.directive('widget', {
         }
     },
     replaceByComponent: function (dom, vdom, parent) {
+
         var com = avalon.vdomAdaptor(vdom, 'toDOM')
         vdom.ouerHTML = avalon.vdomAdaptor(vdom, 'toHTML')
+
         if (dom) {
             parent.replaceChild(com, dom)
         } else {
             parent.appendChild(com)
         }
+
         patch([com], [vdom], parent, vdom.steps)
 
         var vm = vdom.vmodel
         var scope = avalon.scopes[vm.$id]
-      
+
         scope.dom = com
         vm.$element = com
         com.vtree = [vdom]

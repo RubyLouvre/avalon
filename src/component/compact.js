@@ -1,7 +1,6 @@
 
 var VText = require('../vdom/VText')
 var parseView = require('../strategy/parser/parseView')
-var resolvedComponents = avalon.resolvedComponents
 var skipArray = require('../vmodel/parts/skipArray')
 
 var componentContainers = {wbr: 1, xmp: 1, template: 1}
@@ -34,7 +33,7 @@ avalon.component = function (name, definition) {
             mixinHooks(finalOptions, option, index)
         })
 
-        //得到组件的is类型 
+        //得到组件的is类型
         var componentName = root.type.indexOf('-') > 0 ?
                 root.type : finalOptions.is
         if (!avalon.components[componentName]) {
@@ -42,7 +41,7 @@ avalon.component = function (name, definition) {
         }
 
 
-        //得到组件在顶层vm的配置对象名   
+        //得到组件在顶层vm的配置对象名
         var configName = componentName.replace(/-/g, '_')
         if (topVm.hasOwnProperty(configName) &&
                 typeof topVm[configName] === 'object') {
@@ -52,7 +51,6 @@ avalon.component = function (name, definition) {
             mixinHooks(finalOptions, topVm[configName], 0)
             protected = [configName].concat(protected)
         }
-
 
         var docker = avalon.scopes[finalOptions.$id] || avalon.scopes[wid]
         if (docker) {
@@ -118,18 +116,17 @@ avalon.component = function (name, definition) {
         if (vtree.length > 1) {
             avalon.error('组件必须用一个元素包起来')
         }
-        
+
         var componentRoot = vtree[0]
-      
+
         avalon.vmodels[$id] = vmodel
-       
 
        //将用户标签中的属性合并到组件标签的属性里
         avalon.mix(componentRoot.props, root.props)
         //  必须指定wid
         componentRoot.props.wid = $id
         //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
-        
+
         //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
         if (definition.soleSlot) {
             var slots = {}
@@ -156,7 +153,6 @@ avalon.component = function (name, definition) {
         })
         // 必须加这个,方便在parseView.js开挂
         vtree[0].directive = 'widget'
-
         var render = avalon.render(vtree)
 
         vmodel.$render = render
@@ -180,8 +176,8 @@ function replaceByComponent(vdom, vm, vnodes, index) {
 
     var wid = vm.$id
     var scope = avalon.scopes[wid]
+
     if (scope) {
-        vdom.renderCount = ++scope.renderCount
         avalon.scopes[wid].dom.vtree = vdom.nodes = [vdom]
     } else {
         var scope = {

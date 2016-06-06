@@ -13,7 +13,6 @@ avalon.shadowCopy(avalon, {
     vmodels: {},
     filters: {},
     components: {},//放置组件的类
-    resolvedComponents:{},//放置组件的实例
     directives: {},
     eventHooks: {},
     eventListeners: {},
