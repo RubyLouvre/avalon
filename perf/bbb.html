@@ -27,15 +27,13 @@
         }]
 var vm = avalon.define({
     $id: 'page',
-    array: avalon.mix(true, [], data),
+    array: [], //avalon.mix(true, [], data),
     current: {},
     click: function(){
-        console.log(avalon.mix(true, [], data[1]))
-        this.current =avalon.mix(true, [], data[1])
-        console.log(this.current,"++")
+        this.current =avalon.mix(true, {}, data[1])
     }
 })
-vm.current = avalon.mix(true, [], data[0])
+vm.current = avalon.mix(true, {}, data[0])
 
 
 

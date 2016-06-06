@@ -6,6 +6,7 @@
  */
 
 var share = require('./parts/compact')
+var createViewModel = require('./parts/createViewModel')
 
 var isSkip = share.isSkip
 var toJson = share.toJson
@@ -13,7 +14,7 @@ var $$midway = share.$$midway
 var $$skipArray = share.$$skipArray
 
 var makeAccessor = share.makeAccessor
-var makeObserver = share.makeObserver
+var initViewModel = share.initViewModel
 var modelAccessor = share.modelAccessor
 var modelAdaptor = share.modelAdaptor
 var makeHashCode = avalon.makeHashCode
@@ -53,7 +54,7 @@ function masterFactory(definition, heirloom, options) {
 
     accessors.$model = modelAccessor
     var $vmodel = new Observer()
-    $vmodel = addAccessors($vmodel, accessors, definition)
+    $vmodel = createViewModel($vmodel, accessors, definition)
 
     for (key in keys) {
         //对普通监控属性或访问器属性进行赋值
@@ -66,13 +67,12 @@ function masterFactory(definition, heirloom, options) {
             keys[key] = true
         }
     }
-    makeObserver($vmodel, heirloom, keys, accessors, options)
+    initViewModel($vmodel, heirloom, keys, accessors, options)
 
     return $vmodel
 }
 
 $$midway.masterFactory = masterFactory
-var addAccessors = require('./parts/addAccessors')
 var empty = {}
 function slaveFactory(before, after, heirloom, options) {
     var keys = {}
@@ -103,13 +103,13 @@ function slaveFactory(before, after, heirloom, options) {
     options.hashcode = before.$hashcode || makeHashCode('$')
     accessors.$model = modelAccessor
     var $vmodel = new Observer()
-    $vmodel = addAccessors($vmodel, accessors, skips)
+    $vmodel = createViewModel($vmodel, accessors, skips)
 
     for (key in skips) {
         $vmodel[key] = skips[key]
     }
 
-    makeObserver($vmodel, heirloom, keys, accessors, options)
+    initViewModel($vmodel, heirloom, keys, accessors, options)
 
     return $vmodel
 }
@@ -167,7 +167,7 @@ function mediatorFactory(before, after) {
     }
 
     var $vmodel = new Observer()
-    $vmodel = addAccessors($vmodel, accessors, keys)
+    $vmodel = createViewModel($vmodel, accessors, keys)
 
     for (key in keys) {
         if (!accessors[key]) {//添加不可监控的属性
@@ -190,7 +190,7 @@ function mediatorFactory(before, after) {
 
     }
 
-    makeObserver($vmodel, heirloom, keys, accessors, {
+    initViewModel($vmodel, heirloom, keys, accessors, {
         id: before.$id,
         hashcode: makeHashCode('$'),
         master: true
@@ -255,7 +255,7 @@ __method__.forEach(function (method) {
             for (var j = 0, jn = neo.length; j < jn; j++) {
                 var item = old[j]
 
-                args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, {
+                args[j + 2] = modelAdaptor(neo[j], item, (item && item.$events || {}), {
                     id: this.$id + '.*',
                     master: true
                 })

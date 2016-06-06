@@ -1,4 +1,4 @@
-/*! built in 2016-6-6:19 version 2.06 by 司徒正美 */
+/*! built in 2016-6-7:1 version 2.06 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -4660,9 +4660,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	var dispatch = __webpack_require__(81)
 	var $emit = dispatch.$emit
 	var $watch = dispatch.$watch
+	/*
+	 * initEvents
+	 * isSkip
+	 * modelAdaptor
+	 * makeAccessor
+	 */
 
-
-	function makeFire($vmodel, heirloom) {
+	function initEvents($vmodel, heirloom) {
 	    heirloom.__vmodel__ = $vmodel
 	    var hide = $$midway.hideProperty
 
@@ -4862,7 +4867,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        options.array = true
 	        options.hashcode = hashcode
 	        options.id = options.id || hashcode
-	        $$midway.makeObserver(array, heirloom, {}, {}, options)
+	        $$midway.initViewModel(array, heirloom, {}, {}, options)
 
 	        for (var j = 0, n = array.length; j < n; j++) {
 	            array[j] = modelAdaptor(array[j], 0, {}, {
@@ -4917,7 +4922,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    $$skipArray: $$skipArray,
 	    isSkip: isSkip,
 	    __array__: __array__,
-	    makeFire: makeFire,
+	    initEvents: initEvents,
 	    makeAccessor: makeAccessor,
 	    modelAdaptor: modelAdaptor
 	}
@@ -7237,7 +7242,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        definition.$track = keys.sort().join(';;')
 	        var vm = proxyfy(definition)
-	        return makeObserver(vm, heirloom, {}, {}, options)
+	        return initViewModel(vm, heirloom, {}, {}, options)
 	    }
 	    
 	    function proxyfy(definition) {
@@ -7319,7 +7324,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //         _after.$render = before.$render 
 	        //     } 
 	        // }
-	        return makeObserver(vm, heirloom, {}, {}, {
+	        return initViewModel(vm, heirloom, {}, {}, {
 	            id: before.$id,
 	            hashcode: makeHashCode('$'),
 	            master: true
@@ -7329,7 +7334,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    avalon.mediatorFactory = $$midway.mediatorFactory = mediatorFactory
 
 
-	    function makeObserver($vmodel, heirloom, discard , abandon, options) {
+	    function initViewModel($vmodel, heirloom, discard , abandon, options) {
 	        if (options.array) {
 	            Object.defineProperty($vmodel, '$model', {
 	                get: function () {
@@ -7356,7 +7361,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return $vmodel
 	    }
 
-	    $$midway.makeObserver = makeObserver
+	    $$midway.initViewModel = initViewModel
 
 	    var __array__ = share.__array__
 	    var ap = Array.prototype

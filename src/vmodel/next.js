@@ -88,7 +88,7 @@ if (avalon.window.Proxy) {
         }
         definition.$track = keys.sort().join(';;')
         var vm = proxyfy(definition)
-        return makeObserver(vm, heirloom, {}, {}, options)
+        return initViewModel(vm, heirloom, {}, {}, options)
     }
     
     function proxyfy(definition) {
@@ -170,7 +170,7 @@ if (avalon.window.Proxy) {
         //         _after.$render = before.$render 
         //     } 
         // }
-        return makeObserver(vm, heirloom, {}, {}, {
+        return initViewModel(vm, heirloom, {}, {}, {
             id: before.$id,
             hashcode: makeHashCode('$'),
             master: true
@@ -180,7 +180,7 @@ if (avalon.window.Proxy) {
     avalon.mediatorFactory = $$midway.mediatorFactory = mediatorFactory
 
 
-    function makeObserver($vmodel, heirloom, discard , abandon, options) {
+    function initViewModel($vmodel, heirloom, discard , abandon, options) {
         if (options.array) {
             Object.defineProperty($vmodel, '$model', {
                 get: function () {
@@ -207,7 +207,7 @@ if (avalon.window.Proxy) {
         return $vmodel
     }
 
-    $$midway.makeObserver = makeObserver
+    $$midway.initViewModel = initViewModel
 
     var __array__ = share.__array__
     var ap = Array.prototype

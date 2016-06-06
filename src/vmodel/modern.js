@@ -14,7 +14,7 @@ delete $$skipArray.__proxy__
 delete $$skipArray.__const__
 
 var makeAccessor = share.makeAccessor
-var makeObserver = share.makeObserver
+var initViewModel = share.initViewModel
 var modelAccessor = share.modelAccessor
 var modelAdaptor = share.modelAdaptor
 var makeHashCode = avalon.makeHashCode
@@ -65,7 +65,7 @@ function masterFactory(definition, heirloom, options) {
             keys[key] = true
         }
     }
-    makeObserver($vmodel, heirloom, keys, accessors, options)
+    initViewModel($vmodel, heirloom, keys, accessors, options)
 
     return $vmodel
 }
@@ -108,7 +108,7 @@ function slaveFactory(before, after, heirloom, options) {
         }
         keys[key] = true
     }
-    makeObserver($vmodel, heirloom, keys, accessors, options)
+    initViewModel($vmodel, heirloom, keys, accessors, options)
 
     return $vmodel
 }
@@ -177,7 +177,7 @@ function mediatorFactory(before, after) {
         keys[key] = true
     }
 
-    makeObserver($vmodel, heirloom, keys, accessors, {
+    initViewModel($vmodel, heirloom, keys, accessors, {
         id: before.$id,
         hashcode: makeHashCode("$"),
         master: true
@@ -234,7 +234,7 @@ __method__.forEach(function (method) {
             var args = [a, b]
             for (var j = 0, jn = neo.length; j < jn; j++) {
                 var item = old[j]
-                args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, {
+                args[j + 2] = modelAdaptor(neo[j], item, (item && item.$events||{}), {
                     id: this.$id + '.*',
                     master: true
                 })

@@ -1,4 +1,4 @@
-/*! built in 2016-6-6:19 version 2.06 by 司徒正美 */
+/*! built in 2016-6-7:1 version 2.06 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -71,7 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 107:
 /***/ function(module, exports, __webpack_require__) {
 
-	/*! built in 2016-6-6:19 version 2.06 by 司徒正美 */
+	/*! built in 2016-6-7:1 version 2.06 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -4732,9 +4732,14 @@ return /******/ (function(modules) { // webpackBootstrap
 		var dispatch = __webpack_require__(81)
 		var $emit = dispatch.$emit
 		var $watch = dispatch.$watch
+		/*
+		 * initEvents
+		 * isSkip
+		 * modelAdaptor
+		 * makeAccessor
+		 */
 
-
-		function makeFire($vmodel, heirloom) {
+		function initEvents($vmodel, heirloom) {
 		    heirloom.__vmodel__ = $vmodel
 		    var hide = $$midway.hideProperty
 
@@ -4934,7 +4939,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        options.array = true
 		        options.hashcode = hashcode
 		        options.id = options.id || hashcode
-		        $$midway.makeObserver(array, heirloom, {}, {}, options)
+		        $$midway.initViewModel(array, heirloom, {}, {}, options)
 
 		        for (var j = 0, n = array.length; j < n; j++) {
 		            array[j] = modelAdaptor(array[j], 0, {}, {
@@ -4989,7 +4994,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    $$skipArray: $$skipArray,
 		    isSkip: isSkip,
 		    __array__: __array__,
-		    makeFire: makeFire,
+		    initEvents: initEvents,
 		    makeAccessor: makeAccessor,
 		    modelAdaptor: modelAdaptor
 		}
@@ -7233,7 +7238,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		delete $$skipArray.__const__
 
 		var makeAccessor = share.makeAccessor
-		var makeObserver = share.makeObserver
+		var initViewModel = share.initViewModel
 		var modelAccessor = share.modelAccessor
 		var modelAdaptor = share.modelAdaptor
 		var makeHashCode = avalon.makeHashCode
@@ -7284,7 +7289,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            keys[key] = true
 		        }
 		    }
-		    makeObserver($vmodel, heirloom, keys, accessors, options)
+		    initViewModel($vmodel, heirloom, keys, accessors, options)
 
 		    return $vmodel
 		}
@@ -7327,7 +7332,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		        keys[key] = true
 		    }
-		    makeObserver($vmodel, heirloom, keys, accessors, options)
+		    initViewModel($vmodel, heirloom, keys, accessors, options)
 
 		    return $vmodel
 		}
@@ -7396,7 +7401,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        keys[key] = true
 		    }
 
-		    makeObserver($vmodel, heirloom, keys, accessors, {
+		    initViewModel($vmodel, heirloom, keys, accessors, {
 		        id: before.$id,
 		        hashcode: makeHashCode("$"),
 		        master: true
@@ -7453,7 +7458,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            var args = [a, b]
 		            for (var j = 0, jn = neo.length; j < jn; j++) {
 		                var item = old[j]
-		                args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, {
+		                args[j + 2] = modelAdaptor(neo[j], item, (item && item.$events||{}), {
 		                    id: this.$id + '.*',
 		                    master: true
 		                })
@@ -7493,7 +7498,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/***/ function(module, exports, __webpack_require__) {
 
 		var share = __webpack_require__(80)
-		var makeFire = share.makeFire
+		var initEvents = share.initEvents
 
 		function toJson(val) {
 		    var xtype = avalon.type(val)
@@ -7536,7 +7541,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		share.$$midway.hideProperty = hideProperty
 
-		function makeObserver($vmodel, heirloom, keys, accessors, options) {
+		function initViewModel($vmodel, heirloom, keys, accessors, options) {
 
 		    if (options.array) {
 		        Object.defineProperty($vmodel, '$model', modelAccessor)
@@ -7552,15 +7557,15 @@ return /******/ (function(modules) { // webpackBootstrap
 		    if (options.master === true) {
 		        hideProperty($vmodel, '$element', null)
 		        hideProperty($vmodel, '$render', 0)
-		        makeFire($vmodel, heirloom)
+		        initEvents($vmodel, heirloom)
 		    }
 		}
 
-		share.$$midway.makeObserver = makeObserver
+		share.$$midway.initViewModel = initViewModel
 
 		var mixin = {
 		    toJson: toJson,
-		    makeObserver: makeObserver,
+		    initViewModel: initViewModel,
 		    modelAccessor: modelAccessor
 		}
 		for (var i in share) {

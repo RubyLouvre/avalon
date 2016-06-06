@@ -4,9 +4,14 @@ var $$skipArray = require('./skipArray')
 var dispatch = require('./dispatch')
 var $emit = dispatch.$emit
 var $watch = dispatch.$watch
+/*
+ * initEvents
+ * isSkip
+ * modelAdaptor
+ * makeAccessor
+ */
 
-
-function makeFire($vmodel, heirloom) {
+function initEvents($vmodel, heirloom) {
     heirloom.__vmodel__ = $vmodel
     var hide = $$midway.hideProperty
 
@@ -206,7 +211,7 @@ function arrayFactory(array, old, heirloom, options) {
         options.array = true
         options.hashcode = hashcode
         options.id = options.id || hashcode
-        $$midway.makeObserver(array, heirloom, {}, {}, options)
+        $$midway.initViewModel(array, heirloom, {}, {}, options)
 
         for (var j = 0, n = array.length; j < n; j++) {
             array[j] = modelAdaptor(array[j], 0, {}, {
@@ -261,7 +266,7 @@ module.exports = {
     $$skipArray: $$skipArray,
     isSkip: isSkip,
     __array__: __array__,
-    makeFire: makeFire,
+    initEvents: initEvents,
     makeAccessor: makeAccessor,
     modelAdaptor: modelAdaptor
 }

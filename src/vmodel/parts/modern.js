@@ -1,5 +1,5 @@
 var share = require('./share')
-var makeFire = share.makeFire
+var initEvents = share.initEvents
 
 function toJson(val) {
     var xtype = avalon.type(val)
@@ -42,7 +42,7 @@ var modelAccessor = {
 
 share.$$midway.hideProperty = hideProperty
 
-function makeObserver($vmodel, heirloom, keys, accessors, options) {
+function initViewModel($vmodel, heirloom, keys, accessors, options) {
 
     if (options.array) {
         Object.defineProperty($vmodel, '$model', modelAccessor)
@@ -58,15 +58,15 @@ function makeObserver($vmodel, heirloom, keys, accessors, options) {
     if (options.master === true) {
         hideProperty($vmodel, '$element', null)
         hideProperty($vmodel, '$render', 0)
-        makeFire($vmodel, heirloom)
+        initEvents($vmodel, heirloom)
     }
 }
 
-share.$$midway.makeObserver = makeObserver
+share.$$midway.initViewModel = initViewModel
 
 var mixin = {
     toJson: toJson,
-    makeObserver: makeObserver,
+    initViewModel: initViewModel,
     modelAccessor: modelAccessor
 }
 for (var i in share) {

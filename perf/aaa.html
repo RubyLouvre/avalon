@@ -6,27 +6,19 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../dist/avalon.js"></script>
         <script>
+            var aaa = [111,222,333]
             var vm = avalon.define({
                 $id: 'root',
-                array: ["<b>11</b>","<b>22</b>","<b>33</b>"]
+                array: aaa
             });
-            
-            /*
-             *  
-             */
+            aaa.push(666)
         </script>
-        <style>
-            .active{
-                background: #a9ea00;
-            }
-        </style>
     </head>
     <body >
         <div ms-controller="root">
-            <!--ms-js:var index = 0; -->
-            <div ms-for="el in @array as ddd">
-                <!--ms-js:var $first = index++;-->
-                {{$first}}
+            
+            <div ms-for="el in @array ">
+              {{el}}
             </div>
         </div>
     </body>

@@ -1,4 +1,4 @@
-/*! built in 2016-6-6:19 version 2.06 by 司徒正美 */
+/*! built in 2016-6-7:1 version 2.06 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -7559,6 +7559,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 	var share = __webpack_require__(79)
+	var createViewModel = __webpack_require__(83)
 
 	var isSkip = share.isSkip
 	var toJson = share.toJson
@@ -7566,7 +7567,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var $$skipArray = share.$$skipArray
 
 	var makeAccessor = share.makeAccessor
-	var makeObserver = share.makeObserver
+	var initViewModel = share.initViewModel
 	var modelAccessor = share.modelAccessor
 	var modelAdaptor = share.modelAdaptor
 	var makeHashCode = avalon.makeHashCode
@@ -7606,7 +7607,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    accessors.$model = modelAccessor
 	    var $vmodel = new Observer()
-	    $vmodel = addAccessors($vmodel, accessors, definition)
+	    $vmodel = createViewModel($vmodel, accessors, definition)
 
 	    for (key in keys) {
 	        //对普通监控属性或访问器属性进行赋值
@@ -7619,13 +7620,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            keys[key] = true
 	        }
 	    }
-	    makeObserver($vmodel, heirloom, keys, accessors, options)
+	    initViewModel($vmodel, heirloom, keys, accessors, options)
 
 	    return $vmodel
 	}
 
 	$$midway.masterFactory = masterFactory
-	var addAccessors = __webpack_require__(83)
 	var empty = {}
 	function slaveFactory(before, after, heirloom, options) {
 	    var keys = {}
@@ -7656,13 +7656,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    options.hashcode = before.$hashcode || makeHashCode('$')
 	    accessors.$model = modelAccessor
 	    var $vmodel = new Observer()
-	    $vmodel = addAccessors($vmodel, accessors, skips)
+	    $vmodel = createViewModel($vmodel, accessors, skips)
 
 	    for (key in skips) {
 	        $vmodel[key] = skips[key]
 	    }
 
-	    makeObserver($vmodel, heirloom, keys, accessors, options)
+	    initViewModel($vmodel, heirloom, keys, accessors, options)
 
 	    return $vmodel
 	}
@@ -7720,7 +7720,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    var $vmodel = new Observer()
-	    $vmodel = addAccessors($vmodel, accessors, keys)
+	    $vmodel = createViewModel($vmodel, accessors, keys)
 
 	    for (key in keys) {
 	        if (!accessors[key]) {//添加不可监控的属性
@@ -7743,7 +7743,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    }
 
-	    makeObserver($vmodel, heirloom, keys, accessors, {
+	    initViewModel($vmodel, heirloom, keys, accessors, {
 	        id: before.$id,
 	        hashcode: makeHashCode('$'),
 	        master: true
@@ -7808,7 +7808,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            for (var j = 0, jn = neo.length; j < jn; j++) {
 	                var item = old[j]
 
-	                args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, {
+	                args[j + 2] = modelAdaptor(neo[j], item, (item && item.$events || {}), {
 	                    id: this.$id + '.*',
 	                    master: true
 	                })
@@ -7855,7 +7855,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var share = __webpack_require__(80)
 	var canHideProperty = __webpack_require__(82)
-	var makeFire = share.makeFire
+	var initEvents = share.initEvents
+	/*
+	 * toJson
+	 * hideProperty
+	 * initViewModel
+	 */
+
 	function toJson(val) {
 	    var xtype = avalon.type(val)
 	    if (xtype === 'array') {
@@ -7901,7 +7907,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    configurable: true
 	}
 
-	function makeObserver($vmodel, heirloom, keys, accessors, options) {
+	function initViewModel($vmodel, heirloom, keys, accessors, options) {
 
 	    if (options.array) {
 	        if (avalon.modern) {
@@ -7922,17 +7928,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (options.master === true) {
 	        hideProperty($vmodel, '$element', null)
 	        hideProperty($vmodel, '$render', 0)
-	        makeFire($vmodel, heirloom)
+	        initEvents($vmodel, heirloom)
 	    }
 	}
 
-	share.$$midway.makeObserver = makeObserver
+	share.$$midway.initViewModel = initViewModel
 
 	share.$$midway.hideProperty = hideProperty
 
 	var mixin = {
 	    toJson: toJson,
-	    makeObserver: makeObserver,
+	    initViewModel: initViewModel,
 	    modelAccessor: modelAccessor
 	}
 	for (var i in share) {
@@ -7952,9 +7958,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	var dispatch = __webpack_require__(81)
 	var $emit = dispatch.$emit
 	var $watch = dispatch.$watch
+	/*
+	 * initEvents
+	 * isSkip
+	 * modelAdaptor
+	 * makeAccessor
+	 */
 
-
-	function makeFire($vmodel, heirloom) {
+	function initEvents($vmodel, heirloom) {
 	    heirloom.__vmodel__ = $vmodel
 	    var hide = $$midway.hideProperty
 
@@ -8154,7 +8165,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        options.array = true
 	        options.hashcode = hashcode
 	        options.id = options.id || hashcode
-	        $$midway.makeObserver(array, heirloom, {}, {}, options)
+	        $$midway.initViewModel(array, heirloom, {}, {}, options)
 
 	        for (var j = 0, n = array.length; j < n; j++) {
 	            array[j] = modelAdaptor(array[j], 0, {}, {
@@ -8209,7 +8220,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    $$skipArray: $$skipArray,
 	    isSkip: isSkip,
 	    __array__: __array__,
-	    makeFire: makeFire,
+	    initEvents: initEvents,
 	    makeAccessor: makeAccessor,
 	    modelAdaptor: modelAdaptor
 	}
