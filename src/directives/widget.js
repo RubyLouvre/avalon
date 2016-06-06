@@ -55,7 +55,7 @@ var dir = avalon.directive('widget', {
 
             update(cur, fireReady, steps, 'widget', 'afterChange')
         } else {
-             scope.renderCount ++
+            scope.renderCount ++
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
             cur.skipContent = !needUpdate
             if (pre.wid && cur.wid !== pre.wid) {

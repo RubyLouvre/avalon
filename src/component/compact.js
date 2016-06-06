@@ -121,7 +121,7 @@ avalon.component = function (name, definition) {
 
         avalon.vmodels[$id] = vmodel
 
-       //将用户标签中的属性合并到组件标签的属性里
+        //将用户标签中的属性合并到组件标签的属性里
         avalon.mix(componentRoot.props, root.props)
         //  必须指定wid
         componentRoot.props.wid = $id
@@ -177,15 +177,14 @@ function replaceByComponent(vdom, vm, vnodes, index) {
     var wid = vm.$id
     var scope = avalon.scopes[wid]
 
-    if (scope) {
-        avalon.scopes[wid].dom.vtree = vdom.nodes = [vdom]
+    if (scope && scope.dom) {
+        scope.dom.vtree = [vdom]
     } else {
         var scope = {
             vmodel: vm,
             render: vm.$render,
             local: vdom.local,
-            renderCount: 1,
-            nodes: [vdom]
+            renderCount: 1
         }
         avalon.scopes[wid] = scope
     }

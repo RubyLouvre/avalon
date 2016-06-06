@@ -7008,15 +7008,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var wid = vm.$id
 	    var scope = avalon.scopes[wid]
 
-	    if (scope) {
-	        avalon.scopes[wid].dom.vtree = vdom.nodes = [vdom]
+	    if (scope && scope.dom) {
+	        scope.dom.vtree = [vdom]
 	    } else {
 	        var scope = {
 	            vmodel: vm,
 	            render: vm.$render,
 	            local: vdom.local,
-	            renderCount: 1,
-	            nodes: [vdom]
+	            renderCount: 1
 	        }
 	        avalon.scopes[wid] = scope
 	    }
