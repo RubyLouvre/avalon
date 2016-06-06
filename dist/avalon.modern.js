@@ -1897,11 +1897,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (el.$prepend) {
 	            buffer.push(el.$prepend)
 	        }
+	        var append = el.$append
+	        delete el.$append
+	        delete el.$prepend
 	        if (vnode) {
 	            buffer.push(vnode + '\n')
 	        }
-	        if (el.$append) {
-	            buffer.push(el.$append)
+	        if (append) {
+	            buffer.push(append)
 	        }
 	    }
 	    buffer.push('return vnodes\n')
@@ -1944,10 +1947,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return b.name
 
 	        }).join(';;')
-	        if(pre.directive === 'widget'){
-	            cur.order = cur.order  ? 'ms-widget;;'+cur.order : 'ms-widget'
+	        if (pre.directive === 'widget') {
+	            cur.order = cur.order ? 'ms-widget;;' + cur.order : 'ms-widget'
 	            cur.directive = 'widget'
-	            cur.local ='__local__'
+	            cur.local = '__local__'
 	            cur.vmodel = '__vmodel__'
 	            cur.wid = avalon.quote(pre.props.wid)
 	            delete cur.skipAttrs
@@ -2008,15 +2011,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	                forstack.pop()
 	            }
 	            return ''
-	        } else if (nodeValue.indexOf('ms-js:') === 0) {//插入普通JS代码
-	            return addTag(pre)
-	            //str += parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
+	        } else if (nodeValue.indexOf('ms-js:') === 0) {//插入JS声明语句
+	            var statement = parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
+	            var ret = addTag(pre)
+	            var match = statement.match(rstatement)
+	            if (match && match[1]) {
+	                pre.$append = (pre.$append || '') + statement +
+	                        "\n__local__." + match[1] + ' = ' + match[1] + '\n'
+	            }else{
+	                avalon.warn(nodeValue+' parse fail!')
+	            }
+	            return ret
 	        } else {
 	            return addTag(pre)
 	        }
 	    }
 	}
-
+	var rstatement = /^\s*var\s+([$\w]+)\s*\=\s*\S+/
 
 	function stringifyText(el) {
 	    var array = parseDelimiter(el.nodeValue)//返回一个数组

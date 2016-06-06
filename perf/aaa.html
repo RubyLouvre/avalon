@@ -6,21 +6,11 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../dist/avalon.js"></script>
         <script>
-            var root = avalon.define({
+            var vm = avalon.define({
                 $id: 'root',
-                page: 'root',
-                level: 'root',
+                array: ["<b>11</b>","<b>22</b>","<b>33</b>"]
             });
-            var first = avalon.define({
-                $id: 'first',
-                page: 'first',
-                kind: 'first',
-            });
-            var second = avalon.define({
-                $id: 'second',
-                page: 'second',
-                grade: "second",
-            });
+            
             /*
              *  
              */
@@ -33,15 +23,10 @@
     </head>
     <body >
         <div ms-controller="root">
-            <h1>{{@page}}</h1>
-            <div ms-controller="first">
-                <h2 ms-text="@page"></h2>
-                <div ms-if="@page=='first'">
-                    <div ms-controller="second">
-                        <h3 ms-html="@page"></h3>
-                        <div ms-if="@page == 'second'" id="cdiv">{{@level}}-{{@page}}-{{@kind}}</div>
-                    </div>
-                </div>
+            <!--ms-js:var index = 0; -->
+            <div ms-for="el in @array as ddd">
+                <!--ms-js:var $first = index++;-->
+                {{$first}}
             </div>
         </div>
     </body>

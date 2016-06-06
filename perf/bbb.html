@@ -1,75 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
-        <title>first example</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">        
-
-        <script src="../dist/avalon.js"></script>
-
+        <title>Title</title>
     </head>
-    <body>
-
+    <body ms-controller="page">
+        <div id="div">
+            <ul>
+                <li ms-for="el in @current.friends">
+                    <p ms-for="item in el">{{item.name}}</p>
+                </li>
+            </ul>
+            <button ms-click="@click | prevent">change</button>
+        </div>
+        <script src="../dist/avalon.js"></script>
         <script>
-
-
-                    var data1 = [{"Id": - 10, "Name":"管理", "ParentId":1}, {"Id": - 8, "Name":"工具", "ParentId":1}, {"Id":3, "Name":"用户管理", "ParentId": - 10}, {"Id":5, "Name":"角色管理", "ParentId": - 10}, {"Id":15, "Name":"公告管理", "ParentId": - 10}, {"Id":18, "Name":"日志管理", "ParentId": - 10}, {"Id":17, "Name":"个人资料", "ParentId": - 10}, {"Id":96, "Name":"页面访问统计", "ParentId": - 10}, {"Id":109, "Name":"菜单汇总", "ParentId": - 10}, {"Id":4, "Name":"菜单管理", "ParentId": - 8}, {"Id":65, "Name":"航空公司管理", "ParentId": - 8}, {"Id":66, "Name":"分公司管理", "ParentId": - 8}, {"Id":32, "Name":"数据生成", "ParentId": - 8}, {"Id":104, "Name":"预测精度报表数据生成", "ParentId": - 8}];
-                    var data2 = [{"Id": - 8, "Name":"工具", "ParentId":1}, {"Id":3, "Name":"用户管理", "ParentId": - 10}, {"Id":5, "Name":"角色管理", "ParentId": - 10}, {"Id":15, "Name":"公告管理", "ParentId": - 10}, {"Id":18, "Name":"日志管理", "ParentId": - 10}, {"Id":17, "Name":"个人资料", "ParentId": - 10}, {"Id":96, "Name":"页面访问统计", "ParentId": - 10}, {"Id":109, "Name":"菜单汇总", "ParentId": - 10}, {"Id":4, "Name":"菜单管理", "ParentId": - 8}, {"Id":65, "Name":"航空公司管理", "ParentId": - 8}, {"Id":66, "Name":"分公司管理", "ParentId": - 8}, {"Id":32, "Name":"数据生成", "ParentId": - 8}, {"Id":104, "Name":"预测精度报表数据生成", "ParentId": - 8}];
-                    window.vm = avalon.define({
-                    $id: "start2",
-                            data: avalon.mix(true, [], data1), //复制一个副本给vm, 不然后面修改vm.data的时候,会破坏data1的原始数据. 不利于后面的切换演示. 这里的参数true表示是深拷贝
-
-                            testRange:avalon.range(10),
-                            isData2:false,
-                            change:function(){
-                            if (this.isData2){
-                            this.data = []; //修改data前, 先清空. 不然最终结果会被原来的数据污染. 注意, 数据源只能为[],{}, 不能为null.
-                                    this.data = avalon.mix(true, [], data1);
-                                    this.isData2 = false;
-                            }
-                            else{
-                            this.data = [];
-                                    this.data = avalon.mix(true, [], data2);
-                                    this.isData2 = true;
-                            }
-                            },
-                            onCellClick: function(rowIndex, colIndex, ev){
-                            console.log("onCellClick " + rowIndex + " " + colIndex);
-                            },
-                            onTHClick: function(colIndex, ev){
-                            console.log("onTHClick " + colIndex);
-                            }
-                    })
+       var data = [{
+            name: "zs",
+            friends: [[{name: 'ls22'}, {name: 'ls44'}, {name: 'ls55'}]]
+        }, {
+            name: "zs",
+            friends: [
+                [{name: 'ls1'}, {name: 'ls2'}, {name: 'ls3'}],
+                [{name: 'ls1'}, {name: 'ls2'}, {name: 'ls3'}]
+            ]
+        }]
+var vm = avalon.define({
+    $id: 'page',
+    array: avalon.mix(true, [], data),
+    current: {},
+    click: function(){
+        console.log(avalon.mix(true, [], data[1]))
+        this.current =avalon.mix(true, [], data[1])
+        console.log(this.current,"++")
+    }
+})
+vm.current = avalon.mix(true, [], data[0])
 
 
 
         </script>
-
-        <div ms-controller="start2"> 
-            <button type=button ms-click="##change()">Change</button>
-            <div ms-for="(index,el) in ##data" ms-if="el.Id<0" style="display:inline-block; border:solid 1px gray; padding:10px;vertical-align:top">
-                <div style='font-weight:bold'>
-                    --{{index}}--{{el.Id}}--{{el.Name}}
-                </div>
-                <div ms-for="(index2,el2) in ##data" ms-if="el2.ParentId==el.Id">
-                    --{{index2}}--{{el2.Id}}--{{el2.Name}}             
-                </div>             
-            </div> 
-
-            <table>
-                <tr >
-                    <th style="border:solid 1px gray" ms-for="(colIndex,el2) in ##testRange" ms-click="@onTHClick(colIndex,$event)" >
-                        {{el2}}
-                    </th>
-                </tr>
-                <tr ms-for="(rowIndex,el) in ##testRange" >
-                    <td style="border:solid 1px gray" ms-for="(colIndex,el2) in ##testRange" ms-click="@onCellClick(rowIndex,colIndex,$event)" >
-                        {{el*el2}}
-                    </td>
-                </tr>
-            </table>
-
-        </div> 
-
     </body>
-</html>  
+</html>
