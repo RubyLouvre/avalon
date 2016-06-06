@@ -22,10 +22,10 @@ avalon.__format__ = function (name) {
 
 avalon.mix(filters, {
     uppercase: function (str) {
-        return str.toUpperCase()
+        return String(str).toUpperCase()
     },
     lowercase: function (str) {
-        return str.toLowerCase()
+        return String(str).toLowerCase()
     },
     truncate: function (str, length, truncation) {
         //length，新字符串长度，truncation，新字符串的结尾的字段,返回新字符串
