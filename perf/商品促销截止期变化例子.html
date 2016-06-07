@@ -28,12 +28,17 @@
 
                 },
                 array: [
-                    {curDate: new Date - 0, endDate: new Date(2016, 6, 7,12,44,88) - 0, name: "商品1"},
-                    {curDate: new Date - 0, endDate: new Date(2016, 6, 7,7,40,88) - 0, name: "商品2"},
-                    {curDate: new Date - 0, endDate: new Date(2016, 6, 7,8,44,88) - 0, name: "商品3"}
+                    {curDate: new Date - 0, endDate: new Date(2016, 6, 7, 12, 44, 88) - 0, name: "商品1"},
+                    {curDate: new Date - 0, endDate: new Date(2016, 6, 7, 7, 40, 88) - 0, name: "商品2"},
+                    {curDate: new Date - 0, endDate: new Date(2016, 6, 7, 8, 44, 88) - 0, name: "商品3"}
                 ]
             })
-
+            setInterval(function () {
+                var now = new Date - 0
+                vm.array.forEach(function (el) {
+                    el.curDate = now
+                })
+            }, 1000)
         </script>
         <style>
             .redbox{

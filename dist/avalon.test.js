@@ -1,4 +1,4 @@
-/*! built in 2016-6-7:1 version 2.06 by 司徒正美 */
+/*! built in 2016-6-7:11 version 2.06 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -71,7 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 107:
 /***/ function(module, exports, __webpack_require__) {
 
-	/*! built in 2016-6-7:1 version 2.06 by 司徒正美 */
+	/*! built in 2016-6-7:11 version 2.06 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -2654,6 +2654,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		                var fn = Function('return ' + avalon.parseExpr(binding, 'on'))()
 		                var uuid = markID(fn)
 		                eventCache.put(key, fn)
+		            }else{
+		                uuid = fn.uuid
 		            }
 		            
 		            avalon.eventListeners[uuid] = fn

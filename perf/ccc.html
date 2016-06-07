@@ -3,28 +3,75 @@
     <head>
         <title>first example</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">        
         <script src="../dist/avalon.js"></script>
     </head>
     <body>
 
         <script>
+            function heredoc(fn) {
+                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+                        replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+            }
 
+            var tmplWeekSelector = heredoc(function () {
+                /*
+                 <div style="display:inline-block;width:360px; " class="input frequency" ms-attr="{id:@name+'div'}">
+                 <style>
+                 .frequency input {            
+                 margin-left:5px;
+                 }
+                 </style>
+                 <input type="checkbox" value="1" ms-change="@onChange()" ms-attr="{id:@name+'_freq1', name:@name+'_frequency'}">一
+                 <input type="checkbox" value="2" ms-change="@onChange()" ms-attr="{id:@name+'_freq2', name:@name+'_frequency'}">二
+                 <input type="checkbox" value="3" ms-change="@onChange()" ms-attr="{id:@name+'_freq3', name:@name+'_frequency'}">三
+                 <input type="checkbox" value="4" ms-change="@onChange()" ms-attr="{id:@name+'_freq4', name:@name+'_frequency'}">四
+                 <input type="checkbox" value="5" ms-change="@onChange()" ms-attr="{id:@name+'_freq5', name:@name+'_frequency'}">五
+                 <input type="checkbox" value="6" ms-change="@onChange()" ms-attr="{id:@name+'_freq6', name:@name+'_frequency'}">六
+                 <input type="checkbox" value="0" ms-change="@onChange()" ms-attr="{id:@name+'_freq0', name:@name+'_frequency'}">日
+                 <input type="checkbox" ms-change="@onChangeAll()"  ms-attr="{id:@name+'_checkAll', name:@name+'_checkAll'}">全部
+                 <input type="hidden" ms-attr="{id:@name, name:@name}" ms-duplex="@frequency" value="127">
+                 </div>
+                 */
+            });
 
-            vm = avalon.define({
-                $id: 'html2',
-                ccc: ['111','222']
+            //avalon.log(tmplWeekSelector);
+
+            //added by alanthinker
+            avalon.component('ms-weekselector' /*组件名称必须小写*/, {
+                template: tmplWeekSelector,
+                defaults: {
+                    name: 'myFreq',
+                    frequency: 127,
+                    onChange: function () {
+                        avalon.log("onChange");
+                    },
+                    onChangeAll: function () {
+                        avalon.log("onChangeAll");
+                    },
+                    onReady: function () {
+                        avalon.log("onReady");
+                    },
+                    onViewChange: function (ev) {
+                        avalon.log("onViewChange");
+                        avalon.log(ev);
+                    }
+                }
             })
+
+            var vm = avalon.define({
+                $id: 'widget',
+                testData: {name: "myFFF", frequency: 3},
+                testData2: {name: "myFFF2", frequency: 5}
+            })
+
         </script>
 
-        <div ms-controller="html2">
-            <p>
-                <input type="checkbox" value="111" ms-duplex="@ccc"/>
-                <input type="checkbox" value="222" ms-duplex="@ccc"/>
-                <input type="checkbox" value="333" ms-duplex="@ccc"/>
-                <input type="checkbox" value="444" ms-duplex="@ccc"/>
-                {{@ccc}}
-            </p>
+        <div id="box" ms-controller='widget'>         
+            <ms-weekselector ms-widget="@testData"></ms-weekselector>    
+            <div>frequency:{{@testData.frequency}}</div>          
+            <ms-weekselector ms-widget="@testData2"></ms-weekselector>    
+            <div>frequency:{{@testData2.frequency}}</div>         
         </div>
 
     </body>
