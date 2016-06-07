@@ -57,8 +57,7 @@ var dir = avalon.directive('widget', {
             scope.renderCount ++
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
             cur.skipContent = !needUpdate
-            if (pre.wid && cur.wid !== pre.wid) {
-
+            if (pre.wid && cur.wid !== pre.wid && !pre.props.cached ) {
                 delete avalon.scopes[pre.wid]
                 delete avalon.vmodels[pre.wid]
             }

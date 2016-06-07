@@ -123,6 +123,7 @@ function mediatorFactory(before, after) {
     var heirloom = {}
     var arr = avalon.slice(arguments)
     var $skipArray = {}
+    var skipkey = typeof this === 'function'
     for (var i = 0; i < arr.length; i++) {
         var obj = arr[i]
         //收集所有键值对及访问器属性
@@ -130,6 +131,9 @@ function mediatorFactory(before, after) {
         var configName
         for (var key in obj) {
             if(!obj.hasOwnProperty(key)){
+                continue
+            }
+            if(skipkey && this(key)){
                 continue
             }
             if(key === '$skipArray' && Array.isArray(obj.$skipArray)){
@@ -153,9 +157,9 @@ function mediatorFactory(before, after) {
         }
     }
 
-    if (typeof this === 'function') {
-        this(keys, unresolve)
-    }
+//    if (typeof this === 'function') {
+//        this(keys, unresolve, accessors)
+//    }
     for (key in unresolve) {
         //系统属性跳过,已经有访问器的属性跳过
         if ($$skipArray[key] || accessors[key])

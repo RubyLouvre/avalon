@@ -124,11 +124,16 @@ function mediatorFactory(before, after) {
     var arr = avalon.slice(arguments)
     var config
     var configName
+    var skipkey = typeof this === 'function'
     for (var i = 0; i < arr.length; i++) {
         var obj = arr[i]
         //收集所有键值对及访问器属性
         for (var key in obj) {
+            if(skipkey && this(key)){
+                continue
+            }
             keys[key] = obj[key]
+            
             if(key === '$skipArray' && Array.isArray(obj.$skipArray)){
                 obj.$skipArray.forEach(function(el){
                     $skipArray[el] = 1
@@ -148,9 +153,7 @@ function mediatorFactory(before, after) {
             }
         }
     }
-    if(typeof this === 'function'){
-        this(keys, unresolve)
-    }
+   
     for (key in unresolve) {
         if ($$skipArray[key] || accessors[key])
             continue

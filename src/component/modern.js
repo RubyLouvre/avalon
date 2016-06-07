@@ -14,6 +14,17 @@ var unresolvedComponent = {
     directive: 'widget',
     nodeValue: 'unresolved component placeholder'
 }
+function isEmptyOption(a) {
+    if (!a)
+        return true
+    var tmpl = avalon.mix({}, a)
+    delete tmpl.$id
+    delete tmpl.is
+    for (var ii in tmpl) {
+        return false
+    }
+    return true
+}
 avalon.component = function (name, definition) {
     //这是定义组件的分支,并将列队中的同类型对象移除
     if (arguments.length < 4) {
@@ -27,11 +38,16 @@ avalon.component = function (name, definition) {
         var wid = arguments[3]
         var topVm = root.vmodel
         var finalOptions = {}
-        var options = [].concat(root['ms-widget'] || [])
-        options.forEach(function (option, index) {
-            //收集里面的事件
-            mixinHooks(finalOptions, option, index)
-        })
+        if (!isEmptyOption(root['ms-widget'])) {
+            var options = [].concat(root['ms-widget'] || [])
+            options.forEach(function (option, index) {
+                //收集里面的事件
+                mixinHooks(finalOptions, option, index)
+            })
+            var isEmpty = isEmptyOption(finalOptions)
+        } else {
+            isEmpty = true
+        }
 
         //得到组件的is类型
         var componentName = root.type.indexOf('-') > 0 ?
@@ -53,8 +69,9 @@ avalon.component = function (name, definition) {
         }
 
         var docker = avalon.scopes[finalOptions.$id] || avalon.scopes[wid]
-        if (docker) {
-            var ret = docker.render(docker.vmodel, docker.local)
+        if (docker && docker.dom) {
+            var ret = isEmpty ? docker.dom.vtree :
+                    docker.render(docker.vmodel, docker.local)
             if (ret[0]) {
                 return replaceByComponent(ret[0], docker.vmodel, nodes, index)
             }
@@ -110,7 +127,7 @@ avalon.component = function (name, definition) {
 
         avalon.vmodels[$id] = vmodel
 
-       //将用户标签中的属性合并到组件标签的属性里
+        //将用户标签中的属性合并到组件标签的属性里
         avalon.mix(componentRoot.props, root.props)
         //  必须指定wid
         componentRoot.props.wid = $id
@@ -142,7 +159,7 @@ avalon.component = function (name, definition) {
         })
         // 必须加这个,方便在parseView.js开挂
         vtree[0].directive = 'widget'
-        var render = avalon.render(vtree,root.local)
+        var render = avalon.render(vtree, root.local)
 
         vmodel.$render = render
         try {
