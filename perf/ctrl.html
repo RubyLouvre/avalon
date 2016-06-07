@@ -1,78 +1,573 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>first example</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">        
-        <script src="../dist/avalon.js"></script>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>确认订单</title>
+        <link href="./main.css" rel="stylesheet">
+        <script src="./avalon.js"></script>
     </head>
     <body>
+        <div class="container" ms-controller="container">
+            <div class="loading-wrap" ms-visible="@loadingWrapShow">数据加载中....</div>
+            <xmp ms-widget="[{is:'ms-addressWrap', $id:'address'}]"></xmp>
+            <xmp ms-widget="{is:'ms-container'}"></xmp>
+        </div>
+        <script>
+            function heredoc(fn) {
+                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+                 replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+                 }
 
- <script>
-        function heredoc(fn) {
-            return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
-                    replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
-        }
+            var container = heredoc(function () {
+                 /*
+                 <div>
+                 <xmp ms-widget="[{is:'ms-addressWrap'}]"></xmp>
+                 </div>
+                 
+                 */
+                 })
 
-        var tmplWeekSelector=heredoc(function(){
-        /*
-<div style="display:inline-block;width:360px; " class="input frequency" ms-attr="{id:@name+'div'}">
-    <style>
-        .frequency input {            
-            margin-left:5px;
-        }
-    </style>
-    <input type="checkbox" value="1" ms-change="@onChange()" ms-attr="{id:@name+'_freq1', name:@name+'_frequency'}">一
-    <input type="checkbox" value="2" ms-change="@onChange()" ms-attr="{id:@name+'_freq2', name:@name+'_frequency'}">二
-    <input type="checkbox" value="3" ms-change="@onChange()" ms-attr="{id:@name+'_freq3', name:@name+'_frequency'}">三
-    <input type="checkbox" value="4" ms-change="@onChange()" ms-attr="{id:@name+'_freq4', name:@name+'_frequency'}">四
-    <input type="checkbox" value="5" ms-change="@onChange()" ms-attr="{id:@name+'_freq5', name:@name+'_frequency'}">五
-    <input type="checkbox" value="6" ms-change="@onChange()" ms-attr="{id:@name+'_freq6', name:@name+'_frequency'}">六
-    <input type="checkbox" value="0" ms-change="@onChange()" ms-attr="{id:@name+'_freq0', name:@name+'_frequency'}">日
-    <input type="checkbox" ms-change="@onChangeAll()"  ms-attr="{id:@name+'_checkAll', name:@name+'_checkAll'}">全部
-    <input type="hidden" ms-attr="{id:@name, name:@name}" ms-duplex="@frequency" value="127">
-</div>
-        */
-        }); 
 
-        //avalon.log(tmplWeekSelector);
+            // 主容器
+            var vmContainer = avalon.define({
+            $id: 'container',
+                loadingWrapShow: true
+                })
 
-        //added by alanthinker
-        avalon.component('ms-weekselector' /*组件名称必须小写*/, {
-            template: tmplWeekSelector,
-            defaults: { 
-                name: 'myFreq',
-                frequency: 127,
-                onChange: function () {
-                    avalon.log("onChange");                 
-                },
-                onChangeAll: function () {
-                    avalon.log("onChangeAll");                   
-                },
-                onReady: function () {       
-                    avalon.log("onReady");                                  
-                },
-                onViewChange:function(ev){
-                    avalon.log("onViewChange");
-                    avalon.log(ev);
+            avalon.component('ms-container', {                 template: container,
+                defaults: {
                 }
+                })
+
+            var addressTmpl = heredoc(function () {
+                 /*
+                 <div class="address-wrap ms-controller" ms-visible="@addressWrapShow">
+                 <div class="wrap-header">
+                 <h3>选择收货地址</h3>
+                 <span class="small-text">美的商城配送方式：快递（免运费）</span>
+                 <a class="right-text" href="javascript:;" ms-click="@addressListExpand = !@addressListExpand" ms-visible="@addressTotal > 3">
+                 <span ms-visible="!@addressListExpand">展开</span><span ms-visible="@addressListExpand">收起</span>更多收货地址<i class="icon_arrow_bottom" ms-class="{icon_arrow_top: @addressListExpand}"></i></a>
+                 </div>
+                 <div class="address-box">
+                 <!--ms-for:(index, el) in @addressList-->
+                 <div class="adr"
+                 ms-class="{'default': (el.nIsDefault == 1 ? (@checkDefault(el) && true) : false), 'checked': (@addressChecked.lAddrId == el.lAddrId), hide: (index > 2 && ! @addressListExpand)}"
+                 ms-hover="'hover'"
+                 ms-click="@addressChecked = el">
+                 <div class="adr-inner" ms-attr="{title: (el.strProvince + el.strCity + ' ' + el.strPersonName)}">
+                 <i class="icon_checked"></i>
+                 <div class="adr-head" >
+                 <span class="adr-province" ms-text="el.strProvince"></span>
+                 <span class="adr-city" ms-text="el.strCity"></span>
+                 <span class="adr-name" ms-text="el.strPersonName"></span>
+                 </div>
+                 <div class="adr-body" ms-attr="{title: (el.strArea + el.strDetailMsg + ' ' + el.strMobileNum)}">
+                 <p class="adr-text">
+                 <span class="adr-county" ms-text="el.strArea"></span>
+                 <span class="adr-detail" ms-text="el.strDetailMsg"></span>
+                 <span class="adr-tel" ms-text="el.strMobileNum"></span>
+                 <span class="adr-default-text">[默认]</span>
+                 </p>
+                 </div>
+                 <div class="adr-foot">
+                 <a href="javascript:;" ms-click="@editAdrress(el, $event) | stop">编辑</a>
+                 <a href="javascript:;" ms-click="@deleteAddress(el, $event) | stop">删除</a>
+                 </div>
+                 </div>
+                 </div>
+                 <!--ms-for-end:-->
+                 
+                 <div class="adr" ms-hover="'hover'" ms-click="@editAdrress({}, $event)">
+                 <div class="adr-inner">
+                 <div class="adr-add">
+                 <p class="adr-add-icon"><i class="icon_add"></i></p>
+                 <p class="adr-add-text">添加地址</p>
+                 </div>
+                 </div>
+                 </div>
+                 </div>
+                 <xmp ms-widget="[{is:'mdui-dialog', $id:'addressDeleteDialog'}, @dialogAddressDeleteConf]">
+                 <div slot="head">确认要删除地址吗？</div>
+                 <div slot="body">删除后无法恢复哦</div>
+                 </xmp>
+                 <xmp ms-widget="[{is:'mdui-dialog', $id:'addressEditDialog'}, @dialogAddressEditConf]">
+                 <div slot="body">
+                 <table class="adr-table">
+                 <tr>
+                 <th>
+                 <span class="star">*</span>
+                 <label>所在地区：</label>
+                 </th>
+                 <td>
+                 <xmp ms-widget="[{is:'mdui-regionThreeLinkage', $id:'addressRegion'}, @dialogAddressRegionConf]"></xmp>
+                 </td>
+                 </tr>
+                 <tr>
+                 <th>
+                 <div class="address-label">
+                 <span class="star">*</span><label for="address">详细地址：</label>
+                 </div>
+                 </th>
+                 <td>
+                 <div class="ipt-box">
+                 <textarea class="form-text address-detail" placeholder="路名、或街道名，门牌号" ms-duplex="@addressEdit.strDetailMsg"></textarea>
+                 <span class="placeholder address-placeholder J_placeholder" style="display: none;">路名、或街道名，门牌号</span>
+                 <p class="text-error" id="address_msg" style="display: none;"></p>
+                 </div>
+                 </td>
+                 </tr>
+                 <tr>
+                 <th><span class="star">*</span><label for="contact">联系人：</label></th>
+                 <td>
+                 <div class="ipt-box">
+                 <input class="form-text" type="text" placeholder="收货人姓名" ms-duplex="@addressEdit.strPersonName" />
+                 <span class="placeholder ipt-placeholder J_placeholder" style="display: none;">收货人姓名</span>
+                 <p class="text-error" id="name_msg"></p>
+                 </div>
+                 </td>
+                 </tr>
+                 <tr>
+                 <th><span class="star">*</span><label for="tel">手机号码：</label></th>
+                 <td>
+                 <div class="ipt-box">
+                 <input class="form-text" type="text" placeholder="11位手机号码" ms-duplex="@addressEdit.strMobileNum" />
+                 <span class="placeholder ipt-placeholder J_placeholder" style="display: none;">11位手机号码</span>
+                 <p class="text-error" id="tel_msg"></p>
+                 </div>
+                 </td>
+                 </tr>
+                 </table>
+                 <div class="btn-box">
+                 <div class="addr-btn blue" ms-click="@confirmDialog | stop">保存</div>
+                 <div class="addr-btn" ms-click="@closeDialog | stop">取消</div>
+                 </div>
+                 </div>
+                 <div slot="foot"></div>
+                 </xmp>
+                 </div>
+                 */
+            })
+
+            avalon.component('ms-addressWrap', {
+                template: addressTmpl,
+                defaults: {
+                    addressChecked: {},
+                    addressDelete: {},
+                    defaultAddressEdit: {
+                        lAddrId: '',
+                        strArea: '',
+                        strAreaCode: '',
+                        strCity: '',
+                        strCityCode: '',
+                        strDetailMsg: '',
+                        strMobileNum: '',
+                        strPersonName: '',
+                        strProvince: '',
+                        strProvinceCode: ''
+                    },
+                    addressEdit: {},
+                    addressListExpand: false,
+                    addressList: [],
+                    addressTotal: 0,
+                    addressWrapShow: false,
+                    dialogAddressRegionConf: {},
+                    dialogAddressDeleteConf: {
+                        dialogType: 'confirm', // confirm info tips
+                        dialogIcon: 'info',
+                        dialogShow: false,
+                        onConfirm: function (e) {
+                            var msg
+                            var self = this
+                            addressApi.remove({addressid: self.addressDelete.lAddrId}, function () {
+                                self.getAll.call(self)
+                            })
+                            this.addressDelete = {}
+                        },
+                        onClose: function () {
+                            this.addressDelete = {}
+                        }
+                    },
+                    dialogAddressEditConf: {
+                        dialogType: 'confirm', // confirm info tips
+                        dialogIcon: false,
+                        dialogWrapCss: {width: 800},
+                        dialogShow: false,
+                        onConfirm: function (e) {
+                            var msg
+                            var self = this
+                            var url
+                            var addressEdit = this.addressEdit
+                            var params = {
+                                personname: addressEdit.strPersonName,
+                                mobilenum: addressEdit.strMobileNum,
+                                province: addressEdit.strProvince,
+                                provincecode: addressEdit.strProvinceCode,
+                                city: addressEdit.strCity,
+                                citycode: addressEdit.strCityCode,
+                                area: addressEdit.strArea,
+                                areacode: addressEdit.strAreaCode,
+                                detailmsg: addressEdit.strDetailMsg,
+                                isdefault: 0
+                            }
+
+                            if (this.addressEdit.lAddrId) {
+                                params.addressid = this.addressEdit.lAddrId
+                            } else {
+                                var vmRegion = avalon.vmodels.addressRegion
+                                var regionSelected = vmRegion.regionSelected
+                                params = avalon.mix(params, {
+                                    province: regionSelected.province.text,
+                                    provincecode: regionSelected.province.code,
+                                    city: regionSelected.city.text,
+                                    citycode: regionSelected.city.code,
+                                    area: regionSelected.county.text,
+                                    areacode: regionSelected.county.code,
+                                    isdefault: 1
+                                })
+                            }
+
+                            addressApi.edit(params, function () {
+                                if (params.addressid) {
+                                    addressApi.setDefault({addressid: params.addressid}, function () {
+                                        self.getAll.call(self)
+                                    })
+                                } else {
+                                    self.getAll.call(self)
+                                }
+
+                                self.addressListExpand = (self.addressTotal > 3)
+                            }).always(function () {
+                                self.addressEdit = avalon.mix({}, self.defaultAddressEdit)
+                                avalon.vmodels.addressRegion.setDefaultRegion()
+                            })
+                        },
+                        onClose: function () {
+                            this.addressEdit = avalon.mix({}, this.defaultAddressEdit)
+                            avalon.vmodels.addressRegion.setDefaultRegion()
+                        }
+                    },
+                    // 选中默认地址
+                    checkDefault: function (addr) {
+                        if (!this.addressChecked.lAddrId) {
+                            this.addressChecked = addr
+                        }
+                    },
+                    // 获取地址列表数据
+                    getAll: function () {
+                        this.addressList = [{"lAddrId": 10677, "lUin": 12070, "strPersonName": "\u6ee8\u6cb31", "strMobileNum": "11111111111", "strProvince": "\u5e7f\u4e1c\u7701", "strProvinceCode": "440000", "strCity": "\u6df1\u5733\u5e02", "strCityCode": "440300", "strArea": "\u798f\u7530\u533a", "strAreaCode": "440304", "strDetailMsg": "\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3", "nIsDefault": 1}, {"lAddrId": 10724, "lUin": 12070, "strPersonName": "\u8fdb\u57ce\u4e0d3\u70c33\u4e2d\u5730\u7c89\u5730", "strMobileNum": "11111111111", "strProvince": "\u6cb3\u5317\u7701", "strProvinceCode": "130000", "strCity": "\u77f3\u5bb6\u5e84\u5e02", "strCityCode": "130100", "strArea": "\u957f\u5b89\u533a", "strAreaCode": "130102", "strDetailMsg": "12321321313213", "nIsDefault": null}, {"lAddrId": 10725, "lUin": 12070, "strPersonName": "\u9648\u6d69", "strMobileNum": "18611111111", "strProvince": "\u5317\u4eac\u5e02", "strProvinceCode": "110000", "strCity": "\u5317\u4eac\u5e02", "strCityCode": "110100", "strArea": "\u4e1c\u57ce\u533a", "strAreaCode": "110101", "strDetailMsg": "\u5b66\u5e9c\u8def\u6021\u5316\u91d1\u878d\u79d1\u6280\u5927\u53a623\u697c", "nIsDefault": null}, {"lAddrId": 10726, "lUin": 12070, "strPersonName": "\u6d82\u6d82", "strMobileNum": "18611111111", "strProvince": "\u5c71\u897f\u7701", "strProvinceCode": "140000", "strCity": "\u5927\u540c\u5e02", "strCityCode": "140200", "strArea": "\u5357\u90ca\u533a", "strAreaCode": "140211", "strDetailMsg": "\u7389\u5f8b\u8def\u82b1\u6837\u5e74\u82b1\u4e61A\u680b9O", "nIsDefault": null}, {"lAddrId": 10727, "lUin": 12070, "strPersonName": "\u840c\u840c", "strMobileNum": "18611111111", "strProvince": "\u6cb3\u5317\u7701", "strProvinceCode": "130000", "strCity": "\u5510\u5c71\u5e02", "strCityCode": "130200", "strArea": "\u8def\u5357\u533a", "strAreaCode": "130202", "strDetailMsg": "\u6d77\u79c0\u8def21\u53f7\u9f99\u5149\u4e16\u7eaa\u5927\u53a6B\u5ea711\u697c", "nIsDefault": null}];
+                        this.addressTotal = this.addressList.length
+                        this.addressWrapShow = true
+                        this.loadingWrapShow = false
+                    },
+                    // 弹出确认删除浮层
+                    deleteAddress: function (addr, e) {
+                        this.addressDelete = addr
+                        this.dialogAddressDeleteConf.dialogShow = !this.dialogAddressDeleteConf.dialogShow
+                    },
+                    // 弹出地址编辑浮层
+                    editAdrress: function (addr, e) {
+                        var self = this
+                        if (addr.lAddrId) {
+                            addressApi.getOne({
+                                addressid: addr.lAddrId
+                            }, function (obj) {
+                                self.addressEdit = obj.addressInfo
+                                self.dialogAddressEditConf.dialogShow = !self.dialogAddressEditConf.dialogShow
+                                avalon.vmodels.addressRegion.setDefaultRegion({
+                                    province: {
+                                        code: addr.strProvinceCode,
+                                        text: addr.strProvince
+                                    },
+                                    city: {
+                                        code: addr.strCityCode,
+                                        text: addr.strCity
+                                    },
+                                    county: {
+                                        code: addr.strAreaCode,
+                                        text: addr.strArea
+                                    }
+                                })
+                            })
+                        } else {
+                            self.dialogAddressEditConf.dialogShow = !self.dialogAddressEditConf.dialogShow
+                        }
+                    },
+                    onInit: function () {
+                        this.getAll.call(this)
+                        this.addressEdit = avalon.mix({}, this.defaultAddressEdit)
+                        avalon.log('onInit 会加载多次')
+                    }
+                }
+            })
+
+            avalon.component('ms-addressWrap', {
+                template: addressTmpl,
+                defaults: {
+                    onInit: function () {
+                        // 地址容器
+                        var vmAddress = avalon.define({
+                            $id: 'address',
+                            checked: {
+                            },
+                            listExpand: false,
+                            addressList: [],
+                            addressTotal: 0,
+                            addressWrap: false,
+                            // 选中默认地址
+                            checkDefault: function (addr) {
+                                if (!vmAddress.checked.lAddrId) {
+                                    vmAddress.checked = addr;
+                                }
+                            },
+                            // 获取地址列表数据
+                            getAll: function () {
+                                vmAddress.addressList = [{"lAddrId": 10677, "lUin": 12070, "strPersonName": "\u6ee8\u6cb31", "strMobileNum": "11111111111", "strProvince": "\u5e7f\u4e1c\u7701", "strProvinceCode": "440000", "strCity": "\u6df1\u5733\u5e02", "strCityCode": "440300", "strArea": "\u798f\u7530\u533a", "strAreaCode": "440304", "strDetailMsg": "\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3", "nIsDefault": 1}, {"lAddrId": 10724, "lUin": 12070, "strPersonName": "\u8fdb\u57ce\u4e0d3\u70c33\u4e2d\u5730\u7c89\u5730", "strMobileNum": "11111111111", "strProvince": "\u6cb3\u5317\u7701", "strProvinceCode": "130000", "strCity": "\u77f3\u5bb6\u5e84\u5e02", "strCityCode": "130100", "strArea": "\u957f\u5b89\u533a", "strAreaCode": "130102", "strDetailMsg": "12321321313213", "nIsDefault": null}, {"lAddrId": 10725, "lUin": 12070, "strPersonName": "\u9648\u6d69", "strMobileNum": "18611111111", "strProvince": "\u5317\u4eac\u5e02", "strProvinceCode": "110000", "strCity": "\u5317\u4eac\u5e02", "strCityCode": "110100", "strArea": "\u4e1c\u57ce\u533a", "strAreaCode": "110101", "strDetailMsg": "\u5b66\u5e9c\u8def\u6021\u5316\u91d1\u878d\u79d1\u6280\u5927\u53a623\u697c", "nIsDefault": null}, {"lAddrId": 10726, "lUin": 12070, "strPersonName": "\u6d82\u6d82", "strMobileNum": "18611111111", "strProvince": "\u5c71\u897f\u7701", "strProvinceCode": "140000", "strCity": "\u5927\u540c\u5e02", "strCityCode": "140200", "strArea": "\u5357\u90ca\u533a", "strAreaCode": "140211", "strDetailMsg": "\u7389\u5f8b\u8def\u82b1\u6837\u5e74\u82b1\u4e61A\u680b9O", "nIsDefault": null}, {"lAddrId": 10727, "lUin": 12070, "strPersonName": "\u840c\u840c", "strMobileNum": "18611111111", "strProvince": "\u6cb3\u5317\u7701", "strProvinceCode": "130000", "strCity": "\u5510\u5c71\u5e02", "strCityCode": "130200", "strArea": "\u8def\u5357\u533a", "strAreaCode": "130202", "strDetailMsg": "\u6d77\u79c0\u8def21\u53f7\u9f99\u5149\u4e16\u7eaa\u5927\u53a6B\u5ea711\u697c", "nIsDefault": null}];
+                                vmAddress.addressTotal = vmAddress.addressList.length;
+                                vmAddress.addressWrap = true;
+                                return;
+                            }
+                        });
+
+                        vmAddress.getAll();
+                    }
+                }
+            })
+
+            var dialogTmpl = heredoc(function () {
+                /*
+                 <div>
+                 <div class="mdui-dialog-mask" ms-visible="@dialogShow" ms-if="@dialogMask"></div>
+                 <div class="mdui-dialog"
+                 ms-css="@dialogWrapCss"
+                 ms-class="['mdui-dialog-' + @dialogType, @dialogWrapClass]"
+                 ms-visible="@dialogShow">
+                 <a class="mdui-dialog-close" href="javascript:;"
+                 ms-click="@closeDialog"
+                 ms-if="@dialogType != 'tips' && @dialogCloseXShow">&times;</a>
+                 <i ms-class="['mdui-dialog-icon-' + @dialogIcon]" ms-if="@dialogIcon"></i>
+                 <div class="mdui-dialog-confirm-content" ms-if="@dialogType != 'tips'">
+                 <div class="mdui-dialog-head" ms-visible="@dialogHeadShow">
+                 <slot name="head"></slot>
+                 </div>
+                 <div class="mdui-dialog-body" ms-visible="@dialogBodyShow">
+                 <slot name="body"></slot>
+                 </div>
+                 <div class="mdui-dialog-foot mdui-dialog-btns-inline"
+                 ms-class="['mdui-dialog-btns-inline' + @dialogFootBtnNum]"
+                 ms-visible="@dialogFootShow">
+                 <slot name="foot">
+                 <a class="mdui-dialog-btn" href="javascript:void(0)" ms-click="@confirmDialog">确 认</a>
+                 <a class="mdui-dialog-btn" href="javascript:void(0)" ms-click="@closeDialog">取 消</a>
+                 </slot>
+                 </div>
+                 </div>
+                 <div class="mdui-dialog-tips-content" ms-if="@dialogType == 'tips'">
+                 <slot name="content">正在加载中，请稍候......</slot>
+                 </div>
+                 </div>
+                 </div>
+                 */
+            })
+
+            // 组件定义
+            avalon.component('mdui-dialog', {
+                template: dialogTmpl,
+                defaults: {
+                    dialogType: 'confirm', // confirm info tips
+                    dialogIcon: 'info', // info  success
+                    dialogWrapClass: '', // 指定额外的 dialog 容器 class
+                    dialogWrapCss: {}, // // 指定额外的 dialog 容器 css
+                    dialogShow: false,
+                    dialogCloseXShow: true,
+            dialogHeadShow: true,
+                    dialogBodyShow: true,
+                    dialogFootShow: true,
+                    dialogMask: true,
+                    dialogFootBtnNum: 0, // 底部按钮个数
+                    confirmDialog: function (e) {
+                        var result = this.onConfirm(e, this)
+
+                        if (result !== false) {
+                        this.dialogShow = ! this.dialogShow
+                    }
+                },
+                closeDialog: function (e) {
+                    this.onClose(e, this)
+                    this.dialogShow = !this.dialogShow
+                },
+                onConfirm: avalon.noop,
+                onShow: avalon.noop,
+                onClose: avalon.noop,
+                onInit: function (e) {
+                },
+                onReady: function (e) {
+                    //this.dialogFootBtnNum = $(e.target).find('.mdui-dialog-foot a').length
+                    this.onShow(e, this)
+                },
+                onViewChange: function (e) {
+                    // var $dialog =  $(e.target).find('.mdui-dialog')
+                    // var top = - Math.floor($dialog.height() / 2) - 100
+                    // var left = - Math.floor($dialog.width() / 2)
+                // $dialog.css({'margin-top': top, 'margin-left': left})
+                }
+                }
+            })
+
+            var regionTmpl = heredoc(function () {
+                /*
+                 <div class="mdui-region-wrap">
+                 <div class="mdui-region-section mdui-region-province">
+                 <div class="mdui-region-section-inner"
+                 ms-class="{'mdui-region-select-on': @selectProvinceOn}"
+                 ms-click="@selectProvinceOn = ! @selectProvinceOn | stop">
+                 <div class="mdui-region-head">
+                 <div class="mdui-region-selected" ms-text="@regionSelected.province.text"></div>
+                 <i class="mdui-region-icon-arrow"></i>
+                 </div>
+                 <div class="mdui-region-body">
+                 <ul class="mdui-region-option-wrap">
+                 <!--ms-for:(index, el) in @regionData-->
+                 <li class="mdui-region-option"
+                 ms-hover="'mdui-region-option-hover'"
+                 ms-text="el[0]"
+                 ms-click="@regionSelected.province = {code: index, text: el[0]}"></li>
+                 <!--ms-for-end:-->
+                 </ul>
+                 </div>
+                 </div>
+                 </div>
+                 <div class="mdui-region-section mdui-region-city">
+                 <div class="mdui-region-section-inner"
+                 ms-class="{'mdui-region-select-on': @selectCityOn}"
+                 ms-click="@selectCityOn = ! @selectCityOn | stop">
+                 <div class="mdui-region-head">
+                 <div class="mdui-region-selected" ms-text="@regionSelected.city.text"></div>
+                 <i class="mdui-region-icon-arrow"></i>
+                 </div>
+                 <div class="mdui-region-body">
+                 <ul class="mdui-region-option-wrap">
+                 <!--ms-for:(index, el) in @regionCityData-->
+                 <li class="mdui-region-option"
+                 ms-hover="'mdui-region-option-hover'"
+                 ms-text="el[0]"
+                 ms-click="@regionSelected.city = {code: index, text: el[0]}"></li>
+                 <!--ms-for-end:-->
+                 </ul>
+                 </div>
+                 </div>
+                 </div>
+                 <div class="mdui-region-section mdui-region-county">
+                 <div class="mdui-region-section-inner"
+                 ms-class="{'mdui-region-select-on': @selectCountyOn}"
+                 ms-click="@selectCountyOn = ! @selectCountyOn | stop">
+                 <div class="mdui-region-head">
+                 <div class="mdui-region-selected" ms-text="@regionSelected.county.text"></div>
+                 <i class="mdui-region-icon-arrow"></i>
+                 </div>
+                 <div class="mdui-region-body">
+                 <ul class="mdui-region-option-wrap">
+                 <!--ms-for:(index, el) in @regionCountyData-->
+                 <li class="mdui-region-option"
+                 ms-hover="'mdui-region-option-hover'"
+                 ms-text="el"
+                 ms-click="@regionSelected.county = {code: index, text: el}"></li>
+                 <!--ms-for-end:-->
+                 </ul>
+                 </div>
+                 </div>
+                 </div>
+                 </div>
+                 */
+            })
+
+            // 组件定义
+            avalon.component('mdui-regionThreeLinkage', {
+            template: regionTmpl,
+                    defaults: {
+                    selectProvinceOn: false,
+                            selectCityOn: false,
+ selectCountyOn: false,
+              regionSelected: {
+                  province: {
+                      code: '',
+                      text: '请选择省'
+                  },
+                  city: {
+                      code: '',
+                      text: '请选择市'
+                  },
+                  county: {
+                      code: '',
+                      text: '请选择区县'
+                  }
+              },
+              defaultRegionSelected: {
+                  province: {
+                      code: '',
+                      text: '请选择省'
+                  },
+                  city: {
+                      code: '',
+                      text: '请选择市'
+                  },
+                  county: {
+                      code: '',
+                      text: '请选择区县'
+                  }
+              },
+              regionData: {},
+              regionCityData: {},
+              regionCountyData: {},
+              setDefaultRegion: function(region) {
+                  if (region) {
+                      this.regionSelected.province = avalon.mix(true, {}, region.province)
+                      this.regionSelected.city = avalon.mix(true, {}, region.city)
+                      this.regionSelected.county = avalon.mix(true, {}, region.county)
+                  } else {
+                      this.regionSelected = avalon.mix(true, {}, this.defaultRegionSelected)
+                  }
+
+                  this.setDefalutSelectOn()
+              },
+              setDefalutSelectOn: function() {
+                  this.selectProvinceOn = false
+                  this.selectCityOn = false
+                  this.selectCountyOn = false
+              },
+              onInit: function(e) {
+                  var self = this
+                  this.regionData = window.bbcDistrictData || []
+
+                  this.$watch('regionSelected.province', function(province) {
+                      this.regionSelected.city = avalon.mix(true, {}, this.defaultRegionSelected.city)
+                      this.selectCityOn = true
+                      this.selectCountyOn = false
+                      this.regionCityData = {} // 赋值前要先清空一次，不然会影响选择
+                      this.regionCityData = avalon.mix(true, {}, this.regionData[province.code][1])
+                      this.regionCountyData = {}
+                  })
+
+                  this.$watch('regionSelected.city', function(city) {
+                      this.regionSelected.county = avalon.mix(true, {}, this.defaultRegionSelected.county)
+                      this.selectCountyOn = !! city.code
+                      this.regionCountyData = {} // 赋值前要先清空一次，不然会影响选择
+                      city.code && (this.regionCountyData = avalon.mix(true, {}, this.regionCityData[city.code][1]))
+                  })
+              },
+              onReady: function(e) {
+                  var self = this
+
+                  avalon.bind(document.body, 'click', function() {
+                      self.setDefalutSelectOn.call(self)
+                  })
+              },
+              onViewChange: function(e) {
+
+              }
             }
-        })
+          })
 
-        var vm = avalon.define({
-            $id: 'widget',
-            testData: {name:"myFFF",frequency:3},
-              testData2: {name:"myFFF2",frequency:5}
-        })
-
-    </script>
-
-    <div id="box" ms-controller='widget'>         
-            <ms-weekselector ms-widget="@testData"></ms-weekselector>    
-            <div>frequency:{{@testData.frequency}}</div>          
-              <ms-weekselector ms-widget="@testData2"></ms-weekselector>    
-            <div>frequency:{{@testData2.frequency}}</div>         
-    </div>
-
+        </script>
     </body>
-</html>  
+</html>

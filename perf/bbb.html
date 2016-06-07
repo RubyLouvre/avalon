@@ -11,7 +11,7 @@
 
             var vm = avalon.define({
                 $id: 'page',
-                array: [{name: 'ls1'}, {name: 'ls2'}, {name: 'ls3'}],
+                array: [{arr: [1,2,3]},{arr: [5,6,7]},{arr: [8,9,10]}],
                 getId: function (el) {
                     console.log(el)
                     return el.name + "_id"
@@ -22,9 +22,11 @@
 
         </script>
         <div ms-controller="page">
-            <p ms-for="el in @array">
-                <ms-button ms-widget="{$id:@getId(el)}">{{el.name}}</ms-button>
-            </p>
+            <table border="1" width="100%">
+                <tr ms-for="el in @array">
+                    <td ms-for="td in el.arr">{{td}}</td>
+                </tr>
+            </table>
 
         </div>
     </body>
