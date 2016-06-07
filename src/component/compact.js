@@ -27,6 +27,7 @@ avalon.component = function (name, definition) {
         var wid = arguments[3]
         var topVm = root.vmodel
         var finalOptions = {}
+        
         var options = [].concat(root['ms-widget'] || [])
         options.forEach(function (option, index) {
             //收集里面的事件
@@ -51,12 +52,11 @@ avalon.component = function (name, definition) {
             mixinHooks(finalOptions, topVm[configName], 0)
             protected = [configName].concat(protected)
         }
-
         var docker = avalon.scopes[finalOptions.$id] || avalon.scopes[wid]
         if (docker) {
             var ret = docker.render(docker.vmodel, docker.local)
             if (ret[0]) {
-                return replaceByComponent(ret[0], docker.vmodel, nodes, index)
+                return replaceByComponent(ret[0], docker.vmodel, nodes, index, true)
             }
         }
 
@@ -168,7 +168,7 @@ avalon.component = function (name, definition) {
     }
 }
 
-function replaceByComponent(vdom, vm, vnodes, index) {
+function replaceByComponent(vdom, vm, vnodes, index, fast) {
 
     if (!isComponentReady(vdom)) {
         return vnodes[index] = unresolvedComponent

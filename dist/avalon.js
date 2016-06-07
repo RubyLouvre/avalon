@@ -1,4 +1,4 @@
-/*! built in 2016-6-7:11 version 2.07 by 司徒正美 */
+/*! built in 2016-6-7:23 version 2.07 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1605,6 +1605,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 	        }
+	        if(this.wid){
+	            var scope = avalon.scopes[this.wid]
+	            if(scope && scope.dom){
+	               return scope.dom
+	            }
+	        }
 	        if (this.skipContent) {
 	            switch (this.type) {
 	                case 'script':
@@ -2520,7 +2526,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	avalon.clearHTML = function (node) {
-	    avalon.$$unbind(node)
 	    node.textContent = ''
 	    while (node.lastChild) {
 	        node.removeChild(node.lastChild)
@@ -7222,17 +7227,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	}
 
-	function flushUpdate(callback, immediate ) {
-	    if (immediate) {
-	        callback()
-	        var id = needRenderIds.shift()
-	        if (id) {
-	            batchUpdate(id, true)
-	        }
-	    } else {
-	        setTimeout(callback, 0)
-	    }
-	}
+
 
 	module.exports = avalon.batch = batchUpdate
 
@@ -7270,6 +7265,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var wid = arguments[3]
 	        var topVm = root.vmodel
 	        var finalOptions = {}
+	        
 	        var options = [].concat(root['ms-widget'] || [])
 	        options.forEach(function (option, index) {
 	            //收集里面的事件
@@ -7294,12 +7290,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            mixinHooks(finalOptions, topVm[configName], 0)
 	            protected = [configName].concat(protected)
 	        }
-
 	        var docker = avalon.scopes[finalOptions.$id] || avalon.scopes[wid]
 	        if (docker) {
 	            var ret = docker.render(docker.vmodel, docker.local)
 	            if (ret[0]) {
-	                return replaceByComponent(ret[0], docker.vmodel, nodes, index)
+	                return replaceByComponent(ret[0], docker.vmodel, nodes, index, true)
 	            }
 	        }
 
@@ -7411,7 +7406,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-	function replaceByComponent(vdom, vm, vnodes, index) {
+	function replaceByComponent(vdom, vm, vnodes, index, fast) {
 
 	    if (!isComponentReady(vdom)) {
 	        return vnodes[index] = unresolvedComponent

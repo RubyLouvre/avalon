@@ -40,6 +40,12 @@ VElement.prototype = {
                 }
             }
         }
+        if(this.wid){
+            var scope = avalon.scopes[this.wid]
+            if(scope && scope.dom){
+               return scope.dom
+            }
+        }
         if (this.skipContent) {
             switch (this.type) {
                 case 'script':

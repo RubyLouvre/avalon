@@ -46,16 +46,6 @@ function batchUpdate(id, immediate) {
 
 }
 
-function flushUpdate(callback, immediate ) {
-    if (immediate) {
-        callback()
-        var id = needRenderIds.shift()
-        if (id) {
-            batchUpdate(id, true)
-        }
-    } else {
-        setTimeout(callback, 0)
-    }
-}
+
 
 module.exports = avalon.batch = batchUpdate

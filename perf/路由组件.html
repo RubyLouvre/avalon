@@ -6,15 +6,18 @@
     <script src="../dist/avalon.js"></script>
     <script>
         avalon.component('ms-pager',{
-            template:'<div><input type="text" ms-duplex-number="@num"/><button type="button" ms-on-click="@onPlus">+++</button></div>',
+            template:'<div cached="true">{{@num}}<input type="text" ms-duplex-number="@num"/><button type="button" ms-on-click="@onPlus">+++</button></div>',
             defaults:{
                 num:1,
                 onPlus:function(){
                     this.num++;
+                },
+                onDispose:function(){
+                    console.log('dispose')
                 }
             }
         });
-        var tpl ='<div><h4>{{@title}}</h4><h5>{{@random}}</h5><button type="button" ms-on-click="@onChangeTitle">点击改变title</button><button type="button" ms-on-click="@onRandom">获取随机数</button></div>';
+        var tpl ='<div cached="true"><h4>{{@title}}</h4><h5>{{@random}}</h5><button type="button" ms-on-click="@onChangeTitle">点击改变title</button><button type="button" ms-on-click="@onRandom">获取随机数</button></div>';
         avalon.component('ms-header',{
             template:tpl,
             defaults:{
@@ -23,6 +26,9 @@
                 onChangeTitle:function(e){
                     e.preventDefault()
                     this.title = '改变了title'+(new Date-0);
+                },
+                onDispose:function(){
+                    console.log('dispose')
                 },
                 onRandom:function(e){
                     e.preventDefault()
@@ -37,7 +43,7 @@
         })
         window.addEventListener('hashchange',function(e){
             var hash = e.newURL.split('#/')[1];
-            vm.tpl = '<'+hash+' ms-widget=\"{$id:"'+hash+'",cached: true}\"></'+hash+'>'
+            vm.tpl = '<'+hash+'  ms-widget=\"{$id:"'+hash+'"}\"></'+hash+'>'
         })
     </script>
 </head>
