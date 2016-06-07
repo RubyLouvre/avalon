@@ -1,4 +1,4 @@
-/*! built in 2016-6-7:11 version 2.06 by 司徒正美 */
+/*! built in 2016-6-7:11 version 2.07 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
