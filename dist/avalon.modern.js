@@ -1,4 +1,4 @@
-/*! built in 2016-6-7:23 version 2.07 by 司徒正美 */
+/*! built in 2016-6-8:1 version 2.07 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -6664,7 +6664,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            scope.renderCount++
 	            var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
 	            cur.skipContent = !needUpdate
-	            if (pre.wid && cur.wid !== pre.wid) {
+	            if (pre.wid && cur.wid !== pre.wid && !pre.props.cached ) {
 
 	                delete avalon.scopes[pre.wid]
 	                delete avalon.vmodels[pre.wid]
@@ -6877,6 +6877,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    directive: 'widget',
 	    nodeValue: 'unresolved component placeholder'
 	}
+	function isEmptyOption(a) {
+	    if (!a)
+	        return true
+	    var tmpl = avalon.mix({}, a)
+	    delete tmpl.$id
+	    delete tmpl.is
+	    for (var ii in tmpl) {
+	        return false
+	    }
+	    return true
+	}
 	avalon.component = function (name, definition) {
 	    //这是定义组件的分支,并将列队中的同类型对象移除
 	    if (arguments.length < 4) {
@@ -6890,11 +6901,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var wid = arguments[3]
 	        var topVm = root.vmodel
 	        var finalOptions = {}
-	        var options = [].concat(root['ms-widget'] || [])
-	        options.forEach(function (option, index) {
-	            //收集里面的事件
-	            mixinHooks(finalOptions, option, index)
-	        })
+	        if (!isEmptyOption(root['ms-widget'])) {
+	            var options = [].concat(root['ms-widget'] || [])
+	            options.forEach(function (option, index) {
+	                //收集里面的事件
+	                mixinHooks(finalOptions, option, index)
+	            })
+	            var isEmpty = isEmptyOption(finalOptions)
+	        } else {
+	            isEmpty = true
+	        }
 
 	        //得到组件的is类型
 	        var componentName = root.type.indexOf('-') > 0 ?
@@ -6916,8 +6932,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        var docker = avalon.scopes[finalOptions.$id] || avalon.scopes[wid]
-	        if (docker) {
-	            var ret = docker.render(docker.vmodel, docker.local)
+	        if (docker && docker.dom) {
+	            var ret = isEmpty ? docker.dom.vtree :
+	                    docker.render(docker.vmodel, docker.local)
 	            if (ret[0]) {
 	                return replaceByComponent(ret[0], docker.vmodel, nodes, index)
 	            }
@@ -6973,7 +6990,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        avalon.vmodels[$id] = vmodel
 
-	       //将用户标签中的属性合并到组件标签的属性里
+	        //将用户标签中的属性合并到组件标签的属性里
 	        avalon.mix(componentRoot.props, root.props)
 	        //  必须指定wid
 	        componentRoot.props.wid = $id
@@ -7005,7 +7022,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        })
 	        // 必须加这个,方便在parseView.js开挂
 	        vtree[0].directive = 'widget'
-	        var render = avalon.render(vtree,root.local)
+	        var render = avalon.render(vtree, root.local)
 
 	        vmodel.$render = render
 	        try {
@@ -7278,11 +7295,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var arr = avalon.slice(arguments)
 	    var config
 	    var configName
+	    var skipkey = typeof this === 'function'
 	    for (var i = 0; i < arr.length; i++) {
 	        var obj = arr[i]
 	        //收集所有键值对及访问器属性
 	        for (var key in obj) {
+	            if(skipkey && this(key)){
+	                continue
+	            }
 	            keys[key] = obj[key]
+	            
 	            if(key === '$skipArray' && Array.isArray(obj.$skipArray)){
 	                obj.$skipArray.forEach(function(el){
 	                    $skipArray[el] = 1
@@ -7302,9 +7324,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	    }
-	    if(typeof this === 'function'){
-	        this(keys, unresolve)
-	    }
+	   
 	    for (key in unresolve) {
 	        if ($$skipArray[key] || accessors[key])
 	            continue

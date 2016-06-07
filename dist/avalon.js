@@ -1,4 +1,4 @@
-/*! built in 2016-6-7:23 version 2.07 by 司徒正美 */
+/*! built in 2016-6-8:1 version 2.07 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -6134,8 +6134,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            scope.renderCount ++
 	            var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
 	            cur.skipContent = !needUpdate
-	            if (pre.wid && cur.wid !== pre.wid) {
-
+	            if (pre.wid && cur.wid !== pre.wid && !pre.props.cached ) {
 	                delete avalon.scopes[pre.wid]
 	                delete avalon.vmodels[pre.wid]
 	            }
@@ -7252,6 +7251,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    directive: 'widget',
 	    nodeValue: 'unresolved component placeholder'
 	}
+
+	function isEmptyOption(a) {
+	    if (!a)
+	        return true
+	    var tmpl = avalon.mix({}, a)
+	    delete tmpl.$id
+	    delete tmpl.is
+	    for (var ii in tmpl) {
+	        return false
+	    }
+	    return true
+	}
+
 	avalon.component = function (name, definition) {
 	    //这是定义组件的分支,并将列队中的同类型对象移除
 	    if (arguments.length < 4) {
@@ -7265,12 +7277,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var wid = arguments[3]
 	        var topVm = root.vmodel
 	        var finalOptions = {}
-	        
-	        var options = [].concat(root['ms-widget'] || [])
-	        options.forEach(function (option, index) {
-	            //收集里面的事件
-	            mixinHooks(finalOptions, option, index)
-	        })
+	        var finalOptions = {}
+	        if (!isEmptyOption(root['ms-widget'])) {
+	            var options = [].concat(root['ms-widget'] || [])
+	            options.forEach(function (option, index) {
+	                //收集里面的事件
+	                mixinHooks(finalOptions, option, index)
+	            })
+	            var isEmpty = isEmptyOption(finalOptions)
+	        } else {
+	            isEmpty = true
+	        }
 
 	        //得到组件的is类型
 	        var componentName = root.type.indexOf('-') > 0 ?
@@ -7290,11 +7307,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            mixinHooks(finalOptions, topVm[configName], 0)
 	            protected = [configName].concat(protected)
 	        }
+
 	        var docker = avalon.scopes[finalOptions.$id] || avalon.scopes[wid]
-	        if (docker) {
-	            var ret = docker.render(docker.vmodel, docker.local)
+	        if (docker && docker.dom) {
+	            var ret = isEmpty ? docker.dom.vtree:
+	                        docker.render(docker.vmodel, docker.local)
 	            if (ret[0]) {
-	                return replaceByComponent(ret[0], docker.vmodel, nodes, index, true)
+	                return replaceByComponent(ret[0], docker.vmodel, nodes, index)
 	            }
 	        }
 
@@ -7328,11 +7347,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        mixinHooks(finalOptions, defaults, false)
 	        defineArgs = [topVm, defaults].concat(options)
 
-	        var vmodel = define.apply(function (a, b) {
-	            protected.forEach(function (k) {
-	                delete a[k]
-	                delete b[k]
-	            })
+	        var vmodel = define.apply(function (a) {
+	            return !finalOptions.hasOwnProperty(a)
 	        }, defineArgs)
 
 	        if (!avalon.modern) {//增强对IE的兼容
@@ -7679,6 +7695,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var heirloom = {}
 	    var arr = avalon.slice(arguments)
 	    var $skipArray = {}
+	    var skipkey = typeof this === 'function'
 	    for (var i = 0; i < arr.length; i++) {
 	        var obj = arr[i]
 	        //收集所有键值对及访问器属性
@@ -7686,6 +7703,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var configName
 	        for (var key in obj) {
 	            if(!obj.hasOwnProperty(key)){
+	                continue
+	            }
+	            if(skipkey && this(key)){
 	                continue
 	            }
 	            if(key === '$skipArray' && Array.isArray(obj.$skipArray)){
@@ -7709,9 +7729,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 
-	    if (typeof this === 'function') {
-	        this(keys, unresolve)
-	    }
+	//    if (typeof this === 'function') {
+	//        this(keys, unresolve, accessors)
+	//    }
 	    for (key in unresolve) {
 	        //系统属性跳过,已经有访问器的属性跳过
 	        if ($$skipArray[key] || accessors[key])
