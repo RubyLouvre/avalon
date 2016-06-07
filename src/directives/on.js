@@ -27,6 +27,8 @@ avalon.directive('on', {
                 var fn = Function('return ' + avalon.parseExpr(binding, 'on'))()
                 var uuid = markID(fn)
                 eventCache.put(key, fn)
+            }else{
+                uuid = fn.uuid
             }
             
             avalon.eventListeners[uuid] = fn
