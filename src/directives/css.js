@@ -10,7 +10,7 @@ avalon.directive('css', {
                 a = cur[name] = avalon.mix.apply({}, a)
             }
             if (typeof p !== 'object') {
-                cur.changeStyle = a
+                cur.changeStyle = a.$model 
             } else {
                 var patch = {}
                 var hasChange = false

@@ -1,4 +1,4 @@
-/*! built in 2016-6-8:14 version 2.07 by 司徒正美 */
+/*! built in 2016-6-8:16 version 2.07 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3458,7 +3458,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                a = cur[name] = avalon.mix.apply({}, a)
 	            }
 	            if (typeof p !== 'object') {
-	                cur.changeAttr = a
+	                cur.changeAttr = a.$model
 	            } else {
 	                var patch = {}
 	                var hasChange = false
@@ -3501,7 +3501,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                a = cur[name] = avalon.mix.apply({}, a)
 	            }
 	            if (typeof p !== 'object') {
-	                cur.changeStyle = a
+	                cur.changeStyle = a.$model 
 	            } else {
 	                var patch = {}
 	                var hasChange = false
@@ -7172,7 +7172,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return name
 	            })
 	        } catch (e) {
-	            avalon.log(e, e.message, 'diffProps error')
+	            avalon.log(type, e, e.message,'diffProps error')
 	        }
 	    }
 	    

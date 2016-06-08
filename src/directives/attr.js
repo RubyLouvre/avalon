@@ -11,7 +11,7 @@ avalon.directive('attr', {
                 a = cur[name] = avalon.mix.apply({}, a)
             }
             if (typeof p !== 'object') {
-                cur.changeAttr = a
+                cur.changeAttr = a.$model
             } else {
                 var patch = {}
                 var hasChange = false

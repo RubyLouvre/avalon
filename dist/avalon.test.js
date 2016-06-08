@@ -1,4 +1,4 @@
-/*! built in 2016-6-8:14 version 2.07 by 司徒正美 */
+/*! built in 2016-6-8:16 version 2.07 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -57,7 +57,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var avalon = __webpack_require__(111)
+	var avalon = __webpack_require__(107)
 	//require('./gesture/tap')
 	__webpack_require__(108)
 	__webpack_require__(109)
@@ -68,51 +68,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 
-/***/ 108:
-/***/ function(module, exports) {
-
-	//var avalon = require('avalon')
-
-	avalon.component('ms-button', {
-	    template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
-	    defaults: {
-	        buttonText: "button"
-	    },
-	    soleSlot: 'buttonText'
-	})
-
-/***/ },
-
-/***/ 109:
+/***/ 107:
 /***/ function(module, exports, __webpack_require__) {
 
-	var button = __webpack_require__(108)
-	var tmpl = __webpack_require__(110)
-
-	avalon.component('ms-panel', {
-	    template: tmpl,
-	    defaults: {
-	        body: "&nbsp;&nbsp;",
-	        'ms_button': {
-	            buttonText: 'click me!'
-	        }
-	    },
-	    soleSlot: 'body'
-	})
-
-/***/ },
-
-/***/ 110:
-/***/ function(module, exports) {
-
-	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
-
-/***/ },
-
-/***/ 111:
-/***/ function(module, exports, __webpack_require__) {
-
-	/*! built in 2016-6-8:14 version 2.07 by 司徒正美 */
+	/*! built in 2016-6-8:16 version 2.07 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -1766,7 +1725,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                a = cur[name] = avalon.mix.apply({}, a)
 		            }
 		            if (typeof p !== 'object') {
-		                cur.changeStyle = a
+		                cur.changeStyle = a.$model 
 		            } else {
 		                var patch = {}
 		                var hasChange = false
@@ -4683,7 +4642,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                return name
 		            })
 		        } catch (e) {
-		            avalon.log(e, e.message, 'diffProps error')
+		            avalon.log(type, e, e.message,'diffProps error')
 		        }
 		    }
 		    
@@ -7643,6 +7602,47 @@ return /******/ (function(modules) { // webpackBootstrap
 	/******/ ])
 	});
 	;
+
+/***/ },
+
+/***/ 108:
+/***/ function(module, exports) {
+
+	//var avalon = require('avalon')
+
+	avalon.component('ms-button', {
+	    template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
+	    defaults: {
+	        buttonText: "button"
+	    },
+	    soleSlot: 'buttonText'
+	})
+
+/***/ },
+
+/***/ 109:
+/***/ function(module, exports, __webpack_require__) {
+
+	var button = __webpack_require__(108)
+	var tmpl = __webpack_require__(110)
+
+	avalon.component('ms-panel', {
+	    template: tmpl,
+	    defaults: {
+	        body: "&nbsp;&nbsp;",
+	        'ms_button': {
+	            buttonText: 'click me!'
+	        }
+	    },
+	    soleSlot: 'body'
+	})
+
+/***/ },
+
+/***/ 110:
+/***/ function(module, exports) {
+
+	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
 
 /***/ }
 
