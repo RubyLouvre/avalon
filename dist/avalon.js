@@ -1,4 +1,4 @@
-/*! built in 2016-6-8:18 version 2.07 by 司徒正美 */
+/*! built in 2016-6-8:22 version 2.07 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -7203,41 +7203,43 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	//如果正在更新一个子树,那么将它放到
-	var dirtyTrees = {}
 	var needRenderIds = []
+	var renderingID = false
 	avalon.suspendUpdate = 0
-	var isBatchingUpdates = false
-	function batchUpdate(id, immediate) {
 
-	    if (dirtyTrees[id]) {
-	        avalon.Array.ensure(needRenderIds, id)
+	function batchUpdate(id) {
+	    if (renderingID) {
+	        return avalon.Array.ensure(needRenderIds, id)
 	    } else {
-	        dirtyTrees[id] = true
+	        renderingID = id
 	    }
+	    
 	    var scope = avalon.scopes[id]
-	    if (!scope || isBatchingUpdates || !document.nodeName) {
-	        return
+	    if (!scope || !document.nodeName) {
+	        return renderingID = null
 	    }
+	    
 	    var dom = scope.dom
 	    var steps = {count: 0}
 	    var vtree = scope.render(scope.synth || scope.vmodel, scope.local)
 
-	    isBatchingUpdates = true
 	    avalon.diff(vtree, dom.vtree || [], steps)
 	    patch([dom], vtree, null, steps)
 	    steps.count = 0
 	    dom.vtree = vtree
-	    delete dirtyTrees[id]
-	    isBatchingUpdates = false
+	    
+	    renderingID = null
+
+	    var index = needRenderIds.indexOf(id)
+	    if (index > -1) {
+	        var removed = needRenderIds.splice(index, 1)
+	        return batchUpdate(removed[0])
+	    }
+	    
 	    var id = needRenderIds.shift()
 	    if (id) {
-	      return  batchUpdate(id, true)
+	        batchUpdate(id)
 	    }
-	    for (var i in dirtyTrees) {
-	        batchUpdate(i, true)
-	        break
-	    }
-
 	}
 
 

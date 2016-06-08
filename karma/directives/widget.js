@@ -233,20 +233,16 @@ describe('widget', function () {
                 onInit: function (e) {
                     expect(e.type).to.equal('init')
                     ++index
-                    console.log('1111')
                 },
                 onReady: function (e) {
                     expect(e.type).to.equal('ready')
                     ++index
-                    console.log('2222')
                 },
                 onViewChange: function (e) {
                     expect(e.type).to.equal('viewchange')
-                    console.log('3333')
                     ++index
                 },
                 onDispose: function (e) {
-                    console.log('4444')
                     expect(e.type).to.equal('dispose')
                     ++index
                 }
