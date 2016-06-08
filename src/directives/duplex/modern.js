@@ -106,6 +106,7 @@ avalon.directive('duplex', {
             data.format = vnode.duplexFormat
             data.set = vnode.duplexSetter
             data.parse = parseValue
+            data.element = node
             data.callback = vnode.callback
             addValidateField(node, vnode)
             if (!avalon.msie && updateModelByValue === false && !node.valueHijack) {

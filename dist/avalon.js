@@ -4629,6 +4629,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            data.set = vnode.duplexSetter
 	            data.parse = parseValue
 	            data.callback = vnode.callback
+	            data.element = node
 	            addValidateField(node, vnode)
 	            if (!avalon.msie && updateModelByValue === false && !node.valueHijack) {
 	                //chrome 42及以下版本需要这个hack
@@ -5152,7 +5153,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	module.exports = function addField(node, vnode) {
-	    var field = vnode.duplexData
+	    var field = node.__ms_duplex__
 	    var rules = vnode['ms-rules']
 	    if (rules && !field.validator) {
 	        while (node && node.nodeType === 1) {
@@ -5265,7 +5266,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    validate: function (field, isValidateAll, event) {
 	        var promises = []
-	        var value = field.get(field.vmodel)
+	        var value = field.modelValue
 	        var elem = field.element
 	        var validator = field.validator
 	        if (elem.disabled)

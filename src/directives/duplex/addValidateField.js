@@ -1,6 +1,6 @@
 
 module.exports = function addField(node, vnode) {
-    var field = vnode.duplexData
+    var field = node.__ms_duplex__
     var rules = vnode['ms-rules']
     if (rules && !field.validator) {
         while (node && node.nodeType === 1) {

@@ -2918,7 +2918,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		
 		module.exports = function addField(node, vnode) {
-		    var field = vnode.duplexData
+		    var field = node.__ms_duplex__
 		    var rules = vnode['ms-rules']
 		    if (rules && !field.validator) {
 		        while (node && node.nodeType === 1) {
@@ -3031,7 +3031,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    },
 		    validate: function (field, isValidateAll, event) {
 		        var promises = []
-		        var value = field.get(field.vmodel)
+		        var value = field.modelValue
 		        var elem = field.element
 		        var validator = field.validator
 		        if (elem.disabled)
@@ -6440,6 +6440,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            data.format = vnode.duplexFormat
 		            data.set = vnode.duplexSetter
 		            data.parse = parseValue
+		            data.element = node
 		            data.callback = vnode.callback
 		            addValidateField(node, vnode)
 		            if (!avalon.msie && updateModelByValue === false && !node.valueHijack) {

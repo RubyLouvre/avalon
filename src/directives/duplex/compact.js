@@ -107,6 +107,7 @@ avalon.directive('duplex', {
             data.set = vnode.duplexSetter
             data.parse = parseValue
             data.callback = vnode.callback
+            data.element = node
             addValidateField(node, vnode)
             if (!avalon.msie && updateModelByValue === false && !node.valueHijack) {
                 //chrome 42及以下版本需要这个hack

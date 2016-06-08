@@ -88,7 +88,7 @@ var dir = avalon.directive('validate', {
     },
     validate: function (field, isValidateAll, event) {
         var promises = []
-        var value = field.get(field.vmodel)
+        var value = field.modelValue
         var elem = field.element
         var validator = field.validator
         if (elem.disabled)
