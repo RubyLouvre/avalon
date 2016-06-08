@@ -6808,8 +6808,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return a
 	    })
 
-	    rewite('insertBefore', function (fn, a) {
-	        fn.call(this, a)
+	    rewite('insertBefore', function (fn, a, b) {
+	        fn.call(this, a, b)
 	        if (a.nodeType === 1 && this.nodeType === 11) {
 	            fireDisposeHookDelay(a)
 	        }
