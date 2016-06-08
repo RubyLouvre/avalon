@@ -1,4 +1,4 @@
-/*! built in 2016-6-8:16 version 2.07 by 司徒正美 */
+/*! built in 2016-6-8:18 version 2.07 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1648,10 +1648,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var a = cur[name]
 	        var p = pre[name]
 	        if (Object(a) === a) {
+	            
+	            a = a.$model || a
 	            if (Array.isArray(a)) {
 	                a = cur[name] = avalon.mix.apply({}, a)
-	            }else{
-	                a = a.$model
 	            }
 	            if (typeof p !== 'object') {
 	                cur.changeStyle = a

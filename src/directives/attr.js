@@ -7,10 +7,9 @@ avalon.directive('attr', {
         var a = cur[name]
         var p = pre[name]
         if (a && typeof a === 'object') {
+             a = a.$model || a
             if (Array.isArray(a)) {
                 a = cur[name] = avalon.mix.apply({}, a)
-            }else{
-                a = a.$model
             }
             if (typeof p !== 'object') {
                 cur.changeAttr = a
