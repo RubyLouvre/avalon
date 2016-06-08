@@ -4632,17 +4632,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		function diffProps(current, previous, steps) {
 		    if (current.order) {
+		        var directiveType
 		        try {
 		            current.order.replace(/([^;]+)/g, function (name) {
 		                var match = name.match(rbinding)
 		                var type = match && match[1]
+		                directiveType = type
 		                if (directives[type]) {
 		                    directives[type].diff(current, previous || emptyObj(), steps, name)
 		                }
 		                return name
 		            })
 		        } catch (e) {
-		            avalon.log(type, e, e.message,'diffProps error')
+		            avalon.log(directiveType, e, e.message,'diffProps error')
 		        }
 		    }
 		    
