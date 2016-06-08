@@ -56,7 +56,7 @@ function filterBy(array, search) {
     }
 
     array = convertArray(array).filter(function (el, i) {
-         return !!criteria.apply(el, [el.value,i].concat(args) )
+        return !!criteria.apply(el, [el.value,i].concat(args) )
     })
     var isArray = type === 'array'
     var target = isArray ? [] : {}

@@ -1,4 +1,4 @@
-/*! built in 2016-6-9:1 version 2.07 by 司徒正美 */
+/*! built in 2016-6-9:2 version 2.07 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -71,7 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 107:
 /***/ function(module, exports, __webpack_require__) {
 
-	/*! built in 2016-6-9:1 version 2.07 by 司徒正美 */
+	/*! built in 2016-6-9:2 version 2.07 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -1409,7 +1409,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    }
 
 		    array = convertArray(array).filter(function (el, i) {
-		         return !!criteria.apply(el, [el.value,i].concat(args) )
+		        return !!criteria.apply(el, [el.value,i].concat(args) )
 		    })
 		    var isArray = type === 'array'
 		    var target = isArray ? [] : {}
@@ -5946,7 +5946,10 @@ return /******/ (function(modules) { // webpackBootstrap
 		                /* eslint-enable no-cond-assign */
 		                saveInCache(cache, c)
 		                c.action = 'enter'
-
+		                if (cur.fixAction) {
+		                    c.action = 'move'
+		                    c.domIndex = i
+		                }
 		            }
 		            cur.removedComponents = {}
 		            //如果没有孩子也要处理一下
@@ -5971,6 +5974,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                if (p) {
 		                    clearDom(p.children)
 		                    c.domIndex = p.index
+		                    
 		                }
 		                saveInCache(newCache, c)
 		            }
@@ -6238,11 +6242,10 @@ return /******/ (function(modules) { // webpackBootstrap
 		                wid: wid,
 		                componentName: scope.componentName
 		            })
-		            
 		            scope.renderCount = 2
 		            pre.children = []
 		            cur.steps = steps
-		            //fixRepeatAction(cur.children)
+		            fixRepeatAction(cur.children)
 		            update(cur, this.replaceByComponent, steps, 'widget')
 		            function fireReady(dom, vnode) {
 		                cur.vmodel.$fire('onReady', {
@@ -6260,6 +6263,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            if(scope.pre && (pre.wid === scope.pre.wid)){
 		                avalon.mix(pre, scope.pre)
 		            }
+		            
 		            var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
 		            cur.skipContent = !needUpdate
 		            
@@ -6332,7 +6336,16 @@ return /******/ (function(modules) { // webpackBootstrap
 		})
 
 
-
+		function fixRepeatAction(nodes) {
+		    for (var i = 0, el; el = nodes[i++]; ) {
+		        if (el.directive === 'for') {
+		            el.fixAction = true
+		        }
+		        if (el.children) {
+		            fixRepeatAction(el.children)
+		        }
+		    }
+		}
 
 	/***/ },
 	/* 69 */

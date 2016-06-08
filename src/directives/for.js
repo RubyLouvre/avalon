@@ -155,7 +155,10 @@ avalon.directive('for', {
                 /* eslint-enable no-cond-assign */
                 saveInCache(cache, c)
                 c.action = 'enter'
-
+                if (cur.fixAction) {
+                    c.action = 'move'
+                    c.domIndex = i
+                }
             }
             cur.removedComponents = {}
             //如果没有孩子也要处理一下
@@ -180,6 +183,7 @@ avalon.directive('for', {
                 if (p) {
                     clearDom(p.children)
                     c.domIndex = p.index
+                    
                 }
                 saveInCache(newCache, c)
             }

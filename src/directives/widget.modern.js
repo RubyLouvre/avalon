@@ -47,6 +47,7 @@ var dir = avalon.directive('widget', {
             scope.renderCount = 2
             pre.children = []
             cur.steps = steps
+            fixRepeatAction(cur.children)
             update(cur, this.replaceByComponent, steps, 'widget')
             function fireReady(dom, vnode) {
                 cur.vmodel.$fire('onReady', {
@@ -133,3 +134,13 @@ var dir = avalon.directive('widget', {
     }
 })
 
+function fixRepeatAction(nodes) {
+    for (var i = 0, el; el = nodes[i++]; ) {
+        if (el.directive === 'for') {
+            el.fixAction = true
+        }
+        if (el.children) {
+            fixRepeatAction(el.children)
+        }
+    }
+}
