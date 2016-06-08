@@ -8,9 +8,11 @@ avalon.directive('css', {
         if (Object(a) === a) {
             if (Array.isArray(a)) {
                 a = cur[name] = avalon.mix.apply({}, a)
+            }else{
+                a = a.$model
             }
             if (typeof p !== 'object') {
-                cur.changeStyle = a.$model 
+                cur.changeStyle = a
             } else {
                 var patch = {}
                 var hasChange = false

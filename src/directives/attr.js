@@ -9,9 +9,11 @@ avalon.directive('attr', {
         if (a && typeof a === 'object') {
             if (Array.isArray(a)) {
                 a = cur[name] = avalon.mix.apply({}, a)
+            }else{
+                a = a.$model
             }
             if (typeof p !== 'object') {
-                cur.changeAttr = a.$model
+                cur.changeAttr = a
             } else {
                 var patch = {}
                 var hasChange = false
