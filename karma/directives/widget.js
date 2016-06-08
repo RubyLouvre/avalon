@@ -300,5 +300,85 @@ describe('widget', function () {
         })
         
     })
+    it ('路由组件', function (done) {
+        avalon.component('ms-hasha',{
+            template:'<div cached="true">{{@num}}<input type="text" ms-duplex-number="@num"/><button type="button" ms-on-click="@onPlus">+++</button></div>',
+            defaults:{
+                num:1,
+                onPlus:function(){
+                    this.num++;
+                }
+            }
+        });
+        var tpl ='<div cached="true"><h4>{{@title}}</h4><button type="button" ms-on-click="@onChangeTitle">点击改变title</button></div>';
+        var time = 10
+        avalon.component('ms-hashb',{
+            template:tpl,
+            defaults:{
+                title:"这是标题",
+                random:0,
+                onChangeTitle:function(e){
+                    this.title = 'title'+(++time);
+                }
+            }
+        });
+        vm = avalon.define({
+            $id:'router',
+            panel:'',
+            hash: ''
+        })
+        function changePanel(v){ 
+            vm.panel = '<'+v+' ms-widget=\"{$id:"'+v+'"}\"></'+v+'>'
+        }
+        vm.$watch('hash', changePanel)
+        vm.hash = 'ms-hasha'
+        
+        div.innerHTML = heredoc(function(){
+            /*
+            <div ms-controller="router" ms-html="@panel">xxx</div>
+             */
+        })
+        avalon.scan(div)
+        setTimeout(function(){
+           var input = div.getElementsByTagName('input')[0]
+           var button = div.getElementsByTagName('button')[0]
+
+           expect(input.value).to.be.equal('1')
+           fireClick(button)
+           expect(input.value).to.be.equal('2')
+           fireClick(button)
+           expect(input.value).to.be.equal('3')
+           fireClick(button)
+           expect(input.value).to.be.equal('4')
+           vm.hash = 'ms-hashb'
+           setTimeout(function(){
+                var h4 = div.getElementsByTagName('h4')[0]
+                var button = div.getElementsByTagName('button')[0]
+                expect(h4.innerHTML).to.be.equal('这是标题')
+                fireClick(button)
+                expect(h4.innerHTML).to.be.equal('title11')
+                fireClick(button)
+                expect(h4.innerHTML).to.be.equal('title12')
+                fireClick(button)
+                expect(h4.innerHTML).to.be.equal('title13')
+                vm.hash = 'ms-hasha'
+                setTimeout(function(){
+                    var input = div.getElementsByTagName('input')[0]
+                    var button = div.getElementsByTagName('button')[0]
+
+                    expect(input.value).to.be.equal('4')
+                    fireClick(button)
+                    expect(input.value).to.be.equal('5')
+                    fireClick(button)
+                    expect(input.value).to.be.equal('6')
+                    fireClick(button)
+                    expect(input.value).to.be.equal('7')
+                    done()
+               })
+           })
+          
+        })
+        
+    })
 
 })

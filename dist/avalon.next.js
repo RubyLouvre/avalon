@@ -1,4 +1,4 @@
-/*! built in 2016-6-8:23 version 2.07 by 司徒正美 */
+/*! built in 2016-6-9:1 version 2.07 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2644,10 +2644,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var cFn = cur[name]
 	        var pFn = pre[name]
 	        if (cFn !== pFn) {
-	            if (typeof pFn === 'function' && typeof cFn === 'function') {
-	                var pid = pFn.uuid
-	                cFn.uuid = pid
-	                avalon.eventListeners[ pid ] = cFn
+	            if (typeof pFn === 'function' &&
+	                    typeof cFn === 'function' &&
+	                    pFn.uuid === cFn.uuid) {
+	                avalon.eventListeners[ pFn.uuid ] = cFn
 	                return
 	            }
 	            var match = name.match(revent)
@@ -3566,10 +3566,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                /* eslint-enable no-cond-assign */
 	                saveInCache(cache, c)
 	                c.action = 'enter'
-	                if (cur.fixAction) {
-	                    c.action = 'move'
-	                    c.domIndex = i
-	                }
 
 	            }
 	            cur.removedComponents = {}
@@ -6704,7 +6700,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            scope.renderCount = 2
 	            pre.children = []
 	            cur.steps = steps
-	            fixRepeatAction(cur.children)
 	            update(cur, this.replaceByComponent, steps, 'widget')
 	            function fireReady(dom, vnode) {
 	                cur.vmodel.$fire('onReady', {
@@ -6719,8 +6714,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            update(cur, fireReady, steps, 'widget', 'afterChange')
 	        } else {
 	            scope.renderCount++
+	            if(scope.pre && (pre.wid === scope.pre.wid)){
+	                avalon.mix(pre, scope.pre)
+	            }
+	            
 	            var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
 	            cur.skipContent = !needUpdate
+	            
 	            if (pre.wid && cur.wid !== pre.wid && !pre.props.cached ) {
 
 	                delete avalon.scopes[pre.wid]
@@ -6786,16 +6786,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	})
 
-	function fixRepeatAction(nodes) {
-	    for (var i = 0, el; el = nodes[i++]; ) {
-	        if (el.directive === 'for') {
-	            el.fixAction = true
-	        }
-	        if (el.children) {
-	            fixRepeatAction(el.children)
-	        }
-	    }
-	}
 
 
 /***/ },
@@ -7097,6 +7087,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var scope = avalon.scopes[wid]
 
 	    if (scope && scope.dom) {
+	        scope.pre = scope.dom.vtree[0]
 	        scope.dom.vtree = [vdom]
 	    } else {
 	        var scope = {

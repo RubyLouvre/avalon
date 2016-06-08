@@ -155,10 +155,6 @@ avalon.directive('for', {
                 /* eslint-enable no-cond-assign */
                 saveInCache(cache, c)
                 c.action = 'enter'
-                if (cur.fixAction) {
-                    c.action = 'move'
-                    c.domIndex = i
-                }
 
             }
             cur.removedComponents = {}

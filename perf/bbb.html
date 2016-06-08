@@ -43,62 +43,19 @@ avalon.component('ms-container', {
 var addressTmpl = heredoc(function() {
 /*
 <div class="address-wrap ms-controller" ms-visible="@addressWrapShow">
-    <div class="wrap-header">
-        <h3>选择收货地址</h3>
-        <span class="small-text">美的商城配送方式：快递（免运费）</span>
-        <a class="right-text" href="javascript:;" ms-click="@addressListExpand = !@addressListExpand" ms-visible="@addressTotal > 3">
-            <span ms-visible="!@addressListExpand">展开</span><span ms-visible="@addressListExpand">收起</span>更多收货地址<i class="icon_arrow_bottom" ms-class="{icon_arrow_top: @addressListExpand}"></i></a>
-    </div>
+   
     <div class="address-box">
         <div class="adr"
-             ms-for="(index, el) in @addressList"
-             ms-class="{'default': (el.nIsDefault == 1 ? (@checkDefault(el) && true) : false), 'checked': (@addressChecked.lAddrId == el.lAddrId), hide: (index > 2 && ! @addressListExpand)}"
-             ms-hover="'hover'"
-             ms-click="@addressChecked = el">
-            <div class="adr-inner" ms-attr="{title: (el.strProvince + el.strCity + ' ' + el.strPersonName)}">
-                <i class="icon_checked"></i>
-                <div class="adr-head" >
-                    <span class="adr-province" ms-text="el.strProvince"></span>
-                    <span class="adr-city" ms-text="el.strCity"></span>
-                    <span class="adr-name" ms-text="el.strPersonName"></span>
-                </div>
-                <div class="adr-body" ms-attr="{title: (el.strArea + el.strDetailMsg + ' ' + el.strMobileNum)}">
-                    <p class="adr-text">
-                        <span class="adr-county" ms-text="el.strArea"></span>
-                        <span class="adr-detail" ms-text="el.strDetailMsg"></span>
-                        <span class="adr-tel" ms-text="el.strMobileNum"></span>
-                        <span class="adr-default-text">[默认]</span>
-                    </p>
-                </div>
-                <div class="adr-foot">
-                    <a href="javascript:;" ms-click="@editAdrress(el, $event) | stop">编辑</a>
-                    <a href="javascript:;" ms-click="@deleteAddress(el, $event) | stop">删除</a>
-                </div>
-            </div>
+             ms-for="(index, el) in @addressList">
+            {{el.strPersonName}}
         </div>
 
-        <div class="adr" ms-hover="'hover'" ms-click="@editAdrress({}, $event)">
-            <div class="adr-inner">
-                <div class="adr-add">
-                    <p class="adr-add-icon"><i class="icon_add"></i></p>
-                    <p class="adr-add-text">添加地址</p>
-                </div>
-            </div>
+        <div class="adr" >
+            
+            <p class="adr-add-text">添加地址</p>
+               
         </div>
     </div>
-    <xmp ms-widget="[{is:'mdui-dialog', $id:'addressDeleteDialog'}, @dialogAddressDeleteConf]">
-
-    </xmp>
-    <xmp ms-widget="[{is:'mdui-dialog', $id:'addressEditDialog'}, @dialogAddressEditConf]">
-        <div slot="body">
-
-            <div class="btn-box">
-                <div class="addr-btn blue" ms-click="@confirmDialog | stop">保存</div>
-                <div class="addr-btn" ms-click="@closeDialog | stop">取消</div>
-            </div>
-        </div>
-        <div slot="foot"></div>
-    </xmp>
 </div>
 */
 })
@@ -156,9 +113,10 @@ avalon.component('ms-address-wrap', {
         },
         // 获取地址列表数据
         getAll: function() {
-            console.log('getAll')
             this.addressList = [{"lAddrId":10677,"lUin":12070,"strPersonName":"\u6ee8\u6cb31","strMobileNum":"11111111111","strProvince":"\u5e7f\u4e1c\u7701","strProvinceCode":"440000","strCity":"\u6df1\u5733\u5e02","strCityCode":"440300","strArea":"\u798f\u7530\u533a","strAreaCode":"440304","strDetailMsg":"\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3","nIsDefault":1},{"lAddrId":10724,"lUin":12070,"strPersonName":"\u8fdb\u57ce\u4e0d3\u70c33\u4e2d\u5730\u7c89\u5730","strMobileNum":"11111111111","strProvince":"\u6cb3\u5317\u7701","strProvinceCode":"130000","strCity":"\u77f3\u5bb6\u5e84\u5e02","strCityCode":"130100","strArea":"\u957f\u5b89\u533a","strAreaCode":"130102","strDetailMsg":"12321321313213","nIsDefault":null},{"lAddrId":10725,"lUin":12070,"strPersonName":"\u9648\u6d69","strMobileNum":"18611111111","strProvince":"\u5317\u4eac\u5e02","strProvinceCode":"110000","strCity":"\u5317\u4eac\u5e02","strCityCode":"110100","strArea":"\u4e1c\u57ce\u533a","strAreaCode":"110101","strDetailMsg":"\u5b66\u5e9c\u8def\u6021\u5316\u91d1\u878d\u79d1\u6280\u5927\u53a623\u697c","nIsDefault":null},{"lAddrId":10726,"lUin":12070,"strPersonName":"\u6d82\u6d82","strMobileNum":"18611111111","strProvince":"\u5c71\u897f\u7701","strProvinceCode":"140000","strCity":"\u5927\u540c\u5e02","strCityCode":"140200","strArea":"\u5357\u90ca\u533a","strAreaCode":"140211","strDetailMsg":"\u7389\u5f8b\u8def\u82b1\u6837\u5e74\u82b1\u4e61A\u680b9O","nIsDefault":null},{"lAddrId":10727,"lUin":12070,"strPersonName":"\u840c\u840c","strMobileNum":"18611111111","strProvince":"\u6cb3\u5317\u7701","strProvinceCode":"130000","strCity":"\u5510\u5c71\u5e02","strCityCode":"130200","strArea":"\u8def\u5357\u533a","strAreaCode":"130202","strDetailMsg":"\u6d77\u79c0\u8def21\u53f7\u9f99\u5149\u4e16\u7eaa\u5927\u53a6B\u5ea711\u697c","nIsDefault":null}];
-            this.addressTotal = this.addressList.length
+            console.log('getAll', this.addressList.length)
+
+           this.addressTotal = this.addressList.length
             this.addressWrapShow = true
             this.loadingWrapShow = false
         },
@@ -173,7 +131,10 @@ avalon.component('ms-address-wrap', {
             self.dialogAddressEditConf.dialogShow = ! self.dialogAddressEditConf.dialogShow
         },
         onInit: function() {
-            this.getAll.call(this)
+            var self = this
+           setTimeout(function() {
+                self.getAll.call(self)
+            }, 3000)
             console.log("onInit!!!!")
             this.addressEdit = avalon.mix({}, this.defaultAddressEdit)
             //avalon.log('onInit 会加载多次')

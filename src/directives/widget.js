@@ -44,10 +44,11 @@ var dir = avalon.directive('widget', {
                 wid: wid,
                 componentName: scope.componentName
             })
+            
             scope.renderCount = 2
             pre.children = []
             cur.steps = steps
-            fixRepeatAction(cur.children)
+            //fixRepeatAction(cur.children)
             update(cur, this.replaceByComponent, steps, 'widget')
             function fireReady(dom, vnode) {
                 cur.vmodel.$fire('onReady', {
@@ -62,8 +63,12 @@ var dir = avalon.directive('widget', {
             update(cur, fireReady, steps, 'widget', 'afterChange')
         } else {
             scope.renderCount ++
+            if(scope.pre && (pre.wid === scope.pre.wid)){
+                avalon.mix(pre, scope.pre)
+            }
             var needUpdate = !cur.diff || cur.diff(cur, pre, steps)
             cur.skipContent = !needUpdate
+            
             if (pre.wid && cur.wid !== pre.wid && !pre.props.cached ) {
                 delete avalon.scopes[pre.wid]
                 delete avalon.vmodels[pre.wid]
@@ -132,13 +137,4 @@ var dir = avalon.directive('widget', {
     }
 })
 
-function fixRepeatAction(nodes) {
-    for (var i = 0, el; el = nodes[i++]; ) {
-        if (el.directive === 'for') {
-            el.fixAction = true
-        }
-        if (el.children) {
-            fixRepeatAction(el.children)
-        }
-    }
-}
+

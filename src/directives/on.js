@@ -42,10 +42,10 @@ avalon.directive('on', {
         var cFn = cur[name]
         var pFn = pre[name]
         if (cFn !== pFn) {
-            if (typeof pFn === 'function' && typeof cFn === 'function') {
-                var pid = pFn.uuid
-                cFn.uuid = pid
-                avalon.eventListeners[ pid ] = cFn
+            if (typeof pFn === 'function' &&
+                    typeof cFn === 'function' &&
+                    pFn.uuid === cFn.uuid) {
+                avalon.eventListeners[ pFn.uuid ] = cFn
                 return
             }
             var match = name.match(revent)
