@@ -117,19 +117,21 @@ avalon.directive('for', {
 
         prepareCompare(cur.items, cur)
         delete pre.forDiff
-
+      //  console.log( cur.compareText,"=====",current.length,previous.length,previous.ddd,__index__, cur.end)
         if (cur.compareText === pre.compareText) {
             avalon.shadowCopy(cur, pre)
             return
         }
+       
         cur.forDiff = true
 
-        var isInit = !('directive' in pre)
+        var isInit = !('items' in pre)
         var i, c, p
         if (isInit) {
-            pre.items = []
+            var _items = getRepeatRange(previous,__index__ )
+            pre.items = _items.slice(1,-1)
             pre.components = []
-            pre.repeatCount = 0
+            pre.repeatCount =  pre.items.length
         }
 
         var quota = pre.components.length
@@ -139,7 +141,7 @@ avalon.directive('for', {
         //让循环区域在新旧vtree里对齐
         if (n > 0) {
             var spliceArgs = [__index__ + 1, 0]
-            for (var i = 0, n = n - 1; i < n; i++) {
+            for (var i = 0; i < n; i++) {
                 spliceArgs.push(null)
             }
             previous.splice.apply(previous, spliceArgs)
@@ -280,10 +282,10 @@ avalon.directive('for', {
         vnode.repeatCount = items.length
         avalon.diff(items, vnode.prevItems, steps)
 
-
         if (steps.count !== oldCount) {
             patch(entity, items, parent, steps)
         }
+
         var cb = avalon.caches[vnode.cid]
         if (cb) {
             cb.call(vnode.vmodel, {
