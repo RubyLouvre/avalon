@@ -127,7 +127,6 @@ if (avalon.window.Proxy) {
         var definition = {}
         var $compose = {}
         var heirloom = {}, _after
-        var skipkey = typeof this === 'function'
         //将这个属性名对应的Proxy放到$compose中
         for (var i = 0; i < arguments.length; i++) {
             var obj = arguments[i]
@@ -136,9 +135,7 @@ if (avalon.window.Proxy) {
             for (var key in obj) {
                 if ($$skipArray[key])
                     continue
-                if(skipkey && this(key)){
-                    continue
-                 }
+
                 var val = definition[key] = obj[key]
                 if (canObserve(key, val, $skipArray)) {
                     definition[key] = $$midway.modelAdaptor(val, 0, heirloom, {
@@ -166,12 +163,6 @@ if (avalon.window.Proxy) {
         }
         
         
-        // if (_after.$id && before.$element) {
-        //     if (!_after.$element) {
-        //         _after.$element = before.$element
-        //         _after.$render = before.$render 
-        //     } 
-        // }
         return initViewModel(vm, heirloom, {}, {}, {
             id: before.$id,
             hashcode: makeHashCode('$'),

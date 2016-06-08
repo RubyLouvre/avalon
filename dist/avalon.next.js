@@ -1,4 +1,4 @@
-/*! built in 2016-6-8:1 version 2.07 by 司徒正美 */
+/*! built in 2016-6-8:14 version 2.07 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3487,19 +3487,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        prepareCompare(cur.items, cur)
 	        delete pre.forDiff
-
+	      //  console.log( cur.compareText,"=====",current.length,previous.length,previous.ddd,__index__, cur.end)
 	        if (cur.compareText === pre.compareText) {
 	            avalon.shadowCopy(cur, pre)
 	            return
 	        }
+	       
 	        cur.forDiff = true
 
-	        var isInit = !('directive' in pre)
+	        var isInit = !('items' in pre)
 	        var i, c, p
 	        if (isInit) {
-	            pre.items = []
+	            var _items = getRepeatRange(previous,__index__ )
+	            pre.items = _items.slice(1,-1)
 	            pre.components = []
-	            pre.repeatCount = 0
+	            pre.repeatCount =  pre.items.length
 	        }
 
 	        var quota = pre.components.length
@@ -3509,7 +3511,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //让循环区域在新旧vtree里对齐
 	        if (n > 0) {
 	            var spliceArgs = [__index__ + 1, 0]
-	            for (var i = 0, n = n - 1; i < n; i++) {
+	            for (var i = 0; i < n; i++) {
 	                spliceArgs.push(null)
 	            }
 	            previous.splice.apply(previous, spliceArgs)
@@ -3650,10 +3652,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        vnode.repeatCount = items.length
 	        avalon.diff(items, vnode.prevItems, steps)
 
-
 	        if (steps.count !== oldCount) {
 	            patch(entity, items, parent, steps)
 	        }
+
 	        var cb = avalon.caches[vnode.cid]
 	        if (cb) {
 	            cb.call(vnode.vmodel, {
@@ -6878,13 +6880,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    directive: 'widget',
 	    nodeValue: 'unresolved component placeholder'
 	}
-	function isEmptyOption(a) {
+	function isEmptyOption(a, b) {
 	    if (!a)
 	        return true
-	    var tmpl = avalon.mix({}, a)
-	    delete tmpl.$id
-	    delete tmpl.is
+	    var tmpl = avalon.mix(b || {}, a)
 	    for (var ii in tmpl) {
+	        if(ii === 'is' || ii === '$id')
+	            continue
 	        return false
 	    }
 	    return true
@@ -6902,7 +6904,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var wid = arguments[3]
 	        var topVm = root.vmodel
 	        var finalOptions = {}
-	        if (!isEmptyOption(root['ms-widget'])) {
+	        if (!isEmptyOption(root['ms-widget'],finalOptions)) {
 	            var options = [].concat(root['ms-widget'] || [])
 	            options.forEach(function (option, index) {
 	                //收集里面的事件
@@ -6934,8 +6936,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var docker = avalon.scopes[finalOptions.$id] || avalon.scopes[wid]
 	        if (docker && docker.dom) {
-	            var ret = isEmpty ? docker.dom.vtree :
-	                    docker.render(docker.vmodel, docker.local)
+	          //  var ret = isEmpty ? docker.dom.vtree :
+	              var ret =      docker.render(docker.vmodel, docker.local)
 	            if (ret[0]) {
 	                return replaceByComponent(ret[0], docker.vmodel, nodes, index)
 	            }
@@ -7301,7 +7303,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var definition = {}
 	        var $compose = {}
 	        var heirloom = {}, _after
-	        var skipkey = typeof this === 'function'
 	        //将这个属性名对应的Proxy放到$compose中
 	        for (var i = 0; i < arguments.length; i++) {
 	            var obj = arguments[i]
@@ -7310,9 +7311,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            for (var key in obj) {
 	                if ($$skipArray[key])
 	                    continue
-	                if(skipkey && this(key)){
-	                    continue
-	                 }
+
 	                var val = definition[key] = obj[key]
 	                if (canObserve(key, val, $skipArray)) {
 	                    definition[key] = $$midway.modelAdaptor(val, 0, heirloom, {
@@ -7340,12 +7339,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        
 	        
-	        // if (_after.$id && before.$element) {
-	        //     if (!_after.$element) {
-	        //         _after.$element = before.$element
-	        //         _after.$render = before.$render 
-	        //     } 
-	        // }
 	        return initViewModel(vm, heirloom, {}, {}, {
 	            id: before.$id,
 	            hashcode: makeHashCode('$'),

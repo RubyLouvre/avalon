@@ -15,13 +15,13 @@ var unresolvedComponent = {
     nodeValue: 'unresolved component placeholder'
 }
 
-function isEmptyOption(a) {
+function isEmptyOption(a, b) {
     if (!a)
         return true
-    var tmpl = avalon.mix({}, a)
-    delete tmpl.$id
-    delete tmpl.is
+    var tmpl = avalon.mix(b || {}, a)
     for (var ii in tmpl) {
+        if(ii === 'is' || ii === '$id')
+            continue
         return false
     }
     return true
@@ -41,17 +41,17 @@ avalon.component = function (name, definition) {
         var topVm = root.vmodel
         var finalOptions = {}
         var finalOptions = {}
-        if (!isEmptyOption(root['ms-widget'])) {
+        if (!isEmptyOption(root['ms-widget'],finalOptions)) {
             var options = [].concat(root['ms-widget'] || [])
             options.forEach(function (option, index) {
                 //收集里面的事件
                 mixinHooks(finalOptions, option, index)
             })
             var isEmpty = isEmptyOption(finalOptions)
+           
         } else {
             isEmpty = true
         }
-
         //得到组件的is类型
         var componentName = root.type.indexOf('-') > 0 ?
                 root.type : finalOptions.is
@@ -73,8 +73,8 @@ avalon.component = function (name, definition) {
 
         var docker = avalon.scopes[finalOptions.$id] || avalon.scopes[wid]
         if (docker && docker.dom) {
-            var ret = isEmpty ? docker.dom.vtree:
-                        docker.render(docker.vmodel, docker.local)
+            //var ret = isEmpty ? docker.dom.vtree:
+              var ret =    docker.render(docker.vmodel, docker.local)
             if (ret[0]) {
                 return replaceByComponent(ret[0], docker.vmodel, nodes, index)
             }
@@ -110,10 +110,12 @@ avalon.component = function (name, definition) {
         mixinHooks(finalOptions, defaults, false)
         defineArgs = [topVm, defaults].concat(options)
 
-        var vmodel = define.apply(function (a) {
-            return !finalOptions.hasOwnProperty(a)
+        var vmodel = define.apply(function (a,b) {
+            protected.forEach(function (k) {
+                delete a[k]
+                delete b[k]
+            })
         }, defineArgs)
-
         if (!avalon.modern) {//增强对IE的兼容
             for (var i in vmodel) {
                 if (!skipArray[i] && typeof vmodel[i] === 'function') {

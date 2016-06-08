@@ -30,10 +30,14 @@
 
             })
             
-
+            avalon.component('ms-section',{
+                template: '<div><ms-pager></ms-pager></div>'
+            })
             var vm = avalon.define({
                 $id: 'test',
                 aaa: '测试测试',
+                dd:'22',
+                cc:"555",
                 click:function(){
                     console.log('---')
                     avalon.clearHTML(document.body)
@@ -45,8 +49,8 @@
 
     <body ms-controller="test">
         <div>{{@aaa}}</div>
-    <xmp ms-widget="{is:'ms-pager'}"></xmp>
-    <!--111-->
-    <button ms-click="@click" type="button">ddd</button>
+        <xmp ms-widget="{is:'ms-section'}"></xmp>
+        <!--111-->
+       <button ms-click="@click" type="button">ddd</button>
 </body>
 </html>
