@@ -117,12 +117,11 @@ avalon.directive('for', {
 
         prepareCompare(cur.items, cur)
         delete pre.forDiff
-      //  console.log( cur.compareText,"=====",current.length,previous.length,previous.ddd,__index__, cur.end)
         if (cur.compareText === pre.compareText) {
             avalon.shadowCopy(cur, pre)
             return
         }
-       
+        
         cur.forDiff = true
 
         var isInit = !('items' in pre)

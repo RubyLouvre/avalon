@@ -37,6 +37,13 @@ var dir = avalon.directive('widget', {
         } else if (scope && scope.renderCount === 1) {
             //https://github.com/RubyLouvre/avalon/issues/1390
             //当第一次渲染组件时,当组件的儿子为元素,而xmp容器里面只有文本时,就会出错
+             //触发onInit回调
+            scope.vmodel.$fire('onInit', {
+                type: 'init',
+                vmodel: scope.vmodel,
+                wid: wid,
+                componentName: scope.componentName
+            })
             scope.renderCount = 2
             pre.children = []
             cur.steps = steps

@@ -3486,12 +3486,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        prepareCompare(cur.items, cur)
 	        delete pre.forDiff
-	      //  console.log( cur.compareText,"=====",current.length,previous.length,previous.ddd,__index__, cur.end)
 	        if (cur.compareText === pre.compareText) {
 	            avalon.shadowCopy(cur, pre)
 	            return
 	        }
-	       
+	        
 	        cur.forDiff = true
 
 	        var isInit = !('items' in pre)
@@ -6646,6 +6645,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else if (scope && scope.renderCount === 1) {
 	            //https://github.com/RubyLouvre/avalon/issues/1390
 	            //当第一次渲染组件时,当组件的儿子为元素,而xmp容器里面只有文本时,就会出错
+	            scope.vmodel.$fire('onInit', {
+	                type: 'init',
+	                vmodel: scope.vmodel,
+	                wid: wid,
+	                componentName: scope.componentName
+	            })
 	            scope.renderCount = 2
 	            pre.children = []
 	            cur.steps = steps
@@ -6936,7 +6941,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var docker = avalon.scopes[finalOptions.$id] || avalon.scopes[wid]
 	        if (docker && docker.dom) {
 	          //  var ret = isEmpty ? docker.dom.vtree :
-	              var ret =      docker.render(docker.vmodel, docker.local)
+	              var ret = docker.render(docker.vmodel, docker.local)
 	            if (ret[0]) {
 	                return replaceByComponent(ret[0], docker.vmodel, nodes, index)
 	            }
@@ -6956,7 +6961,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        //对于IE6-8,需要对自定义标签进行hack
 	        definition = avalon.components[componentName]
-
 
 	        //开始构建组件的vm的配置对象
 	        var diff = finalOptions.diff
@@ -7015,13 +7019,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                })
 	            }
 	        }
-	        //触发onInit回调
-	        vmodel.$fire('onInit', {
-	            type: 'init',
-	            vmodel: vmodel,
-	            wid: wid,
-	            target: null
-	        })
+	        
 	        // 必须加这个,方便在parseView.js开挂
 	        vtree[0].directive = 'widget'
 	        var render = avalon.render(vtree, root.local)
@@ -7034,12 +7032,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        var vdom = ret[0]
 	        vdom.diff = diff
-	        replaceByComponent(vdom, vmodel, nodes, index)
+	        replaceByComponent(vdom, vmodel, nodes, index, componentName)
 
 	    }
 	}
 
-	function replaceByComponent(vdom, vm, vnodes, index) {
+	function replaceByComponent(vdom, vm, vnodes, index, componentName) {
 
 	    if (!isComponentReady(vdom)) {
 	        return vnodes[index] = unresolvedComponent
@@ -7052,6 +7050,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        scope.dom.vtree = [vdom]
 	    } else {
 	        var scope = {
+	            componentName: componentName,
 	            vmodel: vm,
 	            render: vm.$render,
 	            local: vdom.local,

@@ -74,7 +74,7 @@ avalon.component = function (name, definition) {
         var docker = avalon.scopes[finalOptions.$id] || avalon.scopes[wid]
         if (docker && docker.dom) {
             //var ret = isEmpty ? docker.dom.vtree:
-              var ret =    docker.render(docker.vmodel, docker.local)
+              var ret =  docker.render(docker.vmodel, docker.local)
             if (ret[0]) {
                 return replaceByComponent(ret[0], docker.vmodel, nodes, index)
             }
@@ -163,13 +163,7 @@ avalon.component = function (name, definition) {
                 })
             }
         }
-        //触发onInit回调
-        vmodel.$fire('onInit', {
-            type: 'init',
-            vmodel: vmodel,
-            wid: wid,
-            target: null
-        })
+       
         // 必须加这个,方便在parseView.js开挂
         vtree[0].directive = 'widget'
         var render = avalon.render(vtree,root.local)    
@@ -182,12 +176,12 @@ avalon.component = function (name, definition) {
         }
         var vdom = ret[0]
         vdom.diff = diff
-        replaceByComponent(vdom, vmodel, nodes, index)
+        replaceByComponent(vdom, vmodel, nodes, index, componentName)
 
     }
 }
 
-function replaceByComponent(vdom, vm, vnodes, index, fast) {
+function replaceByComponent(vdom, vm, vnodes, index, componentName) {
 
     if (!isComponentReady(vdom)) {
         return vnodes[index] = unresolvedComponent
@@ -200,6 +194,7 @@ function replaceByComponent(vdom, vm, vnodes, index, fast) {
         scope.dom.vtree = [vdom]
     } else {
         var scope = {
+            componentName: componentName,
             vmodel: vm,
             render: vm.$render,
             local: vdom.local,
