@@ -26,10 +26,49 @@ var specal = {
         dom.htmlFor = val
     }
 }
+
+function createVML(type) {
+    if (document.styleSheets.length < 31) {
+        document.createStyleSheet().addRule(".rvml", "behavior:url(#default#VML)");
+    } else {
+        // no more room, add to the existing one
+        // http://msdn.microsoft.com/en-us/library/ms531194%28VS.85%29.aspx
+        document.styleSheets[0].addRule(".rvml", "behavior:url(#default#VML)");
+    }
+    var arr = type.split(':')
+    if (arr.length === 1) {
+        arr.unshift('v')
+    }
+    var tag = arr[1]
+    var ns = arr[0]
+    if (!document.namespaces[ns]) {
+        document.namespaces.add(ns, "urn:schemas-microsoft-com:vml")
+    }
+    return  document.createElement('<' + ns + ':' + tag + ' class="rvml">');
+}
+
+function createSVG(type) {
+    return document.createElementNS('http://www.w3.org/2000/svg', type)
+}
+var svgTags = avalon.oneObject('circle,defs,ellipse,image,line,' +
+        'path,polygon,polyline,rect,symbol,text,use,g,svg')
+var VMLTags = avalon.oneObject('shape,line,polyline,rect,roundrect,oval,arc,'+
+        'curve,background,image,shapetype,group,fill,'+
+        'stroke,shadow, extrusion, textbox, imagedata, textpath')
+
+var rvml = /^\w+\:\w+/
+
 VElement.prototype = {
     constructor: VElement,
     toDOM: function () {
-        var dom = document.createElement(this.type)
+        var dom, tagName = this.type
+        if (avalon.modern && svgTags[tagName]) {
+            dom = createSVG(tagName)
+        } else if (!avalon.modern && (VMLTag(tagName) || rvml.test(tagName))) {
+            dom = createVML(tagName)
+        } else {
+            dom = document.createElement(tagName)
+        }
         for (var i in this.props) {
             var val = this.props[i]
             if (skipFalseAndFunction(val)) {
@@ -40,10 +79,10 @@ VElement.prototype = {
                 }
             }
         }
-        if(this.wid){
+        if (this.wid) {
             var scope = avalon.scopes[this.wid]
-            if(scope && scope.dom){
-               return scope.dom
+            if (scope && scope.dom) {
+                return scope.dom
             }
         }
         if (this.skipContent) {
@@ -91,7 +130,7 @@ VElement.prototype = {
         str += '>'
         if (this.children.length) {
             str += this.children.map(function (c) {
-                return c ? avalon.vdomAdaptor(c, 'toHTML'): ''
+                return c ? avalon.vdomAdaptor(c, 'toHTML') : ''
             }).join('')
         } else {
             str += this.template

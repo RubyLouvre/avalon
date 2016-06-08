@@ -1,4 +1,4 @@
-/*! built in 2016-6-8:22 version 2.07 by 司徒正美 */
+/*! built in 2016-6-8:23 version 2.07 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1133,10 +1133,49 @@ return /******/ (function(modules) { // webpackBootstrap
 	        dom.htmlFor = val
 	    }
 	}
+
+	function createVML(type) {
+	    if (document.styleSheets.length < 31) {
+	        document.createStyleSheet().addRule(".rvml", "behavior:url(#default#VML)");
+	    } else {
+	        // no more room, add to the existing one
+	        // http://msdn.microsoft.com/en-us/library/ms531194%28VS.85%29.aspx
+	        document.styleSheets[0].addRule(".rvml", "behavior:url(#default#VML)");
+	    }
+	    var arr = type.split(':')
+	    if (arr.length === 1) {
+	        arr.unshift('v')
+	    }
+	    var tag = arr[1]
+	    var ns = arr[0]
+	    if (!document.namespaces[ns]) {
+	        document.namespaces.add(ns, "urn:schemas-microsoft-com:vml")
+	    }
+	    return  document.createElement('<' + ns + ':' + tag + ' class="rvml">');
+	}
+
+	function createSVG(type) {
+	    return document.createElementNS('http://www.w3.org/2000/svg', type)
+	}
+	var svgTags = avalon.oneObject('circle,defs,ellipse,image,line,' +
+	        'path,polygon,polyline,rect,symbol,text,use,g,svg')
+	var VMLTags = avalon.oneObject('shape,line,polyline,rect,roundrect,oval,arc,'+
+	        'curve,background,image,shapetype,group,fill,'+
+	        'stroke,shadow, extrusion, textbox, imagedata, textpath')
+
+	var rvml = /^\w+\:\w+/
+
 	VElement.prototype = {
 	    constructor: VElement,
 	    toDOM: function () {
-	        var dom = document.createElement(this.type)
+	        var dom, tagName = this.type
+	        if (avalon.modern && svgTags[tagName]) {
+	            dom = createSVG(tagName)
+	        } else if (!avalon.modern && (VMLTag(tagName) || rvml.test(tagName))) {
+	            dom = createVML(tagName)
+	        } else {
+	            dom = document.createElement(tagName)
+	        }
 	        for (var i in this.props) {
 	            var val = this.props[i]
 	            if (skipFalseAndFunction(val)) {
@@ -1147,10 +1186,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 	        }
-	        if(this.wid){
+	        if (this.wid) {
 	            var scope = avalon.scopes[this.wid]
-	            if(scope && scope.dom){
-	               return scope.dom
+	            if (scope && scope.dom) {
+	                return scope.dom
 	            }
 	        }
 	        if (this.skipContent) {
@@ -1198,7 +1237,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        str += '>'
 	        if (this.children.length) {
 	            str += this.children.map(function (c) {
-	                return c ? avalon.vdomAdaptor(c, 'toHTML'): ''
+	                return c ? avalon.vdomAdaptor(c, 'toHTML') : ''
 	            }).join('')
 	        } else {
 	            str += this.template
@@ -3588,7 +3627,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var fragment = avalon.avalonFragment
 
-	        var domTemplate = avalon.parseHTML(vnode.template)
+	        var domTemplate 
 	        for (var i in vnode.removedComponents) {
 	            var el = vnode.removedComponents[i]
 
@@ -3599,6 +3638,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        avalon.applyEffect(n, el.children[k], {
 	                            hook: 'onLeaveDone',
 	                            cb: function () {
+	                                console.log(n)
 	                                n.parentNode.removeChild(n)
 	                            },
 	                            staggerKey: key + 'leave'
@@ -3618,6 +3658,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var com = vnode.components[i]
 	            //添加nodes属性并插入节点
 	            if (com.action === 'enter') {
+	                if(!domTemplate){
+	                   domTemplate = avalon.parseHTML(vnode.template)
+	                }
 	                var newFragment = domTemplate.cloneNode(true)
 	                newFragment.appendChild(document.createComment(vnode.signature))
 	                var cnodes = avalon.slice(newFragment.childNodes)
@@ -5826,7 +5869,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	avalon.clearHTML = function (node) {
-	    avalon.$$unbind(node)
 	    node.textContent = ''
 	    while (node.lastChild) {
 	        node.removeChild(node.lastChild)

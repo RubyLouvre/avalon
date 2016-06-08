@@ -217,7 +217,7 @@ avalon.directive('for', {
 
         var fragment = avalon.avalonFragment
 
-        var domTemplate = avalon.parseHTML(vnode.template)
+        var domTemplate 
         for (var i in vnode.removedComponents) {
             var el = vnode.removedComponents[i]
 
@@ -228,6 +228,7 @@ avalon.directive('for', {
                         avalon.applyEffect(n, el.children[k], {
                             hook: 'onLeaveDone',
                             cb: function () {
+                                console.log(n)
                                 n.parentNode.removeChild(n)
                             },
                             staggerKey: key + 'leave'
@@ -247,6 +248,9 @@ avalon.directive('for', {
             var com = vnode.components[i]
             //添加nodes属性并插入节点
             if (com.action === 'enter') {
+                if(!domTemplate){
+                   domTemplate = avalon.parseHTML(vnode.template)
+                }
                 var newFragment = domTemplate.cloneNode(true)
                 newFragment.appendChild(document.createComment(vnode.signature))
                 var cnodes = avalon.slice(newFragment.childNodes)
