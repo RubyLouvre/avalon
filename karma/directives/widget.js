@@ -61,7 +61,7 @@ describe('widget', function () {
 
     })
 
-   
+
 
     it('通过更新配置对象修改组件界面', function (done) {
         div.innerHTML = heredoc(function () {
@@ -209,13 +209,13 @@ describe('widget', function () {
                 setTimeout(function () {
                     expect(hookIndex).to.be.equal(4)
                     done()
-                },120)
+                }, 120)
             }, 120)
 
         })
 
     });
-     it('lifecycle', function (done) {
+    it('lifecycle', function (done) {
         var testDiv = document.createElement('div')
         document.body.appendChild(testDiv)
         testDiv.innerHTML = heredoc(function () {
@@ -250,8 +250,8 @@ describe('widget', function () {
         })
         avalon.scan(testDiv)
         setTimeout(function () {
-            expect(index+"!").to.equal(2+"!")
-            
+            expect(index + "!").to.equal(2 + "!")
+
             vm.config.buttonText = 'change'
             setTimeout(function () {
                 testDiv.innerHTML = ""
@@ -259,11 +259,11 @@ describe('widget', function () {
                     expect(index).to.equal(4)
                     document.body.removeChild(testDiv)
                     done()
-                },120)
-            },120)
-        },120)
+                }, 120)
+            }, 120)
+        }, 120)
     })
-    it ('操作组件vm来更新组件的界面', function (done) {
+    it('操作组件vm来更新组件的界面', function (done) {
         div.innerHTML = heredoc(function () {
             /*
              <div ms-controller="widget5">
@@ -286,7 +286,7 @@ describe('widget', function () {
             }
         })
         avalon.scan(div)
-        setTimeout(function(){
+        setTimeout(function () {
             var button = div.getElementsByTagName('button')[0]
             var strong = div.getElementsByTagName('strong')[0]
             expect(strong.innerHTML).to.be.equal('21')
@@ -298,60 +298,60 @@ describe('widget', function () {
             expect(strong.innerHTML).to.be.equal('24')
             done()
         })
-        
+
     })
-    it ('路由组件', function (done) {
-        avalon.component('ms-hasha',{
-            template:'<div cached="true">{{@num}}<input type="text" ms-duplex-number="@num"/><button type="button" ms-on-click="@onPlus">+++</button></div>',
-            defaults:{
-                num:1,
-                onPlus:function(){
+    it('路由组件', function (done) {
+        avalon.component('ms-hasha', {
+            template: '<div cached="true">{{@num}}<input type="text" ms-duplex-number="@num"/><button type="button" ms-on-click="@onPlus">+++</button></div>',
+            defaults: {
+                num: 1,
+                onPlus: function () {
                     this.num++;
                 }
             }
         });
-        var tpl ='<div cached="true"><h4>{{@title}}</h4><button type="button" ms-on-click="@onChangeTitle">点击改变title</button></div>';
+        var tpl = '<div cached="true"><h4>{{@title}}</h4><button type="button" ms-on-click="@onChangeTitle">点击改变title</button></div>';
         var time = 10
-        avalon.component('ms-hashb',{
-            template:tpl,
-            defaults:{
-                title:"这是标题",
-                random:0,
-                onChangeTitle:function(e){
-                    this.title = 'title'+(++time);
+        avalon.component('ms-hashb', {
+            template: tpl,
+            defaults: {
+                title: "这是标题",
+                random: 0,
+                onChangeTitle: function (e) {
+                    this.title = 'title' + (++time);
                 }
             }
         });
         vm = avalon.define({
-            $id:'router',
-            panel:'',
+            $id: 'router',
+            panel: '',
             hash: ''
         })
-        function changePanel(v){ 
-            vm.panel = '<'+v+' ms-widget=\"{$id:"'+v+'"}\"></'+v+'>'
+        function changePanel(v) {
+            vm.panel = '<' + v + ' ms-widget=\"{$id:"' + v + '"}\"></' + v + '>'
         }
         vm.$watch('hash', changePanel)
         vm.hash = 'ms-hasha'
-        
-        div.innerHTML = heredoc(function(){
+
+        div.innerHTML = heredoc(function () {
             /*
-            <div ms-controller="router" ms-html="@panel">xxx</div>
+             <div ms-controller="router" ms-html="@panel">xxx</div>
              */
         })
         avalon.scan(div)
-        setTimeout(function(){
-           var input = div.getElementsByTagName('input')[0]
-           var button = div.getElementsByTagName('button')[0]
+        setTimeout(function () {
+            var input = div.getElementsByTagName('input')[0]
+            var button = div.getElementsByTagName('button')[0]
 
-           expect(input.value).to.be.equal('1')
-           fireClick(button)
-           expect(input.value).to.be.equal('2')
-           fireClick(button)
-           expect(input.value).to.be.equal('3')
-           fireClick(button)
-           expect(input.value).to.be.equal('4')
-           vm.hash = 'ms-hashb'
-           setTimeout(function(){
+            expect(input.value).to.be.equal('1')
+            fireClick(button)
+            expect(input.value).to.be.equal('2')
+            fireClick(button)
+            expect(input.value).to.be.equal('3')
+            fireClick(button)
+            expect(input.value).to.be.equal('4')
+            vm.hash = 'ms-hashb'
+            setTimeout(function () {
                 var h4 = div.getElementsByTagName('h4')[0]
                 var button = div.getElementsByTagName('button')[0]
                 expect(h4.innerHTML).to.be.equal('这是标题')
@@ -362,7 +362,7 @@ describe('widget', function () {
                 fireClick(button)
                 expect(h4.innerHTML).to.be.equal('title13')
                 vm.hash = 'ms-hasha'
-                setTimeout(function(){
+                setTimeout(function () {
                     var input = div.getElementsByTagName('input')[0]
                     var button = div.getElementsByTagName('button')[0]
 
@@ -374,11 +374,50 @@ describe('widget', function () {
                     fireClick(button)
                     expect(input.value).to.be.equal('7')
                     done()
-               })
-           })
-          
+                })
+            })
+
         })
-        
+
+    })
+
+    it('使用顶层VM的子对象作配置对象', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='widget6' >
+             <wbr ms-widget="@config"/>
+             </div>
+             */
+        })
+        var vm = avalon.define({
+            $id: 'widget6',
+            config: {
+                is: 'ms-button',
+                buttonText: '按钮',
+                onInit: function (a) {
+                    console.log("onInit!!")
+                },
+                onReady: function (a) {
+                    console.log("onReady!!")
+                },
+                onViewChange: function () {
+                    console.log("onViewChange!!")
+                },
+                onDispose: function () {
+                    console.log("onDispose!!")
+                }
+            }
+        })
+        avalon.scan(div, vm)
+        setTimeout(function () {
+            vm.config.buttonText = 'change'
+            setTimeout(function () {
+                var s = div.getElementsByTagName('span')[0]
+                expect(s.innerHTML).to.equal('change')
+                done()
+            }, 100)
+        }, 150)
+
     })
 
 })
