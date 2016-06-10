@@ -15,7 +15,13 @@ var vm = avalon.define({
         console.log(e)
     }
 })
-
+avalon.ready(function(){
+   var a = /^<([-A-Za-z0-9_]+)((?:\s+\w+(?:\s*=\s*(?:(?:"[^"]*")|(?:'[^']*')|[^>\s]+))?)*)\s*(\/?)>/
+   var el = document.querySelector('#aaa')
+   var str = el.outerHTML
+  console.log( str.match(a))
+})
+ 
 
 </script>
 </head>
@@ -25,6 +31,7 @@ var vm = avalon.define({
             margin-left:5px;
         }
     </style> 
+    <div id="aaa" class="bbb"><div id="dd" class="bbb"></div></div>
     <ul >
         <!--ms-for:el in @arr-->
         <li ms-click="@alert(el)">{{el}}</li>

@@ -15,12 +15,9 @@ var unresolvedComponent = {
     nodeValue: 'unresolved component placeholder'
 }
 
-function isEmptyOption(a, b) {
-    if (!a)
-        return true
-    var tmpl = avalon.mix(b || {}, a)
-    for (var ii in tmpl) {
-        if(ii === 'is' || ii === '$id')
+function isEmptyOption(opt) {
+    for (var k in opt) {
+        if (k === 'is' || k === '$id')
             continue
         return false
     }
@@ -39,42 +36,48 @@ avalon.component = function (name, definition) {
         var index = arguments[2]
         var wid = arguments[3]
         var topVm = root.vmodel
-        var finalOptions = {}
-        var finalOptions = {}
-        if (!isEmptyOption(root['ms-widget'],finalOptions)) {
-            var options = [].concat(root['ms-widget'] || [])
-            options.forEach(function (option, index) {
-                //收集里面的事件
-                mixinHooks(finalOptions, option, index)
-            })
-            var isEmpty = isEmptyOption(finalOptions)
-           
-        } else {
+        var hooks = {}
+        //用户只能操作顶层VM
+        //只有$id,is的对象就是emptyOption
+        var rawOption = root['ms-widget']
+        var isEmpty = false
+        if (!rawOption) {
             isEmpty = true
+            options = []
+        } else {
+            var options = [].concat(rawOption)
+            options.forEach(function (a) {
+                if (a && typeof a === 'object') {
+                    mixinHooks(hooks, (a.$model || a), true)
+                }
+            })
+            isEmpty = isEmptyOption(hooks)
         }
+
         //得到组件的is类型
         var componentName = root.type.indexOf('-') > 0 ?
-                root.type : finalOptions.is
+                root.type : hooks.is
         if (!avalon.components[componentName]) {
             return nodes[index] = unresolvedComponent
         }
 
-
         //得到组件在顶层vm的配置对象名
         var configName = componentName.replace(/-/g, '_')
-        if (topVm.hasOwnProperty(configName) &&
-                typeof topVm[configName] === 'object') {
-            //如果定义了,那么全部舍弃
-            finalOptions = {}
-            options = [topVm[configName]]
-            mixinHooks(finalOptions, topVm[configName], 0)
-            protected = [configName].concat(protected)
+
+        try {//如果用户在ms-widget没定义东西那么从vm中取默认东西
+            var vmOption = topVm[configName]
+            if (isEmpty && vmOption && typeof vmOption === 'object') {
+                hooks = {}
+                options = [vmOption]
+                mixinHooks(hooks, vmOption.$model || vmOption, true)
+                protected = [configName].concat(protected)
+            }
+        } catch (e) {
         }
 
-        var docker = avalon.scopes[finalOptions.$id] || avalon.scopes[wid]
+        var docker = avalon.scopes[hooks.$id] || avalon.scopes[wid]
         if (docker && docker.dom) {
-            //var ret = isEmpty ? docker.dom.vtree:
-              var ret =  docker.render(docker.vmodel, docker.local)
+            var ret = docker.render(docker.vmodel, docker.local)
             if (ret[0]) {
                 return replaceByComponent(ret[0], docker.vmodel, nodes, index)
             }
@@ -100,22 +103,21 @@ avalon.component = function (name, definition) {
         }
 
         //开始构建组件的vm的配置对象
-        var diff = finalOptions.diff
-        var define = finalOptions.define
+        var diff = hooks.diff
+        var define = hooks.define
         define = define || avalon.directives.widget.define
 
-        var $id = finalOptions.$id || wid
+        var $id = hooks.$id || wid
 
         var defaults = avalon.mix(true, {}, definition.defaults)
-        mixinHooks(finalOptions, defaults, false)
-        defineArgs = [topVm, defaults].concat(options)
+        mixinHooks(hooks, defaults, false)
 
-        var vmodel = define.apply(function (a,b) {
+        var vmodel = define.apply(function (a, b) {
             protected.forEach(function (k) {
                 delete a[k]
                 delete b[k]
             })
-        }, defineArgs)
+        }, [topVm, defaults].concat(options))
         if (!avalon.modern) {//增强对IE的兼容
             for (var i in vmodel) {
                 if (!skipArray[i] && typeof vmodel[i] === 'function') {
@@ -146,7 +148,6 @@ avalon.component = function (name, definition) {
         componentRoot.props.wid = $id
         //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
 
-        //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
         if (definition.soleSlot) {
             var slots = {}
             var slotName = definition.soleSlot
@@ -157,16 +158,16 @@ avalon.component = function (name, definition) {
             insertSlots(vtree, root, definition.soleSlot)
         }
         for (var e in componentEvents) {
-            if (finalOptions[e]) {
-                finalOptions[e].forEach(function (fn) {
+            if (hooks[e]) {
+                hooks[e].forEach(function (fn) {
                     vmodel.$watch(e, fn)
                 })
             }
         }
-       
+
         // 必须加这个,方便在parseView.js开挂
         vtree[0].directive = 'widget'
-        var render = avalon.render(vtree,root.local)    
+        var render = avalon.render(vtree, root.local)
         vmodel.$render = render
 
         try {
@@ -182,11 +183,9 @@ avalon.component = function (name, definition) {
 }
 
 function replaceByComponent(vdom, vm, vnodes, index, componentName) {
-
     if (!isComponentReady(vdom)) {
         return vnodes[index] = unresolvedComponent
     }
-
     var wid = vm.$id
     var scope = avalon.scopes[wid]
 
@@ -204,7 +203,6 @@ function replaceByComponent(vdom, vm, vnodes, index, componentName) {
         avalon.scopes[wid] = scope
     }
     vnodes[index] = vdom
-
 }
 //必须以字母开头,结尾以字母或数字结束,中间至少出现一次"-",
 //并且不能大写字母,特殊符号,"_","$",汉字
@@ -214,19 +212,20 @@ function isCustomTag(type) {
     return rcustomTag.test(type)
 }
 
-function mixinHooks(target, option, index) {
+function mixinHooks(target, option, overwrite) {
     for (var k in option) {
-        if (!option.hasOwnProperty(k))
-            continue
         var v = option[k]
+        //如果是生命周期钩子,总是不断收集
         if (componentEvents[k]) {
             if (k in target) {
                 target[k].push(v)
             } else {
                 target[k] = [option[k]]
             }
-        } else if (isFinite(index)) {
-            target[k] = v
+        } else {
+            if (overwrite) {
+                target[k] = v
+            }
         }
     }
 }

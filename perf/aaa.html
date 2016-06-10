@@ -1,28 +1,27 @@
 <!DOCTYPE html>
-<html lang="zh-cmn-Hans">
-<head>
-    <meta http-equiv="content-type" content="text/html;charset=utf-8">
-    <title></title>
-    <meta name="renderer" content="webkit">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome">
-    <meta name="keywords" content="">
-    <meta name="description" content="">
-    <meta name="msapplication-tap-highlight" content="no">
-    <script src="../dist/avalon.modern.js"></script>
-</head>
-<body ms-controller="test">
-<script>
-    avalon.ready(function () {
-        var vm = avalon.define({
-            $id: 'test',
-            val: 0,
-        });
-        avalon.scan(document.body)
-    })
-</script>
-<div>
-    <input type="text" ms-duplex-number="@val">
-    <p> {{@val}}</p>
-</div>
-</body>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.test.js"></script>
+        <script>
+            vm = avalon.define({
+                $id: 'widget2',
+                panelBody: '这是面板的内容',
+                aaa: {
+                    ms_button: {
+                        buttonText: "vm中的值"
+                    }
+                }
+            })
+
+        </script>
+    </head>
+
+    <body>
+        <div ms-controller='widget2' >
+            <xmp ms-widget="[{is:'ms-panel'}, @aaa]" style='border:1px solid red;display:block'>{{@panelBody}}</xmp>
+        </div>
+    </body>
 </html>
