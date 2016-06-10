@@ -101,6 +101,7 @@ function parseNode(pre, forstack, logic) {
                 } else {
                     cur.template = pre.template
                     cur.children = '[]'
+                    cur.skipContent = true
                 }
             }
         }

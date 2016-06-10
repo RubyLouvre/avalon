@@ -6,14 +6,30 @@
     <title>确认订单</title>
     <link href="./main.css" rel="stylesheet">
     <script src="../dist/avalon.js"></script>
-</head>
-<body>
+    <script>
 
-<script>
-  var rhtml = /<|&#?\w+;/
-
+var vm = avalon.define({
+    $id:"test",
+    arr: [1,2,3],
+    alert:function(e){
+        console.log(e)
+    }
+})
 
 
 </script>
+</head>
+<body ms-controller="test">
+      <style>
+        .frequency input {            
+            margin-left:5px;
+        }
+    </style> 
+    <ul >
+        <!--ms-for:el in @arr-->
+        <li ms-click="@alert(el)">{{el}}</li>
+        <!--ms-for-end:-->
+    </ul>
+
 </body>
 </html>

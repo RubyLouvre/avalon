@@ -1,4 +1,4 @@
-/*! built in 2016-6-10:18 version 2.08 by 司徒正美 */
+/*! built in 2016-6-10:19 version 2.08 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2013,6 +2013,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                } else {
 	                    cur.template = pre.template
 	                    cur.children = '[]'
+	                    cur.skipContent = true
 	                }
 	            }
 	        }
