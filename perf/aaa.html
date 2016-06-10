@@ -1,77 +1,28 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>first example</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-
-         <script src="../dist/avalon.js"></script>
-
-    </head>
-    <body>
-
-  <script>  
-
-
-var data1 = [{"Id":-10,"Name":"管理","ParentId":1},
-    {"Id":-8,"Name":"工具","ParentId":1} ];
-
-var data2 = [{"Id":-8,"Name":"工具","ParentId":1},
-    {"Id":3,"Name":"用户管理","ParentId":-10} ];
-
-var testTableData1=avalon.range(10).map(String);
-
-
-    window.vm = avalon.define({
-        $id: "start2",
-        data:avalon.mix(true,[], data1)  ,
-
-        testTableData:testTableData1,
-
-        isData2:false,
-        change:function(){
-            if(this.isData2){       
-                this.data= avalon.mix(true,[], data1)  
-                this.isData2=false;
-            }
-            else{  
-                this.data=[]
-                this.isData2=true;
-            }
-        },
-        onCellClick: function(rowIndex,colIndex,ev){
-            console.log("onCellClick "+rowIndex+" "+colIndex);
-        },
-        onTHClick: function(colIndex,ev){
-            console.log("onTHClick "+colIndex);
-        }
-    }) 
-
-
-
-    </script>
-
-    <div ms-controller="start2"> 
-       <button type=button ms-click="##change()">Change</button>
-       <div ms-for="(index,el) in ##data " ms-if="el.Id<0" 
-            style="display:inline-block;border:solid 1px gray; padding:10px;vertical-align:top">
-             <div style='font-weight:bold'>
-             --{{index}}--{{el.Id}}--{{el.Name}}
-             </div>            
-      </div> 
-      <br/>
-      <table border='1' width='100%'>
-          <tr>
-          <th style="border:solid 1px gray" 
-              ms-for="(colIndex,el2) in ##testTableData" 
-              ms-click="@onTHClick(colIndex,$event)" >
-                  {{colIndex}}
-            </th>
-          </tr>
-
-      </table>
-
-    </div> 
-
-    </body>
-</html>  
+<html lang="zh-cmn-Hans">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8">
+    <title></title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome">
+    <meta name="keywords" content="">
+    <meta name="description" content="">
+    <meta name="msapplication-tap-highlight" content="no">
+    <script src="../dist/avalon.modern.js"></script>
+</head>
+<body ms-controller="test">
+<script>
+    avalon.ready(function () {
+        var vm = avalon.define({
+            $id: 'test',
+            val: 0,
+        });
+        avalon.scan(document.body)
+    })
+</script>
+<div>
+    <input type="text" ms-duplex-number="@val">
+    <p> {{@val}}</p>
+</div>
+</body>
+</html>

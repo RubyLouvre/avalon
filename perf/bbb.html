@@ -1,229 +1,54 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>确认订单</title>
-    <link href="./main.css" rel="stylesheet">
-    <script src="../dist/avalon.js"></script>
-</head>
-<body>
-<div class="container" ms-controller="container">
-    <div class="loading-wrap" ms-visible="@loadingWrapShow">数据加载中....</div>
-    <xmp ms-widget="{is:'ms-container'}"></xmp>
-</div>
-<script>
-function heredoc(fn) {
-    return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
-            replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
-}
+<html lang="en">
+    <head>
+        <link href="//cdn.bootcss.com/bootstrap/2.3.2/css/bootstrap.min.css" rel="stylesheet">
+        <script src="../dist/avalon.js"></script>
+        <script type="text/javascript">
+            var test_vm = avalon.define({
+                $id:'test'
+            });
+            avalon.component("ms-pager", {
+                template: '<div class="pagination">'+
+              '<ul><li ms-for="el in @pages" ms-attr="{class:(el == @current_page ? \'active\' : \'\')}"><a href="#" ms-click="@gotoPage(el, $event)">{{el}}</a></li></ul>'+
+            '</div>',
+                defaults: {
+                    total_page: 25,
+                    current_page: 1,
+                    show_page: 7,
+                    pages:[1,2,3,4,5,6,7],
+                    gotoPage: function(page, e){
+                        this.current_page = page;
+                        this.pages = this.getPages();
+                        console.log(this.pages,e.target.innerHTML);
+                    },
+                    getPages: function() {
+                        var pages = [];
+                        var s = this.show_page, l = this.current_page, r = this.current_page, c = this.total_page;
+                        pages.push(l);
+                        while(true) {
+                            if(pages.length >= s) {
+                                break;
+                            }
+                            if(l > 1) {
+                                pages.unshift(--l);
+                            }
+                            if(pages.length >= s) {
+                                break;
+                            }
+                            if(r < c) {
+                                pages.push(++r);
+                            }
+                        }
 
-var container = heredoc(function() {
-/*
-<div>
-  <xmp ms-widget="[{is:'ms-address-wrap', $id:'address'}]"></xmp>
-</div>
-
-*/
-})
-
-
-// 主容器
-var vmContainer = avalon.define({
-    $id: 'container',
-    loadingWrapShow: true
-})
-
-avalon.component('ms-container', {
-  template: container,
-  defaults: {
-  }
-})
-
-var addressTmpl = heredoc(function() {
-/*
-<div class="address-wrap ms-controller" ms-visible="@addressWrapShow">
-   
-    <div class="address-box">
-        <div class="adr"
-             ms-for="(index, el) in @addressList">
-            {{el.strPersonName}}
+                        return pages;
+                    }
+                }
+            });
+        </script>
+    </head>
+    <body>
+        <div ms-controller="test">
+            <xmp ms-widget="{is:'ms-pager'}"></xmp>
         </div>
-
-        <div class="adr" >
-            
-            <p class="adr-add-text">添加地址</p>
-               
-        </div>
-    </div>
-</div>
-*/
-})
-
-avalon.component('ms-address-wrap', {
-    template: addressTmpl,
-    defaults: {
-        addressChecked: {},
-        addressDelete: {},
-        defaultAddressEdit: {
-            lAddrId: '',
-            strArea: '',
-            strAreaCode: '',
-            strCity: '',
-            strCityCode: '',
-            strDetailMsg: '',
-            strMobileNum: '',
-            strPersonName: '',
-            strProvince: '',
-            strProvinceCode: ''
-        },
-        addressEdit: {},
-        addressListExpand: false,
-        addressList: [],
-        addressTotal: 0,
-        addressWrapShow: false,
-        dialogAddressDeleteConf: {
-            dialogType: 'confirm', // confirm info tips
-            dialogIcon: 'info',
-            dialogShow: false,
-            onConfirm: function(e) {
-                avalon.log('AddressDelete confirm')
-            },
-            onClose: function() {
-                avalon.log('AddressDelete close')
-            }
-        },
-        dialogAddressEditConf: {
-            dialogType: 'confirm', // confirm info tips
-            dialogIcon: false,
-            dialogWrapCss: {width: 800},
-            dialogShow: false,
-            onConfirm: function(e) {
-                avalon.log('AddressEdit confirm')
-            },
-            onClose: function() {
-                avalon.log('AddressEdit close')
-            }
-        },
-        // 选中默认地址
-        checkDefault: function (addr) {
-            if (! this.addressChecked.lAddrId) {
-                this.addressChecked = addr
-            }
-        },
-        // 获取地址列表数据
-        getAll: function() {
-            this.addressList = [{"lAddrId":10677,"lUin":12070,"strPersonName":"\u6ee8\u6cb31","strMobileNum":"11111111111","strProvince":"\u5e7f\u4e1c\u7701","strProvinceCode":"440000","strCity":"\u6df1\u5733\u5e02","strCityCode":"440300","strArea":"\u798f\u7530\u533a","strAreaCode":"440304","strDetailMsg":"\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3","nIsDefault":1},{"lAddrId":10724,"lUin":12070,"strPersonName":"\u8fdb\u57ce\u4e0d3\u70c33\u4e2d\u5730\u7c89\u5730","strMobileNum":"11111111111","strProvince":"\u6cb3\u5317\u7701","strProvinceCode":"130000","strCity":"\u77f3\u5bb6\u5e84\u5e02","strCityCode":"130100","strArea":"\u957f\u5b89\u533a","strAreaCode":"130102","strDetailMsg":"12321321313213","nIsDefault":null},{"lAddrId":10725,"lUin":12070,"strPersonName":"\u9648\u6d69","strMobileNum":"18611111111","strProvince":"\u5317\u4eac\u5e02","strProvinceCode":"110000","strCity":"\u5317\u4eac\u5e02","strCityCode":"110100","strArea":"\u4e1c\u57ce\u533a","strAreaCode":"110101","strDetailMsg":"\u5b66\u5e9c\u8def\u6021\u5316\u91d1\u878d\u79d1\u6280\u5927\u53a623\u697c","nIsDefault":null},{"lAddrId":10726,"lUin":12070,"strPersonName":"\u6d82\u6d82","strMobileNum":"18611111111","strProvince":"\u5c71\u897f\u7701","strProvinceCode":"140000","strCity":"\u5927\u540c\u5e02","strCityCode":"140200","strArea":"\u5357\u90ca\u533a","strAreaCode":"140211","strDetailMsg":"\u7389\u5f8b\u8def\u82b1\u6837\u5e74\u82b1\u4e61A\u680b9O","nIsDefault":null},{"lAddrId":10727,"lUin":12070,"strPersonName":"\u840c\u840c","strMobileNum":"18611111111","strProvince":"\u6cb3\u5317\u7701","strProvinceCode":"130000","strCity":"\u5510\u5c71\u5e02","strCityCode":"130200","strArea":"\u8def\u5357\u533a","strAreaCode":"130202","strDetailMsg":"\u6d77\u79c0\u8def21\u53f7\u9f99\u5149\u4e16\u7eaa\u5927\u53a6B\u5ea711\u697c","nIsDefault":null}];
-            console.log('getAll', this.addressList.length)
-
-           this.addressTotal = this.addressList.length
-            this.addressWrapShow = true
-            this.loadingWrapShow = false
-        },
-        // 弹出确认删除浮层
-        deleteAddress: function(addr, e) {
-            this.addressDelete = addr
-            this.dialogAddressDeleteConf.dialogShow = ! this.dialogAddressDeleteConf.dialogShow
-        },
-        // 弹出地址编辑浮层
-        editAdrress: function(addr, e) {
-            var self = this
-            self.dialogAddressEditConf.dialogShow = ! self.dialogAddressEditConf.dialogShow
-        },
-        onInit: function() {
-            var self = this
-           setTimeout(function() {
-                self.getAll.call(self)
-            }, 3000)
-            console.log("onInit!!!!")
-            this.addressEdit = avalon.mix({}, this.defaultAddressEdit)
-            //avalon.log('onInit 会加载多次')
-        }
-    }
-})
-
-
-var dialogTmpl = heredoc(function() {
-/*
-<div>
-  <div class="mdui-dialog-mask" ms-visible="@dialogShow" ms-if="@dialogMask"></div>
-  <div class="mdui-dialog"
-    ms-css="@dialogWrapCss"
-    ms-class="['mdui-dialog-' + @dialogType, @dialogWrapClass]"
-    ms-visible="@dialogShow">
-    <a class="mdui-dialog-close" href="javascript:;"
-        ms-click="@closeDialog"
-        ms-if="@dialogType != 'tips' && @dialogCloseXShow">&times;</a>
-    <i ms-class="['mdui-dialog-icon-' + @dialogIcon]" ms-if="@dialogIcon"></i>
-    <div class="mdui-dialog-confirm-content" ms-if="@dialogType != 'tips'">
-        <div class="mdui-dialog-head" ms-visible="@dialogHeadShow">
-          <slot name="head"></slot>
-        </div>
-        <div class="mdui-dialog-body" ms-visible="@dialogBodyShow">
-            <slot name="body"></slot>
-        </div>
-        <div class="mdui-dialog-foot mdui-dialog-btns-inline"
-            ms-class="['mdui-dialog-btns-inline' + @dialogFootBtnNum]"
-            ms-visible="@dialogFootShow">
-            <slot name="foot">
-                <a class="mdui-dialog-btn" href="javascript:void(0)" ms-click="@confirmDialog">确 认</a>
-                <a class="mdui-dialog-btn" href="javascript:void(0)" ms-click="@closeDialog">取 消</a>
-            </slot>
-        </div>
-    </div>
-    <div class="mdui-dialog-tips-content" ms-if="@dialogType == 'tips'">
-        <slot name="content">正在加载中，请稍候......</slot>
-    </div>
-  </div>
-</div>
-*/
-})
-
-// 组件定义
-avalon.component('mdui-dialog', {
-  template: dialogTmpl,
-  defaults: {
-    dialogType: 'confirm', // confirm info tips
-    dialogIcon: 'info', // info  success
-    dialogWrapClass: '', // 指定额外的 dialog 容器 class
-    dialogWrapCss: {}, // // 指定额外的 dialog 容器 css
-    dialogShow: false,
-    dialogCloseXShow: true,
-    dialogHeadShow: true,
-    dialogBodyShow: true,
-    dialogFootShow: true,
-    dialogMask: true,
-    dialogFootBtnNum: 0, // 底部按钮个数
-    confirmDialog: function(e) {
-        var result = this.onConfirm(e, this)
-
-        if (result !== false) {
-            this.dialogShow = ! this.dialogShow
-        }
-    },
-    closeDialog: function(e) {
-        this.onClose(e, this)
-        this.dialogShow = ! this.dialogShow
-    },
-    onConfirm: avalon.noop,
-    onShow: avalon.noop,
-    onClose: avalon.noop,
-
-    onInit: function(e) {
-    },
-    onReady: function(e) {
-        //this.dialogFootBtnNum = $(e.target).find('.mdui-dialog-foot a').length
-        this.onShow(e, this)
-    },
-    onViewChange: function(e) {
-        // var $dialog =  $(e.target).find('.mdui-dialog')
-        // var top = - Math.floor($dialog.height() / 2) - 100
-        // var left = - Math.floor($dialog.width() / 2)
-        // $dialog.css({'margin-top': top, 'margin-left': left})
-    }
-  }
-})
-
-</script>
-</body>
+    </body>
 </html>
