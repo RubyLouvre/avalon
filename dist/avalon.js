@@ -1,4 +1,4 @@
-/*! built in 2016-6-9:2 version 2.07 by 司徒正美 */
+/*! built in 2016-6-10:12 version 2.07 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2874,8 +2874,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var value = elem.getAttribute('avalon-events')
 	    if (value && (elem.disabled !== true || type !== 'click')) {
 	        var uuids = []
-	        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type + '\\:([^?\s]+)', 'g'))
-	       
+	        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type + '\\:([^?\\s]+)', 'g'))
 	        value.replace(reg, function (a, b) {
 	            uuids.push(b)
 	            return a
@@ -2894,7 +2893,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	}
-	var rhandleHasVm = /^e\d+/
+	var rhandleHasVm = /^e/
 	var rneedSmooth = /move|scroll/
 	function dispatch(event) {
 	    event = new avEvent(event)
@@ -2908,6 +2907,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        j = 0
 	        while ((uuid = handler.uuids[ j++ ]) &&
 	                !event.isImmediatePropagationStopped) {
+	            
 	            var fn = avalon.eventListeners[uuid]
 	            if (fn) {
 	                var vm = rhandleHasVm.test(uuid) ? handler.elem._ms_context_ : 0
@@ -2917,11 +2917,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (rneedSmooth.test(type)) {
 	                    var curr = +new Date()
 	                    if (curr - last > 16) {
-	                        var ret = fn.call(vm || elem, event)
+	                        var ret = fn.call(vm || elem, event, elem.local)
 	                        last = curr
 	                    }
 	                } else {
-	                   ret = fn.call(vm || elem, event)
+	                   ret = fn.call(vm || elem, event, elem.local)
 	                }
 	                if(ret === false){
 	                    event.preventDefault()
@@ -3997,6 +3997,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
 	var rhandleName = /^(?:\@|##)[$\w]+$/i
 
+	var rfilters = /\|.+/g
+	var rvar = /((?:\@|\$|\#\#)?\w+)/g
+
+	function collectLocal(str, ret) {
+	    var arr = str.replace(rfilters, '').match(rvar)
+	    if (arr) {
+	        arr.filter(function (el) {
+	            if (!/^[@\d\-]/.test(el) &&
+	                    el.slice(0, 2) !== '##' &&
+	                    el !== '$event') {
+	                ret[el] = 1
+	            }
+	        })
+	    }
+	}
+
+	function extLocal(ret) {
+	    var arr = []
+	    for (var i in ret) {
+	        arr.push('var ' + i + ' = __local__[' + avalon.quote(i) + ']')
+	    }
+	    return arr
+	}
+
 	function parseExpr(str, category) {
 	    var binding = {}
 	    category = category || 'other'
@@ -4032,8 +4056,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            replace(rshortCircuit, dig).//移除所有短路或
 	            replace(ruselessSp, '$1').//移除. |两端空白
 	            split(rpipeline) //使用管道符分离所有过滤器及表达式的正体
-	//还原body
-	    var body = input.shift().replace(rfill, fill).trim()
+	    //还原body
+	    var _body = input.shift()
+	    var local = {}
+	    var body = _body.replace(rfill, fill).trim()
 	    if (category === 'on' && rhandleName.test(body)) {
 	        body = body + '($event)'
 	    }
@@ -4041,12 +4067,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    body = body.replace(rAt, '$1__vmodel__.')
 	    if (category === 'js') {
 	        return evaluatorPool.put(category + ':' + cacheID, body)
+	    } else if (category === 'on') {
+	        collectLocal(_body, local)
 	    }
 
 	//处理表达式的过滤器部分
 
 	    var filters = input.map(function (str) {
-
+	        collectLocal(str.replace(/^\w+/g, ""), local)
 	        str = str.replace(rfill, fill).replace(rAt, '$1__vmodel__.') //还原
 	        var hasBracket = false
 	        str = str.replace(brackets, function (a, b) {
@@ -4069,13 +4097,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (filters.length) {
 	            filters.push('if($event.$return){\n\treturn;\n}')
 	        }
-	        if(!avalon.modern){
-	            body = body.replace(/__vmodel__\.([^(]+)\(([^)]*)\)/,function(a, b, c){
-	                return '__vmodel__.'+b+".call(__vmodel__"+ (/\S/.test(c) ? ','+c: "")+")"
+	        if (!avalon.modern) {
+	            body = body.replace(/__vmodel__\.([^(]+)\(([^)]*)\)/, function (a, b, c) {
+	                return '__vmodel__.' + b + ".call(__vmodel__" + (/\S/.test(c) ? ',' + c : "") + ")"
 	            })
 	        }
-	        ret = ['function ms_on($event){',
+
+	        ret = ['function ms_on($event, __local__){',
 	            'try{',
+	            extLocal(local).join('\n'),
 	            '\tvar __vmodel__ = this;',
 	            '\t' + body,
 	            '}catch(e){',
@@ -4085,13 +4115,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        filters.unshift(2, 0)
 	    } else if (category === 'duplex') {
 
-	        //从vm中得到当前属性的值
+	//从vm中得到当前属性的值
 	        var getterBody = [
 	            'function (__vmodel__){',
 	            'try{',
 	            'return ' + body + '\n',
 	            '}catch(e){',
-	            quoteError(str, category).replace('parse','get'),
+	            quoteError(str, category).replace('parse', 'get'),
 	            '}',
 	            '}']
 	        evaluatorPool.put('duplex:' + cacheID, getterBody.join('\n'))
@@ -4101,7 +4131,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            'try{',
 	            '\t' + body + ' = __value__',
 	            '}catch(e){',
-	            quoteError(str, category).replace('parse','set'),
+	            quoteError(str, category).replace('parse', 'set'),
 	            '}',
 	            '}']
 	        evaluatorPool.put('duplex:set:' + cacheID, setterBody.join('\n'))
@@ -4113,7 +4143,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                filters.join('\n'),
 	                'return __value__\n',
 	                '}catch(e){',
-	                quoteError(str, category).replace('parse','format'),
+	                quoteError(str, category).replace('parse', 'format'),
 	                '}',
 	                '}']
 	            evaluatorPool.put('duplex:format:' + cacheID, formatBody.join('\n'))
@@ -4124,9 +4154,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            '(function(){',
 	            'try{',
 	            'var __value__ = ' + body,
-	            ( category === 'text'? 
-	            'return avalon.parsers.string(__value__)': 
-	            'return __value__'),
+	            (category === 'text' ?
+	                    'return avalon.parsers.string(__value__)' :
+	                    'return __value__'),
 	            '}catch(e){',
 	            quoteError(str, category),
 	            '\treturn ""',
@@ -4499,52 +4529,43 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.directive('on', {
 	    priority: 3000,
 	    parse: function (cur, pre, binding) {
-	        var vars = binding.expr.replace(rstring, ' ').replace(rfilters, '').match(rvar)
-	        var canCache = vars.every(function (el) {
-	            return el.charAt(0) === '@' || el.slice(0, 2) === '##' || el === '$event'
-	        })
-	        cur.vmodel = '__vmodel__'
-	        if (canCache) {
-	            var key = binding.expr
-	            var fn = eventCache.get(key)
-	            if (!fn) {
-	                var fn = Function('return ' + avalon.parseExpr(binding, 'on'))()
-	                var uuid = markID(fn)
-	                eventCache.put(key, fn)
-	            }else{
-	                uuid = fn.uuid
-	            }
-	            
-	            avalon.eventListeners[uuid] = fn
-	            cur[binding.name] = 'avalon.eventListeners.' + uuid
-	        } else {//如果闭包引用其他变量
-	            cur[binding.name] = avalon.parseExpr(binding, 'on')
+	        var d = 0
+	        var dd = binding.name.replace('ms-on-', 'e').replace('-', '_')
+	        var uuid = dd + '_' + binding.expr.
+	                replace(/\s/g, '').
+	                replace(/[^$a-z]/g, function () {
+	                    return d++
+	                })
 
-	        }
+	        var quoted = avalon.quote(uuid)
+	        var fn = '(function(){\n' +
+	                'var fn610 = ' +
+	                avalon.parseExpr(binding, 'on') +
+	                
+	                '\nfn610.uuid =' + quoted + ';\nreturn fn610})()'
+	        cur.vmodel = '__vmodel__'
+	        cur.local = '__local__'
+	        cur[binding.name] = fn
+
 	    },
 	    diff: function (cur, pre, steps, name) {
-	        var cFn = cur[name]
-	        var pFn = pre[name]
-	        if (cFn !== pFn) {
-	            if (typeof pFn === 'function' &&
-	                    typeof cFn === 'function' &&
-	                    pFn.uuid === cFn.uuid) {
-	                avalon.eventListeners[ pFn.uuid ] = cFn
-	                return
-	            }
-	            var match = name.match(revent)
-	            var type = match[1]
-	            var search = type + ':' + markID(cFn)
-	            cur.addEvents = cur.addEvents || {}
-	            cur.addEvents[search] = cFn
-	            update(cur, this.update, steps, 'on')
-	        }
+	        var fn = cur[name]
+	        var uuid = fn.uuid
+	        var type = uuid.split('_').shift()
+	        var search = type.slice(1) + ':' + uuid
+	        cur.addEvents = cur.addEvents || {}
+	        cur.addEvents[search] = fn
+	        avalon.eventListeners.uuid = fn
+	       
+	        update(cur, this.update, steps, 'on')
+
 	    },
 	    update: function (node, vnode) {
 	        if (!node || node.nodeType > 1) //在循环绑定中，这里为null
 	            return
 	        var key, type, listener
 	        node._ms_context_ = vnode.vmodel
+	        node.local = vnode.local
 	        for (key in vnode.addEvents) {
 	            type = key.split(':').shift()
 	            listener = vnode.addEvents[key]
@@ -5818,12 +5839,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (aliasAs) {
 	            localArr.push(quote(aliasAs) + ':loop')
 	        }
-	        var lll = '{' + localArr.join(',\n') + '}'
+	        var local = '{' + localArr.join(',\n') + '}'
 	        //分别创建isArray, ____n, ___i, ___v, ___trackKey变量
 	        //https://www.w3.org/TR/css3-animations/#animationiteration
 	        pre.$append = assign + assign2 + alias + 'avalon._each(loop,function('
 	                + kv.join(', ') + '){\n' +
-	                '__local__ = avalon.mix(__local__, ' + lll + ')\n'
+	                'var __local__ = avalon.mix(__local__, ' + local + ')\n'
 
 	    },
 	    diff: function (current, previous, steps, __index__) {
@@ -7263,7 +7284,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    
 	    var scope = avalon.scopes[id]
-	    if (!scope || !document.nodeName) {
+	    if (!scope || !document.nodeName || avalon.suspendUpdate) {
 	        return renderingID = null
 	    }
 	    

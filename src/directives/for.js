@@ -100,12 +100,12 @@ avalon.directive('for', {
         if (aliasAs) {
             localArr.push(quote(aliasAs) + ':loop')
         }
-        var lll = '{' + localArr.join(',\n') + '}'
+        var local = '{' + localArr.join(',\n') + '}'
         //分别创建isArray, ____n, ___i, ___v, ___trackKey变量
         //https://www.w3.org/TR/css3-animations/#animationiteration
         pre.$append = assign + assign2 + alias + 'avalon._each(loop,function('
                 + kv.join(', ') + '){\n' +
-                '__local__ = avalon.mix(__local__, ' + lll + ')\n'
+                'var __local__ = avalon.mix(__local__, ' + local + ')\n'
 
     },
     diff: function (current, previous, steps, __index__) {

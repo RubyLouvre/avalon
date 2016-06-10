@@ -93,8 +93,7 @@ function collectHandlers(elem, type, handlers) {
     var value = elem.getAttribute('avalon-events')
     if (value && (elem.disabled !== true || type !== 'click')) {
         var uuids = []
-        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type + '\\:([^?\s]+)', 'g'))
-       
+        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type + '\\:([^?\\s]+)', 'g'))
         value.replace(reg, function (a, b) {
             uuids.push(b)
             return a
@@ -113,7 +112,7 @@ function collectHandlers(elem, type, handlers) {
     }
 
 }
-var rhandleHasVm = /^e\d+/
+var rhandleHasVm = /^e/
 var rneedSmooth = /move|scroll/
 function dispatch(event) {
     event = new avEvent(event)
@@ -127,6 +126,7 @@ function dispatch(event) {
         j = 0
         while ((uuid = handler.uuids[ j++ ]) &&
                 !event.isImmediatePropagationStopped) {
+            
             var fn = avalon.eventListeners[uuid]
             if (fn) {
                 var vm = rhandleHasVm.test(uuid) ? handler.elem._ms_context_ : 0
@@ -136,11 +136,11 @@ function dispatch(event) {
                 if (rneedSmooth.test(type)) {
                     var curr = +new Date()
                     if (curr - last > 16) {
-                        var ret = fn.call(vm || elem, event)
+                        var ret = fn.call(vm || elem, event, elem.local)
                         last = curr
                     }
                 } else {
-                   ret = fn.call(vm || elem, event)
+                   ret = fn.call(vm || elem, event, elem.local)
                 }
                 if(ret === false){
                     event.preventDefault()

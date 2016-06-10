@@ -15,52 +15,43 @@ var rstring = require('../seed/regexp').string
 avalon.directive('on', {
     priority: 3000,
     parse: function (cur, pre, binding) {
-        var vars = binding.expr.replace(rstring, ' ').replace(rfilters, '').match(rvar)
-        var canCache = vars.every(function (el) {
-            return el.charAt(0) === '@' || el.slice(0, 2) === '##' || el === '$event'
-        })
-        cur.vmodel = '__vmodel__'
-        if (canCache) {
-            var key = binding.expr
-            var fn = eventCache.get(key)
-            if (!fn) {
-                var fn = Function('return ' + avalon.parseExpr(binding, 'on'))()
-                var uuid = markID(fn)
-                eventCache.put(key, fn)
-            }else{
-                uuid = fn.uuid
-            }
-            
-            avalon.eventListeners[uuid] = fn
-            cur[binding.name] = 'avalon.eventListeners.' + uuid
-        } else {//如果闭包引用其他变量
-            cur[binding.name] = avalon.parseExpr(binding, 'on')
+        var d = 0
+        var dd = binding.name.replace('ms-on-', 'e').replace('-', '_')
+        var uuid = dd + '_' + binding.expr.
+                replace(/\s/g, '').
+                replace(/[^$a-z]/g, function () {
+                    return d++
+                })
 
-        }
+        var quoted = avalon.quote(uuid)
+        var fn = '(function(){\n' +
+                'var fn610 = ' +
+                avalon.parseExpr(binding, 'on') +
+                
+                '\nfn610.uuid =' + quoted + ';\nreturn fn610})()'
+        cur.vmodel = '__vmodel__'
+        cur.local = '__local__'
+        cur[binding.name] = fn
+
     },
     diff: function (cur, pre, steps, name) {
-        var cFn = cur[name]
-        var pFn = pre[name]
-        if (cFn !== pFn) {
-            if (typeof pFn === 'function' &&
-                    typeof cFn === 'function' &&
-                    pFn.uuid === cFn.uuid) {
-                avalon.eventListeners[ pFn.uuid ] = cFn
-                return
-            }
-            var match = name.match(revent)
-            var type = match[1]
-            var search = type + ':' + markID(cFn)
-            cur.addEvents = cur.addEvents || {}
-            cur.addEvents[search] = cFn
-            update(cur, this.update, steps, 'on')
-        }
+        var fn = cur[name]
+        var uuid = fn.uuid
+        var type = uuid.split('_').shift()
+        var search = type.slice(1) + ':' + uuid
+        cur.addEvents = cur.addEvents || {}
+        cur.addEvents[search] = fn
+        avalon.eventListeners.uuid = fn
+       
+        update(cur, this.update, steps, 'on')
+
     },
     update: function (node, vnode) {
         if (!node || node.nodeType > 1) //在循环绑定中，这里为null
             return
         var key, type, listener
         node._ms_context_ = vnode.vmodel
+        node.local = vnode.local
         for (key in vnode.addEvents) {
             type = key.split(':').shift()
             listener = vnode.addEvents[key]

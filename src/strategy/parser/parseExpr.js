@@ -15,6 +15,30 @@ var ruselessSp = /\s*(\.|\|)\s*/g
 var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
 var rhandleName = /^(?:\@|##)[$\w]+$/i
 
+var rfilters = /\|.+/g
+var rvar = /((?:\@|\$|\#\#)?\w+)/g
+
+function collectLocal(str, ret) {
+    var arr = str.replace(rfilters, '').match(rvar)
+    if (arr) {
+        arr.filter(function (el) {
+            if (!/^[@\d\-]/.test(el) &&
+                    el.slice(0, 2) !== '##' &&
+                    el !== '$event') {
+                ret[el] = 1
+            }
+        })
+    }
+}
+
+function extLocal(ret) {
+    var arr = []
+    for (var i in ret) {
+        arr.push('var ' + i + ' = __local__[' + avalon.quote(i) + ']')
+    }
+    return arr
+}
+
 function parseExpr(str, category) {
     var binding = {}
     category = category || 'other'
@@ -50,8 +74,10 @@ function parseExpr(str, category) {
             replace(rshortCircuit, dig).//移除所有短路或
             replace(ruselessSp, '$1').//移除. |两端空白
             split(rpipeline) //使用管道符分离所有过滤器及表达式的正体
-//还原body
-    var body = input.shift().replace(rfill, fill).trim()
+    //还原body
+    var _body = input.shift()
+    var local = {}
+    var body = _body.replace(rfill, fill).trim()
     if (category === 'on' && rhandleName.test(body)) {
         body = body + '($event)'
     }
@@ -59,12 +85,14 @@ function parseExpr(str, category) {
     body = body.replace(rAt, '$1__vmodel__.')
     if (category === 'js') {
         return evaluatorPool.put(category + ':' + cacheID, body)
+    } else if (category === 'on') {
+        collectLocal(_body, local)
     }
 
 //处理表达式的过滤器部分
 
     var filters = input.map(function (str) {
-
+        collectLocal(str.replace(/^\w+/g, ""), local)
         str = str.replace(rfill, fill).replace(rAt, '$1__vmodel__.') //还原
         var hasBracket = false
         str = str.replace(brackets, function (a, b) {
@@ -87,13 +115,15 @@ function parseExpr(str, category) {
         if (filters.length) {
             filters.push('if($event.$return){\n\treturn;\n}')
         }
-        if(!avalon.modern){
-            body = body.replace(/__vmodel__\.([^(]+)\(([^)]*)\)/,function(a, b, c){
-                return '__vmodel__.'+b+".call(__vmodel__"+ (/\S/.test(c) ? ','+c: "")+")"
+        if (!avalon.modern) {
+            body = body.replace(/__vmodel__\.([^(]+)\(([^)]*)\)/, function (a, b, c) {
+                return '__vmodel__.' + b + ".call(__vmodel__" + (/\S/.test(c) ? ',' + c : "") + ")"
             })
         }
-        ret = ['function ms_on($event){',
+
+        ret = ['function ms_on($event, __local__){',
             'try{',
+            extLocal(local).join('\n'),
             '\tvar __vmodel__ = this;',
             '\t' + body,
             '}catch(e){',
@@ -103,13 +133,13 @@ function parseExpr(str, category) {
         filters.unshift(2, 0)
     } else if (category === 'duplex') {
 
-        //从vm中得到当前属性的值
+//从vm中得到当前属性的值
         var getterBody = [
             'function (__vmodel__){',
             'try{',
             'return ' + body + '\n',
             '}catch(e){',
-            quoteError(str, category).replace('parse','get'),
+            quoteError(str, category).replace('parse', 'get'),
             '}',
             '}']
         evaluatorPool.put('duplex:' + cacheID, getterBody.join('\n'))
@@ -119,7 +149,7 @@ function parseExpr(str, category) {
             'try{',
             '\t' + body + ' = __value__',
             '}catch(e){',
-            quoteError(str, category).replace('parse','set'),
+            quoteError(str, category).replace('parse', 'set'),
             '}',
             '}']
         evaluatorPool.put('duplex:set:' + cacheID, setterBody.join('\n'))
@@ -131,7 +161,7 @@ function parseExpr(str, category) {
                 filters.join('\n'),
                 'return __value__\n',
                 '}catch(e){',
-                quoteError(str, category).replace('parse','format'),
+                quoteError(str, category).replace('parse', 'format'),
                 '}',
                 '}']
             evaluatorPool.put('duplex:format:' + cacheID, formatBody.join('\n'))
@@ -142,9 +172,9 @@ function parseExpr(str, category) {
             '(function(){',
             'try{',
             'var __value__ = ' + body,
-            ( category === 'text'? 
-            'return avalon.parsers.string(__value__)': 
-            'return __value__'),
+            (category === 'text' ?
+                    'return avalon.parsers.string(__value__)' :
+                    'return __value__'),
             '}catch(e){',
             quoteError(str, category),
             '\treturn ""',
