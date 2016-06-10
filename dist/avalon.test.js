@@ -1729,7 +1729,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            for (var i in local) {
 		                vars.push('var ' + i + ' = __local__[' + avalon.quote(i) + ']')
 		            }
-		            vars.push('var vnodes = []')
+		            vars.push('var vnodes = []\n')
 		            var body = vars.join('\n') + effective + '\nreturn vnodes'
 		            var render = avalon.render(body)
 		            synth.$render = present.$render = render
@@ -4256,7 +4256,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    }
 		    var body = '__local__ = __local__ || {};\n' +
 		            'var __present__, __top__,__synth__;\n' +
-		            _local.join(';\n') + _body
+		            _local.join(';\n')+'\n' + _body
 		    var fn = Function('__vmodel__', '__local__', body)
 		    return fn
 		}
