@@ -64,7 +64,7 @@ VElement.prototype = {
         var dom, tagName = this.type
         if (avalon.modern && svgTags[tagName]) {
             dom = createSVG(tagName)
-        } else if (!avalon.modern && (VMLTags(tagName) || rvml.test(tagName))) {
+        } else if (!avalon.modern && (VMLTags[tagName] || rvml.test(tagName))) {
             dom = createVML(tagName)
         } else {
             dom = document.createElement(tagName)
