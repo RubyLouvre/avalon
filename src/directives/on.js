@@ -39,10 +39,12 @@ avalon.directive('on', {
         var uuid = fn.uuid
         var type = uuid.split('_').shift()
         var search = type.slice(1) + ':' + uuid
-        cur.addEvents = cur.addEvents || {}
-        cur.addEvents[search] = fn
-        avalon.eventListeners.uuid = fn
-       
+        var preFn = pre[name]
+        if(!preFn || preFn.uuid !== uuid ){
+            cur.addEvents = cur.addEvents || {}
+            cur.addEvents[search] = fn
+            avalon.eventListeners.uuid = fn
+        }
         update(cur, this.update, steps, 'on')
 
     },

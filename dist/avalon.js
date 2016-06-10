@@ -1,4 +1,4 @@
-/*! built in 2016-6-10:12 version 2.07 by 司徒正美 */
+/*! built in 2016-6-10:18 version 2.08 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -679,7 +679,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return a === 'true'
 	        }
 	    },
-	    version: "2.07",
+	    version: "2.08",
 	    slice: function (nodes, start, end) {
 	        return _slice.call(nodes, start, end)
 	    },
@@ -3908,10 +3908,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	                avalon.error('ms-for指令前不能有空格')
 	            }
 	            forstack.push(pre)
-	            var cur = avalon.mix({
+	            var cur = {
 	                directive: 'for',
 	                vmodel: '__vmodel__'
-	            }, pre)
+	            }
+	            for(var i in pre){
+	                if(pre.hasOwnProperty(i)){
+	                    cur[i] = pre[i]
+	                }
+	            }
+	           
 	            directives['for'].parse(cur, pre, pre)
 
 	            return addTag(cur)
@@ -3922,7 +3928,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (nodeValue.indexOf('ms-for-end:') !== 0) {
 	                avalon.error('ms-for-end指令前不能有空格')
 	            }
-
 	            pre.$append = addTag({
 	                nodeType: 8,
 	                type: '#comment',
@@ -4553,10 +4558,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var uuid = fn.uuid
 	        var type = uuid.split('_').shift()
 	        var search = type.slice(1) + ':' + uuid
-	        cur.addEvents = cur.addEvents || {}
-	        cur.addEvents[search] = fn
-	        avalon.eventListeners.uuid = fn
-	       
+	        var preFn = pre[name]
+	        if(!preFn || preFn.uuid !== uuid ){
+	            cur.addEvents = cur.addEvents || {}
+	            cur.addEvents[search] = fn
+	            avalon.eventListeners.uuid = fn
+	        }
 	        update(cur, this.update, steps, 'on')
 
 	    },
