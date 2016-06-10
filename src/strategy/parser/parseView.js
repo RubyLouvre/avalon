@@ -93,10 +93,11 @@ function parseNode(pre, forstack, logic) {
         }
         if (pre.isVoidTag) {
             cur.isVoidTag = true
+            cur.skipContent = true
         } else {
             if (!('children' in cur)) {
                 var pChildren = pre.children
-                if (pChildren.length) {
+                if (pChildren.length && !pre.skipContent) {
                     cur.children = '(function(){' + parseNodes(pChildren) + '})()'
                 } else {
                     cur.template = pre.template

@@ -4,6 +4,8 @@ var fixCloneNode = require('./fixCloneNode')
 
 var rhtml = /<|&#?\w+;/
 var htmlCache = new Cache(128)
+var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
+
 avalon.parseHTML = function (html) {
     var fragment = avalon.avalonFragment.cloneNode(false), firstChild
     //处理非字符串

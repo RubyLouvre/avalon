@@ -91,6 +91,13 @@ VElement.prototype = {
                     dom.text = this.template
                     break
                 case 'style':
+                    if('styleSheet' in dom){
+                        dom.setAttribute('type', 'text/css')
+                        dom.styleSheet.cssText = this.template
+                    }else{
+                        dom.innerHTML = this.template
+                    }
+                    break
                 case 'template':
                     dom.innerHTML = this.template
                     break

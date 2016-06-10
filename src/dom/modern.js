@@ -9,7 +9,7 @@ require('./class/modern')
 require('./attr/modern')
 require('./css/modern')
 require('./val/modern')
-require('./html/modern')
+require('./html/newHTML')
 require('./event/modern')
 require('./ready/modern')
 

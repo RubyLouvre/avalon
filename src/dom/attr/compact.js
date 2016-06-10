@@ -44,8 +44,9 @@ function attrUpdate(node, vnode) {
                 }
                 //SVG只能使用setAttribute(xxx, yyy), VML只能使用node.xxx = yyy ,
                 //HTML的固有属性必须node.xxx = yyy
+             
                 var isInnate = rsvg.test(node) ? false :
-                        (document.namespaces && isVML(node)) ? true :
+                        (!avalon.modern && isVML(node)) ? true :
                         attrName in node.cloneNode(false)
                 if (isInnate) {
                     node[propName] = val + ''
