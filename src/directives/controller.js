@@ -63,7 +63,7 @@ avalon.directive('controller', {
             for (var i in local) {
                 vars.push('var ' + i + ' = __local__[' + avalon.quote(i) + ']')
             }
-            vars.push('var vnodes = []')
+            vars.push('var vnodes = []\n')
             var body = vars.join('\n') + effective + '\nreturn vnodes'
             var render = avalon.render(body)
             synth.$render = present.$render = render
