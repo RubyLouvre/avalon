@@ -1,4 +1,4 @@
-/*! built in 2016-6-11:11 version 2.08 by 司徒正美 */
+/*! built in 2016-6-11:23 version 2.08 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1895,7 +1895,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.directive('text', {
 	    parse: function (cur, pre, binding) {
-	        cur.children = '[]'
+	        cur.children = '[{nodeType:3,type:"#text",nodeValue:""}]'
 	        cur.skipContent = true
 	        var val = rident.test(binding.expr) ? binding.expr : avalon.parseExpr(binding)
 	        cur[binding.name] = val
@@ -1903,11 +1903,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    diff: function (cur, pre, steps, name) {
 	        var curValue = cur[name]
 	        var preValue = pre[name]
-	        cur.children = pre.children || []
 	        var dom = cur.dom = pre.dom
-	        if (curValue !== preValue || cur.children.length === 0) {
-	            if (!cur.children[0])
-	                cur.children[0] = {type: "#text", nodeType: 3}
+	        if (curValue !== preValue ) {
 	            cur.children[0].nodeValue = curValue
 	            if (dom) {
 	                this.update(dom, cur)
