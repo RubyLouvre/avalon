@@ -3638,8 +3638,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //分别创建isArray, ____n, ___i, ___v, ___trackKey变量
 	        //https://www.w3.org/TR/css3-animations/#animationiteration
 	        pre.$append = assign + assign2 + alias + 'avalon._each(loop,function('
-	                + kv.join(', ') + '){\n' +
-	                'var __local__ = avalon.mix(__local__, ' + local + ')\n'
+	            + kv.join(', ') + '){\n' +
+	            'var __local__ = avalon.mix(__local__, ' + local + ')\n'
 
 	    },
 	    diff: function (current, previous, steps, __index__) {
@@ -3700,28 +3700,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var cache = pre.cache
 	            if (!cache)
 	                return
-	            var newCache = cur.cache = {}
+	            var newCache = {}
 	            /* eslint-disable no-cond-assign */
-	            for (i = 0; c = cur.components[i]; i++) {
-	                /* eslint-enable no-cond-assign */
+	            var fuzzy = []
+	            for (i = 0; c = cur.components[i++];) {
 	                var p = isInCache(cache, c.key)
 	                if (p) {
-	                    quota--
-	                } else if (quota) {
-	                    p = fuzzyMatchCache(cache, c.key)
-	                    if (p) {
-	                        quota--
-	                    }
-	                }
-	                c.action = p ? 'move' : 'enter'
-	                if (p) {
+	                    c.action = 'move'
 	                    clearDom(p.children)
 	                    c.domIndex = p.index
-
+	                } else {
+	                    fuzzy.push(c)
 	                }
 	                saveInCache(newCache, c)
 	            }
-
+	            for (var i = 0, c; c = fuzzy[i++];) {
+	                p = fuzzyMatchCache(cache, c.key)
+	                if (p) {
+	                    c.action = 'move'
+	                    clearDom(p.children)
+	                    c.domIndex = p.index
+	                } else {
+	                    c.action = 'enter'
+	                }
+	            }
+	            /* eslint-enable no-cond-assign */
+	            cur.cache = newCache
 	            for (i in cache) {
 	                cur.removedComponents = cache
 	                break
@@ -3797,7 +3801,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            } else if (com.action === 'move') {
 	                var moveFragment = fragment.cloneNode(false)
 	                var cnodes = DOMs[com.domIndex] || []
-	                for (var k = 0, cc; cc = cnodes[k++]; ) {
+	                for (var k = 0, cc; cc = cnodes[k++];) {
 	                    moveFragment.appendChild(cc)
 	                }
 	                parent.insertBefore(moveFragment, insertPoint.nextSibling)
@@ -3817,7 +3821,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var steps = vnode.steps
 	        var oldCount = steps.count
 	        vnode.repeatCount = items.length
-	        avalon.diff(items,  vnode.prevItems, steps)
+	        avalon.diff(items, vnode.prevItems, steps)
 
 	        if (steps.count !== oldCount) {
 	            patch(entity, items, parent, steps)
@@ -3855,7 +3859,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return ret
 	}
 	function clearDom(arr) {
-	    for (var i = 0, el; el = arr[i++]; ) {
+	    for (var i = 0, el; el = arr[i++];) {
 	        if (el.dom) {
 	            el.dom = null
 	        }
