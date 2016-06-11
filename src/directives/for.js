@@ -357,7 +357,7 @@ function isInCache(cache, id) {
         if (arr) {
             var r = arr.pop()
             if (!arr.length) {
-                delete c.arr
+                c.arr = 0
             }
             return r
         }

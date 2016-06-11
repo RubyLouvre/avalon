@@ -6011,7 +6011,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (arr) {
 	            var r = arr.pop()
 	            if (!arr.length) {
-	                delete c.arr
+	                c.arr = 0
 	            }
 	            return r
 	        }
@@ -8068,18 +8068,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	                //如果这个属性存在通配符
 	                emitWildcard(get.heirloom, vm, spath, val, older)
 
-	                avalon.rerenderStart = new Date
-	                var dotIndex = vm.$id.indexOf('.')
-	                if (dotIndex > 0) {
-	                    avalon.batch(vm.$id.slice(0, dotIndex), true)
-	                } else {
-	                    avalon.batch(vm.$id, true)
-	                }
-
+	                batchUpdateView(vm.$id)
 	            }
 	        },
 	        enumerable: true,
 	        configurable: true
+	    }
+	}
+
+	function batchUpdateView(id) {
+	    avalon.rerenderStart = new Date
+	    var dotIndex = id.indexOf('.')
+	    if (dotIndex > 0) {
+	        avalon.batch(id.slice(0, dotIndex))
+	    } else {
+	        avalon.batch(id)
 	    }
 	}
 
@@ -8129,7 +8132,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        avalon.warn('vm.$id must be specified')
 	    }
 	    if (avalon.vmodels[$id]) {
-	        throw Error('error:['+ $id+ '] had defined!')
+	        throw Error('error:[' + $id + '] had defined!')
 	    }
 	    var vm = $$midway.masterFactory(definition, {}, {
 	        pathname: '',
@@ -8161,8 +8164,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        options.pathname + '.' + a
 	                vm.$fire(path, b, c)
 	                if (!d && !avalon.suspendUpdate) {
-	                    avalon.rerenderStart = new Date
-	                    avalon.batch(vm.$id, true)
+	                    batchUpdateView(vm.$id)
 	                }
 	            }
 	        }
