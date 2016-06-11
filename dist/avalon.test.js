@@ -1,4 +1,4 @@
-/*! built in 2016-6-11:4 version 2.08 by 司徒正美 */
+/*! built in 2016-6-11:11 version 2.08 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -57,7 +57,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var avalon = __webpack_require__(108)
+	var avalon = __webpack_require__(104)
 	//require('./gesture/tap')
 	__webpack_require__(105)
 	__webpack_require__(106)
@@ -68,51 +68,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 
-/***/ 105:
-/***/ function(module, exports) {
-
-	//var avalon = require('avalon')
-
-	avalon.component('ms-button', {
-	    template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
-	    defaults: {
-	        buttonText: "button"
-	    },
-	    soleSlot: 'buttonText'
-	})
-
-/***/ },
-
-/***/ 106:
+/***/ 104:
 /***/ function(module, exports, __webpack_require__) {
 
-	var button = __webpack_require__(105)
-	var tmpl = __webpack_require__(107)
-
-	avalon.component('ms-panel', {
-	    template: tmpl,
-	    defaults: {
-	        body: "&nbsp;&nbsp;",
-	        'ms_button': {
-	            buttonText: 'click me!'
-	        }
-	    },
-	    soleSlot: 'body'
-	})
-
-/***/ },
-
-/***/ 107:
-/***/ function(module, exports) {
-
-	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
-
-/***/ },
-
-/***/ 108:
-/***/ function(module, exports, __webpack_require__) {
-
-	/*! built in 2016-6-11:4 version 2.08 by 司徒正美 */
+	/*! built in 2016-6-11:11 version 2.08 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -2017,9 +1976,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		    diff: function (cur, pre, steps, name) {
 		        var curValue = cur[name]
 		        var preValue = pre[name]
-		        cur.children = pre.children
+		        cur.children = pre.children || []
 		        var dom = cur.dom = pre.dom
-
 		        if (curValue !== preValue || cur.children.length === 0) {
 		            if (!cur.children[0])
 		                cur.children[0] = {type: "#text", nodeType: 3}
@@ -7727,6 +7685,47 @@ return /******/ (function(modules) { // webpackBootstrap
 	/******/ ])
 	});
 	;
+
+/***/ },
+
+/***/ 105:
+/***/ function(module, exports) {
+
+	//var avalon = require('avalon')
+
+	avalon.component('ms-button', {
+	    template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
+	    defaults: {
+	        buttonText: "button"
+	    },
+	    soleSlot: 'buttonText'
+	})
+
+/***/ },
+
+/***/ 106:
+/***/ function(module, exports, __webpack_require__) {
+
+	var button = __webpack_require__(105)
+	var tmpl = __webpack_require__(107)
+
+	avalon.component('ms-panel', {
+	    template: tmpl,
+	    defaults: {
+	        body: "&nbsp;&nbsp;",
+	        'ms_button': {
+	            buttonText: 'click me!'
+	        }
+	    },
+	    soleSlot: 'body'
+	})
+
+/***/ },
+
+/***/ 107:
+/***/ function(module, exports) {
+
+	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
 
 /***/ }
 
