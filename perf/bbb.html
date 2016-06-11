@@ -9,8 +9,7 @@
             });
             avalon.component("ms-pager", {
                 template: '<div class="pagination">'+
-               '<style>.frequency input {margin-left:5px;}</style>'+
-              '<ul><li ms-for="el in @pages" ms-attr="{class:(el == @current_page ? \'active\' : \'\')}"><a href="#" ms-click="@gotoPage(el, $event)">{{el}}</a></li></ul>'+
+              '<ul><li ms-for="el in @pages" ms-class="el == @current_page ? \'active\' : \'\'"><a href="#" ms-click="@gotoPage(el, $event)">{{el}}</a></li></ul>'+
             '</div>',
                 defaults: {
                     total_page: 25,
@@ -20,7 +19,7 @@
                     gotoPage: function(page, e){
                         this.current_page = page;
                         this.pages = this.getPages();
-                        console.log(this.pages,e.target.innerHTML);
+                        console.log(this.pages);
                     },
                     getPages: function() {
                         var pages = [];

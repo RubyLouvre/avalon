@@ -121,16 +121,16 @@ avalon.directive('for', {
             avalon.shadowCopy(cur, pre)
             return
         }
-        
+
         cur.forDiff = true
 
         var isInit = !('items' in pre)
         var i, c, p
         if (isInit) {
-            var _items = getRepeatRange(previous,__index__ )
-            pre.items = _items.slice(1,-1)
+            var _items = getRepeatRange(previous, __index__)
+            pre.items = _items.slice(1, -1)
             pre.components = []
-            pre.repeatCount =  pre.items.length
+            pre.repeatCount = pre.items.length
         }
 
         var quota = pre.components.length
@@ -183,7 +183,7 @@ avalon.directive('for', {
                 if (p) {
                     clearDom(p.children)
                     c.domIndex = p.index
-                    
+
                 }
                 saveInCache(newCache, c)
             }
@@ -217,7 +217,7 @@ avalon.directive('for', {
 
         var fragment = avalon.avalonFragment
 
-        var domTemplate 
+        var domTemplate
         for (var i in vnode.removedComponents) {
             var el = vnode.removedComponents[i]
 
@@ -248,8 +248,8 @@ avalon.directive('for', {
             var com = vnode.components[i]
             //添加nodes属性并插入节点
             if (com.action === 'enter') {
-                if(!domTemplate){
-                   domTemplate = avalon.parseHTML(vnode.template)
+                if (!domTemplate) {
+                    domTemplate = avalon.parseHTML(vnode.template)
                 }
                 var newFragment = domTemplate.cloneNode(true)
                 newFragment.appendChild(document.createComment(vnode.signature))
@@ -283,7 +283,7 @@ avalon.directive('for', {
         var steps = vnode.steps
         var oldCount = steps.count
         vnode.repeatCount = items.length
-        avalon.diff(items, vnode.prevItems, steps)
+        avalon.diff(items,  vnode.prevItems, steps)
 
         if (steps.count !== oldCount) {
             patch(entity, items, parent, steps)
@@ -348,50 +348,29 @@ function fuzzyMatchCache(cache, id) {
 
 // 新位置: 旧位置
 function isInCache(cache, id) {
-    var c = cache[id], cid = id
+    var c = cache[id]
     if (c) {
-        var ctack = cache["***" + id]
-        if (ctack) {
-            var a = ctack.pop()
-            delete cache[a.id]
-            if (ctack.length == 0)
-                delete cache["***" + id]
-            return a.c
-        }
-        var stack = [{id: id, c: c}]
-        while (1) {
-            id += '_'
-            if (cache[id]) {
-                stack.push({
-                    id: id,
-                    c: cache[id]
-                })
-            } else {
-                break
+        var arr = c.arr
+        if (arr) {
+            var r = arr.pop()
+            if (!arr.length) {
+                delete c.arr
             }
+            return r
         }
-        var a = stack.pop()
-        delete cache[a.id]
-        if (stack.length) {
-            cache['***' + cid] = stack
-        }
-        return a.c
+        delete cache[id]
+        return c
     }
-    return c
 }
-
+//[1,1,1] number1 number1_ number1__
 function saveInCache(cache, component) {
     var trackId = component.key
     if (!cache[trackId]) {
         cache[trackId] = component
     } else {
-        while (1) {
-            trackId += '_'
-            if (!cache[trackId]) {
-                cache[trackId] = component
-                break
-            }
-        }
+        var c = cache[trackId]
+        var arr = c.arr || (c.arr = [])
+        arr.push(component)
     }
 }
 var applyEffects = function (nodes, vnodes, opts) {

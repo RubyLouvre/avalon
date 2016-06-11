@@ -3,14 +3,34 @@
 var markID = require('../seed/lang.share').getLongID
 var update = require('./_update')
 
+function classNames() {
+    var classes = []
+    for (var i = 0; i < arguments.length; i++) {
+        var arg = arguments[i]
+        var argType = typeof arg
+        if (argType === 'string' || argType === 'number' || arg === true) {
+            classes.push(arg)
+        } else if (Array.isArray(arg)) {
+            classes.push(classNames.apply(null, arg))
+        } else if (argType === 'object') {
+            for (var key in arg) {
+                if (arg.hasOwnProperty(key) && arg[key]) {
+                    classes.push(key)
+                }
+            }
+        }
+    }
+
+    return classes.join(' ')
+}
+
 var directives = avalon.directives
 avalon.directive('class', {
     diff: function (cur, pre, steps, name) {
         var type = name.slice(3)
         var curValue = cur[name]
-        var preValue = pre[name]
-        if(preValue === void 0)
-            preValue = ''
+        var preValue = pre[name] || ''
+
         if (!pre.classEvent) {
             var classEvent = {}
             if (type === 'hover') {//在移出移入时切换类名
@@ -29,30 +49,24 @@ avalon.directive('class', {
         }
         pre.classEvent = null
 
-        var className = avalon.noop
-        if (Array.isArray(curValue)) {
-            //处理复杂的一维数组
-           className = curValue.map(function(el){
-                return el && typeof el === 'object' ? processBooleanObject(el) :
-                        el ? el : ''
-            }).join(' ')
-        } else if (avalon.isObject(curValue)) {
-            //处理布尔对象
-            className = processBooleanObject(curValue)
-        } else if(curValue || curValue === 0) {
-            //处理其他真值，如字符串，数字
-            className = String(curValue)
-        }else if(!curValue){
-            className = ''
-        }
-        className = cur[name] = className.trim().replace(/\s+/, ' ')
+        var className = classNames(curValue)
+        var uniq = {}, arr = []
+        className.replace(/\S+/g, function (el) {
+            if (!uniq[el]) {
+                uniq[el] = 1
+                arr.push(el)
+            }
+        })
+        
+        className = cur[name] = arr.join(' ')
+       
         if (preValue !== className) {
             cur['change-' + type] = className
-            update(cur, this.update, steps, type )
+            update(cur, this.update, steps, type)
         }
     },
     update: function (node, vnode) {
-        if(!node || node.nodeType !==1)
+        if (!node || node.nodeType !== 1)
             return
         var classEvent = vnode.classEvent
         if (classEvent) {
@@ -68,13 +82,13 @@ avalon.directive('class', {
         var names = ['class', 'hover', 'active']
         names.forEach(function (type) {
             var name = 'change-' + type
-            var value = vnode[ name ]
+            var value = vnode[name]
             if (value === void 0)
                 return
             if (type === 'class') {
                 node && setClass(node, vnode)
             } else {
-                var oldType = node.getAttribute('change-'+type)
+                var oldType = node.getAttribute('change-' + type)
                 if (oldType) {
                     avalon(node).removeClass(oldType)
                 }
@@ -86,11 +100,6 @@ avalon.directive('class', {
 
 directives.active = directives.hover = directives['class']
 
-function processBooleanObject(obj) {
-    return Object.keys(obj).filter(function (name) {
-        return obj[name]
-    }).join(' ')
-}
 
 var classMap = {
     mouseenter: 'change-hover',
@@ -114,10 +123,13 @@ function abandonClass(e) {
 }
 
 function setClass(node, vnode) {
-    var old = node.getAttribute('old-change-class') || ''
+    var old = node.getAttribute('old-change-class')
     var neo = vnode['ms-class']
-    avalon(node).removeClass(old).addClass(neo)
-    node.setAttribute('old-change-class', neo)
+    if (old !== neo) {
+        avalon(node).removeClass(old).addClass(neo)
+        node.setAttribute('old-change-class', neo)
+    }
+
 }
 
 markID(activateClass)

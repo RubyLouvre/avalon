@@ -2663,14 +2663,34 @@ return /******/ (function(modules) { // webpackBootstrap
 		var markID = __webpack_require__(6).getLongID
 		var update = __webpack_require__(36)
 
+		function classNames() {
+		    var classes = []
+		    for (var i = 0; i < arguments.length; i++) {
+		        var arg = arguments[i]
+		        var argType = typeof arg
+		        if (argType === 'string' || argType === 'number' || arg === true) {
+		            classes.push(arg)
+		        } else if (Array.isArray(arg)) {
+		            classes.push(classNames.apply(null, arg))
+		        } else if (argType === 'object') {
+		            for (var key in arg) {
+		                if (arg.hasOwnProperty(key) && arg[key]) {
+		                    classes.push(key)
+		                }
+		            }
+		        }
+		    }
+
+		    return classes.join(' ')
+		}
+
 		var directives = avalon.directives
 		avalon.directive('class', {
 		    diff: function (cur, pre, steps, name) {
 		        var type = name.slice(3)
 		        var curValue = cur[name]
-		        var preValue = pre[name]
-		        if(preValue === void 0)
-		            preValue = ''
+		        var preValue = pre[name] || ''
+
 		        if (!pre.classEvent) {
 		            var classEvent = {}
 		            if (type === 'hover') {//在移出移入时切换类名
@@ -2689,30 +2709,24 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		        pre.classEvent = null
 
-		        var className = avalon.noop
-		        if (Array.isArray(curValue)) {
-		            //处理复杂的一维数组
-		           className = curValue.map(function(el){
-		                return el && typeof el === 'object' ? processBooleanObject(el) :
-		                        el ? el : ''
-		            }).join(' ')
-		        } else if (avalon.isObject(curValue)) {
-		            //处理布尔对象
-		            className = processBooleanObject(curValue)
-		        } else if(curValue || curValue === 0) {
-		            //处理其他真值，如字符串，数字
-		            className = String(curValue)
-		        }else if(!curValue){
-		            className = ''
-		        }
-		        className = cur[name] = className.trim().replace(/\s+/, ' ')
+		        var className = classNames(curValue)
+		        var uniq = {}, arr = []
+		        className.replace(/\S+/g, function (el) {
+		            if (!uniq[el]) {
+		                uniq[el] = 1
+		                arr.push(el)
+		            }
+		        })
+		        
+		        className = cur[name] = arr.join(' ')
+		       
 		        if (preValue !== className) {
 		            cur['change-' + type] = className
-		            update(cur, this.update, steps, type )
+		            update(cur, this.update, steps, type)
 		        }
 		    },
 		    update: function (node, vnode) {
-		        if(!node || node.nodeType !==1)
+		        if (!node || node.nodeType !== 1)
 		            return
 		        var classEvent = vnode.classEvent
 		        if (classEvent) {
@@ -2728,13 +2742,13 @@ return /******/ (function(modules) { // webpackBootstrap
 		        var names = ['class', 'hover', 'active']
 		        names.forEach(function (type) {
 		            var name = 'change-' + type
-		            var value = vnode[ name ]
+		            var value = vnode[name]
 		            if (value === void 0)
 		                return
 		            if (type === 'class') {
 		                node && setClass(node, vnode)
 		            } else {
-		                var oldType = node.getAttribute('change-'+type)
+		                var oldType = node.getAttribute('change-' + type)
 		                if (oldType) {
 		                    avalon(node).removeClass(oldType)
 		                }
@@ -2746,11 +2760,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		directives.active = directives.hover = directives['class']
 
-		function processBooleanObject(obj) {
-		    return Object.keys(obj).filter(function (name) {
-		        return obj[name]
-		    }).join(' ')
-		}
 
 		var classMap = {
 		    mouseenter: 'change-hover',
@@ -2774,10 +2783,13 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 		function setClass(node, vnode) {
-		    var old = node.getAttribute('old-change-class') || ''
+		    var old = node.getAttribute('old-change-class')
 		    var neo = vnode['ms-class']
-		    avalon(node).removeClass(old).addClass(neo)
-		    node.setAttribute('old-change-class', neo)
+		    if (old !== neo) {
+		        avalon(node).removeClass(old).addClass(neo)
+		        node.setAttribute('old-change-class', neo)
+		    }
+
 		}
 
 		markID(activateClass)
@@ -3715,16 +3727,16 @@ return /******/ (function(modules) { // webpackBootstrap
 		            avalon.shadowCopy(cur, pre)
 		            return
 		        }
-		        
+
 		        cur.forDiff = true
 
 		        var isInit = !('items' in pre)
 		        var i, c, p
 		        if (isInit) {
-		            var _items = getRepeatRange(previous,__index__ )
-		            pre.items = _items.slice(1,-1)
+		            var _items = getRepeatRange(previous, __index__)
+		            pre.items = _items.slice(1, -1)
 		            pre.components = []
-		            pre.repeatCount =  pre.items.length
+		            pre.repeatCount = pre.items.length
 		        }
 
 		        var quota = pre.components.length
@@ -3777,7 +3789,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                if (p) {
 		                    clearDom(p.children)
 		                    c.domIndex = p.index
-		                    
+
 		                }
 		                saveInCache(newCache, c)
 		            }
@@ -3811,7 +3823,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		        var fragment = avalon.avalonFragment
 
-		        var domTemplate 
+		        var domTemplate
 		        for (var i in vnode.removedComponents) {
 		            var el = vnode.removedComponents[i]
 
@@ -3842,8 +3854,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		            var com = vnode.components[i]
 		            //添加nodes属性并插入节点
 		            if (com.action === 'enter') {
-		                if(!domTemplate){
-		                   domTemplate = avalon.parseHTML(vnode.template)
+		                if (!domTemplate) {
+		                    domTemplate = avalon.parseHTML(vnode.template)
 		                }
 		                var newFragment = domTemplate.cloneNode(true)
 		                newFragment.appendChild(document.createComment(vnode.signature))
@@ -3877,7 +3889,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        var steps = vnode.steps
 		        var oldCount = steps.count
 		        vnode.repeatCount = items.length
-		        avalon.diff(items, vnode.prevItems, steps)
+		        avalon.diff(items,  vnode.prevItems, steps)
 
 		        if (steps.count !== oldCount) {
 		            patch(entity, items, parent, steps)
@@ -3942,50 +3954,29 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		// 新位置: 旧位置
 		function isInCache(cache, id) {
-		    var c = cache[id], cid = id
+		    var c = cache[id]
 		    if (c) {
-		        var ctack = cache["***" + id]
-		        if (ctack) {
-		            var a = ctack.pop()
-		            delete cache[a.id]
-		            if (ctack.length == 0)
-		                delete cache["***" + id]
-		            return a.c
-		        }
-		        var stack = [{id: id, c: c}]
-		        while (1) {
-		            id += '_'
-		            if (cache[id]) {
-		                stack.push({
-		                    id: id,
-		                    c: cache[id]
-		                })
-		            } else {
-		                break
+		        var arr = c.arr
+		        if (arr) {
+		            var r = arr.pop()
+		            if (!arr.length) {
+		                delete c.arr
 		            }
+		            return r
 		        }
-		        var a = stack.pop()
-		        delete cache[a.id]
-		        if (stack.length) {
-		            cache['***' + cid] = stack
-		        }
-		        return a.c
+		        delete cache[id]
+		        return c
 		    }
-		    return c
 		}
-
+		//[1,1,1] number1 number1_ number1__
 		function saveInCache(cache, component) {
 		    var trackId = component.key
 		    if (!cache[trackId]) {
 		        cache[trackId] = component
 		    } else {
-		        while (1) {
-		            trackId += '_'
-		            if (!cache[trackId]) {
-		                cache[trackId] = component
-		                break
-		            }
-		        }
+		        var c = cache[trackId]
+		        var arr = c.arr || (c.arr = [])
+		        arr.push(component)
 		    }
 		}
 		var applyEffects = function (nodes, vnodes, opts) {
