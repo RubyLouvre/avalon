@@ -1,4 +1,4 @@
-/*! built in 2016-6-12:0 version 2.08 by 司徒正美 */
+/*! built in 2016-6-12:3 version 2.08 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2784,7 +2784,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return
 	        var key, type, listener
 	        node._ms_context_ = vnode.vmodel
-	        node.local = vnode.local
+	        node._ms_local = vnode.local
 	        for (key in vnode.addEvents) {
 	            type = key.split(':').shift()
 	            listener = vnode.addEvents[key]
@@ -3666,7 +3666,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            pre.repeatCount = pre.items.length
 	        }
 
-	        var quota = pre.components.length
 	        cur.endRepeat = pre.endRepeat
 
 	        var n = Math.max(nodes.length - 2, 0) - pre.repeatCount
@@ -6014,7 +6013,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    collectHandlers(elem, type, handlers)
 	    var i = 0, j, uuid, handler
 	    while ((handler = handlers[i++]) && !event.cancelBubble) {
-	        event.currentTarget = handler.elem
+	        var host = event.currentTarget = handler.elem
 	        j = 0
 	        while ((uuid = handler.uuids[ j++ ]) &&
 	                !event.isImmediatePropagationStopped) {
@@ -6027,11 +6026,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (rneedSmooth.test(type)) {
 	                    var curr = +new Date()
 	                    if (curr - last > 16) {
-	                        var ret = fn.call(vm || elem, event, elem.local)
+	                        var ret = fn.call(vm || elem, event, host._ms_local)
 	                        last = curr
 	                    }
 	                } else {
-	                    ret = fn.call(vm || elem, event, elem.local)
+	                    ret = fn.call(vm || elem, event, host._ms_local)
 	                }
 	                if (ret === false) {
 	                    event.preventDefault()

@@ -112,7 +112,7 @@ function dispatch(event) {
     collectHandlers(elem, type, handlers)
     var i = 0, j, uuid, handler
     while ((handler = handlers[i++]) && !event.cancelBubble) {
-        event.currentTarget = handler.elem
+        var host = event.currentTarget = handler.elem
         j = 0
         while ((uuid = handler.uuids[ j++ ]) &&
                 !event.isImmediatePropagationStopped) {
@@ -125,11 +125,11 @@ function dispatch(event) {
                 if (rneedSmooth.test(type)) {
                     var curr = +new Date()
                     if (curr - last > 16) {
-                        var ret = fn.call(vm || elem, event, elem.local)
+                        var ret = fn.call(vm || elem, event, host._ms_local)
                         last = curr
                     }
                 } else {
-                    ret = fn.call(vm || elem, event, elem.local)
+                    ret = fn.call(vm || elem, event, host._ms_local)
                 }
                 if (ret === false) {
                     event.preventDefault()

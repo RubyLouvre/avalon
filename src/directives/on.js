@@ -53,7 +53,7 @@ avalon.directive('on', {
             return
         var key, type, listener
         node._ms_context_ = vnode.vmodel
-        node.local = vnode.local
+        node._ms_local = vnode.local
         for (key in vnode.addEvents) {
             type = key.split(':').shift()
             listener = vnode.addEvents[key]

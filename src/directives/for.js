@@ -133,7 +133,6 @@ avalon.directive('for', {
             pre.repeatCount = pre.items.length
         }
 
-        var quota = pre.components.length
         cur.endRepeat = pre.endRepeat
 
         var n = Math.max(nodes.length - 2, 0) - pre.repeatCount
