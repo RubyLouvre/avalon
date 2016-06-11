@@ -1,4 +1,4 @@
-/*! built in 2016-6-11:23 version 2.08 by 司徒正美 */
+/*! built in 2016-6-12:0 version 2.08 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1336,7 +1336,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (hasCache) {
 	        return fixCloneNode(hasCache)
 	    }
-	    var vnodes = avalon.lexer(html, 0, 1000)
+	    var vnodes = avalon.lexer(html, false, 1000)
 	    for(var i = 0, el; el = vnodes[i++];){
 	        fragment.appendChild(avalon.vdomAdaptor(el,'toDOM'))
 	    }
