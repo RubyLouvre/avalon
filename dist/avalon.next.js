@@ -1,4 +1,4 @@
-/*! built in 2016-6-12:14 version 2.08 by 司徒正美 */
+/*! built in 2016-6-13:2 version 2.08 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3646,8 +3646,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //分别创建isArray, ____n, ___i, ___v, ___trackKey变量
 	        //https://www.w3.org/TR/css3-animations/#animationiteration
 	        pre.$append = assign + assign2 + alias + 'avalon._each(loop,function('
-	            + kv.join(', ') + '){\n'
-	            + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
+	                + kv.join(', ') + '){\n'
+	                + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
 
 	    },
 	    diff: function (current, previous, steps, __index__) {
@@ -3688,6 +3688,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else if (n < 0) {
 	            previous.splice.apply(previous, [__index__, Math.abs(n)])
 	        }
+
 	        cur.action = isInit ? 'init' : 'update'
 	        if (isInit) {
 	            /* eslint-disable no-cond-assign */
@@ -3710,18 +3711,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var newCache = {}
 	            /* eslint-disable no-cond-assign */
 	            var fuzzy = []
-	            for (i = 0; c = cur.components[i++];) {
+	            for (i = 0; c = cur.components[i++]; ) {
 	                var p = isInCache(cache, c.key)
 	                if (p) {
 	                    c.action = 'move'
 	                    clearDom(p.children)
 	                    c.domIndex = p.index
+
 	                } else {
 	                    fuzzy.push(c)
 	                }
 	                saveInCache(newCache, c)
 	            }
-	            for (var i = 0, c; c = fuzzy[i++];) {
+	            for (var i = 0, c; c = fuzzy[i++]; ) {
 	                p = fuzzyMatchCache(cache, c.key)
 	                if (p) {
 	                    c.action = 'move'
@@ -3733,12 +3735,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            /* eslint-enable no-cond-assign */
 	            cur.cache = newCache
-	            for (i in cache) {
-	                cur.removedComponents = cache
-	                break
+	            var dels = []
+	            for (var i in cache) {
+	                var c = cache[i]
+	                dels.push(c)
+	                if (c.arr)
+	                    [].push.apply(dels, c.arr)
 	            }
+	            cur.removedComponents = dels
 	        }
-
 	        pre.components.length = 0 //release memory
 
 	        cur.prevItems = pre.items
@@ -3763,9 +3768,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var fragment = avalon.avalonFragment
 
 	        var domTemplate
-	        for (var i in vnode.removedComponents) {
-	            var el = vnode.removedComponents[i]
-
+	        var hasDeleted = {}
+	        for (var i = 0, el; el = vnode.removedComponents[i++]; ) {
+	            hasDeleted[el.index] = true
 	            var removeNodes = DOMs[el.index]
 	            if (removeNodes) {
 	                removeNodes.forEach(function (n, k) {
@@ -3782,7 +3787,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                el.children.length = 0
 	            }
 	        }
-
 
 	        delete vnode.removedComponents
 
@@ -3805,9 +3809,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    staggerKey: key + 'enter'
 	                })
 	            } else if (com.action === 'move') {
+	                if (hasDeleted[com.index]) {
+	                    continue
+	                }
 	                var moveFragment = fragment.cloneNode(false)
 	                var cnodes = DOMs[com.domIndex] || []
-	                for (var k = 0, cc; cc = cnodes[k++];) {
+	                for (var k = 0, cc; cc = cnodes[k++]; ) {
 	                    moveFragment.appendChild(cc)
 	                }
 	                parent.insertBefore(moveFragment, insertPoint.nextSibling)
@@ -3865,7 +3872,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return ret
 	}
 	function clearDom(arr) {
-	    for (var i = 0, el; el = arr[i++];) {
+	    for (var i = 0, el; el = arr[i++]; ) {
 	        if (el.dom) {
 	            el.dom = null
 	        }

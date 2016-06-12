@@ -12,24 +12,20 @@
     <div ms-controller="test">
         <div>
             <div ms-for="(index,el) in @data as ddd">
-                {{el.name}}
+                {{el}}
                 <a href="#" ms-click="@del(el,index)">删除</a>
-                <div ms-for="item in el.list">
-                    {{item.name}}
-                </div>
+                
             </div>
         </div>
     </div>
     <script>
 var vm = avalon.define({
     $id: "test",
-    data: [{name: "test1", list: [{name: "item11"}]}
-        , {name: "test2", list: [{name: "item21"}, {name: "item22"}]}],
+    data: ['aaa','bbb'],
     del: function (el,index) {
         console.log(el,index)
-       // vm.data.remove(el);//这里影响test2的list绑定,test1删除后，test2的list绑定界面显示3个。
-       // console.log(vm.data[0].list.length,index);//输出来的结果是2
-       // console.log(vm.data)
+        vm.data.remove(el);//这里影响test2的list绑定,test1删除后，test2的list绑定界面显示3个。
+        console.log(vm.data)
         //抱歉，不知道怎么贴图。
     }
 });
