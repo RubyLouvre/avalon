@@ -2884,7 +2884,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.target = event.srcElement
 	    }
 	    var target = this.target
-	    if (event.type.indexOf('key') === 0) {
+	    if (this.which == null && event.type.indexOf('key') === 0) {
 	        this.which = event.charCode != null ? event.charCode : event.keyCode
 	    } else if (rmouseEvent.test(event.type) && !('pageX' in this)) {
 	        var doc = target.ownerDocument || document

@@ -8,31 +8,21 @@
         <script src="../dist/avalon.js"></script>
         <script>
          
-        vm = avalon.define({
-            $id: 'duplex2',
-            arr: [1,2,3,4],
-            dd: function(a){
-                console.log(a)
-            },
-            resort:function(){
-                console.log('------')
-                vm.arr.reverse()
-            },
-            b: function(e,d){
-                console.log(e,d)
+        var vm = avalon.define({
+            $id: 'test',
+            fn: function(e){
+                console.log(e.which)
+                console.log('---')
             }
         })
         </script>
 
     </head>
     <body>
-        <div ms-controller='duplex2' >
-            <div ms-click="@b($event,111)">ww</div>
-            <ul>
-                <li ms-for="el in @arr" ms-click="@dd(el)">{{el}}</li>
-            </ul>
-            <button type="button" ms-click="@resort">xxx</button>
+         <div ms-controller="test">
+           <input type="text" ms-keydown="@fn | enter">
+
         </div>
-    <div>&times;</div>
+        <div>&times;</div>
     </body>
 </html>
