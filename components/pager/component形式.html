@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="//cdn.bootcss.com/bootstrap/2.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="../../dist/avalon.js"></script>
+    <script type="text/javascript">
+            var test_vm = avalon.define({
+                $id:'test'
+            });
+            avalon.component("ms-pager", {
+                template: '<div class="pagination">'+
+              '<ul><li ms-for="el in @pages" ms-attr="{class:(el == @current_page ? \'active\' : \'\')}"><a href="#" ms-click="@gotoPage(el, $event)">{{el}}</a></li></ul>'+
+            '</div>',
+                defaults: {
+                    total_page: 25,
+                    current_page: 1,
+                    show_page: 7,
+                    pages:[1,2,3,4,5,6,7],
+                    gotoPage: function(page, e){
+                        this.current_page = page;
+                        this.pages = this.getPages();
+                        console.log(this.pages);
+                    },
+                    getPages: function() {
+                        var pages = [];
+                        var s = this.show_page, l = this.current_page, r = this.current_page, c = this.total_page;
+                        pages.push(l);
+                        while(true) {
+                            if(pages.length >= s) {
+                                break;
+                            }
+                            if(l > 1) {
+                                pages.unshift(--l);
+                            }
+                            if(pages.length >= s) {
+                                break;
+                            }
+                            if(r < c) {
+                                pages.push(++r);
+                            }
+                        }
+
+                        return pages;
+                    }
+                }
+            });
+        </script>
+</head>
+
+<body>
+    <div ms-controller="test">
+        <xmp ms-widget="{is:'ms-pager'}"></xmp>
+    </div>
+</body>
+
+</html>
