@@ -105,7 +105,7 @@ avalon.directive('for', {
         //https://www.w3.org/TR/css3-animations/#animationiteration
         pre.$append = assign + assign2 + alias + 'avalon._each(loop,function('
             + kv.join(', ') + '){\n' +
-            'var __local__ = avalon.mix(__local__, ' + local + ')\n'
+            '__local__ = avalon.mix({}, __local__, ' + local + ')\n'
 
     },
     diff: function (current, previous, steps, __index__) {

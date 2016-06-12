@@ -1,4 +1,4 @@
-/*! built in 2016-6-12:3 version 2.08 by 司徒正美 */
+/*! built in 2016-6-12:11 version 2.08 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3639,7 +3639,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //https://www.w3.org/TR/css3-animations/#animationiteration
 	        pre.$append = assign + assign2 + alias + 'avalon._each(loop,function('
 	            + kv.join(', ') + '){\n' +
-	            'var __local__ = avalon.mix(__local__, ' + local + ')\n'
+	            '__local__ = avalon.mix({}, __local__, ' + local + ')\n'
 
 	    },
 	    diff: function (current, previous, steps, __index__) {

@@ -1,31 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../dist/avalon.js"></script>
-        <script>
-            avalon.component('ms-pager', {
-            template: '<div><strong>{{@totalPages}}</strong><button ms-click="@xx" type="button">++</button></div>',
-            defaults: {
-                totalPages: 21,
-                xx: function () {
-                    this.totalPages += 1;
-                    console.log('----',this.totalPages)
-                }
-            }
-        })
-            vm = avalon.define({
-            $id: 'widget5',
-            bb: '其他内容'
-        });
-        </script>
+        <meta charset='utf-8'>
+
+        <script src="../dist/avalon.modern.js"></script>
     </head>
     <body>
-         <div ms-controller="widget5">
-             <xmp ms-widget='{is:"ms-pager"}'></xmp>
-             {{@bb}}
-             </div>
+        <div ms-controller="test">
+            <div>
+                <div ms-for="el in ##data">
+                    {{el.name}}
+                    <a href="#" ms-click="##add1(el)">添加</a>
+                    <div ms-for="item in el.list">
+                        {{item.name}}
+                        <a href="#" ms-click="##del(item,el)">删除</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+    var vm = avalon.define({
+        $id: "test",
+        data: [{name: "test", list: [{name: "item1"}]}],
+        add1: function (el) {
+            el.list.push({name: 'item'+(new Date -0 )});//无效
+
+
+        },
+        del: function (item, el) {
+            el.list.remove(item)
+        }
+    });
+        </script>
     </body>
 </html>

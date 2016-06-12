@@ -1,41 +1,51 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <title></title>
-        <script src="../dist/avalon.js"></script>
-        <script>
+<html lang="en">
+<head>
+    <meta charset='utf-8'>
 
-        </script>
-    </head>
-
-    <body ms-controller="test">
-        <script>
-            avalon.ready(function () {
-                var vm = avalon.define({
-                    $id: 'test',
-                    val: [],
-                    key: true,
-                    fn: function () {
-                        console.log(this.val);
-                    },
-                    fn1: function () {
-                        console.log(vm.key);
-                        vm.key = !vm.key;
-                    }
-                });
-                avalon.scan(document.body)
-            })
-        </script>
+    <title>test</title>
+    <script src="../dist/avalon.js"></script>
+</head>
+<body>
+    <div ms-controller="test">
         <div>
-            <button ms-on-click="@fn1"> test</button>
-            <br>
-            <input type="checkbox" value="a" ms-duplex-string="@val" ms-on-click="@fn">
-            <input type="checkbox" value="b" ms-duplex-string="@val" ms-on-click="@fn">
-            <input type="checkbox" value="c" ms-duplex-string="@val" ms-on-click="@fn">
-            <input type="checkbox" value="d" ms-duplex-string="@val" ms-on-click="@fn">
-            <p ms-if="@key">  {{@val}}</p>
-            <p>  {{@val}}.</p>
+            <div ms-for="el in @arr">
+               
+                <div ms-for="(ii, item) in el.list" ms-click="@alert(el,item)">
+                  {{item}}
+                </div>
+            </div>
         </div>
-    </body>
+    </div>
+    <script>
+        function test(local){
+            local = local || {};
+            (function(){
+                var arr = [1,2,3,4]
+                arr.forEach(function(el){
+                     local = avalon.mix({},local,{el: el})
+                    
+                    var ee = [4,5,6,7]
+                    ee.forEach(function(item){
+                        local = avalon.mix({},local,{item: item})
+                        console.log(local)
+                    })
+                    
+                })
+                
+            })();
+            
+        }
+        //test({d:'222'})
+        
+        var vm = avalon.define({
+            $id: "test",
+            arr: [ {name:"xxx",list: [1,2,3]},{name:"yyy",list:[4,5,6]}],
+            alert: function (a,b) {
+          console.log(a.name,b)
+            }
+           
+        });
+    </script>
+</body>
 </html>
