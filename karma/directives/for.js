@@ -284,7 +284,7 @@ describe('for', function () {
                 expect(ths[1][prop]).to.equal('1::true')
                 expect(ths[2][prop]).to.equal('2::true')
                 done()
-            },100)
+            }, 100)
         })
     })
     it('使用注释循环', function (done) {
@@ -311,7 +311,7 @@ describe('for', function () {
             delete avalon.vmodels.for6
         }, 300)
     })
-    
+
     it('数组循环+对象循环', function (done) {
         div.innerHTML = heredoc(function () {
             /*
@@ -344,7 +344,7 @@ describe('for', function () {
              </div>
              */
         })
-         avalon.define({
+        avalon.define({
             $id: 'for8',
             list: [],
             kk: 22
@@ -356,5 +356,59 @@ describe('for', function () {
             done()
             delete avalon.vmodels.for8
         }, 300)
+    })
+
+    it('双重循环,__local__对象传递问题', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller="for9">
+             <div ms-for="el in ##data">
+             {{el.name}}
+             <button type="button" ms-click="##add1(el)">添加</button>
+             <div ms-for="item in el.list">
+             <strong>{{item.name}}</strong>
+             <em class="del" ms-click="##del(el,item)">删除</em>
+             </div>
+             </div>
+             </div>
+             */
+        })
+        var list = ["A", "B", "C"]
+        vm = avalon.define({
+            $id: "for9",
+            data: [{name: "test", list: [{name: "item1"}]}],
+            add1: function (el) {
+                el.list.push({name: 'item' + list.shift()})
+            },
+            del: function (el, item) {
+                el.list.remove(item)
+            }
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            var ss = div.getElementsByTagName('strong')
+            expect(ss[0].innerHTML.trim()).to.equal('item1')
+            var btn = div.getElementsByTagName('button')[0]
+            fireClick(btn)
+            fireClick(btn)
+            fireClick(btn)
+            setTimeout(function () {
+                expect(ss.length).to.equal(4)
+                expect(ss[1].innerHTML.trim()).to.equal('itemA')
+                expect(ss[2].innerHTML.trim()).to.equal('itemB')
+                expect(ss[3].innerHTML.trim()).to.equal('itemC')
+                var ems = div.getElementsByTagName('em')
+                fireClick(ems[2])
+                setTimeout(function () {
+                    expect(ss.length).to.equal(3)
+                    expect(ss[1].innerHTML.trim()).to.equal('itemA')
+                    expect(ss[2].innerHTML.trim()).to.equal('itemC')
+                   
+                    done()
+                })
+               
+            })
+        })
+
     })
 })

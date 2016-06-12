@@ -1,6 +1,6 @@
 
 var propMap = require('./propMap')
-var isVML = require('../html/isVML')
+var isVML = require('./isVML')
 var rsvg =/^\[object SVG\w*Element\]$/
 var ramp = /&amp;/g
 
