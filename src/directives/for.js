@@ -13,21 +13,35 @@ function getTrackKey(item) {
     return item && type === 'object' ? item.$hashcode : type + ':' + item
 }
 
-avalon._each = function (obj, fn) {
+avalon._each = function (obj, fn, local) {
+    var str = (fn + "").match(/function\s+\(([^\)]+)\)/)
+    var args = str[1]
+    var arr = args.match(avalon.rword)
     if (Array.isArray(obj)) {
         for (var i = 0; i < obj.length; i++) {
-            var item = obj[i]
-            var key = getTrackKey(item)
-            fn(i, item, key)
+            iterator(i, obj[i], local, fn, arr[0], arr[1], true)
         }
     } else {
         for (var i in obj) {
             if (obj.hasOwnProperty(i)) {
-                fn(i, obj[i], i)
+                iterator(i, obj[i], local, fn, arr[0], arr[1])
             }
         }
     }
 }
+function iterator(index, item, vars, fn, k1, k2, isArray) {
+    var key = isArray ? getTrackKey(item) : index
+    var local = {}
+    local[k1] = index
+    local[k2] = item
+    for (var k in vars) {
+        if (!(k in local)) {
+            local[k] = vars[k]
+        }
+    }
+    fn(index, item, key, local)
+}
+
 
 //将要循环的节点根据锚点元素再分成一个个更大的单元,用于diff
 function prepareCompare(nodes, cur) {
@@ -95,17 +109,12 @@ avalon.directive('for', {
             kv.unshift('$key')
         }
         kv.push('traceKey')
-        var quote = avalon.quote
-        var localArr = [quote(kv[0]) + ':' + kv[0], quote(kv[1]) + ':' + kv[1]]
-        if (aliasAs) {
-            localArr.push(quote(aliasAs) + ':loop')
-        }
-        var local = '{' + localArr.join(',\n') + '}'
+        kv.push('__local__')
         //分别创建isArray, ____n, ___i, ___v, ___trackKey变量
         //https://www.w3.org/TR/css3-animations/#animationiteration
         pre.$append = assign + assign2 + alias + 'avalon._each(loop,function('
-            + kv.join(', ') + '){\n' +
-            '__local__ = avalon.mix({}, __local__, ' + local + ')\n'
+            + kv.join(', ') + '){\n'
+            + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
 
     },
     diff: function (current, previous, steps, __index__) {
@@ -231,7 +240,6 @@ avalon.directive('for', {
                         avalon.applyEffect(n, el.children[k], {
                             hook: 'onLeaveDone',
                             cb: function () {
-                                console.log(n)
                                 n.parentNode.removeChild(n)
                             },
                             staggerKey: key + 'leave'

@@ -1,51 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-    <meta charset='utf-8'>
+    <meta charset="utf-8">
 
     <title>test</title>
-    <script src="../dist/avalon.js"></script>
+    <script src="../dist/avalon.modern.js"></script>
 </head>
+
 <body>
     <div ms-controller="test">
         <div>
-            <div ms-for="el in @arr">
-               
-                <div ms-for="(ii, item) in el.list" ms-click="@alert(el,item)">
-                  {{item}}
+            <div ms-for="(index,el) in @data as ddd">
+                {{el.name}}
+                <a href="#" ms-click="@del(el,index)">删除</a>
+                <div ms-for="item in el.list">
+                    {{item.name}}
                 </div>
             </div>
         </div>
     </div>
     <script>
-        function test(local){
-            local = local || {};
-            (function(){
-                var arr = [1,2,3,4]
-                arr.forEach(function(el){
-                     local = avalon.mix({},local,{el: el})
-                    
-                    var ee = [4,5,6,7]
-                    ee.forEach(function(item){
-                        local = avalon.mix({},local,{item: item})
-                        console.log(local)
-                    })
-                    
-                })
-                
-            })();
-            
-        }
-        //test({d:'222'})
-        
-        var vm = avalon.define({
-            $id: "test",
-            arr: [ {name:"xxx",list: [1,2,3]},{name:"yyy",list:[4,5,6]}],
-            alert: function (a,b) {
-          console.log(a.name,b)
-            }
-           
-        });
-    </script>
+var vm = avalon.define({
+    $id: "test",
+    data: [{name: "test1", list: [{name: "item11"}]}
+        , {name: "test2", list: [{name: "item21"}, {name: "item22"}]}],
+    del: function (el,index) {
+        console.log(el,index)
+       // vm.data.remove(el);//这里影响test2的list绑定,test1删除后，test2的list绑定界面显示3个。
+       // console.log(vm.data[0].list.length,index);//输出来的结果是2
+       // console.log(vm.data)
+        //抱歉，不知道怎么贴图。
+    }
+});
+        </script>
 </body>
+
 </html>

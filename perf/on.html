@@ -1,28 +1,32 @@
 <!DOCTYPE html>
-
 <html>
-    <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../dist/avalon.js"></script>
-        <script>
-         
-        var vm = avalon.define({
-            $id: 'test',
-            fn: function(e){
-                console.log(e.which)
-                console.log('---')
-            }
-        })
-        </script>
-
-    </head>
-    <body>
-         <div ms-controller="test">
-           <input type="text" ms-keydown="@fn | enter">
-
+<head>
+    <title>test</title>
+    <script src="../dist/avalon.modern.js"></script>
+</head>
+<body>
+    <div ms-controller="test">
+        <div>
+            <div ms-for="el in ##data">
+                {{el.name}}
+                <a href="#" ms-click="##del(el)">删除</a>
+                <div ms-for="item in el.list">
+                    {{item.name}}
+                </div>
+            </div>
         </div>
-        <div>&times;</div>
-    </body>
+    </div>
+    <script>
+        var vm = avalon.define({
+            $id: "test",
+            data: [{ name: "test1", list: [{ name: "item11" }] }
+                    , { name: "test2", list: [{ name: "item21" }, { name: "item22" }] }],
+            del: function (el) {
+                vm.data.remove(el);//这里影响test2的list绑定,test1删除后，test2的list绑定界面显示3个。
+                console.log(vm.data[0].list.length);//输出来的结果是2
+                //抱歉，不知道怎么贴图。
+            }
+        });
+    </script>
+</body>
 </html>

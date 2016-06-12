@@ -142,7 +142,7 @@ function parseNode(pre, forstack, logic) {
                 nodeValue: signature,
                 key: 'traceKey'
             }) + '\n' //结束循环
-                    + "\n})"
+                    + "\n},__local__)"
             if (forstack.length) {
                 pre.$append += "\n" + signature + '.end =' +
                         addTag({
