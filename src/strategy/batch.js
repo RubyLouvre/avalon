@@ -34,17 +34,17 @@ function batchUpdate(id) {
     steps.count = 0
     dom.vtree = vtree
     
+  
+    var index = needRenderIds.indexOf(renderingID)
     renderingID = null
-
-    var index = needRenderIds.indexOf(id)
     if (index > -1) {
         var removed = needRenderIds.splice(index, 1)
         return batchUpdate(removed[0])
     }
     
-    var id = needRenderIds.shift()
-    if (id) {
-        batchUpdate(id)
+    var more = needRenderIds.shift()
+    if (more) {
+        batchUpdate(more)
     }
 }
 

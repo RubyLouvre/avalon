@@ -1,4 +1,4 @@
-/*! built in 2016-6-12:12 version 2.08 by 司徒正美 */
+/*! built in 2016-6-12:14 version 2.08 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -71,7 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 104:
 /***/ function(module, exports, __webpack_require__) {
 
-	/*! built in 2016-6-12:12 version 2.08 by 司徒正美 */
+	/*! built in 2016-6-12:14 version 2.08 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -4515,12 +4515,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		avalon.directive('on', {
 		    priority: 3000,
 		    parse: function (cur, pre, binding) {
-		        var d = 0
-		        var dd = binding.name.replace('ms-on-', 'e').replace('-', '_')
-		        var uuid = dd + '_' + binding.expr.
+		        var underline = binding.name.replace('ms-on-', 'e').replace('-', '_')
+		        var uuid = underline + '_' + binding.expr.
 		                replace(/\s/g, '').
-		                replace(/[^$a-z]/g, function () {
-		                    return d++
+		                replace(/[^$a-z]/ig, function (e) {
+		                    return e.charCodeAt(0)
 		                })
 
 		        var quoted = avalon.quote(uuid)
@@ -7276,17 +7275,17 @@ return /******/ (function(modules) { // webpackBootstrap
 		    steps.count = 0
 		    dom.vtree = vtree
 		    
+		  
+		    var index = needRenderIds.indexOf(renderingID)
 		    renderingID = null
-
-		    var index = needRenderIds.indexOf(id)
 		    if (index > -1) {
 		        var removed = needRenderIds.splice(index, 1)
 		        return batchUpdate(removed[0])
 		    }
 		    
-		    var id = needRenderIds.shift()
-		    if (id) {
-		        batchUpdate(id)
+		    var more = needRenderIds.shift()
+		    if (more) {
+		        batchUpdate(more)
 		    }
 		}
 

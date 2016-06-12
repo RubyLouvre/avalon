@@ -15,12 +15,11 @@ var rstring = require('../seed/regexp').string
 avalon.directive('on', {
     priority: 3000,
     parse: function (cur, pre, binding) {
-        var d = 0
-        var dd = binding.name.replace('ms-on-', 'e').replace('-', '_')
-        var uuid = dd + '_' + binding.expr.
+        var underline = binding.name.replace('ms-on-', 'e').replace('-', '_')
+        var uuid = underline + '_' + binding.expr.
                 replace(/\s/g, '').
-                replace(/[^$a-z]/g, function () {
-                    return d++
+                replace(/[^$a-z]/ig, function (e) {
+                    return e.charCodeAt(0)
                 })
 
         var quoted = avalon.quote(uuid)
