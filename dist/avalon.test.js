@@ -5727,7 +5727,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		var rforAs = /\s+as\s+([$\w]+)/
 		var rident = __webpack_require__(43).ident
 		var update = __webpack_require__(36)
-
+		var Cache = __webpack_require__(28)
+		var forCache = new Cache(128)
 		var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
 		function getTrackKey(item) {
 		    var type = typeof item
@@ -5841,7 +5842,15 @@ return /******/ (function(modules) { // webpackBootstrap
 		    },
 		    diff: function (current, previous, steps, __index__) {
 		        var cur = current[__index__]
-		        var pre = previous[__index__] || {}
+		        var ckey = cur.signature
+		        var hasPre = forCache.get(cur.signature)
+		        if(!hasPre){
+		            var pre = previous[__index__] || {}
+		        }else{
+		            pre = hasPre
+		        }
+		        forCache.put(ckey, cur)
+		        
 		        //2.0.7不需要cur.start
 		        var nodes = current.slice(__index__, cur.end)
 		        cur.items = nodes.slice(1, -1)
@@ -5852,12 +5861,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		            avalon.shadowCopy(cur, pre)
 		            return
 		        }
-
-		        cur.forDiff = true
-
-		        var isInit = !('items' in pre)
+		        
+		        cur.forDiff = true        
+		        
 		        var i, c, p
-		        if (isInit) {
+		        if (!hasPre) {
 		            var _items = getRepeatRange(previous, __index__)
 		            pre.items = _items.slice(1, -1)
 		            pre.components = []
@@ -5878,8 +5886,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            previous.splice.apply(previous, [__index__, Math.abs(n)])
 		        }
 
-		        cur.action = isInit ? 'init' : 'update'
-		        if (isInit) {
+		        if (!hasPre) {
 		            /* eslint-disable no-cond-assign */
 		            var cache = cur.cache = {}
 		            for (i = 0; c = cur.components[i]; i++) {
@@ -5948,7 +5955,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        var endRepeat = vnode.endRepeat
 		        var key = vnode.signature
 		        var DOMs = getDOMs(startRepeat.nextSibling, endRepeat, key)
-		        if (DOMs.length === 0) {
+		        if (DOMs.length === 0 ) {
 		            DOMs.all.forEach(function (el) {
 		                parent.removeChild(el)
 		            })
