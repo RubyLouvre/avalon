@@ -12,9 +12,10 @@ function getTrackKey(item) {
     var type = typeof item
     return item && type === 'object' ? item.$hashcode : type + ':' + item
 }
-
+//IE6-8,function后面没有空格
+var rfunction = /^\s*function\s*\(([^\)]+)\)/
 avalon._each = function (obj, fn, local) {
-    var str = (fn + "").match(/function\s+\(([^\)]+)\)/)
+    var str = (fn + "").match(rfunction)
     var args = str[1]
     var arr = args.match(avalon.rword)
     if (Array.isArray(obj)) {

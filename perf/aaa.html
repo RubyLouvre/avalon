@@ -3,30 +3,55 @@
 <head>
     <title>ms-validate</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <script src="../dist/avalon.js"></script>
     <script>
         var vm = avalon.define({
-            $id: 'test',
-            button: {//注意这里不能以 $开头
-                value: "按钮内容"
-            }
+            $id: "test",
+            firstname: '',
+            lastname: '',
+            username: '',
+            password: '',
+            list1:['dog','bird','cat'],
+            list:[{name:'dog',value:''},{name:'bird',value:''},{name:'cat',value:''}],
+            confirm_password: '',
+            email: '',
+            agree: false,
+            topic: [],
+            toggle: false
         })
-
-        avalon.component('ms-button', {
-            template: '<div><input type="text" ms-duplex="@value"></div>',
-            defaults: {
-                value: "测试数据"
-            }
-        })
-
     </script>
 </head>
 
 <body ms-controller="test">
-<!--在自定义标签中，ms-widget不是必须的-->
-<!--下面三种方式，ms-widget才是存在，其中的is也是必须的-->
-<xmp ms-widget='[{is:"ms-button"},@button]'></xmp>
-<wbr ms-widget='[{is:"ms-button"},@button]'/>
+<form class="cmxform" ms-validate="@validate">
+    <fieldset>
+        <legend>验证完整的表单</legend>
+        <p>
+            <label for="agree1">请同意我们的声明</label>
+            <input type="radio" class="checkbox" id="agree1" value="1" name="agree" ms-duplex-string="@agree">
+            <label for="agree2">不同意</label>
+            <input type="radio" class="checkbox" id="agree2" value="0" name="agree" ms-duplex-string="@agree">
+        </p>
+        <p>
+            <label for="newsletter">我乐意接收新信息</label>
+            <input type="checkbox" class="checkbox" id="newsletter" name="newsletter" ms-duplex-checked="@toggle">
+        </p>
+
+        <div ms-for="el in @list1">{{el}}</div>
+        <fieldset id="newsletter_topics" ms-visible="@toggle">
+            <legend>主题 (至少选择两个) </legend>
+
+
+            <!-- <label ms-for="el in @list">
+                            <input type="checkbox" ms-attr="{id:el.name}" value="marketflash" name="topic">{{el.name}}
+                        </label> -->
+            <label for="topic" class="error" style="display:none">至少选择两个</label>
+        </fieldset>
+        <p>
+            <input class="submit" type="submit" value="提交">
+        </p>
+    </fieldset>
+</form>
 </body>
 </html>
