@@ -5,47 +5,94 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <script src="../dist/avalon.js"></script>
-                <script type="text/javascript" src="//cdn.bootcss.com/jquery/2.1.0/jquery.js"></script>
+        <script type="text/javascript" src="//cdn.bootcss.com/jquery/2.1.0/jquery.js"></script>
 
-        <style>
-            .selected{
-                background:red;
-            }
-            #ani{
-                background:beige;
-            }
-        </style>
+
         <script>
 
-            avalon.effect('zoom', {
-                enter: function (el, done) {
-                    $(el).css({width: 0, height: 0}).animate({
-                        width: 100, height: 100
-                    }, 1000, done)
-                },
-                leave: function (el, done) {
-                    $(el).animate({
-                        width: 0, height: 0
-                    }, 1000, done)
-                }
-            })
+            var startIndex = 0
             var vm = avalon.define({
-                $id: 'aaa',
-                arr: [1, 2, 3, 4],
-                toggle: true,
-                click: function(){
-                    this.toggle = !this.toggle
+                $id: 'test',
+                list: avalon.range(1, 30).map(function(el){
+                    return {
+                        text: el
+                    }
+                }),
+                top: 0,
+                start: 0,
+                mousedown: function (e) {
+                    console.log(e)
+                    var el = e.target
+                    var k = e.touches[0]
+                    console.log(el.scrollTop, "开始 ")
+                },
+                mouseup: function (e) {
+                    setTimeout(function () {
+                        var el = e.target
+                        var a = el.querySelectorAll('.item')
+                        var h = 0
+                        var startIndex = vm.start
+                        var scrollTop = el.scrollTop - vm.top
+                        if (scrollTop > 0) {
+                            console.log(el.scrollTop, '结束')
+                            for (var i = 0; i < a.length; i++) {
+                               var oldH = h
+                                h += a[i].offsetHeight
+                                vm.list[startIndex+i].height = a[i].offsetHeight
+                                console.log(h)
+                                if (h > scrollTop) {
+                                    vm.top = oldH
+                                    startIndex = i + startIndex
+                                    vm.start = startIndex
+                                    console.log(startIndex)
+                                    //vm.list = avalon.range(startIndex, startIndex + 20)
+                                    break
+                                }
+                            }
+                        } else {
+                           var abs = Math.abs(scrollTop)
+                           var i = vm.start
+                           while(i>= 0){
+                               --i
+                               var el = vm.list[i]
+                               abs = abs - el.height
+                               if(abs<= 0){
+                                   break
+                               }
+                               
+                           }
+                        }
+                    })
+
                 }
             })
             // <p ms-for="el in @arr" ms-if="@toggle">{{el}}</p>
         </script>
+        <style>
+            .item {
+                height:30px;
+                width: 300px;
+                background:#ff5;
+                border:1px solid #ddd;
+            }
+            .scrollview{
+                height:300px;
+                overflow:scroll;
+            }
+        </style>
     </head>
 
     <body>
-        <div id="box" ms-controller='aaa' >
-           
-            <p><button type='button' ms-click='@click'>click</button></p>
-            <p id='ani' ms-if="@toggle" ms-effect="{is:'zoom',action:(@toggle?'enter':'leave')}" >333</p>
+        <div class="scrollview" ms-controller='test' 
+             ms-on-touchstart="@mousedown" 
+             ms-on-touchend="@mouseup" 
+
+             >
+            <div ms-css="{height:@top}"></div>
+            <div class="item" ms-for="el in @list | limitBy(20,@start)">{{el.text}}
+
+            </div>
+
         </div>
     </body>
 </html>
