@@ -1,4 +1,4 @@
-/*! built in 2016-6-14:19 version 2.09 by 司徒正美 */
+/*! built in 2016-6-15:0 version 2.09 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -679,7 +679,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return a === 'true'
 	        }
 	    },
-	    version: "2.08",
+	    version: "2.09",
 	    slice: function (nodes, start, end) {
 	        return _slice.call(nodes, start, end)
 	    },
@@ -1670,8 +1670,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    dom.textContent = this.template
 	                    break
 	                default:
-	                    var a = avalon.parseHTML(this.template)
-	                    dom.appendChild(a)
+	                    if(!this.isVoidTag){
+	                       dom.appendChild(avalon.parseHTML(this.template))
+	                    }
 	                    break
 	            }
 
@@ -2494,15 +2495,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
 
 	avalon.parseHTML = function (html) {
-	    var fragment = avalon.avalonFragment.cloneNode(false), firstChild
+	    var fragment = avalon.avalonFragment.cloneNode(false)
 	    //处理非字符串
 	    if (typeof html !== 'string') {
 	        return fragment
 	    }
 	    //处理非HTML字符串
 	    if (!rhtml.test(html)) {
-	        fragment.appendChild(document.createTextNode(html))
-	        return fragment
+	        return document.createTextNode(html)
 	    }
 
 	    html = html.replace(rxhtml, '<$1></$2>').trim()
@@ -3503,7 +3503,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            update(cur, this.update, steps, 'visible' )
 	        }
 	    },
-	    update: function (node, vnode) {
+	    update: function (node, vnode) { 
+	        if(!node || node.nodeType !== 1){
+	            return
+	        }
 	        var show = vnode['ms-visible']
 	        var display = node.style.display
 	        var value
@@ -5657,9 +5660,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var type = typeof item
 	    return item && type === 'object' ? item.$hashcode : type + ':' + item
 	}
-
+	//IE6-8,function后面没有空格
+	var rfunction = /^\s*function\s*\(([^\)]+)\)/
 	avalon._each = function (obj, fn, local) {
-	    var str = (fn + "").match(/function\s+\(([^\)]+)\)/)
+	    var str = (fn + "").match(rfunction)
 	    var args = str[1]
 	    var arr = args.match(avalon.rword)
 	    if (Array.isArray(obj)) {
