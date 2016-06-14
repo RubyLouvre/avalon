@@ -1,4 +1,4 @@
-/*! built in 2016-6-13:2 version 2.08 by 司徒正美 */
+/*! built in 2016-6-14:23 version 2.08 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -1212,8 +1212,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    dom.textContent = this.template
 	                    break
 	                default:
-	                    var a = avalon.parseHTML(this.template)
-	                    dom.appendChild(a)
+	                    if(!this.isVoidTag){
+	                       dom.appendChild(avalon.parseHTML(this.template))
+	                    }
 	                    break
 	            }
 
@@ -1319,15 +1320,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
 
 	avalon.parseHTML = function (html) {
-	    var fragment = avalon.avalonFragment.cloneNode(false), firstChild
+	    var fragment = avalon.avalonFragment.cloneNode(false)
 	    //处理非字符串
 	    if (typeof html !== 'string') {
 	        return fragment
 	    }
 	    //处理非HTML字符串
 	    if (!rhtml.test(html)) {
-	        fragment.appendChild(document.createTextNode(html))
-	        return fragment
+	        return document.createTextNode(html)
 	    }
 
 	    html = html.replace(rxhtml, '<$1></$2>').trim()

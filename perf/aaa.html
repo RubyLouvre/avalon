@@ -1,27 +1,32 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../dist/avalon.test.js"></script>
-        <script>
-            vm = avalon.define({
-                $id: 'widget2',
-                panelBody: '这是面板的内容',
-                aaa: {
-                    ms_button: {
-                        buttonText: "vm中的值"
-                    }
-                }
-            })
+<head>
+    <title>ms-validate</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <script src="../dist/avalon.js"></script>
+    <script>
+        var vm = avalon.define({
+            $id: 'test',
+            button: {//注意这里不能以 $开头
+                value: "按钮内容"
+            }
+        })
 
-        </script>
-    </head>
+        avalon.component('ms-button', {
+            template: '<div><input type="text" ms-duplex="@value"></div>',
+            defaults: {
+                value: "测试数据"
+            }
+        })
 
-    <body>
-        <div ms-controller='widget2' >
-            <xmp ms-widget="[{is:'ms-panel'}, @aaa]" style='border:1px solid red;display:block'>{{@panelBody}}</xmp>
-        </div>
-    </body>
+    </script>
+</head>
+
+<body ms-controller="test">
+<!--在自定义标签中，ms-widget不是必须的-->
+<!--下面三种方式，ms-widget才是存在，其中的is也是必须的-->
+<xmp ms-widget='[{is:"ms-button"},@button]'></xmp>
+<wbr ms-widget='[{is:"ms-button"},@button]'/>
+</body>
 </html>

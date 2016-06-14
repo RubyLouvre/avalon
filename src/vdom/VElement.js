@@ -105,8 +105,9 @@ VElement.prototype = {
                     dom.textContent = this.template
                     break
                 default:
-                    var a = avalon.parseHTML(this.template)
-                    dom.appendChild(a)
+                    if(!this.isVoidTag){
+                       dom.appendChild(avalon.parseHTML(this.template))
+                    }
                     break
             }
 
