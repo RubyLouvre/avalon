@@ -1,4 +1,4 @@
-/*! built in 2016-6-14:10 version 2.08 by 司徒正美 */
+/*! built in 2016-6-14:19 version 2.09 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -2766,7 +2766,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	var reventNames = /[^\s\?]+/g
-	var last = +new Date()
 	var typeRegExp = {}
 	function collectHandlers(elem, type, handlers) {
 	    var value = elem.getAttribute('avalon-events')
@@ -2792,7 +2791,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	}
 	var rhandleHasVm = /^e/
-	var rneedSmooth = /move|scroll/
 	function dispatch(event) {
 	    event = new avEvent(event)
 	    var type = event.type
@@ -2812,15 +2810,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (vm && vm.$hashcode === false) {
 	                    return avalon.unbind(elem, type, fn)
 	                }
-	                if (rneedSmooth.test(type)) {
-	                    var curr = +new Date()
-	                    if (curr - last > 16) {
-	                        var ret = fn.call(vm || elem, event, host._ms_local)
-	                        last = curr
-	                    }
-	                } else {
-	                   ret = fn.call(vm || elem, event, host._ms_local)
-	                }
+	   
+	                var ret = fn.call(vm || elem, event, host._ms_local)
+	                
 	                if(ret === false){
 	                    event.preventDefault()
 	                    event.stopPropagation()
