@@ -1848,7 +1848,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            update(cur, this.update, steps, 'visible' )
 	        }
 	    },
-	    update: function (node, vnode) {
+	    update: function (node, vnode) { 
+	        if(!node || node.nodeType !== 1){
+	            return
+	        }
 	        var show = vnode['ms-visible']
 	        var display = node.style.display
 	        var value
