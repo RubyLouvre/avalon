@@ -13,7 +13,7 @@ var dir = avalon.directive('validate', {
             }
             cur[name] = validator
             for(var name in dir.defaults){
-                if(!validator[name]){
+                if(!validator.hasOwnProperty(name)){
                     validator[name] = dir.defaults[name]
                 }
             }

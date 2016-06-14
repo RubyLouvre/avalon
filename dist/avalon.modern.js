@@ -2952,9 +2952,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function callback(data) {
-	    if (data.validator) {
-	        avalon.directives.validate.validate(data, false)
-	    }
+	//    if (data.validator) {
+	//        avalon.directives.validate.validate(data, false)
+	//    }
 	    if (data.callback) {
 	        data.callback.call(data.vmodel, {
 	            type: 'changed',
@@ -3047,7 +3047,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            cur[name] = validator
 	            for(var name in dir.defaults){
-	                if(!validator[name]){
+	                if(!validator.hasOwnProperty(name)){
 	                    validator[name] = dir.defaults[name]
 	                }
 	            }

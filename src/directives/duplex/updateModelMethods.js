@@ -67,9 +67,9 @@ var updateModelMethods = {
 }
 
 function callback(data) {
-    if (data.validator) {
-        avalon.directives.validate.validate(data, false)
-    }
+//    if (data.validator) {
+//        avalon.directives.validate.validate(data, false)
+//    }
     if (data.callback) {
         data.callback.call(data.vmodel, {
             type: 'changed',
