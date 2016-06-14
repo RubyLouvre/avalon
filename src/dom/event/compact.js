@@ -87,7 +87,6 @@ avalon.unbind = function (elem, type, fn) {
 }
 
 var reventNames = /[^\s\?]+/g
-var last = +new Date()
 var typeRegExp = {}
 function collectHandlers(elem, type, handlers) {
     var value = elem.getAttribute('avalon-events')
@@ -113,7 +112,6 @@ function collectHandlers(elem, type, handlers) {
 
 }
 var rhandleHasVm = /^e/
-var rneedSmooth = /move|scroll/
 function dispatch(event) {
     event = new avEvent(event)
     var type = event.type
@@ -133,15 +131,9 @@ function dispatch(event) {
                 if (vm && vm.$hashcode === false) {
                     return avalon.unbind(elem, type, fn)
                 }
-                if (rneedSmooth.test(type)) {
-                    var curr = +new Date()
-                    if (curr - last > 16) {
-                        var ret = fn.call(vm || elem, event, host._ms_local)
-                        last = curr
-                    }
-                } else {
-                   ret = fn.call(vm || elem, event, host._ms_local)
-                }
+   
+                var ret = fn.call(vm || elem, event, host._ms_local)
+                
                 if(ret === false){
                     event.preventDefault()
                     event.stopPropagation()
