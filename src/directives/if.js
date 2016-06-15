@@ -15,10 +15,17 @@ avalon.directive('if', {
     },
     diff: function (cur, pre, steps) {
         cur.dom = pre.dom
+        if (pre.pre) {
+            cur.pre = pre.pre
+        }
         if (cur.nodeType !== pre.nodeType) {
             cur.steps = steps
-            if(cur.nodeType === 8){
-               cur['ms-effect'] = pre['ms-effect']
+            if (cur.nodeType === 8) {
+                cur['ms-effect'] = pre['ms-effect']
+                cur.pre = pre
+            } else if (cur.pre) {
+                pre.children = cur.pre.children
+                delete cur.pre
             }
             update(cur, this.update, steps, 'if')
         }
@@ -42,7 +49,7 @@ avalon.directive('if', {
                             }
                         }
                     }
-                    
+
                 }
                 parent.replaceChild(element, node)
                 if (vnode.steps.count) {

@@ -5550,10 +5550,17 @@ return /******/ (function(modules) { // webpackBootstrap
 		    },
 		    diff: function (cur, pre, steps) {
 		        cur.dom = pre.dom
+		        if (pre.pre) {
+		            cur.pre = pre.pre
+		        }
 		        if (cur.nodeType !== pre.nodeType) {
 		            cur.steps = steps
-		            if(cur.nodeType === 8){
-		               cur['ms-effect'] = pre['ms-effect']
+		            if (cur.nodeType === 8) {
+		                cur['ms-effect'] = pre['ms-effect']
+		                cur.pre = pre
+		            } else if (cur.pre) {
+		                pre.children = cur.pre.children
+		                delete cur.pre
 		            }
 		            update(cur, this.update, steps, 'if')
 		        }
@@ -5577,7 +5584,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                            }
 		                        }
 		                    }
-		                    
+
 		                }
 		                parent.replaceChild(element, node)
 		                if (vnode.steps.count) {
