@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.5.6 built in 2016.5.11
+ avalon.mobile.js 1.5.6 built in 2016.6.15
  support touch devices 
  ==================================================*/
 (function(global, factory) {
@@ -3950,11 +3950,24 @@ avalon.directive("if", {
                     if (stamp !== binding.stamp)
                         return
                     elem.parentNode.replaceChild(node, elem)
-                    binding.keep = elem //元素节点
-                    ifGroup.appendChild(elem)
-                    binding.rollback = function () {
-                        if (elem.parentNode === ifGroup) {
-                            ifGroup.removeChild(elem)
+                    //解决 当使用ms-if条件为常量表达式时 if节点泄漏
+                    //https://github.com/RubyLouvre/avalon2/issues/78
+                    //通过判断binding.getter()调用是否抛异常，来判断ms-if的表达式是否为常量。
+                    try{
+                        if(!binding.getter()){  //如果binding.expr是常量，binding.getter调用会返回false，不需要将elem移动到ifGroup
+                           binding.keep = elem //元素节点
+                           binding.rollback = noop
+                        }else{
+                            //never been here
+                            log('directive:ms-if: never been here.')
+                        }
+                    }catch(e){ //如果是vm属性绑定，binding.getter调用会抛异常. 把节点移到ifGroup
+                        binding.keep = elem //元素节点
+                        ifGroup.appendChild(elem)
+                        binding.rollback = function () {
+                            if (elem.parentNode === ifGroup) {
+                                ifGroup.removeChild(elem)
+                            }
                         }
                     }
                 }, after)
