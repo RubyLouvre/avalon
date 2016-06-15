@@ -1,4 +1,4 @@
-/*! built in 2016-6-15:15 version 2.09 by 司徒正美 */
+/*! built in 2016-6-15:18 version 2.09 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -71,7 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 104:
 /***/ function(module, exports, __webpack_require__) {
 
-	/*! built in 2016-6-15:15 version 2.09 by 司徒正美 */
+	/*! built in 2016-6-15:18 version 2.09 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -760,6 +760,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		        //读写删除元素节点的样式
 		        if (node instanceof avalon) {
 		            node = node[0]
+		        }
+		        if(node.nodeType !==1){
+		            return
 		        }
 		        var prop = avalon.camelize(name)
 		        name = avalon.cssName(prop) || prop
@@ -8612,7 +8615,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 107:
 /***/ function(module, exports) {
 
-	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
+	module.exports = "<div>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</div>"
 
 /***/ }
 

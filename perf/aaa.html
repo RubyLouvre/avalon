@@ -1,57 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 <head>
-    <title>ms-validate</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <script src="../dist/avalon.js"></script>
+    <meta charset="UTF-8">
+    <title>测试页面</title>
+    <script type="text/javascript" src="../dist/avalon.js"></script>
     <script>
         var vm = avalon.define({
-            $id: "test",
-            firstname: '',
-            lastname: '',
-            username: '',
-            password: '',
-            list1:['dog','bird','cat'],
-            list:[{name:'dog',value:''},{name:'bird',value:''},{name:'cat',value:''}],
-            confirm_password: '',
-            email: '',
-            agree: false,
-            topic: [],
-            toggle: false
+            $id: 'test'
         })
+
+        avalon.component('ms-div', {
+            template: (function(){
+                /*$##$
+                 <div ms-css="{width:@width?@width+2+'px':''}">
+                     <div ms-css="{width:@width?@width+1+'px':''}">
+                        测试内容
+                     </div>
+                 </div>
+                 $##$*/
+            }).toString().split("$##$")[1],
+            defaults: {
+                width:"" //如果是"" null true false 就会报错
+            }
+        });
     </script>
 </head>
 
 <body ms-controller="test">
-<form class="cmxform" ms-validate="@validate">
-    <fieldset>
-        <legend>验证完整的表单</legend>
-        <p>
-            <label for="agree1">请同意我们的声明</label>
-            <input type="radio" class="checkbox" id="agree1" value="1" name="agree" ms-duplex-string="@agree">
-            <label for="agree2">不同意</label>
-            <input type="radio" class="checkbox" id="agree2" value="0" name="agree" ms-duplex-string="@agree">
-        </p>
-        <p>
-            <label for="newsletter">我乐意接收新信息</label>
-            <input type="checkbox" class="checkbox" id="newsletter" name="newsletter" ms-duplex-checked="@toggle">
-        </p>
-
-        <div ms-for="el in @list1">{{el}}</div>
-        <fieldset id="newsletter_topics" ms-visible="@toggle">
-            <legend>主题 (至少选择两个) </legend>
-
-
-            <!-- <label ms-for="el in @list">
-                            <input type="checkbox" ms-attr="{id:el.name}" value="marketflash" name="topic">{{el.name}}
-                        </label> -->
-            <label for="topic" class="error" style="display:none">至少选择两个</label>
-        </fieldset>
-        <p>
-            <input class="submit" type="submit" value="提交">
-        </p>
-    </fieldset>
-</form>
+<!--在自定义标签中，ms-widget不是必须的-->
+<!--下面三种方式，ms-widget才是存在，其中的is也是必须的-->
+<xmp ms-widget='[{is:"ms-div"}]'></xmp>
+<wbr ms-widget='[{is:"ms-div"}]'/>
 </body>
 </html>

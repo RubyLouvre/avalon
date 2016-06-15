@@ -1,4 +1,4 @@
-/*! built in 2016-6-15:15 version 2.09 by 司徒正美 */
+/*! built in 2016-6-15:18 version 2.09 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -229,6 +229,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //读写删除元素节点的样式
 	        if (node instanceof avalon) {
 	            node = node[0]
+	        }
+	        if(node.nodeType !==1){
+	            return
 	        }
 	        var prop = avalon.camelize(name)
 	        name = avalon.cssName(prop) || prop

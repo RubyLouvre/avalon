@@ -39,6 +39,9 @@ avalon.shadowCopy(avalon, {
         if (node instanceof avalon) {
             node = node[0]
         }
+        if(node.nodeType !==1){
+            return
+        }
         var prop = avalon.camelize(name)
         name = avalon.cssName(prop) || prop
         if (value === void 0 || typeof value === 'boolean') { //获取样式
