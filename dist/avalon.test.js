@@ -1,4 +1,4 @@
-/*! built in 2016-6-15:12 version 2.09 by 司徒正美 */
+/*! built in 2016-6-15:14 version 2.09 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -71,7 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 104:
 /***/ function(module, exports, __webpack_require__) {
 
-	/*! built in 2016-6-15:12 version 2.09 by 司徒正美 */
+	/*! built in 2016-6-15:14 version 2.09 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -5730,7 +5730,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		var Cache = __webpack_require__(28)
 		var forCache = new Cache(128)
 		var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
-		function getTrackKey(item) {
+		function getTraceKey(item) {
 		    var type = typeof item
 		    return item && type === 'object' ? item.$hashcode : type + ':' + item
 		}
@@ -5753,7 +5753,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    }
 		}
 		function iterator(index, item, vars, fn, k1, k2, isArray) {
-		    var key = isArray ? getTrackKey(item) : index
+		    var key = isArray ? getTraceKey(item) : index
 		    var local = {}
 		    local[k1] = index
 		    local[k2] = item
@@ -5822,6 +5822,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            }
 		            return ''
 		        })
+		        
 		        var arr = str.replace(rforPrefix, '').split(' in ')
 		        var assign = 'var loop = ' + avalon.parseExpr(arr[1]) + ' \n'
 		        var assign2 = 'var ' + pre.signature + ' = vnodes[vnodes.length-1]\n'
@@ -5842,21 +5843,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    },
 		    diff: function (current, previous, steps, __index__) {
 		        var cur = current[__index__]
-		        var pp = previous[__index__] 
-		        if(!pp || !pp.wid){
-		           cur.wid =  Math.random()
-		        } 
-		        
-		        var hasPre = forCache.get(cur.wid)
-		        var state
-		        if(!hasPre){
-		            var pre = previous[__index__] || {}
-		            state = 'init'
-		        }else{
-		            pre = hasPre
-		            state = 'update'
-		        }
-		        forCache.put(cur.wid, cur)
+		        var pre = previous[__index__] || {}
 		        
 		        //2.0.7不需要cur.start
 		        var nodes = current.slice(__index__, cur.end)
@@ -5873,6 +5860,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        cur.forDiff = true        
 		        var i, c, p
 		        if (!('items' in pre)) {
+		            cur.action = 'init'
 		            var _items = getRepeatRange(previous, __index__)
 		            pre.items = _items.slice(1, -1)
 		            pre.components = []
@@ -5880,8 +5868,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 
 		        cur.endRepeat = pre.endRepeat
-
+		        if(!pre.repeatCount){
+		            pre.repeatCount = pre.items.length
+		        }
 		        var n = Math.max(nodes.length - 2, 0) - pre.repeatCount
+
 		        //让循环区域在新旧vtree里对齐
 		        if (n > 0) {
 		            var spliceArgs = [__index__ + 1, 0]
@@ -5892,8 +5883,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        } else if (n < 0) {
 		            previous.splice.apply(previous, [__index__, Math.abs(n)])
 		        }
-
-		        if (!hasPre) {
+		        if ( cur.action === 'init') {
 		            /* eslint-disable no-cond-assign */
 		            var cache = cur.cache = {}
 		            for (i = 0; c = cur.components[i]; i++) {
@@ -5962,7 +5952,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        var endRepeat = vnode.endRepeat
 		        var key = vnode.signature
 		        var DOMs = getDOMs(startRepeat.nextSibling, endRepeat, key)
-		        if (DOMs.length === 0 ) {
+		        if (DOMs.length === 0 ||   vnode.action == 'init' ) {
 		            DOMs.all.forEach(function (el) {
 		                parent.removeChild(el)
 		            })
@@ -6033,8 +6023,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		            }
 		        }
 		       
-		        var items = vnode.items
-		        
+		        var items = vnode.items|| []
+		       
 		        var steps = vnode.steps
 		        var oldCount = steps.count
 		        vnode.repeatCount = items.length
