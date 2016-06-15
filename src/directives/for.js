@@ -121,14 +121,21 @@ avalon.directive('for', {
     },
     diff: function (current, previous, steps, __index__) {
         var cur = current[__index__]
-        var ckey = cur.signature
-        var hasPre = forCache.get(cur.signature)
+        var pp = previous[__index__] 
+        if(!pp || !pp.wid){
+           cur.wid =  Math.random()
+        } 
+        
+        var hasPre = forCache.get(cur.wid)
+        var state
         if(!hasPre){
             var pre = previous[__index__] || {}
+            state = 'init'
         }else{
             pre = hasPre
+            state = 'update'
         }
-        forCache.put(ckey, cur)
+        forCache.put(cur.wid, cur)
         
         //2.0.7不需要cur.start
         var nodes = current.slice(__index__, cur.end)
@@ -136,15 +143,15 @@ avalon.directive('for', {
 
         prepareCompare(cur.items, cur)
         delete pre.forDiff
+      
         if (cur.compareText === pre.compareText) {
             avalon.shadowCopy(cur, pre)
             return
         }
         
         cur.forDiff = true        
-        
         var i, c, p
-        if (!hasPre) {
+        if (!('items' in pre)) {
             var _items = getRepeatRange(previous, __index__)
             pre.items = _items.slice(1, -1)
             pre.components = []
@@ -304,8 +311,9 @@ avalon.directive('for', {
                 break
             }
         }
+       
         var items = vnode.items
-
+        
         var steps = vnode.steps
         var oldCount = steps.count
         vnode.repeatCount = items.length
