@@ -403,28 +403,49 @@ describe('for', function () {
                     expect(ss.length).to.equal(3)
                     expect(ss[1].innerHTML.trim()).to.equal('itemA')
                     expect(ss[2].innerHTML.trim()).to.equal('itemC')
-                   
+
                     done()
                 })
-               
+
             })
         })
 
     })
-    it('ms-if+ms-for', function(){
-        /*
-         var vm = avalon.define({
-        $id: 'test',
-        lists: ['你好', '司徒正美'],
-        toggle: true
-    });
-        <div ms-if="@toggle">
-            <p class="am-text-danger">此处是带ms-if的内容</p>
-            <ul class="am-list" ms-for="el in @lists">
-                <li>{{el}}</li>
-            </ul>
-        </div>
-         * 
-         */
+    it('ms-if+ms-for', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller="for10">
+             <div ms-if="@toggle">
+             <p class="am-text-danger">此处是带ms-if的内容</p>
+             <ul class="am-list" >
+             <li ms-for="el in @lists">{{el}}</li>
+             </ul>
+             </div>
+             </div>
+             */
+        })
+
+        vm = avalon.define({
+            $id: 'for10',
+            lists: ['你好', '司徒正美'],
+            toggle: true
+        });
+        avalon.scan(div)
+        setTimeout(function () {
+            var ss = div.getElementsByTagName('li')
+            expect(ss.length).to.equal(2)
+            vm.toggle = false
+            setTimeout(function () {
+                var ss = div.getElementsByTagName('li')
+                expect(ss.length).to.equal(0)
+                vm.toggle = true
+                setTimeout(function () {
+                    var ss = div.getElementsByTagName('li')
+                    expect(ss.length).to.equal(2)
+                    done()
+                })
+            })
+        })
+
     })
 })
