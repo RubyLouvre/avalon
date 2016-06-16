@@ -190,7 +190,7 @@ function replaceByComponent(vdom, vm, vnodes, index, componentName) {
     var scope = avalon.scopes[wid]
 
     if (scope && scope.dom) {
-        scope.pre = scope.dom.vtree[0]
+      //  scope.pre = scope.dom.vtree[0]
         scope.dom.vtree = [vdom]
     } else {
         var scope = {

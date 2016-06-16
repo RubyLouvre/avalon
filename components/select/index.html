@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <link href="//cdn.bootcss.com/bootstrap/2.3.2/css/bootstrap.min.css" rel="stylesheet">
+
+        <script src="../../dist/avalon.js"></script>
+
+
+    </head>
+    <body>
+        <div ms-controller="test">
+            <xmp ms-widget="{is:'ms-select', items:@items, value:@value}"></xmp>
+            {{@value}}
+        </div>
+
+
+        <div id="select_tpl" style="display:none;" ms-skip>
+
+        </div>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                items: ['请选择', '选项一', '选项二'],
+                value: '请选择',
+                onChange:function(a, b){
+                    console.log(a,b)
+                }
+            });
+            function heredoc(fn) {
+                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+                        replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+            }
+            avalon.component("ms-select", {
+                template: heredoc(function () {
+                    /*
+                     <div ms-class="['btn-group', @_open && 'open']">
+                     <a name="dropdown-toggle" class="btn dropdown-toggle" 
+                     data-toggle="dropdown" ms-click="@_openDropDown | prevent" href="#">
+                     {{@value}}
+                     <input ms-attr="{name:@name,value:@value}" type="hidden">
+                     <span class="caret"></span>
+                     </a>
+                     <ul class="dropdown-menu" >
+                     <li ms-for="(key, val) in @items" >
+                     <a href="javascript:;" class="not-close" 
+                     ms-click="@_selectValue(key, $event)">{{val}}</a>
+                     </li>
+                     </ul>
+                     </div>
+                     */
+                }),
+                defaults: {
+                    items: [],
+                    value: '',
+                    _open: false,
+                    name: '',
+                    onInit: function (e) {
+                        var vm = this;
+                        avalon(document).bind('click', function (e) {
+                            if (e.target.name !== 'dropdown-toggle') {
+                                vm._open = false
+                            }
+                        })
+                    },
+                    _selectValue: function (key) {
+                        var old = this.value
+                        var neo = this.items[key]
+                        if (old !== neo) {
+                            this.value = neo
+                            if (this.hasOwnProperty('onChange') && typeof this.onChange === 'function') {
+                                var ret = this.onChange(neo, old)
+                                if (ret !== false) {
+                                    this._open = false
+                                }
+                            }
+                        }
+                    },
+                    _openDropDown: function () {
+                        this._open = true
+                    }
+                }
+            });
+
+        </script>
+        <p>给用户用的API有</p>
+        <ul>
+            <li>value:用于提交表单</li>
+            <li>name:用于提交表单</li>
+            <li>onChange:当value改变时触发,如果它返回false则不会自动关闭菜单</li>
+            <li>items:列表中的内容</li>
+        </ul>
+    </body>
+</html>

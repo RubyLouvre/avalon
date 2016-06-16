@@ -1,4 +1,4 @@
-/*! built in 2016-6-15:15 version 2.09 by 司徒正美 */
+/*! built in 2016-6-16:10 version 2.09 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -7440,7 +7440,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var scope = avalon.scopes[wid]
 
 	    if (scope && scope.dom) {
-	        scope.pre = scope.dom.vtree[0]
+	      //  scope.pre = scope.dom.vtree[0]
 	        scope.dom.vtree = [vdom]
 	    } else {
 	        var scope = {
