@@ -1,4 +1,4 @@
-/*! built in 2016-6-16:11 version 2.09 by 司徒正美 */
+/*! built in 2016-6-16:16 version 2.09 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -71,7 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 104:
 /***/ function(module, exports, __webpack_require__) {
 
-	/*! built in 2016-6-16:11 version 2.09 by 司徒正美 */
+	/*! built in 2016-6-16:16 version 2.09 by 司徒正美 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
 			module.exports = factory();
@@ -5865,9 +5865,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		        if (cur.compareText === pre.compareText) {
 		            avalon.shadowCopy(cur, pre)
 		            return
+		        }else{
+		            cur.forDiff = true    
 		        }
 		        
-		        cur.forDiff = true        
+		           
 		        var i, c, p
 		        if (!('items' in pre)) {
 		            cur.action = 'init'
@@ -5875,6 +5877,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		            pre.items = _items.slice(1, -1)
 		            pre.components = []
 		            pre.repeatCount = pre.items.length
+		        }else{
+		            cur.action = 'update'
 		        }
 
 		        cur.endRepeat = pre.endRepeat
@@ -5962,10 +5966,16 @@ return /******/ (function(modules) { // webpackBootstrap
 		        var endRepeat = vnode.endRepeat
 		        var key = vnode.signature
 		        var DOMs = getDOMs(startRepeat.nextSibling, endRepeat, key)
-		        if (DOMs.length === 0 ||   vnode.action == 'init' ) {
+		        if (DOMs.length === 0 || vnode.action == 'init' ) {
 		            DOMs.all.forEach(function (el) {
 		                parent.removeChild(el)
 		            })
+		        }
+		        var allEnter = vnode.components.every(function(e){
+		           return e.action === 'enter'
+		        })
+		        if(DOMs.length && DOMs.length ===vnode.components.length && allEnter ){
+		           return false
 		        }
 
 		        var fragment = avalon.avalonFragment
@@ -5998,6 +6008,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        for (var i = 0; i < vnode.components.length; i++) {
 		            var com = vnode.components[i]
 		            //添加nodes属性并插入节点
+		           
 		            if (com.action === 'enter') {
 		                if (!domTemplate) {
 		                    domTemplate = avalon.parseHTML(vnode.template)
@@ -6032,8 +6043,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		                break
 		            }
 		        }
+		      
 		       
-		        var items = vnode.items|| []
+		        var items = vnode.items
 		       
 		        var steps = vnode.steps
 		        var oldCount = steps.count
@@ -6203,6 +6215,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            update(cur, fireReady, steps, 'widget', 'afterChange')
 		        } else {
 		            scope.renderCount ++
+		          
 		            if(scope.pre && (pre.wid === scope.pre.wid)){
 		                avalon.mix(pre, scope.pre)
 		            }
@@ -6213,8 +6226,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		            if (pre.wid && cur.wid !== pre.wid && !pre.props.cached ) {
 		                delete avalon.scopes[pre.wid]
 		                delete avalon.vmodels[pre.wid]
+		               
 		            }
-
 		            var viewChangeObservers = cur.vmodel.$events.onViewChange
 		            if (viewChangeObservers && viewChangeObservers.length) {
 		                steps.count += 1

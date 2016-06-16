@@ -62,6 +62,7 @@ var dir = avalon.directive('widget', {
             update(cur, fireReady, steps, 'widget', 'afterChange')
         } else {
             scope.renderCount ++
+          
             if(scope.pre && (pre.wid === scope.pre.wid)){
                 avalon.mix(pre, scope.pre)
             }
@@ -72,8 +73,8 @@ var dir = avalon.directive('widget', {
             if (pre.wid && cur.wid !== pre.wid && !pre.props.cached ) {
                 delete avalon.scopes[pre.wid]
                 delete avalon.vmodels[pre.wid]
+               
             }
-
             var viewChangeObservers = cur.vmodel.$events.onViewChange
             if (viewChangeObservers && viewChangeObservers.length) {
                 steps.count += 1

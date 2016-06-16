@@ -11,72 +11,140 @@
     <body>
         <div ms-controller="test">
             <xmp ms-widget="{is:'ms-select', items:@items, value:@value}"></xmp>
+            {{@value}}
+            <p> <wbr ms-widget="{is:'ms-pager'}"></p>
         </div>
 
 
         <div id="select_tpl" style="display:none;" ms-skip>
-           
+
         </div>
         <script>
 var vm = avalon.define({
     $id: 'test',
     items: ['请选择', '选项一', '选项二'],
-    value: '请选择'
+    value: '请选择',
+    onChange: function (a, b) {
+       // console.log(a, b)
+    }
 });
 function heredoc(fn) {
     return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
             replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
 }
 avalon.component("ms-select", {
-    template: heredoc(function(){
+    template: heredoc(function () {
         /*
- <div ms-class="['btn-group', (@open?'open':'')]">
-        <a name="open_select" class="btn dropdown-toggle" 
-           data-toggle="dropdown" ms-click="@openDropDown | prevent" href="#">
-            {{@value}}
-            <span class="caret"></span>
-        </a>
-        <ul class="dropdown-menu" >
-            <li ms-for="(key, val) in @items" >
-                <a href="javascript:;" class="not-close" 
-                   ms-click="@select(key, $event)">{{val}}</a>
-            </li>
-        </ul>
-    </div>
+         <div ms-class="['btn-group', @_open && 'open']">
+         <a name="dropdown-toggle" class="btn dropdown-toggle" 
+         data-toggle="dropdown" ms-click="@_openDropDown | prevent" href="#">
+         {{@value}}
+         <input ms-attr="{name:@name,value:@value}" type="hidden">
+         <span class="caret"></span>
+         </a>
+         <ul class="dropdown-menu" >
+         <li ms-for="(key, val) in @items" >
+         <a href="javascript:;" class="not-close" 
+         ms-click="@_selectValue(key, $event)">{{val}}</a>
+         </li>
+         </ul>
+         </div>
          */
     }),
     defaults: {
         items: [],
         value: '',
-        open: false,
-        canClose: false,
+        _open: false,
+        name: '',
         onInit: function (e) {
             var vm = this;
             avalon(document).bind('click', function (e) {
-                if (e.target.name !== 'open_select') {
-                    vm.open = false
+                if (e.target.name !== 'dropdown-toggle') {
+                    vm._open = false
                 }
             })
         },
-        select: function (key) {
+        _selectValue: function (key) {
             var old = this.value
             var neo = this.items[key]
             if (old !== neo) {
                 this.value = neo
-                if (this.hasOwnProperty('onSelect') && this.onSelect === 'function') {
-                    var ret = this.onSelect(neo, old)
-                    if (ret !==  false) {
-                        this.open = false
+                if (this.hasOwnProperty('onChange') && typeof this.onChange === 'function') {
+                    var ret = this.onChange(neo, old)
+                    if (ret !== false) {
+                        this._open = false
                     }
                 }
             }
         },
-        openDropDown: function () {
-            this.open = true
+        _openDropDown: function () {
+            this._open = true
         }
     }
 });
+avalon.component("ms-pager", {
+    template: heredoc(function(){
+        /*
+    <div class="pagination">
+        <ul>
+          <li ms-for="(key,val) in @pages" 
+          ms-class="[(val == @current_page) && 'active']" >
+          <a ms-click="@gotoPage($event, val)| prevent" href="#">{{val}}</a>
+          </li>
+        </ul>
+      </div>
+         */
+    }),
+    defaults: {
+        total_page: 40,
+        current_page: 1,
+        show_page: 7,
+        pages: [1, 2, 3, 4, 5, 6, 7],
+        gotoPage: function (e, page) {
+            if (page > this.total_page || page < 1) {
+                return false;
+            }
+            this.current_page = page;
+            this.pages = this.getPage(page, this.total_page, this.show_page);
+        },
+        onViewChange: function(){
+            console.log('viewchange')
+        },
+        getPage: function (p, ps, s) {
+            var pages = [], l = p, r = p;
+            if (ps < s) {
 
+                for (var i = 1; i <= ps; i++) {
+                    pages.push(i);
+                }
+            } else {
+                pages.push(p);
+                while (true) {
+                    if (pages.length >= s) {
+                        break;
+                    }
+                    if (l > 1) {
+                        pages.unshift(--l);
+                    }
+                    if (pages.length >= s) {
+                        break;
+                    }
+                    if (r < ps) {
+                        pages.push(++r);
+                    }
+                }
+            }
+            return pages;
+        }
+    }
+});
         </script>
+        <p>ms-select组件给用户用的API有</p>
+        <ul>
+            <li>value:用于提交表单</li>
+            <li>name:用于提交表单</li>
+            <li>onChange:当value改变时触发,如果它返回false则不会自动关闭菜单</li>
+            <li>items:列表中的内容</li>
+        </ul>
     </body>
 </html>
