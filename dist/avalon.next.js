@@ -1,4 +1,4 @@
-/*! built in 2016-6-16:16 version 2.09 by 司徒正美 */
+/*! built in 2016-6-16:19 version 2.09 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -4960,7 +4960,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            var older = old
 	            old = val
-
 	            var vm = heirloom.__vmodel__
 	            if (this.$hashcode && vm && !avalon.suspendUpdate) {
 	                //★★确保切换到新的events中(这个events可能是来自oldProxy)               

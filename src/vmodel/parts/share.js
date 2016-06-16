@@ -90,7 +90,6 @@ function makeAccessor(sid, spath, heirloom) {
             }
             var older = old
             old = val
-
             var vm = heirloom.__vmodel__
             if (this.$hashcode && vm && !avalon.suspendUpdate) {
                 //★★确保切换到新的events中(这个events可能是来自oldProxy)               
