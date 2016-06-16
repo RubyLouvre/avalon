@@ -113,9 +113,9 @@ gulp.task('combo', function () {
         var mobileFiles = modernFiles.concat()
         var pop = mobileFiles.pop()
         var mobile = [pop.replace(/24 outer.js/, '23 touch.0.js'),
-            pop.replace(/24 outer.js/, '23 touch.01.tap.js'),
-            pop.replace(/24 outer.js/, '23 touch.02.press.js'),
-            pop.replace(/24 outer.js/, '23 touch.03.swipe.js'),
+            pop.replace(/24 outer.js/, '23 touch.1.tap.js'),
+            pop.replace(/24 outer.js/, '23 touch.2.press.js'),
+            pop.replace(/24 outer.js/, '23 touch.3.swipe.js'),
             pop
         ]
         mobileFiles = mobileFiles.concat(mobile)
