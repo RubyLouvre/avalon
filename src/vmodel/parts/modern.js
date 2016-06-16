@@ -56,9 +56,30 @@ function initViewModel($vmodel, heirloom, keys, accessors, options) {
     hideProperty($vmodel, '$hashcode', options.hashcode)
     hideProperty($vmodel, '$track', Object.keys(keys).sort().join(';;'))
     if (options.master === true) {
+        hideProperty($vmodel, '$run', run)
+        hideProperty($vmodel, '$wait', wait)
         hideProperty($vmodel, '$element', null)
         hideProperty($vmodel, '$render', 0)
         initEvents($vmodel, heirloom)
+    }
+}
+function wait() {
+    this.$events.$$wait$$ = true
+}
+
+function run() {
+    var host = this.$events
+    delete host.$$wait$$
+    if (host.$$dirty$$) {
+        delete host.$$dirty$$
+        avalon.rerenderStart = new Date
+        var id = this.$id
+        var dotIndex = id.indexOf('.')
+        if (dotIndex > 0) {
+            avalon.batch(id.slice(0, dotIndex))
+        } else {
+            avalon.batch(id)
+        }
     }
 }
 

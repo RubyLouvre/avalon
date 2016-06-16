@@ -5,7 +5,7 @@ var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete
         "final,float,goto,implements,import,int,interface,long,native," +
         "package,private,protected,public,short,static,super,synchronized," +
         "throws,transient,volatile")
-
+avalon.keyMap = keyMap
   var quoted = {
       type: 1,
       template: 1,

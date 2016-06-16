@@ -82,6 +82,7 @@ function makeAccessor(sid, spath, heirloom) {
             if (old === val) {
                 return
             }
+            var vm = heirloom.__vmodel__
             if (val && typeof val === 'object') {
                 val = $$midway.modelAdaptor(val, old, heirloom, {
                     pathname: spath,
@@ -90,8 +91,10 @@ function makeAccessor(sid, spath, heirloom) {
             }
             var older = old
             old = val
-            var vm = heirloom.__vmodel__
-            if (this.$hashcode && vm && !avalon.suspendUpdate) {
+            if (this.$hashcode && vm ) {
+                vm.$events.$$dirty$$ = true
+                if(vm.$events.$$wait$$)
+                    return
                 //★★确保切换到新的events中(这个events可能是来自oldProxy)               
                 if (heirloom !== vm.$events) {
                     get.heirloom = vm.$events
@@ -106,7 +109,7 @@ function makeAccessor(sid, spath, heirloom) {
                 emitArray(sid, vm, spath, val, older)
                 //如果这个属性存在通配符
                 emitWildcard(get.heirloom, vm, spath, val, older)
-
+                vm.$events.$$dirty$$ = false
                 batchUpdateView(vm.$id)
             }
         },
@@ -202,7 +205,7 @@ function arrayFactory(array, old, heirloom, options) {
                         options.pathname :
                         options.pathname + '.' + a
                 vm.$fire(path, b, c)
-                if (!d && !avalon.suspendUpdate) {
+                if (!d && !heirloom.$$wait$$ && !avalon.suspendUpdate ) {
                     batchUpdateView(vm.$id)
                 }
             }

@@ -1,6 +1,7 @@
 var share = require('./share')
 var canHideProperty = require('./canHideProperty')
 var initEvents = share.initEvents
+
 /*
  * toJson
  * hideProperty
@@ -71,9 +72,35 @@ function initViewModel($vmodel, heirloom, keys, accessors, options) {
     hideProperty($vmodel, '$id', options.id)
     hideProperty($vmodel, '$hashcode', options.hashcode)
     if (options.master === true) {
+        hideProperty($vmodel, '$run', function () {
+            run.call($vmodel)
+        })
+        hideProperty($vmodel, '$wait', function () {
+            wait.call($vmodel)
+        })
         hideProperty($vmodel, '$element', null)
         hideProperty($vmodel, '$render', 0)
         initEvents($vmodel, heirloom)
+    }
+}
+
+function wait() {
+    this.$events.$$wait$$ = true
+}
+
+function run() {
+    var host = this.$events
+    delete host.$$wait$$
+    if (host.$$dirty$$) {
+        delete host.$$dirty$$
+        avalon.rerenderStart = new Date
+        var id = this.$id
+        var dotIndex = id.indexOf('.')
+        if (dotIndex > 0) {
+            avalon.batch(id.slice(0, dotIndex))
+        } else {
+            avalon.batch(id)
+        }
     }
 }
 

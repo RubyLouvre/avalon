@@ -1,4 +1,4 @@
-/*! built in 2016-6-16:19 version 2.09 by 司徒正美 */
+/*! built in 2016-6-16:22 version 2.09 by 司徒正美 */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -3905,7 +3905,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        arr.filter(function (el) {
 	            if (!/^[@\d\-]/.test(el) &&
 	                    el.slice(0, 2) !== '##' &&
-	                    el !== '$event') {
+	                    el !== '$event' && !avalon.keyMap[el]) {
 	                ret[el] = 1
 	            }
 	        })
@@ -4228,7 +4228,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        "final,float,goto,implements,import,int,interface,long,native," +
 	        "package,private,protected,public,short,static,super,synchronized," +
 	        "throws,transient,volatile")
-
+	avalon.keyMap = keyMap
 	  var quoted = {
 	      type: 1,
 	      template: 1,
@@ -7231,7 +7231,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!scope || !document.nodeName || avalon.suspendUpdate) {
 	        return renderingID = null
 	    }
-	    
 	    var dom = scope.dom
 	    var steps = {count: 0}
 	    var vtree = scope.render(scope.synth || scope.vmodel, scope.local)
@@ -7590,7 +7589,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 $skipArray被hasOwnProperty后返回true
 	 */
 
-	module.exports = avalon.oneObject('$id,$render,$track,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,__proxy__,__data__,__const__')
+	module.exports = avalon.oneObject('$id,$render,$track,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,$run,$wait,__proxy__,__data__,__const__')
 
 /***/ },
 /* 76 */
@@ -7900,6 +7899,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var share = __webpack_require__(78)
 	var canHideProperty = __webpack_require__(80)
 	var initEvents = share.initEvents
+
 	/*
 	 * toJson
 	 * hideProperty
@@ -7970,9 +7970,35 @@ return /******/ (function(modules) { // webpackBootstrap
 	    hideProperty($vmodel, '$id', options.id)
 	    hideProperty($vmodel, '$hashcode', options.hashcode)
 	    if (options.master === true) {
+	        hideProperty($vmodel, '$run', function () {
+	            run.call($vmodel)
+	        })
+	        hideProperty($vmodel, '$wait', function () {
+	            wait.call($vmodel)
+	        })
 	        hideProperty($vmodel, '$element', null)
 	        hideProperty($vmodel, '$render', 0)
 	        initEvents($vmodel, heirloom)
+	    }
+	}
+
+	function wait() {
+	    this.$events.$$wait$$ = true
+	}
+
+	function run() {
+	    var host = this.$events
+	    delete host.$$wait$$
+	    if (host.$$dirty$$) {
+	        delete host.$$dirty$$
+	        avalon.rerenderStart = new Date
+	        var id = this.$id
+	        var dotIndex = id.indexOf('.')
+	        if (dotIndex > 0) {
+	            avalon.batch(id.slice(0, dotIndex))
+	        } else {
+	            avalon.batch(id)
+	        }
 	    }
 	}
 
@@ -8080,6 +8106,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (old === val) {
 	                return
 	            }
+	            var vm = heirloom.__vmodel__
 	            if (val && typeof val === 'object') {
 	                val = $$midway.modelAdaptor(val, old, heirloom, {
 	                    pathname: spath,
@@ -8088,8 +8115,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            var older = old
 	            old = val
-	            var vm = heirloom.__vmodel__
-	            if (this.$hashcode && vm && !avalon.suspendUpdate) {
+	            if (this.$hashcode && vm ) {
+	                vm.$events.$$dirty$$ = true
+	                if(vm.$events.$$wait$$)
+	                    return
 	                //★★确保切换到新的events中(这个events可能是来自oldProxy)               
 	                if (heirloom !== vm.$events) {
 	                    get.heirloom = vm.$events
@@ -8104,7 +8133,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                emitArray(sid, vm, spath, val, older)
 	                //如果这个属性存在通配符
 	                emitWildcard(get.heirloom, vm, spath, val, older)
-
+	                vm.$events.$$dirty$$ = false
 	                batchUpdateView(vm.$id)
 	            }
 	        },
@@ -8200,7 +8229,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        options.pathname :
 	                        options.pathname + '.' + a
 	                vm.$fire(path, b, c)
-	                if (!d && !avalon.suspendUpdate) {
+	                if (!d && !heirloom.$$wait$$ && !avalon.suspendUpdate ) {
 	                    batchUpdateView(vm.$id)
 	                }
 	            }

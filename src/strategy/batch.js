@@ -24,7 +24,6 @@ function batchUpdate(id) {
     if (!scope || !document.nodeName || avalon.suspendUpdate) {
         return renderingID = null
     }
-    
     var dom = scope.dom
     var steps = {count: 0}
     var vtree = scope.render(scope.synth || scope.vmodel, scope.local)

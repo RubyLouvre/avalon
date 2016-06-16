@@ -24,7 +24,7 @@ function collectLocal(str, ret) {
         arr.filter(function (el) {
             if (!/^[@\d\-]/.test(el) &&
                     el.slice(0, 2) !== '##' &&
-                    el !== '$event') {
+                    el !== '$event' && !avalon.keyMap[el]) {
                 ret[el] = 1
             }
         })
