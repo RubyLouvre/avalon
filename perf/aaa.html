@@ -1,57 +1,82 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <title>ms-validate</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <script src="../dist/avalon.js"></script>
-    <script>
-        var vm = avalon.define({
-            $id: "test",
-            firstname: '',
-            lastname: '',
-            username: '',
-            password: '',
-            list1:['dog','bird','cat'],
-            list:[{name:'dog',value:''},{name:'bird',value:''},{name:'cat',value:''}],
-            confirm_password: '',
-            email: '',
-            agree: false,
-            topic: [],
-            toggle: false
-        })
-    </script>
-</head>
+<html lang="zh-CN">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <link href="//cdn.bootcss.com/bootstrap/2.3.2/css/bootstrap.min.css" rel="stylesheet">
 
-<body ms-controller="test">
-<form class="cmxform" ms-validate="@validate">
-    <fieldset>
-        <legend>验证完整的表单</legend>
-        <p>
-            <label for="agree1">请同意我们的声明</label>
-            <input type="radio" class="checkbox" id="agree1" value="1" name="agree" ms-duplex-string="@agree">
-            <label for="agree2">不同意</label>
-            <input type="radio" class="checkbox" id="agree2" value="0" name="agree" ms-duplex-string="@agree">
-        </p>
-        <p>
-            <label for="newsletter">我乐意接收新信息</label>
-            <input type="checkbox" class="checkbox" id="newsletter" name="newsletter" ms-duplex-checked="@toggle">
-        </p>
-
-        <div ms-for="el in @list1">{{el}}</div>
-        <fieldset id="newsletter_topics" ms-visible="@toggle">
-            <legend>主题 (至少选择两个) </legend>
+        <script src="../dist/avalon.js"></script>
 
 
-            <!-- <label ms-for="el in @list">
-                            <input type="checkbox" ms-attr="{id:el.name}" value="marketflash" name="topic">{{el.name}}
-                        </label> -->
-            <label for="topic" class="error" style="display:none">至少选择两个</label>
-        </fieldset>
-        <p>
-            <input class="submit" type="submit" value="提交">
-        </p>
-    </fieldset>
-</form>
-</body>
+    </head>
+    <body>
+        <div ms-controller="test">
+            <xmp ms-widget="{is:'ms-select', items:@items, value:@value}"></xmp>
+        </div>
+
+
+        <div id="select_tpl" style="display:none;" ms-skip>
+           
+        </div>
+        <script>
+var vm = avalon.define({
+    $id: 'test',
+    items: ['请选择', '选项一', '选项二'],
+    value: '请选择'
+});
+function heredoc(fn) {
+    return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+            replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+}
+avalon.component("ms-select", {
+    template: heredoc(function(){
+        /*
+ <div ms-class="['btn-group', (@open?'open':'')]">
+        <a name="open_select" class="btn dropdown-toggle" 
+           data-toggle="dropdown" ms-click="@openDropDown | prevent" href="#">
+            {{@value}}
+            <span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu" >
+            <li ms-for="(key, val) in @items" >
+                <a href="javascript:;" class="not-close" 
+                   ms-click="@select(key, $event)">{{val}}</a>
+            </li>
+        </ul>
+    </div>
+         */
+    }),
+    defaults: {
+        items: [],
+        value: '',
+        open: false,
+        canClose: false,
+        onInit: function (e) {
+            var vm = this;
+            avalon(document).bind('click', function (e) {
+                if (e.target.name !== 'open_select') {
+                    vm.open = false
+                }
+            })
+        },
+        select: function (key) {
+            var old = this.value
+            var neo = this.items[key]
+            if (old !== neo) {
+                this.value = neo
+                if (this.hasOwnProperty('onSelect') && this.onSelect === 'function') {
+                    var ret = this.onSelect(neo, old)
+                    if (ret !==  false) {
+                        this.open = false
+                    }
+                }
+            }
+        },
+        openDropDown: function () {
+            this.open = true
+        }
+    }
+});
+
+        </script>
+    </body>
 </html>
