@@ -134,9 +134,11 @@ avalon.directive('for', {
         if (cur.compareText === pre.compareText) {
             avalon.shadowCopy(cur, pre)
             return
+        }else{
+            cur.forDiff = true    
         }
         
-        cur.forDiff = true        
+           
         var i, c, p
         if (!('items' in pre)) {
             cur.action = 'init'
@@ -144,6 +146,8 @@ avalon.directive('for', {
             pre.items = _items.slice(1, -1)
             pre.components = []
             pre.repeatCount = pre.items.length
+        }else{
+            cur.action = 'update'
         }
 
         cur.endRepeat = pre.endRepeat
@@ -231,10 +235,16 @@ avalon.directive('for', {
         var endRepeat = vnode.endRepeat
         var key = vnode.signature
         var DOMs = getDOMs(startRepeat.nextSibling, endRepeat, key)
-        if (DOMs.length === 0 ||   vnode.action == 'init' ) {
+        if (DOMs.length === 0 || vnode.action == 'init' ) {
             DOMs.all.forEach(function (el) {
                 parent.removeChild(el)
             })
+        }
+        var allEnter = vnode.components.every(function(e){
+           return e.action === 'enter'
+        })
+        if(DOMs.length && DOMs.length ===vnode.components.length && allEnter ){
+           return false
         }
 
         var fragment = avalon.avalonFragment
@@ -267,6 +277,7 @@ avalon.directive('for', {
         for (var i = 0; i < vnode.components.length; i++) {
             var com = vnode.components[i]
             //添加nodes属性并插入节点
+           
             if (com.action === 'enter') {
                 if (!domTemplate) {
                     domTemplate = avalon.parseHTML(vnode.template)
@@ -301,8 +312,9 @@ avalon.directive('for', {
                 break
             }
         }
+      
        
-        var items = vnode.items|| []
+        var items = vnode.items
        
         var steps = vnode.steps
         var oldCount = steps.count
