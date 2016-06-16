@@ -109,7 +109,9 @@ avalon.directive('duplex', {
             data.callback = vnode.callback
             data.element = node
             addValidateField(node, vnode)
-            if (!avalon.msie && updateModelByValue === false && !node.valueHijack) {
+            if (!avalon.msie && updateModelByValue === false 
+                    && /input|contente/.test(data.type)
+                    && !node.valueHijack) {
                 //chrome 42及以下版本需要这个hack
              
                 node.valueHijack = updateModel

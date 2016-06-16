@@ -28,7 +28,7 @@ describe('on', function () {
     it('test', function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <div ms-controller='on' ms-click='@a($event)' data-aaa=eee >111
+             <div ms-controller='on' ms-click='@a($event)' ms-click-2='@d = true' data-aaa=eee >111
              <div ms-click=@b($event,111) id='a111'>
              
              </div>
@@ -38,6 +38,7 @@ describe('on', function () {
         var index = 1
         vm = avalon.define({
             $id: 'on',
+            d: false,
             a: function (e) {
                 index++
                 expect(e.currentTarget.getAttribute('data-aaa')).to.equal('eee')
