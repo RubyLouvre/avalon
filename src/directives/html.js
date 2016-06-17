@@ -26,16 +26,5 @@ avalon.directive('html', {
             update(cur, this.update, steps, 'html')
         }
     },
-    update: function (node, vnode) {
-        if (node.nodeType !== 1) {
-            return
-        }
-        //添加节点
-        avalon.clearHTML(node)
-        var fragment = document.createDocumentFragment()
-        vnode.children.forEach(function (c) {
-            c && fragment.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
-        })
-        node.appendChild(fragment)
-    }
+    update: function(){}
 })

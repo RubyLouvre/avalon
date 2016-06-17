@@ -5,7 +5,7 @@ require('./attr.modern')
 require('./css')
 require('./visible')
 //处理内容
-require('./expr.modern')
+require('./expr')
 require('./text')
 require('./html')
 //需要用到事件的

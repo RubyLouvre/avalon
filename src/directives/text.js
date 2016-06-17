@@ -11,25 +11,13 @@ avalon.directive('text', {
     diff: function (cur, pre, steps, name) {
         var curValue = cur[name]
         var preValue = pre[name]
-        var dom = cur.dom = pre.dom
         if (curValue !== preValue ) {
-            cur.children[0].nodeValue = curValue
-            if (dom) {
-                this.update(dom, cur)
-            } else {
-                update(cur, this.update, steps, 'text')
-            }
+            var text = cur.children[0]
+            text.nodeValue = curValue
+            text.changeText = true
+            update(cur, this.update, steps, 'text')
         }
-        pre.dom = null
         return false
     },
-    update: function (node, vnode) {
-        var nodeValue = vnode['ms-text']
-        if ('textContent' in node) {
-            node.textContent = nodeValue + ''
-        } else {
-            node.innerText = nodeValue + ''
-        }
-        vnode.dom = node
-    }
+    update: function () {}
 })
