@@ -26,7 +26,7 @@ function getLength(arr) {
     return len
 }
 function getEndRepeat(node) {
-    var isBreak = 1, ret = [], node
+    var isBreak = 1, ret = []
     while (node) {
         if (node.nodeType === 8) {
             if (node.nodeValue.indexOf('ms-for:') === 0) {
@@ -75,9 +75,12 @@ function patch(nodes, vnodes, parent, steps) {
                     i += vlen
                     v += 1//跳过数组
                 } else {//如果节点类型不一样
-                    var newDom = toDom(vnode)
-                    parent.replaceChild(newDom, node)
-                    if (vnode.diretive === 'for') {
+                    if (vnode.directive !== 'if') {
+                        var newDom = toDom(vnode)
+                        parent.replaceChild(newDom, node)
+                    }
+
+                    if (vnode.directive === 'for') {
                         parent.insertBefore(
                                 document.createComment('ms-for-end:'),
                                 newDom.nextSibling)
@@ -86,30 +89,38 @@ function patch(nodes, vnodes, parent, steps) {
 
                 }
 
-            } 
+            }
             if (node.nodeType === 1) {
-                if(node.nodeName.toLowerCase !== vnode.type){
-                    var newDom = toDom(vnode)
-                    parent.replaceChild(newDom, node)
-                    node = newDom
+                if (node.nodeName.toLowerCase() !== vnode.type) {
+                    if (!vnode.directive) {
+                        var newDom = toDom(vnode)
+                        parent.replaceChild(newDom, node)
+                        node = newDom
+                    }
                 }
                 if (false === execHooks(node, vnode, parent, {}, 'change')) {
-                   vnode.afterChange && execHooks(node, vnode, parent, {}, 'afterChange')
+                    vnode.afterChange && execHooks(node, vnode, parent, {}, 'afterChange')
                 }
-
-                patch(node.childNodes, vnode.children, node, steps)
+                if (!vnode.skipContent && vnode.nodeType === 1) {
+                    patch(node.childNodes, vnode.children, node, steps)
+                }
+                vnode.afterChange && execHooks(node, vnode, parent, {}, 'afterChange')
             } else if (node.nodeType === 3) {
-                node.nodeValue = vnode.nodeValue
+                if (vnode.changeText) {
+                    node.nodeValue = vnode.nodeValue
+                }
             } else if (node.nodeType === 8) {
-               
-                node.nodeValue = vnode.nodeValue
+                // node.nodeValue = vnode.nodeValue
             }
             i++
             v++
         } else if (node && !vnode) {
             parent.removeChild(node)
             n--
-        } 
+        }
+        if(!steps.count){
+            break
+        }
     }
 }
 
