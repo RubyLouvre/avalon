@@ -27,15 +27,14 @@ function batchUpdate(id) {
     var dom = scope.dom
     var steps = {count: 0}
     var vtree = scope.render(scope.synth || scope.vmodel, scope.local)
-
     avalon.diff(vtree, dom.vtree || [], steps)
-    patch([dom], vtree, null, steps)
+    patch([dom], vtree, dom.parentNode, steps)
     steps.count = 0
     dom.vtree = vtree
     
   
     var index = needRenderIds.indexOf(renderingID)
-    renderingID = null
+    renderingID = 0
     if (index > -1) {
         var removed = needRenderIds.splice(index, 1)
         return batchUpdate(removed[0])

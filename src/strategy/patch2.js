@@ -58,8 +58,9 @@ function patch(nodes, vnodes, parent, steps) {
             n++
         }
         if (vnode) {
-            //如果类型不一样
-            if (node.nodeType !== vnode.nodeType) {
+            //如果类型不一样{nodeName不一样,nodeType肯定不一定}
+            if (node.nodeName.toLowerCase() !== vnode.type) {
+                console.log(node.nodeName)
                 if (Array.isArray(vnode)) {//如果遇到循环区域
                     var arr = getEndRepeat(node)
                     patch(arr, vnode, parent)
@@ -78,6 +79,7 @@ function patch(nodes, vnodes, parent, steps) {
                     if (vnode.directive !== 'if') {
                         var newDom = toDom(vnode)
                         parent.replaceChild(newDom, node)
+                        node = newDom
                     }
 
                     if (vnode.directive === 'for') {
@@ -90,21 +92,17 @@ function patch(nodes, vnodes, parent, steps) {
                 }
 
             }
+            
+                
             if (node.nodeType === 1) {
-                if (node.nodeName.toLowerCase() !== vnode.type) {
-                    if (!vnode.directive) {
-                        var newDom = toDom(vnode)
-                        parent.replaceChild(newDom, node)
-                        node = newDom
-                    }
-                }
-                if (false === execHooks(node, vnode, parent, {}, 'change')) {
+                
+                if (false === execHooks(node, vnode, parent, steps, 'change')) {
                     vnode.afterChange && execHooks(node, vnode, parent, {}, 'afterChange')
                 }
                 if (!vnode.skipContent && vnode.nodeType === 1) {
                     patch(node.childNodes, vnode.children, node, steps)
                 }
-                vnode.afterChange && execHooks(node, vnode, parent, {}, 'afterChange')
+                vnode.afterChange && execHooks(node, vnode, parent, steps, 'afterChange')
             } else if (node.nodeType === 3) {
                 if (vnode.changeText) {
                     node.nodeValue = vnode.nodeValue
@@ -117,9 +115,6 @@ function patch(nodes, vnodes, parent, steps) {
         } else if (node && !vnode) {
             parent.removeChild(node)
             n--
-        }
-        if(!steps.count){
-            break
         }
     }
 }
