@@ -80,13 +80,17 @@ function lexer(text, curDeep, maxDeep) {
                 outerHTML = match[0]
                 node = new VComment(match[1].replace(rfill, fill))
                 var nodeValue = node.nodeValue
+               
                 if (rspBeforeForEnd.test(nodeValue)) {
-                    var sp = nodes[nodes.length - 1]
-                    //移除紧挨着<!--ms-for-end:xxxx-->前的空白节点
-                    if (sp && sp.nodeType === 3 && rsp.test(sp.nodeValue)) {
-                        nodes.pop()
-                    }
-                    getForTemplate(nodes)
+                    
+                   getForTemplate2(nodes, node)
+                    
+//                    var sp = nodes[nodes.length - 1]
+//                    //移除紧挨着<!--ms-for-end:xxxx-->前的空白节点
+//                    if (sp && sp.nodeType === 3 && rsp.test(sp.nodeValue)) {
+//                        nodes.pop()
+//                    }
+                    //getForTemplate(nodes)
                 }
             }
         }
@@ -147,7 +151,7 @@ function lexer(text, curDeep, maxDeep) {
             if (node.nodeType === 8 && rspAfterForStart.test(node.nodeValue)) {
                 node.signature = makeHashCode('for')
                 //移除紧挨着<!--ms-for:xxxx-->后的空白节点
-                text = text.replace(rleftSp, '')
+              //  text = text.replace(rleftSp, '')
             }
         } else {
             break
@@ -172,9 +176,41 @@ function getForTemplate(nodes){
                 break
             }
         }
+       
         ret.push(avalon.vdomAdaptor(el, 'toHTML'))
     }
     return el.template = ret.reverse().join('')
+}
+
+function getForTemplate2(nodes, end){
+    var i = 1, el, k = nodes.length, toFilter = []
+    var toRemove = k
+    while(el = nodes[--k]){
+        if(el.nodeType === 8){
+            if(rspAfterForStart.test(el.nodeValue)){
+                i -= 1
+            }else if(rspBeforeForEnd.test(el.nodeValue)){
+                i += 1
+            }
+            if(i === 0){
+                break
+            }
+        }
+        toFilter.push(el)
+    }
+    var start = nodes[k]
+    end.signature = start.signature
+    var toRepeat = toFilter.reverse().filter(function(el){
+        if(el.nodeType === 3){
+            return /\S+/.test(el.nodeValue)
+        }else{
+            return true
+        }
+    })
+    nodes.splice(k+1, toRemove, toRepeat)
+    start.template = toRepeat.map(function(a){
+        return avalon.vdomAdaptor(a, 'toHTML')
+    }).join('')
 }
 
 //用于创建适配某一种标签的正则表达式

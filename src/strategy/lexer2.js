@@ -52,7 +52,6 @@ function fixLongAttrValue(attr) {
         attr.replace(rlineSp, '').replace(rstring, dig) : attr
 }
 function lexer(text, curDeep) {
-    console.log(text)
     var nodes = []
     if (typeof curDeep !== 'number') {
         curDeep = 0
@@ -430,8 +429,10 @@ function hasDirective(a) {
 }
 
 function hasDirectiveAttrs(props) {
+    if('ms-skip' in props)
+        return false
     for (var i in props) {
-        if (i.indexOf('ms-') === 0) {
+        if (i.indexOf('ms-') === 0 ) {
             return true
         }
     }
