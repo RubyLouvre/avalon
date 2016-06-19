@@ -9,7 +9,7 @@ avalon.directive('if', {
                 "\nif(varIf){\n"
         var old = pre.$append || ''
         pre.$append = '}else{\n\n' +
-                'vnodes.push({\nnodeType: 8,\ndirective:"if",\n' +
+                'vnodes.push({\nnodeType: 8,\ndirective:"if",notAdd:true,\n' +
                 'type: "#comment",\nnodeValue:"ms-if"\n})' +
                 '\n}' + old
     },

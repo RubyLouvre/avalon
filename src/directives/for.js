@@ -55,19 +55,25 @@ function prepareCompare(nodes, cur) {
     var com = {
         children: []
     }
-    for (var i = 0, el; el = nodes[i]; i++) {
-        if (el.nodeType === 8 && el.nodeValue === splitText) {
-            com.children.push(el)
-            com.key = el.key
-            keys.push(el.key)
-            com.index = items.length
-            items.push(com)
-            com = {
-                children: []
+    try {
+        for (var i = 0, el; el = nodes[i]; i++) {
+            if (el.nodeType === 8 && el.nodeValue === splitText) {
+                com.children.push(el)
+                com.key = el.key
+                keys.push(el.key)
+                com.index = items.length
+                items.push(com)
+                com = {
+                    children: []
+                }
+            } else {
+                com.children.push(el)
             }
-        } else {
-            com.children.push(el)
         }
+    } catch (e) {
+        console.log(nodes)
+        console.log(cur)
+        console.log('----')
     }
     cur.components = items
     cur.compareText = keys.length + '|' + keys.join(';;')
@@ -109,19 +115,32 @@ avalon.directive('for', {
 
     },
     diff: function (cur, pre, steps, curRepeat, preRepeat) {
+        //将curRepeat转换成一个个可以比较的component,并求得compareText
+        preRepeat = preRepeat || []
+        //preRepeat不为空时
 
-       //将curRepeat转换成一个个可以比较的component,并求得compareText
         prepareCompare(curRepeat, cur)
         delete pre.forDiff
-         //如果个数与key一致,那么说明此数组没有发生排序,立即返回
+        //如果个数与key一致,那么说明此数组没有发生排序,立即返回
         if (cur.compareText === pre.compareText) {
             //avalon.shadowCopy(cur, pre)
             return
-        } 
-        
+        }
+
         cur.items = curRepeat
         cur.forDiff = true
         curRepeat.prevItems = preRepeat
+
+//        var n = preRepeat.length
+//        if (n === 0) {
+//            curRepeat.needRemoveCount = 0
+//        } else {
+//            if (curRepeat[n - 1].signature !== cur.signature) {
+//                curRepeat.needRemoveCount = n
+//            } else {
+//                curRepeat.needRemoveCount = 0
+//            }
+//        }
 
 
         var i, c, p
@@ -184,8 +203,8 @@ avalon.directive('for', {
             }
             cur.removedComponents = dels
         }
-        
-        pre.cache = pre.action = pre.components = 
+
+        pre.cache = pre.action = pre.components =
                 pre.compareText = pre.items = 0
         update(cur, this.update, steps, 'for')
         return true
@@ -194,6 +213,7 @@ avalon.directive('for', {
     update: function (startRepeat, vnode, parent) {
         console.log('进入for diff')
         var arr = getEndRepeat(startRepeat)
+
         var doms = arr.slice(1, -1)
         var endRepeat = arr.pop()
         var items = vnode.items
@@ -201,21 +221,21 @@ avalon.directive('for', {
         var prevItems = items.prevItems
         var DOMs = splitDOMs(doms)
         var key = vnode.signature
-        var prev = endRepeat.previousSibling
-        while (prev) {//去掉最初位于循环节点中的内容
-            if (prev.nodeType !== 8) {
-                parent.removeChild(prev)
-                console.log(prevItems.pop())
-            } else {
-                if (prev.nodeValue === key ||
-                        prev.nodeValue.indexOf('ms-for:') === 0) {
+        var check = doms[doms.length - 1]
+        if (check.nodeValue !== key) {
+            do {//去掉最初位于循环节点中的内容
+                var prev = endRepeat.previousSibling
+                if (prev === startRepeat || prev.nodeValue === key) {
                     break
                 }
-            }
-            prev = endRepeat.previousSibling
+                if (prev) {
+                    parent.removeChild(prev)
+                    prevItems.pop()
+                } else {
+                    break
+                }
+            } while (true);
         }
-        
-       
 
         var fragment = avalon.avalonFragment
 

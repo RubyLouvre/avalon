@@ -25,8 +25,6 @@ function getLength(arr) {
     }
     return len
 }
-// 3 3 1 8 3
-// 1 8
 
 
 function patch(nodes, vnodes, parent, steps) {
@@ -34,9 +32,14 @@ function patch(nodes, vnodes, parent, steps) {
     var n = nodes.length;
     var vn = vnodes.length;
     var i = 0, v = 0
+    var stopEndlessLoop = 5000
+    
     while (i < n || v < vn) {
         var node = nodes[i]
         var vnode = vnodes[v]
+        if(--stopEndlessLoop < 0){
+            break
+        }
         if (!node && vnode) {//ms-html会导政节点差异
             var el = parent.childNodes[i]
             node = toDom(vnode)
@@ -55,6 +58,7 @@ function patch(nodes, vnodes, parent, steps) {
                     var entity = vnode.entity
                     avalon.diff(curRepeat, curRepeat.prevItems , steps)
                     curRepeat.prevItems = 0
+                    
                     if (steps.count !== oldCount) {
                         console.log('开始处理循环区域')
                         
@@ -62,7 +66,6 @@ function patch(nodes, vnodes, parent, steps) {
                         console.log('结束处理循环区域')
                     }
                     var vlen = getLength(curRepeat)
-                    console.log(vlen, entity.length)
                     if (entity.length !== vlen) {
                         var detail = Math.abs(entity.length - vlen)
                         if (entity.length > vlen) {
@@ -71,17 +74,17 @@ function patch(nodes, vnodes, parent, steps) {
                             n += detail
                         }
                     }
-                    // n += vlen //真实节点长度添加
                     i += vlen
                     v += 1//跳过数组
-                    console.log("xxxxxx")
+                    
+                    console.log(nodes[i],vnodes[v],'continue')
                     continue
                 } else {//如果节点类型不一样
                     if (!vnode.notAdd) {
                         var newDom = toDom(vnode)
                         parent.replaceChild(newDom, node)
                         node = newDom
-
+                        
                     }
 
                 }
@@ -90,7 +93,6 @@ function patch(nodes, vnodes, parent, steps) {
 
 
             if (node.nodeType === 1) {
-                console.log(node,vnode)
                 if (false === execHooks(node, vnode, parent, steps, 'change')) {
                     vnode.afterChange && execHooks(node, vnode, parent, {}, 'afterChange')
                 }
@@ -115,11 +117,14 @@ function patch(nodes, vnodes, parent, steps) {
             i++
             v++
         } else if (node && !vnode) {
-            parent.removeChild(node)
+            frag.appendChild(node)
+            frag.removeChild(node)
             n--
         }
     }
 }
+
+var frag = document.createDocumentFragment()
 
 function execHooks(node, vnode, parent, steps, hookName) {
     var hooks = vnode[hookName]

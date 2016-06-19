@@ -35,12 +35,10 @@ function batchUpdate(id) {
         //  dom.parentNode.replaceChild(dom2, dom)
         //  dom = scope.dom = dom2
         reconcile([dom], oldTree, dom.parentNode)
-        
-        //return
+        console.log(oldTree)
         scope.isMount = 1
     }
     avalon.diff(vtree, oldTree, steps)
-
     patch([dom], vtree, dom.parentNode, steps)
     if (scope.isMount === 1) {
         var vm = scope.vmodel
