@@ -389,13 +389,15 @@ function hasDirective(a) {
     switch (a.nodeType) {
         case 3:
             if (config.rbind.test(a.nodeValue)) {
+                a.dynamic  = true
                 return true
             } else {
                 a.skipContent = true
                 return false
             }
         case 8:
-            if (a.directive) {
+            if (/^ms\-for/.test(a.nodeValue)) {
+                a.dynamic = true
                 return true
             } else {
                 a.skipContent = true
@@ -408,22 +410,27 @@ function hasDirective(a) {
                 a.skipContent = true
                 return false
             }
-            if (!hasDirectiveAttrs(a.props)) {
+            if(/^(slot|ms\-)/.test(a.type)){
+                a.dynamic = true
+            }
+            if (hasDirectiveAttrs(a.props)) {
+                a.dynamic = true
+            }else{
                 a.skipAttrs = true
             }
-            if (a.isVoidTag && a.skipAttrs && !/^(slot|ms\-)/.test(a.type)) {
+            if (a.isVoidTag && !a.dynamic) {
                 a.skipContent = true
                 return false
             }
+            
             var noDirective = true
-
             for (var i = 0, el; el = a.children[i++];) {
                 if (hasDirective(el)) {
                     noDirective = false
                 }
             }
 
-            if (noDirective && a.skipAttrs && !/^(slot|ms\-)/.test(a.type)) {
+            if (noDirective && !a.dynamic) {
                 a.skipContent = true
                 return false
             }

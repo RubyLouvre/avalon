@@ -74,8 +74,7 @@ function parseNode(pre) {
             template: ''
         }
         var bindings = extractBindings(cur, props)
-       
-
+      
         cur.order = bindings.map(function (b) {
             //将ms-*的值变成函数,并赋给cur.props[ms-*]
             //如果涉及到修改结构,则在pre添加$append,$prepend
@@ -96,8 +95,10 @@ function parseNode(pre) {
             cur.isVoidTag = true
         } else {
             if (!('children' in cur)) {
+                
                 var pChildren = pre.children
                 if (pChildren.length) {
+                    delete pre.template
                     cur.children = '(function(){' + parseNodes(pChildren) + '})()'
                 } else {
                     cur.template = pre.template

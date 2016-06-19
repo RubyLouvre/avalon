@@ -1,19 +1,31 @@
 var patch = require('../strategy/patch')
 var update = require('./_update')
+var stringify = require('../strategy/parser/stringify')
+
 
 //ms-imporant ms-controller ms-for ms-widget ms-effect ms-if   ...
 avalon.directive('if', {
     priority: 6,
     parse: function (cur, pre, binding) {
+        var hasEffect = pre.props['ms-effect']
+        var replaceHolder = {
+            nodeType: 8, 
+            order:'ms-if',
+            directive: 'if', 
+            type: '#comment', 
+            nodeValue: 'ms-if'
+        }
+        if (hasEffect) {
+            replaceHolder['ms-effect'] = avalon.parseExpr(hasEffect)
+        }
         pre.$prepend = (pre.$prepend || '') + 'var varIf = ' + avalon.parseExpr(binding) +
                 "\nif(varIf){\n"
         var old = pre.$append || ''
         pre.$append = '}else{\n\n' +
-                'vnodes.push({\nnodeType: 8,\ndirective:"if",notAdd:true,\n' +
-                'type: "#comment",\nnodeValue:"ms-if"\n})' +
-                '\n}' + old
+                'vnodes.push(' + stringify(replaceHolder) + ')\n}' + old
     },
     diff: function (cur, pre, steps) {
+        cur.wid = cur.wid || true
         cur.dom = pre.dom
         if (pre.pre) {
             cur.pre = pre.pre
@@ -24,6 +36,7 @@ avalon.directive('if', {
                 cur['ms-effect'] = pre['ms-effect']
                 cur.pre = pre
             } else if (cur.pre) {
+                cur.skipContent = true
                 pre.children = cur.pre.children
                 delete cur.pre
             }

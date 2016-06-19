@@ -13,6 +13,7 @@ function getType(node) {
 //[1,8,3],[3,3,1,8,3]
 var rforRange = /^8ms\-for/
 function reconcile(nodes, vnodes, parent) {
+    
     vnodes = flatten(vnodes)
     var map = {}
     vnodes.forEach(function (el, index) {
@@ -33,6 +34,7 @@ function reconcile(nodes, vnodes, parent) {
                 //如果循环节点与空白节点不在一块,则创建循环节点
                 var nodeValue = vtype.slice(1)
                 var node = document.createComment(nodeValue)
+                vnode.dom = node
                 parent.insertBefore(node, el)
                 nodes.splice(index, 0, node)
                 index++
@@ -59,9 +61,13 @@ function reconcile(nodes, vnodes, parent) {
         } else {
             index++
         }
+        
         var preIndex = index - 1
         if (el && el.nodeType === 1 && nodes[preIndex] === el) {
             var vnode = vnodes[preIndex]
+            if(vnode.dynamic){
+               vnode.dom = el
+            }
             if (!vnode.isVoidTag && vnode.children) {
                 reconcile(el.childNodes, vnode.children, el)
             }

@@ -12,7 +12,7 @@ avalon.directive('html', {
         if (!pre.isVoidTag) {
             //将渲染函数的某一部分存起来,渲在c方法中转换为函数
             cur[binding.name] = avalon.parseExpr(binding)
-            delete pre.children
+            pre.children = []
             cur.children = 'avalon.htmlFactory(' + avalon.parseExpr(binding) + ',__vmodel__,__local__)'
         }else{
             cur.children = '[]'
@@ -26,5 +26,6 @@ avalon.directive('html', {
             update(cur, this.update, steps, 'html')
         }
     },
+ 
     update: function(){}
 })

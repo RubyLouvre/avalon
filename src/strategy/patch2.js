@@ -41,10 +41,15 @@ function patch(nodes, vnodes, parent, steps) {
             break
         }
         if (!node && vnode) {//ms-html会导政节点差异
-            var el = parent.childNodes[i]
-            node = toDom(vnode)
+            if(vnode.wid){
+                
+            }else{
+               var el = parent.childNodes[i]
+               node = toDom(vnode)
            
-            parent.insertBefore(node, el && el.nextSibling || null)
+               parent.insertBefore(node, el && el.nextSibling || null)  
+            }
+            
 
             n++
         }
@@ -76,43 +81,46 @@ function patch(nodes, vnodes, parent, steps) {
                     }
                     i += vlen
                     v += 1//跳过数组
-                    
                     console.log(nodes[i],vnodes[v],'continue')
                     continue
                 } else {//如果节点类型不一样
-                    if (!vnode.notAdd) {
-                        var newDom = toDom(vnode)
-                        parent.replaceChild(newDom, node)
-                        node = newDom
-                        
+                    if(vnode.directive === 'if' || /ms-if/.test(vnode.order)){//if, component都有这种行为
+                        console.log(vnode.directive)
                     }
-
+                    var newDom = toDom(vnode)
+                    //  console.log(newDom,'-----')
+                    parent.replaceChild(newDom, node)
+                    node = newDom                    
                 }
-
             }
 
 
             if (node.nodeType === 1) {
+                
                 if (false === execHooks(node, vnode, parent, steps, 'change')) {
                     vnode.afterChange && execHooks(node, vnode, parent, {}, 'afterChange')
                 }
+                
                 if (!vnode.skipContent && !vnode.isVoidTag) {
-                    
                     patch(node.childNodes, vnode.children, node, steps)
-                   
                 }
+                
                 vnode.afterChange && execHooks(node, vnode, parent, steps, 'afterChange')
+                
             } else if (node.nodeType === 3) {
                 if (vnode.changeText) {
                     node.nodeValue = vnode.nodeValue
+                    delete vnode.changeText
                 }
             } else if (node.nodeType === 8) {
-                var list1 = vnode.items
-                if(list1){
-                    var list2 = list1.prevItems
-                    n += (list1.length - list2.length)
+                if(!node.skipContent){
+                    var list1 = vnode.items
+                    if(list1){
+                        var list2 = list1.prevItems
+                        n += (list1.length - list2.length)
+                    }
+                    execHooks(node, vnode, parent, steps, 'change')
                 }
-                execHooks(node, vnode, parent, steps, 'change')
             }
             i++
             v++
