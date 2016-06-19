@@ -15,7 +15,6 @@ var directives = avalon.directives
 var rbinding = require('../seed/regexp').binding
 
 function diff(current, previous, steps) {
-    
     for (var i = 0; i < current.length; i++) {
         var cur = current[i]
         var pre = previous[i] || emptyObj()
@@ -26,24 +25,21 @@ function diff(current, previous, steps) {
                 }
                 break
             case 8:
-                if (cur.directive === 'for') {
-                    var forDiff = directives['for'].diff(current, previous, steps, i)
-                    if (forDiff === true) {
-                        i = i + 1
-                    }
-                } else if (cur.directive) {//if widget
-                    directives[cur.directive].diff(cur, pre, steps)
+                if (cur.directive) {
+                    directives[cur.directive].diff(cur, pre, steps,
+                    current[i+1],previous[i+1])
                 }
                 break
             default:
                 
                 if (Array.isArray(cur)) {
-                    diff(cur, pre || emptyArr, steps)
+                   // diff(cur, pre || emptyArr, steps)
                 } else {
                     if (!cur.skipAttrs) {
                         diffProps(cur, pre, steps)
                     }
-                    if (!cur.skipContent) {
+                    if (!cur.skipContent && !cur.isVoidTag ) {
+                        
                         diff(cur.children, pre.children || emptyArr, steps)
                     }
                 }

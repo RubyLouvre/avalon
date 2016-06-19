@@ -22,8 +22,8 @@ var rtext = /^[^<]+/
 var rcomment = /^<!--([\w\W]*?)-->/
 
 var rnumber = /\d+/g
-var rspAfterForStart = /^\s*ms-for\:/
-var rspBeforeForEnd = /^\s*ms-for-end\:/
+var rmsForStart = /^\s*ms\-for\:/
+var rmsForEnd = /^\s*ms\-for\-end/
 var r = require('../seed/regexp')
 var rsp = r.sp
 var rfill = /\?\?\d+/g
@@ -82,11 +82,8 @@ function lexer(text, curDeep) {
                     nodeType: 8,
                     nodeValue: match[1].replace(rfill, fill)
                 }
-                //如果是ms-for-end:
-                //将 ms-for与ms-for-end:之间的节点塞到一个数组中
-                if (rspBeforeForEnd.test(node.nodeValue)) {
-                    markeRepeatRange(nodes, node)
-                }
+           
+                
             }
         }
 
@@ -145,9 +142,15 @@ function lexer(text, curDeep) {
                 nodes.push(node)
             }
             text = text.slice(outerHTML.length)
-            if (node.nodeType === 8 && rspAfterForStart.test(node.nodeValue)) {
-                node.signature = makeHashCode('for')
-                node.directive = 'for'
+            if (node.nodeType === 8){
+                if(rmsForStart.test(node.nodeValue)) {
+                    
+                   node.signature = node.signature || makeHashCode('for')
+                   node.directive = 'for'
+                }else if (rmsForEnd.test(node.nodeValue)) {
+                     //将 ms-for与ms-for-end:之间的节点塞到一个数组中
+                    markeRepeatRange(nodes, node)
+                }
             }
         } else {
             break
@@ -162,15 +165,15 @@ function lexer(text, curDeep) {
 
 
 function markeRepeatRange(nodes, end) {
-    var el, k = nodes.length, toFilter = [], toRemove = k
+    var el, k = nodes.length-1, toFilter = [], toRemove = k
     while (el = nodes[--k]) {
-        if (el.nodeType === 8 && rspBeforeForEnd.test(el.nodeValue)) {
+        if (el.nodeType === 8 && rmsForStart.test(el.nodeValue)) {
+            var start = el
+            end.signature = el.signature
             break
         }
         toFilter.push(el)
     }
-    var start = nodes[k]
-    end.signature = start.signature
     var toRepeat = toFilter.reverse().filter(function (el) {
         if (el.nodeType === 3) {
             return /\S+/.test(el.nodeValue)
@@ -183,7 +186,7 @@ function markeRepeatRange(nodes, end) {
         return avalon.vdomAdaptor(a, 'toHTML')
     }).join('')
 
-    nodes.splice(k + 1, toRemove, toRepeat)
+    nodes.splice(k +1, toFilter.length, toRepeat)
 }
 
 //用于创建适配某一种标签的正则表达式

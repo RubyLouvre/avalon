@@ -1,4 +1,4 @@
-var patch = require('../strategy/patch')
+var patch = require('../strategy/patch2')
 var rforPrefix = /ms-for\:\s*/
 var rforLeft = /^\s*\(\s*/
 var rforRight = /\s*\)\s*$/
@@ -15,23 +15,25 @@ function getTraceKey(item) {
 }
 //IE6-8,function后面没有空格
 var rfunction = /^\s*function\s*\(([^\)]+)\)/
-avalon._each = function (obj, fn, local) {
+avalon._each = function (obj, fn, local, vnodes) {
+    var repeat = []
+    vnodes.push(repeat)
     var str = (fn + "").match(rfunction)
     var args = str[1]
     var arr = args.match(avalon.rword)
     if (Array.isArray(obj)) {
         for (var i = 0; i < obj.length; i++) {
-            iterator(i, obj[i], local, fn, arr[0], arr[1], true)
+            iterator(i, obj[i], local, fn, arr[0], arr[1], repeat, true)
         }
     } else {
         for (var i in obj) {
             if (obj.hasOwnProperty(i)) {
-                iterator(i, obj[i], local, fn, arr[0], arr[1])
+                iterator(i, obj[i], local, fn, arr[0], arr[1], repeat)
             }
         }
     }
 }
-function iterator(index, item, vars, fn, k1, k2, isArray) {
+function iterator(index, item, vars, fn, k1, k2, repeat, isArray) {
     var key = isArray ? getTraceKey(item) : index
     var local = {}
     local[k1] = index
@@ -41,7 +43,7 @@ function iterator(index, item, vars, fn, k1, k2, isArray) {
             local[k] = vars[k]
         }
     }
-    fn(index, item, key, local)
+    fn(index, item, key, local, repeat)
 }
 
 
@@ -71,23 +73,7 @@ function prepareCompare(nodes, cur) {
     cur.compareText = keys.length + '|' + keys.join(';;')
 }
 
-function getDOMs(first, last, signature) {
-    var items = []
-    var all = []
-    var item = []
-    for (var el = first; el && el !== last; el = el.nextSibling) {
-        all.push(el)
-        if (el.nodeType === 8 && el.nodeValue === signature) {
-            item.push(el)
-            items.push(item)
-            item = []
-        } else {
-            item.push(el)
-        }
-    }
-    items.all = all
-    return items
-}
+
 
 avalon.directive('for', {
     priority: 3,
@@ -101,11 +87,12 @@ avalon.directive('for', {
             }
             return ''
         })
-        
+
         var arr = str.replace(rforPrefix, '').split(' in ')
         var assign = 'var loop = ' + avalon.parseExpr(arr[1]) + ' \n'
-        var assign2 = 'var ' + pre.signature + ' = vnodes[vnodes.length-1]\n'
         var alias = aliasAs ? 'var ' + aliasAs + ' = loop\n' : ''
+        //  var d = cur.signature.split('+')[0]
+        //  var aa = 'var ' + d +'='+avalon.quote(d)+'\n' 
         var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
 
         if (kv.length === 1) {//确保avalon._each的回调有三个参数
@@ -113,77 +100,54 @@ avalon.directive('for', {
         }
         kv.push('traceKey')
         kv.push('__local__')
+        kv.push('vnodes')
         //分别创建isArray, ____n, ___i, ___v, ___trackKey变量
         //https://www.w3.org/TR/css3-animations/#animationiteration
-        pre.$append = assign + assign2 + alias + 'avalon._each(loop,function('
+        pre.$append = assign + alias + 'avalon._each(loop,function('
                 + kv.join(', ') + '){\n'
                 + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
 
     },
-    diff: function (current, previous, steps, __index__) {
-        var cur = current[__index__]
-        var pre = previous[__index__] || {}
-        
-        //2.0.7不需要cur.start
-        var nodes = current.slice(__index__, cur.end)
-        cur.items = nodes.slice(1, -1)
+    diff: function (cur, pre, steps, curRepeat, preRepeat) {
 
-        prepareCompare(cur.items, cur)
+       //将curRepeat转换成一个个可以比较的component,并求得compareText
+        prepareCompare(curRepeat, cur)
         delete pre.forDiff
-      
+         //如果个数与key一致,那么说明此数组没有发生排序,立即返回
         if (cur.compareText === pre.compareText) {
-            avalon.shadowCopy(cur, pre)
+            //avalon.shadowCopy(cur, pre)
             return
-        }else{
-            cur.forDiff = true    
-        }
+        } 
         
-           
+        cur.items = curRepeat
+        cur.forDiff = true
+        curRepeat.prevItems = preRepeat
+
+
         var i, c, p
-        if (!('items' in pre)) {
+        var cache = pre.cache
+        if (!cache) {
             cur.action = 'init'
-            var _items = getRepeatRange(previous, __index__)
-            pre.items = _items.slice(1, -1)
-            pre.components = []
-            pre.repeatCount = pre.items.length
-        }else{
+            prepareCompare(preRepeat, pre)
+        } else {
             cur.action = 'update'
         }
 
-        cur.endRepeat = pre.endRepeat
-        if(!pre.repeatCount){
-            pre.repeatCount = pre.items.length
-        }
-        var n = Math.max(nodes.length - 2, 0) - pre.repeatCount
-
-        //让循环区域在新旧vtree里对齐
-        if (n > 0) {
-            var spliceArgs = [__index__ + 1, 0]
-            for (var i = 0; i < n; i++) {
-                spliceArgs.push(null)
-            }
-            previous.splice.apply(previous, spliceArgs)
-        } else if (n < 0) {
-            previous.splice.apply(previous, [__index__, Math.abs(n)])
-        }
-        if ( cur.action === 'init') {
+        if (!cache) {
             /* eslint-disable no-cond-assign */
             var cache = cur.cache = {}
             for (i = 0; c = cur.components[i]; i++) {
                 /* eslint-enable no-cond-assign */
                 saveInCache(cache, c)
                 c.action = 'enter'
-                if (cur.fixAction) {
-                    c.action = 'move'
-                    c.domIndex = i
-                }
+//                if (cur.fixAction) {
+//                    c.action = 'move'
+//                    c.domIndex = i
+//                }
             }
             cur.removedComponents = {}
             //如果没有孩子也要处理一下
         } else {
-            var cache = pre.cache
-            if (!cache)
-                return
             var newCache = {}
             /* eslint-disable no-cond-assign */
             var fuzzy = []
@@ -220,32 +184,38 @@ avalon.directive('for', {
             }
             cur.removedComponents = dels
         }
-        pre.components.length = 0 //release memory
-
-        cur.prevItems = pre.items
-        cur.steps = steps
-
-        delete pre.cache
-        delete pre.items
+        
+        pre.cache = pre.action = pre.components = 
+                pre.compareText = pre.items = 0
         update(cur, this.update, steps, 'for')
-        return __index__ + nodes.length - 1
+        return true
 
     },
     update: function (startRepeat, vnode, parent) {
-        var endRepeat = vnode.endRepeat
+        console.log('进入for diff')
+        var arr = getEndRepeat(startRepeat)
+        var doms = arr.slice(1, -1)
+        var endRepeat = arr.pop()
+        var items = vnode.items
+        items.endRepeat = endRepeat
+        var prevItems = items.prevItems
+        var DOMs = splitDOMs(doms)
         var key = vnode.signature
-        var DOMs = getDOMs(startRepeat.nextSibling, endRepeat, key)
-        if (DOMs.length === 0 || vnode.action == 'init' ) {
-            DOMs.all.forEach(function (el) {
-                parent.removeChild(el)
-            })
+        var prev = endRepeat.previousSibling
+        while (prev) {//去掉最初位于循环节点中的内容
+            if (prev.nodeType !== 8) {
+                parent.removeChild(prev)
+                console.log(prevItems.pop())
+            } else {
+                if (prev.nodeValue === key ||
+                        prev.nodeValue.indexOf('ms-for:') === 0) {
+                    break
+                }
+            }
+            prev = endRepeat.previousSibling
         }
-        var allEnter = vnode.components.every(function(e){
-           return e.action === 'enter'
-        })
-        if(DOMs.length && DOMs.length ===vnode.components.length && allEnter ){
-           return false
-        }
+        
+       
 
         var fragment = avalon.avalonFragment
 
@@ -277,7 +247,7 @@ avalon.directive('for', {
         for (var i = 0; i < vnode.components.length; i++) {
             var com = vnode.components[i]
             //添加nodes属性并插入节点
-           
+
             if (com.action === 'enter') {
                 if (!domTemplate) {
                     domTemplate = avalon.parseHTML(vnode.template)
@@ -312,19 +282,8 @@ avalon.directive('for', {
                 break
             }
         }
-      
-       
-        var items = vnode.items
-       
-        var steps = vnode.steps
-        var oldCount = steps.count
-        vnode.repeatCount = items.length
-        avalon.diff(items, vnode.prevItems, steps)
 
-        if (steps.count !== oldCount) {
-            patch(entity, items, parent, steps)
-        }
-
+        items.entity = entity
         var cb = avalon.caches[vnode.cid]
         if (cb) {
             cb.call(vnode.vmodel, {
@@ -339,23 +298,41 @@ avalon.directive('for', {
 
 })
 
-function getRepeatRange(nodes, i) {
-    var isBreak = 0, ret = [], node
-    while (node = nodes[i++]) {
-        if (node.type === '#comment') {
+function splitDOMs(nodes, signature) {
+    var items = []
+    var item = []
+    for (var i = 0, el; el = nodes[i++]; ) {
+        if (el.nodeType === 8 && el.nodeValue === signature) {
+            item.push(el)
+            items.push(item)
+            item = []
+        } else {
+            item.push(el)
+        }
+    }
+    return items
+}
+
+function getEndRepeat(node) {
+    var isBreak = 0, ret = []
+    while (node) {
+        if (node.nodeType === 8) {
             if (node.nodeValue.indexOf('ms-for:') === 0) {
-                isBreak++
+                ++isBreak
             } else if (node.nodeValue.indexOf('ms-for-end:') === 0) {
-                isBreak--
+                --isBreak
             }
         }
         ret.push(node)
+        node = node.nextSibling
         if (isBreak === 0) {
             break
         }
     }
     return ret
 }
+
+
 function clearDom(arr) {
     for (var i = 0, el; el = arr[i++]; ) {
         if (el.dom) {

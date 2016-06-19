@@ -25,82 +25,79 @@ function getLength(arr) {
     }
     return len
 }
-function getEndRepeat(node) {
-    var isBreak = 1, ret = []
-    while (node) {
-        if (node.nodeType === 8) {
-            if (node.nodeValue.indexOf('ms-for:') === 0) {
-                ++isBreak
-            } else if (node.nodeValue.indexOf('ms-for-end:') === 0) {
-                --isBreak
-            }
-        }
-        ret.push(node)
-        node = node.nextSibling
-        if (isBreak === 0) {
-            break
-        }
-    }
-    ret.pop()
-    return ret
-}
+// 3 3 1 8 3
+// 1 8
+
+
 function patch(nodes, vnodes, parent, steps) {
+
     var n = nodes.length;
     var vn = vnodes.length;
     var i = 0, v = 0
     while (i < n || v < vn) {
         var node = nodes[i]
         var vnode = vnodes[v]
-        if (!node && vnode) {//如果真实节点不足
+        if (!node && vnode) {//ms-html会导政节点差异
             var el = parent.childNodes[i]
             node = toDom(vnode)
+           
             parent.insertBefore(node, el && el.nextSibling || null)
+
             n++
         }
         if (vnode) {
             //如果类型不一样{nodeName不一样,nodeType肯定不一定}
             if (node.nodeName.toLowerCase() !== vnode.type) {
-                console.log(node.nodeName)
+                //console.log(node.nodeName)
                 if (Array.isArray(vnode)) {//如果遇到循环区域
-                    var arr = getEndRepeat(node)
-                    patch(arr, vnode, parent)
-                    var vlen = getLength(vnode)
-                    if (arr.length !== vlen) {
-                        var detail = Math.abs(arr.length - vlen)
-                        if (arr.length > vlen) {
+                    var curRepeat = vnode
+                    var oldCount = steps.count
+                    var entity = vnode.entity
+                    avalon.diff(curRepeat, curRepeat.prevItems , steps)
+                    curRepeat.prevItems = 0
+                    if (steps.count !== oldCount) {
+                        console.log('开始处理循环区域')
+                        
+                        patch(entity, curRepeat, parent, steps)
+                        console.log('结束处理循环区域')
+                    }
+                    var vlen = getLength(curRepeat)
+                    console.log(vlen, entity.length)
+                    if (entity.length !== vlen) {
+                        var detail = Math.abs(entity.length - vlen)
+                        if (entity.length > vlen) {
                             n -= detail
                         } else {
                             n += detail
                         }
                     }
+                    // n += vlen //真实节点长度添加
                     i += vlen
                     v += 1//跳过数组
+                    console.log("xxxxxx")
+                    continue
                 } else {//如果节点类型不一样
-                    if (vnode.directive !== 'if') {
+                    if (!vnode.notAdd) {
                         var newDom = toDom(vnode)
                         parent.replaceChild(newDom, node)
                         node = newDom
-                    }
 
-                    if (vnode.directive === 'for') {
-                        parent.insertBefore(
-                                document.createComment('ms-for-end:'),
-                                newDom.nextSibling)
-                        n++
                     }
 
                 }
 
             }
-            
-                
+
+
             if (node.nodeType === 1) {
-                
+                console.log(node,vnode)
                 if (false === execHooks(node, vnode, parent, steps, 'change')) {
                     vnode.afterChange && execHooks(node, vnode, parent, {}, 'afterChange')
                 }
-                if (!vnode.skipContent && vnode.nodeType === 1) {
+                if (!vnode.skipContent && !vnode.isVoidTag) {
+                    
                     patch(node.childNodes, vnode.children, node, steps)
+                   
                 }
                 vnode.afterChange && execHooks(node, vnode, parent, steps, 'afterChange')
             } else if (node.nodeType === 3) {
@@ -108,7 +105,12 @@ function patch(nodes, vnodes, parent, steps) {
                     node.nodeValue = vnode.nodeValue
                 }
             } else if (node.nodeType === 8) {
-                // node.nodeValue = vnode.nodeValue
+                var list1 = vnode.items
+                if(list1){
+                    var list2 = list1.prevItems
+                    n += (list1.length - list2.length)
+                }
+                execHooks(node, vnode, parent, steps, 'change')
             }
             i++
             v++
