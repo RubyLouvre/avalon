@@ -85,11 +85,13 @@ avalon.directive('for', {
         pre.change = false
         pre.curRepeat = curRepeat
         pre.preRepeat = preRepeat
-        pre.preItems = pre.preItems || prepareCompare(preRepeat, pre)
         pre.curItems = prepareCompare(curRepeat, cur)
         if (pre.compareText === cur.compareText) {
             //如果个数与key一致,那么说明此数组没有发生排序,立即返回
             return
+        }
+        if (!pre.preItems) {
+            pre.preItems = prepareCompare(preRepeat, pre)
         }
         pre.compareText = cur.compareText
         pre.change = true
@@ -107,6 +109,8 @@ avalon.directive('for', {
 
         var i, c, p
         var cache = pre.cache
+        console.log('-----', cache)
+
         if (!cache) {
             /* eslint-disable no-cond-assign */
             var cache = pre.cache = {}
@@ -120,7 +124,7 @@ avalon.directive('for', {
             var newCache = {}
             /* eslint-disable no-cond-assign */
             var fuzzy = []
-            for (i = 0; c = cur.curItems[i++]; ) {
+            for (i = 0; c = pre.curItems[i++]; ) {
                 var p = isInCache(cache, c.key)
                 if (p) {
                     c.pre = p
@@ -141,6 +145,7 @@ avalon.directive('for', {
                     c.domIndex = p.index
                 } else {
                     c.action = 'enter'
+                    console.log("xxxxx")
                     enterAction(c)
                 }
             }
@@ -161,13 +166,12 @@ avalon.directive('for', {
 
     },
     update: function (dom, vdom, parent) {
-        //  console.log('进入for diff')
 
         var key = vdom.signature
         var range = getEndRepeat(dom)
         var doms = range.slice(1, -1)
         var endRepeat = range.pop()
-        var DOMs = splitDOMs(doms)
+        var DOMs = splitDOMs(doms, key)
         var check = doms[doms.length - 1]
         if (check.nodeValue !== key) {
             do {//去掉最初位于循环节点中的内容
@@ -201,6 +205,7 @@ avalon.directive('for', {
                 el.children.length = 0
             }
         }
+        vdom.removedItems = []
         var insertPoint = dom
         var preRepeat = []
         var fragment = avalon.avalonFragment
@@ -208,6 +213,7 @@ avalon.directive('for', {
         for (var i = 0; i < vdom.curItems.length; i++) {
             var com = vdom.curItems[i]
             var pre = com.pre
+
             var children = pre.children
             if (com.action === 'enter') {
                 if (!domTemplate) {
@@ -227,16 +233,19 @@ avalon.directive('for', {
                 if (hasDeleted[com.index]) {
                     continue
                 }
-                var moveFragment = fragment.cloneNode(false)
                 var cnodes = DOMs[com.domIndex] || []
-                for (var k = 0, cc; cc = cnodes[k++]; ) {
-                    moveFragment.appendChild(cc)
-                }
-                parent.insertBefore(moveFragment, insertPoint.nextSibling)
-                applyEffects(cnodes, children, {
-                    hook: 'onMoveDone',
-                    staggerKey: key + 'move'
-                })
+                console.log(com.index , com.domIndex)
+                //if (com.index !== com.domIndex) {
+                    var moveFragment = fragment.cloneNode(false)
+                    for (var k = 0, cc; cc = cnodes[k++]; ) {
+                        moveFragment.appendChild(cc)
+                    }
+                    parent.insertBefore(moveFragment, insertPoint.nextSibling)
+                    applyEffects(cnodes, children, {
+                        hook: 'onMoveDone',
+                        staggerKey: key + 'move'
+                    })
+                //}
             }
             [].push.apply(preRepeat, children)
             insertPoint = cnodes[cnodes.length - 1]
@@ -246,7 +255,7 @@ avalon.directive('for', {
         }
         var old = vdom.preRepeat
         old.splice(0, old.length);
-        
+
         [].push.apply(old, preRepeat)
 
         var cb = avalon.caches[vdom.cid]
