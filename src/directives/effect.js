@@ -6,14 +6,15 @@ avalon.directive('effect', {
     priority: 5,
     diff: function (cur, pre, steps, name) {
         var curObj = cur[name]
+        curObj = cur.$model || curObj
         if(typeof curObj === 'string'){
             var is = curObj
-            curObj = cur[name] = {
+            curObj = {
                 is: is
             }
            
         }else if (Array.isArray(curObj)) {
-            curObj = cur[name] = avalon.mix.apply({}, curObj)
+            curObj = avalon.mix.apply({}, curObj)
         }
     
         curObj.action = curObj.action || 'enter'
@@ -21,10 +22,11 @@ avalon.directive('effect', {
         if (Object(curObj) === curObj) {
             var preObj = pre[name]
             if ( Object(preObj) !== preObj || diffObj(curObj, preObj ))  {
+                pre[name] = curObj
                 update(cur, this.update, steps, 'effect', 'afterChange')
-
             }
         }
+        delete cur[name]
     },
     update: function (dom, vnode, parent, option) {
         if(dom.animating ){
