@@ -422,20 +422,27 @@ function hasDirective(a) {
                 a.skipContent = true
                 return false
             }
-            
-            var noDirective = true
-            for (var i = 0, el; el = a.children[i++];) {
-                if (hasDirective(el)) {
-                    noDirective = false
-                }
-            }
-
-            if (noDirective && !a.dynamic) {
+            var hasDirective = childrenHasDirective(a.children)
+            if (!hasDirective && !a.dynamic) {
                 a.skipContent = true
                 return false
             }
             return true
+        default:
+            if(Array.isArray(a)){
+                return childrenHasDirective(a)
+            }
     }
+}
+
+function childrenHasDirective(arr){
+    var ret = false
+    for (var i = 0, el; el = arr[i++];) {
+        if (hasDirective(el)) {
+            ret = true
+        }
+    }
+    return ret
 }
 
 function hasDirectiveAttrs(props) {
