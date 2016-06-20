@@ -31,19 +31,18 @@ function diff(current, previous, steps) {
                     current[i+1],previous[i+1])
                 }
                 break
-            default:
-                
-                if (Array.isArray(cur)) {
-                   // diff(cur, pre || emptyArr, steps)
-                } else {
-                    if (!cur.skipAttrs) {
-                        diffProps(cur, pre, steps)
-                    }
-                    if (!cur.skipContent && !cur.isVoidTag ) {
-                        diff(cur.children, pre.children || emptyArr, steps,cur)
-                    }
+            case 1:
+                if (!cur.skipAttrs) {
+                    diffProps(cur, pre, steps)
                 }
-
+                if (!cur.skipContent && !cur.isVoidTag ) {
+                    diff(cur.children, pre.children || emptyArr, steps,cur)
+                }
+                break
+            default: 
+                if(Array.isArray(cur)){
+                   diff(cur, pre, steps)
+                }
                 break
         }
     }
