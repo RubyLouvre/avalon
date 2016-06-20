@@ -1,4 +1,3 @@
-var patch = require('../strategy/patch2')
 var rforPrefix = /ms-for\:\s*/
 var rforLeft = /^\s*\(\s*/
 var rforRight = /\s*\)\s*$/
@@ -6,8 +5,7 @@ var rforSplit = /\s*,\s*/
 var rforAs = /\s+as\s+([$\w]+)/
 var rident = require('../seed/regexp').ident
 var update = require('./_update')
-var Cache = require('../seed/cache')
-var forCache = new Cache(128)
+
 var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
 var reconcile = require('../strategy/reconcile')
 
