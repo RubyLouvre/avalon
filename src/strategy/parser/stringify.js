@@ -15,6 +15,7 @@ avalon.keyMap = keyMap
       nodeValue: 1,
       directive: 1,
       signature: 1,
+      wid: 1,
       cid: 1
   }
 

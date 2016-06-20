@@ -41,7 +41,6 @@ function reconcile(nodes, vnodes, parent) {
         if (!vtype && !type) {
             break
         }
-        console.log(vtype, type)
         if (vtype !== type) {
             if (rforRange.test(vtype) && type !== '3remove') {
                 //如果循环节点与空白节点不在一块,则创建循环节点

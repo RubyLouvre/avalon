@@ -18,6 +18,7 @@ function diff(current, previous, steps) {
     for (var i = 0; i < current.length; i++) {
         var cur = current[i]
         var pre = previous[i] || emptyObj()
+    
         switch (cur.nodeType) {
             case 3:
                 if (!cur.skipContent) {
@@ -39,8 +40,7 @@ function diff(current, previous, steps) {
                         diffProps(cur, pre, steps)
                     }
                     if (!cur.skipContent && !cur.isVoidTag ) {
-                        
-                        diff(cur.children, pre.children || emptyArr, steps)
+                        diff(cur.children, pre.children || emptyArr, steps,cur)
                     }
                 }
 
