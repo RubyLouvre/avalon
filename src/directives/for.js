@@ -48,7 +48,6 @@ function iterator(index, item, vars, fn, k1, k2, repeat, isArray) {
 }
 
 
-
 avalon.directive('for', {
     priority: 3,
     parse: function (cur, pre, binding) {
@@ -82,10 +81,8 @@ avalon.directive('for', {
         //将curRepeat转换成一个个可以比较的component,并求得compareText
         preRepeat = preRepeat || []
         //preRepeat不为空时
-        pre.change = false
-        pre.curRepeat = curRepeat
         pre.preRepeat = preRepeat
-        pre.curItems = prepareCompare(curRepeat, cur)
+        curItems = prepareCompare(curRepeat, cur)
         if (pre.compareText === cur.compareText) {
             //如果个数与key一致,那么说明此数组没有发生排序,立即返回
             return
@@ -94,29 +91,35 @@ avalon.directive('for', {
             pre.preItems = prepareCompare(preRepeat, pre)
         }
         pre.compareText = cur.compareText
-        pre.change = true
         //for指令只做添加删除操作
         var template = cur.template + '<!--' + cur.signature + '-->'
-        var vdomTemplate = avalon.lexer(template)
-        avalon.speedUp(vdomTemplate)
+        var cache = pre.cache
+        var vdomTemplate, i, c, p
+        
         function enterAction(c) {
-            c.action = 'enter'
-            c.pre = {
+            if(!vdomTemplate){
+               vdomTemplate = avalon.lexer(template)
+               avalon.speedUp(vdomTemplate)
+            }
+            return {
+                action: 'enter',
                 children: avalon.mix(true, [], vdomTemplate),
                 key: c.key
             }
         }
 
-        var i, c, p
-        var cache = pre.cache
-        console.log('-----', cache)
+        
 
         if (!cache) {
             /* eslint-disable no-cond-assign */
             var cache = pre.cache = {}
-            for (i = 0; c = pre.curItems[i]; i++) {
-                saveInCache(cache, c)
-                enterAction(c)
+            pre.preItems.length = 0
+            for (i = 0; c = curItems[i]; i++) {
+                 var p = enterAction(c)
+                 pre.preItems.push(p)
+                 p.action = 'enter'
+                 p.index = i
+                 saveInCache(cache, p)
             }
             pre.removedItems = {}
             /* eslint-enable no-cond-assign */
@@ -124,31 +127,36 @@ avalon.directive('for', {
             var newCache = {}
             /* eslint-disable no-cond-assign */
             var fuzzy = []
-            for (i = 0; c = pre.curItems[i++]; ) {
+            for (i = 0; c = curItems[i++]; ) {
                 var p = isInCache(cache, c.key)
                 if (p) {
-                    c.pre = p
-                    c.action = 'move'
-                    c.domIndex = p.index
-
+                    p.action = 'move'
+                    p.oldIndex = p.index
+                    p.index = c.index
+                    saveInCache(newCache, p)
                 } else {
                     //如果找不到就进行模糊搜索
                     fuzzy.push(c)
                 }
-                saveInCache(newCache, c)
+                
             }
             for (var i = 0, c; c = fuzzy[i++]; ) {
                 p = fuzzyMatchCache(cache, c.key)
                 if (p) {
-                    c.pre = p
-                    c.action = 'move'
-                    c.domIndex = p.index
+                    p.action = 'move'
+                    p.oldIndex = p.index
+                    p.index = c.index
                 } else {
-                    c.action = 'enter'
-                    console.log("xxxxx")
-                    enterAction(c)
+                    p = enterAction(c)
+                    p.index = c.index
+                    pre.preItems.push(p)
                 }
+                saveInCache(newCache, p)
             }
+            pre.preItems.sort(function(a, b){
+               return a.index > b.index
+            })
+          
             /* eslint-enable no-cond-assign */
             pre.cache = newCache
             var dels = []
@@ -160,7 +168,10 @@ avalon.directive('for', {
             }
             cur.removedItems = dels
         }
-
+        preRepeat.length = 0
+        pre.preItems.forEach(function(el){
+            Array.prototype.push.apply(preRepeat, el.children) 
+        })
         update(pre, this.update, steps, 'for')
         return true
 
@@ -207,14 +218,12 @@ avalon.directive('for', {
         }
         vdom.removedItems = []
         var insertPoint = dom
-        var preRepeat = []
         var fragment = avalon.avalonFragment
         var domTemplate
-        for (var i = 0; i < vdom.curItems.length; i++) {
-            var com = vdom.curItems[i]
-            var pre = com.pre
-
-            var children = pre.children
+        for (var i = 0; i < vdom.preItems.length; i++) {
+            var com = vdom.preItems[i]
+            
+            var children = com.children
             if (com.action === 'enter') {
                 if (!domTemplate) {
                     //创建用于拷贝的数据,包括虚拟DOM与真实DOM
@@ -223,19 +232,18 @@ avalon.directive('for', {
                 var newFragment = domTemplate.cloneNode(true)
                 var cnodes = avalon.slice(newFragment.childNodes)
                 reconcile(cnodes, children)//关联新的虚拟DOM与真实DOM
-
                 parent.insertBefore(newFragment, insertPoint.nextSibling)
                 applyEffects(cnodes, children, {
                     hook: 'onEnterDone',
                     staggerKey: key + 'enter'
                 })
             } else if (com.action === 'move') {
-                if (hasDeleted[com.index]) {
+                if (hasDeleted[com.oldIndex]) {
                     continue
                 }
-                var cnodes = DOMs[com.domIndex] || []
-                console.log(com.index , com.domIndex)
-                //if (com.index !== com.domIndex) {
+                var cnodes = DOMs[com.oldIndex] 
+      
+                if (com.index !== com.oldIndex) {
                     var moveFragment = fragment.cloneNode(false)
                     for (var k = 0, cc; cc = cnodes[k++]; ) {
                         moveFragment.appendChild(cc)
@@ -245,19 +253,16 @@ avalon.directive('for', {
                         hook: 'onMoveDone',
                         staggerKey: key + 'move'
                     })
-                //}
+                }
             }
-            [].push.apply(preRepeat, children)
+            
             insertPoint = cnodes[cnodes.length - 1]
             if (!insertPoint) {
                 break
             }
         }
-        var old = vdom.preRepeat
-        old.splice(0, old.length);
-
-        [].push.apply(old, preRepeat)
-
+       
+  
         var cb = avalon.caches[vdom.cid]
         if (cb) {
             cb.call(vdom.vmodel, {
