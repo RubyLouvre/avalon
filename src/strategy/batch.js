@@ -31,14 +31,10 @@ function batchUpdate(id) {
     var vtree = scope.render(scope.synth || scope.vmodel, scope.local)
     if (!scope.isMount && oldTree) {
         //在最开始时,替换作用域的所有节点,确保虚拟DOM与真实DOM是对齐的
-        //  var dom2 = avalon.vdomAdaptor(oldTree[0],'toDOM')
-        //  dom.parentNode.replaceChild(dom2, dom)
-        //  dom = scope.dom = dom2
         reconcile([dom], oldTree, dom.parentNode)
         scope.isMount = 1
     }
     avalon.diff(vtree, oldTree, steps)
-    patch([dom], vtree, dom.parentNode, steps)
     if (scope.isMount === 1) {
         var vm = scope.vmodel
         var events = vm.$events["onReady"]
@@ -50,7 +46,6 @@ function batchUpdate(id) {
     }
 
     steps.count = 0
-    dom.vtree = vtree
     var index = needRenderIds.indexOf(renderingID)
     renderingID = 0
     if (index > -1) {
