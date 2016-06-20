@@ -9,6 +9,8 @@ var update = require('./_update')
 var Cache = require('../seed/cache')
 var forCache = new Cache(128)
 var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
+var reconcile = require('../strategy/reconcile')
+
 function getTraceKey(item) {
     var type = typeof item
     return item && type === 'object' ? item.$hashcode : type + ':' + item
@@ -33,6 +35,7 @@ avalon._each = function (obj, fn, local, vnodes) {
         }
     }
 }
+
 function iterator(index, item, vars, fn, k1, k2, repeat, isArray) {
     var key = isArray ? getTraceKey(item) : index
     var local = {}
@@ -44,35 +47,6 @@ function iterator(index, item, vars, fn, k1, k2, repeat, isArray) {
         }
     }
     fn(index, item, key, local, repeat)
-}
-
-
-//将要循环的节点根据锚点元素再分成一个个更大的单元,用于diff
-function prepareCompare(nodes, cur) {
-    var splitText = cur.signature
-    var items = []
-    var keys = []
-    var com = {
-        children: []
-    }
-    
-        for (var i = 0, el; el = nodes[i]; i++) {
-            if (el.nodeType === 8 && el.nodeValue === splitText) {
-                com.children.push(el)
-                com.key = el.key
-                keys.push(el.key)
-                com.index = items.length
-                items.push(com)
-                com = {
-                    children: []
-                }
-            } else {
-                com.children.push(el)
-            }
-        }
-   
-    cur.components = items
-    cur.compareText = keys.length + '|' + keys.join(';;')
 }
 
 
@@ -93,8 +67,6 @@ avalon.directive('for', {
         var arr = str.replace(rforPrefix, '').split(' in ')
         var assign = 'var loop = ' + avalon.parseExpr(arr[1]) + ' \n'
         var alias = aliasAs ? 'var ' + aliasAs + ' = loop\n' : ''
-        //  var d = cur.signature.split('+')[0]
-        //  var aa = 'var ' + d +'='+avalon.quote(d)+'\n' 
         var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
 
         if (kv.length === 1) {//确保avalon._each的回调有三个参数
@@ -103,8 +75,6 @@ avalon.directive('for', {
         kv.push('traceKey')
         kv.push('__local__')
         kv.push('vnodes')
-        //分别创建isArray, ____n, ___i, ___v, ___trackKey变量
-        //https://www.w3.org/TR/css3-animations/#animationiteration
         pre.$append = assign + alias + 'avalon._each(loop,function('
                 + kv.join(', ') + '){\n'
                 + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
@@ -114,66 +84,53 @@ avalon.directive('for', {
         //将curRepeat转换成一个个可以比较的component,并求得compareText
         preRepeat = preRepeat || []
         //preRepeat不为空时
-
-        prepareCompare(curRepeat, cur)
-        delete pre.forDiff
-        //如果个数与key一致,那么说明此数组没有发生排序,立即返回
-        if (cur.compareText === pre.compareText) {
-            avalon.shadowCopy(cur, pre)
+        pre.change = false
+        pre.curRepeat = curRepeat
+        pre.preRepeat = preRepeat
+        pre.preItems = pre.preItems || prepareCompare(preRepeat, pre)
+        pre.curItems = prepareCompare(curRepeat, cur)
+        if (pre.compareText === cur.compareText) {
+            //如果个数与key一致,那么说明此数组没有发生排序,立即返回
             return
         }
-
-        cur.items = curRepeat
-        cur.forDiff = true
-        curRepeat.prevItems = preRepeat
-        curRepeat.forDiff = true
-//        var n = preRepeat.length
-//        if (n === 0) {
-//            curRepeat.needRemoveCount = 0
-//        } else {
-//            if (curRepeat[n - 1].signature !== cur.signature) {
-//                curRepeat.needRemoveCount = n
-//            } else {
-//                curRepeat.needRemoveCount = 0
-//            }
-//        }
-
+        pre.compareText = cur.compareText
+        pre.change = true
+        //for指令只做添加删除操作
+        var template = cur.template + '<!--' + cur.signature + '-->'
+        var vdomTemplate = avalon.lexer(template)
+        avalon.speedUp(vdomTemplate)
+        function enterAction(c) {
+            c.action = 'enter'
+            c.pre = {
+                children: avalon.mix(true, [], vdomTemplate),
+                key: c.key
+            }
+        }
 
         var i, c, p
         var cache = pre.cache
         if (!cache) {
-            cur.action = 'init'
-            prepareCompare(preRepeat, pre)
-        } else {
-            cur.action = 'update'
-        }
-
-        if (!cache) {
             /* eslint-disable no-cond-assign */
-            var cache = cur.cache = {}
-            for (i = 0; c = cur.components[i]; i++) {
-                /* eslint-enable no-cond-assign */
+            var cache = pre.cache = {}
+            for (i = 0; c = pre.curItems[i]; i++) {
                 saveInCache(cache, c)
-                c.action = 'enter'
-//                if (cur.fixAction) {
-//                    c.action = 'move'
-//                    c.domIndex = i
-//                }
+                enterAction(c)
             }
-            cur.removedComponents = {}
-            //如果没有孩子也要处理一下
+            pre.removedItems = {}
+            /* eslint-enable no-cond-assign */
         } else {
             var newCache = {}
             /* eslint-disable no-cond-assign */
             var fuzzy = []
-            for (i = 0; c = cur.components[i++]; ) {
+            for (i = 0; c = cur.curItems[i++]; ) {
                 var p = isInCache(cache, c.key)
                 if (p) {
+                    c.pre = p
                     c.action = 'move'
-                    clearDom(p.children)
                     c.domIndex = p.index
 
                 } else {
+                    //如果找不到就进行模糊搜索
                     fuzzy.push(c)
                 }
                 saveInCache(newCache, c)
@@ -181,15 +138,16 @@ avalon.directive('for', {
             for (var i = 0, c; c = fuzzy[i++]; ) {
                 p = fuzzyMatchCache(cache, c.key)
                 if (p) {
+                    c.pre = p
                     c.action = 'move'
-                    clearDom(p.children)
                     c.domIndex = p.index
                 } else {
                     c.action = 'enter'
+                    enterAction(c)
                 }
             }
             /* eslint-enable no-cond-assign */
-            cur.cache = newCache
+            pre.cache = newCache
             var dels = []
             for (var i in cache) {
                 var c = cache[i]
@@ -197,47 +155,37 @@ avalon.directive('for', {
                 if (c.arr)
                     [].push.apply(dels, c.arr)
             }
-            cur.removedComponents = dels
+            cur.removedItems = dels
         }
 
-        pre.cache = pre.action = pre.components =
-                pre.compareText = pre.items = 0
-        update(cur, this.update, steps, 'for')
+        update(pre, this.update, steps, 'for')
         return true
 
     },
-    update: function (startRepeat, vnode, parent) {
-        console.log('进入for diff')
-        var arr = getEndRepeat(startRepeat)
+    update: function (dom, vdom, parent) {
+        //  console.log('进入for diff')
 
-        var doms = arr.slice(1, -1)
-        var endRepeat = arr.pop()
-        var items = vnode.items
-        items.endRepeat = endRepeat
-        var prevItems = items.prevItems
+        var key = vdom.signature
+        var range = getEndRepeat(dom)
+        var doms = range.slice(1, -1)
+        var endRepeat = range.pop()
         var DOMs = splitDOMs(doms)
-        var key = vnode.signature
         var check = doms[doms.length - 1]
         if (check.nodeValue !== key) {
             do {//去掉最初位于循环节点中的内容
                 var prev = endRepeat.previousSibling
-                if (prev === startRepeat || prev.nodeValue === key) {
+                if (prev === dom || prev.nodeValue === key) {
                     break
                 }
                 if (prev) {
                     parent.removeChild(prev)
-                    prevItems.pop()
                 } else {
                     break
                 }
             } while (true);
         }
-
-        var fragment = avalon.avalonFragment
-
-        var domTemplate
         var hasDeleted = {}
-        for (var i = 0, el; el = vnode.removedComponents[i++]; ) {
+        for (var i = 0, el; el = vdom.removedItems[i++]; ) {
             hasDeleted[el.index] = true
             var removeNodes = DOMs[el.index]
             if (removeNodes) {
@@ -255,25 +203,25 @@ avalon.directive('for', {
                 el.children.length = 0
             }
         }
-
-        delete vnode.removedComponents
-
-        var insertPoint = startRepeat
-        var entity = []
-        for (var i = 0; i < vnode.components.length; i++) {
-            var com = vnode.components[i]
-            //添加nodes属性并插入节点
-
+        var insertPoint = dom
+        var preRepeat = []
+        var fragment = avalon.avalonFragment
+        var domTemplate
+        for (var i = 0; i < vdom.curItems.length; i++) {
+            var com = vdom.curItems[i]
+            var pre = com.pre
+            var children = pre.children
             if (com.action === 'enter') {
                 if (!domTemplate) {
-                    domTemplate = avalon.parseHTML(vnode.template)
+                    //创建用于拷贝的数据,包括虚拟DOM与真实DOM
+                    domTemplate = avalon.vdomAdaptor(children, 'toDOM')
                 }
                 var newFragment = domTemplate.cloneNode(true)
-                newFragment.appendChild(document.createComment(vnode.signature))
                 var cnodes = avalon.slice(newFragment.childNodes)
+                reconcile(cnodes, children)//关联新的虚拟DOM与真实DOM
 
                 parent.insertBefore(newFragment, insertPoint.nextSibling)
-                applyEffects(cnodes, com.children, {
+                applyEffects(cnodes, children, {
                     hook: 'onEnterDone',
                     staggerKey: key + 'enter'
                 })
@@ -287,30 +235,31 @@ avalon.directive('for', {
                     moveFragment.appendChild(cc)
                 }
                 parent.insertBefore(moveFragment, insertPoint.nextSibling)
-                applyEffects(cnodes, com.children, {
+                applyEffects(cnodes, children, {
                     hook: 'onMoveDone',
                     staggerKey: key + 'move'
                 })
             }
-            entity.push.apply(entity, cnodes)
+            [].push.apply(preRepeat, children)
             insertPoint = cnodes[cnodes.length - 1]
             if (!insertPoint) {
                 break
             }
         }
+        var old = vdom.preRepeat
+        old.splice(0, old.length);
+        
+        [].push.apply(old, preRepeat)
 
-        items.entity = entity
-        console.log(entity)
-        var cb = avalon.caches[vnode.cid]
+        var cb = avalon.caches[vdom.cid]
         if (cb) {
-            cb.call(vnode.vmodel, {
+            cb.call(vdom.vmodel, {
                 type: 'rendered',
-                target: startRepeat,
+                target: dom,
                 endRepeat: endRepeat,
-                signature: vnode.signature
+                signature: key
             })
         }
-        return false
     }
 
 })
@@ -329,6 +278,35 @@ function splitDOMs(nodes, signature) {
     }
     return items
 }
+
+//将要循环的节点根据锚点元素再分成一个个更大的单元,用于diff
+function prepareCompare(nodes, cur) {
+    var splitText = cur.signature
+    var items = []
+    var keys = []
+    var com = {
+        children: []
+    }
+
+    for (var i = 0, el; el = nodes[i]; i++) {
+        if (el.nodeType === 8 && el.nodeValue === splitText) {
+            com.children.push(el)
+            com.key = el.key
+            keys.push(el.key)
+            com.index = items.length
+            items.push(com)
+            com = {
+                children: []
+            }
+        } else {
+            com.children.push(el)
+        }
+    }
+
+    cur.compareText = keys.length + '|' + keys.join(';;')
+    return items
+}
+
 
 function getEndRepeat(node) {
     var isBreak = 0, ret = []
@@ -349,17 +327,6 @@ function getEndRepeat(node) {
     return ret
 }
 
-
-function clearDom(arr) {
-    for (var i = 0, el; el = arr[i++]; ) {
-        if (el.dom) {
-            el.dom = null
-        }
-        if (el.children) {
-            clearDom(el.children)
-        }
-    }
-}
 
 var rfuzzy = /^(string|number|boolean)/
 var rkfuzzy = /^_*(string|number|boolean)/
