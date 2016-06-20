@@ -30,8 +30,8 @@ avalon.directive('attr', {
             if (pre.changeAttr) {
                 update(pre, this.update, steps, 'attr' )
             }
-            delete cur[name]//释放内存
         }
+        delete cur[name]//释放内存
     },
     //dom, vnode
     update: attrUpdate

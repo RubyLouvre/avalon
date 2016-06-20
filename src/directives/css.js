@@ -7,31 +7,31 @@ avalon.directive('css', {
         var p = pre[name]
         if (Object(a) === a) {
             
-            a = a.$model || a
-            if (Array.isArray(a)) {
-                a = cur[name] = avalon.mix.apply({}, a)
+            a = a.$model || a//安全的遍历VBscript
+            if (Array.isArray(a)) {//转换成对象
+                a = avalon.mix.apply({}, a)
             }
-            if (typeof p !== 'object') {
-                cur.changeStyle = a
+            if (typeof p !== 'object') {//如果一开始为空
+                pre.changeStyle = pre[name] = a
             } else {
                 var patch = {}
                 var hasChange = false
-                for (var i in a) {
+                for (var i in a) {//diff差异点
                     if (a[i] !== p[i]) {
                         hasChange = true
                         patch[i] = a[i]
                     }
                 }
                 if (hasChange) {
-                    cur.changeStyle = patch
+                    pre[name] = a
+                    pre.changeStyle = patch
                 }
             }
-            if (cur.changeStyle) {
-                update(cur, this.update, steps, 'css')
+            if (pre.changeStyle) {
+                update(pre, this.update, steps, 'css')
             }
-        } else {
-            cur[name] = p
         }
+        delete cur[name]//释放内存
     },
     update: function (node, vnode) {
         var change = vnode.changeStyle
