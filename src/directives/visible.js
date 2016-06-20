@@ -26,44 +26,44 @@ avalon.parseDisplay = parseDisplay
 
 avalon.directive('visible', {
     diff: function (cur, pre, steps, name) {
-        var c = cur[name] = !!cur[name]
-        cur.displayValue = pre.displayValue
-        if (c !== pre.props[name]) {
-            update(cur, this.update, steps, 'visible' )
+        var c = !!cur[name]
+        if (c !== pre[name]) {
+            pre[name] = c
+            update(pre, this.update, steps, 'visible' )
         }
     },
-    update: function (node, vnode) { 
-        if(!node || node.nodeType !== 1){
+    update: function (dom, vdom) { 
+        if(!dom || dom.nodeType !== 1){
             return
         }
-        var show = vnode['ms-visible']
-        var display = node.style.display
+        var show = vdom['ms-visible']
+        var display = dom.style.display
         var value
         if (show) {
             if (display === none) {
-                value = vnode.displayValue
+                value = vdom.displayValue
                 if (!value) {
-                    node.style.display = ''
+                    dom.style.display = ''
                 }
             }
-            if (node.style.display === '' && avalon(node).css('display') === none &&
+            if (dom.style.display === '' && avalon(dom).css('display') === none &&
                     // fix firefox BUG,必须挂到页面上
-                    avalon.contains(node.ownerDocument, node)) {
+                    avalon.contains(dom.ownerDocument, dom)) {
 
-                value = parseDisplay(node)
+                value = parseDisplay(dom)
             }
         } else {
             if (display !== none) {
                 value = none
-                vnode.displayValue = display
+                vdom.displayValue = display
             }
         }
         function cb(){
            if (value !== void 0) {
-              node.style.display = value
+              dom.style.display = value
            }
         }
-        avalon.applyEffect(node, vnode, {
+        avalon.applyEffect(dom, vdom, {
             hook: show ? 'onEnterDone': 'onLeaveDone',
             cb: cb
         })

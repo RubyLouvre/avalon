@@ -10,9 +10,9 @@ avalon.directive('text', {
         cur[binding.name] = val
     },
     diff: function (cur, pre, steps, name) {
-        var curValue = cur[name]
-        var preValue = pre[name]
-        if (curValue !== preValue ) {
+        var curValue = cur[name]+''
+        if (curValue !== pre[name] ) {
+            pre[name] = curValue
             var child = pre.children[0]
             child.nodeValue = curValue
             update(child, this.update, steps, 'text')

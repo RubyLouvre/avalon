@@ -3,8 +3,9 @@ var update = require('./_update')
 avalon.directive('expr', {
     parse: avalon.noop,
     diff: function (cur, pre, steps) {
-        if (cur.nodeValue !== pre.nodeValue) {
-            pre.nodeValue = cur.nodeValue
+        var curValue = cur.nodeValue+''
+        if (curValue !== pre.nodeValue) {
+            pre.nodeValue = curValue
             update(pre, this.update, steps, 'expr')
         }
     },
