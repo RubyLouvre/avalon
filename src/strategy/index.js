@@ -1,5 +1,5 @@
 
-avalon.lexer = require('./lexer2')
+avalon.lexer = require('./lexer')
 avalon.diff = require('./diff')
 avalon.batch = require('./batch')
 // dispatch与patch 为内置模块
