@@ -17,13 +17,11 @@ avalon.directive('if', {
         var show = vdom['ms-if']
         if (show) {
             //要移除元素节点,在对应位置上插入注释节点
+            vdom.nodeType = 1
+            var comment = vdom.comment
+            comment.parentNode.replaceChild(dom, comment)
             avalon.applyEffect(dom, vdom, {
-                hook: 'onEnterDone',
-                cb: function () {
-                    vdom.nodeType = 1
-                    var comment = vdom.comment
-                    comment.parentNode.replaceChild(dom, comment)
-                }
+                hook: 'onEnterDone'
             })
         } else {
             avalon.applyEffect(dom, vdom, {

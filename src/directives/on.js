@@ -26,7 +26,6 @@ avalon.directive('on', {
         var fn = '(function(){\n' +
                 'var fn610 = ' +
                 avalon.parseExpr(binding, 'on') +
-                
                 '\nfn610.uuid =' + quoted + ';\nreturn fn610})()'
         cur.vmodel = '__vmodel__'
         cur.local = '__local__'
@@ -39,25 +38,43 @@ avalon.directive('on', {
         var type = uuid.split('_').shift()
         var search = type.slice(1) + ':' + uuid
         var preFn = pre[name]
-        if(!preFn || preFn.uuid !== uuid ){
-            cur.addEvents = cur.addEvents || {}
-            cur.addEvents[search] = fn
+        var hasChange = false
+        if (!preFn || preFn.uuid !== uuid) {
+            pre[name] = fn
+            pre.addEvents = pre.addEvents || {}
+            pre.addEvents[search] = fn
             avalon.eventListeners.uuid = fn
+            hasChange = true
         }
-        update(cur, this.update, steps, 'on')
-
+        if (diffObj(pre.local|| {}, cur.local)) {
+            hasChange = true
+        }
+        if (hasChange) {
+            pre.local = cur.local
+            pre.vmodel = cur.vmodel
+            update(pre, this.update, steps, 'on')
+        }
     },
-    update: function (node, vnode) {
-        if (!node || node.nodeType > 1) //在循环绑定中，这里为null
+    update: function (dom, vdom) {
+        if (!dom || dom.nodeType > 1) //在循环绑定中，这里为null
             return
         var key, type, listener
-        node._ms_context_ = vnode.vmodel
-        node._ms_local = vnode.local
-        for (key in vnode.addEvents) {
+        dom._ms_context_ = vdom.vmodel
+        dom._ms_local = vdom.local
+        for (key in vdom.addEvents) {
             type = key.split(':').shift()
-            listener = vnode.addEvents[key]
-            avalon.bind(node, type, listener)
+            listener = vdom.addEvents[key]
+            avalon.bind(dom, type, listener)
         }
-        delete vnode.addEvents
+        delete vdom.addEvents
     }
 })
+
+function diffObj(a, b) {
+    for (var i in a) {//diff差异点
+        if (a[i] !== b[i]) {
+            return true
+        }
+    }
+    return false
+}
