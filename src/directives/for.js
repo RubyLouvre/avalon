@@ -55,7 +55,7 @@ function prepareCompare(nodes, cur) {
     var com = {
         children: []
     }
-    try {
+    
         for (var i = 0, el; el = nodes[i]; i++) {
             if (el.nodeType === 8 && el.nodeValue === splitText) {
                 com.children.push(el)
@@ -70,11 +70,7 @@ function prepareCompare(nodes, cur) {
                 com.children.push(el)
             }
         }
-    } catch (e) {
-        console.log(nodes)
-        console.log(cur)
-        console.log('----')
-    }
+   
     cur.components = items
     cur.compareText = keys.length + '|' + keys.join(';;')
 }
@@ -123,14 +119,14 @@ avalon.directive('for', {
         delete pre.forDiff
         //如果个数与key一致,那么说明此数组没有发生排序,立即返回
         if (cur.compareText === pre.compareText) {
-            //avalon.shadowCopy(cur, pre)
+            avalon.shadowCopy(cur, pre)
             return
         }
 
         cur.items = curRepeat
         cur.forDiff = true
         curRepeat.prevItems = preRepeat
-
+        curRepeat.forDiff = true
 //        var n = preRepeat.length
 //        if (n === 0) {
 //            curRepeat.needRemoveCount = 0
@@ -304,6 +300,7 @@ avalon.directive('for', {
         }
 
         items.entity = entity
+        console.log(entity)
         var cb = avalon.caches[vnode.cid]
         if (cb) {
             cb.call(vnode.vmodel, {
