@@ -4,9 +4,11 @@ avalon.directive('expr', {
     parse: avalon.noop,
     diff: function (cur, pre, steps) {
         if (cur.nodeValue !== pre.nodeValue) {
-            cur.changeText = true
-            update(cur, this.update, steps, 'expr')
+            pre.nodeValue = cur.nodeValue
+            update(pre, this.update, steps, 'expr')
         }
     },
-    update: function(){}
+    update: function(dom, vdom){
+        dom.nodeValue = vdom.nodeValue
+    }
 })

@@ -7,32 +7,31 @@ avalon.directive('attr', {
         var a = cur[name]
         var p = pre[name]
         if (a && typeof a === 'object') {
-             a = a.$model || a
-            if (Array.isArray(a)) {
-                a = cur[name] = avalon.mix.apply({}, a)
+             a = a.$model || a //安全的遍历VBscript
+            if (Array.isArray(a)) {//转换成对象
+                a = avalon.mix.apply({}, a)
             }
-            if (typeof p !== 'object') {
-                cur.changeAttr = a
+            if (typeof p !== 'object') {//如果一开始为空
+                pre.changeAttr = pre[name] = a
             } else {
                 var patch = {}
                 var hasChange = false
-                for (var i in a) {
+                for (var i in a) {//diff差异点
                     if (a[i] !== p[i]) {
                         hasChange = true
                         patch[i] = a[i]
                     }
                 }
                 if (hasChange) {
-                    cur.changeAttr = patch
+                    pre[name] = a
+                    pre.changeAttr = patch
                 }
             }
-            if (cur.changeAttr) {
-                update(cur, this.update, steps, 'attr' )
+            if (pre.changeAttr) {
+                update(pre, this.update, steps, 'attr' )
             }
-        } else {
-            cur[name] = p
+            delete cur[name]//释放内存
         }
-        pre.changeAttr = null
     },
     //dom, vnode
     update: attrUpdate
