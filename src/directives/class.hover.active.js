@@ -37,17 +37,14 @@ avalon.directive('class', {
                 classEvent.mouseenter = activateClass
                 classEvent.mouseleave = abandonClass
             } else if (type === 'active') {//在获得焦点时切换类名
-                cur.props.tabindex = cur.props.tabindex || -1
-                classEvent.tabIndex = cur.props.tabindex
+                pre.props.tabindex = cur.props.tabindex || -1
+                classEvent.tabIndex = pre.props.tabindex
                 classEvent.mousedown = activateClass
                 classEvent.mouseup = abandonClass
                 classEvent.mouseleave = abandonClass
             }
-            cur.classEvent = classEvent
-        } else {
-            cur.classEvent = pre.classEvent
+            pre.classEvent = classEvent
         }
-        pre.classEvent = null
 
         var className = classNames(curValue)
         var uniq = {}, arr = []
@@ -58,11 +55,12 @@ avalon.directive('class', {
             }
         })
         
-        className = cur[name] = arr.join(' ')
+        className = arr.join(' ')
        
         if (preValue !== className) {
-            cur['change-' + type] = className
-            update(cur, this.update, steps, type)
+            pre[name] = className
+            pre['change-' + type] = className
+            update(pre, this.update, steps, type)
         }
     },
     update: function (node, vnode) {

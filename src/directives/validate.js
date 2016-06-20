@@ -6,19 +6,19 @@ var dir = avalon.directive('validate', {
         var validator = cur[name]
         var p = pre[name]
         if (p && p.onError && p.addField) {
-            cur[name] = p
+            return
         } else if (Object(validator) === validator) {
             if(validator.$id){//转换为普通对象
                 validator = validator.$model
             }
-            cur[name] = validator
+            pre[name] = validator
             for(var name in dir.defaults){
                 if(!validator.hasOwnProperty(name)){
                     validator[name] = dir.defaults[name]
                 }
             }
             validator.fields = validator.fields || []
-            update(cur, this.update, steps, 'validate' )
+            update(pre, this.update, steps, 'validate' )
 
         }
     },

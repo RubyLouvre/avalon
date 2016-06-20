@@ -4,8 +4,7 @@ var update = require('./_update')
 avalon.directive('text', {
     parse: function (cur, pre, binding) {
         pre.children = [{nodeType:3,type:"#text",dynamic: true, nodeValue:"dynamic"}]
-        cur.children = '[{nodeType:3,type:"#text",nodeValue:""}]'
-        cur.skipContent = true
+        cur.children = '[]'
         var val = rident.test(binding.expr) ? binding.expr : avalon.parseExpr(binding)
         cur[binding.name] = val
     },

@@ -5,7 +5,9 @@ avalon.directive('rules', {
            cur[binding.name] = avalon.parseExpr(binding)
         }
     },
-    diff: avalon.noop
+    diff: function(cur, pre, steps, name){
+        pre[name] = cur[name]
+    }
 })
 function isRegExp(value) {
     return avalon.type(value) === 'regexp'
