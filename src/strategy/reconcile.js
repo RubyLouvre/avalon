@@ -41,6 +41,7 @@ function reconcile(nodes, vnodes, parent) {
         if (!vtype && !type) {
             break
         }
+        console.log(vtype, type)
         if (vtype !== type) {
             if (rforRange.test(vtype) && type !== '3remove') {
                 //如果循环节点与空白节点不在一块,则创建循环节点
@@ -65,10 +66,10 @@ function reconcile(nodes, vnodes, parent) {
                 parent.removeChild(el)
                 n--
                 continue
-            } else if (vtype.charAt(0) + type.charAt(0) === '11') {
-                //移除IE下产生的奇怪元素
-                parent.removeChild(el)
-                n--
+            } else  {//ms-html,ms-text
+                var vv = vnodes[index]
+                var dom = avalon.vdomAdaptor(vv, 'toDOM')
+                el.parentNode.replaceChild(dom, el)
                 continue
             }
         } else {
