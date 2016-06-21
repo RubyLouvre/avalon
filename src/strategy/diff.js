@@ -14,40 +14,40 @@ var emptyObj = function () {
 var directives = avalon.directives
 var rbinding = require('../seed/regexp').binding
 
-function diff(current, previous) {
-    for (var i = 0; i < current.length; i++) {
-        var cur = current[i]
-        var pre = previous[i] || emptyObj()
+function diff(copys, sources) {
+    for (var i = 0; i < copys.length; i++) {
+        var copy = copys[i]
+        var src = sources[i] || emptyObj()
     
-        switch (cur.nodeType) {
+        switch (copy.nodeType) {
             case 3:
-                if (!cur.skipContent) {
-                    directives.expr.diff(cur, pre)
+                if (!copy.skipContent) {
+                    directives.expr.diff(copy, src)
                 }
                 break
             case 8:
-                if (cur.directive) {
-                    directives[cur.directive].diff(cur, pre,
-                    current[i+1],previous[i+1],previous[i+2]) 
+                if (copy.directive) {
+                    directives[copy.directive].diff(copy, src,
+                    copys[i+1],sources[i+1],sources[i+2]) 
                 }
-                if(pre.afterChange){
-                    execHooks(pre, pre.afterChange)
+                if(src.afterChange){
+                    execHooks(src, src.afterChange)
                 }
                 break
             case 1:
-                if (!cur.skipAttrs) {
-                    diffProps(cur, pre)
+                if (!copy.skipAttrs) {
+                    diffProps(copy, src)
                 }
-                if (!cur.skipContent && !cur.isVoidTag ) {
-                    diff(cur.children, pre.children || emptyArr, cur)
+                if (!copy.skipContent && !copy.isVoidTag ) {
+                    diff(copy.children, src.children || emptyArr, copy)
                 }
-                if(pre.afterChange){
-                    execHooks(pre, pre.afterChange)
+                if(src.afterChange){
+                    execHooks(src, src.afterChange)
                 }
                 break
             default: 
-                if(Array.isArray(cur)){
-                   diff(cur, pre)
+                if(Array.isArray(copy)){
+                   diff(copy, src)
                 }
                 break
         }
@@ -63,16 +63,16 @@ function execHooks(el, hooks) {
     delete el.afterChange
 }
 
-function diffProps(current, previous) {
-    if (current.order) {
+function diffProps(copys, sources) {
+    if (copys.order) {
         var directiveType
         try {
-            current.order.replace(/([^;]+)/g, function (name) {
+            copys.order.replace(/([^;]+)/g, function (name) {
                 var match = name.match(rbinding)
                 var type = match && match[1]
                 directiveType = type
                 if (directives[type]) {
-                    directives[type].diff(current, previous || emptyObj(), name)
+                    directives[type].diff(copys, sources || emptyObj(), name)
                 }
                 return name
             })
