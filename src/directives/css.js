@@ -2,9 +2,9 @@
 var update = require('./_update')
 
 avalon.directive('css', {
-    diff: function (cur, pre, name) {
-        var a = cur[name]
-        var p = pre[name]
+    diff: function (copy, src, name) {
+        var a = copy[name]
+        var p = src[name]
         if (Object(a) === a) {
             
             a = a.$model || a//安全的遍历VBscript
@@ -12,7 +12,7 @@ avalon.directive('css', {
                 a = avalon.mix.apply({}, a)
             }
             if (typeof p !== 'object') {//如果一开始为空
-                pre.changeStyle = pre[name] = a
+                src.changeStyle = src[name] = a
             } else {
                 var patch = {}
                 var hasChange = false
@@ -23,22 +23,22 @@ avalon.directive('css', {
                     }
                 }
                 if (hasChange) {
-                    pre[name] = a
-                    pre.changeStyle = patch
+                    src[name] = a
+                    src.changeStyle = patch
                 }
             }
-            if (pre.changeStyle) {
-                update(pre, this.update)
+            if (src.changeStyle) {
+                update(src, this.update)
             }
         }
-        delete cur[name]//释放内存
+        delete copy[name]//释放内存
     },
-    update: function (node, vnode) {
-        var change = vnode.changeStyle
-        var wrap = avalon(node)
+    update: function (dom, vdom) {
+        var change = vdom.changeStyle
+        var wrap = avalon(dom)
         for (var name in change) {
             wrap.css(name, change[name])
         }
-        delete vnode.changeStyle
+        delete vdom.changeStyle
     }
 })

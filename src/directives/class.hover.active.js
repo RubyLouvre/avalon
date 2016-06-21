@@ -26,27 +26,27 @@ function classNames() {
 
 var directives = avalon.directives
 avalon.directive('class', {
-    diff: function (cur, pre, name) {
+    diff: function (copy, src, name) {
         var type = name.slice(3)
-        var curValue = cur[name]
-        var preValue = pre[name] || ''
+        var copyValue = copy[name]
+        var srcValue = src[name] || ''
 
-        if (!pre.classEvent) {
+        if (!src.classEvent) {
             var classEvent = {}
             if (type === 'hover') {//在移出移入时切换类名
                 classEvent.mouseenter = activateClass
                 classEvent.mouseleave = abandonClass
             } else if (type === 'active') {//在获得焦点时切换类名
-                pre.props.tabindex = cur.props.tabindex || -1
-                classEvent.tabIndex = pre.props.tabindex
+                src.props.tabindex = copy.props.tabindex || -1
+                classEvent.tabIndex = src.props.tabindex
                 classEvent.mousedown = activateClass
                 classEvent.mouseup = abandonClass
                 classEvent.mouseleave = abandonClass
             }
-            pre.classEvent = classEvent
+            src.classEvent = classEvent
         }
 
-        var className = classNames(curValue)
+        var className = classNames(copyValue)
         var uniq = {}, arr = []
         className.replace(/\S+/g, function (el) {
             if (!uniq[el]) {
@@ -57,40 +57,40 @@ avalon.directive('class', {
         
         className = arr.join(' ')
        
-        if (preValue !== className) {
-            pre[name] = className
-            pre['change-' + type] = className
-            update(pre, this.update, type)
+        if (srcValue !== className) {
+            src[name] = className
+            src['change-' + type] = className
+            update(src, this.update, type)
         }
     },
-    update: function (node, vnode) {
-        if (!node || node.nodeType !== 1)
+    update: function (dom, vdom) {
+        if (!dom || dom.nodeType !== 1)
             return
-        var classEvent = vnode.classEvent
+        var classEvent = vdom.classEvent
         if (classEvent) {
             for (var i in classEvent) {
                 if (i === 'tabIndex') {
-                    node[i] = classEvent[i]
+                    dom[i] = classEvent[i]
                 } else {
-                    avalon.bind(node, i, classEvent[i])
+                    avalon.bind(dom, i, classEvent[i])
                 }
             }
-            vnode.classEvent = {}
+            vdom.classEvent = {}
         }
         var names = ['class', 'hover', 'active']
         names.forEach(function (type) {
             var name = 'change-' + type
-            var value = vnode[name]
+            var value = vdom[name]
             if (value === void 0)
                 return
             if (type === 'class') {
-                node && setClass(node, vnode)
+                dom && setClass(dom, vdom)
             } else {
-                var oldType = node.getAttribute('change-' + type)
+                var oldType = dom.getAttribute('change-' + type)
                 if (oldType) {
-                    avalon(node).removeClass(oldType)
+                    avalon(dom).removeClass(oldType)
                 }
-                node.setAttribute(name, value)
+                dom.setAttribute(name, value)
             }
         })
     }
@@ -120,12 +120,12 @@ function abandonClass(e) {
     }
 }
 
-function setClass(node, vnode) {
-    var old = node.getAttribute('old-change-class')
-    var neo = vnode['ms-class']
+function setClass(dom, vdom) {
+    var old = dom.getAttribute('old-change-class')
+    var neo = vdom['ms-class']
     if (old !== neo) {
-        avalon(node).removeClass(old).addClass(neo)
-        node.setAttribute('old-change-class', neo)
+        avalon(dom).removeClass(old).addClass(neo)
+        dom.setAttribute('old-change-class', neo)
     }
 
 }

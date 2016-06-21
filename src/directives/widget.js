@@ -10,23 +10,22 @@ avalon.component = function (name, definition) {
     }//这里没有返回值
 }
 avalon.directive('widget', {
-    parse: function (cur, pre, binding) {
-        pre.wid = pre.wid || avalon.makeHashCode('w')
+    parse: function (copy, src, binding) {
+        src.wid = src.wid || avalon.makeHashCode('w')
         //将渲染函数的某一部分存起来,渲在c方法中转换为函数
-        cur[binding.name] = avalon.parseExpr(binding)
-        cur.vmodel = '__vmodel__'
-        cur.local = '__local__'
+        copy[binding.name] = avalon.parseExpr(binding)
+        copy.vmodel = '__vmodel__'
+        copy.local = '__local__'
     },
     define: function () {
         return avalon.mediatorFactory.apply(this, arguments)
     },
-    diff: function (cur, pre, name) {
-        var a = cur[name]
-        var p = pre[name]
-        pre.vmodel = cur.vmodel
-        pre.local = cur.local
-        pre.cur = cur
-        console.log("33333")
+    diff: function (copy, src, name) {
+        var a = copy[name]
+        var p = src[name]
+        src.vmodel = copy.vmodel
+        src.local = copy.local
+        src.copy = copy
         if (Object(a) === a) {
             a = a.$model || a//安全的遍历VBscript
             if (Array.isArray(a)) {//转换成对象
@@ -34,38 +33,38 @@ avalon.directive('widget', {
             }
             var is = a.is
 
-            if (pre.is !== is || !pre[is + "-vm"]) {
-                if (!createComponent(pre, cur, is)) {
+            if (src.is !== is || !src[is + "-vm"]) {
+                if (!createComponent(src, copy, is)) {
                     //替换成注释节点
-                    update(pre, this.mountComment)
+                    update(src, this.mountComment)
                     return
                 }
             }
-            var renderComponent = pre[is + '-vm'].$render
-            var newTree = renderComponent(pre[is + '-vm'], pre.local)[0]
+            var renderComponent = src[is + '-vm'].$render
+            var newTree = renderComponent(src[is + '-vm'], src.local)[0]
             if (isComponentReady(newTree)) {
-                cur.children = []
-                delete cur.local
-                delete cur.vmodel
+                copy.children = []
+                delete copy.local
+                delete copy.vmodel
 
-                avalon.mix(cur, newTree)
-                if (pre[is + '-mount']) {
-                    update(pre, this.updateComponent)
+                avalon.mix(copy, newTree)
+                if (src[is + '-mount']) {
+                    update(src, this.updateComponent)
                 } else {
-                    update(pre, this.mountComponent)
+                    update(src, this.mountComponent)
                 }
             } else {
-                update(pre, this.mountComment)
+                update(src, this.mountComment)
             }
 
         }
     },
     mountComment: function (dom, vdom, parent) {
-        var cur = vdom.cur
-        cur.nodeType = vdom.nodeType = 8
-        cur.nodeValue = vdom.nodeType = 'unresolved component placeholder'
-        cur.children = []
-        var comment = document.createComment(cur.nodeValue)
+        var copy = vdom.copy
+        copy.nodeType = vdom.nodeType = 8
+        copy.nodeValue = vdom.nodeType = 'unresolved component placeholder'
+        copy.children = []
+        var comment = document.createComment(copy.nodeValue)
         vdom.dom = comment
         parent.replaceChild(comment, dom)
     },
@@ -82,7 +81,7 @@ avalon.directive('widget', {
         var vtree = vdom[is + '-vtree']
         var componentRoot = vtree[0]
         delete vdom.skipContent
-        delete vdom.cur
+        delete vdom.copy
         var vm = vdom[is + '-vm']
         avalon.mix(vdom, componentRoot)
 

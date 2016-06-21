@@ -2,23 +2,23 @@ var update = require('./_update')
 
 var dir = avalon.directive('validate', {
 //验证单个表单元素
-    diff: function (cur, pre, name) {
-        var validator = cur[name]
-        var p = pre[name]
+    diff: function (copy, src, name) {
+        var validator = copy[name]
+        var p = src[name]
         if (p && p.onError && p.addField) {
             return
         } else if (Object(validator) === validator) {
             if(validator.$id){//转换为普通对象
                 validator = validator.$model
             }
-            pre[name] = validator
+            src[name] = validator
             for(var name in dir.defaults){
                 if(!validator.hasOwnProperty(name)){
                     validator[name] = dir.defaults[name]
                 }
             }
             validator.fields = validator.fields || []
-            update(pre, this.update)
+            update(src, this.update)
 
         }
     },

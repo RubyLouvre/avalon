@@ -4,32 +4,32 @@ var reconcile = require('../strategy/reconcile')
 
 
 avalon.directive('html', {
-    parse: function (cur, pre, binding) {
+    parse: function (copy, src, binding) {
 
-        if (!pre.isVoidTag) {
+        if (!src.isVoidTag) {
             //将渲染函数的某一部分存起来,渲在c方法中转换为函数
-            cur[binding.name] = avalon.parseExpr(binding)
-            cur.vmodel = '__vmodel__'
-            cur.local = '__local__'
+            copy[binding.name] = avalon.parseExpr(binding)
+            copy.vmodel = '__vmodel__'
+            copy.local = '__local__'
         } else {
-            cur.children = '[]'
+            copy.children = '[]'
         }
     },
-    diff: function (cur, pre, name) {
-        var curValue = cur[name] + ''
-        if (curValue !== pre[name]) {
-            pre[name] = curValue
-            var preTree = avalon.lexer(curValue)
-            avalon.speedUp(preTree)
-            pre.children = preTree
-            var render = avalon.render(preTree)
-            pre.render = render
-            var curTree = render(cur.vmodel, cur.local)
-            cur.children = curTree
-            update(pre, this.update)
+    diff: function (copy, src, name) {
+        var copyValue = copy[name] + ''
+        if (copyValue !== src[name]) {
+            src[name] = copyValue
+            var oldTree = avalon.lexer(copyValue)
+            avalon.speedUp(oldTree)
+            src.children = oldTree
+            var render = avalon.render(oldTree)
+            src.render = render
+            var newTree = render(copy.vmodel, copy.local)
+            copy.children = newTree
+            update(src, this.update)
         } else {
-            var curTree = pre.render(cur.vmodel, cur.local)
-            cur.children = curTree
+            var newTree = src.render(copy.vmodel, copy.local)
+            copy.children = newTree
         }
     },
 

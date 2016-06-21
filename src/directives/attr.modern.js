@@ -3,15 +3,15 @@ var attrUpdate = require('../dom/attr/modern')
 var update = require('./_update')
 
 avalon.directive('attr', {
-    diff: function (cur, pre, name) {
-        var a = cur[name]
-        var p = pre[name]
+    diff: function (copy, src, name) {
+        var a = copy[name]
+        var p = src[name]
         if (a && typeof a === 'object') {
             if (Array.isArray(a)) {//转换成对象
                 a = avalon.mix.apply({}, a)
             }
             if (typeof p !== 'object') {//如果一开始为空
-                pre.changeAttr = pre[name] = a
+                src.changeAttr = src[name] = a
             } else {
                 var patch = {}
                 var hasChange = false
@@ -22,15 +22,15 @@ avalon.directive('attr', {
                     }
                 }
                 if (hasChange) {
-                    pre[name] = a
-                    pre.changeAttr = patch
+                    src[name] = a
+                    src.changeAttr = patch
                 }
             }
-            if (pre.changeAttr) {
-                update(pre, this.update)
+            if (src.changeAttr) {
+                update(src, this.update)
             }
         }
-        delete cur[name]//释放内存
+        delete copy[name]//释放内存
     },
     //dom, vnode
     update: attrUpdate
