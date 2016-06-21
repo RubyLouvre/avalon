@@ -6,31 +6,27 @@ avalon.directive('important', {
     parse: function (cur, pre, binding) {
         var $id = binding.expr
         var quoted = avalon.quote($id)
-        var name = binding.name
-        cur[name] = quoted
+
         pre.$id = $id
         pre.$prepend = ['(function(__vmodel__){',
             'var important = avalon.scopes[' + quoted + ']',
             'if(important && important.fast){avalon.log("不进入"+' + quoted + ');return }',
             'var __top__ = __vmodel__',
-            'var __synth__ =  avalon.vmodels[' + quoted + ']',
-            'var __present__ = __synth__',
-            'var __vmodel__ = __synth__',
+            'var __vmodel__ =  avalon.vmodels[' + quoted + ']',
+
             '/*controller:' + $id + '*/',
         ].join('\n') + '\n\n'
-        cur.synth = '__synth__'
         cur.local = '{}'
         cur.top = '__top__'
-        cur.present = '__present__'
-
+        cur.vmodel = '__vmodel__'
         pre.$append = '/*controller:' + $id + '*/\n})(__vmodel__);'
     },
     diff: function (cur, pre, steps, name) {
-        if (pre[name] !== cur[name]) {
-            pre.synth = cur.synth
+        if (pre.vmodel !== cur.vmodel) {
+            //console.log('ms-important')
             pre.local = cur.local
             pre.top = cur.top
-            pre.present = cur.present
+            pre.synth =  pre.vmodel = cur.vmodel
             update(pre, this.update, steps, 'controller')
         }
     },

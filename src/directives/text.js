@@ -12,12 +12,10 @@ avalon.directive('text', {
         var curValue = cur[name]+''
         if (curValue !== pre[name] ) {
             pre[name] = curValue
-            var child = pre.children[0]
-            child.nodeValue = curValue
-            update(child, this.update, steps, 'text')
+            update(pre, this.update, steps, 'text')
         }
     },
     update: function (dom, vdom) {
-        dom.nodeValue = vdom.nodeValue
+        dom.innerText = dom.textContent = vdom['ms-text']
     }
 })
