@@ -240,7 +240,7 @@ function clipOuterHTML(matchText, type) {
 
 function modifyProps(node, innerHTML, nodes, curDeep) {
     var type = node.type
-
+    var props = node.props
     switch (type) {
         case 'style':
         case 'script':
@@ -249,17 +249,17 @@ function modifyProps(node, innerHTML, nodes, curDeep) {
         case 'textarea':
             node.skipContent = true
             if (type === 'textarea') {
-                node.props.type = 'textarea'
+                props.type = 'textarea'
             }
             break
         case 'input':
-            if (!node.props.type) {
-                node.props.type = 'text'
+            if (!props.type) {
+                props.type = 'text'
             }
             break
         case 'select':
-            if (node.props.hasOwnProperty('multiple')) {
-                node.props.multiple = 'multiple'
+            if (props.hasOwnProperty('multiple')) {
+                props.multiple = 'multiple'
                 node.multiple = true
             }
             break
@@ -270,6 +270,9 @@ function modifyProps(node, innerHTML, nodes, curDeep) {
             node.children.push(new VText(trimHTML(node.template)))
             break
     }
+    if(/^ms-/.test(node.type) && !props['ms-widget']){
+        props['ms-widget'] = '{is:' + avalon.quote(node.type) + '}'
+    }
     if (!node.isVoidTag) {
         var childs = lexer(innerHTML, curDeep + 1)
         node.children = childs
@@ -277,11 +280,11 @@ function modifyProps(node, innerHTML, nodes, curDeep) {
             addTbody(node.children)
         }
     }
-    var forExpr = node.props['ms-for']
+    var forExpr = props['ms-for']
     if (forExpr) {
-        var cb = node.props['data-for-rendered']
+        var cb = props['data-for-rendered']
         var cid = cb + ':cb'
-        delete node.props['ms-for']
+        delete props['ms-for']
         nodes.push({
             nodeType: 8,
             type: '#comment',

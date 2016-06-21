@@ -60,12 +60,12 @@ function parseNode(pre) {
             return addTag(pre)
         }
     } else if (pre.nodeType === 1) {
-        var props = pre.props
-        if (pre.type.indexOf('ms-') === 0) {
-            if (!props['ms-widget']) {
-                props['ms-widget'] = '{is:' + quote(pre.type) + '}'
-            }
-        }
+//        var props = pre.props
+//        if (pre.type.indexOf('ms-') === 0) {
+//            if (!props['ms-widget']) {
+//                props['ms-widget'] = '{is:' + quote(pre.type) + '}'
+//            }
+//        }
 
         var cur = {
             props: {},
@@ -73,8 +73,7 @@ function parseNode(pre) {
             nodeType: 1,
             template: ''
         }
-        var bindings = extractBindings(cur, props)
-      
+        var bindings = extractBindings(cur, pre.props)
         cur.order = bindings.map(function (b) {
             //将ms-*的值变成函数,并赋给cur.props[ms-*]
             //如果涉及到修改结构,则在pre添加$append,$prepend
@@ -82,15 +81,15 @@ function parseNode(pre) {
             return b.name
 
         }).join(';;')
-        if (pre.directive === 'widget') {
-            cur.order = cur.order ? 'ms-widget;;' + cur.order : 'ms-widget'
-            cur.directive = 'widget'
-            cur.local = '__local__'
-            cur.vmodel = '__vmodel__'
-            cur.wid = avalon.quote(pre.props.wid)
-            delete pre.skipAttrs
-            delete cur.skipAttrs
-        }
+//        if (pre.directive === 'widget') {
+//            cur.order = cur.order ? 'ms-widget;;' + cur.order : 'ms-widget'
+//            cur.directive = 'widget'
+//            cur.local = '__local__'
+//            cur.vmodel = '__vmodel__'
+//            cur.wid = avalon.quote(pre.props.wid)
+//            delete pre.skipAttrs
+//            delete cur.skipAttrs
+//        }
         if (pre.isVoidTag) {
             cur.isVoidTag = true
         } else {
