@@ -4,29 +4,29 @@ var update = require('./_update')
 
 avalon.directive('effect', {
     priority: 5,
-    diff: function (cur, pre, name) {
-        var curObj = cur[name]
-        curObj = cur.$model || curObj
-        if(typeof curObj === 'string'){
-            var is = curObj
-            curObj = {
+    diff: function (copy, src, name) {
+        var copyObj = copy[name]
+        copyObj = copy.$model || copyObj
+        if(typeof copyObj === 'string'){
+            var is = copyObj
+            copyObj = {
                 is: is
             }
            
-        }else if (Array.isArray(curObj)) {
-            curObj = avalon.mix.apply({}, curObj)
+        }else if (Array.isArray(copyObj)) {
+            copyObj = avalon.mix.apply({}, copyObj)
         }
     
-        curObj.action = curObj.action || 'enter'
+        copyObj.action = copyObj.action || 'enter'
        
-        if (Object(curObj) === curObj) {
-            var preObj = pre[name]
-            if ( Object(preObj) !== preObj || diffObj(curObj, preObj ))  {
-                pre[name] = curObj
-                update(pre, this.update, 'afterChange')
+        if (Object(copyObj) === copyObj) {
+            var srcObj = src[name]
+            if ( Object(srcObj) !== srcObj || diffObj(copyObj, srcObj ))  {
+                src[name] = copyObj
+                update(src, this.update, 'afterChange')
             }
         }
-        delete cur[name]
+        delete copy[name]
     },
     update: function (dom, vnode, parent, option) {
         if(dom.animating ){

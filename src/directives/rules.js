@@ -1,12 +1,12 @@
 avalon.directive('rules', {
-     parse: function (cur, pre, binding) {
+     parse: function (copy, src, binding) {
         var rules = binding.expr
         if (/{.+}/.test(rules)) {
-           cur[binding.name] = avalon.parseExpr(binding)
+           copy[binding.name] = avalon.parseExpr(binding)
         }
     },
-    diff: function(cur, pre, name){
-        pre[name] = cur[name]
+    diff: function(copy, src, name){
+        src[name] = copy[name]
     }
 })
 function isRegExp(value) {
