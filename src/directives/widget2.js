@@ -33,24 +33,22 @@ avalon.directive('widget', {
             }
             var is = a.is
             if (pre.is !== is) {
-                pre.is = is
                 if (!pre[is + "-vm"]) {
                     if (!createComponent(pre, cur, is)) {
                         //替换成注释节点
                         update(pre, this.mountComment)
                         return
                     }
-                    pre.render = pre[is + 'vm'].$render
-                } else {
-                    pre.render = pre[is + 'vm'].$render
-                }
-                var newTree = pre.render(pre[is + 'vm'], pre.local)
+                } 
+                var renderComponent = pre[is + '-vm'].$render
+                var newTree = renderComponent(pre[is + '-vm'], pre.local)[0]
                 if (isComponentReady(newTree)) {
                     cur.children = []
                     delete cur.local
                     delete cur.vmodel
+                    
                     avalon.mix(cur, newTree)
-                    if (pre[is + 'renderCount']) {
+                    if (pre[is + '-mount']) {
                         update(pre, this.updateComponent)
                     } else {
                         update(pre, this.mountComponent)
@@ -93,8 +91,8 @@ avalon.directive('widget', {
         var is = vdom.is
         var vtree = vdom[is + '-vtree']
         var componentRoot = vtree[0]
-        delete dom.skipContent
-
+        delete vdom.skipContent
+        delete vdom.cur
         var vm = vdom[is + '-vm']
         avalon.mix(vdom, componentRoot)
 
@@ -105,12 +103,13 @@ avalon.directive('widget', {
         })
 
         var com = avalon.vdomAdaptor(vdom, 'toDOM')
+        reconcile( [com],[vdom])
         parent.replaceChild(com, dom)
         vdom.dom = com
         addDisposeMonitor(com)
 
         vdom[is + '-mount'] = true
-        reconcile(vdom, com)
+        
         vdom[is + '-html'] = avalon.vdomAdaptor(vdom, 'toHTML')
         vm.$fire('onReady', {
             type: 'init',
@@ -119,25 +118,25 @@ avalon.directive('widget', {
             componentName: is
         })
 
-    },
-    addDisposeMonitor: function (dom) {
-        if (window.chrome && window.MutationEvent) {
-            disposeDetectStrategy.byMutationEvent(dom)
-        } else if (avalon.modern && typeof window.Node === 'function') {
-            disposeDetectStrategy.byRewritePrototype(dom)
-        } else {
-            disposeDetectStrategy.byPolling(dom)
-        }
     }
-
 })
 
+function addDisposeMonitor(dom) {
+    if (window.chrome && window.MutationEvent) {
+        disposeDetectStrategy.byMutationEvent(dom)
+    } else if (avalon.modern && typeof window.Node === 'function') {
+        disposeDetectStrategy.byRewritePrototype(dom)
+    } else {
+        disposeDetectStrategy.byPolling(dom)
+    }
+}
 
 function isComponentReady(vnode) {
     var isReady = true
     try {
         hasUnresolvedComponent(vnode)
     } catch (e) {
+        console.log(e)
         isReady = false
     }
     return isReady

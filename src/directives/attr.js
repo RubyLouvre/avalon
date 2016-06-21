@@ -7,7 +7,7 @@ avalon.directive('attr', {
         var a = cur[name]
         var p = pre[name]
         if (a && typeof a === 'object') {
-             a = a.$model || a //安全的遍历VBscript
+            a = a.$model || a //安全的遍历VBscript
             if (Array.isArray(a)) {//转换成对象
                 a = avalon.mix.apply({}, a)
             }

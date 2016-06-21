@@ -25,6 +25,7 @@ function createComponent(pre, cur, is) {
         })
         isEmpty = isEmptyOption(hooks)
     }
+    
     //初始化组件失败,因为连组件的定义都没有加载
     if (!avalon.components[is]) {
         return
@@ -79,7 +80,6 @@ function createComponent(pre, cur, is) {
         })
     }, [topVm, defaults].concat(options))
 
-
     if (!avalon.modern) {//增强对IE的兼容
         for (var i in vmodel) {
             if (!skipArray[i] && typeof vmodel[i] === 'function') {
@@ -89,11 +89,11 @@ function createComponent(pre, cur, is) {
     }
 
     vmodel.$id = $id
+   
     //开始构建组件的虚拟DOM
     var finalTemplate = definition.template.trim()
     if (typeof definition.getTemplate === 'function') {
         finalTemplate = definition.getTemplate(vmodel, finalTemplate)
-
     }
 
     var vtree = avalon.lexer(finalTemplate)
