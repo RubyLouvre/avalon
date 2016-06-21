@@ -89,8 +89,6 @@ avalon.directive('controller', {
             avalon.scopes[vmodel.$id] = {
                 vmodel: synth || vmodel,
                 local: local,
-                dom: dom,
-                render: render,
                 isMount: 2,
                 fast: 'important'
             }

@@ -98,7 +98,15 @@ avalon.directive('widget', {
         vdom.dom = com
         addDisposeMonitor(com)
         vdom[is + '-mount'] = true
-
+        //--------------
+        vm.$element = com
+        com.vtree = [vdom]
+        avalon.scopes[vm.$id] = {
+            vmodel: vm,
+            isMount: 2,
+            local: vdom.local
+        }
+        //--------------
         update(vdom, function () {
             vm.$fire('onReady', {
                 type: 'init',

@@ -20,9 +20,7 @@ function scan(nodes, fn) {
 
                 avalon.scopes[vm.$id] = {
                     vmodel: vm,
-                    local: {},
-                    dom: elem,
-                    render: vm.$render
+                    local: {}
                 }
                 var now3 = new Date()
                 avalon.log('create template Function ', now3 - now2)

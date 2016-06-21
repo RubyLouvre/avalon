@@ -24,17 +24,22 @@ function batchUpdate(id) {
     if (!scope || !document.nodeName || avalon.suspendUpdate) {
         return renderingID = null
     }
-    var dom = scope.dom
+    
+    var vm = scope.vmodel
+    var dom = vm.$element
     var oldTree = dom.vtree || []
-    var vtree = scope.render(scope.synth || scope.vmodel, scope.local)
-    if (!scope.isMount && oldTree) {
+    var renderFn = vm.$render
+    
+    var vtree = renderFn(scope.vmodel, scope.local)
+    if (!scope.isMount) {
         //在最开始时,替换作用域的所有节点,确保虚拟DOM与真实DOM是对齐的
         reconcile([dom], oldTree, dom.parentNode)
         scope.isMount = 1
     }
+    
     avalon.diff(vtree, oldTree)
+    
     if (scope.isMount === 1) {
-        var vm = scope.vmodel
         var events = vm.$events["onReady"]
         if (events) {
             vm.fire('onReady')

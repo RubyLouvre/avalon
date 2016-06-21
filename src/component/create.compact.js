@@ -6,7 +6,6 @@ var componentEvents = avalon.oneObject(events)
 var protected = events.split(',').concat('is', 'define')
 
 function createComponent(pre, cur, is) {
-    
     //开始初始化组件
     var hooks = {}
     //用户只能操作顶层VM

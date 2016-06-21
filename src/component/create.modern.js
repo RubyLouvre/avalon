@@ -6,7 +6,6 @@ var componentEvents = avalon.oneObject(events)
 var protected = events.split(',').concat('is', 'define')
 
 function createComponent(pre, cur, is) {
-    
     //开始初始化组件
     var hooks = {}
     //用户只能操作顶层VM
@@ -25,6 +24,7 @@ function createComponent(pre, cur, is) {
         })
         isEmpty = isEmptyOption(hooks)
     }
+    
     //初始化组件失败,因为连组件的定义都没有加载
     if (!avalon.components[is]) {
         return
@@ -55,7 +55,7 @@ function createComponent(pre, cur, is) {
     if (type === 'xmp' || type === 'template' || pre.children.length === 0) {
         pre.children = avalon.lexer(pre.template)
     }
-   
+
     //开始构建组件的vm的配置对象
 
     var define = hooks.define
@@ -73,14 +73,13 @@ function createComponent(pre, cur, is) {
         })
     }, [topVm, defaults].concat(options))
 
-
-  
+   
     vmodel.$id = $id
+   
     //开始构建组件的虚拟DOM
     var finalTemplate = definition.template.trim()
     if (typeof definition.getTemplate === 'function') {
         finalTemplate = definition.getTemplate(vmodel, finalTemplate)
-
     }
 
     var vtree = avalon.lexer(finalTemplate)
