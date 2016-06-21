@@ -5,12 +5,12 @@ var events = 'onInit,onReady,onViewChange,onDispose'
 var componentEvents = avalon.oneObject(events)
 var protected = events.split(',').concat('is', 'define')
 
-function createComponent(pre, cur, is) {
+function createComponent(src, copy, is) {
     //开始初始化组件
     var hooks = {}
     //用户只能操作顶层VM
     //只有$id,is的对象就是emptyOption
-    var rawOption = cur['ms-widget']
+    var rawOption = copy['ms-widget']
     var isEmpty = false
     if (!rawOption) {
         isEmpty = true
@@ -33,7 +33,7 @@ function createComponent(pre, cur, is) {
     //得到组件在顶层vm的配置对象名
     var configName = is.replace(/-/g, '_')
 
-    var topVm = cur.vmodel
+    var topVm = copy.vmodel
     try {//如果用户在ms-widget没定义东西那么从vm中取默认东西
         var vmOption = topVm[configName]
         if (isEmpty && vmOption && typeof vmOption === 'object') {
@@ -45,15 +45,15 @@ function createComponent(pre, cur, is) {
     } catch (e) {
     }
 
-    var type = pre.type
+    var type = src.type
     //判定用户传入的标签名是否符合规格
     if (!componentContainers[type] && !isCustomTag(type)) {
         avalon.warn(type + '不合适做组件的标签')
     }
 
     //将用户声明组件用的自定义标签(或xmp.template)的template转换成虚拟DOM
-    if (type === 'xmp' || type === 'template' || pre.children.length === 0) {
-        pre.children = avalon.lexer(pre.template)
+    if (type === 'xmp' || type === 'template' || src.children.length === 0) {
+        src.children = avalon.lexer(src.template)
     }
 
     //开始构建组件的vm的配置对象
@@ -61,7 +61,7 @@ function createComponent(pre, cur, is) {
     var define = hooks.define
     define = define || avalon.directives.widget.define
 
-    var $id = hooks.$id || pre.wid
+    var $id = hooks.$id || src.wid
 
     var defaults = avalon.mix(true, {}, definition.defaults)
     mixinHooks(hooks, defaults, false)
@@ -92,7 +92,7 @@ function createComponent(pre, cur, is) {
     avalon.vmodels[$id] = vmodel
 
     //将用户标签中的属性合并到组件标签的属性里
-    avalon.mix(componentRoot.props, pre.props)
+    avalon.mix(componentRoot.props, src.props)
     //  必须指定wid
     componentRoot.props.wid = $id
     //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
@@ -100,16 +100,16 @@ function createComponent(pre, cur, is) {
     if (definition.soleSlot) {
         var slots = {}
         var slotName = definition.soleSlot
-        slots[slotName] = /\S/.test(pre.template) ? 
-           pre.children : {
+        slots[slotName] = /\S/.test(src.template) ? 
+           src.children : {
                 nodeType:3,
                 nodeValue:'{{@' + slotName + '}}',
                 type:"#text",
                 dynamic: true
            }
         mergeTempale(vtree, slots)
-    } else if (!pre.isVoidTag) {
-        insertSlots(vtree, pre, definition.soleSlot)
+    } else if (!src.isVoidTag) {
+        insertSlots(vtree, src, definition.soleSlot)
     }
     avalon.speedUp(vtree)
     for (var e in componentEvents) {
@@ -119,11 +119,11 @@ function createComponent(pre, cur, is) {
             })
         }
     }
-    var render = avalon.render(vtree, pre.local)
+    var render = avalon.render(vtree, src.local)
     vmodel.$render = render
-    pre[is + '-vm'] = vmodel
-    pre[is + '-vtree'] = vtree
-    return pre.is = is
+    src[is + '-vm'] = vmodel
+    src[is + '-vtree'] = vtree
+    return src.is = is
 
 }
 module.exports = createComponent
