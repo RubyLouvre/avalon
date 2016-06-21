@@ -34,7 +34,7 @@ avalon.directive('on', {
     },
     diff: function (copy, src, name) {
         var fn = copy[name]
-        var uuid = fn.uuids
+        var uuid = fn.uuid
         var type = uuid.split('_').shift()
         var search = type.slice(1) + ':' + uuid
         var srcFn = src[name]

@@ -25,7 +25,7 @@ var dir = avalon.directive('validate', {
     update: function (node, vnode) {
         var validator = vnode['ms-validate']
         node._ms_validator_ = validator
-        validator.element = node
+        validator.dom = node
         node.setAttribute("novalidate", "novalidate");
         if (validator.validateAllInSubmit) {
             avalon.bind(node, "submit", function (e) {
@@ -41,8 +41,8 @@ var dir = avalon.directive('validate', {
         var validator = this
         var fn = typeof callback === "function" ? callback : validator.onValidateAll
         var promise = validator.fields.filter(function (field) {
-            var el = field.element
-            return el && !el.disabled && validator.element.contains(el)
+            var el = field.dom
+            return el && !el.disabled && validator.dom.contains(el)
         }).map(function (field) {
             return dir.validate(field, true)
         })
@@ -54,7 +54,7 @@ var dir = avalon.directive('validate', {
             if (validator.deduplicateInValidateAll) {
                 var uniq = {}
                 reasons = reasons.filter(function (field) {
-                    var el = field.element
+                    var el = field.dom
                     var uuid = el.uniqueID || (el.uniqueID = setTimeout("1"))
                     if (uniq[uuid]) {
                         return false
@@ -64,12 +64,12 @@ var dir = avalon.directive('validate', {
                     }
                 })
             }
-            fn.call(validator.element, reasons) //这里只放置未通过验证的组件
+            fn.call(validator.dom, reasons) //这里只放置未通过验证的组件
         })
     },
     addField: function (field) {
         var validator = this
-        var node = field.element
+        var node = field.dom
         if (validator.validateInKeyup && (!field.isChanged &&!field.debounceTime)) {
             avalon.bind(node, 'keyup', function (e) {
                  dir.validate(field, 0, e)
@@ -89,7 +89,7 @@ var dir = avalon.directive('validate', {
     validate: function (field, isValidateAll, event) {
         var promises = []
         var value = field.modelValue
-        var elem = field.element
+        var elem = field.dom
         var validator = field.validator
         if (elem.disabled)
             return

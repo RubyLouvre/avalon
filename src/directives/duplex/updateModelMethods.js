@@ -2,11 +2,11 @@ var updateModelMethods = {
     input: function (prop) {//处理单个value值处理
         var data = this
         prop = prop || 'value'
-        var rawValue = data.element[prop]
+        var rawValue = data.dom[prop]
         var formatedValue = data.format(data.vmodel, rawValue)
         if (formatedValue !== rawValue) {
             data.formatedValue = formatedValue
-            data.element[prop] = formatedValue
+            data.dom[prop] = formatedValue
         }
         
         var parsedValue = data.parse(formatedValue)
@@ -36,10 +36,10 @@ var updateModelMethods = {
             avalon.warn('ms-duplex应用于checkbox上要对应一个数组')
             array = [array]
         }
-        var method = data.element.checked ? 'ensure' : 'remove'
+        var method = data.dom.checked ? 'ensure' : 'remove'
         
         if (array[method]) {
-            var val = data.parse(data.element.value)
+            var val = data.parse(data.dom.value)
             array[method](val)
             callback(data)
         }
@@ -47,7 +47,7 @@ var updateModelMethods = {
     },
     select: function () {
         var data = this
-        var val = avalon(data.element).val() //字符串或字符串数组
+        var val = avalon(data.dom).val() //字符串或字符串数组
         if (val + '' !== this.modelValue + '') {
             if (Array.isArray(val)) { //转换布尔数组或其他
                 val = val.map(function (v) {
@@ -71,7 +71,7 @@ function callback(data) {
     if (data.callback) {
         data.callback.call(data.vmodel, {
             type: 'changed',
-            target: data.element
+            target: data.dom
         })
     }
 }

@@ -111,7 +111,7 @@ avalon.directive('duplex', {
             }
             var data = node.__ms_duplex__
             
-            data.element = node
+            data.dom = node
             addValidateField(node, vnode)
             if (/input|content/.test(data.type) 
                    && !avalon.msie 
