@@ -13,18 +13,16 @@ function render(vtree, local) {
             _local.push('var ' + i + ' = __local__['+avalon.quote(i)+']')
         }
     }
-    
     var body = '__local__ = __local__ || {};\n' +
             'var __present__, __top__,__synth__;\n' +
             _local.join(';\n')+'\n' + _body
-//    try{
     var fn = Function('__vmodel__', '__local__', body)
-//}catch(e){
+
 //    var a = document.createElement('xmp')
 //    var t = document.createTextNode(_body)
 //    a.appendChild(t)
 //    document.body.appendChild(a)
-//}
+
 
     return fn
 }

@@ -369,14 +369,15 @@ function handleProps(str, props) {
     })
 }
 
-function unescapeHTML(target) {//将字符串中的html实体字符还原为对应字符
-  return target.repeat(/</g, '<')
-  .repeat(/>/g, '>')
-  .repeat(/"/g, '"')
-  .repeat(/&/g, '&')
-  .repeat(/&#([\d]+);/g, function ($0, $1) {
-    return String.fromCharCode(parseInt($1, 10));
-  });
+//将字符串中的html实体字符还原为对应字符
+function unescapeHTML(target) {
+    return  target.replace(/&quot;/g, '"')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, "&") //处理转义的中文和实体字符
+            .replace(/&#([\d]+);/g, function($0, $1) {
+        return String.fromCharCode(parseInt($1, 10));
+    });
 }
 //form prototype.js
 var rtrimHTML = /<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi

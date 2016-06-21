@@ -61,13 +61,13 @@ avalon.directive('controller', {
         }
         var top = vdom.top //位于上方的顶层vm或mediator vm
         var vmodel = vdom.vmodel
-
         if (top && vmodel) {
             var str = (top.$render + "")
-            var splitText = '/*controller:' + vmodel.$id + '*/'
-            var start = str.indexOf(splitText) + splitText.length
-            var end = str.lastIndexOf(splitText)
-            var effective = str.slice(start, end)
+            var splitText = '/*controller:' + top.$id + '*/'
+           
+            var arr = str.split(splitText)
+            
+            var effective = arr[1]
             var local = vdom.local || {}
             var vars = []
             for (var i in local) {
@@ -75,8 +75,9 @@ avalon.directive('controller', {
             }
             vars.push('var vnodes = []\n')
             var body = vars.join('\n') + effective + '\nreturn vnodes'
-            var render = avalon.render(body)
-            
+         
+            var render = avalon.render(body,{})
+
             var synth = vdom.synth
             synth.$render = vmodel.$render = render
             synth.$element = vmodel.$element = dom
