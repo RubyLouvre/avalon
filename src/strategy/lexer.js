@@ -354,22 +354,30 @@ var ramp = /&amp;/g
 var rnowhite = /\S+/g
 var rquote = /&quot;/g
 var rnogutter = /\s*=\s*/g
+//https://github.com/RubyLouvre/avalon/issues/1501
 function handleProps(str, props) {
     str.replace(rnogutter, '=').replace(rnowhite, function (el) {
         var arr = el.split('='), value = arr[1] || '',
             name = arr[0].toLowerCase()
         if (arr.length === 2) {
             if (value.indexOf('??') === 0) {
-                value = value.replace(rfill, fill).
-                    slice(1, -1).
-                    replace(ramp, '&').
-                    replace(rquote, '"')
+                value = unescapeHTML(value.replace(rfill, fill).
+                    slice(1, -1))
             }
         }
         props[name] = value
     })
 }
 
+function unescapeHTML(target) {//将字符串中的html实体字符还原为对应字符
+  return target.repeat(/</g, '<')
+  .repeat(/>/g, '>')
+  .repeat(/"/g, '"')
+  .repeat(/&/g, '&')
+  .repeat(/&#([\d]+);/g, function ($0, $1) {
+    return String.fromCharCode(parseInt($1, 10));
+  });
+}
 //form prototype.js
 var rtrimHTML = /<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi
 function trimHTML(v) {
