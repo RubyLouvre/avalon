@@ -50,25 +50,24 @@ avalon.directive('controller', {
     },
     update: function (dom, vdom, parent, important) {
 
-
         var scope = avalon.scopes[vdom.$id]
-
         if (scope &&
                 (!important || important.fast)) {
             //如果vm在位于顶层,那么在domReady的第一次scan中已经注册到scopes
             return
         }
+        
         var top = vdom.top //位于上方的顶层vm或mediator vm
         var vmodel = vdom.vmodel
         if (top && vmodel) {
-            var str = (top.$render + "")
+            var str = (top.$render + '')
             var synth = vdom.synth
             var vm = synth || vmodel
             //开始构建模板函数,从顶层vm的模板函数的toString中
             //通过splitText截取其作用的区域,
             //前面加上本地变量与vnodes数组,后面返回vnodes数组
             //放进avalon.render方法中生成
-            var splitText = '/*controller:' + vm.$id + '*/'
+            var splitText = '/*controller:' + vdom.$id + '*/'
             var arr = str.split(splitText)   
             var effective = arr[1]
             var local = vdom.local || {}
@@ -78,7 +77,7 @@ avalon.directive('controller', {
             }
             vars.push('var vnodes = []\n')
             var body = vars.join('\n') + effective + '\nreturn vnodes'
-            var render = avalon.render(body,{})
+            var render = avalon.render(body)
             //为相关的vm添加对应属性,$render,$element,vtree
             
             synth.$render = vmodel.$render = render
@@ -86,7 +85,7 @@ avalon.directive('controller', {
             dom.vtree = [vdom]
             vdom.top = vdom.synth = vdom.vmodel = 0
            
-            avalon.scopes[vmodel.$id] = {
+            avalon.scopes[vdom.$id] = {
                 vmodel: vm,
                 local: local,
                 fast: 'important'
