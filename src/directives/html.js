@@ -3,7 +3,6 @@ var parseView = require('../strategy/parser/parseView')
 var reconcile = require('../strategy/reconcile')
 
 
-
 avalon.directive('html', {
     parse: function (cur, pre, binding) {
         

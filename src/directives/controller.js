@@ -25,25 +25,30 @@ avalon.directive('controller', {
         cur.synth = '__synth__'
         cur.local = '__local__'
         cur.top = '__top__'
+        pre.$id = $id
         cur.present = '__present__'
         pre.$append = '/*controller:' + $id + '*/\n})(__vmodel__);'
     },
     diff: function (cur, pre, steps, name) {
         if (pre[name] !== cur[name]) {
-            update(cur, this.update, steps, 'controller')
+            pre.synth = cur.synth
+            pre.local = cur.local
+            pre.top = cur.top
+            pre.present = cur.present
+            update(pre, this.update, steps, 'controller')
         }
     },
-    update: function (node, vnode, parent, important) {
-        var top = vnode.top //位于上方的顶层vm或mediator vm
-        var present = vnode.present
-        var synth = vnode.synth
+    update: function (dom, vdom, parent, important) {
+        var top = vdom.top //位于上方的顶层vm或mediator vm
+        var present = vdom.present
+        var synth = vdom.synth
         if (top === present) {
             if (top === void 0) {
                 //如果变动是来自某个顶层vm的下方vm,那么在avalon.batch里
                 //只会为render传入synth,top,present都为undefined
                 return
             }
-            var scope = avalon.scopes[top.$id]
+            var scope = avalon.scopes[vdom.$id]
 
             if (scope &&
                     (!important || important.fast)) {
@@ -58,7 +63,7 @@ avalon.directive('controller', {
             var start = str.indexOf(splitText) + splitText.length
             var end = str.lastIndexOf(splitText)
             var effective = str.slice(start, end)
-            var local = vnode.local || {}
+            var local = vdom.local || {}
             var vars = []
             for (var i in local) {
                 vars.push('var ' + i + ' = __local__[' + avalon.quote(i) + ']')
@@ -66,13 +71,15 @@ avalon.directive('controller', {
             vars.push('var vnodes = []\n')
             var body = vars.join('\n') + effective + '\nreturn vnodes'
             var render = avalon.render(body)
+           
             synth.$render = present.$render = render
-            synth.$element = present.$element = node
+            synth.$element = present.$element = dom
+            dom.vtree = vdom
+            vdom.top = vdom.synth = 0
             avalon.scopes[present.$id] = {
-                vmodel: present,
-                synth: synth,
+                vmodel: synth || present,
                 local: local,
-                dom: node,
+                dom: dom,
                 render: render,
                 fast: 'important'
             }
