@@ -3,7 +3,7 @@ var attrUpdate = require('../dom/attr/compact')
 var update = require('./_update')
 
 avalon.directive('attr', {
-    diff: function (cur, pre, steps, name) {
+    diff: function (cur, pre, name) {
         var a = cur[name]
         var p = pre[name]
         if (a && typeof a === 'object') {
@@ -28,7 +28,7 @@ avalon.directive('attr', {
                 }
             }
             if (pre.changeAttr) {
-                update(pre, this.update, steps, 'attr' )
+                update(pre, this.update )
             }
         }
         delete cur[name]//释放内存

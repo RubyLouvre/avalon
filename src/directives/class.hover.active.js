@@ -26,7 +26,7 @@ function classNames() {
 
 var directives = avalon.directives
 avalon.directive('class', {
-    diff: function (cur, pre, steps, name) {
+    diff: function (cur, pre, name) {
         var type = name.slice(3)
         var curValue = cur[name]
         var preValue = pre[name] || ''
@@ -60,7 +60,7 @@ avalon.directive('class', {
         if (preValue !== className) {
             pre[name] = className
             pre['change-' + type] = className
-            update(pre, this.update, steps, type)
+            update(pre, this.update, type)
         }
     },
     update: function (node, vnode) {

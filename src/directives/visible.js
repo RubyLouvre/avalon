@@ -25,11 +25,11 @@ function parseDisplay(elem, val) {
 avalon.parseDisplay = parseDisplay
 
 avalon.directive('visible', {
-    diff: function (cur, pre, steps, name) {
+    diff: function (cur, pre, name) {
         var c = !!cur[name]
         if (c !== pre[name]) {
             pre[name] = c
-            update(pre, this.update, steps, 'visible' )
+            update(pre, this.update )
         }
     },
     update: function (dom, vdom) { 

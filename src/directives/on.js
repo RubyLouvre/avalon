@@ -32,9 +32,9 @@ avalon.directive('on', {
         cur[binding.name] = fn
 
     },
-    diff: function (cur, pre, steps, name) {
+    diff: function (cur, pre, name) {
         var fn = cur[name]
-        var uuid = fn.uuid
+        var uuid = fn.uuids
         var type = uuid.split('_').shift()
         var search = type.slice(1) + ':' + uuid
         var preFn = pre[name]
@@ -52,7 +52,7 @@ avalon.directive('on', {
         if (hasChange) {
             pre.local = cur.local
             pre.vmodel = cur.vmodel
-            update(pre, this.update, steps, 'on')
+            update(pre, this.update)
         }
     },
     update: function (dom, vdom) {

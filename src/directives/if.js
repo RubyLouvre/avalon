@@ -9,7 +9,7 @@ avalon.directive('if', {
             if (c && pre.nodeType === 1) {
                 return
             }
-            update(pre, this.update, steps, 'if')
+            update(pre, this.update)
         }
 
     },

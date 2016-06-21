@@ -21,13 +21,13 @@ avalon.directive('important', {
         cur.vmodel = '__vmodel__'
         pre.$append = '/*controller:' + $id + '*/\n})(__vmodel__);'
     },
-    diff: function (cur, pre, steps) {
+    diff: function (cur, pre) {
         if (pre.vmodel !== cur.vmodel) {
             //console.log('ms-important')
             pre.local = cur.local
             pre.top = cur.top
             pre.synth =  pre.vmodel = cur.vmodel
-            update(pre, this.update, steps, 'controller')
+            update(pre, this.update)
         }
     },
     update: function (node, vnode, parent) {

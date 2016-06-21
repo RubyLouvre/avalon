@@ -4,7 +4,7 @@ var update = require('./_update')
 
 avalon.directive('effect', {
     priority: 5,
-    diff: function (cur, pre, steps, name) {
+    diff: function (cur, pre, name) {
         var curObj = cur[name]
         curObj = cur.$model || curObj
         if(typeof curObj === 'string'){
@@ -23,7 +23,7 @@ avalon.directive('effect', {
             var preObj = pre[name]
             if ( Object(preObj) !== preObj || diffObj(curObj, preObj ))  {
                 pre[name] = curObj
-                update(cur, this.update, steps, 'effect', 'afterChange')
+                update(pre, this.update, 'afterChange')
             }
         }
         delete cur[name]

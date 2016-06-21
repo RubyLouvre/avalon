@@ -8,11 +8,11 @@ avalon.directive('text', {
         var val = rident.test(binding.expr) ? binding.expr : avalon.parseExpr(binding)
         cur[binding.name] = val
     },
-    diff: function (cur, pre, steps, name) {
+    diff: function (cur, pre, name) {
         var curValue = cur[name]+''
         if (curValue !== pre[name] ) {
             pre[name] = curValue
-            update(pre, this.update, steps, 'text')
+            update(pre, this.update)
         }
     },
     update: function (dom, vdom) {

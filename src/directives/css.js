@@ -2,7 +2,7 @@
 var update = require('./_update')
 
 avalon.directive('css', {
-    diff: function (cur, pre, steps, name) {
+    diff: function (cur, pre, name) {
         var a = cur[name]
         var p = pre[name]
         if (Object(a) === a) {
@@ -28,7 +28,7 @@ avalon.directive('css', {
                 }
             }
             if (pre.changeStyle) {
-                update(pre, this.update, steps, 'css')
+                update(pre, this.update)
             }
         }
         delete cur[name]//释放内存

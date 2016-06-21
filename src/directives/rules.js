@@ -5,7 +5,7 @@ avalon.directive('rules', {
            cur[binding.name] = avalon.parseExpr(binding)
         }
     },
-    diff: function(cur, pre, steps, name){
+    diff: function(cur, pre, name){
         pre[name] = cur[name]
     }
 })

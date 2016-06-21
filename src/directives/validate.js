@@ -2,7 +2,7 @@ var update = require('./_update')
 
 var dir = avalon.directive('validate', {
 //验证单个表单元素
-    diff: function (cur, pre, steps, name) {
+    diff: function (cur, pre, name) {
         var validator = cur[name]
         var p = pre[name]
         if (p && p.onError && p.addField) {
@@ -18,7 +18,7 @@ var dir = avalon.directive('validate', {
                 }
             }
             validator.fields = validator.fields || []
-            update(pre, this.update, steps, 'validate' )
+            update(pre, this.update)
 
         }
     },

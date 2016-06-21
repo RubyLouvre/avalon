@@ -77,7 +77,7 @@ avalon.directive('for', {
                 + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
 
     },
-    diff: function (cur, pre, steps, curRepeat, preRepeat) {
+    diff: function (cur, pre, curRepeat, preRepeat) {
         //将curRepeat转换成一个个可以比较的component,并求得compareText
         preRepeat = preRepeat || []
         //preRepeat不为空时
@@ -176,7 +176,7 @@ avalon.directive('for', {
             }
             pre.removes = removes
         }
-        update(pre, this.update, steps, 'for')
+        update(pre, this.update)
         return true
 
     },

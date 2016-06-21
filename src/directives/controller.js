@@ -39,14 +39,14 @@ avalon.directive('controller', {
         cur.vmodel = '__present__'
         pre.$append = '/*controller:' + $id + '*/\n})(__vmodel__);'
     },
-    diff: function (cur, pre, steps, name) {
+    diff: function (cur, pre, name) {
         if (pre[name] !== cur[name]) {
             pre[name] = cur[name]
             pre.synth = cur.synth
             pre.local = cur.local
             pre.top = cur.top
             pre.vmodel = cur.vmodel
-            update(pre, this.update, steps, 'controller')
+            update(pre, this.update)
         }
     },
     update: function (dom, vdom, parent, important) {

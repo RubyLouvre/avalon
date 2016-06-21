@@ -20,43 +20,45 @@ avalon.directive('widget', {
     define: function () {
         return avalon.mediatorFactory.apply(this, arguments)
     },
-    diff: function (cur, pre, steps, name) {
+    diff: function (cur, pre, name) {
         var a = cur[name]
         var p = pre[name]
         pre.vmodel = cur.vmodel
         pre.local = cur.local
         pre.cur = cur
+        console.log("33333")
         if (Object(a) === a) {
             a = a.$model || a//安全的遍历VBscript
             if (Array.isArray(a)) {//转换成对象
                 a = avalon.mix.apply({}, a)
             }
             var is = a.is
-            if (pre.is !== is) {
-                if (!pre[is + "-vm"]) {
-                    if (!createComponent(pre, cur, is)) {
-                        //替换成注释节点
-                        update(pre, this.mountComment)
-                        return
-                    }
-                } 
-                var renderComponent = pre[is + '-vm'].$render
-                var newTree = renderComponent(pre[is + '-vm'], pre.local)[0]
-                if (isComponentReady(newTree)) {
-                    cur.children = []
-                    delete cur.local
-                    delete cur.vmodel
-                    
-                    avalon.mix(cur, newTree)
-                    if (pre[is + '-mount']) {
-                        update(pre, this.updateComponent)
-                    } else {
-                        update(pre, this.mountComponent)
-                    }
-                } else {
+
+            if (pre.is !== is || !pre[is + "-vm"]) {
+                if (!createComponent(pre, cur, is)) {
+                    //替换成注释节点
                     update(pre, this.mountComment)
+                    return
                 }
             }
+            var renderComponent = pre[is + '-vm'].$render
+            var newTree = renderComponent(pre[is + '-vm'], pre.local)[0]
+            if (isComponentReady(newTree)) {
+                cur.children = []
+                delete cur.local
+                delete cur.vmodel
+
+                avalon.mix(cur, newTree)
+                if (pre[is + '-mount']) {
+                    console.log('updateComponent')
+                    update(pre, this.updateComponent)
+                } else {
+                    update(pre, this.mountComponent)
+                }
+            } else {
+                update(pre, this.mountComment)
+            }
+
         }
     },
     mountComment: function (dom, vdom, parent) {
@@ -72,19 +74,19 @@ avalon.directive('widget', {
         var vm = vdom[vdom.is + '-vm']
         var viewChangeObservers = vm.$events.onViewChange
         if (viewChangeObservers && viewChangeObservers.length) {
-//                vdom.afterChange = [function (dom, vnode) {
-//                        var preHTML = pre.outerHTML
-//                        var curHTML = cur.outerHTML ||
-//                                (cur.outerHTML = avalon.vdomAdaptor(cur, 'toHTML'))
-//                        if (preHTML !== curHTML) {
-//                            cur.vmodel.$fire('onViewChange', {
-//                                type: 'viewchange',
-//                                target: dom,
-//                                wid: wid,
-//                                vmodel: vnode.vmodel
-//                            })
-//                        }
-//                    }]
+            //                vdom.afterChange = [function (dom, vnode) {
+            //                        var preHTML = pre.outerHTML
+            //                        var curHTML = cur.outerHTML ||
+            //                                (cur.outerHTML = avalon.vdomAdaptor(cur, 'toHTML'))
+            //                        if (preHTML !== curHTML) {
+            //                            cur.vmodel.$fire('onViewChange', {
+            //                                type: 'viewchange',
+            //                                target: dom,
+            //                                wid: wid,
+            //                                vmodel: vnode.vmodel
+            //                            })
+            //                        }
+            //                    }]
         }
     },
     mountComponent: function (dom, vdom, parent) {
@@ -103,13 +105,13 @@ avalon.directive('widget', {
         })
 
         var com = avalon.vdomAdaptor(vdom, 'toDOM')
-        reconcile( [com],[vdom])
+        reconcile([com], [vdom])
         parent.replaceChild(com, dom)
         vdom.dom = com
         addDisposeMonitor(com)
 
         vdom[is + '-mount'] = true
-        
+
         vdom[is + '-html'] = avalon.vdomAdaptor(vdom, 'toHTML')
         vm.$fire('onReady', {
             type: 'init',
