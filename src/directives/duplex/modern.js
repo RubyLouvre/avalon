@@ -78,7 +78,7 @@ avalon.directive('duplex', {
         }
 
     },
-    diff: function (cur, pre, steps) {
+    diff: function (cur, pre) {
         var curValue = cur.modelValue
         var preValue = pre.modelValue
         
@@ -98,7 +98,7 @@ avalon.directive('duplex', {
                 String(data.format(cur.vmodel, preValue))) {
            
             pre.viewValue =  viewValue
-            update(pre, this.update, steps, 'duplex', 'afterChange')
+            update(pre, this.update,'afterChange')
         }
     },
     update: function (node, vnode) {

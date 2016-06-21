@@ -27,7 +27,7 @@ function scan(nodes, fn) {
                 var now3 = new Date()
                 avalon.log('create template Function ', now3 - now2)
                 avalon.rerenderStart = now3
-                avalon.batch($id, true)
+                avalon.batch($id)
                 if (typeof fn === 'function') {
                     fn(vm)
                 }

@@ -25,7 +25,6 @@ function batchUpdate(id) {
         return renderingID = null
     }
     var dom = scope.dom
-    var steps = {count: 0}
     var oldTree = dom.vtree || []
     var vtree = scope.render(scope.synth || scope.vmodel, scope.local)
     if (!scope.isMount && oldTree) {
@@ -33,7 +32,7 @@ function batchUpdate(id) {
         reconcile([dom], oldTree, dom.parentNode)
         scope.isMount = 1
     }
-    avalon.diff(vtree, oldTree, steps)
+    avalon.diff(vtree, oldTree)
     if (scope.isMount === 1) {
         var vm = scope.vmodel
         var events = vm.$events["onReady"]
@@ -44,7 +43,6 @@ function batchUpdate(id) {
         scope.isMount = 2
     }
 
-    steps.count = 0
     var index = needRenderIds.indexOf(renderingID)
     renderingID = 0
     if (index > -1) {

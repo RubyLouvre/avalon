@@ -14,7 +14,7 @@ var emptyObj = function () {
 var directives = avalon.directives
 var rbinding = require('../seed/regexp').binding
 
-function diff(current, previous, steps) {
+function diff(current, previous) {
     for (var i = 0; i < current.length; i++) {
         var cur = current[i]
         var pre = previous[i] || emptyObj()
@@ -22,33 +22,45 @@ function diff(current, previous, steps) {
         switch (cur.nodeType) {
             case 3:
                 if (!cur.skipContent) {
-                    directives.expr.diff(cur, pre, steps)
+                    directives.expr.diff(cur, pre)
                 }
                 break
             case 8:
                 if (cur.directive) {
-                    directives[cur.directive].diff(cur, pre, steps,
+                    directives[cur.directive].diff(cur, pre,
                     current[i+1],previous[i+1])
                 }
                 break
             case 1:
                 if (!cur.skipAttrs) {
-                    diffProps(cur, pre, steps)
+                    diffProps(cur, pre)
                 }
                 if (!cur.skipContent && !cur.isVoidTag ) {
-                    diff(cur.children, pre.children || emptyArr, steps,cur)
+                    diff(cur.children, pre.children || emptyArr, cur)
+                }
+                if(pre.afterChange){
+                    execHooks(pre, cur.afterChange)
                 }
                 break
             default: 
                 if(Array.isArray(cur)){
-                   diff(cur, pre, steps)
+                   diff(cur, pre)
                 }
                 break
         }
     }
 }
 
-function diffProps(current, previous, steps) {
+function execHooks(el, hooks) {
+    if (hooks.length) {
+        for (var hook; hook = hooks[i++];) {
+           hook(el)
+        }
+    }
+    delete el.afterChange
+}
+
+function diffProps(current, previous) {
     if (current.order) {
         var directiveType
         try {
@@ -57,7 +69,7 @@ function diffProps(current, previous, steps) {
                 var type = match && match[1]
                 directiveType = type
                 if (directives[type]) {
-                    directives[type].diff(current, previous || emptyObj(), steps, name)
+                    directives[type].diff(current, previous || emptyObj(), name)
                 }
                 return name
             })

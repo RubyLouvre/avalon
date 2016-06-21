@@ -70,23 +70,23 @@ avalon.directive('widget', {
         vdom.dom = comment
         parent.replaceChild(comment, dom)
     },
-    updateComponent: function (dom, vdom, parent) {
-        var vm = vdom[vdom.is + '-vm']
+    updateComponent: function (dom, vdom) {
+        var is = vdom.is
+        var vm = vdom[is + '-vm']
+        var preHTML = vdom[is + '-html']
         var viewChangeObservers = vm.$events.onViewChange
         if (viewChangeObservers && viewChangeObservers.length) {
-            //                vdom.afterChange = [function (dom, vnode) {
-            //                        var preHTML = pre.outerHTML
-            //                        var curHTML = cur.outerHTML ||
-            //                                (cur.outerHTML = avalon.vdomAdaptor(cur, 'toHTML'))
-            //                        if (preHTML !== curHTML) {
-            //                            cur.vmodel.$fire('onViewChange', {
-            //                                type: 'viewchange',
-            //                                target: dom,
-            //                                wid: wid,
-            //                                vmodel: vnode.vmodel
-            //                            })
-            //                        }
-            //                    }]
+            update(vdom, function () {
+                var curHTML = avalon.vdomAdaptor(vdom, 'toHTML')
+                if (preHTML !== curHTML) {
+                    vdom[is + '-html'] = curHTML
+                    vm.$fire('onViewChange', {
+                        type: 'viewchange',
+                        target: dom,
+                        vmodel: vm
+                    })
+                }
+            }, 'afterChange')
         }
     },
     mountComponent: function (dom, vdom, parent) {
