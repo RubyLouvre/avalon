@@ -23,12 +23,12 @@ function addTag(obj) {
     return add(stringify(obj))
 }
 
-function parseNodes(array, inner) {
+function parseNodes(source, inner) {
     //ms-important， ms-controller ， ms-for 不可复制，省得死循环
     //ms-important --> ms-controller --> ms-for --> ms-widget --> ms-effect --> ms-if
     var buffer = inner ? []: ['\nvar vnodes = [];'] 
 
-    for (var i = 0, el; el = array[i++]; ) {
+    for (var i = 0, el; el = source[i++]; ) {
         var vnode = parseNode(el)
         if (el.$prepend) {
             buffer.push(el.$prepend)
@@ -51,122 +51,108 @@ function parseNodes(array, inner) {
 
 
 
-function parseNode(pre) {
+function parseNode(source) {
     var directives = avalon.directives
-    if (pre.nodeType === 3) {
-        if (config.rexpr.test(pre.nodeValue)) {
-            return add(stringifyText(pre))
+    if (source.nodeType === 3) {
+        if (config.rexpr.test(source.nodeValue)) {
+            return add(stringifyText(source))
         } else {
-            return addTag(pre)
+            return addTag(source)
         }
-    } else if (pre.nodeType === 1) {
-//        var props = pre.props
-//        if (pre.type.indexOf('ms-') === 0) {
-//            if (!props['ms-widget']) {
-//                props['ms-widget'] = '{is:' + quote(pre.type) + '}'
-//            }
-//        }
+    } else if (source.nodeType === 1) {
 
-        var cur = {
+        var copy = {
             props: {},
-            type: pre.type,
+            type: source.type,
             nodeType: 1,
             template: ''
         }
-        var bindings = extractBindings(cur, pre.props)
-        cur.order = bindings.map(function (b) {
-            //将ms-*的值变成函数,并赋给cur.props[ms-*]
-            //如果涉及到修改结构,则在pre添加$append,$prepend
-            directives[b.type].parse(cur, pre, b)
+        var bindings = extractBindings(copy, source.props)
+        copy.order = bindings.map(function (b) {
+            //将ms-*的值变成函数,并赋给copy.props[ms-*]
+            //如果涉及到修改结构,则在source添加$append,$prepend
+            directives[b.type].parse(copy, source, b)
             return b.name
 
         }).join(';;')
-//        if (pre.directive === 'widget') {
-//            cur.order = cur.order ? 'ms-widget;;' + cur.order : 'ms-widget'
-//            cur.directive = 'widget'
-//            cur.local = '__local__'
-//            cur.vmodel = '__vmodel__'
-//            cur.wid = avalon.quote(pre.props.wid)
-//            delete pre.skipAttrs
-//            delete cur.skipAttrs
-//        }
-        if (pre.isVoidTag) {
-            cur.isVoidTag = true
+
+        if (source.isVoidTag) {
+            copy.isVoidTag = true
         } else {
-            if (!('children' in cur)) {
+            if (!('children' in copy)) {
                 
-                var pChildren = pre.children
+                var pChildren = source.children
                 if (pChildren.length) {
-                    delete pre.template
-                    cur.children = '(function(){' + parseNodes(pChildren) + '})()'
+                    delete source.template
+                    copy.children = '(function(){' + parseNodes(pChildren) + '})()'
                 } else {
-                    cur.template = pre.template
-                    cur.children = '[]'
+                    copy.template = source.template
+                    copy.children = '[]'
                 }
             }
         }
-        if(pre.skipContent)
-            cur.skipContent = true
-        if(pre.skipAttrs)
-            cur.skipAttrs = true
+        if(source.skipContent)
+            copy.skipContent = true
+        if(source.skipAttrs)
+            copy.skipAttrs = true
 
-        return addTag(cur)
+        return addTag(copy)
 
-    } else if (pre.nodeType === 8) {
-        var nodeValue = pre.nodeValue
+    } else if (source.nodeType === 8) {
+        var nodeValue = source.nodeValue
         if (rmsFor.test(nodeValue)) {// 处理ms-for指令
             if (nodeValue.indexOf('ms-for:') !== 0) {
                 avalon.error('ms-for指令前不能有空格')
             }
-            var cur = {
+            var copy = {
                 directive: 'for',
                 vmodel: '__vmodel__'
             }
-            for (var i in pre) {
-                if (pre.hasOwnProperty(i)) {
-                    cur[i] = pre[i]
+            for (var i in source) {
+                if (source.hasOwnProperty(i)) {
+                    copy[i] = source[i]
                 }
             }
 
-            directives['for'].parse(cur, pre, pre)
+            directives['for'].parse(copy, source, source)
 
-            return addTag(cur)
+            return addTag(copy)
 
         } else if (rmsForEnd.test(nodeValue)) {
             if (nodeValue.indexOf('ms-for-end:') !== 0) {
                 avalon.error('ms-for-end指令前不能有空格')
             }
-            pre.$append = addTag({
+            source.$append = addTag({
                 nodeType: 8,
                 type: '#comment',
-                nodeValue: pre.signature,
+                nodeValue: source.signature,
                 key: 'traceKey'
             }) +
                     '\n},__local__,vnodes)\n' +
                     addTag({
                         nodeType: 8,
                         type: "#comment",
-                        signature: pre.signature,
+                        signature: source.signature,
                         nodeValue: "ms-for-end:"
                     }) + '\n'
 
             return ''
         } else if (nodeValue.indexOf('ms-js:') === 0) {//插入JS声明语句
             var statement = parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
-            var ret = addTag(pre)
+            var ret = addTag(source)
             var match = statement.match(rstatement)
             if (match && match[1]) {
-                pre.$append = (pre.$append || '') + statement +
+                source.$append = (source.$append || '') + statement +
                         "\n__local__." + match[1] + ' = ' + match[1] + '\n'
             } else {
                 avalon.warn(nodeValue + ' parse fail!')
             }
             return ret
         } else {
-            return addTag(pre)
+            return addTag(source)
         }
-    } else if (Array.isArray(pre)) {
-        pre.$append = parseNodes(pre, true)
+    } else if (Array.isArray(source)) {
+        source.$append = parseNodes(source, true)
     }
 }
 var rstatement = /^\s*var\s+([$\w]+)\s*\=\s*\S+/

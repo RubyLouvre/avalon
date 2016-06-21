@@ -14,7 +14,7 @@ var rstring = require('../seed/regexp').string
 //基于事件代理的高性能事件绑定
 avalon.directive('on', {
     priority: 3000,
-    parse: function (cur, pre, binding) {
+    parse: function (copy, src, binding) {
         var underline = binding.name.replace('ms-on-', 'e').replace('-', '_')
         var uuid = underline + '_' + binding.expr.
                 replace(/\s/g, '').
@@ -27,32 +27,32 @@ avalon.directive('on', {
                 'var fn610 = ' +
                 avalon.parseExpr(binding, 'on') +
                 '\nfn610.uuid =' + quoted + ';\nreturn fn610})()'
-        cur.vmodel = '__vmodel__'
-        cur.local = '__local__'
-        cur[binding.name] = fn
+        copy.vmodel = '__vmodel__'
+        copy.local = '__local__'
+        copy[binding.name] = fn
 
     },
-    diff: function (cur, pre, name) {
-        var fn = cur[name]
+    diff: function (copy, src, name) {
+        var fn = copy[name]
         var uuid = fn.uuids
         var type = uuid.split('_').shift()
         var search = type.slice(1) + ':' + uuid
-        var preFn = pre[name]
+        var srcFn = src[name]
         var hasChange = false
-        if (!preFn || preFn.uuid !== uuid) {
-            pre[name] = fn
-            pre.addEvents = pre.addEvents || {}
-            pre.addEvents[search] = fn
+        if (!srcFn || srcFn.uuid !== uuid) {
+            src[name] = fn
+            src.addEvents = src.addEvents || {}
+            src.addEvents[search] = fn
             avalon.eventListeners.uuid = fn
             hasChange = true
         }
-        if (diffObj(pre.local|| {}, cur.local)) {
+        if (diffObj(src.local|| {}, copy.local)) {
             hasChange = true
         }
         if (hasChange) {
-            pre.local = cur.local
-            pre.vmodel = cur.vmodel
-            update(pre, this.update)
+            src.local = copy.local
+            src.vmodel = copy.vmodel
+            update(src, this.update)
         }
     },
     update: function (dom, vdom) {

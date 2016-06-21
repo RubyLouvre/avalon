@@ -50,8 +50,8 @@ function iterator(index, item, vars, fn, k1, k2, repeat, isArray) {
 
 avalon.directive('for', {
     priority: 3,
-    parse: function (cur, pre, binding) {
-        var str = pre.nodeValue, aliasAs
+    parse: function (copy, src, binding) {
+        var str = src.nodeValue, aliasAs
         str = str.replace(rforAs, function (a, b) {
             if (!rident.test(b) || rinvalid.test(b)) {
                 avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.')
@@ -72,32 +72,32 @@ avalon.directive('for', {
         kv.push('traceKey')
         kv.push('__local__')
         kv.push('vnodes')
-        pre.$append = assign + alias + 'avalon._each(loop,function('
+        src.$append = assign + alias + 'avalon._each(loop,function('
             + kv.join(', ') + '){\n'
             + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
 
     },
-    diff: function (cur, pre, curRepeat, preRepeat, end) {
+    diff: function (copy, src, curRepeat, preRepeat, end) {
         //将curRepeat转换成一个个可以比较的component,并求得compareText
         preRepeat = preRepeat || []
         //preRepeat不为空时
-        pre.preRepeat = preRepeat
-        var curItems = prepareCompare(curRepeat, cur)
-        if (pre.compareText === cur.compareText) {
+        src.preRepeat = preRepeat
+        var curItems = prepareCompare(curRepeat, copy)
+        if (src.compareText === copy.compareText) {
             //如果个数与key一致,那么说明此数组没有发生排序,立即返回
             return
         }
-        if (!pre.preItems) {
-            pre.preItems = prepareCompare(preRepeat, pre)
+        if (!src.preItems) {
+            src.preItems = prepareCompare(preRepeat, src)
         }
-        pre.compareText = cur.compareText
+        src.compareText = copy.compareText
         //for指令只做添加删除操作
-        var cache = pre.cache
+        var cache = src.cache
         var vdomTemplate, i, c, p
 
         function enterAction(c) {
             if (!vdomTemplate) {
-                var template = pre.template + '<!--' + pre.signature + '-->'
+                var template = src.template + '<!--' + src.signature + '-->'
 
                 vdomTemplate = avalon.lexer(template)
                 avalon.speedUp(vdomTemplate)
@@ -112,16 +112,16 @@ avalon.directive('for', {
 
         if (!cache) {
             /* eslint-disable no-cond-assign */
-            var cache = pre.cache = {}
-            pre.preItems.length = 0
+            var cache = src.cache = {}
+            src.preItems.length = 0
             for (i = 0; c = curItems[i]; i++) {
                 var p = enterAction(c)
-                pre.preItems.push(p)
+                src.preItems.push(p)
                 p.action = 'enter'
                 p.index = i
                 saveInCache(cache, p)
             }
-            pre.removes = []
+            src.removes = []
             /* eslint-enable no-cond-assign */
         } else {
             var newCache = {}
@@ -150,16 +150,16 @@ avalon.directive('for', {
                 } else {
                     p = enterAction(c)
                     p.index = c.index
-                    pre.preItems.push(p)
+                    src.preItems.push(p)
                 }
                 saveInCache(newCache, p)
             }
-            pre.preItems.sort(function (a, b) {
+            src.preItems.sort(function (a, b) {
                 return a.index > b.index
             })
 
             /* eslint-enable no-cond-assign */
-            pre.cache = newCache
+            src.cache = newCache
             var removes = []
 
             for (var i in cache) {
@@ -174,18 +174,20 @@ avalon.directive('for', {
                     delete p.arr
                 }
             }
-            pre.removes = removes
+            src.removes = removes
         }
-        var cb = avalon.caches[pre.cid]
+        
+        var cb = avalon.caches[src.cid]
         if (end && cb) {
             end.afterChange = [function (dom) {
                 cb({
                     type: 'rendered',
                     target: dom,
-                    signature: pre.signature
+                    signature: src.signature
                 })
             }]
         }
+        update(src, this.update)
         return true
 
     },
@@ -197,6 +199,7 @@ avalon.directive('for', {
         var endRepeat = range.pop()
         var DOMs = splitDOMs(doms, key)
         var check = doms[doms.length - 1]
+        
         if (check && check.nodeValue !== key) {
             do {//去掉最初位于循环节点中的内容
                 var prev = endRepeat.previousSibling
@@ -211,7 +214,6 @@ avalon.directive('for', {
                 }
             } while (true);
         }
-
         for (var i = 0, el; el = vdom.removes[i++];) {
             var removeNodes = DOMs[el.index]
             if (removeNodes) {

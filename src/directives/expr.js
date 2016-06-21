@@ -6,7 +6,6 @@ avalon.directive('expr', {
         var copyValue = copy.nodeValue+''
         if (copyValue !== src.nodeValue) {
             src.nodeValue = copyValue
-            console.log(src.dom, src.nodeValue)
             update(src, this.update)
         }
     },

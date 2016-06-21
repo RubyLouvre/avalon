@@ -2,14 +2,14 @@ var update = require('./_update')
 //ms-imporant ms-controller ms-for ms-widget ms-effect ms-if   ...
 avalon.directive('if', {
     priority: 6,
-    diff: function (cur, pre, steps, name) {
-        var c = !!cur[name]
-        if (c !== pre[name]) {
-            pre[name] = c
-            if (c && pre.nodeType === 1) {
+    diff: function (copy, src, steps, name) {
+        var c = !!copy[name]
+        if (c !== src[name]) {
+            src[name] = c
+            if (c && src.nodeType === 1) {
                 return
             }
-            update(pre, this.update)
+            update(src, this.update)
         }
 
     },
