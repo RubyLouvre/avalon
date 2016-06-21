@@ -13,15 +13,14 @@ avalon.mediatorFactory2 = function (__vmodel__, __present__) {
 }
 avalon.directive('controller', {
     priority: 2,
-    parse: function (cur, pre, binding) {
+    parse: function (copy, src, binding) {
         var $id = binding.expr
         var quoted = avalon.quote($id)
         var name = binding.name
-        cur[name] = quoted
+        copy[name] = quoted
 
-        // 'if(!avalon.skipController(__fast__, bottomVm)){ '
-        // cur.props[name] = $id
-        pre.$prepend = ['(function(__vmodel__){',
+
+        src.$prepend = ['(function(__vmodel__){',
             'var __top__ = __vmodel__',
             'var __present__ = avalon.vmodels[' + quoted + ']',
             'if(__present__ && __top__ && __present__ !== __top__){',
@@ -32,21 +31,21 @@ avalon.directive('controller', {
             '}',
             '/*controller:' + $id + '*/',
         ].join('\n') + '\n\n'
-        cur.synth = '__synth__'
-        cur.local = '__local__'
-        cur.top = '__top__'
-        pre.$id = $id
-        cur.vmodel = '__present__'
-        pre.$append = '/*controller:' + $id + '*/\n})(__vmodel__);'
+        copy.synth = '__synth__'
+        copy.local = '__local__'
+        copy.top = '__top__'
+        src.$id = $id
+        copy.vmodel = '__present__'
+        src.$append = '/*controller:' + $id + '*/\n})(__vmodel__);'
     },
-    diff: function (cur, pre, name) {
-        if (pre[name] !== cur[name]) {
-            pre[name] = cur[name]
-            pre.synth = cur.synth
-            pre.local = cur.local
-            pre.top = cur.top
-            pre.vmodel = cur.vmodel
-            update(pre, this.update)
+    diff: function (copy, src, name) {
+        if (src[name] !== copy[name]) {
+            src[name] = copy[name]
+            src.synth = copy.synth
+            src.local = copy.local
+            src.top = copy.top
+            src.vmodel = copy.vmodel
+            update(src, this.update)
         }
     },
     update: function (dom, vdom, parent, important) {
@@ -63,10 +62,14 @@ avalon.directive('controller', {
         var vmodel = vdom.vmodel
         if (top && vmodel) {
             var str = (top.$render + "")
-            var splitText = '/*controller:' + top.$id + '*/'
-           
-            var arr = str.split(splitText)
-            
+            var synth = vdom.synth
+            var vm = synth || vmodel
+            //开始构建模板函数,从顶层vm的模板函数的toString中
+            //通过splitText截取其作用的区域,
+            //前面加上本地变量与vnodes数组,后面返回vnodes数组
+            //放进avalon.render方法中生成
+            var splitText = '/*controller:' + vm.$id + '*/'
+            var arr = str.split(splitText)   
             var effective = arr[1]
             var local = vdom.local || {}
             var vars = []
@@ -75,21 +78,17 @@ avalon.directive('controller', {
             }
             vars.push('var vnodes = []\n')
             var body = vars.join('\n') + effective + '\nreturn vnodes'
-         
             var render = avalon.render(body,{})
-
-            var synth = vdom.synth
+            //为相关的vm添加对应属性,$render,$element,vtree
+            
             synth.$render = vmodel.$render = render
             synth.$element = vmodel.$element = dom
             dom.vtree = [vdom]
-            
-            delete vdom.top 
-            delete vdom.synth
-
+            vdom.top = vdom.synth = vdom.vmodel = 0
+           
             avalon.scopes[vmodel.$id] = {
-                vmodel: synth || vmodel,
+                vmodel: vm,
                 local: local,
-                isMount: 2,
                 fast: 'important'
             }
         }
