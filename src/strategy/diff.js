@@ -28,7 +28,10 @@ function diff(current, previous) {
             case 8:
                 if (cur.directive) {
                     directives[cur.directive].diff(cur, pre,
-                    current[i+1],previous[i+1])
+                    current[i+1],previous[i+1],previous[i+2]) 
+                }
+                if(pre.afterChange){
+                    execHooks(pre, pre.afterChange)
                 }
                 break
             case 1:
@@ -39,7 +42,7 @@ function diff(current, previous) {
                     diff(cur.children, pre.children || emptyArr, cur)
                 }
                 if(pre.afterChange){
-                    execHooks(pre, cur.afterChange)
+                    execHooks(pre, pre.afterChange)
                 }
                 break
             default: 
@@ -53,8 +56,8 @@ function diff(current, previous) {
 
 function execHooks(el, hooks) {
     if (hooks.length) {
-        for (var hook; hook = hooks[i++];) {
-           hook(el)
+        for (var hook, i = 0; hook = hooks[i++];) {
+           hook(el.dom, el)
         }
     }
     delete el.afterChange

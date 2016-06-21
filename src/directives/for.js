@@ -73,11 +73,11 @@ avalon.directive('for', {
         kv.push('__local__')
         kv.push('vnodes')
         pre.$append = assign + alias + 'avalon._each(loop,function('
-                + kv.join(', ') + '){\n'
-                + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
+            + kv.join(', ') + '){\n'
+            + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
 
     },
-    diff: function (cur, pre, curRepeat, preRepeat) {
+    diff: function (cur, pre, curRepeat, preRepeat, end) {
         //将curRepeat转换成一个个可以比较的component,并求得compareText
         preRepeat = preRepeat || []
         //preRepeat不为空时
@@ -94,13 +94,13 @@ avalon.directive('for', {
         //for指令只做添加删除操作
         var cache = pre.cache
         var vdomTemplate, i, c, p
-        
+
         function enterAction(c) {
-            if(!vdomTemplate){
-               var template = pre.template + '<!--' + pre.signature + '-->'
-              
-               vdomTemplate = avalon.lexer(template)
-               avalon.speedUp(vdomTemplate)
+            if (!vdomTemplate) {
+                var template = pre.template + '<!--' + pre.signature + '-->'
+
+                vdomTemplate = avalon.lexer(template)
+                avalon.speedUp(vdomTemplate)
             }
             return {
                 action: 'enter',
@@ -109,17 +109,17 @@ avalon.directive('for', {
             }
         }
 
-      
+
         if (!cache) {
             /* eslint-disable no-cond-assign */
             var cache = pre.cache = {}
             pre.preItems.length = 0
             for (i = 0; c = curItems[i]; i++) {
-                 var p = enterAction(c)
-                 pre.preItems.push(p)
-                 p.action = 'enter'
-                 p.index = i
-                 saveInCache(cache, p)
+                var p = enterAction(c)
+                pre.preItems.push(p)
+                p.action = 'enter'
+                p.index = i
+                saveInCache(cache, p)
             }
             pre.removes = []
             /* eslint-enable no-cond-assign */
@@ -127,7 +127,7 @@ avalon.directive('for', {
             var newCache = {}
             /* eslint-disable no-cond-assign */
             var fuzzy = []
-            for (i = 0; c = curItems[i++]; ) {
+            for (i = 0; c = curItems[i++];) {
                 var p = isInCache(cache, c.key)
                 if (p) {
                     p.action = 'move'
@@ -138,14 +138,14 @@ avalon.directive('for', {
                     //如果找不到就进行模糊搜索
                     fuzzy.push(c)
                 }
-                
+
             }
-            for (var i = 0, c; c = fuzzy[i++]; ) {
+            for (var i = 0, c; c = fuzzy[i++];) {
                 p = fuzzyMatchCache(cache, c.key)
                 if (p) {
                     p.action = 'move'
                     p.oldIndex = p.index
-                    
+
                     p.index = c.index
                 } else {
                     p = enterAction(c)
@@ -154,20 +154,20 @@ avalon.directive('for', {
                 }
                 saveInCache(newCache, p)
             }
-            pre.preItems.sort(function(a, b){
-               return a.index > b.index
+            pre.preItems.sort(function (a, b) {
+                return a.index > b.index
             })
-          
+
             /* eslint-enable no-cond-assign */
             pre.cache = newCache
             var removes = []
-            
+
             for (var i in cache) {
                 p = cache[i]
                 p.action = 'leave'
                 removes.push(p)
-                if (p.arr){
-                    p.arr.forEach(function(m){
+                if (p.arr) {
+                    p.arr.forEach(function (m) {
                         m.action = 'leave'
                         removes.push(m)
                     })
@@ -176,7 +176,16 @@ avalon.directive('for', {
             }
             pre.removes = removes
         }
-        update(pre, this.update)
+        var cb = avalon.caches[pre.cid]
+        if (end && cb) {
+            end.afterChange = [function (dom) {
+                cb({
+                    type: 'rendered',
+                    target: dom,
+                    signature: pre.signature
+                })
+            }]
+        }
         return true
 
     },
@@ -191,19 +200,19 @@ avalon.directive('for', {
         if (check && check.nodeValue !== key) {
             do {//去掉最初位于循环节点中的内容
                 var prev = endRepeat.previousSibling
-                if (prev === dom || prev.nodeType === key ) {
+                if (prev === dom || prev.nodeType === key) {
                     break
                 }
                 if (prev) {
-                   
+
                     parent.removeChild(prev)
                 } else {
                     break
                 }
             } while (true);
         }
-        
-        for (var i = 0, el; el = vdom.removes[i++]; ) {
+
+        for (var i = 0, el; el = vdom.removes[i++];) {
             var removeNodes = DOMs[el.index]
             if (removeNodes) {
                 removeNodes.forEach(function (n, k) {
@@ -226,11 +235,11 @@ avalon.directive('for', {
         var domTemplate
         for (var i = 0; i < vdom.preItems.length; i++) {
             var com = vdom.preItems[i]
-            
+
             var children = com.children
             if (com.action === 'leave') {
                 continue
-            }else if (com.action === 'enter') {
+            } else if (com.action === 'enter') {
                 if (!domTemplate) {
                     //创建用于拷贝的数据,包括虚拟DOM与真实DOM 
                     domTemplate = avalon.vdomAdaptor(children, 'toDOM')
@@ -248,7 +257,7 @@ avalon.directive('for', {
                 var cnodes = DOMs[com.oldIndex] || []
                 if (com.index !== com.oldIndex) {
                     var moveFragment = fragment.cloneNode(false)
-                    for (var k = 0, cc; cc = cnodes[k++]; ) {
+                    for (var k = 0, cc; cc = cnodes[k++];) {
                         moveFragment.appendChild(cc)
                     }
                     parent.insertBefore(moveFragment, insertPoint.nextSibling)
@@ -258,26 +267,18 @@ avalon.directive('for', {
                     })
                 }
             }
-            
+
             insertPoint = cnodes[cnodes.length - 1]
-     
+
             if (!insertPoint) {
                 break
             }
         }
         vdom.preRepeat.length = 0
-        vdom.preItems.forEach(function(el){
-           range.push.apply(vdom.preRepeat, el.children) 
+        vdom.preItems.forEach(function (el) {
+            range.push.apply(vdom.preRepeat, el.children)
         })
-        var cb = avalon.caches[vdom.cid]
-        if (cb) {
-            cb.call(vdom.vmodel, {
-                type: 'rendered',
-                target: dom,
-                endRepeat: endRepeat,
-                signature: key
-            })
-        }
+
     }
 
 })
@@ -285,7 +286,7 @@ avalon.directive('for', {
 function splitDOMs(nodes, signature) {
     var items = []
     var item = []
-    for (var i = 0, el; el = nodes[i++]; ) {
+    for (var i = 0, el; el = nodes[i++];) {
         if (el.nodeType === 8 && el.nodeValue === signature) {
             item.push(el)
             items.push(item)

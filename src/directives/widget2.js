@@ -50,7 +50,6 @@ avalon.directive('widget', {
 
                 avalon.mix(cur, newTree)
                 if (pre[is + '-mount']) {
-                    console.log('updateComponent')
                     update(pre, this.updateComponent)
                 } else {
                     update(pre, this.mountComponent)
@@ -73,20 +72,9 @@ avalon.directive('widget', {
     updateComponent: function (dom, vdom) {
         var is = vdom.is
         var vm = vdom[is + '-vm']
-        var preHTML = vdom[is + '-html']
         var viewChangeObservers = vm.$events.onViewChange
         if (viewChangeObservers && viewChangeObservers.length) {
-            update(vdom, function () {
-                var curHTML = avalon.vdomAdaptor(vdom, 'toHTML')
-                if (preHTML !== curHTML) {
-                    vdom[is + '-html'] = curHTML
-                    vm.$fire('onViewChange', {
-                        type: 'viewchange',
-                        target: dom,
-                        vmodel: vm
-                    })
-                }
-            }, 'afterChange')
+            update(vdom, viewChangeHandle, 'afterChange')
         }
     },
     mountComponent: function (dom, vdom, parent) {
@@ -103,25 +91,45 @@ avalon.directive('widget', {
             vmodel: vm,
             componentName: is
         })
-
         var com = avalon.vdomAdaptor(vdom, 'toDOM')
+
         reconcile([com], [vdom])
         parent.replaceChild(com, dom)
         vdom.dom = com
         addDisposeMonitor(com)
-
         vdom[is + '-mount'] = true
 
-        vdom[is + '-html'] = avalon.vdomAdaptor(vdom, 'toHTML')
-        vm.$fire('onReady', {
-            type: 'init',
-            target: com,
-            vmodel: vm,
-            componentName: is
-        })
+        update(vdom, function () {
+            vm.$fire('onReady', {
+                type: 'init',
+                target: com,
+                vmodel: vm,
+                componentName: is
+            })
+        }, 'afterChange')
+
+        update(vdom, function () {
+            vdom[is + '-html'] = avalon.vdomAdaptor(vdom, 'toHTML')
+        }, 'afterChange')
 
     }
 })
+
+function viewChangeHandle(dom, vdom) {
+    var is = vdom.is
+    var vm = vdom[is + '-vm']
+    var preHTML = vdom[is + '-html']
+    var curHTML = avalon.vdomAdaptor(vdom, 'toHTML')
+    if (preHTML !== curHTML) {
+        vdom[is + '-html'] = curHTML
+        vm.$fire('onViewChange', {
+            type: 'viewchange',
+            target: dom,
+            vmodel: vm,
+            componentName: is
+        })
+    }
+}
 
 function addDisposeMonitor(dom) {
     if (window.chrome && window.MutationEvent) {
@@ -138,7 +146,6 @@ function isComponentReady(vnode) {
     try {
         hasUnresolvedComponent(vnode)
     } catch (e) {
-        console.log(e)
         isReady = false
     }
     return isReady
