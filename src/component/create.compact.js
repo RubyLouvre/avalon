@@ -24,9 +24,9 @@ function createComponent(src, copy, is) {
         })
         isEmpty = isEmptyOption(hooks)
     }
-    
+    var definition = avalon.components[is]
     //初始化组件失败,因为连组件的定义都没有加载
-    if (!avalon.components[is]) {
+    if (!definition) {
         return
     }
     var skipProps = protected.concat()
@@ -52,16 +52,11 @@ function createComponent(src, copy, is) {
     }
 
     //将用户声明组件用的自定义标签(或xmp.template)的template转换成虚拟DOM
-    if (type === 'xmp' || type === 'template' || src.children.length === 0) {
-        src.children = avalon.lexer(src.template)
+    if (type === 'xmp' || type === 'template') {
+        src.children = avalon.lexer(src.children[0].nodeValue)
     }
-    //对于IE6-8,需要对自定义标签进行hack
-    var definition = avalon.components[is]
-    if (!avalon.modern && !definition.fixTag) {
-        avalon.document.createElement(is)
-        definition.fixTag = 1
-    }
-
+    src.isVoidTag = src.skipContent = 0
+   
     //开始构建组件的vm的配置对象
 
     var define = hooks.define
@@ -106,6 +101,7 @@ function createComponent(src, copy, is) {
 
     //将用户标签中的属性合并到组件标签的属性里
     avalon.mix(componentRoot.props, src.props)
+    
     //  必须指定wid
     componentRoot.props.wid = $id
     //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
