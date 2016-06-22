@@ -247,10 +247,15 @@ function modifyProps(node, innerHTML, nodes, curDeep) {
         case 'noscript':
         case 'template':
         case 'textarea':
+        case 'xmp':
             node.skipContent = true
+            node.children.push(new VText(node.template))
+           
             if (type === 'textarea') {
                 props.type = 'textarea'
+                node.children.length = 0
             }
+            
             break
         case 'input':
             if (!props.type) {
@@ -263,9 +268,7 @@ function modifyProps(node, innerHTML, nodes, curDeep) {
                 node.multiple = true
             }
             break
-        case 'xmp':
-            node.children.push(new VText(node.template))
-            break
+      
         case 'option':
             node.children.push(new VText(trimHTML(node.template)))
             break
@@ -273,7 +276,7 @@ function modifyProps(node, innerHTML, nodes, curDeep) {
     if(/^ms-/.test(node.type) && !props['ms-widget']){
         props['ms-widget'] = '{is:' + avalon.quote(node.type) + '}'
     }
-    if (!node.isVoidTag) {
+    if (!node.isVoidTag && !node.skipContent) {
         var childs = lexer(innerHTML, curDeep + 1)
         node.children = childs
         if (type === 'table') {
