@@ -1,11 +1,8 @@
-var scanStatistics = 0
-function scan(nodes, fn) {
+function scan(nodes) {
     for (var i = 0, elem; elem = nodes[i++];) {
         if (elem.nodeType === 1) {
             var $id = getController(elem)
-            if ($id) {
-                ++scanStatistics
-            }
+          
             var vm = avalon.vmodels[$id]
             if (vm && !vm.$element) {
                 avalon(elem).removeClass('ms-controller')
@@ -26,23 +23,20 @@ function scan(nodes, fn) {
                 avalon.log('create template Function ', now3 - now2)
                 avalon.rerenderStart = now3
                 avalon.batch($id)
-                if (typeof fn === 'function') {
-                    fn(vm)
-                }
+                
             } else if (!$id) {
-                scan(elem.childNodes, fn)
+                scan(elem.childNodes)
             }
         }
     }
 }
 
-module.exports = avalon.scan = function (a, fn) {
+module.exports = avalon.scan = function (a) {
     if (!a || !a.nodeType) {
         avalon.warn('[avalon.scan] first argument must be element , documentFragment, or document')
         return
     }
-    scan([a], fn)
-    scanStatistics = 0
+    scan([a])
 }
 
 function getController(a) {

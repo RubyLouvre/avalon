@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-23:1 version 2.10 by 司徒正美
+ * built in 2016-6-23:2 version 2.10 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -3156,14 +3156,11 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 33 */
 /***/ function(module, exports) {
 
-	var scanStatistics = 0
-	function scan(nodes, fn) {
+	function scan(nodes) {
 	    for (var i = 0, elem; elem = nodes[i++];) {
 	        if (elem.nodeType === 1) {
 	            var $id = getController(elem)
-	            if ($id) {
-	                ++scanStatistics
-	            }
+	          
 	            var vm = avalon.vmodels[$id]
 	            if (vm && !vm.$element) {
 	                avalon(elem).removeClass('ms-controller')
@@ -3184,23 +3181,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	                avalon.log('create template Function ', now3 - now2)
 	                avalon.rerenderStart = now3
 	                avalon.batch($id)
-	                if (typeof fn === 'function') {
-	                    fn(vm)
-	                }
+	                
 	            } else if (!$id) {
-	                scan(elem.childNodes, fn)
+	                scan(elem.childNodes)
 	            }
 	        }
 	    }
 	}
 
-	module.exports = avalon.scan = function (a, fn) {
+	module.exports = avalon.scan = function (a) {
 	    if (!a || !a.nodeType) {
 	        avalon.warn('[avalon.scan] first argument must be element , documentFragment, or document')
 	        return
 	    }
-	    scan([a], fn)
-	    scanStatistics = 0
+	    scan([a])
 	}
 
 	function getController(a) {
