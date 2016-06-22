@@ -6,7 +6,7 @@ var updateView = {
     radio: function () {//处理单个checked属性
         var checked
         if (this.isChecked) {
-            checked = !!this.viewValue
+            checked = !!this.modelValue
         } else {
             checked = this.viewValue + '' === this.dom.value
         }

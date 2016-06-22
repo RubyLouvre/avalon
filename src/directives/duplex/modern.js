@@ -21,13 +21,13 @@ avalon.directive('duplex', {
         //处理数据转换器
         var parser = binding.param, dtype
         var isChecked = false
-        parser = parser ?  parser.split('-').map(function(a){
-                if(a === 'checked'){
-                    isChecked = true
-                }
-                return a
-            }) : []
-       
+        parser = parser ? parser.split('-').map(function (a) {
+            if (a === 'checked') {
+                isChecked = true
+            }
+            return a
+        }) : []
+
         if (rcheckedType.test(etype) && isChecked) {
             //如果是radio, checkbox,判定用户使用了checked格式函数没有
             parser = []
@@ -59,10 +59,12 @@ avalon.directive('duplex', {
             }
         }
 
+
         var changed = copy.props['data-duplex-changed']
-        var format = evaluatorPool.get('duplex:format:' + expr)
         copy.parser = avalon.quote(parser + "")
         copy.modelValue = '(' + avalon.parseExpr(binding, 'duplex') + ')(__vmodel__)'// 输出原始数据
+        var format = evaluatorPool.get('duplex:format:' + expr)
+
         copy.duplexData = stringify({
             type: dtype, //这个决定绑定什么事件
             vmodel: '__vmodel__',
@@ -77,78 +79,76 @@ avalon.directive('duplex', {
 
     },
     diff: function (copy, src) {
+
         if (!src.duplexData) {
             //第一次为原始虚拟DOM添加duplexData
             var data = src.duplexData = copy.duplexData
             data.parser = copy.parser ? copy.parser.split(',') : []
             data.parse = parseValue
+
+            var curValue = data.modelValue = data.isString ?
+                    data.parse(copy.modelValue) : copy.modelValue
+
         } else {
             data = src.duplexData
-        }
-        var curValue = copy.modelValue
-        var preValue = src.modelValue
-        if (curValue === preValue) {
-            return
-        }
-        data.modelValue = curValue
-        copy.duplexData = 0
-        
-        var viewValue = data.format(data.vmodel, curValue)
-        
-        if (String(viewValue) !==
-                String(data.format(data.vmodel, preValue))) {
-            if( data.isString ){
-                viewValue += ''
-            }
-            src.viewValue =  viewValue
-            update(src, this.update,'afterChange')
-        }
-    },
-    update: function (node, vnode) {
+            var curValue = copy.modelValue
 
-        if (node && node.nodeType === 1) {
-            if (!node.getAttribute('duplex-inited')) {
-                node.__ms_duplex__ = vnode.duplexData
-                node.setAttribute('duplex-inited', 'true')
-               
-                updateModelByEvent(node, vnode)
+            var preValue = data.modelValue
+            if (curValue === preValue) {
+                return
             }
-            var data = node.__ms_duplex__
-            
-            data.dom = node
-            addValidateField(node, vnode)
-            if ( data.isString
-                   && !avalon.msie 
-                   && updateModelByValue === false 
-                   && !node.valueHijack) {
+            data.modelValue = curValue
+        }
+        copy.duplexData = 0
+        if (data.isString) {//输出到页面时要格式化
+            curValue = data.format(data.vmodel, curValue + '')
+        }
+
+        data.viewValue = curValue
+        update(src, this.update, 'afterChange')
+
+
+    },
+    update: function (dom, vdom) {
+        if (dom && dom.nodeType === 1) {
+            if (!dom.getAttribute('duplex-inited')) {
+                dom.__ms_duplex__ = vdom.duplexData
+                dom.setAttribute('duplex-inited', 'true')
+                updateModelByEvent(dom, vdom)
+            }
+            var data = dom.__ms_duplex__
+
+            data.dom = dom
+            addValidateField(dom, vdom)
+            if (data.isString
+                    && !avalon.msie
+                    && updateModelByValue === false
+                    && !dom.valueHijack) {
                 //chrome 42及以下版本需要这个hack
-             
-                node.valueHijack = updateModel
+
+                dom.valueHijack = updateModel
                 var intervalID = setInterval(function () {
-                    if (!avalon.contains(avalon.root, node)) {
+                    if (!avalon.contains(avalon.root, dom)) {
                         clearInterval(intervalID)
                     } else {
-                        node.valueHijack()
+                        dom.valueHijack()
                     }
                 }, 30)
             }
-         
-            if (data.viewValue !== vnode.viewValue) {
-          
-                data.viewValue = vnode.viewValue  //被过滤器处理的数据
-                updateView[data.type].call(data)
-                if (node.caret) {
-                    var pos = data.caretPos
-                    pos && data.setCaret(node, pos.start, pos.end)
-                    data.caretPos = null
-                }
+
+            updateView[data.type].call(data)
+            if (dom.caret) {
+                var pos = data.caretPos
+                pos && data.setCaret(dom, pos.start, pos.end)
+                data.caretPos = null
             }
+
         }
 
     }
 })
 
-function parseValue( val) {
+function parseValue(val) {
     for (var i = 0, k; k = this.parser[i++]; ) {
         var fn = avalon.parsers[k]
         if (fn) {
@@ -160,6 +160,6 @@ function parseValue( val) {
 
 /*
  vm[ms-duplex]  →  原始modelValue →  格式化后比较   →   输出页面
-    ↑                                                ↓
+ ↑                                                ↓
  比较modelValue  ←  parsed后得到modelValue  ← 格式化后比较 ←  原始viewValue
  */

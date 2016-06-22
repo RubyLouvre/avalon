@@ -3,20 +3,17 @@ var updateModelMethods = {
         var data = this
         prop = prop || 'value'
         var rawValue = data.dom[prop]
-       // var formatedValue = data.format(data.vmodel, rawValue)
+        
         var parsedValue = data.parse(rawValue)
-        formatedValue = data.format(data.vmodel, parsedValue)
-        if (formatedValue !== rawValue) {
-            data.formatedValue = formatedValue
-            data.dom[prop] = formatedValue
-        }
-        
-        
+        var formatedValue = data.format(data.vmodel, parsedValue)
+        //有时候parse后一致,vm不会改变,但input里面的值
         if (parsedValue !== data.modelValue) {
             data.set(data.vmodel, parsedValue)
             callback(data)
         }
-
+        
+        data.dom[prop] = formatedValue
+        
         //vm.aaa = '1234567890'
         //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
 
@@ -24,7 +21,7 @@ var updateModelMethods = {
     radio: function () {
         var data = this
         if (data.isChecked) {
-            var val = data.modelValue = !data.modelValue
+            var val = !data.modelValue
             data.set(data.vmodel, val)
             callback(data)
         } else {
@@ -58,7 +55,7 @@ var updateModelMethods = {
             } else {
                 val = data.parse(val)
             }
-            data.modelValue = val
+           // data.modelValue = val
             data.set(data.vmodel, val)
             callback(data)
         }

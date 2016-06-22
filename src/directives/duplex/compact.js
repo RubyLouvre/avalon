@@ -61,9 +61,10 @@ avalon.directive('duplex', {
 
 
         var changed = copy.props['data-duplex-changed']
-        var format = evaluatorPool.get('duplex:format:' + expr)
         copy.parser = avalon.quote(parser + "")
         copy.modelValue = '(' + avalon.parseExpr(binding, 'duplex') + ')(__vmodel__)'// 输出原始数据
+        var format = evaluatorPool.get('duplex:format:' + expr)
+
         copy.duplexData = stringify({
             type: dtype, //这个决定绑定什么事件
             vmodel: '__vmodel__',
@@ -84,25 +85,29 @@ avalon.directive('duplex', {
             var data = src.duplexData = copy.duplexData
             data.parser = copy.parser ? copy.parser.split(',') : []
             data.parse = parseValue
+
+            var curValue = data.modelValue = data.isString ?
+                    data.parse(copy.modelValue) : copy.modelValue
+
         } else {
             data = src.duplexData
-        }
-        var curValue = copy.modelValue
-        var preValue = src.modelValue
-        if (curValue === preValue) {
-            return
-        }
-        data.modelValue = curValue
-        copy.duplexData = 0
-        var viewValue = data.format(data.vmodel, curValue)
-        if (String(viewValue) !==
-                String(data.format(data.vmodel, preValue))) {
-            if (data.isString) {
-                viewValue += ''
+            var curValue = copy.modelValue
+
+            var preValue = data.modelValue
+            if (curValue === preValue) {
+                return
             }
-            src.viewValue = viewValue
-            update(src, this.update, 'afterChange')
+            data.modelValue = curValue
         }
+        copy.duplexData = 0
+        if (data.isString) {//输出到页面时要格式化
+            curValue = data.format(data.vmodel, curValue + '')
+        }
+
+        data.viewValue = curValue
+        update(src, this.update, 'afterChange')
+
+
     },
     update: function (dom, vdom) {
         if (dom && dom.nodeType === 1) {
@@ -130,16 +135,14 @@ avalon.directive('duplex', {
                     }
                 }, 30)
             }
-            if (data.viewValue !== vdom.viewValue) {
 
-                data.viewValue = vdom.viewValue  //被过滤器处理的数据
-                updateView[data.type].call(data)
-                if (dom.caret) {
-                    var pos = data.caretPos
-                    pos && data.setCaret(dom, pos.start, pos.end)
-                    data.caretPos = null
-                }
+            updateView[data.type].call(data)
+            if (dom.caret) {
+                var pos = data.caretPos
+                pos && data.setCaret(dom, pos.start, pos.end)
+                data.caretPos = null
             }
+
         }
 
     }
