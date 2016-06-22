@@ -33,10 +33,11 @@ avalon.directive('html', {
         }
     },
 
-    update: function (dom, vdom) {
+    update: function (dom, vdom, parent) {
         avalon.clearHTML(dom)
         var f = avalon.vdomAdaptor(vdom.children)
-        reconcile(f.children, vdom.children)
+        reconcile(f.childNodes, vdom.children, f)
         dom.appendChild(f)
+
     }
 })
