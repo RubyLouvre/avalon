@@ -26,18 +26,20 @@ var rforRange = /^8ms\-for/
 function reconcile(nodes, vnodes, parent) {
     //遍平化虚拟DOM树
     vnodes = flatten(vnodes)
+    
     var map = {}
     vnodes.forEach(function (el, index) {
         map[index] = getType(el)
     })
    
     
-    var n = nodes.length
+    var n = vnodes.length
     //遍历真实DOM树
     for (var index = 0; index < n; ) {
         var vtype = map[index]
         var el = nodes[index]
         var type = el && getType(el)
+        
         if (!vtype && !type) {
             break
         }
@@ -49,21 +51,15 @@ function reconcile(nodes, vnodes, parent) {
                 var vdom = vnodes[index]
                 vdom.dom = node
                 parent.insertBefore(node, el)
-                index++
-                n++
+               // index++
                 continue
             } else if (type === '3remove') {
                 //如果是空白节点,移除后不变索引,后面的节点跟上来
                 parent.removeChild(el)
-                n--
-                if (rforRange.test(vtype)) {
-                    ++n
-                }
                 continue
             } else if (!vtype) {
                 //移除多余节点
                 parent.removeChild(el)
-                n--
                 continue
             } else  {//ms-html,ms-text
                 var vv = vnodes[index]
