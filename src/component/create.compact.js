@@ -6,6 +6,12 @@ var componentEvents = avalon.oneObject(events)
 var protected = events.split(',').concat('is', 'define')
 
 function createComponent(src, copy, is) {
+    var type = src.type
+    //判定用户传入的标签名是否符合规格
+    if (!componentContainers[type] && !isCustomTag(type)) {
+        avalon.warn(type + '不合适做组件的标签')
+        return
+    }
     //开始初始化组件
     var hooks = {}
     //用户只能操作顶层VM
@@ -45,14 +51,9 @@ function createComponent(src, copy, is) {
     } catch (e) {
     }
 
-    var type = src.type
-    //判定用户传入的标签名是否符合规格
-    if (!componentContainers[type] && !isCustomTag(type)) {
-        avalon.warn(type + '不合适做组件的标签')
-    }
 
     //将用户声明组件用的自定义标签(或xmp.template)的template转换成虚拟DOM
-    if (type === 'xmp' || type === 'template') {
+    if (componentContainers[type] && src.children[0]) {
         src.children = avalon.lexer(src.children[0].nodeValue)
     }
     src.isVoidTag = src.skipContent = 0
