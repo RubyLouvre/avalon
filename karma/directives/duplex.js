@@ -278,4 +278,40 @@ describe('duplex', function () {
              })
         },100)
     })
+    
+    it('通过更新修改checkbox中的ms-duplex', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='duplex7' >
+            <label ms-for="el in @list">
+            <input ms-duplex="@topic" type="checkbox" ms-attr="{id:el.name,value:el.value}" name="topic">{{el.name}}
+            </label>
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'duplex7',
+            topic: ['1', '2'],
+            list: [{name: 'dog', value: '1'}, {name: 'bird', value: '2'}, {name: 'cat', value: '3'}],
+        })
+        avalon.scan(div, vm)
+        setTimeout(function () {
+
+            var inputs = div.getElementsByTagName('input')
+           
+            expect(inputs[0].checked).to.equal(true)
+            expect(inputs[1].checked).to.equal(true)
+            expect(inputs[2].checked).to.equal(false)
+            
+            vm.topic = ['1','3']
+            setTimeout(function () {
+                 expect(inputs[0].checked).to.equal(true)
+                 expect(inputs[1].checked).to.equal(false)
+                 expect(inputs[2].checked).to.equal(true)
+                 done()
+             },100)
+        },100)
+    })
+    
+    
 })

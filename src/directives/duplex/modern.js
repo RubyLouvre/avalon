@@ -90,7 +90,9 @@ avalon.directive('duplex', {
             data = src.duplexData
             var curValue = copy.modelValue
             var preValue = data.modelValue
-            if (curValue === preValue) {
+            //#1502
+            if (!Array.isArray(curValue) &&
+                    curValue === preValue) {
                 return
             }
         }
@@ -119,9 +121,8 @@ avalon.directive('duplex', {
     },
     update: function (dom, vdom) {
         if (dom && dom.nodeType === 1) {
-            if (!dom.getAttribute('duplex-inited')) {
+            if (!dom.__ms_duplex__) {
                 dom.__ms_duplex__ = vdom.duplexData
-                dom.setAttribute('duplex-inited', 'true')
                 updateModelByEvent(dom, vdom)
             }
             var data = dom.__ms_duplex__

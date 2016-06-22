@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-23:0 version 2.10 by 司徒正美
+ * built in 2016-6-23:1 version 2.10 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -91,7 +91,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-6-23:0 version 2.10 by 司徒正美
+	 * built in 2016-6-23:1 version 2.10 by 司徒正美
 	 * 重大升级!!!!
 	 *  
 	 * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -6987,7 +6987,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		            data = src.duplexData
 		            var curValue = copy.modelValue
 		            var preValue = data.modelValue
-		            if (curValue === preValue) {
+		            //#1502
+		            if (!Array.isArray(curValue) &&
+		                    curValue === preValue) {
 		                return
 		            }
 		        }
@@ -7016,9 +7018,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		    },
 		    update: function (dom, vdom) {
 		        if (dom && dom.nodeType === 1) {
-		            if (!dom.getAttribute('duplex-inited')) {
+		            if (!dom.__ms_duplex__) {
 		                dom.__ms_duplex__ = vdom.duplexData
-		                dom.setAttribute('duplex-inited', 'true')
 		                updateModelByEvent(dom, vdom)
 		            }
 		            var data = dom.__ms_duplex__
