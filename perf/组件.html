@@ -22,15 +22,19 @@
                 },
                 soleSlot: 'buttonText'
             })
-
+/*
+ * 
+ */
         </script>
     </head>
 
     <body ms-controller="test">
     <!--在自定义标签中，ms-widget不是必须的-->
-        <ms-button ms-widget="@button"></ms-button>
+       
         <!--下面三种方式，ms-widget才是存在，其中的is也是必须的-->
-         <xmp ms-widget='[{is:"ms-button"},@button]'></xmp>
+        <xmp ms-widget='[{is:"ms-button"},@button]'></xmp>
+         <ms-button ms-widget="@button"></ms-button>
+  
         <wbr ms-widget='[{is:"ms-button"},@button]' ms-if="@toggle"/>
         <template ms-widget='[{is:"ms-button"}]' ms-if="@toggle"></template>
         <div><ms-button></ms-button></div>
