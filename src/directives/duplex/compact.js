@@ -21,13 +21,13 @@ avalon.directive('duplex', {
         //处理数据转换器
         var parser = binding.param, dtype
         var isChecked = false
-        parser = parser ?  parser.split('-').map(function(a){
-                if(a === 'checked'){
-                    isChecked = true
-                }
-                return a
-            }) : []
-       
+        parser = parser ? parser.split('-').map(function (a) {
+            if (a === 'checked') {
+                isChecked = true
+            }
+            return a
+        }) : []
+
         if (rcheckedType.test(etype) && isChecked) {
             //如果是radio, checkbox,判定用户使用了checked格式函数没有
             parser = []
@@ -47,6 +47,7 @@ avalon.directive('duplex', {
         var isChanged = false, debounceTime = 0
         //判定是否使用了 change debounce 过滤器
         if (dtype === 'input' || dtype === 'contenteditable') {
+            var isString = true
             if (rchangeFilter.test(expr)) {
                 isChanged = true
             }
@@ -58,50 +59,52 @@ avalon.directive('duplex', {
             }
         }
 
-        copy.vmodel = '__vmodel__'
-        copy.modelValue = '('+avalon.parseExpr(binding, 'duplex')+')(__vmodel__)'// 输出原始数据
-       
+
         var changed = copy.props['data-duplex-changed']
-        copy.callback = changed ? avalon.parseExpr(changed,'on'):'avalon.noop'
-        copy.duplexSet = evaluatorPool.get('duplex:set:' + expr)
         var format = evaluatorPool.get('duplex:format:' + expr)
-        copy.duplexFormat = format || 'function(vm, a){return a}'
-        
-        src.duplexData = {
+        copy.parser = avalon.quote(parser + "")
+        copy.modelValue = '(' + avalon.parseExpr(binding, 'duplex') + ')(__vmodel__)'// 输出原始数据
+        copy.duplexData = stringify({
             type: dtype, //这个决定绑定什么事件
+            vmodel: '__vmodel__',
             isChecked: isChecked,
+            isString: !!isString,
             isChanged: isChanged, //这个决定同步的频数
-            parser: parser, //用于转换原始的视图数据
-            parse: parseValue,
-           
-            debounceTime: debounceTime //这个决定同步的频数
-        }
+            debounceTime: debounceTime, //这个决定同步的频数
+            format: format || 'function(vm, a){return a}',
+            set: evaluatorPool.get('duplex:set:' + expr),
+            callback: changed ? avalon.parseExpr(changed, 'on') : 'avalon.noop'
+        })
 
     },
     diff: function (copy, src) {
+
+        if (!src.duplexData) {
+            //第一次为原始虚拟DOM添加duplexData
+            var data = src.duplexData = copy.duplexData
+            data.parser = copy.parser ? copy.parser.split(',') : []
+            data.parse = parseValue
+        } else {
+            data = src.duplexData
+        }
         var curValue = copy.modelValue
         var preValue = src.modelValue
-        
-        
-        var data = src.duplexData 
-        data.vmodel = copy.vmodel
+        if (curValue === preValue) {
+            return
+        }
         data.modelValue = curValue
-        data.set = copy.duplexSet
-        data.format = copy.duplexFormat
-        data.callback = copy.callback
-        
-        copy.duplexSet = copy.duplexFormat = copy.callback = 0
-        
-        var viewValue = data.format(copy.vmodel, curValue)
-        
+        copy.duplexData = 0
+        var viewValue = data.format(data.vmodel, curValue)
         if (String(viewValue) !==
-                String(data.format(copy.vmodel, preValue))) {
-            src.viewValue =  viewValue
+                String(data.format(data.vmodel, preValue))) {
+            if (data.isString) {
+                viewValue += ''
+            }
+            src.viewValue = viewValue
             update(src, this.update, 'afterChange')
         }
     },
     update: function (dom, vdom) {
-
         if (dom && dom.nodeType === 1) {
             if (!dom.getAttribute('duplex-inited')) {
                 dom.__ms_duplex__ = vdom.duplexData
@@ -109,15 +112,15 @@ avalon.directive('duplex', {
                 updateModelByEvent(dom, vdom)
             }
             var data = dom.__ms_duplex__
-      
+
             data.dom = dom
             addValidateField(dom, vdom)
-            if (/input|content/.test(data.type) 
-                   && !avalon.msie 
-                   && updateModelByValue === false 
-                   && !dom.valueHijack) {
+            if (data.isString
+                    && !avalon.msie
+                    && updateModelByValue === false
+                    && !dom.valueHijack) {
                 //chrome 42及以下版本需要这个hack
-             
+
                 dom.valueHijack = updateModel
                 var intervalID = setInterval(function () {
                     if (!avalon.contains(avalon.root, dom)) {
@@ -127,16 +130,8 @@ avalon.directive('duplex', {
                     }
                 }, 30)
             }
-         
             if (data.viewValue !== vdom.viewValue) {
-                if(!Array.isArray(vdom.modelValue)){
-                    var parsedValue = data.parse( vdom.viewValue)
-                    if(parsedValue !== data.modelValue){
-                        data.set(data.vmodel, parsedValue)
-                    }
-                }
-                
-                                
+
                 data.viewValue = vdom.viewValue  //被过滤器处理的数据
                 updateView[data.type].call(data)
                 if (dom.caret) {
@@ -150,7 +145,7 @@ avalon.directive('duplex', {
     }
 })
 
-function parseValue( val) {
+function parseValue(val) {
     for (var i = 0, k; k = this.parser[i++]; ) {
         var fn = avalon.parsers[k]
         if (fn) {
@@ -162,6 +157,6 @@ function parseValue( val) {
 
 /*
  vm[ms-duplex]  →  原始modelValue →  格式化后比较   →   输出页面
-    ↑                                                ↓
+ ↑                                                ↓
  比较modelValue  ←  parsed后得到modelValue  ← 格式化后比较 ←  原始viewValue
  */

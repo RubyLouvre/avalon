@@ -3,13 +3,15 @@ var updateModelMethods = {
         var data = this
         prop = prop || 'value'
         var rawValue = data.dom[prop]
-        var formatedValue = data.format(data.vmodel, rawValue)
+       // var formatedValue = data.format(data.vmodel, rawValue)
+        var parsedValue = data.parse(rawValue)
+        formatedValue = data.format(data.vmodel, parsedValue)
         if (formatedValue !== rawValue) {
             data.formatedValue = formatedValue
             data.dom[prop] = formatedValue
         }
         
-        var parsedValue = data.parse(formatedValue)
+        
         if (parsedValue !== data.modelValue) {
             data.set(data.vmodel, parsedValue)
             callback(data)
@@ -67,7 +69,6 @@ var updateModelMethods = {
 }
 
 function callback(data) {
-
     if (data.callback) {
         data.callback.call(data.vmodel, {
             type: 'changed',
