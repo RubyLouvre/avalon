@@ -3,33 +3,50 @@
 
 <head>
     <meta charset="utf-8">
-
-    <title>test</title>
-    <script src="../dist/avalon.modern.js"></script>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>avalon test</title>
+    <link rel="stylesheet" type="text/css" href="http://cdn.amazeui.org/amazeui/2.7.0/css/amazeui.min.css">
+    <style type="text/css" media="screen">
+    .am-pagination-input {
+        display: inline-block;
+        width: 30px;
+        text-align: center;
+        padding: .5em 0;
+        line-height: 1.2;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        margin-bottom: 5px;
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+    </style>
+    <script src="../dist/avalon.js"></script>
+    <script src="./pager.js"></script>
+    <script>
+    var vm = avalon.define({
+        $id: "test",
+        lists: [],
+        getData: function(page, pager) {
+            // ajax
+            setTimeout(function() {
+                // callback
+                vm.lists = ['列表项1', '列表项2'];
+                pager.totalPages = 20;
+                pager.totalItems = 200;
+            }, 100);
+        }
+    });
+    </script>
 </head>
 
 <body>
-    <div ms-controller="test">
-        <div>
-            <div ms-for="(index,el) in @data as ddd">
-                {{el}}
-                <a href="#" ms-click="@del(el,index)">删除</a>
-                
-            </div>
-        </div>
+    <div class="am-container am-padding" ms-controller="test">
+        <ul class="am-list">
+            <li ms-for="el in @lists">{{el}}</li>
+        </ul>
+        <hr>
+        <ms-pagination ms-widget="{getData:@getData}"></ms-pagination>
     </div>
-    <script>
-var vm = avalon.define({
-    $id: "test",
-    data: ['aaa','bbb'],
-    del: function (el,index) {
-        console.log(el,index)
-        vm.data.remove(el);//这里影响test2的list绑定,test1删除后，test2的list绑定界面显示3个。
-        console.log(vm.data)
-        //抱歉，不知道怎么贴图。
-    }
-});
-        </script>
 </body>
 
 </html>

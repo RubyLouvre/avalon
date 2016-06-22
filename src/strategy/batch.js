@@ -24,15 +24,17 @@ function batchUpdate(id) {
     if (!scope || !document.nodeName || avalon.suspendUpdate) {
         return renderingID = null
     }
-    
     var vm = scope.vmodel
     var dom = vm.$element
     var source = dom.vtree || []
     var renderFn = vm.$render
     var copy = renderFn(scope.vmodel, scope.local)
+   
     if (!scope.isMount) {
         //在最开始时,替换作用域的所有节点,确保虚拟DOM与真实DOM是对齐的
+       
         reconcile([dom], source, dom.parentNode)
+       
         scope.isMount = 1
     }
     

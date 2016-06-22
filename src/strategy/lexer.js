@@ -425,7 +425,7 @@ function hasDirective(a) {
                 a.skipContent = true
                 return false
             }
-            if(/^(slot|ms\-)/.test(a.type)){
+            if(/^ms\-/.test(a.type)){
                 a.dynamic = true
             }
             if (hasDirectiveAttrs(a.props)) {

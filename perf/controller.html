@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>test</title>
+    <meta charset="UTF-8">
+
+    <script src="../dist/avalon.js"></script>
+</head>
+
+<body>
+    <div ms-controller="root">
+        <h1>{{@page}}</h1>
+        <div ms-controller="first">
+            <h2 ms-text="@page"></h2>
+            <div ms-if="@page=='first'">
+                <div ms-controller="second">
+                    <p>中间调试用</p>
+                    <h3 ms-html="@page"></h3>
+                    <div ms-if="@page == 'second'" id="cdiv">{{@level}}-{{@page}}-{{@kind}}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+       var root = avalon.define({
+        $id  : 'root',
+        page : 'root',
+        level: 'root',
+    });
+    var first = avalon.define({
+        $id : 'first',
+        page: 'first',
+        kind: 'first',
+    });
+    var second = avalon.define({
+        $id  : 'second',
+        page : 'second',
+        grade: "second",
+    });
+
+    </script>
+</body>
+
+</html>

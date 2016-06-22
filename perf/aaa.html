@@ -20,6 +20,8 @@
 
         </div>
         <script>
+            
+            ddd.childred = [[]]
 var vm = avalon.define({
     $id: 'test',
     items: ['请选择', '选项一', '选项二'],
@@ -32,6 +34,27 @@ function heredoc(fn) {
     return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
             replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
 }
+/*
+ <div ms-text='@aaa' ms-css='{color:@color}'><a>dd</a><b>dd</b><em>dd</em></div>
+    <div ms-attr='{title:@title}'>{{@title}}</div>
+     *  <p ms-html='@html'>ddd</p>
+    <button ms-click='@toggle = !@toggle'>click me</button>
+    <p ms-if='@toggle'>dddd</p>
+     <p ms-for="el in @array">
+        <span ms-for="elem in el.arr">{{elem}}</span>
+    </p>
+           
+    
+
+        <hr/>
+        <!--ms-for:el in @array-->
+        <p>
+            <!--ms-for:elem in el.arr-->
+            <span>{{elem}}</span>
+            <!--ms-for-end:-->
+        </p>
+        <!--ms-for-end:--> 
+ */
 avalon.component("ms-select", {
     template: heredoc(function () {
         /*

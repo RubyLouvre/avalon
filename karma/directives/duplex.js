@@ -43,7 +43,7 @@ describe('duplex', function () {
         })
         vm = avalon.define({
             $id: 'duplex1',
-            aaa: 12345,
+            aaa: 1234567,
             bbb: '123a',
             ccc: 'true',
             ddd: true

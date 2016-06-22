@@ -1,47 +1,47 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>avalon test</title>
-    <link rel="stylesheet" type="text/css" href="http://cdn.amazeui.org/amazeui/2.7.0/css/amazeui.min.css">
+    <title>test</title>
     <script src="../dist/avalon.js"></script>
-    <script>
-    var vm = avalon.define({
-        $id: 'test',
-        lists: [{
-            greeting: '你好，司徒正美~',
-            skills: ['avalon']
-        }, {
-            greeting: '你好，Seven~',
-            skills: ['html', 'css', 'js']
-        }],
-        toggle: true
-    });
-    </script>
+    <style>
+        .rank_top {
+            background-color: red;
+        }
+    </style>
 </head>
+<body>
+ <script>
+ avalon.component('ms-button', {
+    template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
+    defaults: {
+        buttonText: "button",
+        onViewChange: function(){
+            console.log('viewchange')
+        }
+    },
+    soleSlot: 'buttonText'
+})
+var vm = avalon.define({
+    $id:"root",
+    aaa:"111",
+    title:'title',
+    color:'red',
+    arr: [222,333,444],
+    html: '<span>eee</span><span>eee</span>'
+});
+avalon.define({
+    $id:'ddd',
+    ddd:3333
+})
+</script>
+<div ms-controller="root">
+    <p ms-css='{color:@color}'>{{@color}}</p>
+    <p ms-html='@html'>ddd</p>
+    <p ms-for='($index,el) in @arr'>{{el}}::{{$index}}</p>
+    <p ms-text='@title' ms-attr='{title:@title}' ms-class='@title'></p>
+    <ms-button>{{@aaa}}</ms-button>
+    <div ms-important='ddd'>{{@ddd}}</div>
+</div>
 
-<body ms-controller="test">
-    <div class="am-container am-padding">
-        <button type="button" 
-                class="am-btn am-btn-default am-btn-primary"
-                ms-click="@toggle = !@toggle">切换</button>
-    </div>
-    <div class="am-container">
-        <p>此处是正常for循环的内容</p>
-        <ul ms-for="el in @lists">
-            <li>
-                <p>{{el.greeting}}</p>
-                <p>技能包:</p>
-                <ul>
-                    <li ms-for="skill in el.skills">{{skill}}</li>
-                </ul>
-            </li>
-        </ul>
-        <hr>
-       
-    </div>
 </body>
-
 </html>

@@ -83,11 +83,12 @@ describe('for', function () {
                 expect(ps[3].innerHTML).to.equal('3')
                 expect(ps[4].innerHTML).to.equal('2')
                 done()
-            })
-        })
+            },300)
+        },300)
     })
 
     it('双层循环,并且重复利用已有的元素节点', function (done) {
+        
         div.innerHTML = heredoc(function () {
             /*
              <div ms-controller='for1'>

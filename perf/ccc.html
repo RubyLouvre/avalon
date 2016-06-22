@@ -4,60 +4,24 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         <title>确认订单</title>
-        <link href="//cdn.bootcss.com/bootstrap/2.3.2/css/bootstrap.min.css" rel="stylesheet">
         <script src="../dist/avalon.js"></script>
         <script>
 
-            var vm = avalon.define({
-                $id: "test",
-                total_page: 25,
-                current_page: 1,
-                show_page: 7,
-                pages: [1, 2, 3, 4, 5, 6, 7],
-                gotoPage: function (page, e) {
-                    this.current_page = page;
-                    this.pages = this.getPages();
-                    //console.log(this.pages);
-                },
-                getPages: function () {
-                    var pages = [];
-                    var s = this.show_page,
-                            l = this.current_page,
-                            r = this.current_page,
-                            c = this.total_page;
-                    pages.push(l);
-                    while (true) {
-                        if (pages.length >= s) {
-                            break;
-                        }
-                        if (l > 1) {
-                            pages.unshift(--l);
-                        }
-                        if (pages.length >= s) {
-                            break;
-                        }
-                        if (r < c) {
-                            pages.push(++r);
-                        }
-                    }
-
-                    return pages;
-                }
-            })
-
-
+      
+var vm = avalon.define({
+    $id:'test',
+    array: [111,222,333,444]
+})
 
         </script>
     </head>
     <body ms-controller="test">
 
-        <div class="pagination">
-            <ul>
-                <li ms-for="el in @pages" 
-                    ms-class="el == @current_page ? 'active':''">
-                    <a href="#" ms-click="@gotoPage(el, $event)">{{el}}</a>
-                </li>
-            </ul>
-        </div>
+        <ul>
+            <!--ms-for:el in @array-->
+            <li>{{el}}</li>
+            <!--ms-for-end:-->
+          
+        </ul>
     </body>
 </html>

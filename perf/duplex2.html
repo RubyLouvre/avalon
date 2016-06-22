@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TODO supply a title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../dist/avalon.js"></script>
+    <script>
+        avalon.filters.limit = function (str, a) {
+            return String(str).slice(0, a)
+        }
+            var vm = avalon.define({
+            $id: 'duplex1',
+            aaa: 123456,
+            bbb: '123a',
+            ccc: 'true',
+            ddd: true,
+            aa:[333],
+             select: [111, 444]
+        })
+       
+        </script>
+<!--
+ 
+-->
+</head>
+
+<body>
+    <div ms-controller='duplex1'>
+        <p>使用了ms-duplex-number后只能输入number</p>
+        <input ms-duplex-string='@aaa|limit(4)'><span>{{@aaa}}</span>
+        <input ms-duplex-number='@bbb'><span>{{@bbb}}</span>
+        <input ms-duplex-boolean='@ccc' ><span>{{@ccc}}</span>
+        <input ms-duplex-checked='@ddd' type='radio'><span>{{@ddd}}</span>
+        <div>
+             <input ms-duplex-number='@aa' value='111' type='checkbox'>
+             <input ms-duplex-number='@aa' value='222' type='checkbox'>
+             <input ms-duplex-number='@aa' value='333' type='checkbox'>
+             </div>{{@aa}}
+             <select ms-duplex-number='@select' multiple="true">
+             <option>111</option>
+             <option>222</option>
+             <option>333</option>
+             <option>444</option>
+             </select>
+    </div>
+        
+</body>
+
+</html>

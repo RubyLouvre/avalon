@@ -66,13 +66,13 @@ describe('widget', function () {
     it('通过更新配置对象修改组件界面', function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <div ms-controller='widget2' >
+             <div ms-controller='widget1' >
              <xmp ms-widget="[{is:'ms-panel'}, @aaa]" style='border:1px solid red;display:block'>{{@panelBody}}</xmp>
              </div>
              */
         })
         vm = avalon.define({
-            $id: 'widget2',
+            $id: 'widget1',
             panelBody: '这是面板的内容',
             aaa: {
                 ms_button: {
@@ -114,14 +114,14 @@ describe('widget', function () {
     it('确保都被扫描', function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <form ms-controller='widget3'>
+             <form ms-controller='widget2'>
              <div ms-attr="{title:@option.text}">{{@option.text}}</div>
              <ms-section ms-widget="@option"></ms-section>
              </form>
              */
         })
         vm = avalon.define({
-            $id: 'widget3',
+            $id: 'widget2',
             option: {
                 text: 'test'
             }
@@ -153,7 +153,7 @@ describe('widget', function () {
     it('确保生命周期钩子都生效,其onViewChange回调会在config被修复也触发', function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <form ms-controller='widget4'>
+             <form ms-controller='widget3'>
              <wbr ms-widget="[{is:'ms-dialog',$id:'aaa'},@config]" />
              </form>
              */
@@ -183,7 +183,7 @@ describe('widget', function () {
             soleSlot: 'content'
         })
         vm = avalon.define({
-            $id: 'widget4',
+            $id: 'widget3',
             config: {
                 content: '弹窗1'
             }
@@ -220,14 +220,14 @@ describe('widget', function () {
         document.body.appendChild(testDiv)
         testDiv.innerHTML = heredoc(function () {
             /*
-             <div ms-controller='widget1' >
+             <div ms-controller='widget4' >
              <div><wbr ms-widget="[{is:'ms-button'},@config]"/></div>
              </div>
              */
         })
         var index = 0
         vm = avalon.define({
-            $id: 'widget1',
+            $id: 'widget4',
             config: {
                 buttonText: '按钮',
                 onInit: function (e) {

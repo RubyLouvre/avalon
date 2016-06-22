@@ -31,23 +31,24 @@ avalon.directive('widget', {
             if (Array.isArray(a)) {//转换成对象
                 a = avalon.mix.apply({}, a)
             }
-            var is = a.is
-
+           
+            var is = a.is || copy.type
             if (src.is !== is || !src[is + "-vm"]) {
                 if (!createComponent(src, copy, is)) {
+                 
                     //替换成注释节点
                     update(src, this.mountComment)
                     return
                 }
             }
             var renderComponent = src[is + '-vm'].$render
-            var newTree = renderComponent(src[is + '-vm'], src.local)[0]
-            if (isComponentReady(newTree)) {
+            var newTree = renderComponent(src[is + '-vm'], src.local)
+            
+            var componentRoot = newTree[0]
+            if (componentRoot && isComponentReady(componentRoot)) {
                 copy.children = []
-                delete copy.local
-                delete copy.vmodel
-
-                avalon.mix(copy, newTree)
+                avalon.mix(copy, componentRoot)
+                copy.local = copy.vmodel = copy.isVoidTag = copy.skipContent = 0
                 if (src[is + '-mount']) {
                     update(src, this.updateComponent)
                 } else {
@@ -80,18 +81,18 @@ avalon.directive('widget', {
         var is = vdom.is
         var vtree = vdom[is + '-vtree']
         var componentRoot = vtree[0]
-        delete vdom.skipContent
-        delete vdom.copy
+        vdom.skipContent = vdom.copy = 0
         var vm = vdom[is + '-vm']
+      
         avalon.mix(vdom, componentRoot)
-
         vm.$fire('onInit', {
             type: 'init',
             vmodel: vm,
-            componentName: is
+            is: is
         })
+       
         var com = avalon.vdomAdaptor(vdom, 'toDOM')
-
+    
         reconcile([com], [vdom])
         parent.replaceChild(com, dom)
         vdom.dom = com
@@ -108,10 +109,10 @@ avalon.directive('widget', {
         //--------------
         update(vdom, function () {
             vm.$fire('onReady', {
-                type: 'init',
+                type: 'ready',
                 target: com,
                 vmodel: vm,
-                componentName: is
+                is: is
             })
         }, 'afterChange')
 
@@ -133,7 +134,7 @@ function viewChangeHandle(dom, vdom) {
             type: 'viewchange',
             target: dom,
             vmodel: vm,
-            componentName: is
+            is: is
         })
     }
 }

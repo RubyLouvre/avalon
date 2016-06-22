@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>TODO supply a title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <script src="../dist/avalon.js"></script>
+
+    <script>
+              var div = document.createElement('div')
+            var body = document.body
+            body.appendChild(div)
+            function heredoc(fn) {
+                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+                     replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+            }
+ function fireClick(el) {
+    if (el.click) {
+        el.click()
+    } else {
+//https://developer.mozilla.org/samples/domref/dispatchEvent.html
+        var evt = document.createEvent('MouseEvents')
+        evt.initMouseEvent('click', true, true, window,
+                0, 0, 0, 0, 0, false, false, false, false, 0, null);
+        !el.dispatchEvent(evt);
+    }
+}
+            function expect(a){
+                return {
+                    to: {
+                        equal:function(b){
+                          console.log(a,b,a===b)
+                        }
+                    }
+                }
+            }
+            div.innerHTML = heredoc(function () {
+            /*
+             <table ms-controller="for5" border="1">
+             <tr>
+             <td><input type="checkbox" 
+             ms-duplex-checked="@allchecked" 
+             data-duplex-changed="@checkAll"/>全选</td>
+             </tr>
+             <tr ms-for="($index, el) in @data" >
+             <th><input type="checkbox" ms-duplex-checked="el.checked" data-duplex-changed="@checkOne" />{{$index}}::{{el.checked}}</th>
+             </tr>
+             </table>
+             */
+        })
+        vm = avalon.define({
+            $id: "for5",
+            data: [{checked: false}, {checked: false}, {checked: false}],
+            allchecked: false,
+            checkAll: function (e) {
+                var checked = e.target.checked
+                console.log(checked,'999')
+                vm.data.forEach(function (el) {
+                    el.checked = checked
+                })
+            },
+            checkOne: function (e) {
+                var checked = e.target.checked
+                if (checked === false) {
+                    vm.allchecked = false
+                } else {//avalon已经为数组添加了ecma262v5的一些新方法
+                    vm.allchecked = vm.data.every(function (el) {
+                        return el.checked
+                    })
+                }
+            }
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+           
+            var ths = div.getElementsByTagName('th')
+            var inputs = div.getElementsByTagName('input')
+
+            var prop = 'innerText' in div ? 'innerText' : 'textContent'
+            expect(ths[0][prop]).to.equal('0::false')
+            expect(ths[1][prop]).to.equal('1::false')
+            expect(ths[2][prop]).to.equal('2::false')
+            
+            fireClick(inputs[0])
+            avalon.fireDom(inputs[0])
+            setTimeout(function () {
+                expect(ths[0][prop]).to.equal('0::true')
+                expect(ths[1][prop]).to.equal('1::true')
+                expect(ths[2][prop]).to.equal('2::true')
+               // done()
+            }, 100)
+        })
+            </script>
+</body>
+
+</html>
