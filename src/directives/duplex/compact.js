@@ -85,29 +85,35 @@ avalon.directive('duplex', {
             var data = src.duplexData = copy.duplexData
             data.parser = copy.parser ? copy.parser.split(',') : []
             data.parse = parseValue
-
-            var curValue = data.modelValue = data.isString ?
-                    data.parse(copy.modelValue) : copy.modelValue
-
+            var curValue = copy.modelValue
         } else {
             data = src.duplexData
             var curValue = copy.modelValue
-
             var preValue = data.modelValue
             if (curValue === preValue) {
                 return
             }
-            data.modelValue = curValue
         }
         copy.duplexData = 0
         if (data.isString) {//输出到页面时要格式化
-            curValue = data.format(data.vmodel, curValue + '')
+           var value = data.parse(curValue)
+           if(value !== curValue){
+               data.set(data.vmodel, value)
+               return
+           }
+           curValue = value
         }
-
+        data.modelValue = curValue
+        if (data.isString) {//输出到页面时要格式化
+            value = data.format(data.vmodel, curValue + '')
+            if(value !== curValue+''){
+                data.set(data.vmodel, value)
+                return
+            }
+            curValue = value
+        }
         data.viewValue = curValue
         update(src, this.update, 'afterChange')
-
-
     },
     update: function (dom, vdom) {
         if (dom && dom.nodeType === 1) {

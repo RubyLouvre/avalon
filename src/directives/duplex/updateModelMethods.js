@@ -7,7 +7,7 @@ var updateModelMethods = {
         var parsedValue = data.parse(rawValue)
         var formatedValue = data.format(data.vmodel, parsedValue)
         //有时候parse后一致,vm不会改变,但input里面的值
-        if (parsedValue !== data.modelValue) {
+        if (rawValue !== data.modelValue) {
             data.set(data.vmodel, parsedValue)
             callback(data)
         }
@@ -55,7 +55,6 @@ var updateModelMethods = {
             } else {
                 val = data.parse(val)
             }
-           // data.modelValue = val
             data.set(data.vmodel, val)
             callback(data)
         }
