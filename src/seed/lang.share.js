@@ -21,13 +21,15 @@ avalon.shadowCopy(avalon, {
     cssHooks: cssHooks,
     parsers: {
         number: function (a) {
-            return a === '' ? '' : parseFloat(a) || 0
+            return a === '' ? '' : /\d\.$/.test(a) ? a : parseFloat(a) || 0
         },
         string: function (a) {
             return a === null || a === void 0 ? '' : a + ''
         },
         boolean: function (a) {
-            return a === 'true'
+            if(a === '')
+                return a
+            return a === 'true'|| a == '1'
         }
     },
     version: "2.09",
