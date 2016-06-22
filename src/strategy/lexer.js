@@ -259,7 +259,6 @@ function modifyProps(node, innerHTML, nodes, curDeep) {
                 props.type = 'textarea'
                 node.children.length = 0
             }
-            
             break
         case 'input':
             if (!props.type) {
@@ -272,14 +271,20 @@ function modifyProps(node, innerHTML, nodes, curDeep) {
                 node.multiple = true
             }
             break
-      
+        
         case 'option':
             node.children.push(new VText(trimHTML(node.template)))
             break
+        default:
+            if(/^ms-/.test(type) ){
+                props.is = type
+                if(!props['ms-widget']){
+                   props['ms-widget'] = '{is:' + avalon.quote(type) + '}'
+                }
+            }
+            break
     }
-    if(/^ms-/.test(node.type) && !props['ms-widget']){
-        props['ms-widget'] = '{is:' + avalon.quote(node.type) + '}'
-    }
+    
     if (!node.isVoidTag && !node.skipContent) {
         var childs = lexer(innerHTML, curDeep + 1)
         node.children = childs

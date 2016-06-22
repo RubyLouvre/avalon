@@ -32,8 +32,8 @@ avalon.directive('widget', {
                 a = avalon.mix.apply({}, a)
             }
            
-            var is = a.is || copy.type
-            if (src.is !== is || !src[is + "-vm"]) {
+            var is = a.is || src.props.is
+            if (!src[is + "-vm"]) {
                 if (!createComponent(src, copy, is)) {
                  
                     //替换成注释节点
