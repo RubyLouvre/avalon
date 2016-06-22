@@ -40,12 +40,12 @@
         var vm = avalon.define({
             $id:'test',
             tpl:'',
-             dd:'22',
-                cc:"555"
+            dd:'22',
+            cc:"555"
         })
         window.addEventListener('hashchange',function(e){
             var hash = e.newURL.split('#/')[1];
-            vm.tpl = '<'+hash+'  ms-widget=\"{$id:"'+hash+'"}\"></'+hash+'>'
+            vm.tpl = '<'+hash+' cached=\"true\" ms-widget=\"{$id:"'+hash+'"}\"></'+hash+'>'
         })
     </script>
 </head>

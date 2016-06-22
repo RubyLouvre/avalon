@@ -1,7 +1,6 @@
 var update = require('./_update')
 var reconcile = require('../strategy/reconcile')
-var disposeDetectStrategy = require('../component/dispose.compact')
-var createComponent = require('../component/create.compact')
+var createComponent = require('../component/create')
 
 avalon.component = function (name, definition) {
     //这是定义组件的分支,并将列队中的同类型对象移除
@@ -31,11 +30,11 @@ avalon.directive('widget', {
             if (Array.isArray(a)) {//转换成对象
                 a = avalon.mix.apply({}, a)
             }
-           
+
             var is = a.is || src.props.is
             if (!src[is + "-vm"]) {
                 if (!createComponent(src, copy, is)) {
-                 
+
                     //替换成注释节点
                     update(src, this.mountComment)
                     return
@@ -43,15 +42,16 @@ avalon.directive('widget', {
             }
             var renderComponent = src[is + '-vm'].$render
             var newTree = renderComponent(src[is + '-vm'], src.local)
-            
+
             var componentRoot = newTree[0]
             if (componentRoot && isComponentReady(componentRoot)) {
-                copy.children = []
-                avalon.mix(copy, componentRoot)
-                copy.local = copy.vmodel = copy.isVoidTag = copy.skipContent = 0
-                if (src[is + '-mount']) {
+
+                if (src[is + '-mount']) {//update
+                    updateCopy(copy, componentRoot)
                     update(src, this.updateComponent)
-                } else {
+                } else {//mount
+                    src.copy = copy
+                    src.newCopy = componentRoot
                     update(src, this.mountComponent)
                 }
             } else {
@@ -77,26 +77,41 @@ avalon.directive('widget', {
             update(vdom, viewChangeHandle, 'afterChange')
         }
     },
+    
     mountComponent: function (dom, vdom, parent) {
         var is = vdom.is
-        var vtree = vdom[is + '-vtree']
-        var componentRoot = vtree[0]
-        vdom.skipContent = vdom.copy = 0
+
         var vm = vdom[is + '-vm']
-      
-        avalon.mix(vdom, componentRoot)
+        var copy = vdom.copy
+        var newCopy = vdom.newCopy
+        delete vdom.newCopy
+        var scope = avalon.scopes[vm.$id]
+        if (scope && scope.vmodel) {         
+            var com = scope.vmodel.$element
+            newCopy = com.vtree[0]
+            updateCopy(vdom, newCopy)
+            parent.replaceChild(com, dom)
+            com.vtree = [vdom]
+            vdom[is + '-vm'] = scope.vmodel
+            vdom[is + '-mount'] = true
+            return
+        }
+        //更新原始虚拟DOM树
+        updateCopy(copy, newCopy )  
+        var vtree = vdom[is + '-vtree']
+        //更新另一个刷数据用的虚拟DOM树
+        updateCopy(vdom, vtree[0] )
+     
+        var com = avalon.vdomAdaptor(vdom, 'toDOM')
         vm.$fire('onInit', {
             type: 'init',
             vmodel: vm,
             is: is
         })
-       
-        var com = avalon.vdomAdaptor(vdom, 'toDOM')
-    
         reconcile([com], [vdom])
         parent.replaceChild(com, dom)
         vdom.dom = com
-        addDisposeMonitor(com)
+        avalon.onComponentDispose(com)
         vdom[is + '-mount'] = true
         //--------------
         vm.$element = com
@@ -123,6 +138,12 @@ avalon.directive('widget', {
     }
 })
 
+function updateCopy(copy, newCopy) {
+    copy.children = []
+    avalon.mix(copy, newCopy)
+    copy.local = copy.vmodel = copy.isVoidTag = copy.skipContent = 0
+}
+
 function viewChangeHandle(dom, vdom) {
     var is = vdom.is
     var vm = vdom[is + '-vm']
@@ -139,15 +160,7 @@ function viewChangeHandle(dom, vdom) {
     }
 }
 
-function addDisposeMonitor(dom) {
-    if (window.chrome && window.MutationEvent) {
-        disposeDetectStrategy.byMutationEvent(dom)
-    } else if (avalon.modern && typeof window.Node === 'function') {
-        disposeDetectStrategy.byRewritePrototype(dom)
-    } else {
-        disposeDetectStrategy.byPolling(dom)
-    }
-}
+
 
 function isComponentReady(vnode) {
     var isReady = true

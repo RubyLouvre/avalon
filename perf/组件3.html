@@ -19,7 +19,7 @@
             var tpl = '<ul class="list-unstyled">'+
                         '<li><a href="javascript:;">首页</a></li>'+
                         '<li><a href="javascript:;">上一页</a></li>'+
-                        '<li ms-for="el in @pageList" ms-click="alert(el)"><a href="javascript:;">{{el}}</a></li>'+
+                        '<li ms-for="el in @pageList" ms-click="@alert(el)"><a href="javascript:;">{{el}}</a></li>'+
                         '<li><a href="javascript:;">下一页</a></li>'+
                         '<li><a href="javascript:;">末页</a></li>'+
                         '<li ms-if="@toggle"><a href="javascript:;">{{@pageSize}}</a></li>'+
@@ -34,6 +34,9 @@
                 template:tpl,
                 defaults:avalon.mix(defaults,{
                     pageList:[1,2,3,4,5],
+                    alert: function(e){
+                        console.log(e)
+                    },
                     onViewChange:function(){
                         console.log('viewchange!!!!')
                     },

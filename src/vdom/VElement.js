@@ -69,6 +69,13 @@ VElement.prototype = {
         } else {
             dom = document.createElement(tagName)
         }
+        
+        if (this.wid) {
+            var scope = avalon.scopes[this.wid]
+            if (scope && scope.dom) {
+                return scope.dom
+            }
+        }
         for (var i in this.props) {
             var val = this.props[i]
             if (skipFalseAndFunction(val)) {
@@ -79,12 +86,7 @@ VElement.prototype = {
                 }
             }
         }
-        if (this.wid) {
-            var scope = avalon.scopes[this.wid]
-            if (scope && scope.dom) {
-                return scope.dom
-            }
-        }
+        
         switch (this.type) {
             case 'script':
                 dom.text = this.template

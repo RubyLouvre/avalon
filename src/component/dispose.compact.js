@@ -94,11 +94,16 @@ function byPolling(dom) {
 }
 
 
-module.exports = {
-    byPolling: byPolling,
-    byMutationEvent: byMutationEvent,
-    byRewritePrototype: byRewritePrototype
+module.exports = function onComponentDispose(dom) {
+    if (window.chrome && window.MutationEvent) {
+        byMutationEvent(dom)
+    } else if (avalon.modern && typeof window.Node === 'function') {
+        byRewritePrototype(dom)
+    } else {
+        byPolling(dom)
+    }
 }
+
 function inDomTree(el) {
     while (el) {
         if (el.nodeType === 9) {

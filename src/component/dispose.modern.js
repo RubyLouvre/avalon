@@ -59,11 +59,10 @@ function byRewritePrototype() {
     })
 }
 
-
-
-module.exports = {
-    byRewritePrototype: byRewritePrototype
+module.exports = function onComponentDispose(dom) {
+    byRewritePrototype(dom)
 }
+
 
 function inDomTree(el) {
     while (el) {
