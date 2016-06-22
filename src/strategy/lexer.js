@@ -249,8 +249,12 @@ function modifyProps(node, innerHTML, nodes, curDeep) {
         case 'textarea':
         case 'xmp':
             node.skipContent = true
-            node.children.push(new VText(node.template))
            
+            if(node.template){
+                node.children.push(new VText(node.template))
+            }else{
+                node.children = []
+            }
             if (type === 'textarea') {
                 props.type = 'textarea'
                 node.children.length = 0
