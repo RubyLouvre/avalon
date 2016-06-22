@@ -51,20 +51,21 @@ function reconcile(nodes, vnodes, parent) {
                 var vdom = vnodes[index]
                 vdom.dom = node
                 parent.insertBefore(node, el)
-               // index++
                 continue
-            } else if (type === '3remove') {
+            } else if (type === '3remove' || !vtype) {
                 //如果是空白节点,移除后不变索引,后面的节点跟上来
                 parent.removeChild(el)
                 continue
-            } else if (!vtype) {
-                //移除多余节点
-                parent.removeChild(el)
-                continue
-            } else  {//ms-html,ms-text
+             } else if(!type) {//ms-html,ms-text
                 var vv = vnodes[index]
                 var dom = avalon.vdomAdaptor(vv, 'toDOM')
-                el.parentNode.replaceChild(dom, el)
+                vv.dom = dom
+                var before = nodes[index-1]
+                if(before){
+                    parent.insertBefore(dom,before && before.nextSibling)
+                }else{
+                    parent.appendChild(dom)
+                }
                 continue
             }
         } else {
@@ -72,8 +73,8 @@ function reconcile(nodes, vnodes, parent) {
             if (vnode.dynamic) {
                 vnode.dom = el
             }
-            if (el && el.nodeType === 1) {
-                if (!vnode.isVoidTag && vnode.children) {
+            if (el && el.nodeType === 1 && !vnode.isVoidTag) {
+                if (vnode.children && (vnode.children.length || el.childNodes.length)) {
                     reconcile(el.childNodes, vnode.children, el)
                 }
             }
