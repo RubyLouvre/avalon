@@ -34,7 +34,6 @@ function batchUpdate(id) {
         reconcile([dom], source, dom.parentNode)  
         scope.isMount = 1
     }
-    
     avalon.diff(copy, source)
     
     if (scope.isMount === 1) {

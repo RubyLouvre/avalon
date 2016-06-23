@@ -168,7 +168,7 @@ function stringifyText(el) {
         }).join(' + ')
         nodeValue = 'String(' + token + ')'
     }
-    return '{\ntype: "#text",\nnodeType:3,\nnodeValue: ' + nodeValue + '\n}'
+    return '{\ntype: "#text",\nnodeType:3,\ndynamic:true,\nnodeValue: ' + nodeValue + '\n}'
 }
 
 module.exports = parseNodes

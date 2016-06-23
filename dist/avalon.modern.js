@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-23:10 version 2.10 by 司徒正美
+ * built in 2016-6-23:13 version 2.10 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -2192,7 +2192,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }).join(' + ')
 	        nodeValue = 'String(' + token + ')'
 	    }
-	    return '{\ntype: "#text",\nnodeType:3,\nnodeValue: ' + nodeValue + '\n}'
+	    return '{\ntype: "#text",\nnodeType:3,\ndynamic:true,\nnodeValue: ' + nodeValue + '\n}'
 	}
 
 	module.exports = parseNodes
@@ -5184,7 +5184,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    
 	        switch (copy.nodeType) {
 	            case 3:
-	                if (!copy.skipContent) {
+	                if (copy.dynamic) {
 	                    directives.expr.diff(copy, src)
 	                }
 	                break
@@ -5290,7 +5290,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        reconcile([dom], source, dom.parentNode)  
 	        scope.isMount = 1
 	    }
-	    
 	    avalon.diff(copy, source)
 	    
 	    if (scope.isMount === 1) {

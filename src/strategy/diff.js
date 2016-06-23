@@ -21,7 +21,7 @@ function diff(copys, sources) {
     
         switch (copy.nodeType) {
             case 3:
-                if (!copy.skipContent) {
+                if (copy.dynamic) {
                     directives.expr.diff(copy, src)
                 }
                 break
