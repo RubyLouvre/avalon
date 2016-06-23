@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-24:0 version 2.10 by 司徒正美
+ * built in 2016-6-24:1 version 2.10 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -6782,9 +6782,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	//http://www.colorglare.com/2014/02/03/to-close-or-not-to-close.html
 	//http://blog.jobbole.com/61514/
 
-	var rfullTag = /^<([^\s>\/=.$<]+)(?:\s+[^=\s]+(?:=[^>\s]+)?)*\s*>(?:[\s\S]*)<\/\1>/
-	var rvoidTag = /^<([^\s>\/=.$<]+)\s*([^>]*?)\/?>/
-
+	//var rfullTag = /^<([^\s>\/=.$<]+)(?:\s+[^=\s]+(?:=[^>\s]+)?)*\s*>(?:[\s\S]*)<\/\1>/
+	//var rvoidTag = /^<([^\s>\/=.$<]+)\s*([^>]*?)\/?>/
+	var rfullTag = /^<([-A-Za-z0-9_]+)(?:\s+[^=\s]+(?:=[^>\s]+)?)*\s*>(?:[\s\S]*)<\/\1>/
+	var rvoidTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)\/?>/
 	var rtext = /^[^<]+/
 	var rcomment = /^<!--([\w\W]*?)-->/
 
@@ -6896,7 +6897,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    nodeType: 1,
 	                    type: type,
 	                    props: props,
-	                    template: '',
 	                    children: [],
 	                    isVoidTag: true
 	                }
