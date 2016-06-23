@@ -74,7 +74,7 @@ function parseNode(source) {
             directives[b.type].parse(copy, source, b)
             return b.name
 
-        }).join(';;')
+        }).join(',')
 
         if (source.isVoidTag) {
             copy.isVoidTag = true

@@ -67,7 +67,7 @@ function diffProps(copys, sources) {
     if (copys.order) {
         var directiveType
         try {
-            copys.order.replace(/([^;]+)/g, function (name) {
+            copys.order.replace(avalon.rword, function (name) {
                 var match = name.match(rbinding)
                 var type = match && match[1]
                 directiveType = type
