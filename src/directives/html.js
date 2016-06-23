@@ -22,7 +22,7 @@ avalon.directive('html', {
             var oldTree = avalon.lexer(copyValue)
             avalon.speedUp(oldTree)
             src.children = oldTree
-            var render = avalon.render(oldTree)
+            var render = avalon.render(oldTree,copy.local)
             src.render = render
             var newTree = render(copy.vmodel, copy.local)
             copy.children = newTree

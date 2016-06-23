@@ -1,115 +1,63 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>确认订单</title>
-    <link href="./main.css" rel="stylesheet">
-    <script src="../dist/avalon.js"></script>
-</head>
-<body>
-<div class="container" ms-controller="container">
-    <div class="loading-wrap" ms-visible="@loadingWrapShow">数据加载中....</div>
-    <xmp ms-widget="{is:'ms-container'}"></xmp>
-</div>
-<script>
-function heredoc(fn) {
-    return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
-            replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
-}
-
-var container = heredoc(function() {
-/*
-<div>
-  <xmp ms-widget="[{is:'ms-address-wrap', $id:'address'}]"></xmp>
-</div>
-
-*/
-})
-
-
-// 主容器
-var vmContainer = avalon.define({
-    $id: 'container',
-    loadingWrapShow: true
-})
-
-avalon.component('ms-container', {
-  template: container,
-  defaults: {
-  }
-})
-
-var addressTmpl = heredoc(function() {
-/*
-<div class="address-wrap ms-controller" ms-visible="@addressWrapShow">
-    <div class="wrap-header">
-        <h3>选择收货地址</h3>
-        <span class="small-text">美的商城配送方式：快递（免运费）</span>
-        <a class="right-text" href="javascript:;" ms-click="@addressListExpand = !@addressListExpand" ms-visible="@addressTotal > 3">
-            <span ms-text="@addressListExpand ? '收起' : '展开'"></span>更多收货地址<i class="icon_arrow_bottom" ms-class="{icon_arrow_top: @addressListExpand}"></i></a>
-    </div>
-    <div class="address-box">
-        <div class="adr"
-             ms-for="(index, el) in @addressList"
-              ms-class="{'default': (el.nIsDefault == 1 ? (@checkDefault(el) && true) : false), 'checked': (@addressChecked.lAddrId == el.lAddrId), hide: (index > 2 && ! @addressListExpand)}"
-             ms-click="@addressChecked = el">
-             <div class="adr-inner">
-                 <div class="adr-head" >
-                     <span class="adr-province" ms-text="el.strProvince"></span>
-                     <span class="adr-city" ms-text="el.strCity"></span>
-                     <span class="adr-name" ms-text="el.strPersonName"></span>
-                 </div>
-             </div>
-        </div>
-        <div class="adr" ms-hover="'hover'">
-            <div class="adr-inner">
-                <div class="adr-add">
-                    <p class="adr-add-icon">&times;</p>
-                    <p class="adr-add-text">添加地址</p>
-                </div>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Title</title>
+        <script type="text/javascript" src="../dist/avalon.js"></script>
+    </head>
+    <body>
+        <blockquote>
+            <div ms-controller="tree">
+                <ul ms-for="el in @tree">{{el.text}}
+                    <span ms-click='@toggle($event,el)' ms-text="@trigger(el)"></span>
+                    <div ms-html="@tmpl" ms-visible="el.subtree.length " id="top"></div>
+                </ul>
             </div>
-        </div>
-    </div>
+            <script>
+       var vm = avalon.define({
+            $id: "tree",
+            trigger: function (el) {
+                if (el.subtree && el.subtree.length) {
+                    return el.open ? '[+]' : '[-]'
+                } else {
+                    return ''
+                }
+            },
+            toggle: function (event, elem) {
+                var el = event.target
+                elem.open = el.open = !el.open
+                var tree = el.nextElementSibling
+                tree.style.display = el.open ? '' : 'none'
+            },
+            tree: [
+                {text: "aaa", open: 1, subtree: [
+                        {text: 1111, open: 1, subtree: []},
+                        {text: 2222, open: 1, subtree: [
+                                {text: 777, open: 1, subtree: []}
+                            ]},
+                        {text: 3333, open: 1, subtree: [
+                                {text: 8888, open: 1, subtree: []},
+                                {text: 999, open: 1, subtree: []}
+                            ]}
+                    ]},
+                {text: "bbb", open: 1, subtree: [
+                        {text: 4444, open: 1, subtree: []},
+                        {text: 5555, open: 1, subtree: []},
+                        {text: 6666, open: 1, subtree: []}
+                    ]},
+                {text: "ccc", open: 1, subtree: []},
+                {text: "ddd", open: 1, subtree: []},
+                {text: "eee", open: 1, subtree: [
+                        {text: 1234, open: 1, subtree: []}
+                    ]},
+                {text: "fff", open: 1, subtree: []}
+            ],
+            tmpl: "<ul ms-for='el in el.subtree'><li>{{el.text}}" +
+                    "<span ms-click='@toggle($event,el)' ms-text='@trigger(el)'></span>" +
+                    "<div ms-html='@tmpl' ms-visible='el.subtree.length '>xxx</div></li></ul>"
 
-</div>
-*/
-})
-
-avalon.component('ms-address-wrap', {
-    template: addressTmpl,
-    defaults: {
-        addressChecked: {},
-        addressListExpand: false,
-        addressList: [],
-        addressTotal: 0,
-        addressWrapShow: false,
-
-        // 选中默认地址
-        checkDefault: function (addr) {
-            if (! this.addressChecked.lAddrId) {
-                this.addressChecked = addr
-            }
-        },
-        // 获取地址列表数据
-        getAll: function() {
-            console.log('--')
-            this.addressList = [{"lAddrId":10677,"lUin":12070,"strPersonName":"\u6ee8\u6cb31","strMobileNum":"11111111111","strProvince":"\u5e7f\u4e1c\u7701","strProvinceCode":"440000","strCity":"\u6df1\u5733\u5e02","strCityCode":"440300","strArea":"\u798f\u7530\u533a","strAreaCode":"440304","strDetailMsg":"\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3","nIsDefault":1},{"lAddrId":10724,"lUin":12070,"strPersonName":"\u8fdb\u57ce\u4e0d3\u70c33\u4e2d\u5730\u7c89\u5730","strMobileNum":"11111111111","strProvince":"\u6cb3\u5317\u7701","strProvinceCode":"130000","strCity":"\u77f3\u5bb6\u5e84\u5e02","strCityCode":"130100","strArea":"\u957f\u5b89\u533a","strAreaCode":"130102","strDetailMsg":"12321321313213","nIsDefault":null},{"lAddrId":10725,"lUin":12070,"strPersonName":"\u9648\u6d69","strMobileNum":"18611111111","strProvince":"\u5317\u4eac\u5e02","strProvinceCode":"110000","strCity":"\u5317\u4eac\u5e02","strCityCode":"110100","strArea":"\u4e1c\u57ce\u533a","strAreaCode":"110101","strDetailMsg":"\u5b66\u5e9c\u8def\u6021\u5316\u91d1\u878d\u79d1\u6280\u5927\u53a623\u697c","nIsDefault":null},{"lAddrId":10726,"lUin":12070,"strPersonName":"\u6d82\u6d82","strMobileNum":"18611111111","strProvince":"\u5c71\u897f\u7701","strProvinceCode":"140000","strCity":"\u5927\u540c\u5e02","strCityCode":"140200","strArea":"\u5357\u90ca\u533a","strAreaCode":"140211","strDetailMsg":"\u7389\u5f8b\u8def\u82b1\u6837\u5e74\u82b1\u4e61A\u680b9O","nIsDefault":null},{"lAddrId":10727,"lUin":12070,"strPersonName":"\u840c\u840c","strMobileNum":"18611111111","strProvince":"\u6cb3\u5317\u7701","strProvinceCode":"130000","strCity":"\u5510\u5c71\u5e02","strCityCode":"130200","strArea":"\u8def\u5357\u533a","strAreaCode":"130202","strDetailMsg":"\u6d77\u79c0\u8def21\u53f7\u9f99\u5149\u4e16\u7eaa\u5927\u53a6B\u5ea711\u697c","nIsDefault":null}];
-            this.addressTotal = this.addressList.length
-            this.addressWrapShow = true
-            this.loadingWrapShow = false
-        },
-        onInit: function() {
-            var self = this
-            setTimeout(function() {
-                self.getAll.call(self)
-            }, 3000)
-
-        }
-    }
-})
-
-
-</script>
-</body>
+        })
+            </script>
+        </blockquote>
+    </body>
 </html>

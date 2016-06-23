@@ -10,18 +10,24 @@
       
 var vm = avalon.define({
     $id:'test',
-    array: [111,222,333,444]
+    array: [111,222,333],
+    panels:[1111,2222,3333],
+    selectedIndex:0,
+    toggle:function(i){
+        this.selectedIndex = i
+    }
 })
 
         </script>
     </head>
     <body ms-controller="test">
-
         <ul>
-            <!--ms-for:el in @array-->
-            <li>{{el}}</li>
-            <!--ms-for-end:-->
-          
+            <li ms-for="($index,el) in @array"
+                ms-click="@toggle($index)">{{el}}</li>
         </ul>
+        <div ms-for="(i,el) in @panels" ms-visible="i === @selectedIndex">
+            {{el}}
+        </div>
+       
     </body>
 </html>
