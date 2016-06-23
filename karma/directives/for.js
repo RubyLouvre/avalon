@@ -254,7 +254,6 @@ describe('for', function () {
             allchecked: false,
             checkAll: function (e) {
                 var checked = e.target.checked
-                console.log(checked)
                 vm.data.forEach(function (el) {
                     el.checked = checked
                 })
