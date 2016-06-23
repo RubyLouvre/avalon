@@ -4,7 +4,7 @@ var path = require('path');
 var fs = require('fs')
 var json = require('./package.json')
 
-var version =  '2.1.0'.split('.')    // json.version.split('.')
+var version =  json.version.split('.')
 var v = (version.shift() + '.' + version.join('')).replace(/0+$/,"0")
 var text = fs.readFileSync('./src/seed/lang.share.js', 'utf8')
 text = text.replace(/version\s*\:\s*([^,]+)/, function (a, b) {
