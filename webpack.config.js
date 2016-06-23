@@ -26,6 +26,8 @@ var feather = heredoc(function(){
 优化lexer虚拟DOM生成器
 完全重写ms-for, ms-html指令
 重构ms-if指令
+重构ms-text,让其刷新工作交给expr表达式处理
+修正ms-html向下传参
 修正on指令的UUID问题
 修正__local__往下传递 问题
 参考react 的classNames插件，重构ms-class/active/hover，

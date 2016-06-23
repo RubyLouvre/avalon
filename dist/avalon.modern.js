@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-23:17 version 2.10 by 司徒正美
+ * built in 2016-6-24:0 version 2.10 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -10,6 +10,8 @@
  * 优化lexer虚拟DOM生成器
  * 完全重写ms-for, ms-html指令
  * 重构ms-if指令
+ * 重构ms-text,让其刷新工作交给expr表达式处理
+ * 修正ms-html向下传参
  * 修正on指令的UUID问题
  * 修正__local__往下传递 问题
  * 参考react 的classNames插件，重构ms-class/active/hover，
@@ -1932,49 +1934,38 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 42 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	var rident = __webpack_require__(43).ident
-	var update = __webpack_require__(36)
-
+	//此指令实际上不会操作DOM,交由expr指令处理
 	avalon.directive('text', {
 	    parse: function (copy, src, binding) {
-	        src.children = [{nodeType:3,type:"#text",dynamic: true, nodeValue:"dynamic"}]
-	        copy.children = '[{nodeType:3,type:"#text", nodeValue:"dynamic"}]'
-	        var val = rident.test(binding.expr) ? binding.expr : avalon.parseExpr(binding)
-	        copy[binding.name] = val
+	        copy[binding.name] = 1
+	        src.children = []
+	        copy.children = '[{\nnodeType:3,\ntype:"#text",\ndynamic:true,' +
+	                '\nnodeValue:avalon.parsers.string(' +
+	                avalon.parseExpr(binding) + ')}]'
 	    },
 	    diff: function (copy, src, name) {
-	        var copyValue = copy[name]+''
-	        if (copyValue !== src[name] ) {
-	            src[name] = copy.children[0].nodeValue = copyValue
-	            update(src, this.update)
+	        if (src.dom && !src.isVoidTag && !src.children.length) {
+	            var parent = src.dom
+	            while (parent.firstChild) {
+	                parent.removeChild(parent.firstChild)
+	            }
+	            var dom = document.createTextNode('x')
+	            parent.appendChild(dom)
+	            var vdom = {nodeType: 3, type:'#text', dom: dom}
+	            src.children.push(vdom)
 	        }
 	    },
-	    update: function (dom, vdom) {
-	        dom.innerText = dom.textContent = vdom['ms-text']
-	    }
+	    update: avalon.noop
 	})
 
 /***/ },
 /* 43 */
-/***/ function(module, exports) {
-
-	module.exports = {
-	    ident: /^[$a-zA-Z_][$a-zA-Z0-9_]*$/,
-	    sp: /^\s+$/, //全部都是空白,
-	    leftSp: /^\s+/, //左边空白
-	    rightSp: /s+$/, //右边空白,
-	    binding: /^ms-(\w+)-?(.*)/, //绑定属性,
-	    string: /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
-	}
-
-/***/ },
-/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var update = __webpack_require__(36)
-	var parseView = __webpack_require__(45)
+	var parseView = __webpack_require__(44)
 	var reconcile = __webpack_require__(51)
 
 
@@ -2019,18 +2010,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 45 */
+/* 44 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var parseExpr = __webpack_require__(46)
+	var parseExpr = __webpack_require__(45)
 	var extractBindings = __webpack_require__(48)
 	var parseDelimiter = __webpack_require__(49)
 	var stringify = __webpack_require__(50)
 	var config = avalon.config
 	var quote = avalon.quote
 	var makeHashCode = avalon.makeHashCode
-	var r = __webpack_require__(43)
+	var r = __webpack_require__(47)
 	var rident = r.ident
 	var rsp = r.sp
 
@@ -2199,16 +2190,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 46 */
+/* 45 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 
 	//缓存求值函数，以便多次利用
-	var evaluatorPool = __webpack_require__(47)
+	var evaluatorPool = __webpack_require__(46)
 
 	var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
-	var rstring = __webpack_require__(43).string
+	var rstring = __webpack_require__(47).string
 	var rfill = /\?\?\d+/g
 	var brackets = /\(([^)]*)\)/
 
@@ -2404,7 +2395,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 47 */
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -2414,11 +2405,24 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
+/* 47 */
+/***/ function(module, exports) {
+
+	module.exports = {
+	    ident: /^[$a-zA-Z_][$a-zA-Z0-9_]*$/,
+	    sp: /^\s+$/, //全部都是空白,
+	    leftSp: /^\s+/, //左边空白
+	    rightSp: /s+$/, //右边空白,
+	    binding: /^ms-(\w+)-?(.*)/, //绑定属性,
+	    string: /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
+	}
+
+/***/ },
 /* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var directives = avalon.directives
-	var rbinding = __webpack_require__(43).binding
+	var rbinding = __webpack_require__(47).binding
 	var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
 
 	function extractBindings(cur, props) {
@@ -2491,7 +2495,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var rline = /\r?\n/g
-	var r = __webpack_require__(43)
+	var r = __webpack_require__(47)
 	var config = avalon.config
 
 	function parseDelimiter(str) {
@@ -2860,7 +2864,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var revent = /^ms-on-([a-z]+)/
 	var rfilters = /\|.+/g
 	var rvar = /((?:\@|\$|\#\#)?\w+)/g
-	var rstring = __webpack_require__(43).string
+	var rstring = __webpack_require__(47).string
 	//基于事件代理的高性能事件绑定
 	avalon.directive('on', {
 	    priority: 3000,
@@ -3486,7 +3490,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rforRight = /\s*\)\s*$/
 	var rforSplit = /\s*,\s*/
 	var rforAs = /\s+as\s+([$\w]+)/
-	var rident = __webpack_require__(43).ident
+	var rident = __webpack_require__(47).ident
 	var update = __webpack_require__(36)
 
 	var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
@@ -4643,7 +4647,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.diff = __webpack_require__(72)
 	avalon.batch = __webpack_require__(73)
 	// dispatch与patch 为内置模块
-	var parseView = __webpack_require__(45)
+	var parseView = __webpack_require__(44)
 
 	function render(vtree, local) {
 	    var _body = Array.isArray(vtree) ? parseView(vtree) : vtree
@@ -4701,7 +4705,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rnumber = /\d+/g
 	var rmsForStart = /^\s*ms\-for\:/
 	var rmsForEnd = /^\s*ms\-for\-end/
-	var r = __webpack_require__(43)
+	var r = __webpack_require__(47)
 	var rsp = r.sp
 	var rfill = /\?\?\d+/g
 	var rleftSp = r.leftSp
@@ -5175,7 +5179,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 	var directives = avalon.directives
-	var rbinding = __webpack_require__(43).binding
+	var rbinding = __webpack_require__(47).binding
 
 	function diff(copys, sources) {
 	    for (var i = 0; i < copys.length; i++) {
@@ -6733,7 +6737,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	//处理内容
 	__webpack_require__(41)
 	__webpack_require__(42)
-	__webpack_require__(44)
+	__webpack_require__(43)
 	//需要用到事件的
 	__webpack_require__(52)
 	__webpack_require__(53)
@@ -6797,7 +6801,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	var update = __webpack_require__(36)
-	var evaluatorPool = __webpack_require__(47)
+	var evaluatorPool = __webpack_require__(46)
 	var stringify = __webpack_require__(50)
 
 	var rchangeFilter = /\|\s*change\b/

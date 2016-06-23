@@ -1,21 +1,23 @@
-var rident = require('../seed/regexp').ident
-var update = require('./_update')
-
+//此指令实际上不会操作DOM,交由expr指令处理
 avalon.directive('text', {
     parse: function (copy, src, binding) {
-        src.children = [{nodeType:3,type:"#text",dynamic: true, nodeValue:"dynamic"}]
-        copy.children = '[{nodeType:3,type:"#text", nodeValue:"dynamic"}]'
-        var val = rident.test(binding.expr) ? binding.expr : avalon.parseExpr(binding)
-        copy[binding.name] = val
+        copy[binding.name] = 1
+        src.children = []
+        copy.children = '[{\nnodeType:3,\ntype:"#text",\ndynamic:true,' +
+                '\nnodeValue:avalon.parsers.string(' +
+                avalon.parseExpr(binding) + ')}]'
     },
     diff: function (copy, src, name) {
-        var copyValue = copy[name]+''
-        if (copyValue !== src[name] ) {
-            src[name] = copy.children[0].nodeValue = copyValue
-            update(src, this.update)
+        if (src.dom && !src.isVoidTag && !src.children.length) {
+            var parent = src.dom
+            while (parent.firstChild) {
+                parent.removeChild(parent.firstChild)
+            }
+            var dom = document.createTextNode('x')
+            parent.appendChild(dom)
+            var vdom = {nodeType: 3, type:'#text', dom: dom}
+            src.children.push(vdom)
         }
     },
-    update: function (dom, vdom) {
-        dom.innerText = dom.textContent = vdom['ms-text']
-    }
+    update: avalon.noop
 })
