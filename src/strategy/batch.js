@@ -39,7 +39,7 @@ function batchUpdate(id) {
     if (scope.isMount === 1) {
         var events = vm.$events["onReady"]
         if (events) {
-            vm.fire('onReady')
+            vm.$fire('onReady')
             delete vm.$events.onReady
         }
         scope.isMount = 2
