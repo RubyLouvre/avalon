@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-23:2 version 2.10 by 司徒正美
+ * built in 2016-6-23:10 version 2.10 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -2099,7 +2099,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            directives[b.type].parse(copy, source, b)
 	            return b.name
 
-	        }).join(';;')
+	        }).join(',')
 
 	        if (source.isVoidTag) {
 	            copy.isVoidTag = true
@@ -5231,7 +5231,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (copys.order) {
 	        var directiveType
 	        try {
-	            copys.order.replace(/([^;]+)/g, function (name) {
+	            copys.order.replace(avalon.rword, function (name) {
 	                var match = name.match(rbinding)
 	                var type = match && match[1]
 	                directiveType = type
@@ -6441,13 +6441,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                nativeBind(elem, type, dispatch)
 	            }
 	        }
-	        var keys = value.split('??')
+	        var keys = value.split(',')
 	        if (keys[0] === '') {
 	            keys.shift()
 	        }
 	        if (keys.indexOf(key) === -1) {
 	            keys.push(key)
-	            elem.setAttribute('avalon-events', keys.join('??'))
+	            elem.setAttribute('avalon-events', keys.join(','))
 	            //将令牌放进avalon-events属性中
 	        }
 
@@ -6466,17 +6466,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	                elem.removeAttribute('avalon-events')
 	                break
 	            case 2:
-	                value = value.split('??').filter(function (str) {
+	                value = value.split(',').filter(function (str) {
 	                    return str.indexOf(type + ':') === -1
-	                }).join('??')
+	                }).join(',')
 
 	                elem.setAttribute('avalon-events', value)
 	                break
 	            default:
 	                var search = type + ':' + fn.uuid
-	                value = value.split('??').filter(function (str) {
+	                value = value.split(',').filter(function (str) {
 	                    return str !== search
-	                }).join('??')
+	                }).join(',')
 	                elem.setAttribute('avalon-events', value)
 	                delete avalon.eventListeners[fn.uuid]
 	                break
@@ -6486,13 +6486,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-	var reventNames = /[^\s\?]+/g
 	var typeRegExp = {}
 	function collectHandlers(elem, type, handlers) {
 	    var value = elem.getAttribute('avalon-events')
 	    if (value && (elem.disabled !== true || type !== 'click')) {
 	        var uuids = []
-	        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type + '\\:([^?\\s]+)', 'g'))
+	        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type + '\\:([^,\\s]+)', 'g'))
 	        value.replace(reg, function (a, b) {
 	            uuids.push(b)
 	            return a
@@ -6557,9 +6556,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	function delegateEvent(type) {
 	    var value = root.getAttribute('delegate-events') || ''
 	    if (value.indexOf(type) === -1) {
-	        var arr = value.match(reventNames) || []
+	        var arr = value.match(avalon.rword) || []
 	        arr.push(type)
-	        root.setAttribute('delegate-events', arr.join('??'))
+	        root.setAttribute('delegate-events', arr.join(','))
 	        nativeBind(root, type, dispatch, !!focusBlur[type])
 	    }
 	}

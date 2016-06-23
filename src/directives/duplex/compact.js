@@ -105,7 +105,6 @@ avalon.directive('duplex', {
             }
             curValue = value
         }
-        console.log(curValue)
         data.modelValue = curValue
         if (data.isString) {//输出到页面时要格式化
             value = data.format(data.vmodel, curValue + '')

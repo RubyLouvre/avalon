@@ -42,13 +42,13 @@ avalon.bind = function (elem, type, fn) {
                 nativeBind(elem, type, dispatch)
             }
         }
-        var keys = value.split('??')
+        var keys = value.split(',')
         if (keys[0] === '') {
             keys.shift()
         }
         if (keys.indexOf(key) === -1) {
             keys.push(key)
-            elem.setAttribute('avalon-events', keys.join('??'))
+            elem.setAttribute('avalon-events', keys.join(','))
             //将令牌放进avalon-events属性中
         }
 
@@ -67,16 +67,16 @@ avalon.unbind = function (elem, type, fn) {
                 elem.removeAttribute('avalon-events')
                 break
             case 2:
-                value = value.split('??').filter(function (str) {
+                value = value.split(',').filter(function (str) {
                     return str.indexOf(type + ':') === -1
-                }).join('??')
+                }).join(',')
                 elem.setAttribute('avalon-events', value)
                 break
             default:
                 var search = type + ':' + fn.uuid
-                value = value.split('??').filter(function (str) {
+                value = value.split(',').filter(function (str) {
                     return str !== search
-                }).join('??')
+                }).join(',')
                 elem.setAttribute('avalon-events', value)
                 delete avalon.eventListeners[fn.uuid]
                 break
@@ -86,13 +86,12 @@ avalon.unbind = function (elem, type, fn) {
     }
 }
 
-var reventNames = /[^\s\?]+/g
 var typeRegExp = {}
 function collectHandlers(elem, type, handlers) {
     var value = elem.getAttribute('avalon-events')
     if (value && (elem.disabled !== true || type !== 'click')) {
         var uuids = []
-        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type + '\\:([^?\\s]+)', 'g'))
+        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type + '\\:([^,\\s]+)', 'g'))
         value.replace(reg, function (a, b) {
             uuids.push(b)
             return a
@@ -161,9 +160,9 @@ var nativeUnBind = W3C ? function (el, type, fn) {
 function delegateEvent(type) {
     var value = root.getAttribute('delegate-events') || ''
     if (value.indexOf(type) === -1) {
-        var arr = value.match(reventNames) || []
+        var arr = value.match(avalon.rword) || []
         arr.push(type)
-        root.setAttribute('delegate-events', arr.join('??'))
+        root.setAttribute('delegate-events', arr.join(','))
         nativeBind(root, type, dispatch, !!focusBlur[type])
     }
 }
