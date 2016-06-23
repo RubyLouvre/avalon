@@ -15,9 +15,10 @@ var VComment = vdom.VComment
 //http://www.colorglare.com/2014/02/03/to-close-or-not-to-close.html
 //http://blog.jobbole.com/61514/
 
-var rfullTag = /^<([^\s>\/=.$<]+)(?:\s+[^=\s]+(?:=[^>\s]+)?)*\s*>(?:[\s\S]*)<\/\1>/
-var rvoidTag = /^<([^\s>\/=.$<]+)\s*([^>]*?)\/?>/
-
+//var rfullTag = /^<([^\s>\/=.$<]+)(?:\s+[^=\s]+(?:=[^>\s]+)?)*\s*>(?:[\s\S]*)<\/\1>/
+//var rvoidTag = /^<([^\s>\/=.$<]+)\s*([^>]*?)\/?>/
+var rfullTag = /^<([-A-Za-z0-9_]+)(?:\s+[^=\s]+(?:=[^>\s]+)?)*\s*>(?:[\s\S]*)<\/\1>/
+var rvoidTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)\/?>/
 var rtext = /^[^<]+/
 var rcomment = /^<!--([\w\W]*?)-->/
 
@@ -129,7 +130,6 @@ function lexer(text, curDeep) {
                     nodeType: 1,
                     type: type,
                     props: props,
-                    template: '',
                     children: [],
                     isVoidTag: true
                 }
