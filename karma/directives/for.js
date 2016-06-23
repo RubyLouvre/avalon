@@ -448,4 +448,31 @@ describe('for', function () {
         })
 
     })
+    
+    it('ms-text+ms-for', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller="for11">
+             <p ms-for="el in @list" ms-text="el">{{el}}</p>
+             </div>
+             */
+        })
+
+        vm = avalon.define({
+            $id: 'for11',
+            list: [111,222,333]
+        });
+        avalon.scan(div)
+        setTimeout(function () {
+            var ss = div.getElementsByTagName('p')
+            expect(ss.length).to.equal(3)
+            expect(ss[0].innerHTML).to.equal('111')
+            expect(ss[1].innerHTML).to.equal('222')
+            expect(ss[2].innerHTML).to.equal('333')
+         
+            done()
+
+        },100)
+
+    })
 })
