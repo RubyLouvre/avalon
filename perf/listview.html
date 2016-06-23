@@ -16,100 +16,82 @@
             var vm = avalon.define({
                 $id: 'test',
                 list: avalon.range(1, 30).map(function (el) {
+                    //生成所有列表
                     return {
                         text: el
                     }
                 }),
-                top: 0,
-                start: 0,
+                placeHolderHeight: 0,
+                startIndex: 0,
+                $lastScrollTop: 0, //用来计算其是否往上移动,还是往下移动的
                 onScroll: function (e) {
                     var el = e.target
                     var scrollTop = el.scrollTop
+                    if (scrollTop === 0) {
+                        var direction = 'down'
+                    } else {
+                        var direction = scrollTop - vm.$lastScrollTop > 0 ? 'down' : 'up'
+                    }
                     if (!el.isStart) {
                         el.isStart = true
                         el.isStop = false
                         el.startTop = scrollTop
                     } else {
                         var time = new Date - 0
-                        if (time - lastTime > 4) {
-                            clearInterval(id)
-                            lastTime = time
-                            console.log(time)
-                            var a = el.querySelectorAll('.item')
-                            var h = 0
-                            var startIndex = vm.start
-                            var scrollTop = el.scrollTop - vm.top
-                            if (scrollTop > 0) {
-                                
-                            }
-                            
-                            
-                            id = setTimeout(function () {
-                                if (scrollTop === el.scrollTop) {
-                                    el.isStop = true
-                                    el.isStart = false
+                        //  if (time - lastTime > 4) {
+                        //clearInterval(id)
+                      
+                        //      lastTime = time
+                        // console.log(time)
+                        var items = el.querySelectorAll('.item')
+                        var h = 0
+                        var startIndex = vm.startIndex
+                        //求出可见区的高度
+                        var moveDistance = scrollTop - vm.placeHolderHeight
+
+                        if (moveDistance > 0) {
+
+                            var index = 0
+                            var addHeight = 0
+                            for (var i = 0, n = items.length; i < n; i++) {
+                                var item = items[i]
+                                var itemHeight = item.offsetHeight
+                                console.log(moveDistance, itemHeight)
+                                if (moveDistance > itemHeight) {
+                                    moveDistance -= itemHeight
+                                    index += 1
+                                    addHeight += itemHeight
+                                } else {
+                                    break
                                 }
-                            })
-                        }
-
-
-                    }
-
-
-                    
-                },
-                mouseup: function (e) {
-
-                    var el = e.target
-                    var a = el.querySelectorAll('.item')
-                    var h = 0
-                    var startIndex = vm.start
-                    var scrollTop = el.scrollTop - vm.top
-                    console.log(el.scrollTop, '结束')
-                    if (scrollTop > 0) {
-
-                        for (var i = 0; i < a.length; i++) {
-                            var oldH = h
-                            h += a[i].offsetHeight
-                            vm.list[startIndex + i].height = a[i].offsetHeight
-                            //console.log(h)
-                            if (h > scrollTop) {
-                                vm.top = oldH
-                                startIndex = i + startIndex
-                                vm.start = startIndex
-                                console.log(startIndex, '-----')
-                                //vm.list = avalon.range(startIndex, startIndex + 20)
-                                break
                             }
-                        }
-                    } else {
-                        var abs = Math.abs(scrollTop)
-                        var i = vm.start
-                        while (i > 0) {
-                            --i
-                            var el = vm.list[i]
-                            console.log(el)
-                            abs = abs - el.height
-                            if (abs <= 0) {
-                                break
+                            if (direction === 'down') {
+                                vm.startIndex += index
+                                vm.placeHolderHeight += itemHeight
+                            } else {
+                                vm.startIndex -= index
+                                vm.placeHolderHeight -= itemHeight
                             }
 
                         }
-                        if (i !== vm.start) {
-                            console.log('end')
-                            vm.h = abs
-                            vm.start = i
-                        }
-                    }
+                      
+                       
+                        //判定是否拖到最上面
+//                            id = setTimeout(function () {
+//                                if (scrollTop === el.scrollTop) {
+//                                    el.isStop = true
+//                                    el.isStart = false
+//                                }
+//                            })
 
+                        //                       }
+
+
+                    }
 
                 }
             })
-            function anonymous(fn,scope
-/**/) {
-for(var r=[],j=0,i=0,n = this.length; i < n; i++){if(((i in this) && fn.call(scope,this[i],i,this)))r[j++]=this[i]}return r
-}
-            // <p ms-for="el in @arr" ms-if="@toggle">{{el}}</p>
+
         </script>
         <style>
             .item {
@@ -128,10 +110,11 @@ for(var r=[],j=0,i=0,n = this.length; i < n; i++){if(((i in this) && fn.call(sco
     <body>
         <div class="scrollview" ms-controller='test' 
              ms-on-scroll="@onScroll" 
-
              >
-            <div ms-css="{height:@top}"></div>
-            <div class="item" ms-for="el in @list | limitBy(20,@start)">{{el.text}}
+            <div ms-css="{height:@placeHolderHeight,marginTop:-@placeHolderHeight}"></div>
+            <div class="item" 
+                 ms-for="(i,el) in @list | limitBy(15, @startIndex) as list2">
+                {{list2[i].text}}
 
             </div>
 
