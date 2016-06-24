@@ -43,14 +43,14 @@ function reconcile(nodes, vnodes, parent) {
         if (!vtype && !type) {
             break
         }
-        if (vtype !== type) {
-            if (rforRange.test(vtype) && type !== '3remove') {
+        if (vtype !== type ) {
+            if (rforRange.test(vtype) && type && type !== '3remove') {
                 //如果循环节点与空白节点不在一块,则创建循环节点
                 var nodeValue = vtype.slice(1)
                 var node = document.createComment(nodeValue)
                 var vdom = vnodes[index]
                 vdom.dom = node
-                parent.insertBefore(node, el)
+                parent.insertBefore(node, el || null)
                 continue
             } else if (type === '3remove' || !vtype) {
                 //如果是空白节点,移除后不变索引,后面的节点跟上来
@@ -71,10 +71,11 @@ function reconcile(nodes, vnodes, parent) {
         } else {
             var vnode = vnodes[index]
             if (vnode.dynamic) {
+               
                 vnode.dom = el
             }
             if (el && el.nodeType === 1 && !vnode.isVoidTag) {
-                if (vnode.children && (vnode.children.length || el.childNodes.length)) {
+                if (vnode.children && !containers[vnode.type]&&  (vnode.children.length || el.childNodes.length)) {
                     reconcile(el.childNodes, vnode.children, el)
                 }
             }
@@ -82,7 +83,7 @@ function reconcile(nodes, vnodes, parent) {
         }
     }
 }
-
+var containers = avalon.oneObject('script,style,template,xmp,noscript,textarea,option')
 function flatten(nodes) {
     var arr = []
     for (var i = 0, el; el = nodes[i]; i++) {
