@@ -1,33 +1,22 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <title>确认订单</title>
-        <script src="../dist/avalon.js"></script>
-        <script>
-
-      
-var vm = avalon.define({
-    $id:'test',
-    array: [111,222,333],
-    panels:[1111,2222,3333],
-    selectedIndex:0,
-    toggle:function(i){
-        this.selectedIndex = i
-    }
-})
-
-        </script>
-    </head>
-    <body ms-controller="test">
-        <ul>
-            <li ms-for="($index,el) in @array"
-                ms-click="@toggle($index)">{{el}}</li>
-        </ul>
-        <div ms-for="(i,el) in @panels" ms-visible="i === @selectedIndex">
-            {{el}}
-        </div>
-       
-    </body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script type="text/javascript" src="../dist/avalon.js"></script>
+</head>
+<body>
+<blockquote>
+    <div ms-controller="tree" id="tree">
+        <div id="btn">&nbsp;&nbsp;&nbsp;</div>
+        <p ms-for="el in @arr">{{el}}</p>
+    </div>
+    <script >
+        avalon.define({
+            $id: "tree",
+            arr: [1,2,3]
+        });
+    </script>
+</blockquote>
+</body>
 </html>
