@@ -57,7 +57,7 @@ function createComponent(src, copy, is) {
         src.children = avalon.lexer(src.children[0].nodeValue)
     }
     src.isVoidTag = src.skipContent = 0
-   
+
     //开始构建组件的vm的配置对象
 
     var define = hooks.define
@@ -84,7 +84,7 @@ function createComponent(src, copy, is) {
     }
 
     vmodel.$id = $id
-   
+
     //开始构建组件的虚拟DOM
     var finalTemplate = definition.template.trim()
     if (typeof definition.getTemplate === 'function') {
@@ -102,7 +102,7 @@ function createComponent(src, copy, is) {
 
     //将用户标签中的属性合并到组件标签的属性里
     avalon.mix(componentRoot.props, src.props)
-    
+
     //  必须指定wid
     componentRoot.props.wid = $id
     //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
@@ -110,13 +110,8 @@ function createComponent(src, copy, is) {
     if (definition.soleSlot) {
         var slots = {}
         var slotName = definition.soleSlot
-        slots[slotName] = /\S/.test(src.template) ? 
-           src.children : {
-                nodeType:3,
-                nodeValue:'{{@' + slotName + '}}',
-                type:"#text",
-                dynamic: true
-           }
+        slots[slotName] = /\S/.test(src.template) ?
+                src.children : newText(slotName)
         mergeTempale(vtree, slots)
     } else if (!src.isVoidTag) {
         insertSlots(vtree, src, definition.soleSlot)
@@ -138,6 +133,14 @@ function createComponent(src, copy, is) {
 }
 module.exports = createComponent
 
+function newText(name) {
+    return {
+        nodeType: 3,
+        nodeValue: '{{##' + name + '}}',
+        type: "#text",
+        dynamic: true
+    }
+}
 function isEmptyOption(opt) {
     for (var k in opt) {
         if (k === 'is' || k === '$id')
@@ -172,9 +175,8 @@ function mergeTempale(vtree, slots) {
             if (node.type === 'slot') {
                 var name = node.props.name || 'default'
                 if (slots[name]) {
-                    var s = slots[name]
+                    var s = slots[name].length ? slots[name] :  newText(name)
                     vtree.splice.apply(vtree, [i - 1, 1].concat(s))
-
                 }
             } else {
                 mergeTempale(node.children, slots)

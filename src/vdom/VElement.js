@@ -105,7 +105,7 @@ VElement.prototype = {
             case 'noscript':
                 dom.textContent = this.template
                 break
-                default:
+            default:
                 if (!this.isVoidTag) {
                     this.children.forEach(function (c) {
                         c && dom.appendChild(avalon.vdomAdaptor(c, 'toDOM'))

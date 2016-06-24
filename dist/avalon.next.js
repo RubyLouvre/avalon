@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-24:1 version 2.10 by 司徒正美
+ * built in 2016-6-25:2 version 2.10 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -1253,7 +1253,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            case 'noscript':
 	                dom.textContent = this.template
 	                break
-	                default:
+	            default:
 	                if (!this.isVoidTag) {
 	                    this.children.forEach(function (c) {
 	                        c && dom.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
@@ -2611,26 +2611,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	/*
 	 * 
 	 节点对齐算法
-	元素节点是1＋其类型
-	文本节点是3＋其是否能移除
-	注释节点是8＋其内容
-	发现不一样，就对真实DOM树添加或删除
-	添加的是 ms-for,ms-for-end占位的注释节点
-	删除的是多余的空白文本节点,与IE6-8私下添加的奇怪节点
+	 元素节点是1＋其类型
+	 文本节点是3＋其是否能移除
+	 注释节点是8＋其内容
+	 发现不一样，就对真实DOM树添加或删除
+	 添加的是 ms-for,ms-for-end占位的注释节点
+	 删除的是多余的空白文本节点,与IE6-8私下添加的奇怪节点
 	 */
 	function getType(node) {
 	    switch (node.nodeType) {
-	        
+
 	        case 3:
 	            return '3' + (/\S/.test(node.nodeValue) ? 'retain' : 'remove')
 	        case 1:
 	            return '1' + (node.nodeName || node.type).toLowerCase()
 	        case 8:
 	            return '8' + node.nodeValue
-	        
+
 	    }
 
 	}
+
 
 	var rforRange = /^8ms\-for/
 	function reconcile(nodes, vnodes, parent) {
@@ -2692,7 +2693,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	}
-
+	var containers = avalon.oneObject('script,style,template,noscript,textarea,option')
 	function flatten(nodes) {
 	    var arr = []
 	    for (var i = 0, el; el = nodes[i]; i++) {
@@ -4139,7 +4140,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        src.children = avalon.lexer(src.children[0].nodeValue)
 	    }
 	    src.isVoidTag = src.skipContent = 0
-	   
+
 	    //开始构建组件的vm的配置对象
 
 	    var define = hooks.define
@@ -4166,7 +4167,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    vmodel.$id = $id
-	   
+
 	    //开始构建组件的虚拟DOM
 	    var finalTemplate = definition.template.trim()
 	    if (typeof definition.getTemplate === 'function') {
@@ -4184,7 +4185,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    //将用户标签中的属性合并到组件标签的属性里
 	    avalon.mix(componentRoot.props, src.props)
-	    
+
 	    //  必须指定wid
 	    componentRoot.props.wid = $id
 	    //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
@@ -4192,13 +4193,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (definition.soleSlot) {
 	        var slots = {}
 	        var slotName = definition.soleSlot
-	        slots[slotName] = /\S/.test(src.template) ? 
-	           src.children : {
-	                nodeType:3,
-	                nodeValue:'{{@' + slotName + '}}',
-	                type:"#text",
-	                dynamic: true
-	           }
+	        slots[slotName] = /\S/.test(src.template) ?
+	                src.children : newText(slotName)
 	        mergeTempale(vtree, slots)
 	    } else if (!src.isVoidTag) {
 	        insertSlots(vtree, src, definition.soleSlot)
@@ -4220,6 +4216,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 	module.exports = createComponent
 
+	function newText(name) {
+	    return {
+	        nodeType: 3,
+	        nodeValue: '{{##' + name + '}}',
+	        type: "#text",
+	        dynamic: true
+	    }
+	}
 	function isEmptyOption(opt) {
 	    for (var k in opt) {
 	        if (k === 'is' || k === '$id')
@@ -4254,9 +4258,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (node.type === 'slot') {
 	                var name = node.props.name || 'default'
 	                if (slots[name]) {
-	                    var s = slots[name]
+	                    var s = slots[name].length ? slots[name] :  newText(name)
 	                    vtree.splice.apply(vtree, [i - 1, 1].concat(s))
-
 	                }
 	            } else {
 	                mergeTempale(node.children, slots)
