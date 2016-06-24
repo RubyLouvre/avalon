@@ -1,28 +1,26 @@
 
 (function() {
 
-  // Regular Expressions for parsing tags and attributes
   var startTag = /^<([-A-Za-z0-9_]+)((?:\s+[\w-]+(?:\s*=\s*(?:(?:"[^"]*")|(?:'[^']*')|[^>\s]+))?)*)\s*(\/?)>/,
     endTag = /^<\/([-A-Za-z0-9_]+)[^>]*>/,
     attr = /([-A-Za-z0-9_]+)(?:\s*=\s*(?:(?:"((?:\\.|[^"])*)")|(?:'((?:\\.|[^'])*)')|([^>\s]+)))?/g;
 
-  // Empty Elements - HTML 4.01
+  // 半闭合元素
   var empty = makeMap("area,base,basefont,br,col,frame,hr,img,input,isindex,link,meta,param,embed");
 
-  // Block Elements - HTML 4.01
+  // 块状元素
   var block = makeMap("address,applet,blockquote,button,center,dd,del,dir,div,dl,dt,fieldset,form,frameset,hr,iframe,ins,isindex,li,map,menu,noframes,noscript,object,ol,p,pre,script,table,tbody,td,tfoot,th,thead,tr,ul");
 
-  // Inline Elements - HTML 4.01
+  // 内联元素
   var inline = makeMap("a,abbr,acronym,applet,b,basefont,bdo,big,br,button,cite,code,del,dfn,em,font,i,iframe,img,input,ins,kbd,label,map,object,q,s,samp,script,select,small,span,strike,strong,sub,sup,textarea,tt,u,var");
 
-  // Elements that you can, intentionally, leave open
-  // (and which close themselves)
+  // 自闭合元素
   var closeSelf = makeMap("colgroup,dd,dt,li,options,p,td,tfoot,th,thead,tr");
 
-  // Attributes that have their values filled in disabled="disabled"
+  // 布尔属性
   var fillAttrs = makeMap("checked,compact,declare,defer,disabled,ismap,multiple,nohref,noresize,noshade,nowrap,readonly,selected");
 
-  // Special Elements (can contain anything)
+  // 容器元素,里面只能包含文本节点
   var special = makeMap("script,style,textarea,xmp,noscript,template");
 
   var HTMLParser = this.HTMLParser = function(html, handler) {
@@ -35,37 +33,37 @@
       while (html) {
         chars = true;
 
-        // Make sure we're not in a script or style element
+        // 不处理容器元素
         if (!stack.last() || !special[stack.last()]) {
 
-          // Comment
-          if (html.indexOf("<!--") == 0) {
-            index = html.indexOf("-->");
+          // 注释节点
+          if (html.indexOf("<!--") === 0) {
+            index = html.indexOf("-->")
 
             if (index >= 0) {
-              if (handler.comment) handler.comment(html.substring(4, index));
-              html = html.substring(index + 3);
-              chars = false;
+              if (handler.comment) handler.comment(html.substring(4, index))
+              html = html.substring(index + 3)
+              chars = false
             }
 
             // end tag
-          } else if (html.indexOf("</") == 0) {
-            match = html.match(endTag);
+          } else if (html.indexOf("</") === 0) {
+            match = html.match(endTag)
 
             if (match) {
-              html = html.substring(match[0].length);
-              match[0].replace(endTag, parseEndTag);
-              chars = false;
+              html = html.substring(match[0].length)
+              match[0].replace(endTag, parseEndTag)
+              chars = false
             }
 
             // start tag
-          } else if (html.indexOf("<") == 0) {
-            match = html.match(startTag);
+          } else if (html.indexOf("<") === 0) {
+            match = html.match(startTag)
 
             if (match) {
-              html = html.substring(match[0].length);
-              match[0].replace(startTag, parseStartTag);
-              chars = false;
+              html = html.substring(match[0].length)
+              match[0].replace(startTag, parseStartTag)
+              chars = false
             }
           }
 
@@ -79,6 +77,7 @@
           }
 
         } else {
+            //抽取元素的innerHTML
           html = html.replace(new RegExp("(.*)<\/" + stack.last() + "[^>]*>"), function(all, text) {
             text = text.replace(/<!--(.*?)-->/g, "$1").replace(/<!\[CDATA\[(.*?)]]>/g, "$1");
 
@@ -90,7 +89,7 @@
           parseEndTag("", stack.last());
         }
 
-        if (html == last) throw "Parse Error: " + html;
+        if (html === last) throw "Parse Error: " + html;
         last = html;
       }
 
@@ -162,57 +161,40 @@
       base: "head"
     };
 
-    if (!doc) {
-      if (typeof DOMDocument != "undefined") doc = new DOMDocument();
-      else if (typeof document != "undefined" && document.implementation && document.implementation.createDocument) doc = document.implementation.createDocument("", "", null);
-      else if (typeof ActiveX != "undefined") doc = new ActiveXObject("Msxml.DOMDocument");
 
-    } else doc = doc.ownerDocument || doc.getOwnerDocument && doc.getOwnerDocument() || doc;
-
-    var elems = [],
-      documentElement = doc.documentElement || doc.getDocumentElement && doc.getDocumentElement();
-
-    // If we're dealing with an empty document then we
-    // need to pre-populate it with the HTML document structure
-    if (!documentElement && doc.createElement)(function() {
-      var html = doc.createElement("html");
-      var head = doc.createElement("head");
-      head.appendChild(doc.createElement("title"));
-      html.appendChild(head);
-      html.appendChild(doc.createElement("body"));
-      doc.appendChild(html);
-    })();
-
-    // Find all the unique elements
-    if (doc.getElementsByTagName) for (var i in one)
-    one[i] = doc.getElementsByTagName(i)[0];
-
-    // If we're working with a document, inject contents into
-    // the body element
-    var curParentNode = one.body;
+    var elems = []
+    var curParentNode ;
 
     HTMLParser(html, {
-      start: function(tagName, attrs, unary) {
+      start: function(tagName, attrs, isVoidTag) {
         // If it's a pre-built element, then we can ignore
         // its construction
         if (one[tagName]) {
           curParentNode = one[tagName];
-          if (!unary) {
+          if (!isVoidTag) {
             elems.push(curParentNode);
           }
           return;
         }
 
-        var elem = doc.createElement(tagName);
+        var elem = {
+            type:tagName,
+            nodeType:1,
+            children:[],
+            props:{},
+            isVoidTag: !!isVoidTag
+        }
 
-        for (var attr in attrs)
-        elem.setAttribute(attrs[attr].name, attrs[attr].value);
+        for (var attr in attrs){
+            elem.props[attrs[attr].name] = attrs[attr].value
+        }
 
-        if (structure[tagName] && typeof one[structure[tagName]] != "boolean") one[structure[tagName]].appendChild(elem);
+        if (structure[tagName] && typeof one[structure[tagName]] != "boolean") 
+            one[structure[tagName]].children.push(elem)
 
-        else if (curParentNode && curParentNode.appendChild) curParentNode.appendChild(elem);
+        else if (curParentNode ) curParentNode.children.push(elem)
 
-        if (!unary) {
+        if (!isVoidTag) {
           elems.push(elem);
           curParentNode = elem;
         }
@@ -224,10 +206,18 @@
         curParentNode = elems[elems.length - 1];
       },
       chars: function(text) {
-        curParentNode.appendChild(doc.createTextNode(text));
+        curParentNode.children.push({
+            nodeType:3,
+            type: '#text',
+            nodeValue: text
+        });
       },
       comment: function(text) {
-        // create comment node
+        curParentNode.children.push({
+            nodeType: 8,
+            type: '#comment',
+            nodeValue: text
+        });
       }
     });
 

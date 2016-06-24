@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html >
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+
+        <script src="../dist/avalon.js"></script>
+    </head>
+
+    <body ms-controller="root">
+        <div class="container clearfix">
+            <h4 ms-if="@status != 'SENT' &&  @status !='SIGNED'">快递</h4>
+        </div>
+        <script type="text/javascript">
+            var vm = avalon.define({
+                $id: 'root',
+                status: 'SENT'
+            })
+        </script>
+    </body>
+</html>

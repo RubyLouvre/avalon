@@ -66,10 +66,10 @@
                                 }
                             }
                             if (direction === 'down') {
-                                vm.startIndex += index
-                                vm.placeHolderHeight += itemHeight
+                                this._startIndex += index
+                                this._placeHolderHeight += itemHeight
                             } else {
-                                vm.startIndex -= index
+                                this._startIndex -= index
                                 vm.placeHolderHeight -= itemHeight
                             }
 
