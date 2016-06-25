@@ -21,6 +21,10 @@ var feather = heredoc(function(){
 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
 (之前是diff新旧虚拟DOM树,然后再为真实DOM树刷新)
     
+    
+    
+修复&nbsp;&copy; 等HTML实体的转义问题
+修复IE6-8下复制闭包中的对象返回相同对象,导致ms-for出BUG的问题 1522 1511
 所有vm都支持onReady,在它第一次刷新作用区载时触发 
 添加新的对齐节点算法
 优化lexer虚拟DOM生成器
