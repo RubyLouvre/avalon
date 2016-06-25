@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-25:2 version 2.10 by 司徒正美
+ * built in 2016-6-25:10 version 2.10 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -93,7 +93,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-6-25:2 version 2.10 by 司徒正美
+	 * built in 2016-6-25:10 version 2.10 by 司徒正美
 	 * 重大升级!!!!
 	 *  
 	 * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -2017,6 +2017,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    diff: function (copy, src) {
 		        var copyValue = copy.nodeValue+''
 		        if (copyValue !== src.nodeValue) {
+		           // console.log(src.dom)
 		            src.nodeValue = copyValue
 		            update(src, this.update)
 		        }
@@ -2731,73 +2732,43 @@ return /******/ (function(modules) { // webpackBootstrap
 		function reconcile(nodes, vnodes, parent) {
 		    //遍平化虚拟DOM树
 		    vnodes = flatten(vnodes)
-
 		    var map = {}
 		    vnodes.forEach(function (el, index) {
 		        map[index] = getType(el)
 		    })
-
-
-		    var n = vnodes.length
-		    //遍历真实DOM树
-		    for (var index = 0; index < n; ) {
-		        var vtype = map[index]
-		        var el = nodes[index]
-		        var type = el && getType(el)
-
-		        if (!vtype && !type) {
-		            break
-		        }
-		        if (vtype !== type) {
-		            if (vtype && type) {
-		               
-		                if (rforRange.test(vtype) && type !== '3remove') {
-		                    //如果循环节点与空白节点不在一块,则创建循环节点
-		                    var nodeValue = vtype.slice(1)
-		                    var node = document.createComment(nodeValue)
-		                    var vdom = vnodes[index]
-		                    vdom.dom = node
-		                    parent.insertBefore(node, el)
-		                    continue
-		                } else if (type === '3remove' && vtype !== '3retain') {
-		                    parent.removeChild(el)
-		                    continue
-		                } else {
-		                    index++
-		                }
-		            } else {
-		                if (rforRange.test(vtype)) {
-		                    var nodeValue = vtype.slice(1)
-		                    var node = document.createComment(nodeValue)
-		                    var vdom = vnodes[index]
-		                    vdom.dom = node
-		                    parent.insertBefore(node, el||null)
-		//                    var vv = vnodes[index]
-		//                    var dom = avalon.vdomAdaptor(vv, 'toDOM')
-		//                    vv.dom = dom
-		//                    var before = nodes[index - 1]
-		//                    if (before) {
-		//                        parent.insertBefore(dom, before && before.nextSibling)
-		//                    } else {
-		//                        parent.appendChild(dom)
-		//                    }
-		                    continue
-		                } else {
-		                    index++
-		                }
-		            }
-		        } else {
-		            var vnode = vnodes[index]
+		    var newNodes = [], change = false, el, i = 0
+		    while (el = nodes[i++]) {
+		        var vtype = getType(el)
+		        var v = newNodes.length
+		        if (map[v] == vtype) {
+		            newNodes.push(el)
+		            var vnode = vnodes[v]
 		            if (vnode.dynamic) {
 		                vnode.dom = el
 		            }
-		            if (el && el.nodeType === 1 && !vnode.isVoidTag) {
-		                if (vnode.children && (vnode.children.length || el.childNodes.length)) {
-		                    reconcile(el.childNodes, vnode.children, el)
-		                }
+		            if (el.nodeType === 1 && !vnode.isVoidTag && !containers[vnode.type]) {
+		                reconcile(el.childNodes, vnode.children, el)
 		            }
-		            index++
+		        } else {
+		            change = true
+		            if (rforRange.test(map[v])) {
+		                var vv = vnodes[v]
+		                var nn = document.createComment(vv.nodeValue)
+		                vv.dom = nn
+		                newNodes.push(nn)
+		            }
 		        }
+		    }
+		    if (change) {
+		        var f = document.createDocumentFragment(), i = 0
+		        while (el = newNodes[i++]) {
+		            f.appendChild(el)
+		        }
+		        while (parent.firstChild) {
+		          //  console.log(parent.firstChild)
+		            parent.removeChild(parent.firstChild)
+		        }
+		        parent.appendChild(f)
 		    }
 		}
 		var containers = avalon.oneObject('script,style,template,noscript,textarea,option')
@@ -3705,17 +3676,19 @@ return /******/ (function(modules) { // webpackBootstrap
 		            }
 		        }
 
-
-		        if (!cache) {
+		//console.log(JSON.stringify(cache))
+		        if (!cache ||JSON.stringify(cache) == '{}' ) {
 		            /* eslint-disable no-cond-assign */
 		            var cache = src.cache = {}
 		            src.preItems.length = 0
+		            console.log(curItems)
 		            for (i = 0; c = curItems[i]; i++) {
 		                var p = enterAction(c)
 		                src.preItems.push(p)
 		                p.action = 'enter'
 		                p.index = i
 		                saveInCache(cache, p)
+		                console.log(p)
 		            }
 		            src.removes = []
 		            /* eslint-enable no-cond-assign */
@@ -3803,7 +3776,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                    break
 		                }
 		                if (prev) {
-
+		console.log("xxxxx",prev)
 		                    parent.removeChild(prev)
 		                } else {
 		                    break
@@ -7806,7 +7779,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 103:
 /***/ function(module, exports) {
 
-	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
+	module.exports = "<div>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</div>"
 
 /***/ }
 

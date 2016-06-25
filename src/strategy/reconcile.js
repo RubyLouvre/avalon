@@ -28,73 +28,43 @@ var rforRange = /^8ms\-for/
 function reconcile(nodes, vnodes, parent) {
     //遍平化虚拟DOM树
     vnodes = flatten(vnodes)
-
     var map = {}
     vnodes.forEach(function (el, index) {
         map[index] = getType(el)
     })
-
-
-    var n = vnodes.length
-    //遍历真实DOM树
-    for (var index = 0; index < n; ) {
-        var vtype = map[index]
-        var el = nodes[index]
-        var type = el && getType(el)
-
-        if (!vtype && !type) {
-            break
-        }
-        if (vtype !== type) {
-            if (vtype && type) {
-               
-                if (rforRange.test(vtype) && type !== '3remove') {
-                    //如果循环节点与空白节点不在一块,则创建循环节点
-                    var nodeValue = vtype.slice(1)
-                    var node = document.createComment(nodeValue)
-                    var vdom = vnodes[index]
-                    vdom.dom = node
-                    parent.insertBefore(node, el)
-                    continue
-                } else if (type === '3remove' && vtype !== '3retain') {
-                    parent.removeChild(el)
-                    continue
-                } else {
-                    index++
-                }
-            } else {
-                if (rforRange.test(vtype)) {
-                    var nodeValue = vtype.slice(1)
-                    var node = document.createComment(nodeValue)
-                    var vdom = vnodes[index]
-                    vdom.dom = node
-                    parent.insertBefore(node, el||null)
-//                    var vv = vnodes[index]
-//                    var dom = avalon.vdomAdaptor(vv, 'toDOM')
-//                    vv.dom = dom
-//                    var before = nodes[index - 1]
-//                    if (before) {
-//                        parent.insertBefore(dom, before && before.nextSibling)
-//                    } else {
-//                        parent.appendChild(dom)
-//                    }
-                    continue
-                } else {
-                    index++
-                }
-            }
-        } else {
-            var vnode = vnodes[index]
+    var newNodes = [], change = false, el, i = 0
+    while (el = nodes[i++]) {
+        var vtype = getType(el)
+        var v = newNodes.length
+        if (map[v] == vtype) {
+            newNodes.push(el)
+            var vnode = vnodes[v]
             if (vnode.dynamic) {
                 vnode.dom = el
             }
-            if (el && el.nodeType === 1 && !vnode.isVoidTag) {
-                if (vnode.children && (vnode.children.length || el.childNodes.length)) {
-                    reconcile(el.childNodes, vnode.children, el)
-                }
+            if (el.nodeType === 1 && !vnode.isVoidTag && !containers[vnode.type]) {
+                reconcile(el.childNodes, vnode.children, el)
             }
-            index++
+        } else {
+            change = true
+            if (rforRange.test(map[v])) {
+                var vv = vnodes[v]
+                var nn = document.createComment(vv.nodeValue)
+                vv.dom = nn
+                newNodes.push(nn)
+            }
         }
+    }
+    if (change) {
+        var f = document.createDocumentFragment(), i = 0
+        while (el = newNodes[i++]) {
+            f.appendChild(el)
+        }
+        while (parent.firstChild) {
+          //  console.log(parent.firstChild)
+            parent.removeChild(parent.firstChild)
+        }
+        parent.appendChild(f)
     }
 }
 var containers = avalon.oneObject('script,style,template,noscript,textarea,option')

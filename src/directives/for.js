@@ -109,17 +109,19 @@ avalon.directive('for', {
             }
         }
 
-
-        if (!cache) {
+//console.log(JSON.stringify(cache))
+        if (!cache ||JSON.stringify(cache) == '{}' ) {
             /* eslint-disable no-cond-assign */
             var cache = src.cache = {}
             src.preItems.length = 0
+            console.log(curItems)
             for (i = 0; c = curItems[i]; i++) {
                 var p = enterAction(c)
                 src.preItems.push(p)
                 p.action = 'enter'
                 p.index = i
                 saveInCache(cache, p)
+                console.log(p)
             }
             src.removes = []
             /* eslint-enable no-cond-assign */
@@ -207,7 +209,7 @@ avalon.directive('for', {
                     break
                 }
                 if (prev) {
-
+console.log("xxxxx",prev)
                     parent.removeChild(prev)
                 } else {
                     break
