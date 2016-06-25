@@ -176,7 +176,8 @@ function markeRepeatRange(nodes, end) {
     }
     var toRepeat = toFilter.reverse().filter(function (el) {
         if (el.nodeType === 3) {
-            return /\S+/.test(el.nodeValue)
+            console.log(el.nodeValue)
+            return /[\S\xA0]+/.test(el.nodeValue)
         } else {
             return true
         }

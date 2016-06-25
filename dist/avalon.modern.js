@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-25:10 version 2.10 by 司徒正美
+ * built in 2016-6-25:20 version 2.10 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -3566,35 +3566,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	        src.compareText = copy.compareText
 	        //for指令只做添加删除操作
 	        var cache = src.cache
-	        var vdomTemplate, i, c, p
+	        var i, c, p
 
 	        function enterAction(c) {
-	            if (!vdomTemplate) {
 	                var template = src.template + '<!--' + src.signature + '-->'
-
-	                vdomTemplate = avalon.lexer(template)
+	                var vdomTemplate = avalon.lexer(template)
 	                avalon.speedUp(vdomTemplate)
-	            }
 	            return {
 	                action: 'enter',
-	                children: avalon.mix(true, [], vdomTemplate),
+	                children: vdomTemplate,
 	                key: c.key
 	            }
 	        }
 
-	//console.log(JSON.stringify(cache))
-	        if (!cache ||JSON.stringify(cache) == '{}' ) {
+	        if (!cache || isEmptyObject(cache)) {
 	            /* eslint-disable no-cond-assign */
 	            var cache = src.cache = {}
 	            src.preItems.length = 0
-	            console.log(curItems)
 	            for (i = 0; c = curItems[i]; i++) {
 	                var p = enterAction(c)
 	                src.preItems.push(p)
 	                p.action = 'enter'
 	                p.index = i
 	                saveInCache(cache, p)
-	                console.log(p)
 	            }
 	            src.removes = []
 	            /* eslint-enable no-cond-assign */
@@ -3682,7 +3676,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    break
 	                }
 	                if (prev) {
-	console.log("xxxxx",prev)
 	                    parent.removeChild(prev)
 	                } else {
 	                    break
@@ -3759,7 +3752,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	})
-
+	function isEmptyObject(a){
+	    for(var i in a){
+	        return false
+	    }
+	    return true
+	}
 	function splitDOMs(nodes, signature) {
 	    var items = []
 	    var item = []
@@ -4847,7 +4845,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    var toRepeat = toFilter.reverse().filter(function (el) {
 	        if (el.nodeType === 3) {
-	            return /\S+/.test(el.nodeValue)
+	            console.log(el.nodeValue)
+	            return /[\S\xA0]+/.test(el.nodeValue)
 	        } else {
 	            return true
 	        }
