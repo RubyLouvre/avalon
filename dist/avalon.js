@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-25:20 version 2.10 by 司徒正美
+ * built in 2016-6-25:22 version 2.10 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -1561,7 +1561,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	VText.prototype = {
 	    constructor: VText,
 	    toDOM: function () {
-	        return document.createTextNode(this.nodeValue)
+	       var a =  VText.decoder = VText.decoder || document.createElement('p')
+	       a.innerHTML = this.nodeValue
+	       return a.removeChild(a.firstChild) 
 	    },
 	    toHTML: function () {
 	        return this.nodeValue

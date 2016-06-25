@@ -16,7 +16,9 @@ function VText(text) {
 VText.prototype = {
     constructor: VText,
     toDOM: function () {
-        return document.createTextNode(this.nodeValue)
+       var a =  VText.decoder = VText.decoder || document.createElement('p')
+       a.innerHTML = this.nodeValue
+       return a.removeChild(a.firstChild) 
     },
     toHTML: function () {
         return this.nodeValue
