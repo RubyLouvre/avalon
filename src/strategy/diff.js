@@ -64,18 +64,21 @@ function execHooks(el, hooks) {
 }
 
 function diffProps(copys, sources) {
-    if (copys.order) {
+    var order = copys.order
+    if (order) {
         var directiveType
         try {
-            copys.order.replace(avalon.rword, function (name) {
+           order.replace(avalon.rword, function (name) {
                 var match = name.match(rbinding)
                 var type = match && match[1]
                 directiveType = type
                 if (directives[type]) {
                     directives[type].diff(copys, sources || emptyObj(), name)
                 }
-                return name
             })
+            if(copys.order !== order){
+                diffProps(copys, sources)
+            }
         } catch (e) {
             avalon.log(directiveType, e, e.message, 'diffProps error')
         }

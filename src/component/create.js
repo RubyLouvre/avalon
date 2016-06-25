@@ -102,8 +102,7 @@ function createComponent(src, copy, is) {
 
     //将用户标签中的属性合并到组件标签的属性里
     avalon.mix(componentRoot.props, src.props)
-
-    //  必须指定wid
+    delete componentRoot.props['ms-widget']
     componentRoot.props.wid = $id
     //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
 

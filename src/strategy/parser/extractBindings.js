@@ -48,16 +48,7 @@ function extractBindings(cur, props) {
     }
     bindings.sort(byPriority)
 
-    var ret = []
-    for (var k = 0, el; el = bindings[k++]; ) {
-        var type = el.type
-        ret.type = type
-        ret.push(el)
-        if ( type === 'widget') {
-               break
-        }
-    }
-    return ret
+    return bindings
 }
 
 function byPriority(a, b) {

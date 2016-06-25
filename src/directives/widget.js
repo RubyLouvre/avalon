@@ -45,7 +45,6 @@ avalon.directive('widget', {
 
             var componentRoot = newTree[0]
             if (componentRoot && isComponentReady(componentRoot)) {
-
                 if (src[is + '-mount']) {//update
                     updateCopy(copy, componentRoot)
                     update(src, this.updateComponent)
@@ -101,7 +100,6 @@ avalon.directive('widget', {
         var vtree = vdom[is + '-vtree']
         //更新另一个刷数据用的虚拟DOM树
         updateCopy(vdom, vtree[0] )
-     
         var com = avalon.vdomAdaptor(vdom, 'toDOM')
         vm.$fire('onInit', {
             type: 'init',
@@ -112,6 +110,8 @@ avalon.directive('widget', {
         parent.replaceChild(com, dom)
         vdom.dom = com
         avalon.onComponentDispose(com)
+       
+        
         vdom[is + '-mount'] = true
         //--------------
         vm.$element = com
@@ -141,7 +141,7 @@ avalon.directive('widget', {
 function updateCopy(copy, newCopy) {
     copy.children = []
     avalon.mix(copy, newCopy)
-    copy.local = copy.vmodel = copy.isVoidTag = copy.skipContent = 0
+    copy.local = copy.isVoidTag = copy.skipContent = 0
 }
 
 function viewChangeHandle(dom, vdom) {
