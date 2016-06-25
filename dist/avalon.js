@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-25:22 version 2.10 by 司徒正美
+ * built in 2016-6-26:1 version 2.10 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -4131,16 +4131,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    bindings.sort(byPriority)
 
-	    var ret = []
-	    for (var k = 0, el; el = bindings[k++]; ) {
-	        var type = el.type
-	        ret.type = type
-	        ret.push(el)
-	        if ( type === 'widget') {
-	               break
-	        }
-	    }
-	    return ret
+	    return bindings
 	}
 
 	function byPriority(a, b) {
@@ -6014,7 +6005,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            var componentRoot = newTree[0]
 	            if (componentRoot && isComponentReady(componentRoot)) {
-
 	                if (src[is + '-mount']) {//update
 	                    updateCopy(copy, componentRoot)
 	                    update(src, this.updateComponent)
@@ -6070,7 +6060,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var vtree = vdom[is + '-vtree']
 	        //更新另一个刷数据用的虚拟DOM树
 	        updateCopy(vdom, vtree[0] )
-	     
 	        var com = avalon.vdomAdaptor(vdom, 'toDOM')
 	        vm.$fire('onInit', {
 	            type: 'init',
@@ -6081,6 +6070,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        parent.replaceChild(com, dom)
 	        vdom.dom = com
 	        avalon.onComponentDispose(com)
+	       
+	        
 	        vdom[is + '-mount'] = true
 	        //--------------
 	        vm.$element = com
@@ -6110,7 +6101,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function updateCopy(copy, newCopy) {
 	    copy.children = []
 	    avalon.mix(copy, newCopy)
-	    copy.local = copy.vmodel = copy.isVoidTag = copy.skipContent = 0
+	    copy.local = copy.isVoidTag = copy.skipContent = 0
 	}
 
 	function viewChangeHandle(dom, vdom) {
@@ -6261,8 +6252,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    //将用户标签中的属性合并到组件标签的属性里
 	    avalon.mix(componentRoot.props, src.props)
-
-	    //  必须指定wid
+	    delete componentRoot.props['ms-widget']
 	    componentRoot.props.wid = $id
 	    //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
 
@@ -7312,18 +7302,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function diffProps(copys, sources) {
-	    if (copys.order) {
+	    var order = copys.order
+	    if (order) {
 	        var directiveType
 	        try {
-	            copys.order.replace(avalon.rword, function (name) {
+	           order.replace(avalon.rword, function (name) {
 	                var match = name.match(rbinding)
 	                var type = match && match[1]
 	                directiveType = type
 	                if (directives[type]) {
 	                    directives[type].diff(copys, sources || emptyObj(), name)
 	                }
-	                return name
 	            })
+	            if(copys.order !== order){
+	                diffProps(copys, sources)
+	            }
 	        } catch (e) {
 	            avalon.log(directiveType, e, e.message, 'diffProps error')
 	        }
