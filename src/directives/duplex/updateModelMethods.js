@@ -11,7 +11,7 @@ var updateModelMethods = {
             data.set(data.vmodel, parsedValue)
             callback(data)
         }
-        
+        data.lastViewValue = formatedValue
         data.dom[prop] = formatedValue
         
         //vm.aaa = '1234567890'
