@@ -65,8 +65,6 @@ module.exports = {
     ],
     module: {
         loaders: [
-            {test: /\.jade$/, loader: 'text-loader'}
-
         ],
         preLoaders: [
             //https://segmentfault.com/a/1190000004468428
@@ -79,8 +77,7 @@ module.exports = {
     resolve: {
         extensions: ['.js', '', '.css'],
         alias: {
-            avalon: './src/avalon',
-            'vars': path.join(process.cwd(), './src/base/builtin')
+            avalon: './src/avalon'
         }
     }
 }
