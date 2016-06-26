@@ -75,12 +75,18 @@ function diffProps(copys, sources) {
                 if (directives[type]) {
                     directives[type].diff(copys, sources || emptyObj(), name)
                 }
+                if(copys.order !== order){
+                    throw "break"
+                }
+               
             })
-            if(copys.order !== order){
+            
+        } catch (e) {
+            if(e !== 'break'){
+                avalon.log(directiveType, e, e.message, 'diffProps error')
+            }else{
                 diffProps(copys, sources)
             }
-        } catch (e) {
-            avalon.log(directiveType, e, e.message, 'diffProps error')
         }
     }
 

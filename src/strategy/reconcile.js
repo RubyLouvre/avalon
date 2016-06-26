@@ -29,19 +29,30 @@ function reconcile(nodes, vnodes, parent) {
     //遍平化虚拟DOM树
     vnodes = flatten(vnodes)
     var map = {}
+    var vn = vnodes.length
+    if(vn === 0)
+        return
+    
     vnodes.forEach(function (el, index) {
         map[index] = getType(el)
     })
-    var newNodes = [], change = false, el, i = 0
-    while (el = nodes[i++]) {
-        var vtype = getType(el)
+    
+    var newNodes = [], change = false , el, i = 0
+    var breakLoop = 0
+    while (true) {
+        el = nodes[i++]
+        if(breakLoop++ > 5000){
+            break
+        }
+        var vtype = el && getType(el)
         var v = newNodes.length
-        if (map[v] == vtype) {
+        if (map[v] === vtype) {
             newNodes.push(el)
             var vnode = vnodes[v]
             if (vnode.dynamic) {
                 vnode.dom = el
             }
+       
             if (el.nodeType === 1 && !vnode.isVoidTag && !containers[vnode.type]) {
                 reconcile(el.childNodes, vnode.children, el)
             }
@@ -52,16 +63,20 @@ function reconcile(nodes, vnodes, parent) {
                 var nn = document.createComment(vv.nodeValue)
                 vv.dom = nn
                 newNodes.push(nn)
+                i = Math.max(0, --i)
             }
         }
+        if(newNodes.length === vn){
+            break
+        }
     }
+   // console.log(newNodes.length, vnodes.length)
     if (change) {
         var f = document.createDocumentFragment(), i = 0
         while (el = newNodes[i++]) {
             f.appendChild(el)
         }
         while (parent.firstChild) {
-          //  console.log(parent.firstChild)
             parent.removeChild(parent.firstChild)
         }
         parent.appendChild(f)
