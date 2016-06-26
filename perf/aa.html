@@ -1,33 +1,26 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>ms-validate</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../dist/avalon.js"></script>
         <script>
-
+            var vm = avalon.define({
+                $id: "test",
+                a: 111
+            })
         </script>
+        <style>
+            .ms-controller{
+                display:none;
+            }
+        </style>
     </head>
-
-    <body ms-controller="start" class='ms-controller'>
-  <wbr ms-widget="[{is : 'test'},@$config]">
-
-  <script>
-    avalon.component("test",{
-      template : "<div ms-click='@test' ms-attr=\"{title:@aaa}\">asd231&copy;&times;<p>qffqwfdqw</p></div>",
-      defaults : {
-        test : function(){
-          alert(1);
-        },
-        aaa: 333
-      }
-    });
-    avalon.define({
-      $id : "start",
-      $config : {
-      }
-    });
-  </script>
-</body>
+    <body>
+        <div ms-controller="test">
+            <input ms-duplex="@a" />
+            <p>{{@a}}</p>
+        </div>
+    </body>
 </html>

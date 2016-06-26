@@ -420,7 +420,7 @@ describe('widget', function () {
 
     })
     
-    it('使用顶层VM的子对象作配置对象', function (done) {
+    it('组件的最外层元素定义其他指令不生效的BUG', function (done) {
         div.innerHTML = heredoc(function () {
             /*
               <div ms-controller="widget7"><wbr ms-widget="[{is : 'test'},@$config]"></div>
