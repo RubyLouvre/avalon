@@ -1,0 +1,109 @@
+
+//弹出框样式
+.modal-mask{
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(55,55,55,.6);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+}
+
+.confirm-content{
+  padding-left: 30px;
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
+
+
+
+.modal-confirm{
+  width: 400px;
+  box-sizing: border-box;
+  padding: 30px 40px;
+  background-color: #fff;
+  border-radius: 6px;
+  transition: transform .3s ease;
+  i{
+    color: #fa0;
+    font-size: 24px;
+    position: relative;
+    top: 2px;
+  }
+
+  .confirm-btns{
+    text-align: right;
+  }
+}
+
+.modal-box{
+  width: 520px;
+  box-sizing: border-box;
+  background-color: #fff;
+  border-radius: 6px;
+}
+
+
+@media only screen and (max-width: 640px) {
+
+  .modal-confirm{
+    width: 100%;
+    margin: 0 20px;
+    padding: 10px 20px;
+
+  }
+  .modal-box{
+    width: 100%;
+    margin: 0 20px;
+  }
+
+}
+
+.modal-header{
+  padding: 13px 18px 14px 16px;
+  border-bottom: 1px solid #e9e9e9;
+  position: relative;
+  i{
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  h3{
+    font-size: 14px;
+  }
+}
+
+.modal-body{
+  padding: 16px;
+}
+
+.modal-footer{
+  padding: 10px 18px 10px 10px;
+  border-top: 1px solid #e9e9e9;
+  background: #fff;
+  border-radius: 0 0 6px 6px;
+  text-align: right;
+}
+
+.modal-enter, .modal-leave {
+  opacity: 0;
+}
+.modal-transition{
+  transition: all .3s ease;
+}
+
+.modal-enter .modal-confirm,
+.modal-leave .modal-confirm {
+  transform: scale(1.1);
+}
+.modal-enter .modal-box,
+.modal-leave .modal-box {
+  transform: scale(1.1);
+}

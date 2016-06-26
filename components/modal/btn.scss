@@ -1,0 +1,98 @@
+.btn {
+  display: inline-block;
+  margin-bottom: 0;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid #d9d9d9;
+  white-space: nowrap;
+  line-height: 1.5;
+  padding: 2px 14px;
+  font-size: 14px;
+  border-radius: 6px;
+  -webkit-user-select: none;
+  user-select: none;
+  // -webkit-transition: background-color .3s cubic-bezier(.645, .045, .355, 1);
+  // transition: background-color .3s cubic-bezier(.645, .045, .355, 1);
+  color: #666;
+  outline: none;
+  background-color: #fff;
+  &:hover {
+    background: #f7f7f7;
+  }
+  &:active {
+    background: darken(#f7f7f7, 3%);
+    transition: none;
+  }
+  &:disabled{
+    color: #ccc;
+    cursor: no-drop;
+  }
+}
+
+@mixin color($color: #fff) {
+  color: #fff;
+  background-color: $color;
+  border-color: $color;
+}
+
+@mixin active($color: #fff) {
+  color: #fff;
+  background-color: $color;
+  border-color: $color;
+  transition: none;
+}
+$primary-color: #2db7f5;
+$success-color: #5FBC29;
+$info-color: #01B3CA;
+$warning-color: #FAC450;
+$danger-color: #E01515;
+
+
+@mixin btn($color: #fff) {
+  @include color($color);
+  &:hover {
+    @include color(lighten($color, 5%));
+  }
+  &:active {
+    @include active(darken($color, 5%));
+  }
+  &:disabled{
+    @include active(lighten($color, 20%));
+    cursor: no-drop;
+  }
+}
+
+.btn-primary {
+  @include btn($primary-color)
+}
+
+.btn-success {
+  @include btn($success-color)
+}
+
+.btn-info {
+  @include btn($info-color)
+}
+
+.btn-warning {
+  @include btn($warning-color)
+}
+
+.btn-danger {
+  @include btn($danger-color)
+}
+
+.btn-lg {
+  padding: 6px 18px;
+}
+
+.btn-sm {
+  padding: 0px 10px;
+}
+
+
+.btn-block {
+  display: block;
+  width: 100%;
+}
