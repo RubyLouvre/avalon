@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-27:5 version 2.10 by 司徒正美
+ * built in 2016-6-27:5 version 2.11 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -249,7 +249,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return a === 'true'|| a == '1'
 	        }
 	    },
-	    version: "2.10",
+	    version: "2.11",
 	    slice: function (nodes, start, end) {
 	        return _slice.call(nodes, start, end)
 	    },
