@@ -188,18 +188,16 @@ avalon.directive('for', {
 
     },
     update: function (dom, vdom, parent) {
-
         var key = vdom.signature
         var range = getEndRepeat(dom)
         var doms = range.slice(1, -1)
         var endRepeat = range.pop()
         var DOMs = splitDOMs(doms, key)
         var check = doms[doms.length - 1]
-        
         if (check && check.nodeValue !== key) {
             do {//去掉最初位于循环节点中的内容
                 var prev = endRepeat.previousSibling
-                if (prev === dom || prev.nodeType === key) {
+                if (prev === dom || prev.nodeValue === key) {
                     break
                 }
                 if (prev) {
