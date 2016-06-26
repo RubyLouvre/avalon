@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>确认订单</title>
+    <style>
+        body {
+    height: 100%;
+    background-color: #fff;
+    color: #666;
+    font: 12px/1.5 'Lucida Grande', Arial, '\5FAE\8F6F\96C5\9ED1', '\5b8b\4f53';
+}
+.hide {
+    display: none
+}
+
+
+.address-box, .confirm-order-box .shop-header, .confirm-order-box .goods-wrap, .confirm-order-box .item-num .num_box, .confirm-order-box .shop-total-wrap, .amount-wrap .amount-inner .amount-table, .amount-wrap .amount-inner .order-submit-box {
+  zoom: 1; }
+  .address-box:after, .confirm-order-box .shop-header:after, .confirm-order-box .goods-wrap:after, .confirm-order-box .item-num .num_box:after, .confirm-order-box .shop-total-wrap:after, .amount-wrap .amount-inner .amount-table:after, .amount-wrap .amount-inner .order-submit-box:after {
+    visibility: hidden;
+    display: block;
+    font-size: 0;
+    content: " ";
+    clear: both;
+    height: 0; }
+
+.container i, .wrap-header h3, .address-box .adr-body .adr-detail, .item-box-btn-save, .item-box-btn-cancel, .coupon-tag, .confirm-order-box .item-num .num_box > span, .confirm-order-box .shop-total-wrap > div {
+  display: inline-block;
+  *display: inline;
+  *zoom: 1; }
+
+textarea, input {
+  font-family: "Lucida Grande", Arial, \5FAE\8F6F\96C5\9ED1, \5b8b\4f53;
+  outline: none; }
+
+body {
+  background-color: #f4f4f4; }
+
+.ms-controller {
+  display: none; }
+
+.container {
+  width: 1190px;
+  margin: auto;
+  line-height: 12px; }
+  .container .text-orange {
+    color: #ff6600; }
+  .container .text-black {
+    color: #000; }
+  .container .text-gray {
+    color: #999; }
+  .container .text-red {
+    color: #f30; }
+  .container .text_center {
+    text-align: center; }
+  .container .loading-wrap {
+    width: 330px;
+    margin: 100px auto;
+    padding: 30px;
+    font-size: 14px;
+    text-align: center;
+    border: 1px solid #e9e9e9;
+    background-color: #fff;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px; }
+
+.wrap-header h3 {
+  font-size: 24px;
+  line-height: 24px;
+  font-weight: 400;
+  color: #333;
+  margin-right: 15px; }
+
+.wrap-header .small-text {
+  font-size: 12px;
+  color: #999; }
+
+.wrap-header .right-text {
+  float: right;
+  position: relative;
+  top: 12px;
+  *top: -12px;
+  font-size: 12px;
+  color: #333; }
+
+.wrap-header .icon_arrow_bottom {
+  position: relative;
+  top: -2px;
+  right: 1px;
+  margin-left: 6px; }
+
+.wrap-header .icon_arrow_right {
+  margin-left: 5px; }
+
+.address-wrap {
+  margin-top: 40px; }
+
+.address-box {
+  margin-top: 20px; }
+  .address-box .adr {
+    float: left;
+    margin-top: -1px;
+    margin-left: -1px;
+    background-color: #fff;
+    cursor: pointer; }
+  .address-box .hover {
+    background-color: #fafafa; }
+    .address-box .hover .adr-foot {
+      display: block; }
+  .address-box .adr-inner {
+    position: relative;
+    width: 256.25px;
+    height: 75px;
+    padding: 20px;
+    border: 1px solid #e9e9e9;
+    color: #999; }
+    .address-box .adr-inner .icon_checked {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      display: none; }
+  .address-box .adr-head {
+    font-size: 0; }
+    .address-box .adr-head .adr-name {
+      margin-left: 12px; }
+    .address-box .adr-head span {
+      font-size: 14px;
+      line-height: 14px; }
+  .address-box .adr-body {
+    margin-top: 10px;
+    font-size: 0; }
+    .address-box .adr-body .adr-detail {
+      margin-right: 8px; }
+    .address-box .adr-body span {
+      font-size: 12px;
+      line-height: 17px; }
+  .address-box .adr-default-text {
+    margin-left: 6px;
+    display: none; }
+  .address-box .adr-foot {
+    display: none;
+    position: absolute;
+    bottom: 10px;
+    left: 20px; }
+    .address-box .adr-foot a {
+      color: #0093d9;
+      margin-right: 5px; }
+  .address-box .checked .adr-inner {
+    border: 2px solid #0092d8;
+    padding: 19px;
+    color: #333;
+    z-index: 1; }
+  .address-box .checked .adr-foot {
+    bottom: 9px;
+    left: 19px; }
+  .address-box .checked .icon_checked {
+    display: inline-block; }
+  .address-box .adr-default-text {
+    display: none; }
+  .address-box .default .adr-default-text {
+    display: inline-block; }
+  .address-box .adr-add {
+    text-align: center; }
+    .address-box .adr-add .adr-add-icon {
+      margin-top: 18px;
+      margin-bottom: 10px; }
+    </style>
+    <script src="../dist/avalon.js"></script>
+</head>
+<body>
+<div class="container" ms-controller="container">
+    <div class="loading-wrap" ms-visible="@loadingWrapShow">数据加载中....</div>
+    <xmp ms-widget="{is:'ms-container'}"></xmp>
+</div>
+<script>
+function heredoc(fn) {
+    return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+            replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+}
+
+var container = heredoc(function() {
+/*
+<div>
+  <xmp ms-widget="[{is:'ms-address-wrap', $id:'address'}]"></xmp>
+</div>
+
+*/
+})
+
+
+// 主容器
+var vmContainer = avalon.define({
+    $id: 'container',
+    loadingWrapShow: true
+})
+
+avalon.component('ms-container', {
+  template: container,
+  defaults: {
+  }
+})
+
+var addressTmpl = heredoc(function() {
+/*
+<div class="address-wrap ms-controller" ms-visible="@addressWrapShow">
+    <div class="wrap-header">
+        <h3>选择收货地址</h3>
+        <span class="small-text">美的商城配送方式：快递（免运费）</span>
+        <a class="right-text" href="javascript:;" ms-click="@addressListExpand = !@addressListExpand" ms-visible="@addressTotal > 3">
+            <span ms-text="@addressListExpand ? '收起' : '展开'"></span>更多收货地址<i class="icon_arrow_bottom" ms-class="{icon_arrow_top: @addressListExpand}"></i></a>
+    </div>
+    <div class="address-box">
+        <div class="adr"
+             ms-for="(index, el) in @addressList"
+              ms-class="{'default': (el.nIsDefault == 1 ? (@checkDefault(el) && true) : false), 'checked': (@addressChecked.lAddrId == el.lAddrId), hide: (index > 2 && ! @addressListExpand)}"
+             ms-click="@addressChecked = el">
+             <div class="adr-inner">
+                 <div class="adr-head" >
+                     <span class="adr-province" ms-text="el.strProvince"></span>
+                     <span class="adr-city" ms-text="el.strCity"></span>
+                     <span class="adr-name" ms-text="el.strPersonName"></span>
+                 </div>
+             </div>
+        </div>
+        <div class="adr" ms-hover="'hover'">
+            <div class="adr-inner">
+                <div class="adr-add">
+                    <p class="adr-add-icon">&times;</p>
+                    <p class="adr-add-text">添加地址</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+*/
+})
+
+avalon.component('ms-address-wrap', {
+    template: addressTmpl,
+    defaults: {
+        addressChecked: {},
+        addressListExpand: false,
+        addressList: [],
+        addressTotal: 0,
+        addressWrapShow: false,
+
+        // 选中默认地址
+        checkDefault: function (addr) {
+            if (! this.addressChecked.lAddrId) {
+                this.addressChecked = addr
+            }
+        },
+        // 获取地址列表数据
+        getAll: function() {
+            this.addressList = [{"lAddrId":10677,"lUin":12070,"strPersonName":"\u6ee8\u6cb31","strMobileNum":"11111111111","strProvince":"\u5e7f\u4e1c\u7701","strProvinceCode":"440000","strCity":"\u6df1\u5733\u5e02","strCityCode":"440300","strArea":"\u798f\u7530\u533a","strAreaCode":"440304","strDetailMsg":"\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3\u6ee8\u6cb3","nIsDefault":1},{"lAddrId":10724,"lUin":12070,"strPersonName":"\u8fdb\u57ce\u4e0d3\u70c33\u4e2d\u5730\u7c89\u5730","strMobileNum":"11111111111","strProvince":"\u6cb3\u5317\u7701","strProvinceCode":"130000","strCity":"\u77f3\u5bb6\u5e84\u5e02","strCityCode":"130100","strArea":"\u957f\u5b89\u533a","strAreaCode":"130102","strDetailMsg":"12321321313213","nIsDefault":null},{"lAddrId":10725,"lUin":12070,"strPersonName":"\u9648\u6d69","strMobileNum":"18611111111","strProvince":"\u5317\u4eac\u5e02","strProvinceCode":"110000","strCity":"\u5317\u4eac\u5e02","strCityCode":"110100","strArea":"\u4e1c\u57ce\u533a","strAreaCode":"110101","strDetailMsg":"\u5b66\u5e9c\u8def\u6021\u5316\u91d1\u878d\u79d1\u6280\u5927\u53a623\u697c","nIsDefault":null},{"lAddrId":10726,"lUin":12070,"strPersonName":"\u6d82\u6d82","strMobileNum":"18611111111","strProvince":"\u5c71\u897f\u7701","strProvinceCode":"140000","strCity":"\u5927\u540c\u5e02","strCityCode":"140200","strArea":"\u5357\u90ca\u533a","strAreaCode":"140211","strDetailMsg":"\u7389\u5f8b\u8def\u82b1\u6837\u5e74\u82b1\u4e61A\u680b9O","nIsDefault":null},{"lAddrId":10727,"lUin":12070,"strPersonName":"\u840c\u840c","strMobileNum":"18611111111","strProvince":"\u6cb3\u5317\u7701","strProvinceCode":"130000","strCity":"\u5510\u5c71\u5e02","strCityCode":"130200","strArea":"\u8def\u5357\u533a","strAreaCode":"130202","strDetailMsg":"\u6d77\u79c0\u8def21\u53f7\u9f99\u5149\u4e16\u7eaa\u5927\u53a6B\u5ea711\u697c","nIsDefault":null}];
+            this.addressTotal = this.addressList.length
+            this.addressWrapShow = true
+            this.loadingWrapShow = false
+        },
+        onInit: function() {
+            var self = this
+            setTimeout(function() {
+                self.getAll.call(self)
+            }, 3000)
+
+        }
+    }
+})
+
+
+</script>
+</body>
+</html>
