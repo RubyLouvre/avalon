@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-26:13 version 2.10 by 司徒正美
+ * built in 2016-6-27:5 version 2.10 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -86,6 +86,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	//require('./gesture/tap')
 	__webpack_require__(101)
 	__webpack_require__(102)
+
 	module.exports = avalon
 
 
@@ -97,7 +98,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-6-26:13 version 2.10 by 司徒正美
+	 * built in 2016-6-27:5 version 2.10 by 司徒正美
 	 * 重大升级!!!!
 	 *  
 	 * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -3085,7 +3086,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            data.set(data.vmodel, parsedValue)
 		            callback(data)
 		        }
-		        
+		        data.lastViewValue = formatedValue
 		        data.dom[prop] = formatedValue
 		        
 		        //vm.aaa = '1234567890'
@@ -7805,7 +7806,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 103:
 /***/ function(module, exports) {
 
-	module.exports = "<div>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</div>"
+	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
 
 /***/ }
 
