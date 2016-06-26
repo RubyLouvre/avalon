@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-26:1 version 2.10 by 司徒正美
+ * built in 2016-6-26:13 version 2.10 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -97,7 +97,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-6-26:1 version 2.10 by 司徒正美
+	 * built in 2016-6-26:13 version 2.10 by 司徒正美
 	 * 重大升级!!!!
 	 *  
 	 * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -2076,7 +2076,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		avalon.directive('html', {
 		    parse: function (copy, src, binding) {
-
 		        if (!src.isVoidTag) {
 		            //将渲染函数的某一部分存起来,渲在c方法中转换为函数
 		            copy[binding.name] = avalon.parseExpr(binding)
@@ -2109,7 +2108,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		        var f = avalon.vdomAdaptor(vdom.children)
 		        reconcile(f.childNodes, vdom.children, f)
 		        dom.appendChild(f)
-
 		    }
 		})
 
@@ -2734,19 +2732,30 @@ return /******/ (function(modules) { // webpackBootstrap
 		    //遍平化虚拟DOM树
 		    vnodes = flatten(vnodes)
 		    var map = {}
+		    var vn = vnodes.length
+		    if(vn === 0)
+		        return
+		    
 		    vnodes.forEach(function (el, index) {
 		        map[index] = getType(el)
 		    })
-		    var newNodes = [], change = false, el, i = 0
-		    while (el = nodes[i++]) {
-		        var vtype = getType(el)
+		    
+		    var newNodes = [], change = false , el, i = 0
+		    var breakLoop = 0
+		    while (true) {
+		        el = nodes[i++]
+		        if(breakLoop++ > 5000){
+		            break
+		        }
+		        var vtype = el && getType(el)
 		        var v = newNodes.length
-		        if (map[v] == vtype) {
+		        if (map[v] === vtype) {
 		            newNodes.push(el)
 		            var vnode = vnodes[v]
 		            if (vnode.dynamic) {
 		                vnode.dom = el
 		            }
+		       
 		            if (el.nodeType === 1 && !vnode.isVoidTag && !containers[vnode.type]) {
 		                reconcile(el.childNodes, vnode.children, el)
 		            }
@@ -2757,16 +2766,20 @@ return /******/ (function(modules) { // webpackBootstrap
 		                var nn = document.createComment(vv.nodeValue)
 		                vv.dom = nn
 		                newNodes.push(nn)
+		                i = Math.max(0, --i)
 		            }
 		        }
+		        if(newNodes.length === vn){
+		            break
+		        }
 		    }
+		   // console.log(newNodes.length, vnodes.length)
 		    if (change) {
 		        var f = document.createDocumentFragment(), i = 0
 		        while (el = newNodes[i++]) {
 		            f.appendChild(el)
 		        }
 		        while (parent.firstChild) {
-		          //  console.log(parent.firstChild)
 		            parent.removeChild(parent.firstChild)
 		        }
 		        parent.appendChild(f)
@@ -3526,6 +3539,10 @@ return /******/ (function(modules) { // webpackBootstrap
 		    priority: 6,
 		    diff: function (copy, src, name) {
 		        var c = !!copy[name]
+		        if (!c) {
+		            copy.nodeType = 8
+		            copy.order = ""
+		        }
 		        if (c !== src[name]) {
 		            src[name] = c
 		            if (c && src.nodeType === 1) {
@@ -3533,25 +3550,28 @@ return /******/ (function(modules) { // webpackBootstrap
 		            }
 		            update(src, this.update)
 		        }
-
 		    },
 		    update: function (dom, vdom, parent) {
 		        var show = vdom['ms-if']
 		        if (show) {
 		            //要移除元素节点,在对应位置上插入注释节点
+		            //console.log(vdom.nodeType,vdom.dom)
 		            vdom.nodeType = 1
 		            var comment = vdom.comment
-		            comment.parentNode.replaceChild(dom, comment)
+		            parent = comment.parentNode
+		            parent.replaceChild(dom, comment)
 		            avalon.applyEffect(dom, vdom, {
 		                hook: 'onEnterDone'
 		            })
 		        } else {
+
 		            avalon.applyEffect(dom, vdom, {
 		                hook: 'onLeaveDone',
 		                cb: function () {
 		                    var comment = document.createComment('ms-if')
 		                    //去掉注释节点临时添加的ms-effect
 		                    parent.replaceChild(comment, dom)
+		                    //comment.parentNode = parent
 		                    vdom.nodeType = 8
 		                    vdom.comment = comment
 		                }
@@ -3756,18 +3776,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		    },
 		    update: function (dom, vdom, parent) {
-
 		        var key = vdom.signature
 		        var range = getEndRepeat(dom)
 		        var doms = range.slice(1, -1)
 		        var endRepeat = range.pop()
 		        var DOMs = splitDOMs(doms, key)
 		        var check = doms[doms.length - 1]
-		        
 		        if (check && check.nodeValue !== key) {
 		            do {//去掉最初位于循环节点中的内容
 		                var prev = endRepeat.previousSibling
-		                if (prev === dom || prev.nodeType === key) {
+		                if (prev === dom || prev.nodeValue === key) {
 		                    break
 		                }
 		                if (prev) {
@@ -5325,12 +5343,18 @@ return /******/ (function(modules) { // webpackBootstrap
 		                if (directives[type]) {
 		                    directives[type].diff(copys, sources || emptyObj(), name)
 		                }
+		                if(copys.order !== order){
+		                    throw "break"
+		                }
+		               
 		            })
-		            if(copys.order !== order){
+		            
+		        } catch (e) {
+		            if(e !== 'break'){
+		                avalon.log(directiveType, e, e.message, 'diffProps error')
+		            }else{
 		                diffProps(copys, sources)
 		            }
-		        } catch (e) {
-		            avalon.log(directiveType, e, e.message, 'diffProps error')
 		        }
 		    }
 
@@ -7781,7 +7805,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 103:
 /***/ function(module, exports) {
 
-	module.exports = "<div>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</div>"
+	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
 
 /***/ }
 

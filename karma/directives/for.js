@@ -73,7 +73,7 @@ describe('for', function () {
             vm.array.reverse()
             vm.array.unshift(9)
             setTimeout(function () {
-                expect(lis[0].innerHTML).to.equal('0::9')
+                expect(lis[0].innerHTML+"!").to.equal('0::9!')
                 expect(lis[1].innerHTML).to.equal('1::5')
                 expect(lis[2].innerHTML).to.equal('2::4')
                 expect(lis[3].innerHTML).to.equal('3::3')

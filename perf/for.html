@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 
 <head>
@@ -10,7 +9,6 @@
 </head>
 
 <body>
-
     <script>
             function heredoc(fn) {
                 return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
@@ -36,7 +34,7 @@
             <ul>
              <li ms-for='($index, el) in @array | limitBy(4)'>{{$index}}::{{el}}</li>
              </ul>
-             <ol>
+            <ol>
              <li ms-for='($key, $val) in @object'>{{$key}}::{{$val}}</li>
              </ol>
              <!--ms-for: ($index,el) in @array   -->

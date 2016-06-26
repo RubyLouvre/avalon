@@ -6,33 +6,28 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
         <script src="../dist/avalon.js"></script>
         <script>
-            var vm = avalon.define({
-                $id: 'test',
-                toggle: 1,
-                html: "<strong><span>222</span></strong>",
-                button: {//注意这里不能以 $开头
-                    buttonText: "VM内容"
-                }
-            })
 
-            avalon.component('ms-button', {
-                template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
-                defaults: {
-                    buttonText: "默认内容"
-                },
-                soleSlot: 'buttonText'
-            })
-/*
- * 
- */
         </script>
     </head>
 
-    <body ms-controller="test">
-    <!--在自定义标签中，ms-widget不是必须的-->
-       
-        <!--下面三种方式，ms-widget才是存在，其中的is也是必须的-->
-        <wbr ms-widget='[{is:"ms-button"},@button]'/>
-      
+    <body ms-controller="start" class='ms-controller'>
+  <wbr ms-widget="[{is : 'test'},@$config]">
+
+  <script>
+    avalon.component("test",{
+      template : "<div ms-click='@test' ms-attr=\"{title:@aaa}\">asd231&copy;&times;<p>qffqwfdqw</p></div>",
+      defaults : {
+        test : function(){
+          alert(1);
+        },
+        aaa: 333
+      }
+    });
+    avalon.define({
+      $id : "start",
+      $config : {
+      }
+    });
+  </script>
 </body>
 </html>

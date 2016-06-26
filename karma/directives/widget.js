@@ -419,5 +419,34 @@ describe('widget', function () {
         }, 150)
 
     })
+    
+    it('使用顶层VM的子对象作配置对象', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+              <div ms-controller="widget7"><wbr ms-widget="[{is : 'test'},@$config]"></div>
+             */
+        })
+        avalon.component("test",{
+            template : "<test ms-attr=\"{title:@aaa}\">{{##bbb}}</test>",
+            defaults : {
+              bbb: "TEST",
+              aaa: 'title'
+            }
+        })
+        vm = avalon.define({
+            $id : "widget7",
+            $config : { }
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            var widget = div.firstChild.firstChild
+            expect(widget.nodeName.toLowerCase()).to.equal('test')
+            expect(widget.title).to.equal('title')
+            expect(widget.innerHTML).to.equal('TEST')
+            done()
+           
+        }, 150)
+
+    })
 
 })
