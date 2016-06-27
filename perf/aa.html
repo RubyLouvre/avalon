@@ -1,25 +1,20 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../dist/avalon.test.js"></script>
-        <script>
-            var vm = avalon.define({
-                $id: "test"
-               
-            })
-        </script>
-        <style>
-            .ms-controller{
-                display:none;
-            }
-        </style>
-    </head>
-    <body>
-        <div ms-controller="test">
-            <ms-modal>333</ms-modal>
-        </div>
-    </body>
+<head>
+    <title>test</title>
+    <script src="../dist/avalon.modern.js"></script>    
+</head>
+<body>
+    <div ms-controller="test">
+        <select>
+            <option ms-for="item in @list" >{{item.Name}}</option>
+        </select>
+    </div>
+    <script>
+        var vm = avalon.define({
+            $id: "test",
+            list: [{ Id: "123", Name: "123" }],
+        });
+    </script>
+</body>
 </html>

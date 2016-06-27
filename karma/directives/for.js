@@ -149,9 +149,9 @@ describe('for', function () {
     it('监听数组长度变化', function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <ul ms-controller='for2'>
-             <li ms-for='el in @array'>{{el.length}}</li>
-             </ul>
+             <select ms-controller='for2'>
+             <option ms-for='el in @array'>{{el.length}}</option>
+             </select>
              */
         })
         vm = avalon.define({
@@ -160,16 +160,16 @@ describe('for', function () {
         })
         avalon.scan(div)
         setTimeout(function () {
-            var lis = div.getElementsByTagName('li')
+            var options = div.getElementsByTagName('option')
 
-            expect(lis[0].innerHTML).to.equal('2')
-            expect(lis[1].innerHTML).to.equal('3')
+            expect(options[0].innerHTML).to.equal('2')
+            expect(options[1].innerHTML).to.equal('3')
 
             vm.array = [['a', "b", "c", "d"], [3, 4, 6, 7, 8]]
             setTimeout(function () {
 
-                expect(lis[0].innerHTML).to.equal('4')
-                expect(lis[1].innerHTML).to.equal('5')
+                expect(options[0].innerHTML).to.equal('4')
+                expect(options[1].innerHTML).to.equal('5')
                 done()
             })
         })

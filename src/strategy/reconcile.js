@@ -49,6 +49,7 @@ function reconcile(nodes, vnodes, parent) {
         if (map[v] === vtype) {
             newNodes.push(el)
             var vnode = vnodes[v]
+            
             if (vnode.dynamic) {
                 vnode.dom = el
             }
@@ -82,7 +83,7 @@ function reconcile(nodes, vnodes, parent) {
         parent.appendChild(f)
     }
 }
-var containers = avalon.oneObject('script,style,template,noscript,textarea,option')
+var containers = avalon.oneObject('script,style,xmp,template,noscript,textarea')
 function flatten(nodes) {
     var arr = []
     for (var i = 0, el; el = nodes[i]; i++) {

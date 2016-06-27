@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-27:5 version 2.11 by 司徒正美
+ * built in 2016-6-27:13 version 2.11 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -98,7 +98,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-6-27:5 version 2.10 by 司徒正美
+	 * built in 2016-6-27:13 version 2.11 by 司徒正美
 	 * 重大升级!!!!
 	 *  
 	 * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -347,7 +347,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return a === 'true'|| a == '1'
 		        }
 		    },
-		    version: "2.10",
+		    version: "2.11",
 		    slice: function (nodes, start, end) {
 		        return _slice.call(nodes, start, end)
 		    },
@@ -2753,6 +2753,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        if (map[v] === vtype) {
 		            newNodes.push(el)
 		            var vnode = vnodes[v]
+		            
 		            if (vnode.dynamic) {
 		                vnode.dom = el
 		            }
@@ -2786,7 +2787,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        parent.appendChild(f)
 		    }
 		}
-		var containers = avalon.oneObject('script,style,template,noscript,textarea,option')
+		var containers = avalon.oneObject('script,style,xmp,template,noscript,textarea')
 		function flatten(nodes) {
 		    var arr = []
 		    for (var i = 0, el; el = nodes[i]; i++) {
