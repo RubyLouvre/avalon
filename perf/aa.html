@@ -1,20 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>test</title>
-    <script src="../dist/avalon.modern.js"></script>    
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script src="../dist/avalon.js"></script>
 </head>
-<body>
-    <div ms-controller="test">
-        <select>
-            <option ms-for="item in @list" >{{item.Name}}</option>
-        </select>
-    </div>
+<body ms-controller="test">
     <script>
-        var vm = avalon.define({
-            $id: "test",
-            list: [{ Id: "123", Name: "123" }],
-        });
+        var vm=avalon.define({
+            $id:'test',
+            isChecked:''
+        })
     </script>
+    <label><input type="radio" ms-duplex-string="@isChecked" name="check" value="true">是</label>
+    <label><input type="radio" ms-duplex-string="@isChecked" name="check" value="false">否</label>
+    <p ms-text="@isChecked"></p>
 </body>
 </html>

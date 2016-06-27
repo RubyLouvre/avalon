@@ -312,6 +312,18 @@ describe('duplex', function () {
              },100)
         },100)
     })
-    
+    it('', function(){
+        /*
+    <script>
+        var vm=avalon.define({
+            $id:'test',
+            isChecked:''
+        })
+    </script>
+    <label><input type="radio" ms-duplex-string="@isChecked" name="check" value="true">是</label>
+    <label><input type="radio" ms-duplex-string="@isChecked" name="check" value="false">否</label>
+    <p ms-text="@isChecked"></p>
+         */
+    })
     
 })

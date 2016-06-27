@@ -26,6 +26,7 @@ var updateModelMethods = {
             callback(data)
         } else {
             updateModelMethods.input.call(data)
+            data.lastViewValue = NaN
         }
     },
     checkbox: function () {
