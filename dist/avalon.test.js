@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-28:16 version 2.11 by 司徒正美
+ * built in 2016-6-28:22 version 2.11 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -98,7 +98,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-6-27:14 version 2.11 by 司徒正美
+	 * built in 2016-6-28:22 version 2.11 by 司徒正美
 	 * 重大升级!!!!
 	 *  
 	 * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -2026,17 +2026,19 @@ return /******/ (function(modules) { // webpackBootstrap
 		avalon.directive('expr', {
 		    parse: avalon.noop,
 		    diff: function (copy, src) {
-		        var copyValue = copy.nodeValue+''
+		        var copyValue = copy.nodeValue + ''
 		        if (copyValue !== src.nodeValue) {
-		           // console.log(src.dom)
 		            src.nodeValue = copyValue
 		            update(src, this.update)
 		        }
 		    },
-		    update: function(dom, vdom){
+		    update: function (dom, vdom) {
 		        dom.nodeValue = vdom.nodeValue
 		    }
 		})
+
+
+
 
 	/***/ },
 	/* 42 */
@@ -5474,12 +5476,13 @@ return /******/ (function(modules) { // webpackBootstrap
 		    })
 		}
 
+		var rskip = /function|window|date|regexp|element/i
 
 		function isSkip(key, value, skipArray) {
 		    // 判定此属性能否转换访问器
 		    return key.charAt(0) === '$' ||
 		            skipArray[key] ||
-		            (typeof value === 'function') ||
+		            (rskip.test(avalon.type(value))) ||
 		            (value && value.nodeName && value.nodeType > 0)
 		}
 
@@ -7808,7 +7811,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 103:
 /***/ function(module, exports) {
 
-	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
+	module.exports = "<div>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</div>"
 
 /***/ }
 

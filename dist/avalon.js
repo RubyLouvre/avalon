@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-28:16 version 2.11 by 司徒正美
+ * built in 2016-6-28:22 version 2.11 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -4778,7 +4778,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var msie = avalon.msie
 	var window = avalon.window
 	var document = avalon.document
-
 	function updateModelByEvent(node, vnode) {
 	    var events = {}
 	    var data = vnode.duplexData
@@ -4786,13 +4785,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //添加需要监听的事件
 	    switch (data.type) {
 	        case 'radio':
-	            if (vnode.props.type === 'radio') {
-	                events.click = updateModel
-	            } else {
-	                events[msie < 9 ? 'click' : 'change'] = updateModel
-	            }
-	            break
 	        case 'checkbox':
+	            events.click = updateModel
+	            break
 	        case 'select':
 	            events.change = updateModel
 	            break
