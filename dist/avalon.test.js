@@ -1,28 +1,12 @@
 /*!
- * built in 2016-6-29:0 version 2.11 by 司徒正美
- * 重大升级!!!!
- *  
- * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
- * (之前是diff新旧虚拟DOM树,然后再为真实DOM树刷新)
- *     
- *     
- *     
- * 修复&nbsp;&copy; 等HTML实体的转义问题
- * 修复IE6-8下复制闭包中的对象返回相同对象,导致ms-for出BUG的问题 1522 1511
- * 所有vm都支持onReady,在它第一次刷新作用区载时触发 
- * 添加新的对齐节点算法
- * 优化lexer虚拟DOM生成器
- * 完全重写ms-for, ms-html指令
- * 重构ms-if指令
- * 重构ms-text,让其刷新工作交给expr表达式处理
- * 修正ms-html向下传参
- * 修正on指令的UUID问题
- * 修正__local__往下传递 问题
- * 参考react 的classNames插件，重构ms-class/active/hover，
- * 上线全新的parseHTML，内部基于avalon.lexer，能完美生成script, xml,svg元素
- * 重构isInCache， saveInCache
- * 修正e.which BUG
- * 修正 ms-duplex-checked在低版本浏览器不断闪烁的问题
+ * built in 2016-6-29:1 version 2.12 by 司徒正美
+ * 修正isSkip方法,阻止regexp, window, date被转换成子VM
+ * checkbox改用click事件来同步VM #1532
+ * ms-duplex-string在radio 的更新失效问题
+ * ms-for+expr在option元素不显示的问题（实质是节点对齐问题）
+ * 模板中的&copy;&times;没有被htmlDecode的问题
+ * 绑定在组件模板中最外层元素上的事件不生效
+ * ie7,8下 ms-duplex 因为onproppertychange环调用，导致辞爆栈的问题
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -98,7 +82,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-6-28:22 version 2.11 by 司徒正美
+	 * built in 2016-6-29:1 version 2.12 by 司徒正美
 	 * 重大升级!!!!
 	 *  
 	 * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
@@ -347,7 +331,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return a === 'true'|| a == '1'
 		        }
 		    },
-		    version: "2.11",
+		    version: "2.12",
 		    slice: function (nodes, start, end) {
 		        return _slice.call(nodes, start, end)
 		    },
