@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-28:22 version 2.11 by 司徒正美
+ * built in 2016-6-29:0 version 2.11 by 司徒正美
  * 重大升级!!!!
  *  
  * 重构虚拟DOM同步真实DOM的机制,现在是一边diff一边patch,一个遍历搞定!
