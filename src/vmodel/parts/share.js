@@ -29,12 +29,13 @@ function initEvents($vmodel, heirloom) {
     })
 }
 
+var rskip = /function|window|date|regexp|element/i
 
 function isSkip(key, value, skipArray) {
     // 判定此属性能否转换访问器
     return key.charAt(0) === '$' ||
             skipArray[key] ||
-            (typeof value === 'function') ||
+            (rskip.test(avalon.type(value))) ||
             (value && value.nodeName && value.nodeType > 0)
 }
 
