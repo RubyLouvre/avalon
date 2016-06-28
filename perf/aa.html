@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -9,11 +9,25 @@
     <script>
         var vm=avalon.define({
             $id:'test',
-            isChecked:''
+            arr:[],
+            list:['test1','test2','test3','test4'],
+            list2:['test1','test2','test3','test4'],
+            aaa:"",
+            bbb: false
         })
     </script>
-    <label><input type="radio" ms-duplex-string="@isChecked" name="check" value="true">是</label>
-    <label><input type="radio" ms-duplex-string="@isChecked" name="check" value="false">否</label>
-    <p ms-text="@isChecked"></p>
+    <label ms-for="el in @list">
+        <input type="checkbox" ms-attr="{value:el}" ms-duplex-string="@arr">{{el}}
+    </label>
+    <hr/>
+    <p ms-for="el in @arr">{{el}}</p>
+    <hr/>
+     <label ms-for="el in @list">
+        <input type="radio" ms-attr="{value:el}" ms-duplex="@aaa">{{el}}
+    </label>
+    <p>{{@aaa}}</p>
+    <hr>
+    <input type="radio" ms-duplex-checked="@bbb"/>
+      <p>{{@bbb}}</p>
 </body>
 </html>

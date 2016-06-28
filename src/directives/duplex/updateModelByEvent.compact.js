@@ -10,7 +10,6 @@ var markID = require('../../seed/lang.share').getShortID
 var msie = avalon.msie
 var window = avalon.window
 var document = avalon.document
-
 function updateModelByEvent(node, vnode) {
     var events = {}
     var data = vnode.duplexData
@@ -18,13 +17,9 @@ function updateModelByEvent(node, vnode) {
     //添加需要监听的事件
     switch (data.type) {
         case 'radio':
-            if (vnode.props.type === 'radio') {
-                events.click = updateModel
-            } else {
-                events[msie < 9 ? 'click' : 'change'] = updateModel
-            }
-            break
         case 'checkbox':
+            events.click = updateModel
+            break
         case 'select':
             events.change = updateModel
             break

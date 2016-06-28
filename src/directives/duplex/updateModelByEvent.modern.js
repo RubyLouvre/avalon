@@ -18,13 +18,9 @@ function updateModelByEvent(node, vnode) {
     //添加需要监听的事件
     switch (data.type) {
         case 'radio':
-            if (vnode.props.type === 'radio') {
-                events.click = updateModel
-            } else {
-                events.change = updateModel
-            }
-            break
         case 'checkbox':
+           events.click = updateModel
+           break
         case 'select':
             events.change = updateModel
             break
