@@ -111,6 +111,20 @@ avalon.directive('for', {
         //for指令只做添加删除操作
         var cache = src.cache
         var i, c, p
+        
+         function enterAction2(src, key) {//IE6-8下不能使用缓存
+                var template = src.template + '<!--' + src.signature + '-->'
+                var vdomTemplate = avalon.lexer(template)
+                avalon.speedUp(vdomTemplate)
+            return {
+                action: 'enter',
+                children: vdomTemplate,
+                key: key
+            }
+        }
+        if(avalon.msie <= 8){
+            enterAction = enterAction2
+        }
 
         if (!cache || isEmptyObject(cache)) {
             /* eslint-disable no-cond-assign */
@@ -181,9 +195,10 @@ avalon.directive('for', {
         }
 
         var cb = avalon.caches[src.cid]
+        var vm = copy.vmodel
         if (end && cb) {
             end.afterChange = [function (dom) {
-                    cb({
+                    cb.call(vm, {
                         type: 'rendered',
                         target: dom,
                         signature: src.signature

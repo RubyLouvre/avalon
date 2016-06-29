@@ -1,35 +1,55 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <title>test</title>
-        <script src="../dist/avalon.modern.js"></script>
-    </head>
-    <body>
-        <div ms-controller="test">
-            <button type="button" ms-click="##click">点击7下,列表乱了</button>
-            <ul>
-                <li ms-for="item in ##list">{{item.Body}}</li>
-            </ul>
-        </div>
-        <script>
-    var vm = avalon.define({
-        $id: "test",
-        list: [{Id: "1", Body: "2"}],
-        index: 1,
-        click: function () {
-            //vm.list.clear();//加了clear后正常
-            if (vm.index == 1) {
-                vm.list = [{"Body": "我是测试"}, {"Body": "111"}, {"Body": "222"}, {"Body": "333"}, {"Body": "444"}, {"Body": "555"}, {"Body": "666"}, {"Body": "777"}, {"Body": "888"}, {"Body": "fff"}]
-                vm.index = 2;
-            }
-            else {
-                vm.list = [{"Body": "我是测试"}]
-                vm.index = 1;
-            }
-        },
-    });
-        </script>
-    </body>
-</html>
+<html lang="zh_CN">
+<head>
+<meta charset="utf-8" />
+<title>Test avalon2 data-for-rendered</title>
+<style type="text/css">
+.ms-controller {
+    display: none;
+}
+.table {
+    border-collapse: collapse;
+}
+.table td,
+.table th {
+    border: 1px solid;
+}
+</style>
+</head>
+<body>
 
+<table id="dt" class="table">
+    <thead>
+        <tr>
+            <th>名称</th>
+        </tr>
+    </thead>
+    <tbody class="ms-controller" ms-controller="dt-body">
+        <tr ms-for="(i, el) in @objs" data-for-rendered="@afterRendered">
+            <td>{{el.name}}</td>
+        </tr>
+    </tbody>
+</table>
+
+<script src="../dist/avalon.js"></script>
+<script>
+
+var vm = avalon.define({
+    $id:'dt-body',
+    objs: [{
+        id: 1,
+        name: 'AAA'
+    }, {
+        id: 2,
+        name: 'BBB'
+    }],
+    afterRendered: function() {
+        var tb = document.getElementById('dt');
+        console.log(tb.height);
+    }
+});
+
+
+</script>
+</body>
+</html>

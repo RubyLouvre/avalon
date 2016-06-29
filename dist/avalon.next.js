@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-29:21 version 2.12 by 司徒正美
+ * built in 2016-6-29:23 version 2.12 by 司徒正美
  * 修正isSkip方法,阻止regexp, window, date被转换成子VM
  * checkbox改用click事件来同步VM #1532
  * ms-duplex-string在radio 的更新失效问题
@@ -2688,7 +2688,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return arr
 	}
 
-	module.exports = avalon.__ = reconcile
+	module.exports = reconcile
 
 /***/ },
 /* 52 */
@@ -3590,6 +3590,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //for指令只做添加删除操作
 	        var cache = src.cache
 	        var i, c, p
+	        
+	         function enterAction2(src, key) {//IE6-8下不能使用缓存
+	                var template = src.template + '<!--' + src.signature + '-->'
+	                var vdomTemplate = avalon.lexer(template)
+	                avalon.speedUp(vdomTemplate)
+	            return {
+	                action: 'enter',
+	                children: vdomTemplate,
+	                key: key
+	            }
+	        }
+	        if(avalon.msie <= 8){
+	            enterAction = enterAction2
+	        }
 
 	        if (!cache || isEmptyObject(cache)) {
 	            /* eslint-disable no-cond-assign */
@@ -3660,9 +3674,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        var cb = avalon.caches[src.cid]
+	        var vm = copy.vmodel
 	        if (end && cb) {
 	            end.afterChange = [function (dom) {
-	                    cb({
+	                    cb.call(vm, {
 	                        type: 'rendered',
 	                        target: dom,
 	                        signature: src.signature
