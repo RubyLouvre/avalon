@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-29:1 version 2.12 by 司徒正美
+ * built in 2016-6-29:21 version 2.12 by 司徒正美
  * 修正isSkip方法,阻止regexp, window, date被转换成子VM
  * checkbox改用click事件来同步VM #1532
  * ms-duplex-string在radio 的更新失效问题
@@ -4340,7 +4340,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return arr
 	}
 
-	module.exports = reconcile
+	module.exports = avalon.__ = reconcile
 
 /***/ },
 /* 52 */
@@ -5567,6 +5567,23 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
 	var reconcile = __webpack_require__(51)
+	var Cache = __webpack_require__(28)
+	var cache = new Cache(100)
+
+	function enterAction(src, key) {
+	    var tmpl = src.template + '<!--' + src.signature + '-->'
+	    var t = cache.get(tmpl)
+	    if (!t) {
+	        var vdomTemplate = avalon.lexer(tmpl)
+	        avalon.speedUp(vdomTemplate)
+	        t = cache.put(tmpl, vdomTemplate)
+	    }
+	    return {
+	        action: 'enter',
+	        children: avalon.mix(true, [], t),
+	        key: key
+	    }
+	}
 
 	function getTraceKey(item) {
 	    var type = typeof item
@@ -5632,8 +5649,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        kv.push('__local__')
 	        kv.push('vnodes')
 	        src.$append = assign + alias + 'avalon._each(loop,function('
-	            + kv.join(', ') + '){\n'
-	            + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
+	                + kv.join(', ') + '){\n'
+	                + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
 
 	    },
 	    diff: function (copy, src, curRepeat, preRepeat, end) {
@@ -5654,23 +5671,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var cache = src.cache
 	        var i, c, p
 
-	        function enterAction(c) {
-	                var template = src.template + '<!--' + src.signature + '-->'
-	                var vdomTemplate = avalon.lexer(template)
-	                avalon.speedUp(vdomTemplate)
-	            return {
-	                action: 'enter',
-	                children: vdomTemplate,
-	                key: c.key
-	            }
-	        }
-
 	        if (!cache || isEmptyObject(cache)) {
 	            /* eslint-disable no-cond-assign */
 	            var cache = src.cache = {}
 	            src.preItems.length = 0
 	            for (i = 0; c = curItems[i]; i++) {
-	                var p = enterAction(c)
+	                var p = enterAction(src, c.key)
 	                src.preItems.push(p)
 	                p.action = 'enter'
 	                p.index = i
@@ -5682,7 +5688,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var newCache = {}
 	            /* eslint-disable no-cond-assign */
 	            var fuzzy = []
-	            for (i = 0; c = curItems[i++];) {
+	            for (i = 0; c = curItems[i++]; ) {
 	                var p = isInCache(cache, c.key)
 	                if (p) {
 	                    p.action = 'move'
@@ -5695,15 +5701,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 
 	            }
-	            for (var i = 0, c; c = fuzzy[i++];) {
+	            for (var i = 0, c; c = fuzzy[i++]; ) {
 	                p = fuzzyMatchCache(cache, c.key)
 	                if (p) {
 	                    p.action = 'move'
+	                    // clearData(p.children)
 	                    p.oldIndex = p.index
 
 	                    p.index = c.index
 	                } else {
-	                    p = enterAction(c)
+	                    p = enterAction(src, c.key)
 	                    p.index = c.index
 	                    src.preItems.push(p)
 	                }
@@ -5731,17 +5738,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            src.removes = removes
 	        }
-	        
+
 	        var cb = avalon.caches[src.cid]
 	        if (end && cb) {
 	            end.afterChange = [function (dom) {
-	                cb({
-	                    type: 'rendered',
-	                    target: dom,
-	                    signature: src.signature
-	                })
-	            }]
+	                    cb({
+	                        type: 'rendered',
+	                        target: dom,
+	                        signature: src.signature
+	                    })
+	                }]
 	        }
+
 	        update(src, this.update)
 	        return true
 
@@ -5766,7 +5774,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            } while (true);
 	        }
-	        for (var i = 0, el; el = vdom.removes[i++];) {
+	        for (var i = 0, el; el = vdom.removes[i++]; ) {
 	            var removeNodes = DOMs[el.index]
 	            if (removeNodes) {
 	                removeNodes.forEach(function (n, k) {
@@ -5787,20 +5795,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var insertPoint = dom
 	        var fragment = avalon.avalonFragment
 	        var domTemplate
+	        var keep = []
 	        for (var i = 0; i < vdom.preItems.length; i++) {
 	            var com = vdom.preItems[i]
-
 	            var children = com.children
 	            if (com.action === 'leave') {
 	                continue
-	            } else if (com.action === 'enter') {
+	            }
+	            keep.push(com)
+	            if (com.action === 'enter') {
 	                if (!domTemplate) {
 	                    //创建用于拷贝的数据,包括虚拟DOM与真实DOM 
 	                    domTemplate = avalon.vdomAdaptor(children, 'toDOM')
 	                }
 	                var newFragment = domTemplate.cloneNode(true)
 	                var cnodes = avalon.slice(newFragment.childNodes)
-	                reconcile(cnodes, children)//关联新的虚拟DOM与真实DOM
+	                reconcile(cnodes, children, parent)//关联新的虚拟DOM与真实DOM
 	                parent.insertBefore(newFragment, insertPoint.nextSibling)
 	                applyEffects(cnodes, children, {
 	                    hook: 'onEnterDone',
@@ -5811,10 +5821,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var cnodes = DOMs[com.oldIndex] || []
 	                if (com.index !== com.oldIndex) {
 	                    var moveFragment = fragment.cloneNode(false)
-	                    for (var k = 0, cc; cc = cnodes[k++];) {
+	                    for (var k = 0, cc; cc = cnodes[k++]; ) {
 	                        moveFragment.appendChild(cc)
 	                    }
 	                    parent.insertBefore(moveFragment, insertPoint.nextSibling)
+	                   // reconcile(cnodes, children, parent)
 	                    applyEffects(cnodes, children, {
 	                        hook: 'onMoveDone',
 	                        staggerKey: key + 'move'
@@ -5828,16 +5839,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	                break
 	            }
 	        }
+	        
 	        vdom.preRepeat.length = 0
-	        vdom.preItems.forEach(function (el) {
+	        vdom.preItems.length = 0
+	        keep.forEach(function (el) {
+	            vdom.preItems.push(el)
 	            range.push.apply(vdom.preRepeat, el.children)
 	        })
 
 	    }
 
 	})
-	function isEmptyObject(a){
-	    for(var i in a){
+
+	function isEmptyObject(a) {
+	    for (var i in a) {
 	        return false
 	    }
 	    return true
@@ -5845,7 +5860,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function splitDOMs(nodes, signature) {
 	    var items = []
 	    var item = []
-	    for (var i = 0, el; el = nodes[i++];) {
+	    for (var i = 0, el; el = nodes[i++]; ) {
 	        if (el.nodeType === 8 && el.nodeValue === signature) {
 	            item.push(el)
 	            items.push(item)
@@ -6928,8 +6943,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    var toRepeat = toFilter.reverse().filter(function (el) {
 	        if (el.nodeType === 3) {
-	            console.log(el.nodeValue)
-	            return /[\S\xA0]+/.test(el.nodeValue)
+	            return /\S+/.test(el.nodeValue)
 	        } else {
 	            return true
 	        }

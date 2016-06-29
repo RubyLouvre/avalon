@@ -1,48 +1,35 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../dist/avalon.js"></script>
-        <script>
-            var vm1 = avalon.define({
-                $id: "test",
-                a: 111
-            })
-            vm1.$watch('a', function(){
-                console.log('vm1.a change')
-            })
-            var vm2 = avalon.define({
-                $id: 'test2',
-                b: 222
-            })
-            vm2.$watch('b', function(){
-                console.log('vm2.b change')
-            })
-            var vm3 = avalon.mediatorFactory(vm1,vm2)
-            //这个回调其实放在vm1.$events中
-             vm3.$watch('a', function(){
-                console.log('vm3.a change')
-            })
-             //这个回调其实放在vm2.$events中
-            vm3.$watch('b', function(){
-                console.log('vm3.b change')
-            })
-            console.log('------')
-            vm3.a = 22
-            vm3.b = 44
-        </script>
-        <style>
-            .ms-controller{
-                display:none;
-            }
-        </style>
+        <meta charset="utf-8">
+        <title>test</title>
+        <script src="../dist/avalon.modern.js"></script>
     </head>
     <body>
         <div ms-controller="test">
-            <input ms-duplex="@a" />
-            <p>{{@a}}</p>
+            <button type="button" ms-click="##click">点击7下,列表乱了</button>
+            <ul>
+                <li ms-for="item in ##list">{{item.Body}}</li>
+            </ul>
         </div>
+        <script>
+    var vm = avalon.define({
+        $id: "test",
+        list: [{Id: "1", Body: "2"}],
+        index: 1,
+        click: function () {
+            //vm.list.clear();//加了clear后正常
+            if (vm.index == 1) {
+                vm.list = [{"Body": "我是测试"}, {"Body": "111"}, {"Body": "222"}, {"Body": "333"}, {"Body": "444"}, {"Body": "555"}, {"Body": "666"}, {"Body": "777"}, {"Body": "888"}, {"Body": "fff"}]
+                vm.index = 2;
+            }
+            else {
+                vm.list = [{"Body": "我是测试"}]
+                vm.index = 1;
+            }
+        },
+    });
+        </script>
     </body>
 </html>
+

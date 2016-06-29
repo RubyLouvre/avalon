@@ -312,18 +312,44 @@ describe('duplex', function () {
              },100)
         },100)
     })
-    it('', function(){
-        /*
-    <script>
-        var vm=avalon.define({
-            $id:'test',
+    it('ms-duplex+radio', function(done){
+         div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='duplex8' >
+           <label><input type="radio" ms-duplex-string="@isChecked" name="check" value="true">是</label>
+           <label><input type="radio" ms-duplex-string="@isChecked" name="check" value="false">否</label>
+            <p ms-text="@isChecked"></p>
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id:'duplex8',
             isChecked:''
         })
-    </script>
-    <label><input type="radio" ms-duplex-string="@isChecked" name="check" value="true">是</label>
-    <label><input type="radio" ms-duplex-string="@isChecked" name="check" value="false">否</label>
-    <p ms-text="@isChecked"></p>
-         */
+        avalon.scan(div)
+        setTimeout(function () {
+
+            var inputs = div.getElementsByTagName('input')
+           
+            expect(inputs[0].checked).to.equal(false)
+            expect(inputs[1].checked).to.equal(false)
+            fireClick(inputs[0])
+            setTimeout(function () {
+                 expect(vm.isChecked).to.equal('true')
+                
+                 fireClick(inputs[1])
+                 setTimeout(function () {
+                    expect(vm.isChecked).to.equal('false')
+                  
+                    fireClick(inputs[0])
+                    setTimeout(function () {
+                        expect(vm.isChecked).to.equal('true')
+                         done()
+                    },100)
+                },100)
+             },100)
+        },100)
+   
     })
     
 })

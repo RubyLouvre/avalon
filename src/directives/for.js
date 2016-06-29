@@ -8,6 +8,23 @@ var update = require('./_update')
 
 var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
 var reconcile = require('../strategy/reconcile')
+var Cache = require('../seed/cache')
+var cache = new Cache(100)
+
+function enterAction(src, key) {
+    var tmpl = src.template + '<!--' + src.signature + '-->'
+    var t = cache.get(tmpl)
+    if (!t) {
+        var vdomTemplate = avalon.lexer(tmpl)
+        avalon.speedUp(vdomTemplate)
+        t = cache.put(tmpl, vdomTemplate)
+    }
+    return {
+        action: 'enter',
+        children: avalon.mix(true, [], t),
+        key: key
+    }
+}
 
 function getTraceKey(item) {
     var type = typeof item
@@ -73,8 +90,8 @@ avalon.directive('for', {
         kv.push('__local__')
         kv.push('vnodes')
         src.$append = assign + alias + 'avalon._each(loop,function('
-            + kv.join(', ') + '){\n'
-            + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
+                + kv.join(', ') + '){\n'
+                + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
 
     },
     diff: function (copy, src, curRepeat, preRepeat, end) {
@@ -95,23 +112,12 @@ avalon.directive('for', {
         var cache = src.cache
         var i, c, p
 
-        function enterAction(c) {
-                var template = src.template + '<!--' + src.signature + '-->'
-                var vdomTemplate = avalon.lexer(template)
-                avalon.speedUp(vdomTemplate)
-            return {
-                action: 'enter',
-                children: vdomTemplate,
-                key: c.key
-            }
-        }
-
         if (!cache || isEmptyObject(cache)) {
             /* eslint-disable no-cond-assign */
             var cache = src.cache = {}
             src.preItems.length = 0
             for (i = 0; c = curItems[i]; i++) {
-                var p = enterAction(c)
+                var p = enterAction(src, c.key)
                 src.preItems.push(p)
                 p.action = 'enter'
                 p.index = i
@@ -123,7 +129,7 @@ avalon.directive('for', {
             var newCache = {}
             /* eslint-disable no-cond-assign */
             var fuzzy = []
-            for (i = 0; c = curItems[i++];) {
+            for (i = 0; c = curItems[i++]; ) {
                 var p = isInCache(cache, c.key)
                 if (p) {
                     p.action = 'move'
@@ -136,15 +142,16 @@ avalon.directive('for', {
                 }
 
             }
-            for (var i = 0, c; c = fuzzy[i++];) {
+            for (var i = 0, c; c = fuzzy[i++]; ) {
                 p = fuzzyMatchCache(cache, c.key)
                 if (p) {
                     p.action = 'move'
+                    // clearData(p.children)
                     p.oldIndex = p.index
 
                     p.index = c.index
                 } else {
-                    p = enterAction(c)
+                    p = enterAction(src, c.key)
                     p.index = c.index
                     src.preItems.push(p)
                 }
@@ -172,17 +179,18 @@ avalon.directive('for', {
             }
             src.removes = removes
         }
-        
+
         var cb = avalon.caches[src.cid]
         if (end && cb) {
             end.afterChange = [function (dom) {
-                cb({
-                    type: 'rendered',
-                    target: dom,
-                    signature: src.signature
-                })
-            }]
+                    cb({
+                        type: 'rendered',
+                        target: dom,
+                        signature: src.signature
+                    })
+                }]
         }
+
         update(src, this.update)
         return true
 
@@ -207,7 +215,7 @@ avalon.directive('for', {
                 }
             } while (true);
         }
-        for (var i = 0, el; el = vdom.removes[i++];) {
+        for (var i = 0, el; el = vdom.removes[i++]; ) {
             var removeNodes = DOMs[el.index]
             if (removeNodes) {
                 removeNodes.forEach(function (n, k) {
@@ -228,20 +236,22 @@ avalon.directive('for', {
         var insertPoint = dom
         var fragment = avalon.avalonFragment
         var domTemplate
+        var keep = []
         for (var i = 0; i < vdom.preItems.length; i++) {
             var com = vdom.preItems[i]
-
             var children = com.children
             if (com.action === 'leave') {
                 continue
-            } else if (com.action === 'enter') {
+            }
+            keep.push(com)
+            if (com.action === 'enter') {
                 if (!domTemplate) {
                     //创建用于拷贝的数据,包括虚拟DOM与真实DOM 
                     domTemplate = avalon.vdomAdaptor(children, 'toDOM')
                 }
                 var newFragment = domTemplate.cloneNode(true)
                 var cnodes = avalon.slice(newFragment.childNodes)
-                reconcile(cnodes, children)//关联新的虚拟DOM与真实DOM
+                reconcile(cnodes, children, parent)//关联新的虚拟DOM与真实DOM
                 parent.insertBefore(newFragment, insertPoint.nextSibling)
                 applyEffects(cnodes, children, {
                     hook: 'onEnterDone',
@@ -252,10 +262,11 @@ avalon.directive('for', {
                 var cnodes = DOMs[com.oldIndex] || []
                 if (com.index !== com.oldIndex) {
                     var moveFragment = fragment.cloneNode(false)
-                    for (var k = 0, cc; cc = cnodes[k++];) {
+                    for (var k = 0, cc; cc = cnodes[k++]; ) {
                         moveFragment.appendChild(cc)
                     }
                     parent.insertBefore(moveFragment, insertPoint.nextSibling)
+                   // reconcile(cnodes, children, parent)
                     applyEffects(cnodes, children, {
                         hook: 'onMoveDone',
                         staggerKey: key + 'move'
@@ -269,16 +280,20 @@ avalon.directive('for', {
                 break
             }
         }
+        
         vdom.preRepeat.length = 0
-        vdom.preItems.forEach(function (el) {
+        vdom.preItems.length = 0
+        keep.forEach(function (el) {
+            vdom.preItems.push(el)
             range.push.apply(vdom.preRepeat, el.children)
         })
 
     }
 
 })
-function isEmptyObject(a){
-    for(var i in a){
+
+function isEmptyObject(a) {
+    for (var i in a) {
         return false
     }
     return true
@@ -286,7 +301,7 @@ function isEmptyObject(a){
 function splitDOMs(nodes, signature) {
     var items = []
     var item = []
-    for (var i = 0, el; el = nodes[i++];) {
+    for (var i = 0, el; el = nodes[i++]; ) {
         if (el.nodeType === 8 && el.nodeValue === signature) {
             item.push(el)
             items.push(item)
