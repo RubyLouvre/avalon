@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.5.6 built in 2016.6.16
+ avalon.js 1.5.6 built in 2016.6.30
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -6418,8 +6418,9 @@ new function () { // jshint ignore:line
             log("执行[" + id + "]模块的factory抛错： ", e)
         }
         if (ret !== void 0) {
-            module.exports = ret
+            modules[id].exports = ret
         }
+        modules[id].state = 4
         if (rcallback.test(id)) {
             delete modules[id]
         }

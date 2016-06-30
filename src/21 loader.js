@@ -522,8 +522,9 @@ new function () { // jshint ignore:line
             log("执行[" + id + "]模块的factory抛错： ", e)
         }
         if (ret !== void 0) {
-            module.exports = ret
+            modules[id].exports = ret
         }
+        modules[id].state = 4
         if (rcallback.test(id)) {
             delete modules[id]
         }
