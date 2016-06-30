@@ -1,18 +1,19 @@
 #avalon 2 
 
-基于avalon1.6内部版本研发出来，兼容IE6及各种山寨浏览器,
-视浏览器的支持情况使用VBScript/Descriptors/Proxy创建vm,
-以求取最高的性能
+avalon2是基于虚拟DOM的超高性能MVVM框架,兼容到IE6.
+
+
 ###[avalon2官网](http://avalonjs.coding.me/)
 
 ```javascript
 npm install avalon2
 ```
 
-<img src='https://github.com/RubyLouvre/avalon/blob/master/structure.jpg'/>
+### [avalon2 学习教程(包括组件)](https://segmentfault.com/u/situzhengmei/articles)
+
+<img src='https://github.com/RubyLouvre/avalon/blob/master/structure.jpg' width=600 height=400/>
 
 主要特征如下：
-
 1. ms-*属性的行为全部统一
 
 2. 使用虚拟DOM提高性能，确保更新是从上到下，从外到内，并且能准确知道渲染结束的时机，从而更好地支持扫描后的回调
