@@ -64,4 +64,30 @@ describe('html', function () {
         })
 
     })
+     it('test3', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+            <div ms-controller="html3" ms-html='@aaa'>
+            </div>
+             */
+        })
+        window.kkk20160630 = 1
+        vm = avalon.define({
+            $id: 'html3',
+            bbb:111,
+            aaa:'<b id="color">{{@bbb}}</b><script>window.kkk20160630= 20<\/script><style>#color{color:red}</style>'
+        })
+        avalon.scan(div, vm)
+
+        setTimeout(function () {
+            var el = document.getElementById('color')
+            var color = avalon(el).css('color')
+            expect(/rgb\(255,\s*0,\s*0\)|red/.test(color)).to.equal(true)
+            expect(el.innerHTML).to.equal('111')
+            expect(window.kkk20160630).to.equal(20)
+            window.kkk20160630 = void 0
+            done()
+        }, 300)
+
+    })
 })

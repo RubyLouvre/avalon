@@ -69,7 +69,7 @@ VElement.prototype = {
         } else {
             dom = document.createElement(tagName)
         }
-        
+
         if (this.wid) {
             var scope = avalon.scopes[this.wid]
             if (scope && scope.dom) {
@@ -86,24 +86,25 @@ VElement.prototype = {
                 }
             }
         }
-        
+        var c = this.children || []
+        var template = c[0] ? c[0].nodeValue: ''
         switch (this.type) {
             case 'script':
-                dom.text = this.template
+                dom.text = template
                 break
             case 'style':
                 if ('styleSheet' in dom) {
                     dom.setAttribute('type', 'text/css')
-                    dom.styleSheet.cssText = this.template
+                    dom.styleSheet.cssText = template
                 } else {
-                    dom.innerHTML = this.template
+                    dom.innerHTML = template
                 }
                 break
             case 'template':
-                dom.innerHTML = this.template
+                dom.innerHTML = template
                 break
             case 'noscript':
-                dom.textContent = this.template
+                dom.textContent = template
                 break
             default:
                 if (!this.isVoidTag) {
@@ -134,7 +135,7 @@ VElement.prototype = {
                 return c ? avalon.vdomAdaptor(c, 'toHTML') : ''
             }).join('')
         } else {
-            str += this.template
+            str += this.template || ""
         }
         return str + '</' + this.type + '>'
     }

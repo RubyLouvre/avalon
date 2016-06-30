@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-29:23 version 2.12 by 司徒正美
+ * built in 2016-6-30:19 version 2.12 by 司徒正美
  * 修正isSkip方法,阻止regexp, window, date被转换成子VM
  * checkbox改用click事件来同步VM #1532
  * ms-duplex-string在radio 的更新失效问题
@@ -82,7 +82,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-6-29:23 version 2.12 by 司徒正美
+	 * built in 2016-6-30:19 version 2.12 by 司徒正美
 	 * 修正isSkip方法,阻止regexp, window, date被转换成子VM
 	 * checkbox改用click事件来同步VM #1532
 	 * ms-duplex-string在radio 的更新失效问题
@@ -1289,7 +1289,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        } else {
 		            dom = document.createElement(tagName)
 		        }
-		        
+
 		        if (this.wid) {
 		            var scope = avalon.scopes[this.wid]
 		            if (scope && scope.dom) {
@@ -1306,24 +1306,25 @@ return /******/ (function(modules) { // webpackBootstrap
 		                }
 		            }
 		        }
-		        
+		        var c = this.children || []
+		        var template = c[0] ? c[0].nodeValue: ''
 		        switch (this.type) {
 		            case 'script':
-		                dom.text = this.template
+		                dom.text = template
 		                break
 		            case 'style':
 		                if ('styleSheet' in dom) {
 		                    dom.setAttribute('type', 'text/css')
-		                    dom.styleSheet.cssText = this.template
+		                    dom.styleSheet.cssText = template
 		                } else {
-		                    dom.innerHTML = this.template
+		                    dom.innerHTML = template
 		                }
 		                break
 		            case 'template':
-		                dom.innerHTML = this.template
+		                dom.innerHTML = template
 		                break
 		            case 'noscript':
-		                dom.textContent = this.template
+		                dom.textContent = template
 		                break
 		            default:
 		                if (!this.isVoidTag) {
@@ -1354,7 +1355,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                return c ? avalon.vdomAdaptor(c, 'toHTML') : ''
 		            }).join('')
 		        } else {
-		            str += this.template
+		            str += this.template || ""
 		        }
 		        return str + '</' + this.type + '>'
 		    }
@@ -2077,6 +2078,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    update: function (dom, vdom, parent) {
 		        avalon.clearHTML(dom)
 		        var f = avalon.vdomAdaptor(vdom.children)
+		        console.log(f)
 		        reconcile(f.childNodes, vdom.children, f)
 		        dom.appendChild(f)
 		    }
@@ -5033,7 +5035,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        case 'textarea':
 		        case 'xmp':
 		            node.skipContent = true
-		           
+		          //  node.template = node.template
 		            if(node.template){
 		                node.children.push(new VText(node.template))
 		            }else{
@@ -7804,7 +7806,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 103:
 /***/ function(module, exports) {
 
-	module.exports = "<div>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</div>"
+	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
 
 /***/ }
 
