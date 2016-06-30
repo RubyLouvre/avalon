@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.mobile.js 1.5.6 built in 2016.6.16
+ avalon.mobile.js 1.5.6 built in 2016.6.30
  support touch devices 
  ==================================================*/
 (function(global, factory) {
