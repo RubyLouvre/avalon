@@ -1,12 +1,5 @@
 var updateModelMethods = require('./updateModelMethods')
-//avalon.log = function(){
-//    var str =  avalon.slice(arguments).join(" ")
-//    avalon.ready(function(){
-//       var div =  document.createElement('div')
-//       document.body.appendChild(div)
-//       div.innerHTML = str
-//    })
-//}
+
 function updateModelHandle(e) {
     var elem = this
     var field = this.__ms_duplex__
