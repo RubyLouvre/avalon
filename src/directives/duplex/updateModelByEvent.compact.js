@@ -47,30 +47,31 @@ function updateModelByEvent(node, vnode) {
             }
             break
         case 'input':
-
             if (data.isChanged) {
                 events.change = updateModel
             } else {
-
                 //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
                 //http://www.matts411.com/post/internet-explorer-9-oninput/
-                if (avalon.msie < 10) {
+                if (msie) {//处理输入法问题
+                    events.keyup = updateModelKeyDown
+                }
 
+                if (msie < 9) {
                     events.propertychange = updateModelHack
-                    if (msie > 7) {
-                        //IE8的propertychange有BUG,第一次用JS修改值时不会触发,而且你是全部清空value也不会触发
-                        events.keyup = updateModel
-                        events.keydown = updateModel
-                    }
-                    if (msie > 8) {
-                        //IE9的propertychange不支持自动完成,退格,删除,复制,贴粘,剪切或点击右边的小X的清空操作
-                        //它们可以能过window的selectionchange
-                        node.valueHijack = updateModel
-                        //当你选中一个input value值,将它拖到别处时
-                        events.dragend = updateModelDelay
-                    }
+                    events.paste = updateModelDelay
+                    events.cut = updateModelDelay
                 } else {
-                    events.input = updateModel
+                    events.input = updateModelHack
+                }
+                //IE6-8的propertychange有BUG,第一次用JS修改值时不会触发,而且你是全部清空value也不会触发
+                //IE9的propertychange不支持自动完成,退格,删除,复制,贴粘,剪切或点击右边的小X的清空操作
+                if (avalon.msie >= 9) {
+                    //IE11微软拼音好像才会触发compositionstart 不会触发compositionend
+                    //https://github.com/RubyLouvre/avalon/issues/1368#issuecomment-220503284
+                    events.compositionstart = openComposition
+                    events.compositionend = closeComposition
+                }
+                if (!msie) {
                     //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
                     //如果当前浏览器支持Int8Array,那么我们就不需要以下这些事件来打补丁了
                     if (!/\[native code\]/.test(window.Int8Array)) {
@@ -81,12 +82,6 @@ function updateModelByEvent(node, vnode) {
                             // Firefox <= 3.6 doesn't fire the 'input' event when text is filled in through autocomplete
                             events.DOMAutoComplete = updateModel
                         }
-                    }
-                    if (!avalon.msie) {
-                        //IE11微软拼音好像才会触发compositionstart 不会触发compositionend
-                        //https://github.com/RubyLouvre/avalon/issues/1368#issuecomment-220503284
-                        events.compositionstart = openComposition
-                        events.compositionend = closeComposition
                     }
                 }
             }
@@ -116,7 +111,7 @@ function updateModelDelay(e) {
     var elem = this
     setTimeout(function () {
         updateModel.call(elem, e)
-    }, 17)
+    }, 0)
 }
 
 
@@ -133,14 +128,16 @@ function openComposition() {
 
 function closeComposition(e) {
     this.composing = false
+    updateModel.call(this, e)
 }
+
 function updateModelKeyDown(e) {
-    var key = e.keyCode;
+    var key = e.keyCode
     // ignore
     //    command            modifiers                   arrows
     if (key === 91 || (15 < key && key < 19) || (37 <= key && key <= 40))
         return
-    updateModelDelay.call(this, e)
+    updateModel.call(this, e)
 }
 
 markID(openCaret)
@@ -152,43 +149,62 @@ markID(updateModelHack)
 markID(updateModelDelay)
 markID(updateModelKeyDown)
 
-if (msie >= 8 && msie < 10) {
-    avalon.bind(document, 'selectionchange', function (e) {
-        var el = document.activeElement || {}
-        if (!el.caret && el.valueHijack) {
-            el.valueHijack()
-        }
-    })
+//IE6-8要处理光标时需要异步
+var mayBeAsync = function (fn) {
+    setTimeout(fn, 0)
 }
-
-function getCaret(field) {
-    var start = NaN, end = NaN
-    if (field.setSelectionRange) {
-        start = field.selectionStart
-        end = field.selectionEnd
-    } else if (document.selection && document.selection.createRange) {
-        var range = document.selection.createRange()
-        start = 0 - range.duplicate().moveStart('character', -100000)
-        end = start + range.text.length
-    }
-    return {
-        start: start,
-        end: end
-    }
-}
-
-function setCaret(field, begin, end) {
-    if (!field.value || field.readOnly)
-        return
-    if (field.createTextRange) {//IE6-8
-        var range = field.createTextRange()
-        range.collapse(true)
-        range.moveStart('character', begin)
-        range.select()
+var setCaret = function (target, cursorPosition) {
+    var range
+    if (target.createTextRange) {
+        mayBeAsync(function () {
+            target.focus()
+            range = target.createTextRange()
+            range.collapse(true)
+            range.moveEnd('character', cursorPosition)
+            range.moveStart('character', cursorPosition)
+            range.select()
+        })
     } else {
-        field.selectionStart = begin
-        field.selectionEnd = end
+        target.focus()
+        if (target.selectionStart !== undefined) {
+            target.setSelectionRange(cursorPosition, cursorPosition)
+        }
     }
+}
+
+var getCaret = function (target) {
+    var start = 0
+    var normalizedValue
+    var range
+    var textInputRange
+    var len
+    var endRange
+
+    if (typeof target.selectionStart == "number" && typeof target.selectionEnd == "number") {
+        start = target.selectionStart
+    } else {
+        range = document.selection.createRange()
+
+        if (range && range.parentElement() == target) {
+            len = target.value.length
+            normalizedValue = target.value.replace(/\r\n/g, "\n")
+
+            textInputRange = target.createTextRange()
+            textInputRange.moveToBookmark(range.getBookmark())
+
+            endRange = target.createTextRange()
+            endRange.collapse(false)
+
+            if (textInputRange.compareEndPoints("StartToEnd", endRange) > -1) {
+                start = len
+            } else {
+                start = -textInputRange.moveStart("character", -len)
+                start += normalizedValue.slice(0, start).split("\n").length - 1
+            }
+        }
+    }
+
+    return start
 }
 
 module.exports = updateModelByEvent

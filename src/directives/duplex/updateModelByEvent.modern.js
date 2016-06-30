@@ -19,8 +19,8 @@ function updateModelByEvent(node, vnode) {
     switch (data.type) {
         case 'radio':
         case 'checkbox':
-           events.click = updateModel
-           break
+            events.click = updateModel
+            break
         case 'select':
             events.change = updateModel
             break
@@ -44,10 +44,12 @@ function updateModelByEvent(node, vnode) {
                 events.change = updateModel
             } else {
                 events.input = updateModel
-                if (!avalon.msie) {
-                    //https://github.com/RubyLouvre/avalon/issues/1368#issuecomment-220503284
-                    events.compositionstart = openComposition
-                    events.compositionend = closeComposition
+
+                //https://github.com/RubyLouvre/avalon/issues/1368#issuecomment-220503284
+                events.compositionstart = openComposition
+                events.compositionend = closeComposition
+                if(avalon.msie){
+                   events.keyup = updateModelKeyDown 
                 }
             }
             break
@@ -66,19 +68,14 @@ function updateModelByEvent(node, vnode) {
 }
 
 
-function updateModelHack(e) {
-    if (e.propertyName === 'value') {
-        updateModel.call(this, e)
-    }
+function updateModelKeyDown(e) {
+    var key = e.keyCode
+    // ignore
+    //    command            modifiers                   arrows
+    if (key === 91 || (15 < key && key < 19) || (37 <= key && key <= 40))
+        return
+    updateModel.call(this, e)
 }
-
-function updateModelDelay(e) {
-    var elem = this
-    setTimeout(function () {
-        updateModel.call(elem, e)
-    }, 17)
-}
-
 
 function openCaret() {
     this.caret = true
@@ -93,6 +90,7 @@ function openComposition() {
 
 function closeComposition(e) {
     this.composing = false
+    updateModel.call(this, e)
 }
 
 
@@ -100,26 +98,23 @@ markID(openCaret)
 markID(closeCaret)
 markID(openComposition)
 markID(closeComposition)
+markID(updateModelKeyDown)
 markID(updateModel)
 
 
 function getCaret(field) {
-    var start = NaN, end = NaN
+    var start = NaN
     if (field.setSelectionRange) {
         start = field.selectionStart
-        end = field.selectionEnd
     }
-    return {
-        start: start,
-        end: end
-    }
+    return start
 }
 
-function setCaret(field, begin, end) {
+function setCaret(field, pos) {
     if (!field.value || field.readOnly)
         return
-    field.selectionStart = begin
-    field.selectionEnd = end
+    field.selectionStart = pos
+    field.selectionEnd = pos
 }
 
 

@@ -144,11 +144,7 @@ avalon.directive('duplex', {
             }
 
             updateView[data.type].call(data)
-            if (dom.caret) {
-                var pos = data.caretPos
-                pos && data.setCaret(dom, pos.start, pos.end)
-                data.caretPos = null
-            }
+
 
         }
 

@@ -2,18 +2,25 @@ var updateModelMethods = {
     input: function (prop) {//处理单个value值处理
         var data = this
         prop = prop || 'value'
-        var rawValue = data.dom[prop]
-        
+        var dom = data.dom
+        var rawValue = dom[prop]
+      
         var parsedValue = data.parse(rawValue)
         var formatedValue = data.format(data.vmodel, parsedValue)
+        data.lastViewValue = formatedValue
         //有时候parse后一致,vm不会改变,但input里面的值
         if (parsedValue !== data.modelValue) {
             data.set(data.vmodel, parsedValue)
             callback(data)
         }
-        data.lastViewValue = formatedValue
-        data.dom[prop] = formatedValue
-        
+       
+        avalon.log("修改value")
+        dom[prop] = formatedValue
+      
+        var pos = data.pos
+        if (dom.caret && pos) {
+            data.setCaret(dom, pos)
+         }
         //vm.aaa = '1234567890'
         //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
 

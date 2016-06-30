@@ -1,15 +1,23 @@
 var updateModelMethods = require('./updateModelMethods')
-function updateModelHandle() {
+//avalon.log = function(){
+//    var str =  avalon.slice(arguments).join(" ")
+//    avalon.ready(function(){
+//       var div =  document.createElement('div')
+//       document.body.appendChild(div)
+//       div.innerHTML = str
+//    })
+//}
+function updateModelHandle(e) {
     var elem = this
     var field = this.__ms_duplex__
-    if (elem.composing || elem.value === field.lastViewValue)
+    if (elem.composing || elem.value === field.lastViewValue){
+        //防止onpropertychange引发爆栈
         return
-    if (elem.caret) {
+    }
+   if (elem.caret) {
         try {
             var pos = field.getCaret(elem)
-            if (pos.start === pos.end || pos.start + 1 === pos.end) {
-                field.caretPos = pos
-            }
+            field.pos = pos
         } catch (e) {
             avalon.warn('fixCaret error', e)
         }

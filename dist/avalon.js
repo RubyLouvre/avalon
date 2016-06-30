@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-30:19 version 2.12 by 司徒正美
+ * built in 2016-6-30:21 version 2.12 by 司徒正美
  * 修正isSkip方法,阻止regexp, window, date被转换成子VM
  * checkbox改用click事件来同步VM #1532
  * ms-duplex-string在radio 的更新失效问题
@@ -4720,11 +4720,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 
 	            updateView[data.type].call(data)
-	            if (dom.caret) {
-	                var pos = data.caretPos
-	                pos && data.setCaret(dom, pos.start, pos.end)
-	                data.caretPos = null
-	            }
+
 
 	        }
 
@@ -4800,30 +4796,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            break
 	        case 'input':
-
 	            if (data.isChanged) {
 	                events.change = updateModel
 	            } else {
-
 	                //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
 	                //http://www.matts411.com/post/internet-explorer-9-oninput/
-	                if (avalon.msie < 10) {
+	                if (msie) {//处理输入法问题
+	                    events.keyup = updateModelKeyDown
+	                }
 
+	                if (msie < 9) {
 	                    events.propertychange = updateModelHack
-	                    if (msie > 7) {
-	                        //IE8的propertychange有BUG,第一次用JS修改值时不会触发,而且你是全部清空value也不会触发
-	                        events.keyup = updateModel
-	                        events.keydown = updateModel
-	                    }
-	                    if (msie > 8) {
-	                        //IE9的propertychange不支持自动完成,退格,删除,复制,贴粘,剪切或点击右边的小X的清空操作
-	                        //它们可以能过window的selectionchange
-	                        node.valueHijack = updateModel
-	                        //当你选中一个input value值,将它拖到别处时
-	                        events.dragend = updateModelDelay
-	                    }
+	                    events.paste = updateModelDelay
+	                    events.cut = updateModelDelay
 	                } else {
-	                    events.input = updateModel
+	                    events.input = updateModelHack
+	                }
+	                //IE6-8的propertychange有BUG,第一次用JS修改值时不会触发,而且你是全部清空value也不会触发
+	                //IE9的propertychange不支持自动完成,退格,删除,复制,贴粘,剪切或点击右边的小X的清空操作
+	                if (avalon.msie >= 9) {
+	                    //IE11微软拼音好像才会触发compositionstart 不会触发compositionend
+	                    //https://github.com/RubyLouvre/avalon/issues/1368#issuecomment-220503284
+	                    events.compositionstart = openComposition
+	                    events.compositionend = closeComposition
+	                }
+	                if (!msie) {
 	                    //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
 	                    //如果当前浏览器支持Int8Array,那么我们就不需要以下这些事件来打补丁了
 	                    if (!/\[native code\]/.test(window.Int8Array)) {
@@ -4834,12 +4831,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            // Firefox <= 3.6 doesn't fire the 'input' event when text is filled in through autocomplete
 	                            events.DOMAutoComplete = updateModel
 	                        }
-	                    }
-	                    if (!avalon.msie) {
-	                        //IE11微软拼音好像才会触发compositionstart 不会触发compositionend
-	                        //https://github.com/RubyLouvre/avalon/issues/1368#issuecomment-220503284
-	                        events.compositionstart = openComposition
-	                        events.compositionend = closeComposition
 	                    }
 	                }
 	            }
@@ -4869,7 +4860,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var elem = this
 	    setTimeout(function () {
 	        updateModel.call(elem, e)
-	    }, 17)
+	    }, 0)
 	}
 
 
@@ -4886,14 +4877,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function closeComposition(e) {
 	    this.composing = false
+	    updateModel.call(this, e)
 	}
+
 	function updateModelKeyDown(e) {
-	    var key = e.keyCode;
+	    var key = e.keyCode
 	    // ignore
 	    //    command            modifiers                   arrows
 	    if (key === 91 || (15 < key && key < 19) || (37 <= key && key <= 40))
 	        return
-	    updateModelDelay.call(this, e)
+	    updateModel.call(this, e)
 	}
 
 	markID(openCaret)
@@ -4905,43 +4898,62 @@ return /******/ (function(modules) { // webpackBootstrap
 	markID(updateModelDelay)
 	markID(updateModelKeyDown)
 
-	if (msie >= 8 && msie < 10) {
-	    avalon.bind(document, 'selectionchange', function (e) {
-	        var el = document.activeElement || {}
-	        if (!el.caret && el.valueHijack) {
-	            el.valueHijack()
-	        }
-	    })
+	//IE6-8要处理光标时需要异步
+	var mayBeAsync = function (fn) {
+	    setTimeout(fn, 0)
 	}
-
-	function getCaret(field) {
-	    var start = NaN, end = NaN
-	    if (field.setSelectionRange) {
-	        start = field.selectionStart
-	        end = field.selectionEnd
-	    } else if (document.selection && document.selection.createRange) {
-	        var range = document.selection.createRange()
-	        start = 0 - range.duplicate().moveStart('character', -100000)
-	        end = start + range.text.length
-	    }
-	    return {
-	        start: start,
-	        end: end
-	    }
-	}
-
-	function setCaret(field, begin, end) {
-	    if (!field.value || field.readOnly)
-	        return
-	    if (field.createTextRange) {//IE6-8
-	        var range = field.createTextRange()
-	        range.collapse(true)
-	        range.moveStart('character', begin)
-	        range.select()
+	var setCaret = function (target, cursorPosition) {
+	    var range
+	    if (target.createTextRange) {
+	        mayBeAsync(function () {
+	            target.focus()
+	            range = target.createTextRange()
+	            range.collapse(true)
+	            range.moveEnd('character', cursorPosition)
+	            range.moveStart('character', cursorPosition)
+	            range.select()
+	        })
 	    } else {
-	        field.selectionStart = begin
-	        field.selectionEnd = end
+	        target.focus()
+	        if (target.selectionStart !== undefined) {
+	            target.setSelectionRange(cursorPosition, cursorPosition)
+	        }
 	    }
+	}
+
+	var getCaret = function (target) {
+	    var start = 0
+	    var normalizedValue
+	    var range
+	    var textInputRange
+	    var len
+	    var endRange
+
+	    if (typeof target.selectionStart == "number" && typeof target.selectionEnd == "number") {
+	        start = target.selectionStart
+	    } else {
+	        range = document.selection.createRange()
+
+	        if (range && range.parentElement() == target) {
+	            len = target.value.length
+	            normalizedValue = target.value.replace(/\r\n/g, "\n")
+
+	            textInputRange = target.createTextRange()
+	            textInputRange.moveToBookmark(range.getBookmark())
+
+	            endRange = target.createTextRange()
+	            endRange.collapse(false)
+
+	            if (textInputRange.compareEndPoints("StartToEnd", endRange) > -1) {
+	                start = len
+	            } else {
+	                start = -textInputRange.moveStart("character", -len)
+	                start += normalizedValue.slice(0, start).split("\n").length - 1
+	            }
+	        }
+	    }
+
+	    return start
 	}
 
 	module.exports = updateModelByEvent
@@ -4951,17 +4963,25 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var updateModelMethods = __webpack_require__(57)
-	function updateModelHandle() {
+	//avalon.log = function(){
+	//    var str =  avalon.slice(arguments).join(" ")
+	//    avalon.ready(function(){
+	//       var div =  document.createElement('div')
+	//       document.body.appendChild(div)
+	//       div.innerHTML = str
+	//    })
+	//}
+	function updateModelHandle(e) {
 	    var elem = this
 	    var field = this.__ms_duplex__
-	    if (elem.composing || elem.value === field.lastViewValue)
+	    if (elem.composing || elem.value === field.lastViewValue){
+	        //防止onpropertychange引发爆栈
 	        return
-	    if (elem.caret) {
+	    }
+	   if (elem.caret) {
 	        try {
 	            var pos = field.getCaret(elem)
-	            if (pos.start === pos.end || pos.start + 1 === pos.end) {
-	                field.caretPos = pos
-	            }
+	            field.pos = pos
 	        } catch (e) {
 	            avalon.warn('fixCaret error', e)
 	        }
@@ -4994,17 +5014,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var data = this
 	        prop = prop || 'value'
 	        var rawValue = data.dom[prop]
-	        
+	      
 	        var parsedValue = data.parse(rawValue)
 	        var formatedValue = data.format(data.vmodel, parsedValue)
+	        data.lastViewValue = formatedValue
 	        //有时候parse后一致,vm不会改变,但input里面的值
 	        if (parsedValue !== data.modelValue) {
 	            data.set(data.vmodel, parsedValue)
 	            callback(data)
 	        }
-	        data.lastViewValue = formatedValue
+	       
+	        avalon.log("修改value")
 	        data.dom[prop] = formatedValue
-	        
+	        var dom = data.dom
+	        var pos = data.pos
+	        if (dom.caret && pos) {
+	            data.setCaret(dom, pos)
+	         }
 	        //vm.aaa = '1234567890'
 	        //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
 
