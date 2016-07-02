@@ -1,12 +1,11 @@
 /*!
- * built in 2016-7-1:11 version 2.13 by 司徒正美
- * 修正isSkip方法,阻止regexp, window, date被转换成子VM
- * checkbox改用click事件来同步VM #1532
- * ms-duplex-string在radio 的更新失效问题
- * ms-for+expr在option元素不显示的问题（实质是节点对齐问题）
- * 模板中的&copy;&times;没有被htmlDecode的问题
- * 绑定在组件模板中最外层元素上的事件不生效
- * ie7,8下 ms-duplex 因为onproppertychange环调用，导致辞爆栈的问题
+ * built in 2016-7-2:12 version 2.13 by 司徒正美
+ * 光标问题
+ * 输入法问题
+ * ms-html中script, style标签不生效的问题
+ * ms-for在多次点击后错乱的问题
+ * ms-for-rendered回调问题
+ * checkbox在IE6-8同步不及时的问题
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -82,14 +81,13 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-6-30:21 version 2.12 by 司徒正美
-	 * 修正isSkip方法,阻止regexp, window, date被转换成子VM
-	 * checkbox改用click事件来同步VM #1532
-	 * ms-duplex-string在radio 的更新失效问题
-	 * ms-for+expr在option元素不显示的问题（实质是节点对齐问题）
-	 * 模板中的&copy;&times;没有被htmlDecode的问题
-	 * 绑定在组件模板中最外层元素上的事件不生效
-	 * ie7,8下 ms-duplex 因为onproppertychange环调用，导致辞爆栈的问题
+	 * built in 2016-7-2:12 version 2.13 by 司徒正美
+	 * 光标问题
+	 * 输入法问题
+	 * ms-html中script, style标签不生效的问题
+	 * ms-for在多次点击后错乱的问题
+	 * ms-for-rendered回调问题
+	 * checkbox在IE6-8同步不及时的问题
 	 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
@@ -315,7 +313,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return a === 'true'|| a == '1'
 		        }
 		    },
-		    version: "2.12",
+		    version: "2.13",
 		    slice: function (nodes, start, end) {
 		        return _slice.call(nodes, start, end)
 		    },
@@ -3057,7 +3055,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		    input: function (prop) {//处理单个value值处理
 		        var data = this
 		        prop = prop || 'value'
-		        var rawValue = data.dom[prop]
+		        var dom = data.dom
+		        var rawValue = dom[prop]
 		      
 		        var parsedValue = data.parse(rawValue)
 		        var formatedValue = data.format(data.vmodel, parsedValue)
@@ -3069,8 +3068,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		       
 		        avalon.log("修改value")
-		        data.dom[prop] = formatedValue
-		        var dom = data.dom
+		        dom[prop] = formatedValue
+		      
 		        var pos = data.pos
 		        if (dom.caret && pos) {
 		            data.setCaret(dom, pos)
