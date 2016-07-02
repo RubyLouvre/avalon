@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-2:16 version 2.12 by 司徒正美
+ * built in 2016-7-2:16 version 2.14 by 司徒正美
  * 光标问题
  * 输入法问题
  * ms-html中script, style标签不生效的问题
@@ -3063,7 +3063,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        dom[prop] = formatedValue
 		      
 		        var pos = data.pos
-		        if (dom.caret && pos) {
+		        if (dom.caret ) {
 		            data.setCaret(dom, pos)
 		         }
 		        //vm.aaa = '1234567890'
