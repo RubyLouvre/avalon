@@ -58,7 +58,7 @@ function lexer(text, curDeep) {
         curDeep = 0
     }
     if (!curDeep) {
-        text = text.replace(rstring, dig)
+        text =  unescapeHTML(text).replace(rstring, dig)
     }
     do {
         var outerHTML = ''
@@ -376,8 +376,8 @@ function handleProps(str, props) {
             name = arr[0].toLowerCase()
         if (arr.length === 2) {
             if (value.indexOf('??') === 0) {
-                value = unescapeHTML(value.replace(rfill, fill).
-                    slice(1, -1))
+                value = value.replace(rfill, fill).
+                    slice(1, -1)
             }
         }
         props[name] = value

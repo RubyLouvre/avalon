@@ -2,10 +2,6 @@
  * built in 2016-7-2:16 version 2.14 by 司徒正美
  * 光标问题
  * 输入法问题
- * ms-html中script, style标签不生效的问题
- * ms-for在多次点击后错乱的问题
- * ms-for-rendered回调问题
- * checkbox在IE6-8同步不及时的问题
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -6860,7 +6856,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        curDeep = 0
 	    }
 	    if (!curDeep) {
-	        text = text.replace(rstring, dig)
+	        text =  unescapeHTML(text).replace(rstring, dig)
 	    }
 	    do {
 	        var outerHTML = ''
@@ -7178,8 +7174,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            name = arr[0].toLowerCase()
 	        if (arr.length === 2) {
 	            if (value.indexOf('??') === 0) {
-	                value = unescapeHTML(value.replace(rfill, fill).
-	                    slice(1, -1))
+	                value = value.replace(rfill, fill).
+	                    slice(1, -1)
 	            }
 	        }
 	        props[name] = value

@@ -2,10 +2,6 @@
  * built in 2016-7-2:16 version 2.14 by 司徒正美
  * 光标问题
  * 输入法问题
- * ms-html中script, style标签不生效的问题
- * ms-for在多次点击后错乱的问题
- * ms-for-rendered回调问题
- * checkbox在IE6-8同步不及时的问题
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -81,7 +77,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-7-2:16 version 2.12 by 司徒正美
+	 * built in 2016-7-2:16 version 2.14 by 司徒正美
 	 * 光标问题
 	 * 输入法问题
 	 * ms-html中script, style标签不生效的问题
@@ -313,7 +309,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return a === 'true'|| a == '1'
 		        }
 		    },
-		    version: "2.12",
+		    version: "2.14",
 		    slice: function (nodes, start, end) {
 		        return _slice.call(nodes, start, end)
 		    },

@@ -18,10 +18,6 @@ var feather = heredoc(function(){
     /*
 光标问题
 输入法问题
-ms-html中script, style标签不生效的问题
-ms-for在多次点击后错乱的问题
-ms-for-rendered回调问题
-checkbox在IE6-8同步不及时的问题
      */
 })
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')
