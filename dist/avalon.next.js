@@ -1,7 +1,6 @@
 /*!
- * built in 2016-7-2:16 version 2.14 by 司徒正美
- * 光标问题
- * 输入法问题
+ * built in 2016-7-2:18 version 2.14 by 司徒正美
+ * 修复 1光标问题 2输入法问题 3HTML转义问题
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')

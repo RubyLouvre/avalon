@@ -16,8 +16,7 @@ function heredoc(fn) {
             }
 var feather = heredoc(function(){
     /*
-光标问题
-输入法问题
+修复 1光标问题 2输入法问题 3HTML转义问题
      */
 })
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')
