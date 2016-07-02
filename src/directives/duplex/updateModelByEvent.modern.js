@@ -90,7 +90,11 @@ function openComposition() {
 
 function closeComposition(e) {
     this.composing = false
-    updateModel.call(this, e)
+    var elem = this
+    setTimeout(function(){
+       updateModel.call(elem, e) 
+    }, 0)
+    
 }
 
 

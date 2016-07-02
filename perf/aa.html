@@ -6,34 +6,20 @@
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <title>ms-repeat</title>
-        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.no-icons.min.css" rel="stylesheet">
-        <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
 
-        <script src="http://cdn.bootcss.com/avalon.js/2.1.0/avalon.js" type="text/javascript"></script>
+        <script src="../dist/avalon.js" type="text/javascript"></script>
     </head>
 
     <body>
         <script>
-            avalon.define({
-                $id: 'start3',
-                array: [
-                    {
-                        aChild: [1, 2, 3],
-                        aName: "aName1"
-                    },
-                    {
-                        aChild: [4, 5, 6],
-                        aName: "bName1"
-                    }
-                ],
-                getName: function (a) {
-                    alert(a.aName)
-                }
+            var vm = avalon.define({
+                $id: 'test',
+                aaa: 'ddd'
             })
         </script>
 
-        <div ms-controller='start3'>
-            <i class="icon-double-angle-left">222</i>
+        <div ms-controller='test'>
+            <input ms-duplex="@aaa"/>|{{@aaa}}|
         </div>
     </body>
 

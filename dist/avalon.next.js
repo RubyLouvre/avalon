@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-30:23 version 2.12 by 司徒正美
+ * built in 2016-7-2:16 version 2.12 by 司徒正美
  * 修正isSkip方法,阻止regexp, window, date被转换成子VM
  * checkbox改用click事件来同步VM #1532
  * ms-duplex-string在radio 的更新失效问题
@@ -2980,7 +2980,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            callback(data)
 	        }
 	       
-	        avalon.log("修改value")
 	        dom[prop] = formatedValue
 	      
 	        var pos = data.pos
@@ -7110,7 +7109,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function closeComposition(e) {
 	    this.composing = false
-	    updateModel.call(this, e)
+	    var elem = this
+	    setTimeout(function(){
+	       updateModel.call(elem, e) 
+	    }, 0)
+	    
 	}
 
 

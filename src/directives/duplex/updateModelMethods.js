@@ -14,7 +14,6 @@ var updateModelMethods = {
             callback(data)
         }
        
-        avalon.log("修改value")
         dom[prop] = formatedValue
       
         var pos = data.pos

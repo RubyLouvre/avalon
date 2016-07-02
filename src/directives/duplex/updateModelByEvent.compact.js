@@ -72,6 +72,8 @@ function updateModelByEvent(node, vnode) {
                     events.compositionend = closeComposition
                 }
                 if (!msie) {
+                    events.compositionstart = openComposition
+                    events.compositionend = closeComposition
                     //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
                     //如果当前浏览器支持Int8Array,那么我们就不需要以下这些事件来打补丁了
                     if (!/\[native code\]/.test(window.Int8Array)) {
@@ -128,7 +130,7 @@ function openComposition() {
 
 function closeComposition(e) {
     this.composing = false
-    updateModel.call(this, e)
+    updateModelDelay.call(this, e)
 }
 
 function updateModelKeyDown(e) {

@@ -1,5 +1,5 @@
 /*!
- * built in 2016-6-30:23 version 2.12 by 司徒正美
+ * built in 2016-7-2:16 version 2.12 by 司徒正美
  * 修正isSkip方法,阻止regexp, window, date被转换成子VM
  * checkbox改用click事件来同步VM #1532
  * ms-duplex-string在radio 的更新失效问题
@@ -4821,6 +4821,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    events.compositionend = closeComposition
 	                }
 	                if (!msie) {
+	                    events.compositionstart = openComposition
+	                    events.compositionend = closeComposition
 	                    //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
 	                    //如果当前浏览器支持Int8Array,那么我们就不需要以下这些事件来打补丁了
 	                    if (!/\[native code\]/.test(window.Int8Array)) {
@@ -4877,7 +4879,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function closeComposition(e) {
 	    this.composing = false
-	    updateModel.call(this, e)
+	    updateModelDelay.call(this, e)
 	}
 
 	function updateModelKeyDown(e) {
@@ -5018,7 +5020,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            callback(data)
 	        }
 	       
-	        avalon.log("修改value")
 	        dom[prop] = formatedValue
 	      
 	        var pos = data.pos
