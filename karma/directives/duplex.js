@@ -351,5 +351,32 @@ describe('duplex', function () {
         },100)
    
     })
-    
+     it('ms-duplex事件触发问题', function(done){
+         div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='duplex9' >
+          <input ms-duplex="@aaa"/><em>{{@aaa}}</em>
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id:'duplex9',
+            aaa:''
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+
+            var input = div.getElementsByTagName('input')[0]
+            input.value = 999
+            avalon.fireDom(input,'input')
+            avalon.fireDom(input,'propertychange')
+            setTimeout(function () {
+                expect(vm.aaa).to.equal('999')
+                var em = div.getElementsByTagName('em')[0]
+                expect(em.innerHTML).to.equal('999')
+                done()
+             },100)
+        },100)
+   
+    })
 })

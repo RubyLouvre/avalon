@@ -61,7 +61,7 @@ function updateModelByEvent(node, vnode) {
                     events.paste = updateModelDelay
                     events.cut = updateModelDelay
                 } else {
-                    events.input = updateModelHack
+                    events.input = updateModel
                 }
                 //IE6-8的propertychange有BUG,第一次用JS修改值时不会触发,而且你是全部清空value也不会触发
                 //IE9的propertychange不支持自动完成,退格,删除,复制,贴粘,剪切或点击右边的小X的清空操作
