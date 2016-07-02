@@ -65,15 +65,14 @@ function updateModelByEvent(node, vnode) {
                 }
                 //IE6-8的propertychange有BUG,第一次用JS修改值时不会触发,而且你是全部清空value也不会触发
                 //IE9的propertychange不支持自动完成,退格,删除,复制,贴粘,剪切或点击右边的小X的清空操作
-                if (avalon.msie >= 9) {
-                    //IE11微软拼音好像才会触发compositionstart 不会触发compositionend
-                    //https://github.com/RubyLouvre/avalon/issues/1368#issuecomment-220503284
+                //IE11微软拼音好像才会触发compositionstart 不会触发compositionend
+                //https://github.com/RubyLouvre/avalon/issues/1368#issuecomment-220503284
+                if(!msie || msie > 9){
                     events.compositionstart = openComposition
                     events.compositionend = closeComposition
                 }
                 if (!msie) {
-                    events.compositionstart = openComposition
-                    events.compositionend = closeComposition
+
                     //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
                     //如果当前浏览器支持Int8Array,那么我们就不需要以下这些事件来打补丁了
                     if (!/\[native code\]/.test(window.Int8Array)) {

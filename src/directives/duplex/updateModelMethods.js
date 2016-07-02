@@ -17,7 +17,7 @@ var updateModelMethods = {
         dom[prop] = formatedValue
       
         var pos = data.pos
-        if (dom.caret && pos) {
+        if (dom.caret ) {
             data.setCaret(dom, pos)
          }
         //vm.aaa = '1234567890'

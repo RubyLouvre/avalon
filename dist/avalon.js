@@ -1,12 +1,11 @@
 /*!
  * built in 2016-7-2:16 version 2.12 by 司徒正美
- * 修正isSkip方法,阻止regexp, window, date被转换成子VM
- * checkbox改用click事件来同步VM #1532
- * ms-duplex-string在radio 的更新失效问题
- * ms-for+expr在option元素不显示的问题（实质是节点对齐问题）
- * 模板中的&copy;&times;没有被htmlDecode的问题
- * 绑定在组件模板中最外层元素上的事件不生效
- * ie7,8下 ms-duplex 因为onproppertychange环调用，导致辞爆栈的问题
+ * 光标问题
+ * 输入法问题
+ * ms-html中script, style标签不生效的问题
+ * ms-for在多次点击后错乱的问题
+ * ms-for-rendered回调问题
+ * checkbox在IE6-8同步不及时的问题
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -4810,19 +4809,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    events.paste = updateModelDelay
 	                    events.cut = updateModelDelay
 	                } else {
-	                    events.input = updateModelHack
+	                    events.input = updateModel
 	                }
 	                //IE6-8的propertychange有BUG,第一次用JS修改值时不会触发,而且你是全部清空value也不会触发
 	                //IE9的propertychange不支持自动完成,退格,删除,复制,贴粘,剪切或点击右边的小X的清空操作
-	                if (avalon.msie >= 9) {
-	                    //IE11微软拼音好像才会触发compositionstart 不会触发compositionend
-	                    //https://github.com/RubyLouvre/avalon/issues/1368#issuecomment-220503284
+	                //IE11微软拼音好像才会触发compositionstart 不会触发compositionend
+	                //https://github.com/RubyLouvre/avalon/issues/1368#issuecomment-220503284
+	                if(!msie || msie > 9){
 	                    events.compositionstart = openComposition
 	                    events.compositionend = closeComposition
 	                }
 	                if (!msie) {
-	                    events.compositionstart = openComposition
-	                    events.compositionend = closeComposition
+
 	                    //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
 	                    //如果当前浏览器支持Int8Array,那么我们就不需要以下这些事件来打补丁了
 	                    if (!/\[native code\]/.test(window.Int8Array)) {
@@ -5023,7 +5021,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        dom[prop] = formatedValue
 	      
 	        var pos = data.pos
-	        if (dom.caret && pos) {
+	        if (dom.caret ) {
 	            data.setCaret(dom, pos)
 	         }
 	        //vm.aaa = '1234567890'
