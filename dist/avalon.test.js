@@ -1,6 +1,7 @@
 /*!
- * built in 2016-7-3:14 version 2.14 by 司徒正美
- * 修复 1光标问题 2输入法问题 3HTML转义问题
+ * built in 2016-7-3:14 version 2.15 by 司徒正美
+ * 修复 HTML实体转义问题,将处理逻辑放到parseView里面去
+ * 修复双层注释节点ms-for循环问题(markRepeatRange BUG)
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
