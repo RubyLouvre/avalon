@@ -50,7 +50,7 @@ var rhasString = /=["']/
 var rlineSp = /\n\s*/g
 function fixLongAttrValue(attr) {
     return rhasString.test(attr) ?
-        attr.replace(rlineSp, '').replace(rstring, dig) : attr
+            attr.replace(rlineSp, '').replace(rstring, dig) : attr
 }
 function lexer(text, curDeep) {
     var nodes = []
@@ -83,8 +83,6 @@ function lexer(text, curDeep) {
                     nodeType: 8,
                     nodeValue: match[1].replace(rfill, fill)
                 }
-           
-                
             }
         }
 
@@ -104,7 +102,7 @@ function lexer(text, curDeep) {
                 }
 
                 var innerHTML = outerHTML.slice(match[0].length,
-                    (type.length + 3) * -1) //抽取innerHTML
+                        (type.length + 3) * -1) //抽取innerHTML
                 node = {
                     nodeType: 1,
                     type: type,
@@ -142,13 +140,14 @@ function lexer(text, curDeep) {
                 nodes.push(node)
             }
             text = text.slice(outerHTML.length)
-            if (node.nodeType === 8){
-                if(rmsForStart.test(node.nodeValue)) {
-                    
-                   node.signature = node.signature || makeHashCode('for')
-                   node.directive = 'for'
-                }else if (rmsForEnd.test(node.nodeValue)) {
-                     //将 ms-for与ms-for-end:之间的节点塞到一个数组中
+            if (node.nodeType === 8) {
+                if (rmsForStart.test(node.nodeValue)) {
+
+                    node.signature = node.signature || makeHashCode('for')
+                    node.directive = 'for'
+                } else if (rmsForEnd.test(node.nodeValue)) {
+                    //将 ms-for与ms-for-end:之间的节点塞到一个数组中
+                    nodes.pop()
                     markeRepeatRange(nodes, node)
                 }
             }
@@ -165,28 +164,27 @@ function lexer(text, curDeep) {
 
 
 function markeRepeatRange(nodes, end) {
-    var el, k = nodes.length-1, toFilter = [], toRemove = k
-    while (el = nodes[--k]) {
-        if (el.nodeType === 8 && rmsForStart.test(el.nodeValue)) {
-            var start = el
-            end.signature = el.signature
-            break
+
+    var array = [], start, deep = 1
+    while (start = nodes.pop()) {
+        if (start.nodeType === 8) {
+            if (rmsForEnd.test(start.nodeValue)) {
+                ++deep
+            } else if (rmsForStart.test(start.nodeValue)) {
+                --deep
+                if (deep === 0) {
+                    end.signature = start.signature
+                    nodes.push(start, array, end)
+                    start.template = array.map(function (a) {
+                        return avalon.vdomAdaptor(a, 'toHTML')
+                    }).join('')
+                    break
+                }
+            }
         }
-        toFilter.push(el)
+        array.unshift(start)
     }
-    var toRepeat = toFilter.reverse().filter(function (el) {
-        if (el.nodeType === 3) {
-            return /\S+/.test(el.nodeValue)
-        } else {
-            return true
-        }
-    })
 
-    start.template = toRepeat.map(function (a) {
-        return avalon.vdomAdaptor(a, 'toHTML')
-    }).join('')
-
-    nodes.splice(k +1, toFilter.length, toRepeat)
 }
 
 //用于创建适配某一种标签的正则表达式
@@ -198,9 +196,9 @@ function clipOuterHTML(matchText, type) {
     var opens = []
     var closes = []
     var ropen = tagCache[type + 'open'] ||
-        (tagCache[type + 'open'] = new RegExp('<' + type + openStr, regArgs))
+            (tagCache[type + 'open'] = new RegExp('<' + type + openStr, regArgs))
     var rclose = tagCache[type + 'close'] ||
-        (tagCache[type + 'close'] = new RegExp('<\/' + type + '>', regArgs))
+            (tagCache[type + 'close'] = new RegExp('<\/' + type + '>', regArgs))
 
     /* jshint ignore:start */
     matchText.replace(ropen, function (_, b) {
@@ -249,10 +247,10 @@ function modifyProps(node, innerHTML, nodes, curDeep) {
         case 'textarea':
         case 'xmp':
             node.skipContent = true
-           
-            if(node.template){
+
+            if (node.template) {
                 node.children.push(new VText(node.template))
-            }else{
+            } else {
                 node.children = []
             }
             if (type === 'textarea') {
@@ -271,20 +269,20 @@ function modifyProps(node, innerHTML, nodes, curDeep) {
                 node.multiple = true
             }
             break
-        
+
         case 'option':
             node.children.push(new VText(trimHTML(node.template)))
             break
         default:
-            if(/^ms-/.test(type) ){
+            if (/^ms-/.test(type)) {
                 props.is = type
-                if(!props['ms-widget']){
-                   props['ms-widget'] = '{is:' + avalon.quote(type) + '}'
+                if (!props['ms-widget']) {
+                    props['ms-widget'] = '{is:' + avalon.quote(type) + '}'
                 }
             }
             break
     }
-    
+
     if (!node.isVoidTag && !node.skipContent) {
         var childs = lexer(innerHTML, curDeep + 1)
         node.children = childs
@@ -373,27 +371,18 @@ var rnogutter = /\s*=\s*/g
 function handleProps(str, props) {
     str.replace(rnogutter, '=').replace(rnowhite, function (el) {
         var arr = el.split('='), value = arr[1] || '',
-            name = arr[0].toLowerCase()
+                name = arr[0].toLowerCase()
         if (arr.length === 2) {
             if (value.indexOf('??') === 0) {
                 value = value.replace(rfill, fill).
-                    slice(1, -1)
+                        slice(1, -1)
             }
         }
         props[name] = value
     })
 }
 
-//将字符串中的html实体字符还原为对应字符
-function unescapeHTML(target) {
-    return  target.replace(/&quot;/g, '"')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&amp;/g, "&") //处理转义的中文和实体字符
-            .replace(/&#([\d]+);/g, function($0, $1) {
-        return String.fromCharCode(parseInt($1, 10));
-    });
-}
+
 //form prototype.js
 var rtrimHTML = /<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi
 function trimHTML(v) {
@@ -413,7 +402,7 @@ function hasDirective(a) {
     switch (a.nodeType) {
         case 3:
             if (config.rbind.test(a.nodeValue)) {
-                a.dynamic  = true
+                a.dynamic = true
                 return true
             } else {
                 a.skipContent = true
@@ -434,12 +423,12 @@ function hasDirective(a) {
                 a.skipContent = true
                 return false
             }
-            if(/^ms\-/.test(a.type)){
+            if (/^ms\-/.test(a.type)) {
                 a.dynamic = true
             }
             if (hasDirectiveAttrs(a.props)) {
                 a.dynamic = true
-            }else{
+            } else {
                 a.skipAttrs = true
             }
             if (a.isVoidTag && !a.dynamic) {
@@ -453,15 +442,15 @@ function hasDirective(a) {
             }
             return true
         default:
-            if(Array.isArray(a)){
+            if (Array.isArray(a)) {
                 return childrenHasDirective(a)
             }
     }
 }
 
-function childrenHasDirective(arr){
+function childrenHasDirective(arr) {
     var ret = false
-    for (var i = 0, el; el = arr[i++];) {
+    for (var i = 0, el; el = arr[i++]; ) {
         if (hasDirective(el)) {
             ret = true
         }
@@ -470,10 +459,10 @@ function childrenHasDirective(arr){
 }
 
 function hasDirectiveAttrs(props) {
-    if('ms-skip' in props)
+    if ('ms-skip' in props)
         return false
     for (var i in props) {
-        if (i.indexOf('ms-') === 0 ) {
+        if (i.indexOf('ms-') === 0) {
             return true
         }
     }

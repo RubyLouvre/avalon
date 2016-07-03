@@ -198,9 +198,9 @@ function quoteError(str, type) {
 }
 
 module.exports = avalon.parseExpr = parseExpr
-var rescape = /&(quote|lt|gt|amp|#\d+);/g
+var rescape = /&(quot|lt|gt|amp|#\d+);/g
 var rescapeOne = {
-    quote: '"',
+    quot: '"',
     lt: '<',
     gt: '>',
     amp: '&'

@@ -9,12 +9,12 @@ function scan(nodes) {
                 vm.$element = elem
                 var now = new Date()
                 //IE6-8下元素的outerHTML前面会有空白
-                elem.vtree = avalon.lexer(elem.outerHTML.trim())
+                var text = elem.outerHTML.trim()
+                elem.vtree = avalon.lexer(text)
                 avalon.speedUp(elem.vtree)
                 var now2 = new Date()
                 avalon.log('create primitive vtree', now2 - now)
                 vm.$render = avalon.render(elem.vtree)
-
                 avalon.scopes[vm.$id] = {
                     vmodel: vm,
                     local: {}
