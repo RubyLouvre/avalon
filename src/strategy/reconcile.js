@@ -8,11 +8,11 @@
  添加的是 ms-for,ms-for-end占位的注释节点
  删除的是多余的空白文本节点,与IE6-8私下添加的奇怪节点
  */
+var rretain = /[\S\xA0]/
 function getType(node) {
     switch (node.nodeType) {
-
         case 3:
-            return '3' + (/\S/.test(node.nodeValue) ? 'retain' : 'remove')
+            return '3' + (/[\S\xA0]/.test(node.nodeValue) ? 'retain' : 'remove')
         case 1:
             return '1' + (node.nodeName || node.type).toLowerCase()
         case 8:
@@ -30,18 +30,17 @@ function reconcile(nodes, vnodes, parent) {
     vnodes = flatten(vnodes)
     var map = {}
     var vn = vnodes.length
-    if(vn === 0)
+    if (vn === 0)
         return
-    
+
     vnodes.forEach(function (el, index) {
         map[index] = getType(el)
     })
-    
-    var newNodes = [], change = false , el, i = 0
+    var newNodes = [], change = false, el, i = 0
     var breakLoop = 0
     while (true) {
         el = nodes[i++]
-        if(breakLoop++ > 5000){
+        if (breakLoop++ > 5000) {
             break
         }
         var vtype = el && getType(el)
@@ -49,11 +48,11 @@ function reconcile(nodes, vnodes, parent) {
         if (map[v] === vtype) {
             newNodes.push(el)
             var vnode = vnodes[v]
-            
+
             if (vnode.dynamic) {
                 vnode.dom = el
             }
-       
+
             if (el.nodeType === 1 && !vnode.isVoidTag && !containers[vnode.type]) {
                 reconcile(el.childNodes, vnode.children, el)
             }
@@ -67,11 +66,11 @@ function reconcile(nodes, vnodes, parent) {
                 i = Math.max(0, --i)
             }
         }
-        if(newNodes.length === vn){
+        if (newNodes.length === vn) {
             break
         }
     }
-   // console.log(newNodes.length, vnodes.length)
+    // console.log(newNodes.length, vnodes.length)
     if (change) {
         var f = document.createDocumentFragment(), i = 0
         while (el = newNodes[i++]) {
