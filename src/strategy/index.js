@@ -18,12 +18,6 @@ function render(vtree, local) {
             _local.join(';\n')+'\n' + _body
     var fn = Function('__vmodel__', '__local__', body)
 
-//    var a = document.createElement('xmp')
-//    var t = document.createTextNode(_body)
-//    a.appendChild(t)
-//    document.body.appendChild(a)
-
-
     return fn
 }
 avalon.render = render

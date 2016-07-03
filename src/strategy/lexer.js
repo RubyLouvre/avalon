@@ -58,7 +58,7 @@ function lexer(text, curDeep) {
         curDeep = 0
     }
     if (!curDeep) {
-        text =  unescapeHTML(text).replace(rstring, dig)
+        text = text.replace(rstring, dig)
     }
     do {
         var outerHTML = ''

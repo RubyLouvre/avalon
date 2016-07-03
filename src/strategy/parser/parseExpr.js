@@ -71,6 +71,7 @@ function parseExpr(str, category) {
 
     var input = str.replace(rregexp, dig).//移除所有正则
             replace(rstring, dig).//移除所有字符串
+            replace(rescape, fescape).
             replace(rshortCircuit, dig).//移除所有短路或
             replace(ruselessSp, '$1').//移除. |两端空白
             split(rpipeline) //使用管道符分离所有过滤器及表达式的正体
@@ -197,3 +198,17 @@ function quoteError(str, type) {
 }
 
 module.exports = avalon.parseExpr = parseExpr
+var rescape = /&(quote|lt|gt|amp|#\d+);/g
+var rescapeOne = {
+    quote: '"',
+    lt: '<',
+    gt: '>',
+    amp: '&'
+}
+var fescape = function(a, b){
+    if(rescapeOne[b]){
+       return rescapeOne[b]
+    }else{
+       return rescapeOne[b] = String.fromCharCode(parseInt(b.slice(1), 10));
+    }
+}

@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-2:18 version 2.14 by 司徒正美
+ * built in 2016-7-3:11 version 2.14 by 司徒正美
  * 修复 1光标问题 2输入法问题 3HTML转义问题
  */
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -3680,7 +3680,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function parseNodes(source, inner) {
 	    //ms-important， ms-controller ， ms-for 不可复制，省得死循环
 	    //ms-important --> ms-controller --> ms-for --> ms-widget --> ms-effect --> ms-if
-	    var buffer = inner ? []: ['\nvar vnodes = [];'] 
+	    var buffer = inner ? [] : ['\nvar vnodes = [];']
 
 	    for (var i = 0, el; el = source[i++]; ) {
 	        var vnode = parseNode(el)
@@ -3734,7 +3734,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            copy.isVoidTag = true
 	        } else {
 	            if (!('children' in copy)) {
-	                
+
 	                var pChildren = source.children
 	                if (pChildren.length) {
 	                    delete source.template
@@ -3745,9 +3745,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 	        }
-	        if(source.skipContent)
+	        if (source.skipContent)
 	            copy.skipContent = true
-	        if(source.skipAttrs)
+	        if (source.skipAttrs)
 	            copy.skipAttrs = true
 
 	        return addTag(copy)
@@ -3905,6 +3905,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var input = str.replace(rregexp, dig).//移除所有正则
 	            replace(rstring, dig).//移除所有字符串
+	            replace(rescape, fescape).
 	            replace(rshortCircuit, dig).//移除所有短路或
 	            replace(ruselessSp, '$1').//移除. |两端空白
 	            split(rpipeline) //使用管道符分离所有过滤器及表达式的正体
@@ -4031,6 +4032,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	module.exports = avalon.parseExpr = parseExpr
+	var rescape = /&(quote|lt|gt|amp|#\d+);/g
+	var rescapeOne = {
+	    quote: '"',
+	    lt: '<',
+	    gt: '>',
+	    amp: '&'
+	}
+	var fescape = function(a, b){
+	    if(rescapeOne[b]){
+	       return rescapeOne[b]
+	    }else{
+	       return rescapeOne[b] = String.fromCharCode(parseInt(b.slice(1), 10));
+	    }
+	}
 
 
 /***/ },
@@ -6778,12 +6793,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            _local.join(';\n')+'\n' + _body
 	    var fn = Function('__vmodel__', '__local__', body)
 
-	//    var a = document.createElement('xmp')
-	//    var t = document.createTextNode(_body)
-	//    a.appendChild(t)
-	//    document.body.appendChild(a)
-
-
 	    return fn
 	}
 	avalon.render = render
@@ -6855,7 +6864,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        curDeep = 0
 	    }
 	    if (!curDeep) {
-	        text =  unescapeHTML(text).replace(rstring, dig)
+	        text = text.replace(rstring, dig)
 	    }
 	    do {
 	        var outerHTML = ''

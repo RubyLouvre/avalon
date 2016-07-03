@@ -1,9 +1,9 @@
 
 
 
-var startTag = /^<([-A-Za-z0-9_\:]+)((?:\s+[\w-]+(?:\s*=\s*(?:(?:"[^"]*")|(?:'[^']*')|[^>\s]+))?)*)\s*(\/?)>/,
+var startTag = /^<([-A-Za-z0-9_\:]+)((?:\s+[\w-\:\@\$]+(?:\s*=\s*(?:(?:"[^"]*")|(?:'[^']*')|[^>\s]+))?)*)\s*(\/?)>/,
         endTag = /^<\/([-A-Za-z0-9_\:]+)[^>]*>/,
-        attr = /([-A-Za-z0-9_]+)(?:\s*=\s*(?:(?:"((?:\\.|[^"])*)")|(?:'((?:\\.|[^'])*)')|([^>\s]+)))?/g;
+        rattrs = /([^=\s]+)(?:\s*=\s*(?:(?:"((?:\\.|[^"])*)")|(?:'((?:\\.|[^'])*)')|([^>\s]+)))?/g;
 
 // 半闭合元素
 var empty = avalon.oneObject("area,base,basefont,br,col,frame,hr,img,input,isindex,link,meta,param,embed");
@@ -23,7 +23,7 @@ var fillAttrs = avalon.oneObject("checked,compact,declare,defer,disabled,ismap,m
 // 容器元素,里面只能包含文本节点
 var special = avalon.oneObject("script,style,textarea,xmp,noscript,template");
 var regexpOne = {}
-
+var rbinding = /^(?:ms\-|\:)(\w+)-?(.*)/
 var HTMLParser = function (html, handler) {
     var index, chars, match, stack = [],
             last = html
@@ -86,20 +86,20 @@ var HTMLParser = function (html, handler) {
             //抽取元素的innerHTML
             var tag = stack.last()
             var reg = regOne[tag]
-            if(!reg){
-                reg = (regOne[tag] = new RegExp("(.*)<\/" + tag  + "[^>]*>"))
+            if (!reg) {
+                reg = (regOne[tag] = new RegExp("(.*)<\/" + tag + "[^>]*>"))
             }
-            
-            html = html.replace(reg, 
-               function (all, text) {
-                text = text.replace(/<!--(.*?)-->/g, "$1").
-                        replace(/<!\[CDATA\[(.*?)]]>/g, "$1")
 
-                if (handler.chars)
-                    handler.chars(text)
+            html = html.replace(reg,
+                    function (all, text) {
+                        text = text.replace(/<!--(.*?)-->/g, "$1").
+                                replace(/<!\[CDATA\[(.*?)]]>/g, "$1")
 
-                return ""
-            });
+                        if (handler.chars)
+                            handler.chars(text)
+
+                        return ""
+                    });
 
             parseEndTag("", stack.last())
         }
@@ -117,63 +117,87 @@ var HTMLParser = function (html, handler) {
 
         if (block[tagName]) {
             while (stack.last() && inline[stack.last()]) {
-                parseEndTag("", stack.last());
+                parseEndTag('', stack.last());
             }
         }
 
         if (closeSelf[tagName] && stack.last() === tagName) {
-            parseEndTag("", tagName);
+            parseEndTag('', tagName);
         }
 
         unary = empty[tagName] || !!unary;
 
-        if (!unary)
+        if (!unary) {
             stack.push(tagName);
-
+        }
         if (handler.start) {
-            var attrs = [];
+            var attrs = {};
 
-            rest.replace(attr, function (match, name) {
-                var value = arguments[2] ? arguments[2] : arguments[3] ? arguments[3] : arguments[4] ? arguments[4] : fillAttrs[name] ? name : "";
+            rest.replace(rattrs, function (match, name) {
+                name = name.toLowerCase()
+                var value = arguments[2] ? arguments[2] :
+                        arguments[3] ? arguments[3] :
+                        arguments[4] ? arguments[4] :
+                        fillAttrs[name] ? name : '';
+                if (!attrs[name]) {
+                    attrs[name] = value
+                }
+            })
 
-                attrs.push({
-                    name: name,
-                    value: value,
-                    escaped: value.replace(/(^|[^\\])"/g, '$1\\\"') //"
-                });
-            });
+            switch (tagName) {
+                case 'textarea':
+                    attrs.type = 'textarea'
+                    break
+                case 'input':
+                    if (!attrs.type) {
+                        attrs.type = 'text'
+                    }
+                    break
+                default:
+                    if (tagName.indexOf('ms-') === 0) {
+                        if (!attrs['ms-widget']) {
+                            attrs.is = tagName
+                            attrs['ms-widget'] = '{is:' + avalon.quote(tagName) + '}'
+                        }
+                    }
+                    break
+            }
 
-            if (handler.start)
-                handler.start(tagName, attrs, unary);
+            if (handler.start) {
+                handler.start(tagName, attrs, unary)
+            }
         }
     }
 
     function parseEndTag(tag, tagName) {
         // If no tag name is provided, clean shop
-        if (!tagName)
+        if (!tagName) {
             var pos = 0;
 
-        // Find the closest opened tag of the same type
-        else
-            for (var pos = stack.length - 1; pos >= 0; pos--)
-                if (stack[pos] == tagName)
+            // Find the closest opened tag of the same type
+        } else {
+            for (var pos = stack.length - 1; pos >= 0; pos--) {
+                if (stack[pos] == tagName) {
                     break;
-
+                }
+            }
+        }
         if (pos >= 0) {
             // Close all the open elements, up the stack
-            for (var i = stack.length - 1; i >= pos; i--)
-                if (handler.end)
+            for (var i = stack.length - 1; i >= pos; i--) {
+                if (handler.end) {
                     handler.end(stack[i]);
-
+                }
+            }
             // Remove the open elements from the stack
             stack.length = pos;
         }
     }
 };
 
+var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
 
-
-this.HTMLtoDOM = function (html, doc) {
+avalon.toVTree = function (html) {
     // There can be only one of these elements
     var one = avalon.oneObject("html,head,body,title");
 
@@ -181,10 +205,10 @@ this.HTMLtoDOM = function (html, doc) {
     var structure = {
         link: "head",
         base: "head"
-    };
+    }
 
-
-    var elems = []
+    var elems = []// 正在处理的节点栈
+    var result = []  //顶层节点集合
     var curParentNode;
 
     HTMLParser(html, {
@@ -192,11 +216,11 @@ this.HTMLtoDOM = function (html, doc) {
             // If it's a pre-built element, then we can ignore
             // its construction
             if (one[tagName]) {
-                curParentNode = one[tagName];
+                curParentNode = one[tagName]
                 if (!isVoidTag) {
-                    elems.push(curParentNode);
+                    elems.push(curParentNode)
                 }
-                return;
+                return
             }
 
             var elem = {
@@ -204,47 +228,111 @@ this.HTMLtoDOM = function (html, doc) {
                 nodeType: 1,
                 children: [],
                 props: {},
+                dirs: {},
                 isVoidTag: !!isVoidTag
             }
 
-            for (var attr in attrs) {
-                elem.props[attrs[attr].name] = attrs[attr].value
+            if (!curParentNode) {
+                result.push(elem)
             }
+            parseDirectives(elem, attrs)
 
-            if (structure[tagName] && typeof one[structure[tagName]] != "boolean")
+            if (structure[tagName] && typeof one[structure[tagName]] != "boolean") {
                 one[structure[tagName]].children.push(elem)
 
-            else if (curParentNode)
+            } else if (curParentNode) {
                 curParentNode.children.push(elem)
-
+            }
             if (!isVoidTag) {
-                elems.push(elem);
-                curParentNode = elem;
+                elems.push(elem)
+                curParentNode = elem
             }
         },
         end: function (tag) {
-            elems.length -= 1;
-
+            elems.length -= 1
             // Init the new parentNode
-            curParentNode = elems[elems.length - 1];
+            curParentNode = elems[elems.length - 1]
         },
         chars: function (text) {
-            curParentNode.children.push({
-                nodeType: 3,
-                type: '#text',
-                nodeValue: text
-            });
+            if (/\S/.test(text)) {
+                var node = {
+                    nodeType: 3,
+                    type: '#text',
+                    nodeValue: text
+                }
+                if (!curParentNode) {
+                    result.push(node)
+                }
+                curParentNode.children.push(node)
+            }
         },
         comment: function (text) {
-            curParentNode.children.push({
+            var node = {
                 nodeType: 8,
                 type: '#comment',
                 nodeValue: text
-            });
+            }
+            if (!curParentNode) {
+                result.push(node)
+            }
+            curParentNode.children.push(node)
         }
-    });
+    })
 
-    return doc;
-};
+    return result
+}
 
+function parseDirectives(elem, attrs) {
+    var bindings = []
+    for (var name in attrs) {
 
+        var value = attrs[name]
+        var match = name.match(rbinding)
+        if (match) {
+            var type = match[1]
+            var param = match[2] || ""
+            if (eventMap[type]) {
+                var order = parseFloat(param) || 0
+                param = type
+                type = 'on'
+            }
+            name = 'ms-' + type + (param ? '-' + param : '')
+            var d = avalon.directives[type]
+            var binding = {
+                type: type,
+                param: param,
+                name: name,
+                expr: value,
+                priority: d && d.priority || type.charCodeAt(0) * 100
+            }
+            if (type === 'on') {
+                order = order || 0
+                binding.name += '-' + order
+                binding.priority = param.charCodeAt(0) * 100 + order
+            }
+
+            bindings.push(binding)
+            elem.dirs[name] = binding
+        } else {
+            elem.props[name] = value
+        }
+    }
+
+    if (elem.dirs['ms-skip']) {
+        elem.props['ms-skip'] = 'true'
+        bindings = []
+    }
+    if (!bindings.length) {
+        elem.skipAttrs = true
+        delete elem.dirs
+    } else {
+        //得到所有绑定属性的执行顺序
+        elem.order = bindings.sort(byPriority).map(function (el) {
+            return el.name
+        }).join(';')
+    }
+}
+
+function byPriority(a, b) {
+    return a.priority - b.priority
+}

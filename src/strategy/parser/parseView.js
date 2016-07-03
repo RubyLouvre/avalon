@@ -26,7 +26,7 @@ function addTag(obj) {
 function parseNodes(source, inner) {
     //ms-important， ms-controller ， ms-for 不可复制，省得死循环
     //ms-important --> ms-controller --> ms-for --> ms-widget --> ms-effect --> ms-if
-    var buffer = inner ? []: ['\nvar vnodes = [];'] 
+    var buffer = inner ? [] : ['\nvar vnodes = [];']
 
     for (var i = 0, el; el = source[i++]; ) {
         var vnode = parseNode(el)
@@ -80,7 +80,7 @@ function parseNode(source) {
             copy.isVoidTag = true
         } else {
             if (!('children' in copy)) {
-                
+
                 var pChildren = source.children
                 if (pChildren.length) {
                     delete source.template
@@ -91,9 +91,9 @@ function parseNode(source) {
                 }
             }
         }
-        if(source.skipContent)
+        if (source.skipContent)
             copy.skipContent = true
-        if(source.skipAttrs)
+        if (source.skipAttrs)
             copy.skipAttrs = true
 
         return addTag(copy)
