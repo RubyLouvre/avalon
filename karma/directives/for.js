@@ -73,7 +73,7 @@ describe('for', function () {
             vm.array.reverse()
             vm.array.unshift(9)
             setTimeout(function () {
-                expect(lis[0].innerHTML+"!").to.equal('0::9!')
+                expect(lis[0].innerHTML + "!").to.equal('0::9!')
                 expect(lis[1].innerHTML).to.equal('1::5')
                 expect(lis[2].innerHTML).to.equal('2::4')
                 expect(lis[3].innerHTML).to.equal('3::3')
@@ -83,12 +83,12 @@ describe('for', function () {
                 expect(ps[3].innerHTML).to.equal('3')
                 expect(ps[4].innerHTML).to.equal('2')
                 done()
-            },300)
-        },300)
+            }, 300)
+        }, 300)
     })
 
     it('双层循环,并且重复利用已有的元素节点', function (done) {
-        
+
         div.innerHTML = heredoc(function () {
             /*
              <div ms-controller='for1'>
@@ -448,7 +448,7 @@ describe('for', function () {
         })
 
     })
-    
+
     it('ms-text+ms-for', function (done) {
         div.innerHTML = heredoc(function () {
             /*
@@ -460,7 +460,7 @@ describe('for', function () {
 
         vm = avalon.define({
             $id: 'for11',
-            list: [111,222,333]
+            list: [111, 222, 333]
         });
         avalon.scan(div)
         setTimeout(function () {
@@ -469,10 +469,79 @@ describe('for', function () {
             expect(ss[0].innerHTML).to.equal('111')
             expect(ss[1].innerHTML).to.equal('222')
             expect(ss[2].innerHTML).to.equal('333')
-         
+
             done()
 
-        },100)
+        }, 100)
 
     })
+
+    it('复杂数据的排序', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <form ms-controller="for12" style="height:100%;width:100%">
+             <table border="1">
+             <tr ms-for="($row, elem) in @list">
+             <td>
+             <div>{{$row}}-{{elem.Caption_Chs}}</div>
+             </td>
+             </tr>
+             </table>
+             </form>
+             */
+        })
+
+        var Data = [
+            {"Caption_Chs": "分店编码", "ColumnType": "nvarchar"},
+            {"Caption_Chs": "公司名称", "ColumnType": "nvarchar"},
+            {"Caption_Chs": "公司名称02", "ColumnType": "nvarchar"},
+            {"Caption_Chs": "公司名称03", "ColumnType": "nvarchar"},
+            {"Caption_Chs": "公司名称04", "ColumnType": "nvarchar"},
+            {"Caption_Chs": "中文地址01", "ColumnType": "nvarchar"},
+            {"Caption_Chs": "中文地址02", "ColumnType": "nvarchar"},
+            {"Caption_Chs": "中文地址03", "ColumnType": "nvarchar"},
+            {"Caption_Chs": "公司地址04", "ColumnType": "nvarchar"},
+            {"Caption_Chs": "英文地址01", "ColumnType": "nvarchar"},
+            {"Caption_Chs": "联系人", "ColumnType": "nvarchar"},
+            {"Caption_Chs": "电话", "ColumnType": "nvarchar"},
+            {"Caption_Chs": "传真", "ColumnType": "nvarchar"},
+            {"Caption_Chs": "预设折扣%", "ColumnType": "decimal"},
+            {"Caption_Chs": "简称", "ColumnType": "nvarchar"}
+        ];
+        vm = avalon.define({
+            $id: "for12",
+            //必须深拷贝数组,防止 原Data受到影响变成一个vm数组 ,导致vm.arary = vm数组
+            //http://avalonjs.coding.me/cn/question.html
+            list: avalon.mix(true, [], Data)
+        });
+        avalon.scan(div)
+        setTimeout(function () {
+            Data.push({"Caption_Chs": "新内容",
+                "ColumnType": "nvarchar"
+            });
+
+            vm.list = avalon.mix(true, [], Data);
+            setTimeout(function () {
+                var divs = div.getElementsByTagName('div')
+                expect(divs[0].innerHTML).to.equal('0-分店编码')
+                expect(divs[1].innerHTML).to.equal('1-公司名称')
+                expect(divs[2].innerHTML).to.equal('2-公司名称02')
+                expect(divs[3].innerHTML).to.equal('3-公司名称03')
+                expect(divs[4].innerHTML).to.equal('4-公司名称04')
+                expect(divs[5].innerHTML).to.equal('5-中文地址01')
+                expect(divs[6].innerHTML).to.equal('6-中文地址02')
+                expect(divs[7].innerHTML).to.equal('7-中文地址03')
+                expect(divs[8].innerHTML).to.equal('8-公司地址04')
+                expect(divs[9].innerHTML).to.equal('9-英文地址01')
+                expect(divs[10].innerHTML).to.equal('10-联系人')
+                expect(divs[11].innerHTML).to.equal('11-电话')
+                expect(divs[12].innerHTML).to.equal('12-传真')
+                expect(divs[13].innerHTML).to.equal('13-预设折扣%')
+                expect(divs[14].innerHTML).to.equal('14-简称')
+                expect(divs[15].innerHTML).to.equal('15-新内容')
+                done()
+            }, 100)
+        }, 100);
+    })
+
 })

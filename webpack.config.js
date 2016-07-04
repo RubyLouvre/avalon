@@ -16,8 +16,10 @@ function heredoc(fn) {
             }
 var feather = heredoc(function(){
     /*
-修复 HTML实体转义问题,将处理逻辑放到parseView里面去
-修复双层注释节点ms-for循环问题(markRepeatRange BUG)
+重构ms-controller, ms-important指令
+虚拟DOM移除template属性
+修正ms-for的排序问题
+fix 在chrome与firefox下删掉select中的空白节点，会影响到selectedIndex BUG   
      */
 })
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')
