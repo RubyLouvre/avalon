@@ -1,47 +1,43 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>test</title>
-    <script src="../dist/avalon.js"></script>
-    <style>
-        .rank_top {
-            background-color: red;
-        }
-    </style>
-</head>
-<body>
- <script>
- avalon.component('ms-button', {
-    template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
-    defaults: {
-        buttonText: "button",
-        onViewChange: function(){
-            console.log('viewchange')
-        }
-    },
-    soleSlot: 'buttonText'
-})
-var vm = avalon.define({
-    $id:"root",
-    aaa:"111",
-    title:'title',
-    color:'red',
-    arr: [222,333,444],
-    html: '<span>eee</span><span>eee</span>'
-});
-avalon.define({
-    $id:'ddd',
-    ddd:3333
-})
-</script>
-<div ms-controller="root">
-    <p ms-css='{color:@color}'>{{@color}}</p>
-    <p ms-html='@html'>ddd</p>
-    <p ms-for='($index,el) in @arr'>{{el}}::{{$index}}</p>
-    <p ms-text='@title' ms-attr='{title:@title}' ms-class='@title'></p>
-    <ms-button>{{@aaa}}</ms-button>
-    <div ms-important='ddd'>{{@ddd}}</div>
-</div>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>test</title>
+        <script src="../dist/avalon.js"></script>
 
-</body>
+    </head>
+
+
+    <body ms-controller="test">
+        <div ms-html="@tpl"></div>
+   
+        <script type="aaa" id="html">
+<div ms-controller="test2">
+    <div id="dataTypeLayer" ms-html="@aaa"></div>
+</div>
+        </script>
+        <script>
+          
+           var vm = avalon.define({
+                $id: 'test',
+                tpl: ""
+            })
+
+            var vm2 = avalon.define({
+                $id: 'test2',
+                aaa: "aaaa"
+            });
+
+            setTimeout(function () {
+                vm.tpl = document.querySelector("#html").innerHTML
+                setTimeout(function(){
+                    vm2.aaa = 'bbbb'
+                })
+               // avalon.vmodels.test.layerTpl = "4564";//动态改变失效！！！
+
+            }, 2000)
+        </script>
+
+    </body>
 </html>

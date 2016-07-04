@@ -90,4 +90,40 @@ describe('html', function () {
         }, 300)
 
     })
+    
+     it('能过ms-html动态加载控制器', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+            <div ms-controller="html4">
+            <div ms-html="@tpl"></div>
+            </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'html4',
+            tpl: ""
+        })
+
+        var vm2 = avalon.define({
+            $id: 'html42',
+            aaa: "aaaa"
+        });
+
+        avalon.scan(div)
+
+        setTimeout(function () {
+            vm.tpl = heredoc(function(){
+                /*
+<div ms-controller="html42">
+    <span  ms-html="@aaa"></span>
+</div>
+                 */
+            })
+            vm2.aaa = 5555
+            var el = div.getElementsByTagName('span')[0]
+            expect(el.innerHTML).to.equal('5555')
+            done()
+        }, 300)
+
+    })
 })

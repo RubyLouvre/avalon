@@ -64,8 +64,8 @@ function parseNode(source) {
         var copy = {
             props: {},
             type: source.type,
-            nodeType: 1,
-            template: ''
+            nodeType: 1
+            //template: ''
         }
         var bindings = extractBindings(copy, source.props)
         copy.order = bindings.map(function (b) {

@@ -14,7 +14,6 @@ function render(vtree, local) {
         }
     }
     var body = '__local__ = __local__ || {};\n' +
-            'var __present__, __top__,__synth__;\n' +
             _local.join(';\n')+'\n' + _body
     var fn = Function('__vmodel__', '__local__', body)
 
