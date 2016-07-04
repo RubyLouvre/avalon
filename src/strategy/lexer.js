@@ -107,10 +107,11 @@ function lexer(text, curDeep) {
                     nodeType: 1,
                     type: type,
                     props: props,
-                    template: innerHTML.replace(rfill, fill).trim(),
                     children: []
                 }
-                node = modifyProps(node, innerHTML, nodes, curDeep)
+                node = modifyProps(node, nodes, curDeep, innerHTML,
+                        innerHTML.replace(rfill, fill).trim())
+
 
             }
         }
@@ -131,7 +132,7 @@ function lexer(text, curDeep) {
                     children: [],
                     isVoidTag: true
                 }
-                node = modifyProps(node, '', nodes, curDeep)
+                node = modifyProps(node, nodes, curDeep, '', '')
             }
         }
 
@@ -236,7 +237,7 @@ function clipOuterHTML(matchText, type) {
 }
 
 
-function modifyProps(node, innerHTML, nodes, curDeep) {
+function modifyProps(node, nodes, curDeep, innerHTML, template) {
     var type = node.type
     var props = node.props
     switch (type) {
@@ -248,8 +249,8 @@ function modifyProps(node, innerHTML, nodes, curDeep) {
         case 'xmp':
             node.skipContent = true
 
-            if (node.template) {
-                node.children.push(new VText(node.template))
+            if (template) {
+                node.children.push(new VText(template))
             } else {
                 node.children = []
             }
@@ -271,7 +272,7 @@ function modifyProps(node, innerHTML, nodes, curDeep) {
             break
 
         case 'option':
-            node.children.push(new VText(trimHTML(node.template)))
+            node.children.push(new VText(trimHTML(template)))
             break
         default:
             if (/^ms-/.test(type)) {

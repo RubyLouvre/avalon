@@ -172,7 +172,7 @@ avalon.directive('for', {
                 saveInCache(newCache, p)
             }
             src.preItems.sort(function (a, b) {
-                return a.index > b.index
+                return a.index - b.index
             })
 
             /* eslint-enable no-cond-assign */
@@ -300,6 +300,7 @@ avalon.directive('for', {
         vdom.preItems.length = 0
         keep.forEach(function (el) {
             vdom.preItems.push(el)
+            
             range.push.apply(vdom.preRepeat, el.children)
         })
 

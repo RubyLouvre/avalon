@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-4:23 version 2.15 by 司徒正美
+ * built in 2016-7-5:0 version 2.15 by 司徒正美
  * 修复 HTML实体转义问题,将处理逻辑放到parseView里面去
  * 修复双层注释节点ms-for循环问题(markRepeatRange BUG)
  */
@@ -5737,7 +5737,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                saveInCache(newCache, p)
 	            }
 	            src.preItems.sort(function (a, b) {
-	                return a.index > b.index
+	                return a.index - b.index
 	            })
 
 	            /* eslint-enable no-cond-assign */
@@ -5865,6 +5865,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        vdom.preItems.length = 0
 	        keep.forEach(function (el) {
 	            vdom.preItems.push(el)
+	            
 	            range.push.apply(vdom.preRepeat, el.children)
 	        })
 
@@ -6765,7 +6766,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	    var body = '__local__ = __local__ || {};\n' +
-	        //    'var __present__, __top__,__synth__;\n' +
 	            _local.join(';\n')+'\n' + _body
 	    var fn = Function('__vmodel__', '__local__', body)
 
@@ -6889,10 +6889,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    nodeType: 1,
 	                    type: type,
 	                    props: props,
-	                    template: innerHTML.replace(rfill, fill).trim(),
 	                    children: []
 	                }
-	                node = modifyProps(node, innerHTML, nodes, curDeep)
+	                node = modifyProps(node, nodes, curDeep, innerHTML,
+	                        innerHTML.replace(rfill, fill).trim())
+
 
 	            }
 	        }
@@ -6913,7 +6914,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    children: [],
 	                    isVoidTag: true
 	                }
-	                node = modifyProps(node, '', nodes, curDeep)
+	                node = modifyProps(node, nodes, curDeep, '', '')
 	            }
 	        }
 
@@ -7018,7 +7019,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-	function modifyProps(node, innerHTML, nodes, curDeep) {
+	function modifyProps(node, nodes, curDeep, innerHTML, template) {
 	    var type = node.type
 	    var props = node.props
 	    switch (type) {
@@ -7030,8 +7031,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        case 'xmp':
 	            node.skipContent = true
 
-	            if (node.template) {
-	                node.children.push(new VText(node.template))
+	            if (template) {
+	                node.children.push(new VText(template))
 	            } else {
 	                node.children = []
 	            }
@@ -7053,7 +7054,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            break
 
 	        case 'option':
-	            node.children.push(new VText(trimHTML(node.template)))
+	            node.children.push(new VText(trimHTML(template)))
 	            break
 	        default:
 	            if (/^ms-/.test(type)) {
