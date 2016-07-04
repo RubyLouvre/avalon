@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-4:1 version 2.15 by 司徒正美
+ * built in 2016-7-4:16 version 2.15 by 司徒正美
  * 修复 HTML实体转义问题,将处理逻辑放到parseView里面去
  * 修复双层注释节点ms-for循环问题(markRepeatRange BUG)
  */
@@ -4309,7 +4309,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 
 	            if (el.nodeType === 1 && !vnode.isVoidTag && !containers[vnode.type]) {
+	                if (el.type === 'select-one') {
+	                    //在chrome与firefox下删掉select中的空白节点，会影响到selectedIndex
+	                    var fixIndex = el.selectedIndex
+	                }
 	                reconcile(el.childNodes, vnode.children, el)
+	                if (el.type === 'select-one') {
+	                    el.selectedIndex = fixIndex
+	                }
 	            }
 	        } else {
 	            change = true

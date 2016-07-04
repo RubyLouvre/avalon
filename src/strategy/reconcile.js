@@ -54,7 +54,14 @@ function reconcile(nodes, vnodes, parent) {
             }
 
             if (el.nodeType === 1 && !vnode.isVoidTag && !containers[vnode.type]) {
+                if (el.type === 'select-one') {
+                    //在chrome与firefox下删掉select中的空白节点，会影响到selectedIndex
+                    var fixIndex = el.selectedIndex
+                }
                 reconcile(el.childNodes, vnode.children, el)
+                if (el.type === 'select-one') {
+                    el.selectedIndex = fixIndex
+                }
             }
         } else {
             change = true
