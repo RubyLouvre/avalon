@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-5:11 version 2.15 by 司徒正美
+ * built in 2016-7-5:12 version 2.15 by 司徒正美
  * 重构ms-controller, ms-important指令
  * 虚拟DOM移除template属性
  * 修正ms-for的排序问题
@@ -79,7 +79,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-7-5:11 version 2.05 by 司徒正美
+	 * built in 2016-7-5:12 version 2.15 by 司徒正美
 	 * 重构ms-controller, ms-important指令
 	 * 虚拟DOM移除template属性
 	 * 修正ms-for的排序问题
@@ -309,7 +309,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return a === 'true'|| a == '1'
 		        }
 		    },
-		    version: "2.05",
+		    version: "2.15",
 		    slice: function (nodes, start, end) {
 		        return _slice.call(nodes, start, end)
 		    },
@@ -3191,12 +3191,14 @@ return /******/ (function(modules) { // webpackBootstrap
 		        if (p && p.onError && p.addField) {
 		            return
 		        } else if (Object(validator) === validator) {
-		            if(validator.$id){//转换为普通对象
+		            src.vmValidator = validator
+		            if (validator.$id) {//转换为普通对象
 		                validator = validator.$model
 		            }
+		           
 		            src[name] = validator
-		            for(var name in dir.defaults){
-		                if(!validator.hasOwnProperty(name)){
+		            for (var name in dir.defaults) {
+		                if (!validator.hasOwnProperty(name)) {
 		                    validator[name] = dir.defaults[name]
 		                }
 		            }
@@ -3205,19 +3207,32 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		        }
 		    },
-		    update: function (node, vnode) {
-		        var validator = vnode['ms-validate']
-		        node._ms_validator_ = validator
-		        validator.dom = node
-		        node.setAttribute("novalidate", "novalidate");
+		    update: function (dom, vdom) {
+		        var validator = vdom['ms-validate']
+		        dom._ms_validator_ = validator
+		        validator.dom = dom
+		        var v = vdom.vmValidator 
+		        try{
+		           v.onManual = onManual
+		        }catch(e){}
+		        delete vdom.vmValidator 
+		        dom.setAttribute("novalidate", "novalidate")
+		        function onManual() {
+		            dir.validateAll.call(validator, validator.onValidateAll)
+		        }
 		        if (validator.validateAllInSubmit) {
-		            avalon.bind(node, "submit", function (e) {
+		            avalon.bind(dom, "submit", function (e) {
 		                e.preventDefault()
-		                dir.validateAll.call(validator, validator.onValidateAll)
+		                onManual()
 		            })
 		        }
+		       
 		        if (typeof validator.onInit === "function") { //vmodels是不包括vmodel的
-		            validator.onInit.call(node)
+		            validator.onInit.call(dom, {
+		                type: 'init',
+		                target: dom,
+		                validator: validator
+		            })
 		        }
 		    },
 		    validateAll: function (callback) {
@@ -3253,9 +3268,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		    addField: function (field) {
 		        var validator = this
 		        var node = field.dom
-		        if (validator.validateInKeyup && (!field.isChanged &&!field.debounceTime)) {
+		        if (validator.validateInKeyup && (!field.isChanged && !field.debounceTime)) {
 		            avalon.bind(node, 'keyup', function (e) {
-		                 dir.validate(field, 0, e)
+		                dir.validate(field, 0, e)
 		            })
 		        }
 		        if (validator.validateInBlur) {
@@ -3338,11 +3353,13 @@ return /******/ (function(modules) { // webpackBootstrap
 		    })
 		}
 		dir.defaults = {
-		    addField: dir.addField,
+		    addField: dir.addField,//供内部使用,收集此元素底下的所有ms-duplex的域对象
 		    onError: avalon.noop,
 		    onSuccess: avalon.noop,
 		    onComplete: avalon.noop,
+		    onManual: avalon.noop,
 		    onReset: avalon.noop,
+		    onValidateAll: avalon.noop,
 		    validateInBlur: true, //@config {Boolean} true，在blur事件中进行验证,触发onSuccess, onError, onComplete回调
 		    validateInKeyup: true, //@config {Boolean} true，在keyup事件中进行验证,触发onSuccess, onError, onComplete回调
 		    validateAllInSubmit: true, //@config {Boolean} true，在submit事件中执行onValidateAll回调

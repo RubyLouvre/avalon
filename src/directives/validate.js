@@ -8,12 +8,14 @@ var dir = avalon.directive('validate', {
         if (p && p.onError && p.addField) {
             return
         } else if (Object(validator) === validator) {
-            if(validator.$id){//转换为普通对象
+            src.vmValidator = validator
+            if (validator.$id) {//转换为普通对象
                 validator = validator.$model
             }
+           
             src[name] = validator
-            for(var name in dir.defaults){
-                if(!validator.hasOwnProperty(name)){
+            for (var name in dir.defaults) {
+                if (!validator.hasOwnProperty(name)) {
                     validator[name] = dir.defaults[name]
                 }
             }
@@ -22,19 +24,32 @@ var dir = avalon.directive('validate', {
 
         }
     },
-    update: function (node, vnode) {
-        var validator = vnode['ms-validate']
-        node._ms_validator_ = validator
-        validator.dom = node
-        node.setAttribute("novalidate", "novalidate");
+    update: function (dom, vdom) {
+        var validator = vdom['ms-validate']
+        dom._ms_validator_ = validator
+        validator.dom = dom
+        var v = vdom.vmValidator 
+        try{
+           v.onManual = onManual
+        }catch(e){}
+        delete vdom.vmValidator 
+        dom.setAttribute("novalidate", "novalidate")
+        function onManual() {
+            dir.validateAll.call(validator, validator.onValidateAll)
+        }
         if (validator.validateAllInSubmit) {
-            avalon.bind(node, "submit", function (e) {
+            avalon.bind(dom, "submit", function (e) {
                 e.preventDefault()
-                dir.validateAll.call(validator, validator.onValidateAll)
+                onManual()
             })
         }
+       
         if (typeof validator.onInit === "function") { //vmodels是不包括vmodel的
-            validator.onInit.call(node)
+            validator.onInit.call(dom, {
+                type: 'init',
+                target: dom,
+                validator: validator
+            })
         }
     },
     validateAll: function (callback) {
@@ -70,9 +85,9 @@ var dir = avalon.directive('validate', {
     addField: function (field) {
         var validator = this
         var node = field.dom
-        if (validator.validateInKeyup && (!field.isChanged &&!field.debounceTime)) {
+        if (validator.validateInKeyup && (!field.isChanged && !field.debounceTime)) {
             avalon.bind(node, 'keyup', function (e) {
-                 dir.validate(field, 0, e)
+                dir.validate(field, 0, e)
             })
         }
         if (validator.validateInBlur) {
@@ -155,11 +170,13 @@ function getMessage() {
     })
 }
 dir.defaults = {
-    addField: dir.addField,
+    addField: dir.addField,//供内部使用,收集此元素底下的所有ms-duplex的域对象
     onError: avalon.noop,
     onSuccess: avalon.noop,
     onComplete: avalon.noop,
+    onManual: avalon.noop,
     onReset: avalon.noop,
+    onValidateAll: avalon.noop,
     validateInBlur: true, //@config {Boolean} true，在blur事件中进行验证,触发onSuccess, onError, onComplete回调
     validateInKeyup: true, //@config {Boolean} true，在keyup事件中进行验证,触发onSuccess, onError, onComplete回调
     validateAllInSubmit: true, //@config {Boolean} true，在submit事件中执行onValidateAll回调
