@@ -26,8 +26,8 @@ function diff(copys, sources) {
                 }
                 break
             case 8:
-                if (copy.directive) {
-                    directives[copy.directive].diff(copy, src,
+                if (copy.dynamic === 'for') {
+                    directives['for'].diff(copy, src,
                     copys[i+1],sources[i+1],sources[i+2]) 
                 }
                 if(src.afterChange){
@@ -83,7 +83,7 @@ function diffProps(copys, sources) {
             
         } catch (e) {
             if(e !== 'break'){
-                avalon.log(directiveType, e, e.message, 'diffProps error')
+                avalon.log(directiveType, e, e.stack || e.message, 'diffProps error')
             }else{
                 diffProps(copys, sources)
             }

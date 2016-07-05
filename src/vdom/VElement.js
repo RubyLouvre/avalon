@@ -9,7 +9,6 @@ function VElement(type, props, children) {
         this.type = type
         this.props = props
         this.children = children
-        this.template = ''
     }
 }
 function skipFalseAndFunction(a) {
@@ -69,11 +68,13 @@ VElement.prototype = {
         } else {
             dom = document.createElement(tagName)
         }
-
-        if (this.wid) {
-            var scope = avalon.scopes[this.wid]
-            if (scope && scope.dom) {
-                return scope.dom
+        var wid = this.props['ms-important'] ||
+                this.props['ms-controller'] || this.wid
+        if (wid) {
+            var scope = avalon.scopes[wid]
+            var element = scope && scope.vmodel && scope.vmodel.$element
+            if (element) {
+                return element
             }
         }
         for (var i in this.props) {
@@ -87,7 +88,7 @@ VElement.prototype = {
             }
         }
         var c = this.children || []
-        var template = c[0] ? c[0].nodeValue: ''
+        var template = c[0] ? c[0].nodeValue : ''
         switch (this.type) {
             case 'script':
                 dom.text = template
@@ -134,9 +135,7 @@ VElement.prototype = {
             str += this.children.map(function (c) {
                 return c ? avalon.vdomAdaptor(c, 'toHTML') : ''
             }).join('')
-        } else {
-            str += this.template || ""
-        }
+        } 
         return str + '</' + this.type + '>'
     }
 }

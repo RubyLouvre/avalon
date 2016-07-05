@@ -13,7 +13,7 @@ avalon.keyMap = keyMap
       outerHTML: 1,
       order: 1,
       nodeValue: 1,
-      directive: 1,
+      dynamic: 1,
       signature: 1,
       wid: 1,
       cid: 1

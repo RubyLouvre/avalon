@@ -145,7 +145,7 @@ function lexer(text, curDeep) {
                 if (rmsForStart.test(node.nodeValue)) {
 
                     node.signature = node.signature || makeHashCode('for')
-                    node.directive = 'for'
+                    node.dynamic = 'for'
                 } else if (rmsForEnd.test(node.nodeValue)) {
                     //将 ms-for与ms-for-end:之间的节点塞到一个数组中
                     nodes.pop()
@@ -301,7 +301,7 @@ function modifyProps(node, nodes, curDeep, innerHTML, template) {
             type: '#comment',
             nodeValue: 'ms-for:' + forExpr,
             signature: makeHashCode('for'),
-            directive: 'for',
+            dynamic: 'for',
             cid: cid
         })
 
@@ -313,6 +313,7 @@ function modifyProps(node, nodes, curDeep, innerHTML, template) {
         return {
             nodeType: 8,
             type: '#comment',
+            dynamic: true,
             nodeValue: 'ms-for-end:'
         }
     }
@@ -403,15 +404,14 @@ function hasDirective(a) {
     switch (a.nodeType) {
         case 3:
             if (config.rbind.test(a.nodeValue)) {
-                a.dynamic = true
+                a.dynamic = 'expr'
                 return true
             } else {
                 a.skipContent = true
                 return false
             }
         case 8:
-            if (/^ms\-for/.test(a.nodeValue)) {
-                a.dynamic = true
+            if (a.dynamic) {
                 return true
             } else {
                 a.skipContent = true

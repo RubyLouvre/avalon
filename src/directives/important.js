@@ -5,6 +5,7 @@ avalon.directive('important', {
     priority: 1,
     parse: function (copy, src, binding) {
         var quoted = avalon.quote(binding.expr)
+        copy[binding.name] = quoted
         copy.local = '{}'
         copy.vmodel = '(function(){ return __vmodel__ = avalon.vmodels[' + quoted + ']})()'
         src.$prepend = ['(function(__vmodel__){',
@@ -13,10 +14,9 @@ avalon.directive('important', {
         ].join('\n') + '\n'
         src.$append = '\n})();'
     },
-    diff: function (copy, src) {
+    diff: function (copy, src, name) {
         if (src.vmodel !== copy.vmodel) {
-            src.props['ms-controller'] = src.props['ms-important']
-            delete src.props['ms-important']
+            src['ms-controller'] = copy[name]
             src.local = copy.local
             src.vmodel = copy.vmodel
             update(src, this.update)

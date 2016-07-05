@@ -1,3 +1,4 @@
+var getHTML = require('./htmlfy')
 function scan(nodes) {
     for (var i = 0, elem; elem = nodes[i++];) {
         if (elem.nodeType === 1) {

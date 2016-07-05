@@ -19,7 +19,9 @@ var feather = heredoc(function(){
 重构ms-controller, ms-important指令
 虚拟DOM移除template属性
 修正ms-for的排序问题
-fix 在chrome与firefox下删掉select中的空白节点，会影响到selectedIndex BUG   
+fix 在chrome与firefox下删掉select中的空白节点，会影响到selectedIndex BUG  
+ms-widget, ms-controller, ms-important生成的VM与对应的DOM都保存起来,
+并在avalon.vdomAdaptor中还原
      */
 })
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')
@@ -40,8 +42,8 @@ module.exports = {
         libraryTarget: 'umd',
         library: 'avalon'
     }, //页面引用的文件
-    plugins: [//'built in '+snow+
-      new webpack.BannerPlugin(' version '+ v+' by 司徒正美\n')
+    plugins: [//
+      new webpack.BannerPlugin('built in '+snow+' version '+ v+' by 司徒正美\n'+feather)
     ],
     module: {
         loaders: [

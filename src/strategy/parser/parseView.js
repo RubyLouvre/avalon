@@ -83,10 +83,8 @@ function parseNode(source) {
 
                 var pChildren = source.children
                 if (pChildren.length) {
-                    delete source.template
                     copy.children = '(function(){' + parseNodes(pChildren) + '})()'
                 } else {
-                    copy.template = source.template
                     copy.children = '[]'
                 }
             }
@@ -105,7 +103,7 @@ function parseNode(source) {
                 avalon.error('ms-for指令前不能有空格')
             }
             var copy = {
-                directive: 'for',
+                dynamic: 'for',
                 vmodel: '__vmodel__'
             }
             for (var i in source) {

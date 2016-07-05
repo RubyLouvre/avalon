@@ -42,7 +42,7 @@ avalon.directive('controller', {
     update: function (dom, vdom, parent, important) {
         var vmodel = vdom.vmodel
         var local = vdom.local
-        var id = vdom.props['ms-controller']
+        var id = vdom['ms-controller']
         var scope = avalon.scopes[id]
         if (scope &&
                 (!important || important.fast)) {
@@ -51,16 +51,14 @@ avalon.directive('controller', {
         }
         delete vdom.vmodel
         delete vdom.local
-        delete vdom.props['ms-controller']
         var top = avalon.vmodels[id]
-
         var render = avalon.render([vdom], local)
         vmodel.$render = render
         vmodel.$element = dom
         dom.vtree = [vdom]
         if (top !== vmodel) {
-            top.$render = render
-            top.$element = dom
+            top.$render = top.$render || render
+            top.$element = top.$element || dom
         }
         avalon.scopes[id] = {
             vmodel: vmodel,

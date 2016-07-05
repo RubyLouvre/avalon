@@ -6,37 +6,22 @@
     <script src="../dist/avalon.js"></script>
     <script>
     var vm = avalon.define({
-        $id: 'page',
-        array:[[1,2,3,4],[5,6,7,8],[9,10,11,12]]
+        $id:'test',
+        toggle: true,
+        aaa: 111,
+        alert:function(){
+            console.log('aaa')
+        }
     })
-    setTimeout(function () {
-        console.log('dddddd')
-        //vm.array[1] =[33,44,55,66];
-        //set更改可以同步视图
-        vm.array.set(1,[33,44,55,66]);
-    }, 1500)
 </script>
 <style>
- table tr td {
-    border: 1px solid #ddd;
- }
+
 </style>
 </head>
-<body ms-controller="page">
-<div id="div">
-    <table>
-        <tbody>
-        <!--ms-for:(key,value) in @array-->
-        <tr>
-            <!--ms-for:(k,v) in value-->
-            <td>
-                第{{key}}行第{{k}}元素为{{v}}
-            </td>
-            <!--ms-for-end:-->
-        </tr>
-        <!--ms-for-end:-->
-        </tbody>
-    </table>
-</div>
+<body ms-controller="test">
+    <div ms-if="@toggle">{{@aaa}}
+        <p ms-click="@alert">ddd</p>
+    </div>
+    <p><button ms-click="@toggle = !@toggle" type="button">切换</button></p>
 </body>
 </html>

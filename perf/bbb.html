@@ -4,47 +4,74 @@
         <meta charset="UTF-8">
         <title>Drag-Drop</title>
         <script src="../dist/avalon.js"></script>
-    </head>
-    <body>
-        <div ms-controller="validate1">
-            <form ms-validate="@validate">
-                <p><input ms-duplex="@aaa" placeholder="username"
-                          ms-rules='{required:true,chs:true}' >{{@aaa}}</p>
-                <p><input type="password" id="pw" placeholder="password"
-                          ms-rules='{required:true}' 
-                          ms-duplex="@bbb" /></p>
-                <p><input type="password" 
-                          ms-rules="{required:true,equalto:'pw'}" placeholder="再填一次"
-                          ms-duplex="@ccc | change" /></p>
-                <p><input type="submit" value="submit"/></p>
-            </form>
-        </div>
         <script>
-var vm = avalon.define({
-    $id: "validate1",
-    aaa: "",
-    bbb: '',
-    ccc: '',
-    validate: {
-        onManual:avalon.noop,//IE6-8必须指定,avalon一会儿会重写方法
-        onError: function (reasons) {
-            reasons.forEach(function (reason) {
-                console.log(reason.getMessage())
-            })
-        },
-        onValidateAll: function (reasons) {
-            if (reasons.length) {
-                console.log('有表单没有通过')
-            } else {
-                console.log('全部通过')
+            function heredoc(fn) {
+                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+                        replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
             }
-        }
-    }
-})
+            var v123 = heredoc(function () {
+                /*
+                 <fieldset ms-controller="test2">
+                 <div id="dataTypeLayer" ms-html="@layerTpl"></div>
+                 <button ms-click="@display">显示</button>
+                 <xmp ms-skip style="display: none" id="addTpl1">
+                 "模板1"
+                 </xmp>
+                 </fieldset>
+                 */
+            })
+            var v456 = heredoc(function () {
+                /*
+                 <form ms-controller="test3">
+                 <div id="dataTypeLayer" ms-html="@layerTpl"></div>
+                 <button ms-click="@display |prevent">显示</button>
+                 <xmp ms-skip style="display: none" id="addTpl2">
+                 "模板2"
+                 </xmp>
+                 </form>
+                 */
+            })
+            var vm = avalon.define({
+                $id: 'test',
+                tpl: "",
+                switch1: function () {
+                    vm.tpl = v123
 
-setTimeout(function(){
-    vm.validate.onManual()
-})
+                },
+                switch2: function () {
+
+                    vm.tpl = v456
+
+                }
+            })
+
+            var vm2 = avalon.define({
+                $id: 'test2',
+                layerTpl: "vm2",
+                display: function () {
+                     console.log('test2.display')
+                   // var text = document.querySelector("#addTpl1").innerHTML;
+                  //  console.log(text)
+                    this.layerTpl = new Date - 0//text
+                }
+            });
+
+            var vm3 = avalon.define({
+                $id: 'test3',
+                layerTpl: "vm3",
+                display: function () {
+                    console.log('test3.display')
+                  //  var text = document.querySelector("#addTpl2").innerHTML;
+                 //   console.log(text)
+                    this.layerTpl = "xxx" + (new Date - 0) //text
+                }
+            });
         </script>
+    </head>
+    <body ms-controller="test">
+        <div ms-html="@tpl"></div>
+        <button ms-click="@switch1">切换1</button>
+        <button ms-click="@switch2">切换2</button>
+
     </body>
 </html>
