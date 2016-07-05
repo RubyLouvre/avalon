@@ -1,5 +1,5 @@
 /*!
- *  version 2.09 by 司徒正美
+ *  version 2.10 by 司徒正美
  * 
  */
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -684,7 +684,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return a === 'true'|| a == '1'
 	        }
 	    },
-	    version: "2.09",
+	    version: "2.10",
 	    slice: function (nodes, start, end) {
 	        return _slice.call(nodes, start, end)
 	    },
