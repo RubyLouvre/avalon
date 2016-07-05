@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-5:1 version 2.15 by 司徒正美
+ * built in 2016-7-5:11 version 2.15 by 司徒正美
  * 重构ms-controller, ms-important指令
  * 虚拟DOM移除template属性
  * 修正ms-for的排序问题
@@ -79,7 +79,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-7-5:1 version 2.15 by 司徒正美
+	 * built in 2016-7-5:11 version 2.05 by 司徒正美
 	 * 重构ms-controller, ms-important指令
 	 * 虚拟DOM移除template属性
 	 * 修正ms-for的排序问题
@@ -309,7 +309,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return a === 'true'|| a == '1'
 		        }
 		    },
-		    version: "2.15",
+		    version: "2.05",
 		    slice: function (nodes, start, end) {
 		        return _slice.call(nodes, start, end)
 		    },
