@@ -32,7 +32,7 @@ avalon.shadowCopy(avalon, {
             return a === 'true'|| a == '1'
         }
     },
-    version: "2.05",
+    version: "2.06",
     slice: function (nodes, start, end) {
         return _slice.call(nodes, start, end)
     },
