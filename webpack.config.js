@@ -40,8 +40,8 @@ module.exports = {
         libraryTarget: 'umd',
         library: 'avalon'
     }, //页面引用的文件
-    plugins: [
-      new webpack.BannerPlugin('built in '+snow+' version '+ v+' by 司徒正美\n'+feather)
+    plugins: [//'built in '+snow+
+      new webpack.BannerPlugin(' version '+ v+' by 司徒正美\n')
     ],
     module: {
         loaders: [

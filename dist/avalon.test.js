@@ -1,9 +1,6 @@
 /*!
- * built in 2016-7-5:12 version 2.15 by 司徒正美
- * 重构ms-controller, ms-important指令
- * 虚拟DOM移除template属性
- * 修正ms-for的排序问题
- * fix 在chrome与firefox下删掉select中的空白节点，会影响到selectedIndex BUG
+ *  version 2.05 by 司徒正美
+ * 
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -79,11 +76,8 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-7-5:12 version 2.15 by 司徒正美
-	 * 重构ms-controller, ms-important指令
-	 * 虚拟DOM移除template属性
-	 * 修正ms-for的排序问题
-	 * fix 在chrome与firefox下删掉select中的空白节点，会影响到selectedIndex BUG
+	 *  version 2.05 by 司徒正美
+	 * 
 	 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
@@ -309,7 +303,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return a === 'true'|| a == '1'
 		        }
 		    },
-		    version: "2.15",
+		    version: "2.05",
 		    slice: function (nodes, start, end) {
 		        return _slice.call(nodes, start, end)
 		    },
