@@ -1,43 +1,56 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
     <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <title>test</title>
+        <meta charset="UTF-8">
+        <title>Drag-Drop</title>
         <script src="../dist/avalon.js"></script>
-
     </head>
-
-
-    <body ms-controller="test">
-        <div ms-html="@tpl"></div>
-   
-        <script type="aaa" id="html">
-<div ms-controller="test2">
-    <div id="dataTypeLayer" ms-html="@aaa"></div>
-</div>
-        </script>
+    <body>
+        <div ms-controller="test" style="height:100%;width:100%">
+            <table border="1">
+                <tr ms-for="($row, elem) in @list">
+                    <td>
+                        <div>{{$row}}-{{elem.Caption_Chs}}</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
         <script>
-          
-           var vm = avalon.define({
-                $id: 'test',
-                tpl: ""
-            })
+var Data = [
+    {"Caption_Chs": "分店编码", "ColumnType": "nvarchar"},
+    {"Caption_Chs": "公司名称", "ColumnType": "nvarchar"},
+    {"Caption_Chs": "公司名称02", "ColumnType": "nvarchar"},
+    {"Caption_Chs": "公司名称03", "ColumnType": "nvarchar"},
+    {"Caption_Chs": "公司名称04", "ColumnType": "nvarchar"},
+    {"Caption_Chs": "中文地址01", "ColumnType": "nvarchar"},
+    {"Caption_Chs": "中文地址02", "ColumnType": "nvarchar"},
+    {"Caption_Chs": "中文地址03", "ColumnType": "nvarchar"},
+    {"Caption_Chs": "公司地址04", "ColumnType": "nvarchar"},
+    {"Caption_Chs": "英文地址01", "ColumnType": "nvarchar"},
+    {"Caption_Chs": "联系人", "ColumnType": "nvarchar"},
+    {"Caption_Chs": "电话", "ColumnType": "nvarchar"},
+    {"Caption_Chs": "传真", "ColumnType": "nvarchar"},
+    {"Caption_Chs": "预设折扣%", "ColumnType": "decimal"},
+    {"Caption_Chs": "简称", "ColumnType": "nvarchar"}
+];
+var vm = avalon.define({
+    $id: "test",
+    ttt: "ABC",
+    //必须深拷贝数组,防止 原Data受到影响变成一个vm数组 ,导致vm.arary = vm数组
+    //http://avalonjs.coding.me/cn/question.html
+    list: avalon.mix(true, [], Data)
+});
 
-            var vm2 = avalon.define({
-                $id: 'test2',
-                aaa: "aaaa"
-            });
+setTimeout(function () {
+    Data.push({"Caption_Chs": "新内容",
+        "ColumnType": "nvarchar"
+    });
 
-            setTimeout(function () {
-                vm.tpl = document.querySelector("#html").innerHTML
-                setTimeout(function(){
-                    vm2.aaa = 'bbbb'
-                })
-               // avalon.vmodels.test.layerTpl = "4564";//动态改变失效！！！
+    vm.list = avalon.mix(true, [], Data);
+}, 500);
 
-            }, 2000)
+
+
         </script>
-
     </body>
 </html>

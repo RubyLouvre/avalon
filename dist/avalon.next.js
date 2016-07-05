@@ -1,7 +1,9 @@
 /*!
- * built in 2016-7-5:0 version 2.15 by 司徒正美
- * 修复 HTML实体转义问题,将处理逻辑放到parseView里面去
- * 修复双层注释节点ms-for循环问题(markRepeatRange BUG)
+ * built in 2016-7-5:1 version 2.15 by 司徒正美
+ * 重构ms-controller, ms-important指令
+ * 虚拟DOM移除template属性
+ * 修正ms-for的排序问题
+ * fix 在chrome与firefox下删掉select中的空白节点，会影响到selectedIndex BUG
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
