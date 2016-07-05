@@ -35,7 +35,7 @@ function diff(copys, sources) {
                 }
                 break
             case 1:
-                if (!copy.skipAttrs) {
+                if (copy.order) {
                     diffProps(copy, src)
                 }
                 if (!copy.skipContent && !copy.isVoidTag ) {
