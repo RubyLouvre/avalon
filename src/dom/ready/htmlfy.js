@@ -18,7 +18,7 @@ function getAttributes(array) {
     var ret = []
     for (var i = 0, attr; attr = array[i++]; ) {
         if (attr.specified) {
-            ret.push(attr.name.toLowerCase()+'="' + escape(attr.value) + '"')
+            ret.push(attr.name.toLowerCase()+'="' + escapeHtml(attr.value) + '"')
         }
     }
     var str = ret.join(' ')

@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-6:13 version 2.10 by 司徒正美
+ * built in 2016-7-6:14 version 2.10 by 司徒正美
  * 重构ms-controller, ms-important指令
  * 虚拟DOM移除template属性
  * 修正ms-for的排序问题
@@ -3097,7 +3097,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                vm.$element = elem
 	                var now = new Date()
 	                //IE6-8下元素的outerHTML前面会有空白
-	                var text = getHTML(elem)
+	                var text = getHTML(elem)//elem.outerHTML
 	                elem.vtree = avalon.lexer(text)
 	                avalon.speedUp(elem.vtree)
 	                var now2 = new Date()
@@ -3157,7 +3157,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var ret = []
 	    for (var i = 0, attr; attr = array[i++]; ) {
 	        if (attr.specified) {
-	            ret.push(attr.name.toLowerCase()+'="' + escape(attr.value) + '"')
+	            ret.push(attr.name.toLowerCase()+'="' + escapeHtml(attr.value) + '"')
 	        }
 	    }
 	    var str = ret.join(' ')

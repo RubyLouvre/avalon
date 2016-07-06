@@ -10,7 +10,7 @@ function scan(nodes) {
                 vm.$element = elem
                 var now = new Date()
                 //IE6-8下元素的outerHTML前面会有空白
-                var text = getHTML(elem)
+                var text = getHTML(elem)//elem.outerHTML
                 elem.vtree = avalon.lexer(text)
                 avalon.speedUp(elem.vtree)
                 var now2 = new Date()

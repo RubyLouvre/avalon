@@ -11,61 +11,67 @@
             }
             var v123 = heredoc(function () {
                 /*
-                 <fieldset ms-controller="test2">
-                 <div id="dataTypeLayer" ms-html="@layerTpl"></div>
-                 <button ms-click="@display">显示</button>
-                 <xmp ms-skip style="display: none" id="addTpl1">
-                 "模板1"
-                 </xmp>
-                 </fieldset>
+                 <div ms-controller="test2">
+        <p ms-click="@alert">123</p>
+                 <xmp cached='true' ms-widget="{is:'ms-span',$id:'yyy'}"></xmp>
+                 </div>
                  */
             })
             var v456 = heredoc(function () {
                 /*
-                 <form ms-controller="test3">
-                 <div id="dataTypeLayer" ms-html="@layerTpl"></div>
-                 <button ms-click="@display |prevent">显示</button>
-                 <xmp ms-skip style="display: none" id="addTpl2">
-                 "模板2"
-                 </xmp>
-                 </form>
+                 <div ms-controller="test3">
+         <p ms-click="@alert">456</p>
+                 <xmp cached='true' ms-widget="{is:'ms-span'}"></xmp>
+                 </div>
                  */
             })
+        </script>
+        <script>
+
             var vm = avalon.define({
                 $id: 'test',
                 tpl: "",
                 switch1: function () {
-                    vm.tpl = v123
+                    setTimeout(function () {
+                        console.log('111111')
+                        avalon.vmodels.test.tpl = v123
+
+                    })
 
                 },
                 switch2: function () {
+                    setTimeout(function () {
+                        console.log('sssss')
+                        avalon.vmodels.test.tpl = v456
 
-                    vm.tpl = v456
+                    })
 
                 }
-            })
-
+            });
             var vm2 = avalon.define({
                 $id: 'test2',
-                layerTpl: "vm2",
-                display: function () {
-                     console.log('test2.display')
-                   // var text = document.querySelector("#addTpl1").innerHTML;
-                  //  console.log(text)
-                    this.layerTpl = new Date - 0//text
+                ddd: 111,
+                alert: function(){
+                    console.log('????')
+                }
+            });
+            var vm3 = avalon.define({
+                $id: 'test3',
+                ddd: 222,
+                alert: function(){
+                    console.log('!!!!')
+                }
+            });
+            avalon.component('ms-span', {
+                template: "<span ms-click='@click'>{{@ddd}}</span>",
+                defaults: {
+                    ddd:'3333',
+                    click: function(){
+                        console.log('inner...')
+                    }
                 }
             });
 
-            var vm3 = avalon.define({
-                $id: 'test3',
-                layerTpl: "vm3",
-                display: function () {
-                    console.log('test3.display')
-                  //  var text = document.querySelector("#addTpl2").innerHTML;
-                 //   console.log(text)
-                    this.layerTpl = "xxx" + (new Date - 0) //text
-                }
-            });
         </script>
     </head>
     <body ms-controller="test">
