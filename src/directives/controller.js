@@ -1,5 +1,7 @@
 // 抽离出来公用
 var update = require('./_update')
+var reconcile = require('../strategy/reconcile')
+
 var cache = {}
 avalon.mediatorFactoryCache = function (__vmodel__, __present__) {
     var a = __vmodel__.$hashcode
@@ -37,6 +39,7 @@ avalon.directive('controller', {
             src.local = copy.local
             src.vmodel = copy.vmodel
             update(src, this.update)
+
         }
     },
     update: function (dom, vdom, parent, important) {
@@ -44,9 +47,7 @@ avalon.directive('controller', {
         var local = vdom.local
         var id = vdom['ms-controller']
         var scope = avalon.scopes[id]
-        if (scope &&
-                (!important || important.fast)) {
-            //如果vm在位于顶层,那么在domReady的第一次scan中已经注册到scopes
+        if (scope) {
             return
         }
         delete vdom.vmodel
@@ -55,16 +56,25 @@ avalon.directive('controller', {
         var render = avalon.render([vdom], local)
         vmodel.$render = render
         vmodel.$element = dom
+        reconcile([dom], vdom, parent)
         dom.vtree = [vdom]
         if (top !== vmodel) {
             top.$render = top.$render || render
             top.$element = top.$element || dom
         }
-        avalon.scopes[id] = {
+        var needFire = important ? vmodel : top
+        var scope = avalon.scopes[id] = {
             vmodel: vmodel,
-            local: local,
-            fast: 'important'
+            local: local
         }
+        update(vdom, function () {
+            var events = needFire.$events["onReady"]
+            if (events) {
+                needFire.$fire('onReady')
+                delete needFire.$events.onReady
+            }
+            scope.isMount = true
+        }, 'afterChange')
 
     }
 })

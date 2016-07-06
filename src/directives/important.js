@@ -10,7 +10,7 @@ avalon.directive('important', {
         copy.vmodel = '(function(){ return __vmodel__ = avalon.vmodels[' + quoted + ']})()'
         src.$prepend = ['(function(__vmodel__){',
             'var important = avalon.scopes[' + quoted + ']',
-            'if(important && important.fast){avalon.log("不进入"+' + quoted + ');return }',
+            'if(important){avalon.log("不进入"+' + quoted + ');return }',
         ].join('\n') + '\n'
         src.$append = '\n})();'
     },
