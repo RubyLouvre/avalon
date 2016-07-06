@@ -62,7 +62,12 @@ function createComponent(src, copy, is) {
 
     var define = hooks.define
     define = define || avalon.directives.widget.define
-
+    if (!hooks.$id) {
+        avalon.warn('warning!', is, '组件在ms-widget配置对象中指定全局不重复的$id\n',
+                '若在for循环中可以利用 ($index,el) in @array 中的$index拼写你的$id\n',
+                '如 ms-widget="{is:\'ms-button\',$id:\'btn\'+$index}"'
+                )
+    }
     var $id = hooks.$id || src.wid
 
     var defaults = avalon.mix(true, {}, definition.defaults)
@@ -174,7 +179,7 @@ function mergeTempale(vtree, slots) {
             if (node.type === 'slot') {
                 var name = node.props.name || 'default'
                 if (slots[name]) {
-                    var s = slots[name].length ? slots[name] :  newText(name)
+                    var s = slots[name].length ? slots[name] : newText(name)
                     vtree.splice.apply(vtree, [i - 1, 1].concat(s))
                 }
             } else {
