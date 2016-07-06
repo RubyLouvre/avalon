@@ -4271,8 +4271,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var define = hooks.define
 	    define = define || avalon.directives.widget.define
 	    if (!hooks.$id) {
-	        avalon.warn('warning!', is, '组件在ms-widget配置对象中指定全局不重复的$id\n',
-	                '若在for循环中可以利用 ($index,el) in @array 中的$index拼写你的$id\n',
+	        avalon.warn('warning!', is, '组件没有在ms-widget配置对象中指定全局不重复的$id\n',
+	                '若在ms-for循环中可以利用 ($index,el) in @array 中的$index拼写你的$id\n',
 	                '如 ms-widget="{is:\'ms-button\',$id:\'btn\'+$index}"'
 	                )
 	    }
