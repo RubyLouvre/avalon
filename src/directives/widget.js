@@ -30,11 +30,9 @@ avalon.directive('widget', {
             if (Array.isArray(a)) {//转换成对象
                 a = avalon.mix.apply({}, a)
             }
-
             var is = a.is || src.props.is
             if (!src[is + "-vm"]) {
                 if (!createComponent(src, copy, is)) {
-
                     //替换成注释节点
                     update(src, this.mountComment)
                     return
@@ -79,13 +77,13 @@ avalon.directive('widget', {
     
     mountComponent: function (dom, vdom, parent) {
         var is = vdom.is
-
         var vm = vdom[is + '-vm']
         var copy = vdom.copy
         var newCopy = vdom.newCopy
         delete vdom.newCopy
-        var scope = avalon.scopes[vm.$id]
-        if (scope && scope.vmodel) {         
+       
+        var scope = avalon.scopes[vm.$id]  
+        if (scope && scope.vmodel) {  
             var com = scope.vmodel.$element
             newCopy = com.vtree[0]
             updateCopy(vdom, newCopy)
@@ -95,6 +93,7 @@ avalon.directive('widget', {
             vdom[is + '-mount'] = true
             return
         }
+        
         //更新原始虚拟DOM树
         updateCopy(copy, newCopy )  
         var vtree = vdom[is + '-vtree']
@@ -111,7 +110,6 @@ avalon.directive('widget', {
         vdom.dom = com
         avalon.onComponentDispose(com)
        
-        
         vdom[is + '-mount'] = true
         //--------------
         vm.$element = com

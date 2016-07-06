@@ -29,21 +29,13 @@ function batchUpdate(id) {
     var source = dom.vtree || []
     var renderFn = vm.$render
     var copy = renderFn(scope.vmodel, scope.local)
-    if (!scope.isMount) {
+    if (scope.isTemp) {
         //在最开始时,替换作用域的所有节点,确保虚拟DOM与真实DOM是对齐的
-        reconcile([dom], source, dom.parentNode)  
-        scope.isMount = 1
+        reconcile([dom], source, dom.parentNode)
+        delete avalon.scopes[id]
     }
     avalon.diff(copy, source)
-    
-    if (scope.isMount === 1) {
-        var events = vm.$events["onReady"]
-        if (events) {
-            vm.$fire('onReady')
-            delete vm.$events.onReady
-        }
-        scope.isMount = 2
-    }
+
 
     var index = needRenderIds.indexOf(renderingID)
     renderingID = 0

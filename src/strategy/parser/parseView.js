@@ -65,7 +65,6 @@ function parseNode(source) {
             props: {},
             type: source.type,
             nodeType: 1
-            //template: ''
         }
         var bindings = extractBindings(copy, source.props)
         copy.order = bindings.map(function (b) {
@@ -80,7 +79,6 @@ function parseNode(source) {
             copy.isVoidTag = true
         } else {
             if (!('children' in copy)) {
-
                 var pChildren = source.children
                 if (pChildren.length) {
                     copy.children = '(function(){' + parseNodes(pChildren) + '})()'

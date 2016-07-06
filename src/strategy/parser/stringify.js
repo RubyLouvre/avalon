@@ -39,7 +39,8 @@ function stringify(obj) {
                 arr2.push(fixKey(k) + ': ' + kv)
             }
             arr1.push('props: {' + arr2.join(',\n') + '}')
-        } else if(obj.hasOwnProperty(i)) {
+        } else if(obj.hasOwnProperty(i) && i !== 'dom') {
+           
             var v = obj[i]
             if (typeof v === 'string') {
                 v = quoted[i] ? quote(v) : v
