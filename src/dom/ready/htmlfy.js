@@ -18,7 +18,7 @@ function getAttributes(array) {
     var ret = []
     for (var i = 0, attr; attr = array[i++]; ) {
         if (attr.specified) {
-            ret.push(attr.name.toLowerCase()+'="' + escapeHtml(attr.value) + '"')
+            ret.push(attr.name.toLowerCase()+'="' + avalon.escapeHtml(attr.value) + '"')
         }
     }
     var str = ret.join(' ')
@@ -32,53 +32,5 @@ function getChild(el) {
     }
     return ret
 }
-var matchHtmlRegExp = /["'&<>]/;
 
-function escapeHtml(string) {
-    var str = '' + string;
-    var match = matchHtmlRegExp.exec(str);
-
-    if (!match) {
-        return str;
-    }
-
-    var escape;
-    var html = '';
-    var index = 0;
-    var lastIndex = 0;
-
-    for (index = match.index; index < str.length; index++) {
-        switch (str.charCodeAt(index)) {
-            case 34: // "
-                escape = '&quot;';
-                break;
-            case 38: // &
-                escape = '&amp;';
-                break;
-            case 39: // '
-                escape = '&#39;';
-                break;
-            case 60: // <
-                escape = '&lt;';
-                break;
-            case 62: // >
-                escape = '&gt;';
-                break;
-            default:
-                continue;
-        }
-
-        if (lastIndex !== index) {
-            html += str.substring(lastIndex, index);
-        }
-
-        lastIndex = index + 1;
-        html += escape;
-    }
-
-    return lastIndex !== index
-            ? html + str.substring(lastIndex, index)
-            : html;
-}
-//https://github.com/nthtran/vdom-to-html
 module.exports = getHTML

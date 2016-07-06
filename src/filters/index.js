@@ -1,6 +1,5 @@
 
 var number = require("./number")
-var escape = require("./escape")
 var sanitize = require("./sanitize")
 var date = require("./date")
 var arrayFilters = require("./array")
@@ -37,7 +36,7 @@ avalon.mix(filters, {
     },
     camelize: avalon.camelize,
     date: date,
-    escape: escape,
+    escape: avalon.escapeHtml,
     sanitize: sanitize,
     number: number,
     currency: function (amount, symbol, fractionSize) {
@@ -46,11 +45,6 @@ avalon.mix(filters, {
                         isFinite(fractionSize) ? fractionSize : 2)
     }
 }, arrayFilters, eventFilters)
-
-
-
-
-
 
 
 module.exports = avalon

@@ -68,7 +68,7 @@ avalon.fn.position = function () {
 avalon.fn.offsetParent = function () {
     var offsetParent = this[0].offsetParent
     while (offsetParent && avalon.css(offsetParent, 'position') === 'static') {
-        offsetParent = offsetParent.offsetParent;
+        offsetParent = offsetParent.offsetParent
     }
     return avalon(offsetParent || root)
 }
@@ -144,7 +144,7 @@ if (window.getComputedStyle) {
     cssHooks['opacity:set'] = function (node, name, value) {
         var style = node.style
         var opacity = isFinite(value) && value <= 1 ? 'alpha(opacity=' + value * 100 + ')' : ''
-        var filter = style.filter || '';
+        var filter = style.filter || ''
         style.zoom = 1
         //不能使用以下方式设置透明度
         //node.filters.alpha.opacity = value * 100
@@ -224,8 +224,8 @@ avalon.each({
         return ret
     }
     cssHooks[method + '&get'] = function (node) {
-        var hidden = [];
-        showHidden(node, hidden);
+        var hidden = []
+        showHidden(node, hidden)
         var val = cssHooks[method + ':get'](node)
         for (var i = 0, obj; obj = hidden[i++]; ) {
             node = obj.node

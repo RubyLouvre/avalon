@@ -4,44 +4,26 @@
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
         <meta charset="utf-8" />
         <script src="../dist/avalon.js"></script>
-  
-        <script type="html" id="ddd">
-        <div>
-            <div ms-for="el in @innerArray" >
-               
-                <div ms-if="el.messageType == 'PUBLIC_CHAT'"
-                     ms-text="el.message"></div>
-                  
-            </div>
-        </div>
 
-        </script>
+
         <script type="text/javascript">
 
-        var template = document.getElementById('ddd').text
-
-        avalon.component("ms-messagelist", {
-            template: template,
-            defaults: {
-                innerArray: []
-            }
-        });
-
-
-        avalon.define({
-            $id: "main",
-            message_list: [
-                {messageType:"PUBLIC_CHAT", message:"aaa"},
-                {messageType:"XXX", message:"bbbb"}
-            ]
-        })
+            avalon.define({
+                $id: "main",
+                list: [
+                    {messageType: "PUBLIC_CHAT", message: "aaa"},
+                    {messageType: "XXX", message: "bbbb"}
+                ]
+            })
 
         </script>
     </head>
-    <body>
+    <body ms-controller="main">
+        <div ms-for="el in @list" >
 
-    <div ms-controller="main">
-        <wbr ms-widget='{is:"ms-messagelist",innerArray:@message_list}' />
-    </div>
-</body>
+            <div ms-if="el.messageType == 'PUBLIC_CHAT'"
+                 ms-text="el.message"></div>
+
+        </div>
+    </body>
 </html>

@@ -28,7 +28,7 @@ for (var name in checker) {
     try {
         var a = document.createEvent(name)
         tran = checker[name]
-        break;
+        break
     } catch (e) {
     }
 }
@@ -53,8 +53,8 @@ checker = {
 var ani
 for (name in checker) {
     if (window[name]) {
-        ani = checker[name];
-        break;
+        ani = checker[name]
+        break
     }
 }
 if (typeof ani === 'string') {

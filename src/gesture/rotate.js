@@ -12,7 +12,7 @@ var rotateRecognizer = {
         var endAngel = rotateRecognizer.getAngle180(rotateRecognizer.center, finger.lastTouch)
         var diff = rotateRecognizer.startAngel - endAngel
         var direction = (diff > 0 ? 'right' : 'left')
-        var count = 0;
+        var count = 0
         var __rotation = ~~finger.element.__rotation
         while (Math.abs(diff - __rotation) > 90 && count++ < 50) {
             if (__rotation < 0) {

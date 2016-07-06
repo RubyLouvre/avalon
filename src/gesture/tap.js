@@ -19,14 +19,14 @@ var tapRecognizer = {
           return true
         }
 
-        break;
+        break
       case 'input':
         // IOS6 pad 上选择文件，如果不是原生的click，弹出的选择界面尺寸错误
         if ((Recognizer.isIOS && target.type === 'file') || target.disabled) {
           return true
         }
 
-        break;
+        break
       case 'label':
       case 'iframe':
       case 'video':
@@ -39,7 +39,7 @@ var tapRecognizer = {
     switch (target.nodeName.toLowerCase()) {
       case 'textarea':
       case 'select': //实测android下select也需要
-        return true;
+        return true
       case 'input':
         switch (target.type) {
           case 'button':
@@ -57,7 +57,7 @@ var tapRecognizer = {
     }
   },
   focus: function(targetElement) {
-    var length;
+    var length
     //在iOS7下, 对一些新表单元素(如date, datetime, time, month)调用focus方法会抛错,
     //幸好的是,我们可以改用setSelectionRange获取焦点, 将光标挪到文字的最后
     var type = targetElement.type
@@ -87,7 +87,7 @@ var tapRecognizer = {
       return target.parentNode
     }
     if (window.SVGElementInstance && (target instanceof SVGElementInstance)) {
-      return target.correspondingUseElement;
+      return target.correspondingUseElement
     }
 
     return target
@@ -158,7 +158,7 @@ var tapRecognizer = {
     var touch = event.targetTouches[0]
     if (Recognizer.isIOS) {
       // 判断是否是点击文字，进行选择等操作，如果是，不需要模拟click
-      var selection = window.getSelection();
+      var selection = window.getSelection()
       if (selection.rangeCount && !selection.isCollapsed) {
         return true
       }
@@ -236,7 +236,7 @@ var tapRecognizer = {
 
     if (Recognizer.isIOS) {
       //如果它的父容器的滚动条发生改变,那么应该识别为划动或拖动事件,不应该触发点击事件
-      var scrollParent = targetElement.tapScrollParent;
+      var scrollParent = targetElement.tapScrollParent
       if (scrollParent && scrollParent.lastScrollTop !== scrollParent.scrollTop) {
         return true
       }

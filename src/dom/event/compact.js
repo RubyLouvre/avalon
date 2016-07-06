@@ -211,7 +211,7 @@ function avEvent(event) {
 }
 avEvent.prototype = {
     preventDefault: function () {
-        var e = this.originalEvent;
+        var e = this.originalEvent
         this.returnValue = false
         if (e) {
             e.returnValue = false

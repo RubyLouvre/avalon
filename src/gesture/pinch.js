@@ -41,14 +41,14 @@ var pinchRecognizer = {
             var position = [],
                     current = []
             for (var i = 0; i < event.touches.length; i++) {
-                var touch = event.touches[i];
-                var gesture = Recognizer.pointers[touch.identifier];
-                position.push([gesture.startTouch.clientX, gesture.startTouch.clientY]);
-                current.push([touch.clientX, touch.clientY]);
+                var touch = event.touches[i]
+                var gesture = Recognizer.pointers[touch.identifier]
+                position.push([gesture.startTouch.clientX, gesture.startTouch.clientY])
+                current.push([touch.clientX, touch.clientY])
             }
 
             var scale = pinchRecognizer.getScale(position[0][0], position[0][1], position[1][0], position[1][1],
-                    current[0][0], current[0][1], current[1][0], current[1][1]);
+                    current[0][0], current[0][1], current[1][0], current[1][1])
             pinchRecognizer.scale = scale
             Recognizer.fire(pinchRecognizer.element, 'pinch', {
                 scale: scale,

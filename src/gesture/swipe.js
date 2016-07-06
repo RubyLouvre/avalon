@@ -7,9 +7,9 @@ var swipeRecognizer = {
     },
     getDirection: function (x, y) {
         if (abs(x) >= abs(y)) {
-           return x < 0 ? 'left' : 'right';
+           return x < 0 ? 'left' : 'right'
         }
-        return y < 0 ? 'up' : 'down';
+        return y < 0 ? 'up' : 'down'
     },
     touchstart: function (event) {
         Recognizer.start(event, avalon.noop)

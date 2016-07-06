@@ -167,7 +167,7 @@ function avEvent(event) {
 }
 avEvent.prototype = {
     preventDefault: function () {
-        var e = this.originalEvent;
+        var e = this.originalEvent
         this.returnValue = false
         if (e) {
             e.returnValue = false
@@ -193,7 +193,7 @@ avEvent.prototype = {
 }
 
 avalon.fireDom = function (elem, type, opts) {
-    var hackEvent = document.createEvent('Events');
+    var hackEvent = document.createEvent('Events')
     hackEvent.initEvent(type, true, true)
     avalon.shadowCopy(hackEvent, opts)
     elem.dispatchEvent(hackEvent)

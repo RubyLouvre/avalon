@@ -48,7 +48,7 @@ var Recognizer = avalon.gestureHooks = {
                 status: 'tapping',
                 element: event.target
             }
-            Recognizer.pointers[touch.identifier] = pointer;
+            Recognizer.pointers[touch.identifier] = pointer
             callback(pointer, touch)
 
         }
@@ -79,7 +79,7 @@ var Recognizer = avalon.gestureHooks = {
                     pointer.duration = RECORD_DURATION - time
                 }
 
-                pointer.duration += time;
+                pointer.duration += time
                 pointer.lastTouch = mixLocations({}, touch)
 
                 pointer.lastTime = Date.now()

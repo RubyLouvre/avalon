@@ -68,7 +68,7 @@ avalon.fn.position = function () {
 avalon.fn.offsetParent = function () {
     var offsetParent = this[0].offsetParent
     while (offsetParent && avalon.css(offsetParent, "position") === "static") {
-        offsetParent = offsetParent.offsetParent;
+        offsetParent = offsetParent.offsetParent
     }
     return avalon(offsetParent || root)
 }
@@ -158,8 +158,8 @@ avalon.each({
         return ret
     }
     cssHooks[method + "&get"] = function (node) {
-        var hidden = [];
-        showHidden(node, hidden);
+        var hidden = []
+        showHidden(node, hidden)
         var val = cssHooks[method + ":get"](node)
         for (var i = 0, obj; obj = hidden[i++]; ) {
             node = obj.node
@@ -169,7 +169,7 @@ avalon.each({
                 }
             }
         }
-        return val;
+        return val
     }
     avalon.fn[method] = function (value) { //会忽视其display
         var node = this[0]

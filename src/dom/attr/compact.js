@@ -68,7 +68,7 @@ var rvalidchars = /^[\],:{}\s]*$/,
 
 avalon.parseJSON = avalon.window.JSON ? JSON.parse : function (data) {
     if (typeof data === 'string') {
-        data = data.trim();
+        data = data.trim()
         if (data) {
             if (rvalidchars.test(data.replace(rvalidescape, '@')
                     .replace(rvalidtokens, ']')

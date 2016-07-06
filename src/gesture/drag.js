@@ -22,7 +22,7 @@ var dragRecognizer = {
             }
         })
 
-        event.preventDefault();
+        event.preventDefault()
     },
     touchend: function (event) {
         Recognizer.end(event, function (pointer, touch) {
