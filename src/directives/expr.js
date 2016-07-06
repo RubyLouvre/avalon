@@ -10,7 +10,11 @@ avalon.directive('expr', {
         }
     },
     update: function (dom, vdom) {
-        dom.nodeValue = vdom.nodeValue
+        if (dom) {
+            dom.nodeValue = vdom.nodeValue
+        } else {
+            avalon.warn('[', vdom.nodeValue, ']找到对应的文本节点赋值')
+        }
     }
 })
 

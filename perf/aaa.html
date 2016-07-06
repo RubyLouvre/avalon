@@ -25,36 +25,13 @@
     <script>
         var vm = avalon.define({
             $id:"test",
-            url:'./test1.html',
             show:false,
-            toogle:function(){
-                this.show = this.show == false ? true : false;
-            },
-            prevent:function(e){
-                e.stopPropagation();
-            }
+            msg: 'dddd'
         });
     </script>
 </head>
 <body ms-controller = "test" >
-    <div  id="left" >
-        <ul class="reportList" >
-            <li ms-click="@toogle | prevent" >报警</a>
-                <ul class="report warn" ms-visible="@show === true " >
-                    <li> <a href="#"ms-click="@prevent" ms-click-1="@url = './test1.html'"  >温度报警</a> </li>
-                    <li><a href="#" ms-click="@prevent" ms-click-1="@url = './test2.html'" >油量报警</a></li>
-                    <li><a href="#" ms-click="@url = './test3.html'" >超速报警</a></li>
-                </ul>
-            </li>
-            <li><a href="#1" ms-click="@url = './test2.html'" >报表1</a></li>
-            <li><a href="#1" ms-click="@url = './test3.html'" >报表1</a></li>
-            <li><a href="#1" ms-click="@url = './test4.html'" >报表1</a></li>
-            <li><a href="#1" ms-click="@url = './test5.html'" >报表1</a></li>
-        </ul>
-    </div>
-    <div id="right" >
-        <iframe id="main" width="100%" height="700" frameborder="0" scrolling="no" ms-attr="{src:@url}" ></iframe>
-    </div>
+    <div ms-text="@msg" ms-if="@show">444</div>
 
 </body>
 </html> 

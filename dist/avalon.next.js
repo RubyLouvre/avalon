@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-6:21 version 2.10 by 司徒正美
+ * built in 2016-7-7:1 version 2.10 by 司徒正美
  * 重构ms-controller, ms-important指令
  * 虚拟DOM移除template属性
  * 修正ms-for的排序问题
@@ -1574,6 +1574,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var getHTML = __webpack_require__(34)
+	var first = true
 	function scan(nodes) {
 	    for (var i = 0, elem; elem = nodes[i++]; ) {
 	        if (elem.nodeType === 1) {
@@ -1589,7 +1590,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                elem.vtree = avalon.lexer(text)
 	                avalon.speedUp(elem.vtree)
 	                var now2 = new Date()
-	                avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')
+	                first && avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')
 	                vm.$render = avalon.render(elem.vtree)
 	                avalon.scopes[vm.$id] = {
 	                    vmodel: vm,
@@ -1597,10 +1598,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    isTemp: true
 	                }
 	                var now3 = new Date()
-	                avalon.log('构建当前vm的$render方法耗时 ', now3 - now2, 'ms\n',
+	                first && avalon.log('构建当前vm的$render方法耗时 ', now3 - now2, 'ms\n',
 	                        '如果此时间太长,达100ms以上\n',
 	                        '建议将当前ms-controller拆分成多个ms-controlelr,减少每个vm管辖的区域')
 	                avalon.rerenderStart = now3
+	                first = false
 	                avalon.batch($id)
 
 	            } else if (!$id) {
@@ -2103,7 +2105,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    update: function (dom, vdom) {
-	        dom.nodeValue = vdom.nodeValue
+	        if (dom) {
+	            dom.nodeValue = vdom.nodeValue
+	        } else {
+	            avalon.warn('[', vdom.nodeValue, ']找到对应的文本节点赋值')
+	        }
 	    }
 	})
 
@@ -2112,9 +2118,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 44 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	//此指令实际上不会操作DOM,交由expr指令处理
+	var update = __webpack_require__(37)
+
 	avalon.directive('text', {
 	    parse: function (copy, src, binding) {
 	        copy[binding.name] = 1
@@ -2123,19 +2131,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	                '\nnodeValue:avalon.parsers.string(' +
 	                avalon.parseExpr(binding) + ')}]'
 	    },
-	    diff: function (copy, src, name) {
-	        if (src.dom && !src.isVoidTag && !src.children.length) {
-	            var parent = src.dom
+	    diff: function (copy, src) {
+	        if(!src.children.length){
+	           update(src, this.update)
+	        }
+	    },
+	    update: function(dom, vdom){
+	        if (dom && !vdom.isVoidTag ) {
+	            var parent = dom
 	            while (parent.firstChild) {
 	                parent.removeChild(parent.firstChild)
 	            }
 	            var dom = document.createTextNode('x')
 	            parent.appendChild(dom)
-	            var vdom = {nodeType: 3, type:'#text', dom: dom}
-	            src.children.push(vdom)
+	            var a = {nodeType: 3, type:'#text', dom: dom}
+	            vdom.children.push(a)
 	        }
-	    },
-	    update: avalon.noop
+	    }
 	})
 
 /***/ },
@@ -3549,6 +3561,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!c) {
 	            copy.nodeType = 8
 	            copy.order = ""
+	            //不再执行子孙节点的操作
+	            copy.skipContent = true
 	        }
 	        if (c !== src[name]) {
 	            src[name] = c
@@ -3578,7 +3592,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    var comment = document.createComment('ms-if')
 	                    //去掉注释节点临时添加的ms-effect
 	                    parent.replaceChild(comment, dom)
-	                    //comment.parentNode = parent
 	                    vdom.nodeType = 8
 	                    vdom.comment = comment
 	                }
@@ -4279,7 +4292,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var define = hooks.define
 	    define = define || avalon.directives.widget.define
 	    if (!hooks.$id) {
-	        avalon.warn('warning!', is, '组件没有在ms-widget配置对象中指定全局不重复的$id\n',
+	        avalon.warn('warning!', is, '组件最好在ms-widget配置对象中指定全局不重复的$id以提高性能!\n',
 	                '若在ms-for循环中可以利用 ($index,el) in @array 中的$index拼写你的$id\n',
 	                '如 ms-widget="{is:\'ms-button\',$id:\'btn\'+$index}"'
 	                )
@@ -4800,11 +4813,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    var body = '__local__ = __local__ || {};\n' +
 	            _local.join(';\n')+'\n' + _body
-	   
 	    var fn = Function('__vmodel__', '__local__', body)
 
 	    return fn
-	   
 	}
 	avalon.render = render
 

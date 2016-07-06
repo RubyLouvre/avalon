@@ -7,6 +7,8 @@ avalon.directive('if', {
         if (!c) {
             copy.nodeType = 8
             copy.order = ""
+            //不再执行子孙节点的操作
+            copy.skipContent = true
         }
         if (c !== src[name]) {
             src[name] = c
@@ -36,7 +38,6 @@ avalon.directive('if', {
                     var comment = document.createComment('ms-if')
                     //去掉注释节点临时添加的ms-effect
                     parent.replaceChild(comment, dom)
-                    //comment.parentNode = parent
                     vdom.nodeType = 8
                     vdom.comment = comment
                 }

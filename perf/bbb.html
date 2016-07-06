@@ -13,7 +13,7 @@
                 /*
                  <div ms-controller="test2">
         <p ms-click="@alert">123</p>
-                 <xmp cached='true' ms-widget="{is:'ms-span',$id:'yyy'}"></xmp>
+                 <xmp  ms-widget="{is:'ms-span',$id:'yyy'}"></xmp>
                  </div>
                  */
             })
@@ -21,7 +21,7 @@
                 /*
                  <div ms-controller="test3">
          <p ms-click="@alert">456</p>
-                 <xmp cached='true' ms-widget="{is:'ms-span'}"></xmp>
+                 <xmp  ms-widget="{is:'ms-span'}"></xmp>
                  </div>
                  */
             })
@@ -33,7 +33,6 @@
                 tpl: "",
                 switch1: function () {
                     setTimeout(function () {
-                        console.log('111111')
                         avalon.vmodels.test.tpl = v123
 
                     })
@@ -41,27 +40,45 @@
                 },
                 switch2: function () {
                     setTimeout(function () {
-                        console.log('sssss')
                         avalon.vmodels.test.tpl = v456
 
                     })
 
                 }
             });
+            vm.$watch('onReady', function(){
+                console.log('vm1 onReady')
+            })
             var vm2 = avalon.define({
                 $id: 'test2',
-                ddd: 111,
+                ddd: 'aaaa',
                 alert: function(){
                     console.log('????')
                 }
             });
+            vm2.$watch('onReady',function(){
+                console.log('vm2 onReady')
+            })
             var vm3 = avalon.define({
                 $id: 'test3',
-                ddd: 222,
+                ddd: 'bbbb',
                 alert: function(){
                     console.log('!!!!')
                 }
             });
+            vm3.$watch('onReady',function(){
+                console.log('vm3 onReady')
+            })
+            var vm4 = avalon.define({
+                $id: 'test4',
+                fff: 'rrrr',
+                alert: function(){
+                    console.log('!!!!')
+                }
+            });
+            vm4.$watch('onReady',function(){
+                console.log('vm4 onReady')
+            })
             avalon.component('ms-span', {
                 template: "<span ms-click='@click'>{{@ddd}}</span>",
                 defaults: {
@@ -76,8 +93,11 @@
     </head>
     <body ms-controller="test">
         <div ms-html="@tpl"></div>
-        <button ms-click="@switch1">切换1</button>
-        <button ms-click="@switch2">切换2</button>
+        <button ms-click="@switch1">aaaa</button>
+        <button ms-click="@switch2">bbbb</button>
+        <div ms-important="test4">
+            {{@fff}}
+        </div>
 
     </body>
 </html>

@@ -1,27 +1,47 @@
 <!DOCTYPE html>
 <html>
-
     <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>avalon test</title>
-    
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <meta charset="utf-8" />
         <script src="../dist/avalon.js"></script>
-        <script>
-            var vm = avalon.define({
-                $id: "test",
-                list: [1, 2, 3, 4],
-            });
+  
+        <script type="html" id="ddd">
+        <div>
+            <div ms-for="el in @innerArray" >
+               
+                <div ms-if="el.messageType == 'PUBLIC_CHAT'"
+                     ms-text="el.message"></div>
+                  
+            </div>
+        </div>
+
+        </script>
+        <script type="text/javascript">
+
+        var template = document.getElementById('ddd').text
+
+        avalon.component("ms-messagelist", {
+            template: template,
+            defaults: {
+                innerArray: []
+            }
+        });
+
+
+        avalon.define({
+            $id: "main",
+            message_list: [
+                {messageType:"PUBLIC_CHAT", message:"aaa"},
+                {messageType:"XXX", message:"bbbb"}
+            ]
+        })
+
         </script>
     </head>
-
     <body>
-        <div ms-controller="test">
-            <ul>
-                <li ms-for="el in @list" ms-click="@list.remove(el)">{{el}}</li>
-            </ul>
 
-        </div>
-    </body>
-
+    <div ms-controller="main">
+        <wbr ms-widget='{is:"ms-messagelist",innerArray:@message_list}' />
+    </div>
+</body>
 </html>
