@@ -74,6 +74,10 @@ VElement.prototype = {
             var scope = avalon.scopes[wid]
             var element = scope && scope.vmodel && scope.vmodel.$element
             if (element) {
+                var oldVdom = element.vtree[0]
+                if(oldVdom.children){
+                    this.children = oldVdom.children
+                }
                 return element
             }
         }
