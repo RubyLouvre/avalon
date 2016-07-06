@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-6:3 version 2.10 by 司徒正美
+ * built in 2016-7-6:11 version 2.10 by 司徒正美
  * 重构ms-controller, ms-important指令
  * 虚拟DOM移除template属性
  * 修正ms-for的排序问题
@@ -81,7 +81,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-7-6:3 version 2.10 by 司徒正美
+	 * built in 2016-7-6:11 version 2.10 by 司徒正美
 	 * 重构ms-controller, ms-important指令
 	 * 虚拟DOM移除template属性
 	 * 修正ms-for的排序问题
@@ -1292,6 +1292,10 @@ return /******/ (function(modules) { // webpackBootstrap
 		            var scope = avalon.scopes[wid]
 		            var element = scope && scope.vmodel && scope.vmodel.$element
 		            if (element) {
+		                var oldVdom = element.vtree[0]
+		                if(oldVdom.children){
+		                    this.children = oldVdom.children
+		                }
 		                return element
 		            }
 		        }
