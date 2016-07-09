@@ -5,23 +5,12 @@ var parseDelimiter = require('./parseDelimiter')
 var stringify = require('./stringify')
 var config = avalon.config
 var quote = avalon.quote
-var makeHashCode = avalon.makeHashCode
-var r = require('../../seed/regexp')
-var rident = r.ident
-var rsp = r.sp
+var rident =  /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
+var rmsForStart = /^\s*ms\-for\:/
+var rmsForEnd = /^\s*ms\-for\-end/
+var rstatement = /^\s*var\s+([$\w]+)\s*\=\s*\S+/
 
-var rmsFor = /^\s*ms\-for:/
-var rmsForEnd = /^\s*ms\-for\-end:/
-function wrapDelimiter(expr) {
-    return rident.test(expr) ? expr : parseExpr(expr, 'text')
-}
 
-function add(a) {
-    return 'vnodes.push(' + a + ');'
-}
-function addTag(obj) {
-    return add(stringify(obj))
-}
 
 function parseNodes(source, inner) {
     //ms-important， ms-controller ， ms-for 不可复制，省得死循环
@@ -151,7 +140,22 @@ function parseNode(source) {
         source.$append = parseNodes(source, true)
     }
 }
-var rstatement = /^\s*var\s+([$\w]+)\s*\=\s*\S+/
+
+
+
+module.exports = parseNodes
+
+
+function wrapDelimiter(expr) {
+    return rident.test(expr) ? expr : parseExpr(expr, 'text')
+}
+
+function add(a) {
+    return 'vnodes.push(' + a + ');'
+}
+function addTag(obj) {
+    return add(stringify(obj))
+}
 
 function stringifyText(el) {
     var array = parseDelimiter(el.nodeValue)//返回一个数组
@@ -166,5 +170,3 @@ function stringifyText(el) {
     }
     return '{\ntype: "#text",\nnodeType:3,\ndynamic:true,\nnodeValue: ' + nodeValue + '\n}'
 }
-
-module.exports = parseNodes
