@@ -22,6 +22,7 @@ var feather = heredoc(function(){
 fix 在chrome与firefox下删掉select中的空白节点，会影响到selectedIndex BUG  
 ms-widget, ms-controller, ms-important生成的VM与对应的DOM都保存起来,
 并在avalon.vdomAdaptor中还原
+添加unescapeHTML与escapeHTML方法
      */
 })
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')
