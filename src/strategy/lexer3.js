@@ -31,7 +31,7 @@ function lexer(str) {
         if (str.charAt(0) !== '<') {
             var i = str.indexOf('<')
             i = i === -1 ? str.length : i
-            var nodeValue = str.slice(0, i)
+            var nodeValue = nomalString(str.slice(0, i))
             str = str.slice(i)//处理文本节点
             node = {type: "#text", nodeType: 3, nodeValue: nodeValue}
             if (rcontent.test(nodeValue)) {
@@ -49,7 +49,9 @@ function lexer(str) {
                 str = str.slice(l + 3)
                 node = {type: "#comment", nodeType: 8, nodeValue: nodeValue}
                 collectNodes(node, stack, ret)
-                if (rmsForEnd.test(nodeValue)) {
+                if(nodeValue.indexOf('ms-js:') === 0){
+                    node.nodeValue = nomalString(node.nodeValu)
+                } else if (rmsForEnd.test(nodeValue)) {
                     var p = stack.last()
                     var nodes = p.children
                     markeRepeatRange(nodes, nodes.pop())
@@ -89,20 +91,20 @@ function lexer(str) {
                                         node.children.push({
                                             nodeType: 3,
                                             type: '#text',
-                                            nodeValue: innerHTML
+                                            nodeValue: nomalString(innerHTML)
                                         })
                                     }
                                     break
                                 case 'textarea':
                                     node.skipContent = true
                                     node.props.type = 'textarea'
-                                    node.props.value = innerHTML
+                                    node.props.value = nomalString(innerHTML)
                                     break
                                 case 'option':
                                     node.children.push({
                                         nodeType: 3,
                                         type: '#text',
-                                        nodeValue: trimHTML(innerHTML)
+                                        nodeValue: nomalString(trimHTML(innerHTML))
                                     })
                                     break
                             }
@@ -126,7 +128,7 @@ function lexer(str) {
                 str = str.slice(match[0].length)
             }
         }
-        if (!node || --breakIndex == 0) {
+        if (!node || --breakIndex === 0) {
             break
         }
         if (node.fire) {
@@ -202,6 +204,7 @@ function markeRepeatRange(nodes, end) {
             } else if (rmsForStart.test(start.nodeValue)) {
                 --deep
                 if (deep === 0) {
+                    start.nodeValue = nomalString(start.nodeValue)
                     end.signature = start.signature
                     start.dynamic = 'for'
                     nodes.push(start, array, end)
@@ -234,10 +237,9 @@ function collectProps(attrs, props) {
         var value = arr[1] || ''
         if (value) {
             if (value.indexOf('??') === 0) {
-                value = avalon.unescapeHTML(value.
-                        replace(rfill, fill).
+                value = nomalString(value).
                         replace(rlineSp, '').
-                        slice(1, -1))
+                        slice(1, -1)
             }
         }
         if (!(name in props)) {
@@ -246,6 +248,10 @@ function collectProps(attrs, props) {
     })
 
 }
+function nomalString(str) {
+    return avalon.unescapeHTML(str.replace(rfill, fill))
+}
+
 function clearString(str) {
     var array = readString(str)
     for (var i = 0, n = array.length; i < n; i++) {

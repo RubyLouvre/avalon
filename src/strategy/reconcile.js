@@ -9,21 +9,9 @@
  删除的是多余的空白文本节点,与IE6-8私下添加的奇怪节点
  */
 var rretain = /[\S\xA0]/
-function getType(node) {
-    switch (node.nodeType) {
-        case 3:
-            return '3' + (/[\S\xA0]/.test(node.nodeValue) ? 'retain' : 'remove')
-        case 1:
-            return '1' + (node.nodeName || node.type).toLowerCase()
-        case 8:
-            return '8' + node.nodeValue
-
-    }
-
-}
-
-
 var rforRange = /^8ms\-for/
+var containers = avalon.oneObject('script,style,xmp,template,noscript,textarea')
+
 
 function reconcile(nodes, vnodes, parent) {
     //遍平化虚拟DOM树
@@ -77,7 +65,6 @@ function reconcile(nodes, vnodes, parent) {
             break
         }
     }
-    // console.log(newNodes.length, vnodes.length)
     if (change) {
         var f = document.createDocumentFragment(), i = 0
         while (el = newNodes[i++]) {
@@ -89,7 +76,23 @@ function reconcile(nodes, vnodes, parent) {
         parent.appendChild(f)
     }
 }
-var containers = avalon.oneObject('script,style,xmp,template,noscript,textarea')
+
+module.exports = reconcile
+
+
+function getType(node) {
+    switch (node.nodeType) {
+        case 3:
+            return '3' + (/[\S\xA0]/.test(node.nodeValue) ? 'retain' : 'remove')
+        case 1:
+            return '1' + (node.nodeName || node.type).toLowerCase()
+        case 8:
+            return '8' + node.nodeValue
+
+    }
+
+}
+
 function flatten(nodes) {
     var arr = []
     for (var i = 0, el; el = nodes[i]; i++) {
@@ -102,4 +105,3 @@ function flatten(nodes) {
     return arr
 }
 
-module.exports = reconcile
