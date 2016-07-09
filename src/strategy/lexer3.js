@@ -12,7 +12,7 @@ var rmsForEnd = /^\s*ms\-for\-end/
 //判定里面有没有内容
 var rcontent = /\S/
 var voidTag = avalon.oneObject('area,base,basefont,br,col,frame,hr,img,input,isindex,link,meta,param,embed')
-var containerTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
+var plainTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
 var stringPool = {}
 
 
@@ -73,7 +73,7 @@ function lexer(str) {
                     node.fire = node.isVoidTag = true
                 } else {
                     stack.push(node)
-                    if (containerTag[type]) {
+                    if (plainTag[type]) {
                         var index = str.indexOf("</" + type + '>')
                         var innerHTML = str.slice(0, index).trim()
                         str = str.slice(index)
@@ -141,6 +141,7 @@ function lexer(str) {
 }
 
 module.exports = lexer
+
 function fireEnd(node, stack) {
     var type = node.type
     var props = node.props
@@ -177,7 +178,7 @@ function fireEnd(node, stack) {
         })
         var cb = props['data-for-rendered']
         var cid = cb + ':cb'
-        
+
         if (cb && !avalon.caches[cid]) {
             avalon.caches[cid] = Function('return ' + avalon.parseExpr(cb, 'on'))()
         }
@@ -217,14 +218,6 @@ function markeRepeatRange(nodes, end) {
 }
 
 
-function clearString(str) {
-    var array = readString(str)
-    for (var i = 0, n = array.length; i < n; i++) {
-        str = str.replace(array[i], dig)
-    }
-    return str
-}
-
 function collectNodes(node, stack, ret) {
     var p = stack.last()
     if (p) {
@@ -253,7 +246,13 @@ function collectProps(attrs, props) {
     })
 
 }
-
+function clearString(str) {
+    var array = readString(str)
+    for (var i = 0, n = array.length; i < n; i++) {
+        str = str.replace(array[i], dig)
+    }
+    return str
+}
 function readString(str) {
     var end, s = 0
     var ret = []
@@ -353,7 +352,7 @@ avalon.speedUp = function (arr) {
 function hasDirective(a) {
     switch (a.nodeType) {
         case 3:
-            if (config.rbind.test(a.nodeValue)) {
+            if (avalon.config.rbind.test(a.nodeValue)) {
                 a.dynamic = 'expr'
                 return true
             } else {
@@ -379,12 +378,12 @@ function hasDirective(a) {
             } else {
                 a.skipAttrs = true
             }
-            // if (!a.dynamic) {
-            if (a.isVoidTag || !childrenHasDirective(a.children)) {
+
+            if (a.isVoidTag || plainTag[a.type] || !childrenHasDirective(a.children)) {
                 a.skipContent = true
                 return false
             }
-            // }
+
             return true
         default:
             if (Array.isArray(a)) {
