@@ -75,7 +75,7 @@ VElement.prototype = {
             var element = scope && scope.vmodel && scope.vmodel.$element
             if (element) {
                 var oldVdom = element.vtree[0]
-                if(oldVdom.children){
+                if (oldVdom.children) {
                     this.children = oldVdom.children
                 }
                 return element
@@ -104,6 +104,9 @@ VElement.prototype = {
                 } else {
                     dom.innerHTML = template
                 }
+                break
+            case 'xmp':
+                dom.innerText = dom.textContent = template
                 break
             case 'template':
                 dom.innerHTML = template
@@ -139,7 +142,7 @@ VElement.prototype = {
             str += this.children.map(function (c) {
                 return c ? avalon.vdomAdaptor(c, 'toHTML') : ''
             }).join('')
-        } 
+        }
         return str + '</' + this.type + '>'
     }
 }

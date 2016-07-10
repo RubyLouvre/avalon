@@ -1182,7 +1182,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var element = scope && scope.vmodel && scope.vmodel.$element
 	            if (element) {
 	                var oldVdom = element.vtree[0]
-	                if(oldVdom.children){
+	                if (oldVdom.children) {
 	                    this.children = oldVdom.children
 	                }
 	                return element
@@ -1211,6 +1211,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                } else {
 	                    dom.innerHTML = template
 	                }
+	                break
+	            case 'xmp':
+	                dom.innerText = dom.textContent = template
 	                break
 	            case 'template':
 	                dom.innerHTML = template
@@ -1246,7 +1249,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            str += this.children.map(function (c) {
 	                return c ? avalon.vdomAdaptor(c, 'toHTML') : ''
 	            }).join('')
-	        } 
+	        }
 	        return str + '</' + this.type + '>'
 	    }
 	}

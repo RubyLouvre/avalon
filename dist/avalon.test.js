@@ -1722,7 +1722,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            var element = scope && scope.vmodel && scope.vmodel.$element
 		            if (element) {
 		                var oldVdom = element.vtree[0]
-		                if(oldVdom.children){
+		                if (oldVdom.children) {
 		                    this.children = oldVdom.children
 		                }
 		                return element
@@ -1751,6 +1751,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		                } else {
 		                    dom.innerHTML = template
 		                }
+		                break
+		            case 'xmp':
+		                dom.innerText = dom.textContent = template
 		                break
 		            case 'template':
 		                dom.innerHTML = template
@@ -1786,7 +1789,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            str += this.children.map(function (c) {
 		                return c ? avalon.vdomAdaptor(c, 'toHTML') : ''
 		            }).join('')
-		        } 
+		        }
 		        return str + '</' + this.type + '>'
 		    }
 		}
@@ -8633,7 +8636,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 102:
 /***/ function(module, exports) {
 
-	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
+	module.exports = "<div>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</div>"
 
 /***/ }
 
