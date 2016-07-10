@@ -28,7 +28,7 @@
             })
             var v456 = heredoc(function () {
                 /*
-                 <div ms-controller="test3">
+                 <div ms-controller="test3">&nbsp;1
                  <xmp ms-widget="{is:'ms-span',$id:'yyy'}"></xmp>
                  </div>
                  */
@@ -49,7 +49,6 @@
                     $id: 'test2',
                     aaa:111
                 });
-
                 var vm2 = avalon.define({
                     $id: 'test3',
                     aaa: 222
@@ -66,3 +65,29 @@
         </script>
     </body>
 </html>
+
+.page-toc:before {
+    content: "Table of Contents";
+    font-weight: bold;
+}
+
+.page-toc {
+	float: right;
+    background: #f8f8f8;
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    border-radius: 3px;
+    padding: 20px !important;
+	font-size: smaller;
+}
+
+.page-toc ul {
+    padding-left: 20px;
+}
+
+.page-toc > ul {
+	padding-left: 0;
+}
+
+.page-toc li {
+    list-style: none;
+}

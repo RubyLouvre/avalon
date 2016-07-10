@@ -5,6 +5,7 @@
 var extractBindings = require('./extractBindings')
 var stringify = require('./stringify')
 var parseExpr = require('./parseExpr')
+var decode = require('../decode')
 var config = avalon.config
 var quote = avalon.quote
 var rident =  /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
@@ -176,7 +177,7 @@ function extractExpr(str) {
         index = index === -1 ? str.length : index
         var value = str.slice(0, index)
         if (/\S/.test(value)) {
-            ret.push({expr: value})
+            ret.push({expr: decode(value)})
         }
         str = str.slice(index + config.openTag.length)
         if (str) {

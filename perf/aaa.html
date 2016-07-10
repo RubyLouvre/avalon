@@ -8,110 +8,29 @@
 
     </head>
     <body>
-        <div class="content"  ms-controller="admin">
-            <div class="widget-box widget-color-blue ui-sortable-handle" ms-for="el in @deliverylist">
-                <table class="table  table-bordered table-hover"  >
-                    <thead class="thin-border-bottom">
-                        <tr>
-                    <h5>
-                        <span class="action-buttons">
-                            @{{ el.name }}
-                            <a class="white" ms-attr="{ id:el.id }" role="button" data-toggle="modal"  ms-click="@deletedelivery(el)">
-                                删除
-                                <i class="ace-icon fa fa-trash-o light-blue bigger-100"></i>
-                            </a>
-                            <a href="/shop/delivery/create">
-                                <i class="ace-icon fa fa-pencil-square-o text-primary bigger-100"></i>
-                            </a>
-                        </span>
-                    </h5>
-                    </tr>
-                    <tr>
-                        <th align="center" width="150px">
-                            运送方式
-                        </th>
-                        <th align="center">
-                            运送到
-                        </th>
-                        <th align="center">
-                            首件
-                        </th>
-                        <th align="center">
-                            运费
-                        </th>
-                        <th align="center">
-                            续件
-                        </th>
-                        <th align="center">
-                            运费
-                        </th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                        <tr  ms-for="elem in el.items">
-                            <td align="center"  width="150px">
-                                @{{ elem.typeStr }}
-                                <a class="white" ms-attr="{ id:elem.id }"  role="button" data-toggle="modal"  ms-click="@deletedeliveryitem(el)">
-                                    删除
-                                    <i class="fa fa-trash-o text-muted"></i>
-                                </a>
-                            </td>
-                            <td align="center">
-                                @{{ elem.area_name }}
-                            </td>
-                            <td align="center">
-                                @{{ elem.firstunit }}
-                            </td>
-                            <td align="center">
-                                ¥@{{ elem.firstfee }}
-                            </td>
-                            <td align="center">
-                                @{{ elem.addonunit }}
-                            </td>
-                            <td align="center">
-                                ¥@{{ elem.addonfee }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <div ms-controller='for0' >
+          <ul>
+             <li ms-for='($index, el) in @array | limitBy(4)'>{{$index}}::{{el}}</li>
+             </ul>
+             <ol>
+             <li ms-for='($key, $val) in @object'>{{$key}}::{{$val}}</li>
+             </ol>
+             <!--ms-for: ($index,el) in @array   -->
+             <p>{{el}}</p>
+             <!--ms-for-end:-->
         </div>
         <script>
-var model = avalon.define({
-    $id: "admin",
-    alldatas: [{"id": "0", "area_name": "0", "area": "0", "firstunit": "", "firstfee": "", "addonunit": "", "addonfee": ""}],
-    deliverydatas: [],
-    deliverylist: [{id: 22, uid: 364781, name: "111", type: 0, dateline: "1467636144", updated_at: "1467636144", items: []},
-        {id: 23, uid: 364781, name: "舟桥", type: 0, dateline: "1467636600", updated_at: "1467636600", items: [{id: 22, tid: 23, type: 1, area: "{json}", area_name: "adfasdf", firstunit: 2, firstfee: "2.00", addonunit: 3, addonfee: "4.00", dateline: "1467636600", updated_at: "1467636600"}, {id: 23, tid: 23, type: 1, area: "{json}", area_name: "adfasdf", firstunit: 2, firstfee: "2.00", addonunit: 3, addonfee: "4.00", dateline: "1467636600", updated_at: "1467636600"}]},
-        {id: 29, uid: 364781, name: "乏味欧风街", type: 1, dateline: "1467706939", updated_at: "1467706939", items: []},
-        {id: 30, uid: 364781, name: "清风", type: 0, dateline: "1467707032", updated_at: "1467707032", items: []},
-        {id: 31, uid: 364781, name: "发违法", type: 1, dateline: "1467707195", updated_at: "1467707195", items: [{id: 26, tid: 31, type: 0, area: "", area_name: "全国默认地区", firstunit: 0, firstfee: "0.00", addonunit: 1, addonfee: "1.00", dateline: "1467707195", updated_at: "1467707195"}]},
-        {id: 32, uid: 364781, name: "我是李林", type: 1, dateline: "1467713423", updated_at: "1467713423", items: []}],
-    deletedelivery: function (el) {
-        var blist = model.deliverylist;
-        for (var i = 0; i < blist.length; i++) {
-            if (blist[i].id == el.id) {
-                blist.remove(blist[i])
-                break
-            }
-        }
-        model.deliverylist = blist
-    },
-    deletedeliveryitem: function (el) {
-        var dlist = model.deliverylist;
-        for (var i = 0; i < dlist.length; i++) {
-            var items = dlist[i].items;
-            for (var j = 0; j < items.length; j++) {
-                if (items[j].id == el.id) {
-                    items.remove(items[j]);
-                    dlist[i].items = items;
-                    break;
-                }
-            }
-        }
-        model.deliverylist = dlist;
+var vm = avalon.define({
+    $id: 'for0',
+    array: [1, 2, 3, 4, 5],
+    object: {
+        a: 11,
+        b: 22,
+        c: 33,
+        d: 44,
+        e: 55
     }
-});
+})
         </script>
     </body>
 </html>

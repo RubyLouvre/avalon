@@ -3,27 +3,331 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
         <meta charset="utf-8" />
-        <script src="../dist/avalon.js"></script>
-
 
         <script type="text/javascript">
 
-            avalon.define({
-                $id: "main",
-                list: [
-                    {messageType: "PUBLIC_CHAT", message: "aaa"},
-                    {messageType: "XXX", message: "bbbb"}
-                ]
-            })
+//form prototype.js
+            var rtrimHTML = /<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi
+            function trimHTML(v) {
+                return String(v).replace(rtrimHTML, '').trim()
+            }
 
+            var openTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
+            var voidTag = {br: 1, hr: 1, wbr: 1, col: 1, img: 1, input: 1, frame: 1, link: 1, meta: 1}
+            var endTag = /^<\/([^>]+)>/
+            var container = {xmp: 1, textarea: 1, script: 1, noscript: 1, style: 1, embed: 1}
+            var avalon = {
+                unescapeHTML: function (a) {
+                    return a
+                },
+                quote: function (a) {
+                    return a
+                },
+                makeHashCode: function (a) {
+                    return a + (new Date - 0)
+                },
+                vdomAdaptor: function () {
+                }
+            }
+
+            function getString(str) {
+                var end, s = 0
+                var ret = []
+                for (var i = 0, n = str.length; i < n; i++) {
+                    var c = str.charAt(i)
+                    if (!end) {
+                        if (c === "'") {
+                            end = "'"
+                            s = i
+                        } else if (c === '"') {
+                            end = '"'
+                            s = i
+                        }
+                    } else {
+                        if (c === "\\") {
+                            i += 1
+                            continue
+                        }
+                        if (c === end) {
+                            ret.push(str.slice(s, i + 1))
+                            end = false
+                        }
+                    }
+                }
+                return ret
+            }
+            var rmsForStart = /^\s*ms\-for\:/
+            var rmsForEnd = /^\s*ms\-for\-end/
+            var rfill = /\?\?\d+/g
+            var rlineSp = /\n\s*/g
+            var maps = {}
+            var number = 1
+            function clearString(str) {
+                var array = getString(str)
+                console.log(array)
+                for (var i = 0, n = array.length; i < n; i++) {
+                    str = str.replace(array[i], dig)
+                }
+                return str
+            }
+            function dig(a) {
+                var key = '??' + number++
+                maps[key] = a
+                return key
+            }
+            function fill(a) {
+                var val = maps[a]
+                return val
+            }
+            function lexer(str) {
+                str = clearString(str)
+                // str = str.replace(rstring, dig)
+                var stack = []
+                stack.last = function () {
+                    return  stack[stack.length - 1]
+                }
+
+
+                var ret = []
+                function collect(node, str) {
+
+                    var p = stack.last()
+                    if (p) {
+                        p.children.push(node)
+                    } else {
+                        ret.push(node)
+                    }
+                }
+
+                var breakIndex = 10000
+                do {
+
+                    var node = false
+                    if (str.charAt(0) !== '<') {
+                        var i = str.indexOf('<')
+                        i = i === -1 ? str.length : i
+                        var nodeValue = str.slice(0, i)
+                        str = str.slice(i)//处理文本点
+                        node = {type: "#text", nodeType: 3, nodeValue: nodeValue}
+                        if (/\S/.test(nodeValue)) {
+                            collect(node)//不收集空白节点
+                        }
+                    }
+                    if (!node) {
+                        var i = str.indexOf('<!--')
+                        if (i === 0) {
+                            var l = str.indexOf('-->')
+                            if (l === -1) {
+                                throw "注释节点没有闭合" + str
+                            }
+                            var nodeValue = str.slice(4, l)
+                            str = str.slice(l + 3)
+                            node = {type: "#comment", nodeType: 8, nodeValue: nodeValue}
+                            collect(node)
+                            if (rmsForEnd.test(nodeValue)) {
+                                var p = stack.last()
+                                var nodes = p.children
+                                markeRepeatRange(nodes, nodes.pop())
+                            }
+                        }
+
+                    }
+                    if (!node) {
+                        var match = str.match(openTag)
+                        if (match) {
+
+                            var type = match[1].toLowerCase()
+                            //console.log(match)
+                            var isVoidTag = voidTag[type] || match[3] === '\/'
+                            node = {type: type, props: {}, children: [], isVoidTag: isVoidTag, nodeType: 1}
+                            var attrs = match[2]
+                            var props = node.props
+                            if (attrs) {
+                                //处理所有属性
+                                attrs.replace(/\S+/g, function (prop) {
+                                    var arr = prop.split('=')
+                                    var name = arr[0]
+                                    var value = arr[1] || ''
+
+                                    if (value) {
+
+                                        if (value.indexOf('??') === 0) {
+                                            value = avalon.unescapeHTML(value.
+                                                    replace(rfill, fill).
+                                                    replace(rlineSp, '').
+                                                    slice(1, -1))
+
+                                        }
+                                    }
+                                    if (!(name in props)) {
+                                        props[name] = value
+                                    }
+
+                                })
+                            }
+
+                            collect(node)
+                            str = str.slice(match[0].length)
+                            if (isVoidTag) {
+                                node.fire = node.isVoidTag = true
+                            } else {
+                                stack.push(node)
+                                if (container[type]) {
+                                    // console.log(type, '!!!')
+                                    var index = str.indexOf("</" + type + '>')
+
+                                    var temp = str.slice(0, index)
+                                    str = str.slice(index)
+                                    if (temp) {
+                                        switch (type) {
+                                            case 'style':
+                                            case 'script':
+                                            case 'noscript':
+                                            case 'template':
+                                            case 'xmp':
+                                                node.skipContent = true
+                                                if (temp) {
+                                                    node.children.push({
+                                                        nodeType: 3,
+                                                        type: '#text',
+                                                        nodeValue: temp
+                                                    })
+                                                }
+                                                break
+                                            case 'textarea':
+                                                node.skipContent = true
+                                                node.props.type = 'textarea'
+                                                node.props.value = temp.trim()
+                                                break
+                                            case 'option':
+                                                node.children.push({
+                                                    nodeType: 3,
+                                                    type: '#text',
+                                                    nodeValue: trimHTML(temp.trim())
+                                                })
+                                                break
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (!node) {
+                        var match = str.match(endTag)
+                        if (match) {
+                            var type = match[1].toLowerCase()
+                            var last = stack.last()
+                            if (!last || last.type !== type) {
+                                maps = {}
+                                throw '没有正确闭合'
+                            }
+                            node = stack.pop()
+                            node.fire = true
+                            str = str.slice(match[0].length)
+                        }
+                    }
+                    if (!node) {
+                        break
+                    }
+                    if (node.fire) {
+                        fireEnd(node, stack, ret)//console.log(node)
+                        delete node.fire
+                    }
+                    if (--breakIndex == 0) {
+                        break
+                    }
+
+                } while (str.length);
+                // 
+                maps = {}
+                console.log(ret)
+
+            }
+            function fireEnd(node, stack, ret) {
+                var props = node.props
+                var p = stack.last()
+                var type = node.type
+                switch (type) {
+                    case 'input':
+                        if (!props.type) {
+                            props.type = 'text'
+                        }
+                        break
+                    case 'select':
+                        var _type = props.hasOwnProperty('multiple') ? 'multiple' : 'one'
+                        props.type = type + '-' + _type
+
+                        break
+                    case 'table':
+                        addTbody(node.children)
+                        break
+                    default:
+                        if (/^ms-/.test(type)) {
+                            props.is = type
+                            if (!props['ms-widget']) {
+                                props['ms-widget'] = '{is:' + avalon.quote(type) + '}'
+                            }
+                        }
+                        break
+                }
+                var forExpr = props['ms-for']
+                if (forExpr) {
+
+                    delete props['ms-for']
+                    //   var signature = avalon.makeHashCode('for')
+                    var arr = p.children
+                    arr.splice(arr.length - 2, 0, {
+                        nodeType: 8,
+                        type: '#comment',
+                        nodeValue: 'ms-for:' + forExpr,
+                    })
+                    markeRepeatRange(arr, {
+                        nodeType: 8,
+                        type: '#comment',
+                        nodeValue: 'ms-for-end:',
+                    })
+                }
+            }
+            function markeRepeatRange(nodes, end) {
+                end.dynamic = true
+                end.signature = avalon.makeHashCode('for')
+                var array = [], start, deep = 1
+                while (start = nodes.pop()) {
+                    if (start.nodeType === 8) {
+                        if (rmsForEnd.test(start.nodeValue)) {
+                            ++deep
+                        } else if (rmsForStart.test(start.nodeValue)) {
+                            --deep
+                            if (deep === 0) {
+                                end.signature = start.signature
+                                start.dynamic = 'for'
+                                nodes.push(start, array, end)
+                                start.template = array.map(function (a) {
+                                    return avalon.vdomAdaptor(a, 'toHTML')
+                                }).join('')
+                                break
+                            }
+                        }
+                    }
+                    array.unshift(start)
+                }
+
+            }
+            window.onload = function () {
+                var text = document.body.outerHTML
+                console.log(text)
+                lexer(text)
+                // lexer('<div type="aaa"  ddd=444 dddd=999></div>')
+            }
+
+            // lexer('2222<!--3333--><div></div>')
+            //  lexer('<div><span><span></span></span><span></span></div>')
+            //lexer('<script><div>3333<div>444</div></div><\/script><div></div>')
         </script>
     </head>
     <body ms-controller="main">
-        <div ms-for="el in @list" >
 
-            <div ms-if="el.messageType == 'PUBLIC_CHAT'"
-                 ms-text="el.message"></div>
+        < < <div>333</div>
 
-        </div>
     </body>
 </html>

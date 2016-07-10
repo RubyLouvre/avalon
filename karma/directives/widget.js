@@ -419,23 +419,23 @@ describe('widget', function () {
         }, 150)
 
     })
-    
+
     it('组件的最外层元素定义其他指令不生效的BUG', function (done) {
         div.innerHTML = heredoc(function () {
             /*
-              <div ms-controller="widget7"><wbr ms-widget="[{is : 'test'},@$config]"></div>
+             <div ms-controller="widget7"><wbr ms-widget="[{is : 'test'},@$config]"></div>
              */
         })
-        avalon.component("test",{
-            template : "<test ms-attr=\"{title:@aaa}\">{{##bbb}}</test>",
-            defaults : {
-              bbb: "TEST",
-              aaa: 'title'
+        avalon.component("test", {
+            template: "<test ms-attr=\"{title:@aaa}\">{{##bbb}}</test>",
+            defaults: {
+                bbb: "TEST",
+                aaa: 'title'
             }
         })
         vm = avalon.define({
-            $id : "widget7",
-            $config : { }
+            $id: "widget7",
+            $config: {}
         })
         avalon.scan(div)
         setTimeout(function () {
@@ -444,9 +444,35 @@ describe('widget', function () {
             expect(widget.title).to.equal('title')
             expect(widget.innerHTML).to.equal('TEST')
             done()
-           
+
         }, 150)
 
     })
+    it('&nbsp;的解析问题', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller="widget8">
+             <xmp cached='true' ms-widget="{is:'ms-time',$id:'xxx'}"></xmp>
+             </div>             
+             */
+        })
+        avalon.component('ms-time', {
+            template: "<span ms-click='@click'>{{@aaa}}&nbsp;</span>",
+            defaults: {
+                aaa: 123
+            }
+        });
+        vm = avalon.define({
+            $id: "widget8"
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            var span = div.getElementsByTagName('span')[0]
+            expect(span.firstChild.nodeValue.trim()).to.equal('123')
+          
+            done()
 
+        }, 150)
+
+    })
 })
