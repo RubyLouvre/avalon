@@ -1,171 +1,201 @@
 /**
  * ------------------------------------------------------------
- * lexer 将字符串变成一个虚拟DOM树,方便以后进一步变成模板函数
+ * avalon2.1.1的新式lexer
+ * 将字符串变成一个虚拟DOM树,方便以后进一步变成模板函数
  * 此阶段只会生成VElement,VText,VComment
  * ------------------------------------------------------------
  */
-
-var makeHashCode = avalon.makeHashCode
-var vdom = require('../vdom/index')
-var VText = vdom.VText
-var VComment = vdom.VComment
-
-
-//匹配只有开标签的无内容元素（Void elements 或 self-contained tags）
-//http://www.colorglare.com/2014/02/03/to-close-or-not-to-close.html
-//http://blog.jobbole.com/61514/
-
-//var rfullTag = /^<([^\s>\/=.$<]+)(?:\s+[^=\s]+(?:=[^>\s]+)?)*\s*>(?:[\s\S]*)<\/\1>/
-//var rvoidTag = /^<([^\s>\/=.$<]+)\s*([^>]*?)\/?>/
-var rfullTag = /^<([-A-Za-z0-9_]+)(?:\s+[^=\s]+(?:=[^>\s]+)?)*\s*>(?:[\s\S]*)<\/\1>/
-var rvoidTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)\/?>/
-var rtext = /^[^<]+/
-var rcomment = /^<!--([\w\W]*?)-->/
-
-var rnumber = /\d+/g
+var ropenTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
+var rendTag = /^<\/([^>]+)>/
 var rmsForStart = /^\s*ms\-for\:/
 var rmsForEnd = /^\s*ms\-for\-end/
-var r = require('../seed/regexp')
-var rsp = r.sp
-var rfill = /\?\?\d+/g
-var rleftSp = r.leftSp
-var rstring = r.string
+//判定里面有没有内容
+var rcontent = /\S/
+var voidTag = avalon.oneObject('area,base,basefont,br,col,frame,hr,img,input,isindex,link,meta,param,embed')
+var plainTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
+var stringPool = {}
 
 
-var config = avalon.config
-
-
-var maps = {}
-var number = 1
-function dig(a) {
-    var key = '??' + number++
-    maps[key] = a
-    return key
-}
-function fill(a) {
-    var val = maps[a]
-    return val
-}
-var rhasString = /=["']/
-var rlineSp = /\n\s*/g
-function fixLongAttrValue(attr) {
-    return rhasString.test(attr) ?
-            attr.replace(rlineSp, '').replace(rstring, dig) : attr
-}
-function lexer(text, curDeep) {
-    var nodes = []
-    if (typeof curDeep !== 'number') {
-        curDeep = 0
+function lexer(str) {
+    stringPool = {}
+    str = clearString(str)
+    var stack = []
+    stack.last = function () {
+        return  stack[stack.length - 1]
     }
-    if (!curDeep) {
-        text = text.replace(rstring, dig)
-    }
+    var ret = []
+
+    var breakIndex = 100000
     do {
-        var outerHTML = ''
         var node = false
-        var match = text.match(rtext)
-        if (match) {//尝试匹配文本
-            outerHTML = match[0]
-            node = {
-                type: '#text',
-                nodeType: 3,
-                nodeValue: outerHTML.replace(rfill, fill)
-            }
-
-        }
-
-        if (!node) {//尝试匹配注释
-            match = text.match(rcomment)
-            if (match) {
-                outerHTML = match[0]
-                node = {
-                    type: '#comment',
-                    nodeType: 8,
-                    nodeValue: match[1].replace(rfill, fill)
-                }
+        if (str.charAt(0) !== '<') {
+            var i = str.indexOf('<')
+            i = i === -1 ? str.length : i
+            var nodeValue = nomalString(str.slice(0, i))
+            str = str.slice(i)//处理文本节点
+            node = {type: "#text", nodeType: 3, nodeValue: nodeValue}
+            if (rcontent.test(nodeValue)) {
+                collectNodes(node, stack, ret)//不收集空白节点
             }
         }
-
-
-        if (!node) {//尝试匹配拥有闭标签的元素节点
-            match = text.match(rfullTag)
-            if (match) {
-                outerHTML = match[0]//贪婪匹配 outerHTML,可能匹配过多
-                var type = match[1].toLowerCase()//nodeName
-                outerHTML = clipOuterHTML(outerHTML, type)
-
-                match = outerHTML.match(rvoidTag) //抽取所有属性
-
-                var props = {}
-                if (match[2]) {
-                    handleProps(fixLongAttrValue(match[2]), props)
-                }
-
-                var innerHTML = outerHTML.slice(match[0].length,
-                        (type.length + 3) * -1) //抽取innerHTML
-                node = {
-                    nodeType: 1,
-                    type: type,
-                    props: props,
-                    children: []
-                }
-                node = modifyProps(node, nodes, curDeep, innerHTML,
-                        innerHTML.replace(rfill, fill).trim())
-
-
-            }
-        }
-
         if (!node) {
-            match = text.match(rvoidTag)
-            if (match) {//尝试匹配自闭合标签
-                outerHTML = match[0]
-                type = match[1].toLowerCase()
-                props = {}
-                if (match[2]) {
-                    handleProps(fixLongAttrValue(match[2]), props)
+            var i = str.indexOf('<!--')
+            if (i === 0) {
+                var l = str.indexOf('-->')
+                if (l === -1) {
+                    avalon.error("注释节点没有闭合" + str)
                 }
-                node = {
-                    nodeType: 1,
-                    type: type,
-                    props: props,
-                    children: [],
-                    isVoidTag: true
+                var nodeValue = str.slice(4, l)
+                str = str.slice(l + 3)
+                node = {type: "#comment", nodeType: 8, nodeValue: nodeValue}
+                collectNodes(node, stack, ret)
+                if(nodeValue.indexOf('ms-js:') === 0){
+                    node.nodeValue = nomalString(node.nodeValu)
+                } else if (rmsForEnd.test(nodeValue)) {
+                    var p = stack.last()
+                    var nodes = p.children
+                    markeRepeatRange(nodes, nodes.pop())
                 }
-                node = modifyProps(node, nodes, curDeep, '', '')
+            }
+
+        }
+        if (!node) {
+            var match = str.match(ropenTag)
+            if (match) {
+                var type = match[1].toLowerCase()
+                var isVoidTag = voidTag[type] || match[3] === '\/'
+                node = {type: type, nodeType: 1, props: {}, children: [], isVoidTag: isVoidTag}
+                var attrs = match[2]
+                if (attrs) {
+                    collectProps(attrs, node.props)
+                }
+                collectNodes(node, stack, ret)
+                str = str.slice(match[0].length)
+                if (isVoidTag) {
+                    node.fire = node.isVoidTag = true
+                } else {
+                    stack.push(node)
+                    if (plainTag[type]) {
+                        var index = str.indexOf("</" + type + '>')
+                        var innerHTML = str.slice(0, index).trim()
+                        str = str.slice(index)
+                        if (innerHTML) {
+                            switch (type) {
+                                case 'style':
+                                case 'script':
+                                case 'noscript':
+                                case 'template':
+                                case 'xmp':
+                                    node.skipContent = true
+                                    if (innerHTML) {
+                                        node.children.push({
+                                            nodeType: 3,
+                                            type: '#text',
+                                            nodeValue: nomalString(innerHTML)
+                                        })
+                                    }
+                                    break
+                                case 'textarea':
+                                    node.skipContent = true
+                                    node.props.type = 'textarea'
+                                    node.props.value = nomalString(innerHTML)
+                                    break
+                                case 'option':
+                                    node.children.push({
+                                        nodeType: 3,
+                                        type: '#text',
+                                        nodeValue: nomalString(trimHTML(innerHTML))
+                                    })
+                                    break
+                            }
+                        }
+                    }
+                }
             }
         }
-
-        if (node) {//从text中移除被匹配的部分
-            if (node.nodeType !== 3 || /\S/.test(node.nodeValue)) {
-                nodes.push(node)
-            }
-            text = text.slice(outerHTML.length)
-            if (node.nodeType === 8) {
-                if (rmsForStart.test(node.nodeValue)) {
-
-                    node.signature = node.signature || makeHashCode('for')
-                    node.dynamic = 'for'
-                } else if (rmsForEnd.test(node.nodeValue)) {
-                    //将 ms-for与ms-for-end:之间的节点塞到一个数组中
-                    nodes.pop()
-                    markeRepeatRange(nodes, node)
+        if (!node) {
+            var match = str.match(rendTag)
+            if (match) {
+                var type = match[1].toLowerCase()
+                var last = stack.last()
+                if (!last) {
+                    avalon.error(match[0] + '前面缺少<' + type + '>')
+                } else if (last.type !== type) {
+                    avalon.error(last.type + '没有闭合')
                 }
+                node = stack.pop()
+                node.fire = true
+                str = str.slice(match[0].length)
             }
-        } else {
+        }
+        if (!node || --breakIndex === 0) {
             break
         }
-    } while (1);
-    if (!curDeep) {
-        maps = {}
-    }
-    return nodes
+        if (node.fire) {
+            fireEnd(node, stack, ret)
+            delete node.fire
+        }
+
+    } while (str.length);
+
+    return ret
+
 }
 
+module.exports = lexer
 
+function fireEnd(node, stack) {
+    var type = node.type
+    var props = node.props
+    switch (type) {
+        case 'input':
+            if (!props.type) {
+                props.type = 'text'
+            }
+            break
+        case 'select':
+            props.type = type + '-' + props.hasOwnProperty('multiple') ? 'multiple' : 'one'
+            break
+        case 'table':
+            addTbody(node.children)
+            break
+        default:
+            if (type.indexOf('ms-') === 0) {
+                props.is = type
+                if (!props['ms-widget']) {
+                    props['ms-widget'] = '{is:' + avalon.quote(type) + '}'
+                }
+            }
+            break
+    }
+    var forExpr = props['ms-for']
+    if (forExpr) {
+        delete props['ms-for']
+        var p = stack.last()
+        var arr = p.children
+        arr.splice(arr.length - 2, 0, {
+            nodeType: 8,
+            type: '#comment',
+            nodeValue: 'ms-for:' + forExpr
+        })
+        var cb = props['data-for-rendered']
+        var cid = cb + ':cb'
+
+        if (cb && !avalon.caches[cid]) {
+            avalon.caches[cid] = Function('return ' + avalon.parseExpr(cb, 'on'))()
+        }
+
+        markeRepeatRange(arr, {
+            nodeType: 8,
+            type: '#comment',
+            nodeValue: 'ms-for-end:'
+        })
+    }
+}
 
 function markeRepeatRange(nodes, end) {
-
+    end.dynamic = true
+    end.signature = avalon.makeHashCode('for')
     var array = [], start, deep = 1
     while (start = nodes.pop()) {
         if (start.nodeType === 8) {
@@ -174,11 +204,13 @@ function markeRepeatRange(nodes, end) {
             } else if (rmsForStart.test(start.nodeValue)) {
                 --deep
                 if (deep === 0) {
-                    end.signature = start.signature
-                    nodes.push(start, array, end)
+                    start.nodeValue = nomalString(start.nodeValue)
+                    start.signature = end.signature
+                    start.dynamic = 'for'
                     start.template = array.map(function (a) {
                         return avalon.vdomAdaptor(a, 'toHTML')
                     }).join('')
+                    nodes.push(start, array, end)
                     break
                 }
             }
@@ -188,138 +220,91 @@ function markeRepeatRange(nodes, end) {
 
 }
 
-//用于创建适配某一种标签的正则表达式
-var openStr = '(?:\\s+[^>=]*?(?:=[^>]+?)?)*>'
-var tagCache = {}// 缓存所有匹配开标签闭标签的正则
-var rchar = /./g
-var regArgs = avalon.msie < 9 ? 'ig' : 'g'//IE6-8，标签名都是大写
-function clipOuterHTML(matchText, type) {
-    var opens = []
-    var closes = []
-    var ropen = tagCache[type + 'open'] ||
-            (tagCache[type + 'open'] = new RegExp('<' + type + openStr, regArgs))
-    var rclose = tagCache[type + 'close'] ||
-            (tagCache[type + 'close'] = new RegExp('<\/' + type + '>', regArgs))
 
-    /* jshint ignore:start */
-    matchText.replace(ropen, function (_, b) {
-        //注意,页面有时很长,b的数值就很大,如
-        //000000000<000000011>000000041<000000066>000000096<000000107>
-        opens.push(('0000000000' + b + '<').slice(-10))//取得所有开标签的位置
-        return _.replace(rchar, '1')
-    }).replace(rclose, function (_, b) {
-        closes.push(('0000000000' + b + '>').slice(-10))//取得所有闭标签的位置               
+function collectNodes(node, stack, ret) {
+    var p = stack.last()
+    if (p) {
+        p.children.push(node)
+    } else {
+        ret.push(node)
+    }
+}
+
+function collectProps(attrs, props) {
+    attrs.replace(rnowhite, function (prop) {
+        var arr = prop.split('=')
+        var name = arr[0]
+        var value = arr[1] || ''
+        if (value) {
+            if (value.indexOf('??') === 0) {
+                value = nomalString(value).
+                        replace(rlineSp, '').
+                        slice(1, -1)
+            }
+        }
+        if (!(name in props)) {
+            props[name] = value
+        }
     })
 
-    /* jshint ignore:end */
-    //<div><div>01</div><div>02</div></div><div>222</div><div>333</div>
-    //会变成000<005<012>018<025>031>037<045>051<059>
-    //再变成<<><>><><>
-    //最后获取正确的>的索引值,这里为<<><>>的最后一个字符,
-    var pos = opens.concat(closes).sort()
-    var gtlt = pos.join('').replace(rnumber, '')
-    var k = 0, last = 0
+}
+function nomalString(str) {
+    return avalon.unescapeHTML(str.replace(rfill, fill))
+}
 
-    for (var i = 0, n = gtlt.length; i < n; i++) {
-        var c = gtlt.charAt(i)
-        if (c === '<') {
-            k += 1
+function clearString(str) {
+    var array = readString(str)
+    for (var i = 0, n = array.length; i < n; i++) {
+        str = str.replace(array[i], dig)
+    }
+    return str
+}
+function readString(str) {
+    var end, s = 0
+    var ret = []
+    for (var i = 0, n = str.length; i < n; i++) {
+        var c = str.charAt(i)
+        if (!end) {
+            if (c === "'") {
+                end = "'"
+                s = i
+            } else if (c === '"') {
+                end = '"'
+                s = i
+            }
         } else {
-            k -= 1
-        }
-        if (k === 0) {
-            last = i
-            break
+            if (c === '\\') {
+                i += 1
+                continue
+            }
+            if (c === end) {
+                ret.push(str.slice(s, i + 1))
+                end = false
+            }
         }
     }
-    var findex = parseFloat(pos[last]) + type.length + 3 // (</>为三个字符)
-    return matchText.slice(0, findex) //取得正确的outerHTML
+    return ret
 }
 
-
-function modifyProps(node, nodes, curDeep, innerHTML, template) {
-    var type = node.type
-    var props = node.props
-    switch (type) {
-        case 'style':
-        case 'script':
-        case 'noscript':
-        case 'template':
-        case 'textarea':
-        case 'xmp':
-            node.skipContent = true
-
-            if (template) {
-                node.children.push(new VText(template))
-            } else {
-                node.children = []
-            }
-            if (type === 'textarea') {
-                props.type = 'textarea'
-                node.children.length = 0
-            }
-            break
-        case 'input':
-            if (!props.type) {
-                props.type = 'text'
-            }
-            break
-        case 'select':
-            if (props.hasOwnProperty('multiple')) {
-                props.multiple = 'multiple'
-                node.multiple = true
-            }
-            break
-
-        case 'option':
-            node.children.push(new VText(trimHTML(template)))
-            break
-        default:
-            if (/^ms-/.test(type)) {
-                props.is = type
-                if (!props['ms-widget']) {
-                    props['ms-widget'] = '{is:' + avalon.quote(type) + '}'
-                }
-            }
-            break
-    }
-
-    if (!node.isVoidTag && !node.skipContent) {
-        var childs = lexer(innerHTML, curDeep + 1)
-        node.children = childs
-        if (type === 'table') {
-            addTbody(node.children)
-        }
-    }
-    var forExpr = props['ms-for']
-    if (forExpr) {
-        var cb = props['data-for-rendered']
-        var cid = cb + ':cb'
-        delete props['ms-for']
-        nodes.push({
-            nodeType: 8,
-            type: '#comment',
-            nodeValue: 'ms-for:' + forExpr,
-            signature: makeHashCode('for'),
-            dynamic: 'for',
-            cid: cid
-        })
-
-        if (cb && !avalon.caches[cid]) {
-            avalon.caches[cid] = Function('return ' + avalon.parseExpr(cb, 'on'))()
-        }
-
-        nodes.push(node)
-        return {
-            nodeType: 8,
-            type: '#comment',
-            dynamic: true,
-            nodeValue: 'ms-for-end:'
-        }
-    }
-
-    return node
+var rfill = /\?\?\d+/g
+var rlineSp = /\n\s*/g
+var rnowhite = /\S+/g
+var number = 1
+function dig(a) {
+    var key = '??' + number++
+    stringPool[key] = a
+    return key
 }
+function fill(a) {
+    var val = stringPool[a]
+    return val
+}
+//专门用于处理option标签里面的标签
+var rtrimHTML = /<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi
+function trimHTML(v) {
+    return String(v).replace(rtrimHTML, '').trim()
+}
+
 //如果直接将tr元素写table下面,那么浏览器将将它们(相邻的那几个),放到一个动态创建的tbody底下
 function addTbody(nodes) {
     var tbody, needAddTbody = false, count = 0, start = 0, n = nodes.length
@@ -364,36 +349,6 @@ function addTbody(nodes) {
     }
 }
 
-
-var ramp = /&amp;/g
-var rnowhite = /\S+/g
-var rquote = /&quot;/g
-var rnogutter = /\s*=\s*/g
-//https://github.com/RubyLouvre/avalon/issues/1501
-function handleProps(str, props) {
-    str.replace(rnogutter, '=').replace(rnowhite, function (el) {
-        var arr = el.split('='), value = arr[1] || '',
-                name = arr[0].toLowerCase()
-        if (arr.length === 2) {
-            if (value.indexOf('??') === 0) {
-                value = value.replace(rfill, fill).
-                        slice(1, -1)
-            }
-        }
-        props[name] = value
-    })
-}
-
-
-//form prototype.js
-var rtrimHTML = /<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi
-function trimHTML(v) {
-    return String(v).replace(rtrimHTML, '').trim()
-}
-
-
-module.exports = lexer
-
 avalon.speedUp = function (arr) {
     for (var i = 0; i < arr.length; i++) {
         hasDirective(arr[i])
@@ -403,7 +358,7 @@ avalon.speedUp = function (arr) {
 function hasDirective(a) {
     switch (a.nodeType) {
         case 3:
-            if (config.rbind.test(a.nodeValue)) {
+            if (avalon.config.rbind.test(a.nodeValue)) {
                 a.dynamic = 'expr'
                 return true
             } else {
@@ -418,16 +373,12 @@ function hasDirective(a) {
                 return false
             }
         case 1:
-
             if (a.props['ms-skip']) {
                 a.skipAttrs = true
                 a.skipContent = true
                 return false
             }
-            if (/^ms\-/.test(a.type)) {
-                a.dynamic = true
-            }
-            if (hasDirectiveAttrs(a.props)) {
+            if (/^ms\-/.test(a.type) || hasDirectiveAttrs(a.props)) {
                 a.dynamic = true
             } else {
                 a.skipAttrs = true
@@ -456,7 +407,7 @@ function childrenHasDirective(arr) {
             ret = true
         }
     }
-    return ret
+    return ret 
 }
 
 function hasDirectiveAttrs(props) {

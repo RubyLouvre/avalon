@@ -4,7 +4,7 @@
 var evaluatorPool = require('./evaluatorPool')
 
 var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
-var rstring = require('../../seed/regexp').string
+var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
 var rfill = /\?\?\d+/g
 var brackets = /\(([^)]*)\)/
 

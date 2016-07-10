@@ -12,7 +12,7 @@ var emptyObj = function () {
     }
 }
 var directives = avalon.directives
-var rbinding = require('../seed/regexp').binding
+var rbinding = /^ms-(\w+)-?(.*)/
 
 function diff(copys, sources) {
     for (var i = 0; i < copys.length; i++) {

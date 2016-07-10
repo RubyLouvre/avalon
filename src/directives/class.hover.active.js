@@ -30,7 +30,6 @@ avalon.directive('class', {
         var type = name.slice(3)
         var copyValue = copy[name]
         var srcValue = src[name] || ''
-
         if (!src.classEvent) {
             var classEvent = {}
             if (type === 'hover') {//在移出移入时切换类名

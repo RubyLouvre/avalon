@@ -1,6 +1,5 @@
 
-var avalon = require('../dist/avalon.modern')
-//require('./gesture/tap')
+var avalon = require('../dist/avalon')
 require('../components/button/index')
 require('../components/panel/index')
 

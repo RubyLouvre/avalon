@@ -1,16 +1,16 @@
-var markID = require('../seed/lang.share').getLongID
 var Cache = require('../seed/cache')
 var eventCache = new Cache(128)
-var quote = avalon.quote
 var update = require('./_update')
+var markID = require('../seed/lang.share').getLongID
 
+var rfilters = /\|.+/g
 //Ref: http://developers.whatwg.org/webappapis.html#event-handler-idl-attributes
 // The assumption is that future DOM event attribute names will begin with
 // 'on' and be composed of only English letters.
-var revent = /^ms-on-([a-z]+)/
 var rfilters = /\|.+/g
 var rvar = /((?:\@|\$|\#\#)?\w+)/g
-var rstring = require('../seed/regexp').string
+var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
+
 //基于事件代理的高性能事件绑定
 avalon.directive('on', {
     priority: 3000,

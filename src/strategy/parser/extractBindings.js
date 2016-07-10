@@ -1,5 +1,5 @@
 var directives = avalon.directives
-var rbinding = require('../../seed/regexp').binding
+var rbinding = /^ms-(\w+)-?(.*)/
 var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
 
 function extractBindings(cur, props) {
@@ -35,7 +35,7 @@ function extractBindings(cur, props) {
                 if (type === 'on') {
                     order = order || 0
                     binding.name += '-' + order
-                    binding.priority += param.charCodeAt(0) * 100 + order
+                    binding.priority = param.charCodeAt(0) * 100 + order
                 }
                 if (!uniq[binding.name]) {
                     uniq[binding.name] = 1

@@ -160,7 +160,7 @@ describe('widget', function () {
         })
         var hookIndex = 0
         avalon.component('ms-dialog', {
-            template: '<div class="dialog"><p><slot name="content"></p></div>',
+            template: '<div class="dialog"><p><slot name="content"/></p></div>',
             defaults: {
                 buttonText: "内容",
                 onInit: function (a) {

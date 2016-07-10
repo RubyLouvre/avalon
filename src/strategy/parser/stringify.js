@@ -9,8 +9,6 @@ avalon.keyMap = keyMap
   var quoted = {
       type: 1,
       template: 1,
-      innerHTML: 1,
-      outerHTML: 1,
       order: 1,
       nodeValue: 1,
       dynamic: 1,

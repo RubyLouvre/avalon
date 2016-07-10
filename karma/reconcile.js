@@ -32,8 +32,7 @@ describe('节点对齐算法', function () {
         avalon.scan(div)
       
         setTimeout(function () {
-            var el =  div.getElementsByTagName('select')[0]
-            console.log(el)
+            var el = div.getElementsByTagName('select')[0]
             expect(el.selectedIndex).to.equal(0)
             done()
           

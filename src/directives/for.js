@@ -1,11 +1,11 @@
+var update = require('./_update')
+
 var rforPrefix = /ms-for\:\s*/
 var rforLeft = /^\s*\(\s*/
 var rforRight = /\s*\)\s*$/
 var rforSplit = /\s*,\s*/
 var rforAs = /\s+as\s+([$\w]+)/
-var rident = require('../seed/regexp').ident
-var update = require('./_update')
-
+var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
 var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
 var reconcile = require('../strategy/reconcile')
 var Cache = require('../seed/cache')

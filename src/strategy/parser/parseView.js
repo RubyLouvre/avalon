@@ -1,15 +1,15 @@
+/*
+ * 本模块是用于将虚拟DOM变成一个函数
+ */
 
-var parseExpr = require('./parseExpr')
 var extractBindings = require('./extractBindings')
-var parseDelimiter = require('./parseDelimiter')
 var stringify = require('./stringify')
+var parseExpr = require('./parseExpr')
 var config = avalon.config
 var quote = avalon.quote
 var rident =  /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
-var rmsForStart = /^\s*ms\-for\:/
-var rmsForEnd = /^\s*ms\-for\-end/
 var rstatement = /^\s*var\s+([$\w]+)\s*\=\s*\S+/
-
+var skips = {__local__: 1,vmode:1, dom: 1}
 
 
 function parseNodes(source, inner) {
@@ -40,111 +40,107 @@ function parseNodes(source, inner) {
 
 
 
-function parseNode(source) {
-    var directives = avalon.directives
-    if (source.nodeType === 3) {
-        if (config.rexpr.test(source.nodeValue)) {
-            return add(stringifyText(source))
-        } else {
-            return addTag(source)
-        }
-    } else if (source.nodeType === 1) {
-
-        var copy = {
-            props: {},
-            type: source.type,
-            nodeType: 1
-        }
-        var bindings = extractBindings(copy, source.props)
-        copy.order = bindings.map(function (b) {
-            //将ms-*的值变成函数,并赋给copy.props[ms-*]
-            //如果涉及到修改结构,则在source添加$append,$prepend
-            directives[b.type].parse(copy, source, b)
-            return b.name
-
-        }).join(',')
-
-        if (source.isVoidTag) {
-            copy.isVoidTag = true
-        } else {
-            if (!('children' in copy)) {
-                var pChildren = source.children
-                if (pChildren.length) {
-                    copy.children = '(function(){' + parseNodes(pChildren) + '})()'
-                } else {
-                    copy.children = '[]'
-                }
+function parseNode(vdom) {
+    switch (vdom.nodeType) {
+        case 3:
+            if (config.rexpr.test(vdom.nodeValue)) {
+                return add(parseText(vdom))
+            } else {
+                return addTag(vdom)
             }
-        }
-        if (source.skipContent)
-            copy.skipContent = true
-        if (source.skipAttrs)
-            copy.skipAttrs = true
-
-        return addTag(copy)
-
-    } else if (source.nodeType === 8) {
-        var nodeValue = source.nodeValue
-        if (rmsFor.test(nodeValue)) {// 处理ms-for指令
-            if (nodeValue.indexOf('ms-for:') !== 0) {
-                avalon.error('ms-for指令前不能有空格')
-            }
+        case 1:
             var copy = {
-                dynamic: 'for',
-                vmodel: '__vmodel__'
+                props: {},
+                type: vdom.type,
+                nodeType: 1
             }
-            for (var i in source) {
-                if (source.hasOwnProperty(i)) {
-                    copy[i] = source[i]
+            var bindings = extractBindings(copy, vdom.props)
+            var order = bindings.map(function (b) {
+                //将ms-*的值变成函数,并赋给copy.props[ms-*]
+                //如果涉及到修改结构,则在source添加$append,$prepend
+                avalon.directives[b.type].parse(copy, vdom, b)
+                return b.name
+            }).join(',')
+            if (order) {
+                copy.order = order
+            }
+            if (vdom.isVoidTag) {
+                copy.isVoidTag = true
+            } else {
+                if (!('children' in copy)) {
+                    var c = vdom.children
+                    if (c.length) {
+                        copy.children = '(function(){' + parseNodes(c) + '})()'
+                    } else {
+                        copy.children = '[]'
+                    }
                 }
             }
-
-            directives['for'].parse(copy, source, source)
+            if (vdom.skipContent)
+                copy.skipContent = true
+            if (vdom.skipAttrs)
+                copy.skipAttrs = true
 
             return addTag(copy)
+        case 8:
+            var nodeValue = vdom.nodeValue
+            if (vdom.dynamic === 'for') {// 处理ms-for指令
+                if (nodeValue.indexOf('ms-for:') !== 0) {
+                    avalon.error('ms-for指令前不能有空格')
+                }
+                var copy = {
+                    dynamic: 'for',
+                    vmodel: '__vmodel__'
+                }
+                for (var i in vdom) {
+                    if (vdom.hasOwnProperty(i) && !skips[i]) {
+                        copy[i] = vdom[i]
+                    }
+                }
 
-        } else if (rmsForEnd.test(nodeValue)) {
-            if (nodeValue.indexOf('ms-for-end:') !== 0) {
-                avalon.error('ms-for-end指令前不能有空格')
-            }
-            source.$append = addTag({
-                nodeType: 8,
-                type: '#comment',
-                nodeValue: source.signature,
-                key: 'traceKey'
-            }) +
-                    '\n},__local__,vnodes)\n' +
-                    addTag({
-                        nodeType: 8,
-                        type: "#comment",
-                        signature: source.signature,
-                        nodeValue: "ms-for-end:"
-                    }) + '\n'
+                avalon.directives['for'].parse(copy, vdom, vdom)
+                return addTag(copy)
+            } else if (vdom.dynamic) {
+                if (nodeValue.indexOf('ms-for-end:') !== 0) {
+                    avalon.error('ms-for-end指令前不能有空格')
+                }
+                vdom.$append = addTag({
+                    nodeType: 8,
+                    type: '#comment',
+                    nodeValue: vdom.signature,
+                    key: 'traceKey'
+                }) + '\n},__local__,vnodes)\n' +
+                        addTag({
+                            nodeType: 8,
+                            type: "#comment",
+                            signature: vdom.signature,
+                            nodeValue: "ms-for-end:"
+                        }) + '\n'
+                return ''
 
-            return ''
-        } else if (nodeValue.indexOf('ms-js:') === 0) {//插入JS声明语句
-            var statement = parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
-            var ret = addTag(source)
-            var match = statement.match(rstatement)
-            if (match && match[1]) {
-                source.$append = (source.$append || '') + statement +
-                        "\n__local__." + match[1] + ' = ' + match[1] + '\n'
+            } else if (nodeValue.indexOf('ms-js:') === 0) {//插入JS声明语句
+                var statement = parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
+                var ret = addTag(vdom)
+                var match = statement.match(rstatement)
+                if (match && match[1]) {
+                    vdom.$append = (vdom.$append || '') + statement +
+                            "\n__local__." + match[1] + ' = ' + match[1] + '\n'
+                } else {
+                    avalon.warn(nodeValue + ' parse fail!')
+                }
+                return ret
             } else {
-                avalon.warn(nodeValue + ' parse fail!')
+                return addTag(vdom)
             }
-            return ret
-        } else {
-            return addTag(source)
-        }
-    } else if (Array.isArray(source)) {
-        source.$append = parseNodes(source, true)
+        default:
+            if (Array.isArray(vdom)) {
+                vdom.$append = parseNodes(vdom, true)
+            }
     }
+
 }
 
-
-
 module.exports = parseNodes
-
 
 function wrapDelimiter(expr) {
     return rident.test(expr) ? expr : parseExpr(expr, 'text')
@@ -157,8 +153,8 @@ function addTag(obj) {
     return add(stringify(obj))
 }
 
-function stringifyText(el) {
-    var array = parseDelimiter(el.nodeValue)//返回一个数组
+function parseText(el) {
+    var array = extractExpr(el.nodeValue)//返回一个数组
     var nodeValue = ''
     if (array.length === 1) {
         nodeValue = wrapDelimiter(array[0].expr)
@@ -169,4 +165,31 @@ function stringifyText(el) {
         nodeValue = 'String(' + token + ')'
     }
     return '{\ntype: "#text",\nnodeType:3,\ndynamic:true,\nnodeValue: ' + nodeValue + '\n}'
+}
+
+var rlineSp = /\n\s*/g
+
+function extractExpr(str) {
+    var ret = []
+    do {//aaa{{@bbb}}ccc
+        var index = str.indexOf(config.openTag)
+        index = index === -1 ? str.length : index
+        var value = str.slice(0, index)
+        if (/\S/.test(value)) {
+            ret.push({expr: value})
+        }
+        str = str.slice(index + config.openTag.length)
+        if (str) {
+            index = str.indexOf(config.closeTag)
+
+            var value = str.slice(0, index)
+            ret.push({
+                expr: value.replace(rlineSp, ''),
+                type: '{{}}'
+            })
+            str = str.slice(index + config.closeTag.length)
+        }
+    } while (str.length)
+
+   return ret
 }
