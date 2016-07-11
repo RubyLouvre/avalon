@@ -4,7 +4,6 @@ var updateModelMethods = {
         prop = prop || 'value'
         var dom = data.dom
         var rawValue = dom[prop]
-      
         var parsedValue = data.parse(rawValue)
         var formatedValue = data.format(data.vmodel, parsedValue)
         data.lastViewValue = formatedValue

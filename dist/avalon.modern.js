@@ -2790,7 +2790,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	function updateModelHandle(e) {
 	    var elem = this
 	    var field = this.__ms_duplex__
-	    if (elem.composing || elem.value === field.lastViewValue){
+	    if (elem.composing || field.parse(elem.value) === field.lastViewValue){
 	        //防止onpropertychange引发爆栈
 	        return
 	    }
@@ -2831,7 +2831,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        prop = prop || 'value'
 	        var dom = data.dom
 	        var rawValue = dom[prop]
-	      
 	        var parsedValue = data.parse(rawValue)
 	        var formatedValue = data.format(data.vmodel, parsedValue)
 	        data.lastViewValue = formatedValue

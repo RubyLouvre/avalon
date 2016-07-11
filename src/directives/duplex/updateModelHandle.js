@@ -3,7 +3,7 @@ var updateModelMethods = require('./updateModelMethods')
 function updateModelHandle(e) {
     var elem = this
     var field = this.__ms_duplex__
-    if (elem.composing || elem.value === field.lastViewValue){
+    if (elem.composing || field.parse(elem.value) === field.lastViewValue){
         //防止onpropertychange引发爆栈
         return
     }

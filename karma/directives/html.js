@@ -168,4 +168,24 @@ describe('html', function () {
 
         }, 150)
     })
+
+    it('ms-html遇到XMP', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller="html6" ms-html="@tpl"></div>
+             */
+        })
+      
+        vm = avalon.define({
+            $id: 'html6',
+            tpl: ""
+        });
+       
+        avalon.scan(div)
+        setTimeout(function(){
+            vm.tpl = '<xmp><input /></xmp>'
+            expect(div.getElementsByTagName('input').length).to.equal(0)
+            done()
+        }, 300)
+    })
 })
