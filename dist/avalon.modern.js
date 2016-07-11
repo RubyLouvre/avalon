@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-11:11 version 2.10 by 司徒正美
+ * built in 2016-7-11:14 version 2.10 by 司徒正美
  * 重构ms-controller, ms-important指令
  * 虚拟DOM移除template属性
  * 修正ms-for的排序问题
@@ -2923,8 +2923,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var bproto = HTMLTextAreaElement.prototype
 	    function newSetter(value) { // jshint ignore:line
 	        setters[this.tagName].call(this, value)
-	        if (!this.caret && this._ms_field_) {
-	            this._ms_field_.update.call(this)
+	        if (!this.caret && this.__ms_duplex__) {
+	            this.__ms_duplex__.update.call(this)
 	        }
 	    }
 	    var inputProto = HTMLInputElement.prototype

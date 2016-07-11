@@ -5,8 +5,8 @@ try { //#272 IE9-IE11, firefox
     var bproto = HTMLTextAreaElement.prototype
     function newSetter(value) { // jshint ignore:line
         setters[this.tagName].call(this, value)
-        if (!this.caret && this._ms_field_) {
-            this._ms_field_.update.call(this)
+        if (!this.caret && this.__ms_duplex__) {
+            this.__ms_duplex__.update.call(this)
         }
     }
     var inputProto = HTMLInputElement.prototype
