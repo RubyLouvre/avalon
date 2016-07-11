@@ -6369,7 +6369,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //如果是使用bind方法绑定的回调,其uuid格式为_12
 	        var uuid = getShortID(fn)
 	        var hook = eventHooks[type]
-	        if(hook){
+	        if (hook) {
 	            type = hook.type || type
 	            if (hook.fix) {
 	                fn = hook.fix(elem, fn)
@@ -6435,7 +6435,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var value = elem.getAttribute('avalon-events')
 	    if (value && (elem.disabled !== true || type !== 'click')) {
 	        var uuids = []
-	        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp(type + '\\:([^,\\s]+)', 'g'))
+	        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp('\\b' + type + '\\:([^,\\s]+)', 'g'))
 	        value.replace(reg, function (a, b) {
 	            uuids.push(b)
 	            return a
@@ -6474,9 +6474,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (vm && vm.$hashcode === false) {
 	                    return avalon.unbind(elem, type, fn)
 	                }
-	               
+
 	                var ret = fn.call(vm || elem, event, host._ms_local)
-	            
+
 	                if (ret === false) {
 	                    event.preventDefault()
 	                    event.stopPropagation()

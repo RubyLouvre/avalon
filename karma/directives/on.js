@@ -206,5 +206,31 @@ describe('on', function () {
 
 
     })
+    
+    it('ms-on-dblclick', function (done) {
+        //https://github.com/RubyLouvre/avalon/issues/1582
+        div.innerHTML = heredoc(function () {
+            /*
+             <blockquote ms-controller='on6'ms-dblclick='@callback' >xxx</blockquote>
+             */
+        })
+        var i = 0
+        vm = avalon.define({
+            $id: "test",
+            callback: function (e) {
+               ++i
+            },
+            panels: ["面板1", "面板2", "面板3"]
+        })
+        avalon.scan(div)
+        setTimeout(function(){
+            var divs = div.getElementsByTagName('blockquote')
+            fireClick(divs[0])
+            setTimeout(function(){
+                expect(i).to.equal(0) 
+                done()
+            }, 150)
+        }, 150)
+    })
 })
 
