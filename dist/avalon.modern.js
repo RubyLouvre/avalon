@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-11:16 version 2.10 by 司徒正美
+ * built in 2016-7-11:17 version 2.10 by 司徒正美
  * 重构ms-controller, ms-important指令
  * 虚拟DOM移除template属性
  * 修正ms-for的排序问题
@@ -3169,14 +3169,18 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	avalon.directive('rules', {
-	     parse: function (copy, src, binding) {
+	    parse: function (copy, src, binding) {
 	        var rules = binding.expr
 	        if (/{.+}/.test(rules)) {
-	           copy[binding.name] = avalon.parseExpr(binding)
+	            copy[binding.name] = avalon.parseExpr(binding)
 	        }
 	    },
-	    diff: function(copy, src, name){
+	    diff: function (copy, src, name) {
 	        src[name] = copy[name]
+	        var field = src.dom && src.dom.__ms_duplex__
+	        if (field) {
+	            field.rules = copy[name]
+	        }
 	    }
 	})
 	function isRegExp(value) {

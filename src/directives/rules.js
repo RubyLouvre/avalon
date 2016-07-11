@@ -1,12 +1,16 @@
 avalon.directive('rules', {
-     parse: function (copy, src, binding) {
+    parse: function (copy, src, binding) {
         var rules = binding.expr
         if (/{.+}/.test(rules)) {
-           copy[binding.name] = avalon.parseExpr(binding)
+            copy[binding.name] = avalon.parseExpr(binding)
         }
     },
-    diff: function(copy, src, name){
+    diff: function (copy, src, name) {
         src[name] = copy[name]
+        var field = src.dom && src.dom.__ms_duplex__
+        if (field) {
+            field.rules = copy[name]
+        }
     }
 })
 function isRegExp(value) {
