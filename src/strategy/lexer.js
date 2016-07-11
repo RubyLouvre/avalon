@@ -173,7 +173,7 @@ function fireEnd(node, stack) {
         delete props['ms-for']
         var p = stack.last()
         var arr = p.children
-        arr.splice(arr.length - 2, 0, {
+        arr.splice(arr.length - 1, 0, {
             nodeType: 8,
             type: '#comment',
             nodeValue: 'ms-for:' + forExpr

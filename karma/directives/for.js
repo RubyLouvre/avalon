@@ -543,5 +543,26 @@ describe('for', function () {
             }, 100)
         }, 100);
     })
+    it('防止构建循环区域错误', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <ul ms-controller="for13">
+             <li>zzz</li>
+             <li ms-for="el in @arr">{{el}}</li>    
+             </ul>
+             */
+        })
 
+        vm = avalon.define({
+            $id: 'for13',
+            arr: ['aaa', 'bbb', 'ccc'],
+            bbb: true
+        });
+        avalon.scan(div)
+        setTimeout(function () {
+            var lis = div.getElementsByTagName('li')
+            expect(lis.length).to.equal(4)
+            done()
+        }, 150)
+    })
 })

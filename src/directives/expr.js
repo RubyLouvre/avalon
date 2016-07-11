@@ -13,7 +13,7 @@ avalon.directive('expr', {
         if (dom) {
             dom.nodeValue = vdom.nodeValue
         } else {
-            avalon.warn('[', vdom.nodeValue, ']找到对应的文本节点赋值')
+            avalon.warn('[', vdom.nodeValue, ']找不到对应的文本节点赋值')
         }
     }
 })

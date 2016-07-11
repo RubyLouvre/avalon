@@ -24,6 +24,9 @@ ms-widget, ms-controller, ms-important生成的VM与对应的DOM都保存起来,
 并在avalon.vdomAdaptor中还原
 添加unescapeHTML与escapeHTML方法
 全新的lexer与 插值表达式抽取方法
+修正xmp元素的内容生成BUG
+修正input.value = newValue的同步BUG
+修正双击事件BUG
      */
 })
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')

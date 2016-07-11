@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-11:15 version 2.10 by 司徒正美
+ * built in 2016-7-11:16 version 2.10 by 司徒正美
  * 重构ms-controller, ms-important指令
  * 虚拟DOM移除template属性
  * 修正ms-for的排序问题
@@ -8,6 +8,9 @@
  * 并在avalon.vdomAdaptor中还原
  * 添加unescapeHTML与escapeHTML方法
  * 全新的lexer与 插值表达式抽取方法
+ * 修正xmp元素的内容生成BUG
+ * 修正input.value = newValue的同步BUG
+ * 修正双击事件BUG
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -82,7 +85,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-7-11:15 version 2.10 by 司徒正美
+	 * built in 2016-7-11:16 version 2.10 by 司徒正美
 	 * 重构ms-controller, ms-important指令
 	 * 虚拟DOM移除template属性
 	 * 修正ms-for的排序问题
@@ -91,6 +94,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * 并在avalon.vdomAdaptor中还原
 	 * 添加unescapeHTML与escapeHTML方法
 	 * 全新的lexer与 插值表达式抽取方法
+	 * 修正xmp元素的内容生成BUG
+	 * 修正input.value = newValue的同步BUG
+	 * 修正双击事件BUG
 	 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
@@ -3769,7 +3775,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        if (dom) {
 		            dom.nodeValue = vdom.nodeValue
 		        } else {
-		            avalon.warn('[', vdom.nodeValue, ']找到对应的文本节点赋值')
+		            avalon.warn('[', vdom.nodeValue, ']找不到对应的文本节点赋值')
 		        }
 		    }
 		})
@@ -7071,7 +7077,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        delete props['ms-for']
 		        var p = stack.last()
 		        var arr = p.children
-		        arr.splice(arr.length - 2, 0, {
+		        arr.splice(arr.length - 1, 0, {
 		            nodeType: 8,
 		            type: '#comment',
 		            nodeValue: 'ms-for:' + forExpr
