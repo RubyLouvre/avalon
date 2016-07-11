@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-11:2 version 2.10 by 司徒正美
+ * built in 2016-7-11:11 version 2.10 by 司徒正美
  * 重构ms-controller, ms-important指令
  * 虚拟DOM移除template属性
  * 修正ms-for的排序问题
@@ -1454,7 +1454,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
-	 * 虚拟DOM的4大构造器
+	 * 虚拟DOM的3大构造器
 	 */
 	var VText = __webpack_require__(15)
 	var VComment = __webpack_require__(16)
@@ -1669,14 +1669,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    dom.innerHTML = template
 	                }
 	                break
-	            case 'xmp':
+	            case 'xmp'://IE6-8,XMP元素里面只能有文本节点,不能使用innerHTML
+	            case 'noscript':
 	                dom.innerText = dom.textContent = template
 	                break
 	            case 'template':
 	                dom.innerHTML = template
-	                break
-	            case 'noscript':
-	                dom.textContent = template
 	                break
 	            default:
 	                if (!this.isVoidTag) {

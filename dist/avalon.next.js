@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-11:2 version 2.10 by 司徒正美
+ * built in 2016-7-11:11 version 2.10 by 司徒正美
  * 重构ms-controller, ms-important指令
  * 虚拟DOM移除template属性
  * 修正ms-for的排序问题
@@ -68,12 +68,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	var avalon = __webpack_require__(80) 
 
 	__webpack_require__(8)
-	__webpack_require__(14)
 	__webpack_require__(82)
-	__webpack_require__(90)
+	__webpack_require__(84)
+	__webpack_require__(92)
 	__webpack_require__(69)
-	__webpack_require__(98)
-	avalon.onComponentDispose = __webpack_require__(97)
+	__webpack_require__(100)
+	avalon.onComponentDispose = __webpack_require__(99)
 
 
 	module.exports = avalon
@@ -993,53 +993,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = eventFilters
 
 /***/ },
-/* 14 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * 虚拟DOM的4大构造器
-	 */
-	var VText = __webpack_require__(15)
-	var VComment = __webpack_require__(16)
-	var VElement = __webpack_require__(17)
-
-	avalon.vdomAdaptor = function (obj, method) {
-	    if (!obj) {//obj在ms-for循环里面可能是null
-	        return (method === "toHTML" ? '' :
-	            avalon.avalonFragment.cloneNode(false))
-	    }
-	    switch (obj.nodeType) {
-	        case 3:
-	            return VText.prototype[method].call(obj)
-	        case 8:
-	            return VComment.prototype[method].call(obj)
-	        case 1:
-	            return VElement.prototype[method].call(obj)
-	        default:
-	            if (Array.isArray(obj)) {
-	                if (method === "toHTML") {
-	                    return obj.map(function (a) {
-	                        return avalon.vdomAdaptor(a, 'toHTML')
-	                    }).join('')
-	                } else {
-	                    var f = avalon.avalonFragment.cloneNode(false)
-	                    obj.forEach(function (a) {
-	                        f.appendChild(avalon.vdomAdaptor(a, 'toDOM'))
-	                    })
-	                    return f
-	                }
-	            }
-	    }
-	}
-
-	module.exports = {
-	    VText: VText,
-	    VComment: VComment,
-	    VElement: VElement
-	}
-
-
-/***/ },
+/* 14 */,
 /* 15 */
 /***/ function(module, exports) {
 
@@ -1102,161 +1056,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = VComment
 
 /***/ },
-/* 17 */
-/***/ function(module, exports) {
-
-	
-	function VElement(type, props, children) {
-	    if (typeof type === 'object') {
-	        for (var i in type) {
-	            this[i] = type[i]
-	        }
-	    } else {
-	        this.nodeType = 1
-	        this.type = type
-	        this.props = props
-	        this.children = children
-	    }
-	}
-	function skipFalseAndFunction(a) {
-	    return a !== false && (Object(a) !== a)
-	}
-	var specal = {
-	    "class": function (dom, val) {
-	        dom.className = val
-	    },
-	    style: function (dom, val) {
-	        dom.style.cssText = val
-	    },
-	    'for': function (dom, val) {
-	        dom.htmlFor = val
-	    }
-	}
-
-	function createVML(type) {
-	    if (document.styleSheets.length < 31) {
-	        document.createStyleSheet().addRule(".rvml", "behavior:url(#default#VML)");
-	    } else {
-	        // no more room, add to the existing one
-	        // http://msdn.microsoft.com/en-us/library/ms531194%28VS.85%29.aspx
-	        document.styleSheets[0].addRule(".rvml", "behavior:url(#default#VML)");
-	    }
-	    var arr = type.split(':')
-	    if (arr.length === 1) {
-	        arr.unshift('v')
-	    }
-	    var tag = arr[1]
-	    var ns = arr[0]
-	    if (!document.namespaces[ns]) {
-	        document.namespaces.add(ns, "urn:schemas-microsoft-com:vml")
-	    }
-	    return  document.createElement('<' + ns + ':' + tag + ' class="rvml">');
-	}
-
-	function createSVG(type) {
-	    return document.createElementNS('http://www.w3.org/2000/svg', type)
-	}
-	var svgTags = avalon.oneObject('circle,defs,ellipse,image,line,' +
-	        'path,polygon,polyline,rect,symbol,text,use,g,svg')
-	var VMLTags = avalon.oneObject('shape,line,polyline,rect,roundrect,oval,arc,' +
-	        'curve,background,image,shapetype,group,fill,' +
-	        'stroke,shadow, extrusion, textbox, imagedata, textpath')
-
-	var rvml = /^\w+\:\w+/
-
-	VElement.prototype = {
-	    constructor: VElement,
-	    toDOM: function () {
-	        var dom, tagName = this.type
-	        if (avalon.modern && svgTags[tagName]) {
-	            dom = createSVG(tagName)
-	        } else if (!avalon.modern && (VMLTags[tagName] || rvml.test(tagName))) {
-	            dom = createVML(tagName)
-	        } else {
-	            dom = document.createElement(tagName)
-	        }
-	        var wid = this.props['ms-important'] ||
-	                this.props['ms-controller'] || this.wid
-	        if (wid) {
-	            var scope = avalon.scopes[wid]
-	            var element = scope && scope.vmodel && scope.vmodel.$element
-	            if (element) {
-	                var oldVdom = element.vtree[0]
-	                if (oldVdom.children) {
-	                    this.children = oldVdom.children
-	                }
-	                return element
-	            }
-	        }
-	        for (var i in this.props) {
-	            var val = this.props[i]
-	            if (skipFalseAndFunction(val)) {
-	                if (specal[i] && avalon.msie < 8) {
-	                    specal[i](dom, val)
-	                } else {
-	                    dom.setAttribute(i, val + '')
-	                }
-	            }
-	        }
-	        var c = this.children || []
-	        var template = c[0] ? c[0].nodeValue : ''
-	        switch (this.type) {
-	            case 'script':
-	                dom.text = template
-	                break
-	            case 'style':
-	                if ('styleSheet' in dom) {
-	                    dom.setAttribute('type', 'text/css')
-	                    dom.styleSheet.cssText = template
-	                } else {
-	                    dom.innerHTML = template
-	                }
-	                break
-	            case 'xmp':
-	                dom.innerText = dom.textContent = template
-	                break
-	            case 'template':
-	                dom.innerHTML = template
-	                break
-	            case 'noscript':
-	                dom.textContent = template
-	                break
-	            default:
-	                if (!this.isVoidTag) {
-	                    this.children.forEach(function (c) {
-	                        c && dom.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
-	                    })
-	                }
-	                break
-	        }
-	        return dom
-	    },
-	    toHTML: function () {
-	        var arr = []
-	        for (var i in this.props) {
-	            var val = this.props[i]
-	            if (skipFalseAndFunction(val)) {
-	                arr.push(i + '=' + avalon.quote(this.props[i] + ''))
-	            }
-	        }
-	        arr = arr.length ? ' ' + arr.join(' ') : ''
-	        var str = '<' + this.type + arr
-	        if (this.isVoidTag) {
-	            return str + '/>'
-	        }
-	        str += '>'
-	        if (this.children.length) {
-	            str += this.children.map(function (c) {
-	                return c ? avalon.vdomAdaptor(c, 'toHTML') : ''
-	            }).join('')
-	        }
-	        return str + '</' + this.type + '>'
-	    }
-	}
-
-	module.exports = VElement
-
-/***/ },
+/* 17 */,
 /* 18 */,
 /* 19 */,
 /* 20 */,
@@ -5930,26 +5730,183 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 82 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/**
+	 * 虚拟DOM的3大构造器
+	 */
+	var VText = __webpack_require__(15)
+	var VComment = __webpack_require__(16)
+	var VElement = __webpack_require__(83)
+
+	avalon.vdomAdaptor = function (obj, method) {
+	    if (!obj) {//obj在ms-for循环里面可能是null
+	        return (method === "toHTML" ? '' :
+	            avalon.avalonFragment.cloneNode(false))
+	    }
+	    switch (obj.nodeType) {
+	        case 3:
+	            return VText.prototype[method].call(obj)
+	        case 8:
+	            return VComment.prototype[method].call(obj)
+	        case 1:
+	            return VElement.prototype[method].call(obj)
+	        default:
+	            if (Array.isArray(obj)) {
+	                if (method === "toHTML") {
+	                    return obj.map(function (a) {
+	                        return avalon.vdomAdaptor(a, 'toHTML')
+	                    }).join('')
+	                } else {
+	                    var f = avalon.avalonFragment.cloneNode(false)
+	                    obj.forEach(function (a) {
+	                        f.appendChild(avalon.vdomAdaptor(a, 'toDOM'))
+	                    })
+	                    return f
+	                }
+	            }
+	    }
+	}
+
+	module.exports = {
+	    VText: VText,
+	    VComment: VComment,
+	    VElement: VElement
+	}
+
+
+/***/ },
+/* 83 */
+/***/ function(module, exports) {
+
+	
+	function VElement(type, props, children) {
+	    if (typeof type === 'object') {
+	        for (var i in type) {
+	            this[i] = type[i]
+	        }
+	    } else {
+	        this.nodeType = 1
+	        this.type = type
+	        this.props = props
+	        this.children = children
+	    }
+	}
+	function skipFalseAndFunction(a) {
+	    return a !== false && (Object(a) !== a)
+	}
+
+
+	function createSVG(type) {
+	    return document.createElementNS('http://www.w3.org/2000/svg', type)
+	}
+	var svgTags = avalon.oneObject('circle,defs,ellipse,image,line,' +
+	        'path,polygon,polyline,rect,symbol,text,use,g,svg')
+
+
+	var rvml = /^\w+\:\w+/
+	var supportTemplate = 'content' in document.createElement('template')
+	VElement.prototype = {
+	    constructor: VElement,
+	    toDOM: function () {
+	        var dom, tagName = this.type
+	        if (avalon.modern && svgTags[tagName]) {
+	            dom = createSVG(tagName)
+	        } else {
+	            dom = document.createElement(tagName)
+	        }
+	        var wid = this.props['ms-important'] ||
+	                this.props['ms-controller'] || this.wid
+	        if (wid) {
+	            var scope = avalon.scopes[wid]
+	            var element = scope && scope.vmodel && scope.vmodel.$element
+	            if (element) {
+	                var oldVdom = element.vtree[0]
+	                if (oldVdom.children) {
+	                    this.children = oldVdom.children
+	                }
+	                return element
+	            }
+	        }
+	        for (var i in this.props) {
+	            var val = this.props[i]
+	            if (skipFalseAndFunction(val)) {
+	                dom.setAttribute(i, val + '')
+	            }
+	        }
+	        var c = this.children || []
+	        var template = c[0] ? c[0].nodeValue : ''
+	        switch (this.type) {
+	            case 'xmp':
+	            case 'script':
+	            case 'style':
+	            case 'noscript':
+	                dom.innerHTML = template
+	                break
+	            case 'template':
+	                if (supportTemplate) {
+	                    dom.innerHTML = template
+	                } else {
+	                    dom.textContent = template
+	                }
+	                break
+	            default:
+	                if (!this.isVoidTag) {
+	                    this.children.forEach(function (c) {
+	                        c && dom.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
+	                    })
+	                }
+	                break
+	        }
+	        return dom
+	    },
+	    toHTML: function () {
+	        var arr = []
+	        for (var i in this.props) {
+	            var val = this.props[i]
+	            if (skipFalseAndFunction(val)) {
+	                arr.push(i + '=' + avalon.quote(this.props[i] + ''))
+	            }
+	        }
+	        arr = arr.length ? ' ' + arr.join(' ') : ''
+	        var str = '<' + this.type + arr
+	        if (this.isVoidTag) {
+	            return str + '/>'
+	        }
+	        str += '>'
+	        if (this.children.length) {
+	            str += this.children.map(function (c) {
+	                return c ? avalon.vdomAdaptor(c, 'toHTML') : ''
+	            }).join('')
+	        }
+	        return str + '</' + this.type + '>'
+	    }
+	}
+
+	module.exports = VElement
+
+/***/ },
+/* 84 */
+/***/ function(module, exports, __webpack_require__) {
+
 	
 	/*********************************************************************
 	 *                          DOM Api                                 *
 	 *           shim,class,data,css,val,html,event,ready               *
 	 **********************************************************************/
 
-	__webpack_require__(83)
-	__webpack_require__(84)
 	__webpack_require__(85)
 	__webpack_require__(86)
 	__webpack_require__(87)
-	__webpack_require__(26)
 	__webpack_require__(88)
 	__webpack_require__(89)
+	__webpack_require__(26)
+	__webpack_require__(90)
+	__webpack_require__(91)
 
 	module.exports = avalon
 
 
 /***/ },
-/* 83 */
+/* 85 */
 /***/ function(module, exports) {
 
 	//safari5+是把contains方法放在Element.prototype上而不是Node.prototype
@@ -5974,7 +5931,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 84 */
+/* 86 */
 /***/ function(module, exports) {
 
 	var rnowhite = /\S+/g
@@ -6013,7 +5970,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 85 */
+/* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var propMap = __webpack_require__(22)
@@ -6075,7 +6032,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = attrUpdate
 
 /***/ },
-/* 86 */
+/* 88 */
 /***/ function(module, exports) {
 
 	var root = avalon.root
@@ -6325,7 +6282,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 87 */
+/* 89 */
 /***/ function(module, exports) {
 
 	function getValType(elem) {
@@ -6394,7 +6351,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 88 */
+/* 90 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var document = avalon.document
@@ -6673,7 +6630,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 89 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var scan = __webpack_require__(32)
@@ -6711,13 +6668,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 90 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
 	__webpack_require__(35)
 	__webpack_require__(37)
 	//处理属性样式
-	__webpack_require__(91)
+	__webpack_require__(93)
 	__webpack_require__(40)
 	__webpack_require__(41)
 	//处理内容
@@ -6727,7 +6684,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	//需要用到事件的
 	__webpack_require__(51)
 	__webpack_require__(52)
-	__webpack_require__(92)
+	__webpack_require__(94)
 	__webpack_require__(60)
 	__webpack_require__(61)
 
@@ -6739,11 +6696,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(67)
 
 /***/ },
-/* 91 */
+/* 93 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var attrUpdate = __webpack_require__(85)
+	var attrUpdate = __webpack_require__(87)
 	var update = __webpack_require__(36)
 
 	avalon.directive('attr', {
@@ -6782,7 +6739,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 92 */
+/* 94 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -6793,10 +6750,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rchangeFilter = /\|\s*change\b/
 	var rcheckedType = /^(?:checkbox|radio)$/
 	var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/
-	var updateModelByEvent = __webpack_require__(93)
+	var updateModelByEvent = __webpack_require__(95)
 	var updateModelByValue = __webpack_require__(57)
 	var updateModel = __webpack_require__(55)
-	var updateView = __webpack_require__(94)
+	var updateView = __webpack_require__(96)
 	var addValidateField = __webpack_require__(59)
 
 
@@ -6961,7 +6918,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 /***/ },
-/* 93 */
+/* 95 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* 
@@ -7091,7 +7048,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = updateModelByEvent
 
 /***/ },
-/* 94 */
+/* 96 */
 /***/ function(module, exports) {
 
 	
@@ -7138,9 +7095,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 95 */,
-/* 96 */,
-/* 97 */
+/* 97 */,
+/* 98 */,
+/* 99 */
 /***/ function(module, exports) {
 
 	
@@ -7252,7 +7209,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 98 */
+/* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**

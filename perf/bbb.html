@@ -2,46 +2,54 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <script src="../dist/avalon.js"></script>
+        <title></title>
 
     </head>
     <body>
-        <div ms-controller="test">
-            <div ms-html="@tpl"></div>
-            <button ms-click="@click">插入</button>
-            <button ms-click="@click2">插入</button>
-        </div>
-        <script>
-            function heredoc(fn) {
-                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
-                        replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
-            }
-             var html = heredoc(function () {
-                /*
-                 <div ms-controller="test2">
-                 <span  ms-if='@show'>AAA</span>|<span ms-for='el in @ter'>{{el}}</span>
-                 </div>
-                 */
-            })
-            var vm = avalon.define({
-                $id: 'test',
-                tpl: "",
-                click: function () {
-                    vm.tpl = html
-
-                },
-                click2: function () {
-                    this.tpl = "";
-                }
-            });
-
-            avalon.define({
-                $id: 'test2',
-                ter: ['呵呵哒1', '呵呵哒2', '呵呵哒3'],
-                show: false
-            });
-
-
+        <script id="aaa">
+            console.log(2222)
         </script>
-    </body>
+        <style id="bbb">
+
+        </style>
+    <xmp id="ccc">
+
+    </xmp>
+    <select>
+        <option id="fff"></option>
+    </select>
+    <template id="ddd">
+
+    </template>
+    <noscript id="eee">
+
+    </noscript>
+    3333
+    <script>
+
+
+        var el = document.getElementById('bbb')
+        console.log(el)
+        el.innerHTML = 'body{color:red}'
+        var el = document.getElementById('ccc')
+        console.log(el)
+        el.innerHTML = '<input/><button>222</button>'
+        var el = document.getElementById('ddd')
+        console.log(el)
+        el.innerHTML = '<input/><button>222</button>'
+        var el = document.getElementById('eee')
+        console.log(el)
+        el.innerHTML = '<input/><button>222</button>'
+        var el = document.querySelector('#aaa')
+       
+        el.type = 'text/javascript'
+        el.innerHTML = 'console.log(1);'
+
+        var el = document.getElementById('fff')
+        console.log(el)
+        el.innerText = '<input/><button>222</button>'
+
+
+    </script>
+</body>
 </html>

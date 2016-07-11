@@ -1,5 +1,5 @@
 /**
- * 虚拟DOM的4大构造器
+ * 虚拟DOM的3大构造器
  */
 var VText = require('./VText')
 var VComment = require('./VComment')
