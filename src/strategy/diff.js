@@ -38,7 +38,7 @@ function diff(copys, sources) {
                 if (copy.order) {
                     diffProps(copy, src)
                 }
-                if (!copy.skipContent && !copy.isVoidTag ) {
+                if (copy.nodeType === 1 && !copy.skipContent && !copy.isVoidTag ) {
                     diff(copy.children, src.children || emptyArr, copy)
                 }
                 if(src.afterChange){

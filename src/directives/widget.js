@@ -1,6 +1,6 @@
 var update = require('./_update')
 var reconcile = require('../strategy/reconcile')
-var createComponent = require('../component/create')
+var tryInitComponent = require('../component/init')
 
 avalon.component = function (name, definition) {
     //这是定义组件的分支,并将列队中的同类型对象移除
@@ -31,22 +31,27 @@ avalon.directive('widget', {
                 a = avalon.mix.apply({}, a)
             }
             var is = a.is || src.props.is
+
+            //如果组件没有初始化,那么先初始化(生成对应的vm,$render)
             if (!src[is + "-vm"]) {
-                if (!createComponent(src, copy, is)) {
+                if (!tryInitComponent(src, copy, is)) {
                     //替换成注释节点
                     update(src, this.mountComment)
                     return
                 }
             }
+            //如果已经存在于avalon.scopes
             var renderComponent = src[is + '-vm'].$render
             var newTree = renderComponent(src[is + '-vm'], src.local)
-
             var componentRoot = newTree[0]
+            //判定组里面是否包含unresolved component placeholder
             if (componentRoot && isComponentReady(componentRoot)) {
                 if (src[is + '-mount']) {//update
+                    avalon.log("再次插入到DOM树", src)
                     updateCopy(copy, componentRoot)
                     update(src, this.updateComponent)
-                } else {//mount
+                } else {//第一次插入到DOM树
+                    avalon.log("第一次插入到DOM树")
                     src.copy = copy
                     src.newCopy = componentRoot
                     update(src, this.mountComponent)
@@ -69,47 +74,58 @@ avalon.directive('widget', {
     updateComponent: function (dom, vdom) {
         var is = vdom.is
         var vm = vdom[is + '-vm']
+
         var viewChangeObservers = vm.$events.onViewChange
         if (viewChangeObservers && viewChangeObservers.length) {
             update(vdom, viewChangeHandle, 'afterChange')
         }
     },
-    
     mountComponent: function (dom, vdom, parent) {
+        avalon.log('开始widget update......',vdom.comment)
         var is = vdom.is
         var vm = vdom[is + '-vm']
         var copy = vdom.copy
         var newCopy = vdom.newCopy
         delete vdom.newCopy
-       
-        var scope = avalon.scopes[vm.$id]  
-        if (scope && scope.vmodel) {  
+
+        var scope = avalon.scopes[vm.$id]
+        if (scope && scope.vmodel) {
             var com = scope.vmodel.$element
             newCopy = com.vtree[0]
             updateCopy(vdom, newCopy)
+
             parent.replaceChild(com, dom)
             com.vtree = [vdom]
             vdom[is + '-vm'] = scope.vmodel
             vdom[is + '-mount'] = true
             return
         }
-        
         //更新原始虚拟DOM树
-        updateCopy(copy, newCopy )  
+        copy._copy = true
+        updateCopy(copy, newCopy)
         var vtree = vdom[is + '-vtree']
         //更新另一个刷数据用的虚拟DOM树
-        updateCopy(vdom, vtree[0] )
+        vdom.source = true
+        updateCopy(vdom, vtree[0])
         var com = avalon.vdomAdaptor(vdom, 'toDOM')
+        com.setAttribute('is', is)
+
         vm.$fire('onInit', {
             type: 'init',
             vmodel: vm,
             is: is
         })
+        if (vdom.dom && vdom.comment && !avalon.contains(avalon.root, vdom.dom)) {
+            com = vdom.dom
+            dom = vdom.comment
+            parent = dom.parentNode
+        }
         reconcile([com], [vdom])
+
         parent.replaceChild(com, dom)
         vdom.dom = com
         avalon.onComponentDispose(com)
-       
+
         vdom[is + '-mount'] = true
         //--------------
         vm.$element = com
