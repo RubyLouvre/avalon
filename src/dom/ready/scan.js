@@ -1,5 +1,5 @@
 var getHTML = require('./htmlfy')
-var first = true
+var onceWarn = true //只警告一次
 function scan(nodes) {
     for (var i = 0, elem; elem = nodes[i++]; ) {
         if (elem.nodeType === 1) {
@@ -15,7 +15,7 @@ function scan(nodes) {
                 elem.vtree = avalon.lexer(text)
                 avalon.speedUp(elem.vtree)
                 var now2 = new Date()
-                first && avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')
+                onceWarn && avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')
                 vm.$render = avalon.render(elem.vtree)
                 avalon.scopes[vm.$id] = {
                     vmodel: vm,
@@ -23,11 +23,11 @@ function scan(nodes) {
                     isTemp: true
                 }
                 var now3 = new Date()
-                first && avalon.log('构建当前vm的$render方法耗时 ', now3 - now2, 'ms\n',
+                onceWarn && avalon.log('构建当前vm的$render方法耗时 ', now3 - now2, 'ms\n',
                         '如果此时间太长,达100ms以上\n',
                         '建议将当前ms-controller拆分成多个ms-controlelr,减少每个vm管辖的区域')
                 avalon.rerenderStart = now3
-                first = false
+                onceWarn = false
                 avalon.batch($id)
 
             } else if (!$id) {

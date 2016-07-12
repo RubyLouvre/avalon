@@ -4,7 +4,7 @@ var legalTags = {wbr: 1, xmp: 1, template: 1}
 var events = 'onInit,onReady,onViewChange,onDispose'
 var componentEvents = avalon.oneObject(events)
 var protected = events.split(',').concat('is', 'define')
-
+var onceWarn = true
 function initComponent(src, copy, is) {
     var tag = src.type
     //判定用户传入的标签名是否符合规格
@@ -62,11 +62,12 @@ function initComponent(src, copy, is) {
 
     var define = hooks.define
     define = define || avalon.directives.widget.define
-    if (!hooks.$id) {
+    if (!hooks.$id && onceWarn) {
         avalon.warn('warning!', is, '组件最好在ms-widget配置对象中指定全局不重复的$id以提高性能!\n',
                 '若在ms-for循环中可以利用 ($index,el) in @array 中的$index拼写你的$id\n',
                 '如 ms-widget="{is:\'ms-button\',$id:\'btn\'+$index}"'
                 )
+        onceWarn = false
     }
     var $id = hooks.$id || src.wid
 

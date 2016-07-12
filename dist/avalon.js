@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-12:12 version 2.10 by 司徒正美
+ * built in 2016-7-13:1 version 2.10 by 司徒正美
  * 重构ms-controller, ms-important指令
  * 虚拟DOM移除template属性
  * 修正ms-for的排序问题
@@ -3125,7 +3125,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var getHTML = __webpack_require__(33)
-	var first = true
+	var onceWarn = true //只警告一次
 	function scan(nodes) {
 	    for (var i = 0, elem; elem = nodes[i++]; ) {
 	        if (elem.nodeType === 1) {
@@ -3141,7 +3141,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                elem.vtree = avalon.lexer(text)
 	                avalon.speedUp(elem.vtree)
 	                var now2 = new Date()
-	                first && avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')
+	                onceWarn && avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')
 	                vm.$render = avalon.render(elem.vtree)
 	                avalon.scopes[vm.$id] = {
 	                    vmodel: vm,
@@ -3149,11 +3149,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    isTemp: true
 	                }
 	                var now3 = new Date()
-	                first && avalon.log('构建当前vm的$render方法耗时 ', now3 - now2, 'ms\n',
+	                onceWarn && avalon.log('构建当前vm的$render方法耗时 ', now3 - now2, 'ms\n',
 	                        '如果此时间太长,达100ms以上\n',
 	                        '建议将当前ms-controller拆分成多个ms-controlelr,减少每个vm管辖的区域')
 	                avalon.rerenderStart = now3
-	                first = false
+	                onceWarn = false
 	                avalon.batch($id)
 
 	            } else if (!$id) {
@@ -5551,9 +5551,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var c = !!copy[name]
 	        if (!c) {
 	            copy.nodeType = 8
-	            copy.order = ""
+	            copy.order = ''
 	            //不再执行子孙节点的操作
-	            copy.skipContent = true
 	        }
 	        if (c !== src[name]) {
 	            src[name] = c
@@ -6035,7 +6034,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var update = __webpack_require__(36)
 	var reconcile = __webpack_require__(38)
-	var createComponent = __webpack_require__(65)
+	var tryInitComponent = __webpack_require__(65)
 
 	avalon.component = function (name, definition) {
 	    //这是定义组件的分支,并将列队中的同类型对象移除
@@ -6066,22 +6065,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	                a = avalon.mix.apply({}, a)
 	            }
 	            var is = a.is || src.props.is
+	            //如果组件没有初始化,那么先初始化(生成对应的vm,$render)
 	            if (!src[is + "-vm"]) {
-	                if (!createComponent(src, copy, is)) {
+	                if (!tryInitComponent(src, copy, is)) {
 	                    //替换成注释节点
 	                    update(src, this.mountComment)
 	                    return
 	                }
 	            }
+	            //如果已经存在于avalon.scopes
 	            var renderComponent = src[is + '-vm'].$render
 	            var newTree = renderComponent(src[is + '-vm'], src.local)
-
 	            var componentRoot = newTree[0]
 	            if (componentRoot && isComponentReady(componentRoot)) {
-	                if (src[is + '-mount']) {//update
+	                if (src[is + '-mount']) {
 	                    updateCopy(copy, componentRoot)
 	                    update(src, this.updateComponent)
-	                } else {//mount
+	                } else {//第一次插入到DOM树
 	                    src.copy = copy
 	                    src.newCopy = componentRoot
 	                    update(src, this.mountComponent)
@@ -6102,23 +6102,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	        parent.replaceChild(comment, dom)
 	    },
 	    updateComponent: function (dom, vdom) {
-	        var is = vdom.is
-	        var vm = vdom[is + '-vm']
+	        var vm = vdom[vdom.is + '-vm']
 	        var viewChangeObservers = vm.$events.onViewChange
 	        if (viewChangeObservers && viewChangeObservers.length) {
 	            update(vdom, viewChangeHandle, 'afterChange')
 	        }
 	    },
-	    
 	    mountComponent: function (dom, vdom, parent) {
 	        var is = vdom.is
 	        var vm = vdom[is + '-vm']
 	        var copy = vdom.copy
 	        var newCopy = vdom.newCopy
 	        delete vdom.newCopy
-	       
-	        var scope = avalon.scopes[vm.$id]  
-	        if (scope && scope.vmodel) {  
+
+	        var scope = avalon.scopes[vm.$id]
+	        if (scope && scope.vmodel) {
 	            var com = scope.vmodel.$element
 	            newCopy = com.vtree[0]
 	            updateCopy(vdom, newCopy)
@@ -6128,23 +6126,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	            vdom[is + '-mount'] = true
 	            return
 	        }
-	        
+
 	        //更新原始虚拟DOM树
-	        updateCopy(copy, newCopy )  
+	        updateCopy(copy, newCopy)
 	        var vtree = vdom[is + '-vtree']
 	        //更新另一个刷数据用的虚拟DOM树
-	        updateCopy(vdom, vtree[0] )
-	        var com = avalon.vdomAdaptor(vdom, 'toDOM')
-	        vm.$fire('onInit', {
-	            type: 'init',
-	            vmodel: vm,
-	            is: is
-	        })
+	        updateCopy(vdom, vtree[0])
+
+	        if (vdom.comment && !avalon.contains(avalon.root, vdom.dom)) {
+	            com = vdom.dom
+	            dom = vdom.comment
+	            parent = dom.parentNode
+	        } else {
+	            var com = avalon.vdomAdaptor(vdom, 'toDOM')
+	            com.setAttribute('is', is)
+	            vm.$fire('onInit', {
+	                type: 'init',
+	                vmodel: vm,
+	                is: is
+	            })
+	        }
 	        reconcile([com], [vdom])
+
 	        parent.replaceChild(com, dom)
 	        vdom.dom = com
 	        avalon.onComponentDispose(com)
-	       
+
 	        vdom[is + '-mount'] = true
 	        //--------------
 	        vm.$element = com
@@ -6223,16 +6230,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var skipArray = __webpack_require__(66)
 
-	var componentContainers = {wbr: 1, xmp: 1, template: 1}
+	var legalTags = {wbr: 1, xmp: 1, template: 1}
 	var events = 'onInit,onReady,onViewChange,onDispose'
 	var componentEvents = avalon.oneObject(events)
 	var protected = events.split(',').concat('is', 'define')
-
-	function createComponent(src, copy, is) {
-	    var type = src.type
+	var onceWarn = true
+	function initComponent(src, copy, is) {
+	    var tag = src.type
 	    //判定用户传入的标签名是否符合规格
-	    if (!componentContainers[type] && !isCustomTag(type)) {
-	        avalon.warn(type + '不合适做组件的标签')
+	    if (!legalTags[tag] && !isCustomTag(tag)) {
+	        avalon.warn(tag + '不合适做组件的标签')
 	        return
 	    }
 	    //开始初始化组件
@@ -6276,7 +6283,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	    //将用户声明组件用的自定义标签(或xmp.template)的template转换成虚拟DOM
-	    if (componentContainers[type] && src.children[0]) {
+	    if (legalTags[tag] && src.children[0]) {
 	        src.children = avalon.lexer(src.children[0].nodeValue)
 	    }
 	    src.isVoidTag = src.skipContent = 0
@@ -6285,11 +6292,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var define = hooks.define
 	    define = define || avalon.directives.widget.define
-	    if (!hooks.$id) {
+	    if (!hooks.$id && onceWarn) {
 	        avalon.warn('warning!', is, '组件最好在ms-widget配置对象中指定全局不重复的$id以提高性能!\n',
 	                '若在ms-for循环中可以利用 ($index,el) in @array 中的$index拼写你的$id\n',
 	                '如 ms-widget="{is:\'ms-button\',$id:\'btn\'+$index}"'
 	                )
+	        onceWarn = false
 	    }
 	    var $id = hooks.$id || src.wid
 
@@ -6358,7 +6366,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return src.is = is
 
 	}
-	module.exports = createComponent
+	module.exports = initComponent
 
 	function newText(name) {
 	    return {
@@ -7288,7 +7296,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (copy.order) {
 	                    diffProps(copy, src)
 	                }
-	                if (!copy.skipContent && !copy.isVoidTag ) {
+	                if (copy.nodeType === 1 && !copy.skipContent && !copy.isVoidTag ) {
 	                    diff(copy.children, src.children || emptyArr, copy)
 	                }
 	                if(src.afterChange){
@@ -7466,7 +7474,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        obj.set = newSetter
 	        Object.defineProperty(ep, 'innerHTML', obj)
 	    }
-	    
+
 	    rewite('appendChild', function (fn, a) {
 	        fn.call(this, a)
 	        if (a.nodeType === 1 && this.nodeType === 11) {
@@ -7531,7 +7539,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (el.nodeType === 1 && el.getAttribute('wid') && !inDomTree(el)) {
 	        var wid = el.getAttribute('wid')
 	        var docker = avalon.scopes[ wid ]
-	        if(!docker)
+	        if (!docker)
 	            return
 	        var vm = docker.vmodel
 	        docker.vmodel.$fire("onDispose", {
@@ -7542,15 +7550,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (docker && !el.getAttribute('cached')) {
 	            delete docker.vmodel
 	            delete avalon.scopes[ wid ]
+	            var is = el.getAttribute('is')
+	            var v = el.vtree
+	            if (v) {
+	                v[0][is + '-mount'] = false
+	            }
 	        }
 	        return false
 	    }
 	}
 
-	function fireDisposeHookDelay(a){
+	function fireDisposeHookDelay(a) {
 	    setTimeout(function () {
 	        fireDisposeHook(a)
-	    },4)
+	    }, 4)
 	}
 	function fireDisposedComponents(nodes) {
 	    for (var i = 0, el; el = nodes[i++]; ) {

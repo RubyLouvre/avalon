@@ -5,45 +5,71 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../dist/avalon.js"></script>
-
     </head>
-    <body>
-        <div ms-controller="test">
-            <div ms-html="@tpl"></div>
-            <button ms-click="@click">插入</button>
-        </div>
-        <script>
-            function heredoc(fn) {
-                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
-                        replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
-            }
-            var v123 = heredoc(function () {
-                /*
-                 <xmp ms-skip class="hide" id="addTpl">
-                 <form ms-validate="@validate">
-                 <div class="inputbar clearfix"><label class="inputbar-label" for="name">名称：</label>
-                 <div class="inputbox"><input class="form-control" id="name" type="text" ms-attr="[@operationType=='edit'?{disabled:'disabled'}:{}]" ms-duplex='@layerData.name' ms-rules='{required:true}' data-required-message='名称不得为空' /></div>
-                 </div>
-                 <div class="inputbar clearfix"><label class="inputbar-label" for="desc">描述：</label>
-                 <div class="inputbox"><input class="form-control" id="desc" type="text" ms-duplex='@layerData.desc' /></div>
-                 </div>
-                 <div class="inputbar clearfix"><label class="inputbar-label" for="ddays">自动删除(天)：</label>
-                 <div class="inputbox"><input class="form-control" id="ddays" 
-                 type="text" ms-duplex-number='@layerData.ddays' ms-rules='{digits:true}' data-digits-message='请输入整数' /></div>
-                 </div>
-                 <p class="error-msg" ms-text="@errorMsg"></p>
-                 </form>
-                 </xmp>
-                 */
-            })
+    <body ms-controller="test">
+        <p>
+        <button ms-click="@clickPage1" type="button">不显示</button>
+        <button ms-click="@clickPage2" type="button">显示</button>
+        </p>
+    <xmp ms-widget="[{is:'ms-pagination', $id:'xxx_'}, @configPagination]"></xmp>
 
-            var vm = avalon.define({
-                $id: 'test',
-                tpl: "",
-                click: function () {
-                    this.tpl = v123;
+    <script>
+        function heredoc(fn) {
+            return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+                    replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+        }
+
+        var paginationTemplate = heredoc(function () {
+
+            /*
+             <nav class="pagination-financial" ms-if="@_isShow">
+             测试 ms-if 和 ms visible 的区别 , ms-if 好像有bug {{@totalPages}}
+             </nav>
+             */
+
+        });
+
+        avalon.component('ms-pagination', {
+            template: paginationTemplate,
+            defaults: {
+                totalPages: 1,
+                _isShow: true,
+                isShowPagination: true,
+                onInit: function () {
+                    var vm = this;
+                    console.log('onInit......')
+                    vm._showPaginations();
+                    this.$watch('totalPages', function (a) {
+                        console.log(a, 'totalPages change')
+                        setTimeout(function () {
+                            vm._showPaginations()
+                        }, 2)
+                    })
+                },
+                _showPaginations: function () {
+                    var vm = this;
+                   return vm._isShow = vm.totalPages > 0 && vm.isShowPagination
+                   
                 }
-            });
-        </script>
-    </body>
+            }
+        })
+
+        var vm = avalon.define({
+            $id: 'test',
+            configPagination: {
+                totalPages: 0
+            },
+            clickPage1: function () {
+                console.log(1111)
+                vm.configPagination.totalPages = 0;
+
+            },
+            clickPage2: function () {
+                console.log(22222)
+                vm.configPagination.totalPages = 12;
+            }
+
+        });
+    </script>
+</body>
 </html>

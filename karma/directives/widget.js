@@ -469,9 +469,73 @@ describe('widget', function () {
         setTimeout(function () {
             var span = div.getElementsByTagName('span')[0]
             expect(span.firstChild.nodeValue.trim()).to.equal('123')
-          
+
             done()
 
+        }, 150)
+
+    })
+
+    it('应该ms-widget没有cached,并且出现不规范的ms-if的情况', function (done) {
+        //https://github.com/RubyLouvre/avalon/issues/1584
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller="widget9"><wbr ms-widget="[{is:'ms-pagination2', $id:'xxx_'}, @configPagination]"/></div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'widget9',
+            configPagination: {
+                totalPages: 0
+            },
+            clickPage1: function () {
+                vm.configPagination.totalPages = 0
+
+            },
+            clickPage2: function () {
+                vm.configPagination.totalPages = 12
+            }
+        })
+        var paginationTemplate = heredoc(function () {
+            /*
+             <nav ms-if="@_isShow">
+             {{@totalPages}}
+             </nav>
+             */
+        });
+        avalon.component('ms-pagination2', {
+            template: paginationTemplate,
+            defaults: {
+                totalPages: 1,
+                _isShow: true,
+                isShowPagination: true,
+                onInit: function () {
+                    var vm = this;
+                    vm._showPaginations();
+                    this.$watch('totalPages', function (a) {
+                        setTimeout(function () {
+                            vm._showPaginations()
+                        }, 2)
+                    })
+                },
+                _showPaginations: function () {
+                    var vm = this;
+                    return vm._isShow = vm.totalPages > 0 && vm.isShowPagination
+                }
+            }
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            expect(div.getElementsByTagName('nav').length).to.equal(0)
+            vm.clickPage2()
+            setTimeout(function () {
+                expect(div.getElementsByTagName('nav').length).to.equal(1)
+                vm.clickPage1()
+                setTimeout(function () {
+                    expect(div.getElementsByTagName('nav').length).to.equal(0)
+                    done()
+                }, 150)
+            }, 150)
         }, 150)
 
     })
