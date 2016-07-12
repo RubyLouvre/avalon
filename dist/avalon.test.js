@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-13:1 version 2.11 by 司徒正美
+ * built in 2016-7-13:1 version 2.16 by 司徒正美
  * 重构ms-controller, ms-important指令
  * 虚拟DOM移除template属性
  * 修正ms-for的排序问题
