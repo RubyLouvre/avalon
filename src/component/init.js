@@ -1,15 +1,15 @@
 var skipArray = require('../vmodel/parts/skipArray')
 
-var componentContainers = {wbr: 1, xmp: 1, template: 1}
+var legalTags = {wbr: 1, xmp: 1, template: 1}
 var events = 'onInit,onReady,onViewChange,onDispose'
 var componentEvents = avalon.oneObject(events)
 var protected = events.split(',').concat('is', 'define')
 
-function createComponent(src, copy, is) {
-    var type = src.type
+function initComponent(src, copy, is) {
+    var tag = src.type
     //判定用户传入的标签名是否符合规格
-    if (!componentContainers[type] && !isCustomTag(type)) {
-        avalon.warn(type + '不合适做组件的标签')
+    if (!legalTags[tag] && !isCustomTag(tag)) {
+        avalon.warn(tag + '不合适做组件的标签')
         return
     }
     //开始初始化组件
@@ -53,7 +53,7 @@ function createComponent(src, copy, is) {
 
 
     //将用户声明组件用的自定义标签(或xmp.template)的template转换成虚拟DOM
-    if (componentContainers[type] && src.children[0]) {
+    if (legalTags[tag] && src.children[0]) {
         src.children = avalon.lexer(src.children[0].nodeValue)
     }
     src.isVoidTag = src.skipContent = 0
@@ -135,7 +135,7 @@ function createComponent(src, copy, is) {
     return src.is = is
 
 }
-module.exports = createComponent
+module.exports = initComponent
 
 function newText(name) {
     return {
