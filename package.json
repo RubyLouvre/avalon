@@ -5,7 +5,7 @@
     "type": "git",
     "url": "https://github.com/RubyLouvre/avalon.git"
   },
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "an elegant efficient express mvvm framework",
   "main": "dist/avalon.js",
   "keywords": [
