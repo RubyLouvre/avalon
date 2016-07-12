@@ -144,7 +144,7 @@ function lexer(str) {
 
 module.exports = lexer
 
-function fireEnd(node, stack) {
+function fireEnd(node, stack, ret) {
     var type = node.type
     var props = node.props
     switch (type) {
@@ -172,12 +172,13 @@ function fireEnd(node, stack) {
     if (forExpr) {
         delete props['ms-for']
         var p = stack.last()
-        var arr = p.children
+        var arr = p ? p.children: ret
         arr.splice(arr.length - 1, 0, {
             nodeType: 8,
             type: '#comment',
             nodeValue: 'ms-for:' + forExpr
         })
+ 
         var cb = props['data-for-rendered']
         var cid = cb + ':cb'
 

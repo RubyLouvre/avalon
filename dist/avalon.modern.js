@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-11:17 version 2.10 by 司徒正美
+ * built in 2016-7-12:12 version 2.10 by 司徒正美
  * 重构ms-controller, ms-important指令
  * 虚拟DOM移除template属性
  * 修正ms-for的排序问题
@@ -4739,7 +4739,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = lexer
 
-	function fireEnd(node, stack) {
+	function fireEnd(node, stack, ret) {
 	    var type = node.type
 	    var props = node.props
 	    switch (type) {
@@ -4767,12 +4767,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (forExpr) {
 	        delete props['ms-for']
 	        var p = stack.last()
-	        var arr = p.children
+	        var arr = p ? p.children: ret
 	        arr.splice(arr.length - 1, 0, {
 	            nodeType: 8,
 	            type: '#comment',
 	            nodeValue: 'ms-for:' + forExpr
 	        })
+	 
 	        var cb = props['data-for-rendered']
 	        var cid = cb + ':cb'
 
