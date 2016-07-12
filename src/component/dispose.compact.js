@@ -53,7 +53,7 @@ function byRewritePrototype() {
         obj.set = newSetter
         Object.defineProperty(ep, 'innerHTML', obj)
     }
-    
+
     rewite('appendChild', function (fn, a) {
         fn.call(this, a)
         if (a.nodeType === 1 && this.nodeType === 11) {
@@ -118,7 +118,7 @@ function fireDisposeHook(el) {
     if (el.nodeType === 1 && el.getAttribute('wid') && !inDomTree(el)) {
         var wid = el.getAttribute('wid')
         var docker = avalon.scopes[ wid ]
-        if(!docker)
+        if (!docker)
             return
         var vm = docker.vmodel
         docker.vmodel.$fire("onDispose", {
@@ -129,15 +129,20 @@ function fireDisposeHook(el) {
         if (docker && !el.getAttribute('cached')) {
             delete docker.vmodel
             delete avalon.scopes[ wid ]
+            var is = el.getAttribute('is')
+            var v = el.vtree
+            if (v) {
+                v[0][is + '-mount'] = false
+            }
         }
         return false
     }
 }
 
-function fireDisposeHookDelay(a){
+function fireDisposeHookDelay(a) {
     setTimeout(function () {
         fireDisposeHook(a)
-    },4)
+    }, 4)
 }
 function fireDisposedComponents(nodes) {
     for (var i = 0, el; el = nodes[i++]; ) {
