@@ -61,6 +61,21 @@ describe('节点对齐算法', function () {
             done()
         }, 100)
     })
+    it('&lt;&gt; BUG', function (done) {
+        div.innerHTML = '<div ms-controller="reconcile3"><code>&lt;a&gt;</code></div>'
+
+       
+        vm = avalon.define({
+            $id: 'reconcile3',
+            arr: [1, 2, 3]
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            expect(div.getElementsByTagName('code').length).to.equal(1)
+            done()
+        }, 100)
+    })
+    
 
 
 })

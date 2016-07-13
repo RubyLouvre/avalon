@@ -1,21 +1,21 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title></title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../dist/avalon.js"></script>
-    </head>
-    <body ms-controller="test">
-        <!--<div class=""></div>-->
-        <div ms-for="el in @arr">
-            {{el}}
-        </div>
-        <script>
-avalon.define({
-    $id: 'test',
-    arr: [1,2,3,4,5,6]
-})
-        </script>
-    </body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script type="text/javascript" src="../dist/avalon.js"></script>
+</head>
+<body>
+<div ms-controller="test">
+   <!--<div id=""></div>-->
+   <ul>
+       <li ms-for="el in @arr">{{el}}</li>
+   </ul>
+</div>
+</body>
+<script>
+   var vm = avalon.define({
+        $id: 'test',
+        arr: [1,2,3]
+    })
+</script>
 </html>

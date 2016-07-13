@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-13:15 version 2.16 by 司徒正美
+ * built in 2016-7-13:20 version 2.16 by 司徒正美
  * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
  * 修正tap事件误触发BUG
  */
@@ -76,12 +76,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-7-13:15 version 2.16 by 司徒正美
-	 * 添加unescapeHTML与escapeHTML方法
-	 * 全新的lexer与 插值表达式抽取方法
-	 * 修正xmp元素的内容生成BUG
-	 * 修正input.value = newValue的同步BUG
-	 * 修正双击事件BUG
+	 * built in 2016-7-13:20 version 2.16 by 司徒正美
+	 * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
+	 * 修正tap事件误触发BUG
 	 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
@@ -3259,7 +3256,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return '<' + type + getAttributes(el.attributes) +
 		                    (noChild[type] ? '/>' : ('>' + getChild(el) + '</' + type + '>'))
 		        case 3:
-		            return el.nodeValue
+		            return avalon.escapeHtml(el.nodeValue)//#1592
 		        case 8:
 		            return '<!--' + el.nodeValue + '-->'
 		    }
@@ -3489,7 +3486,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    var breakLoop = 0
 		    while (true) {
 		        el = nodes[i++]
-		        if (breakLoop++ > 100) {
+		        if (breakLoop++ > 5000) {
 		            break
 		        }
 		        var vtype = el && getType(el)
@@ -6907,6 +6904,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		var rendTag = /^<\/([^>]+)>/
 		var rmsForStart = /^\s*ms\-for\:/
 		var rmsForEnd = /^\s*ms\-for\-end/
+		//https://github.com/rviscomi/trunk8/blob/master/trunk8.js
 		//判定里面有没有内容
 		var rcontent = /\S/
 		var voidTag = avalon.oneObject('area,base,basefont,br,col,frame,hr,img,input,isindex,link,meta,param,embed')

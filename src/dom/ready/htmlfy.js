@@ -7,7 +7,7 @@ function getHTML(el) {
             return '<' + type + getAttributes(el.attributes) +
                     (noChild[type] ? '/>' : ('>' + getChild(el) + '</' + type + '>'))
         case 3:
-            return el.nodeValue
+            return avalon.escapeHtml(el.nodeValue)//#1592
         case 8:
             return '<!--' + el.nodeValue + '-->'
     }

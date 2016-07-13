@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-13:15 version 2.16 by 司徒正美
+ * built in 2016-7-13:20 version 2.16 by 司徒正美
  * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
  * 修正tap事件误触发BUG
  */
@@ -3179,7 +3179,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return '<' + type + getAttributes(el.attributes) +
 	                    (noChild[type] ? '/>' : ('>' + getChild(el) + '</' + type + '>'))
 	        case 3:
-	            return el.nodeValue
+	            return avalon.escapeHtml(el.nodeValue)//#1592
 	        case 8:
 	            return '<!--' + el.nodeValue + '-->'
 	    }
@@ -6827,6 +6827,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rendTag = /^<\/([^>]+)>/
 	var rmsForStart = /^\s*ms\-for\:/
 	var rmsForEnd = /^\s*ms\-for\-end/
+	//https://github.com/rviscomi/trunk8/blob/master/trunk8.js
 	//判定里面有没有内容
 	var rcontent = /\S/
 	var voidTag = avalon.oneObject('area,base,basefont,br,col,frame,hr,img,input,isindex,link,meta,param,embed')
