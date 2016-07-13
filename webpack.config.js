@@ -16,17 +16,8 @@ function heredoc(fn) {
             }
 var feather = heredoc(function(){
     /*
-重构ms-controller, ms-important指令
-虚拟DOM移除template属性
-修正ms-for的排序问题
-fix 在chrome与firefox下删掉select中的空白节点，会影响到selectedIndex BUG  
-ms-widget, ms-controller, ms-important生成的VM与对应的DOM都保存起来,
-并在avalon.vdomAdaptor中还原
-添加unescapeHTML与escapeHTML方法
-全新的lexer与 插值表达式抽取方法
-修正xmp元素的内容生成BUG
-修正input.value = newValue的同步BUG
-修正双击事件BUG
+修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
+修正tap事件误触发BUG
      */
 })
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')

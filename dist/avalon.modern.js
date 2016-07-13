@@ -1,16 +1,7 @@
 /*!
- * built in 2016-7-13:1 version 2.16 by 司徒正美
- * 重构ms-controller, ms-important指令
- * 虚拟DOM移除template属性
- * 修正ms-for的排序问题
- * fix 在chrome与firefox下删掉select中的空白节点，会影响到selectedIndex BUG  
- * ms-widget, ms-controller, ms-important生成的VM与对应的DOM都保存起来,
- * 并在avalon.vdomAdaptor中还原
- * 添加unescapeHTML与escapeHTML方法
- * 全新的lexer与 插值表达式抽取方法
- * 修正xmp元素的内容生成BUG
- * 修正input.value = newValue的同步BUG
- * 修正双击事件BUG
+ * built in 2016-7-13:15 version 2.16 by 司徒正美
+ * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
+ * 修正tap事件误触发BUG
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -1656,10 +1647,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 添加的是 ms-for,ms-for-end占位的注释节点
 	 删除的是多余的空白文本节点,与IE6-8私下添加的奇怪节点
 	 */
-	var rretain = /[\S\xA0]/
-	var rforRange = /^8ms\-for/
-	var containers = avalon.oneObject('script,style,xmp,template,noscript,textarea')
-
+	var rforHolder = /^ms\-for/
+	var rwhiteRetain = /[\S\xA0]/
+	var plainTag = avalon.oneObject('script,style,xmp,template,noscript,textarea')
 
 	function reconcile(nodes, vnodes, parent) {
 	    //遍平化虚拟DOM树
@@ -1689,7 +1679,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                vnode.dom = el
 	            }
 
-	            if (el.nodeType === 1 && !vnode.isVoidTag && !containers[vnode.type]) {
+	            if (el.nodeType === 1 && !vnode.isVoidTag && !plainTag[vnode.type]) {
 	                if (el.type === 'select-one') {
 	                    //在chrome与firefox下删掉select中的空白节点，会影响到selectedIndex
 	                    var fixIndex = el.selectedIndex
@@ -1701,7 +1691,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        } else {
 	            change = true
-	            if (rforRange.test(map[v])) {
+	            if (map[v] === '8true') {
 	                var vv = vnodes[v]
 	                var nn = document.createComment(vv.nodeValue)
 	                vv.dom = nn
@@ -1731,14 +1721,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	function getType(node) {
 	    switch (node.nodeType) {
 	        case 3:
-	            return '3' + (/[\S\xA0]/.test(node.nodeValue) ? 'retain' : 'remove')
+	            return '3' + rwhiteRetain.test(node.nodeValue) 
 	        case 1:
 	            return '1' + (node.nodeName || node.type).toLowerCase()
 	        case 8:
-	            return '8' + node.nodeValue
-
+	            return '8' + rforHolder.test(node.nodeValue)
 	    }
-
 	}
 
 	function flatten(nodes) {
@@ -4648,13 +4636,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (l === -1) {
 	                    avalon.error("注释节点没有闭合" + str)
 	                }
-	                var nodeValue = str.slice(4, l)
+	                var nodeValue = str.slice(4, l).replace(rfill, fill)
 	                str = str.slice(l + 3)
 	                node = {type: "#comment", nodeType: 8, nodeValue: nodeValue}
 	                collectNodes(node, stack, ret)
-	                if(nodeValue.indexOf('ms-js:') === 0){
-	                    node.nodeValue = nomalString(node.nodeValu)
-	                } else if (rmsForEnd.test(nodeValue)) {
+	                if (rmsForEnd.test(nodeValue)) {
 	                    var p = stack.last()
 	                    var nodes = p.children
 	                    markeRepeatRange(nodes, nodes.pop())
@@ -5060,8 +5046,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (copy.dynamic === 'for') {
 	                    directives['for'].diff(copy, src,
 	                    copys[i+1],sources[i+1],sources[i+2]) 
-	                }
-	                if(src.afterChange){
+	                }else if(src.afterChange){
 	                    execHooks(src, src.afterChange)
 	                }
 	                break
@@ -5107,14 +5092,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    directives[type].diff(copys, sources || emptyObj(), name)
 	                }
 	                if(copys.order !== order){
-	                    throw "break"
+	                    throw 'break'
 	                }
-	               
 	            })
 	            
 	        } catch (e) {
 	            if(e !== 'break'){
-	                avalon.log(directiveType, e, e.stack || e.message, 'diffProps error')
+	                avalon.warn(directiveType, e, e.stack || e.message, 'diffProps error')
 	            }else{
 	                diffProps(copys, sources)
 	            }

@@ -8,10 +8,9 @@
  添加的是 ms-for,ms-for-end占位的注释节点
  删除的是多余的空白文本节点,与IE6-8私下添加的奇怪节点
  */
-var rretain = /[\S\xA0]/
-var rforRange = /^8ms\-for/
-var containers = avalon.oneObject('script,style,xmp,template,noscript,textarea')
-
+var rforHolder = /^ms\-for/
+var rwhiteRetain = /[\S\xA0]/
+var plainTag = avalon.oneObject('script,style,xmp,template,noscript,textarea')
 
 function reconcile(nodes, vnodes, parent) {
     //遍平化虚拟DOM树
@@ -41,7 +40,7 @@ function reconcile(nodes, vnodes, parent) {
                 vnode.dom = el
             }
 
-            if (el.nodeType === 1 && !vnode.isVoidTag && !containers[vnode.type]) {
+            if (el.nodeType === 1 && !vnode.isVoidTag && !plainTag[vnode.type]) {
                 if (el.type === 'select-one') {
                     //在chrome与firefox下删掉select中的空白节点，会影响到selectedIndex
                     var fixIndex = el.selectedIndex
@@ -53,7 +52,7 @@ function reconcile(nodes, vnodes, parent) {
             }
         } else {
             change = true
-            if (rforRange.test(map[v])) {
+            if (map[v] === '8true') {
                 var vv = vnodes[v]
                 var nn = document.createComment(vv.nodeValue)
                 vv.dom = nn
@@ -83,14 +82,12 @@ module.exports = reconcile
 function getType(node) {
     switch (node.nodeType) {
         case 3:
-            return '3' + (/[\S\xA0]/.test(node.nodeValue) ? 'retain' : 'remove')
+            return '3' + rwhiteRetain.test(node.nodeValue) 
         case 1:
             return '1' + (node.nodeName || node.type).toLowerCase()
         case 8:
-            return '8' + node.nodeValue
-
+            return '8' + rforHolder.test(node.nodeValue)
     }
-
 }
 
 function flatten(nodes) {

@@ -45,13 +45,11 @@ function lexer(str) {
                 if (l === -1) {
                     avalon.error("注释节点没有闭合" + str)
                 }
-                var nodeValue = str.slice(4, l)
+                var nodeValue = str.slice(4, l).replace(rfill, fill)
                 str = str.slice(l + 3)
                 node = {type: "#comment", nodeType: 8, nodeValue: nodeValue}
                 collectNodes(node, stack, ret)
-                if(nodeValue.indexOf('ms-js:') === 0){
-                    node.nodeValue = nomalString(node.nodeValu)
-                } else if (rmsForEnd.test(nodeValue)) {
+                if (rmsForEnd.test(nodeValue)) {
                     var p = stack.last()
                     var nodes = p.children
                     markeRepeatRange(nodes, nodes.pop())

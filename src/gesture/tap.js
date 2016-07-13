@@ -8,7 +8,7 @@ if (supportPointer) {
 var tapRecognizer = {
   events: ['tap'],
   touchBoundary: 10,
-  tapDelay: 200,
+  tapDelay: 90,
   needClick: function(target) {
     //判定是否使用原生的点击事件, 否则使用sendClick方法手动触发一个人工的点击事件
     switch (target.nodeName.toLowerCase()) {

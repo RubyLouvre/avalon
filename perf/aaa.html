@@ -7,69 +7,15 @@
         <script src="../dist/avalon.js"></script>
     </head>
     <body ms-controller="test">
-        <p>
-        <button ms-click="@clickPage1" type="button">不显示</button>
-        <button ms-click="@clickPage2" type="button">显示</button>
-        </p>
-    <xmp ms-widget="[{is:'ms-pagination', $id:'xxx_'}, @configPagination]"></xmp>
-
-    <script>
-        function heredoc(fn) {
-            return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
-                    replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
-        }
-
-        var paginationTemplate = heredoc(function () {
-
-            /*
-             <nav class="pagination-financial" ms-if="@_isShow">
-             测试 ms-if 和 ms visible 的区别 , ms-if 好像有bug {{@totalPages}}
-             </nav>
-             */
-
-        });
-
-        avalon.component('ms-pagination', {
-            template: paginationTemplate,
-            defaults: {
-                totalPages: 1,
-                _isShow: true,
-                isShowPagination: true,
-                onInit: function () {
-                    var vm = this;
-                    console.log('onInit......')
-                    vm._showPaginations();
-                    this.$watch('totalPages', function (a) {
-                        console.log(a, 'totalPages change')
-                        setTimeout(function () {
-                            vm._showPaginations()
-                        }, 2)
-                    })
-                },
-                _showPaginations: function () {
-                    var vm = this;
-                   return vm._isShow = vm.totalPages > 0 && vm.isShowPagination
-                   
-                }
-            }
-        })
-
-        var vm = avalon.define({
-            $id: 'test',
-            configPagination: {
-                totalPages: 0
-            },
-            clickPage1: function () {
-                console.log(1111)
-                vm.configPagination.totalPages = 0;
-
-            },
-            clickPage2: function () {
-                console.log(22222)
-                vm.configPagination.totalPages = 12;
-            }
-
-        });
-    </script>
-</body>
+        <!--<div class=""></div>-->
+        <div ms-for="el in @arr">
+            {{el}}
+        </div>
+        <script>
+avalon.define({
+    $id: 'test',
+    arr: [1,2,3,4,5,6]
+})
+        </script>
+    </body>
 </html>
