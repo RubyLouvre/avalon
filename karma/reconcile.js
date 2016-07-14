@@ -62,20 +62,37 @@ describe('节点对齐算法', function () {
         }, 100)
     })
     it('&lt;&gt; BUG', function (done) {
-        div.innerHTML = '<div ms-controller="reconcile3"><code>&lt;a&gt;</code></div>'
+        div.innerHTML =  heredoc(function () {
+            /*
+             <div ms-controller="reconcile3">
+             <code>&lt;a&gt;</code><br/>
+             <b ms-html="@wenti1"></b>
+             <p ms-for="item in @wenti2">问题{{item+1}}:{{ item < 1 ? '小于1' : item > 1 ? '大于1' : item }}</p>
+             </div>
+             */
+        })
 
-       
+
         vm = avalon.define({
             $id: 'reconcile3',
-            arr: [1, 2, 3]
+            wenti1: '它使用了不同于传统 <kbd>&lt;script&gt;</kbd> 标签的脚本加载步骤',
+            wenti2: [0, 1, 2]
         })
         avalon.scan(div)
         setTimeout(function () {
-            expect(div.getElementsByTagName('code').length).to.equal(1)
+            var code = div.getElementsByTagName('code')[0]
+            expect(code && code.innerHTML).to.equal('&lt;a&gt;')
+            var kbd = div.getElementsByTagName('kbd')[0]
+            expect(kbd && kbd.innerHTML).to.equal('&lt;script&gt;')
+            var ps = div.getElementsByTagName('p')
+            expect(ps.length).to.equal(3)
+            expect(ps[0].innerHTML).to.equal('问题1:小于1')
+            expect(ps[1].innerHTML).to.equal('问题2:1')
+            expect(ps[2].innerHTML).to.equal('问题3:大于1')
             done()
         }, 100)
     })
-    
+
 
 
 })
