@@ -20,6 +20,7 @@ var feather = heredoc(function(){
 修正tap事件误触发BUG
 升级ms-widget的slot机制,让它们的值也放到组件VM中
 添加:xxx短指令的支持
+紧急修正了lexer的一些BUG
      */
 })
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')
@@ -44,12 +45,6 @@ module.exports = {
       new webpack.BannerPlugin('built in '+snow+' version '+ v+' by 司徒正美\n'+feather)
     ],
     module: {
-        loaders: [
-        ],
-        preLoaders: [
-            //https://segmentfault.com/a/1190000004468428
-          //  {test: /\.js$/, loader: 'eslint-loader', exclude: /node_modules|__test__/}
-        ]
     },
     eslint: {
         configFile: './eslintrc.json'
