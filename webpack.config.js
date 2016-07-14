@@ -18,6 +18,8 @@ var feather = heredoc(function(){
     /*
 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
 修正tap事件误触发BUG
+升级ms-widget的slot机制,让它们的值也放到组件VM中
+添加:xxx短指令的支持
      */
 })
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')

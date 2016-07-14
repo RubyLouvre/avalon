@@ -1,21 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <script type="text/javascript" src="../dist/avalon.js"></script>
-</head>
-<body>
-<div ms-controller="test">
-   <!--<div id=""></div>-->
-   <ul>
-       <li ms-for="el in @arr">{{el}}</li>
-   </ul>
-</div>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport"  content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                aaa: 111
+            })
+            function heredoc(fn) {
+                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+                        replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+            }
+            avalon.component('ms-button', {
+                template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
+                defaults: {
+                    buttonText: "button"
+                },
+                soleSlot: 'buttonText'
+            })
+            var tmpl = heredoc(function () {
+                /*
+                 <div>
+                 <div>
+                 <span :for="($index,el) in @triggers" :click=@onSwitch($index)>{{el}}</span>
+                 </div>
+                 <div :for="($index, el) in @panels" ms-html="el" 
+                      :visible="$index === @selectedIndex">
+                 </div>
+                 </div>
+                 */
+            })
+            avalon.component('ms-tabs', {
+                template: tmpl,
+                defaults: {
+                    triggers: [111, 222, 333],
+                    panels: [],
+                    selectedIndex: 0,
+                    onSwitch: function (i) {
+                        this.selectedIndex = i
+                    }
+                }
+
+            })
+        </script>
+    </head>
+    <body :controller="test">
+    <ms-tabs :widget="[{$id:'aaa'}]">
+        <div slot="panels" >面板1</div>
+        <div slot="panels" >面板2</div>
+        <div slot="panels" >面板3</div>
+    </ms-tabs>
+    <ms-button><b>{{@aaa}}</b></ms-button>
 </body>
-<script>
-   var vm = avalon.define({
-        $id: 'test',
-        arr: [1,2,3]
-    })
-</script>
 </html>

@@ -8,7 +8,7 @@
 var rentities = /&[a-z0-9#]{2,10};/g
 var temp = avalon.avalonDiv
 module.exports = function (str) {
-    if (rentities.test) {
+    if (rentities.test(str)) {
         temp.innerHTML = str
         return temp.innerText || temp.textContent
     }

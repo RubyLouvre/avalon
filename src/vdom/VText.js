@@ -1,5 +1,5 @@
 var rexpr = avalon.config.rexpr
-
+var decode = require('../strategy/decode')
 function VText(text) {
     if (typeof text === 'string') {
         this.type = '#text'
@@ -16,9 +16,8 @@ function VText(text) {
 VText.prototype = {
     constructor: VText,
     toDOM: function () {
-       var a =  VText.decoder = VText.decoder || document.createElement('p')
-       a.innerHTML = this.nodeValue
-       return a.removeChild(a.firstChild) 
+       var v = decode(this.nodeValue)
+       return document.createTextNode(v)
     },
     toHTML: function () {
         return this.nodeValue

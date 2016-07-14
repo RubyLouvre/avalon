@@ -32,7 +32,7 @@ function lexer(str) {
         if (str.charAt(0) !== '<') {
             var i = str.indexOf('<')
             i = i === -1 ? str.length : i
-            var nodeValue = nomalString(str.slice(0, i))
+            var nodeValue = str.slice(0, i).replace(rfill,fill)
             str = str.slice(i)//处理文本节点
             node = {type: "#text", nodeType: 3, nodeValue: nodeValue}
             if (rcontent.test(nodeValue)) {
@@ -127,6 +127,7 @@ function lexer(str) {
                 str = str.slice(match[0].length)
             }
         }
+      
         if (!node || --breakIndex === 0) {
             break
         }
@@ -171,13 +172,13 @@ function fireEnd(node, stack, ret) {
     if (forExpr) {
         delete props['ms-for']
         var p = stack.last()
-        var arr = p ? p.children: ret
+        var arr = p ? p.children : ret
         arr.splice(arr.length - 1, 0, {
             nodeType: 8,
             type: '#comment',
             nodeValue: 'ms-for:' + forExpr
         })
- 
+
         var cb = props['data-for-rendered']
         var cid = cb + ':cb'
 
@@ -204,7 +205,7 @@ function markeRepeatRange(nodes, end) {
             } else if (rmsForStart.test(start.nodeValue)) {
                 --deep
                 if (deep === 0) {
-                    start.nodeValue = nomalString(start.nodeValue)
+                    start.nodeValue =  start.nodeValue.replace(rfill, fill)        //nomalString(start.nodeValue)
                     start.signature = end.signature
                     start.dynamic = 'for'
                     start.template = array.map(function (a) {
@@ -235,6 +236,9 @@ function collectProps(attrs, props) {
         var arr = prop.split('=')
         var name = arr[0]
         var value = arr[1] || ''
+        if (name.charAt(0) === ':') {
+            name = 'ms-' + name.slice(1)
+        }
         if (value) {
             if (value.indexOf('??') === 0) {
                 value = nomalString(value).
@@ -407,7 +411,7 @@ function childrenHasDirective(arr) {
             ret = true
         }
     }
-    return ret 
+    return ret
 }
 
 function hasDirectiveAttrs(props) {

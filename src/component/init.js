@@ -57,7 +57,7 @@ function initComponent(src, copy, is) {
         src.children = avalon.lexer(src.children[0].nodeValue)
     }
     src.isVoidTag = src.skipContent = 0
-
+    var slots = collectSlots(src, definition.soleSlot)
     //开始构建组件的vm的配置对象
 
     var define = hooks.define
@@ -72,6 +72,13 @@ function initComponent(src, copy, is) {
     var $id = hooks.$id || src.wid
 
     var defaults = avalon.mix(true, {}, definition.defaults)
+
+    for (var i in slots) {
+        if (i !== definition.soleSlot) {
+            defaults[i] = toHTML(slots[i])
+        }
+    }
+
     mixinHooks(hooks, defaults, false)
 
     var vmodel = define.apply(function (a, b) {
@@ -112,14 +119,8 @@ function initComponent(src, copy, is) {
     componentRoot.props.wid = $id
     //抽取用户标签里带slot属性的元素,替换组件的虚拟DOM树中的slot元素
 
-    if (definition.soleSlot) {
-        var slots = {}
-        var slotName = definition.soleSlot
-        slots[slotName] = /\S/.test(src.template) ?
-                src.children : newText(slotName)
-        mergeTempale(vtree, slots)
-    } else if (!src.isVoidTag) {
-        insertSlots(vtree, src, definition.soleSlot)
+    if (!src.isVoidTag) {
+        mergeSlots(vtree, slots)
     }
     avalon.speedUp(vtree)
     for (var e in componentEvents) {
@@ -130,6 +131,7 @@ function initComponent(src, copy, is) {
         }
     }
     var render = avalon.render(vtree, src.local)
+
     vmodel.$render = render
     src[is + '-vm'] = vmodel
     src[is + '-vtree'] = vtree
@@ -137,6 +139,24 @@ function initComponent(src, copy, is) {
 
 }
 module.exports = initComponent
+
+
+function isEmptyOption(opt) {
+    for (var k in opt) {
+        if (k === 'is' || k === '$id')
+            continue
+        return false
+    }
+    return true
+}
+function toHTML(a) {
+    if (Array.isArray(a)) {
+        return a.map(function (e) {
+            return avalon.vdomAdaptor(e, 'toHTML')
+        })
+    }
+    return avalon.vdomAdaptor(a, 'toHTML')
+}
 
 function newText(name) {
     return {
@@ -146,45 +166,42 @@ function newText(name) {
         dynamic: true
     }
 }
-function isEmptyOption(opt) {
-    for (var k in opt) {
-        if (k === 'is' || k === '$id')
-            continue
-        return false
-    }
-    return true
-}
 
-function insertSlots(vtree, node, soleSlot) {
+function collectSlots(node, soleSlot) {
     var slots = {}
     if (soleSlot) {
         slots[soleSlot] = node.children
     } else {
         node.children.forEach(function (el) {
             if (el.nodeType === 1) {
-                var name = el.props.slot || 'default'
-                if (slots[name]) {
-                    slots[name].push(el)
-                } else {
-                    slots[name] = [el]
+                var name = el.props.slot
+                if (name) {
+                    delete el.props.slot
+                    if (Array.isArray(slots[name])) {
+                        slots[name].push(el)
+                    } else if (slots[name]) {
+                        slots[name] = [slots[name], el]
+                    } else {
+                        slots[name] = el
+                    }
                 }
             }
         })
     }
-    mergeTempale(vtree, slots)
+    return slots
 }
 
-function mergeTempale(vtree, slots) {
+function mergeSlots(vtree, slots) {
     for (var i = 0, node; node = vtree[i++]; ) {
         if (node.nodeType === 1) {
             if (node.type === 'slot') {
-                var name = node.props.name || 'default'
+                var name = node.props.name
                 if (slots[name]) {
                     var s = slots[name].length ? slots[name] : newText(name)
                     vtree.splice.apply(vtree, [i - 1, 1].concat(s))
                 }
             } else {
-                mergeTempale(node.children, slots)
+                mergeSlots(node.children, slots)
             }
         }
     }

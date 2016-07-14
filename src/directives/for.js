@@ -111,18 +111,17 @@ avalon.directive('for', {
         //for指令只做添加删除操作
         var cache = src.cache
         var i, c, p
-        
-         function enterAction2(src, key) {//IE6-8下不能使用缓存
-                var template = src.template + '<!--' + src.signature + '-->'
-                var vdomTemplate = avalon.lexer(template)
-                avalon.speedUp(vdomTemplate)
+        function enterAction2(src, key) {//IE6-8下不能使用缓存
+            var template = src.template + '<!--' + src.signature + '-->'
+            var vdomTemplate = avalon.lexer(template)
+            avalon.speedUp(vdomTemplate)
             return {
                 action: 'enter',
                 children: vdomTemplate,
                 key: key
             }
         }
-        if(avalon.msie <= 8){
+        if (avalon.msie <= 8) {
             enterAction = enterAction2
         }
 
@@ -281,7 +280,7 @@ avalon.directive('for', {
                         moveFragment.appendChild(cc)
                     }
                     parent.insertBefore(moveFragment, insertPoint.nextSibling)
-                   // reconcile(cnodes, children, parent)
+                    // reconcile(cnodes, children, parent)
                     applyEffects(cnodes, children, {
                         hook: 'onMoveDone',
                         staggerKey: key + 'move'
@@ -295,12 +294,12 @@ avalon.directive('for', {
                 break
             }
         }
-        
+
         vdom.preRepeat.length = 0
         vdom.preItems.length = 0
         keep.forEach(function (el) {
             vdom.preItems.push(el)
-            
+
             range.push.apply(vdom.preRepeat, el.children)
         })
 

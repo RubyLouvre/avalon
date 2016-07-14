@@ -7,7 +7,7 @@ function getHTML(el) {
             return '<' + type + getAttributes(el.attributes) +
                     (noChild[type] ? '/>' : ('>' + getChild(el) + '</' + type + '>'))
         case 3:
-            return avalon.escapeHtml(el.nodeValue)//#1592
+            return avalon.escapeHTML(el.nodeValue)//#1592
         case 8:
             return '<!--' + el.nodeValue + '-->'
     }
@@ -18,7 +18,7 @@ function getAttributes(array) {
     var ret = []
     for (var i = 0, attr; attr = array[i++]; ) {
         if (attr.specified) {
-            ret.push(attr.name.toLowerCase()+'="' + avalon.escapeHtml(attr.value) + '"')
+            ret.push(attr.name.toLowerCase() + '="' + avalon.escapeHTML(attr.value) + '"')
         }
     }
     var str = ret.join(' ')

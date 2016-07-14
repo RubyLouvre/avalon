@@ -182,15 +182,13 @@ function extractExpr(str) {
         str = str.slice(index + config.openTag.length)
         if (str) {
             index = str.indexOf(config.closeTag)
-
             var value = str.slice(0, index)
             ret.push({
-                expr: value.replace(rlineSp, ''),
+                expr: avalon.unescapeHTML( value.replace(rlineSp, '') ),
                 type: '{{}}'
             })
             str = str.slice(index + config.closeTag.length)
         }
     } while (str.length)
-
    return ret
 }
