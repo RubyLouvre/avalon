@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-14:20 version 2.16 by 司徒正美
+ * built in 2016-7-15:0 version 2.16 by 司徒正美
  * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
  * 修正tap事件误触发BUG
  * 升级ms-widget的slot机制,让它们的值也放到组件VM中
@@ -4662,7 +4662,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                collectNodes(node, stack, ret)
 	                if (rmsForEnd.test(nodeValue)) {
 	                    var p = stack.last()
-	                    var nodes = p.children
+	                    var nodes = p ? p.children: ret
 	                    markeRepeatRange(nodes, nodes.pop())
 	                }
 	            }

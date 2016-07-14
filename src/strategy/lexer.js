@@ -52,7 +52,7 @@ function lexer(str) {
                 collectNodes(node, stack, ret)
                 if (rmsForEnd.test(nodeValue)) {
                     var p = stack.last()
-                    var nodes = p.children
+                    var nodes = p ? p.children: ret
                     markeRepeatRange(nodes, nodes.pop())
                 }
             }
