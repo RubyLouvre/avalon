@@ -1,7 +1,5 @@
 var update = require('./_update')
 var reconcile = require('../strategy/reconcile')
-var parseView = require('../strategy/parser/parseView')
-
 
 avalon.directive('html', {
     parse: function (copy, src, binding) {

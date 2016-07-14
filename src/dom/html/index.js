@@ -22,7 +22,7 @@ avalon.parseHTML = function (html) {
     if (hasCache) {
         return fixCloneNode(hasCache)
     }
-    var vnodes = avalon.lexer(html, false, 1000)
+    var vnodes = avalon.lexer(html)
     for (var i = 0, el; el = vnodes[i++]; ) {
         fragment.appendChild(avalon.vdomAdaptor(el, 'toDOM'))
     }

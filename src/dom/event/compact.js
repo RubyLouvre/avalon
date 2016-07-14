@@ -13,10 +13,6 @@ if (!W3C) {
     delete canBubbleUp.select
 }
 
-//canBubbleUp.touchstart = 1
-//canBubbleUp.touchstart = 1
-//canBubbleUp.touchstart = 1
-
 var eventHooks = avalon.eventHooks
 /*绑定事件*/
 avalon.bind = function (elem, type, fn) {
