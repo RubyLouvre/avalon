@@ -65,6 +65,17 @@ describe('节点对齐算法', function () {
         div.innerHTML =  heredoc(function () {
             /*
              <div ms-controller="reconcile3">
+            <style>
+            kbd {
+                padding: 2px 4px;
+                font-size: 90%;
+                color: #fff;
+                background-color: #333;
+                border-radius: 3px;
+                -webkit-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .25);
+                box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .25);
+            }
+            </style>
              <code>&lt;a&gt;</code><br/>
              <b ms-html="@wenti1"></b>
              <p ms-for="item in @wenti2">问题{{item+1}}:{{ item < 1 ? '小于1' : item > 1 ? '大于1' : item }}</p>
