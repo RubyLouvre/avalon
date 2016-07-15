@@ -65,17 +65,17 @@ describe('节点对齐算法', function () {
         div.innerHTML =  heredoc(function () {
             /*
              <div ms-controller="reconcile3">
-            <style>
-            kbd {
-                padding: 2px 4px;
-                font-size: 90%;
-                color: #fff;
-                background-color: #333;
-                border-radius: 3px;
-                -webkit-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .25);
-                box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .25);
-            }
-            </style>
+             <style>
+             kbd {
+             padding: 2px 4px;
+             font-size: 90%;
+             color: #fff;
+             background-color: #333;
+             border-radius: 3px;
+             -webkit-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .25);
+             box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .25);
+             }
+             </style>
              <code>&lt;a&gt;</code><br/>
              <b ms-html="@wenti1"></b>
              <p ms-for="item in @wenti2">问题{{item+1}}:{{ item < 1 ? '小于1' : item > 1 ? '大于1' : item }}</p>
@@ -104,6 +104,42 @@ describe('节点对齐算法', function () {
         }, 100)
     })
 
+    it('多个&nbsp; BUG', function (done) {
+        div.innerHTML =  heredoc(function () {
+            /*
+             <div ms-controller="reconcile4">
+             <xmp cached='true' ms-widget="{is:'ms-pager2',$id:'xxx'}"></xmp>
+             </div>
+             */
+        })
 
+        var tpl = heredoc(function () {
+            /*
+             <div class="pageNum dib">页,共&nbsp;{{@totalPages}}&nbsp;页</div>
+             */
+        })
+
+        vm = avalon.define({
+            $id: 'reconcile4'
+        });
+
+        avalon.component('ms-pager2', {
+            template: tpl,
+            defaults: {
+                totalPages: 0,
+                onReady: function(){
+                    delete avalon.components['ms-pager2']
+                }
+            }
+        });
+        avalon.scan(div)
+        setTimeout(function () {
+            var a = div.innerText || div.textContent
+            expect(a.indexOf('&nbsp;')).to.equal(-1)
+          delete avalon.scopes.xxx
+          delete avalon.vmodels.xxx
+            done()
+        }, 100)
+    })
 
 })

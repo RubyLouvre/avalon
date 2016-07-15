@@ -452,12 +452,12 @@ describe('widget', function () {
         div.innerHTML = heredoc(function () {
             /*
              <div ms-controller="widget8">
-             <xmp cached='true' ms-widget="{is:'ms-time',$id:'xxx'}"></xmp>
+             <xmp cached='true' ms-widget="{is:'ms-time',$id:'d234234'}"></xmp>
              </div>             
              */
         })
         avalon.component('ms-time', {
-            template: "<span ms-click='@click'>{{@aaa}}&nbsp;</span>",
+            template: "<kbd ms-click='@click'>{{@aaa}}&nbsp;</kbd>",
             defaults: {
                 aaa: 123
             }
@@ -467,12 +467,13 @@ describe('widget', function () {
         })
         avalon.scan(div)
         setTimeout(function () {
-            var span = div.getElementsByTagName('span')[0]
+            var span = div.getElementsByTagName('kbd')[0]
             expect(span.firstChild.nodeValue.trim()).to.equal('123')
-
+            delete avalon.scopes.d234234
+            delete avalon.vmodels.d234234
             done()
 
-        }, 150)
+        }, 250)
 
     })
 
@@ -534,6 +535,8 @@ describe('widget', function () {
                 setTimeout(function () {
                     expect(div.getElementsByTagName('nav').length).to.equal(0)
                     done()
+                    delete avalon.scopes.xxx_
+                    delete avalon.vmodels.xxx_
                 }, 150)
             }, 150)
         }, 150)

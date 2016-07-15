@@ -5,7 +5,7 @@
  * http://www.stefankrause.net/js-frameworks-benchmark2/webdriver-java/table.html
  */
 
-var rentities = /&[a-z0-9#]{2,10};/g
+var rentities = /&[a-z0-9#]{2,10};/
 var temp = avalon.avalonDiv
 module.exports = function (str) {
     if (rentities.test(str)) {

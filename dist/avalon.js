@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-15:1 version 2.17 by 司徒正美
+ * built in 2016-7-15:13 version 2.17 by 司徒正美
  * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
  * 修正tap事件误触发BUG
  * 升级ms-widget的slot机制,让它们的值也放到组件VM中
@@ -1536,7 +1536,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * http://www.stefankrause.net/js-frameworks-benchmark2/webdriver-java/table.html
 	 */
 
-	var rentities = /&[a-z0-9#]{2,10};/g
+	var rentities = /&[a-z0-9#]{2,10};/
 	var temp = avalon.avalonDiv
 	module.exports = function (str) {
 	    if (rentities.test(str)) {
