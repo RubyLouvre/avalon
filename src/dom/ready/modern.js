@@ -1,4 +1,8 @@
 var scan = require('./scan')
+scan.htmlfy = function(el){
+    return el.outerHTML
+}
+
 var document = avalon.document
 var window = avalon.window
 

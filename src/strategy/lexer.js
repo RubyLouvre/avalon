@@ -12,7 +12,8 @@ var rmsForEnd = /^\s*ms\-for\-end/
 //https://github.com/rviscomi/trunk8/blob/master/trunk8.js
 //判定里面有没有内容
 var rcontent = /\S/
-var voidTag = avalon.oneObject('area,base,basefont,br,col,frame,hr,img,input,isindex,link,meta,param,embed')
+var voidTag = avalon.oneObject('area,base,basefont,bgsound,br,col,command,embed,' +
+        'frame,hr,img,input,keygen,link,meta,param,source,track,wbr')
 var plainTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
 var stringPool = {}
 
@@ -32,7 +33,7 @@ function lexer(str) {
         if (str.charAt(0) !== '<') {
             var i = str.indexOf('<')
             i = i === -1 ? str.length : i
-            var nodeValue = str.slice(0, i).replace(rfill,fill)
+            var nodeValue = str.slice(0, i).replace(rfill, fill)
             str = str.slice(i)//处理文本节点
             node = {type: "#text", nodeType: 3, nodeValue: nodeValue}
             if (rcontent.test(nodeValue)) {
@@ -52,7 +53,7 @@ function lexer(str) {
                 collectNodes(node, stack, ret)
                 if (rmsForEnd.test(nodeValue)) {
                     var p = stack.last()
-                    var nodes = p ? p.children: ret
+                    var nodes = p ? p.children : ret
                     markeRepeatRange(nodes, nodes.pop())
                 }
             }
@@ -127,7 +128,7 @@ function lexer(str) {
                 str = str.slice(match[0].length)
             }
         }
-      
+
         if (!node || --breakIndex === 0) {
             break
         }
@@ -205,7 +206,7 @@ function markeRepeatRange(nodes, end) {
             } else if (rmsForStart.test(start.nodeValue)) {
                 --deep
                 if (deep === 0) {
-                    start.nodeValue =  start.nodeValue.replace(rfill, fill)        //nomalString(start.nodeValue)
+                    start.nodeValue = start.nodeValue.replace(rfill, fill)        //nomalString(start.nodeValue)
                     start.signature = end.signature
                     start.dynamic = 'for'
                     start.template = array.map(function (a) {

@@ -1,6 +1,6 @@
-var getHTML = require('./htmlfy')
 var onceWarn = true //只警告一次
 function scan(nodes) {
+    var getHTML = avalon.scan.htmlfy
     for (var i = 0, elem; elem = nodes[i++]; ) {
         if (elem.nodeType === 1) {
             var $id = getController(elem)

@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-17:2 version 2.17 by 司徒正美
+ * built in 2016-7-17:4 version 2.17 by 司徒正美
  * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
  * 修正tap事件误触发BUG
  * 升级ms-widget的slot机制,让它们的值也放到组件VM中
@@ -1426,11 +1426,11 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 32 */,
 /* 33 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	var getHTML = __webpack_require__(34)
 	var onceWarn = true //只警告一次
 	function scan(nodes) {
+	    var getHTML = avalon.scan.htmlfy
 	    for (var i = 0, elem; elem = nodes[i++]; ) {
 	        if (elem.nodeType === 1) {
 	            var $id = getController(elem)
@@ -1483,48 +1483,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 34 */
-/***/ function(module, exports) {
-
-	var noChild = avalon.oneObject("area,base,basefont,br,col,command,embed,hr,img,input,link,meta,param,source,track,wbr")
-
-	function getHTML(el) {
-	    switch (el.nodeType) {
-	        case 1:
-	            var type = el.nodeName.toLowerCase()
-	            return '<' + type + getAttributes(el.attributes) +
-	                    (noChild[type] ? '/>' : ('>' + getChild(el) + '</' + type + '>'))
-	        case 3:
-	            return avalon.escapeHTML(el.nodeValue)//#1592
-	        case 8:
-	            return '<!--' + el.nodeValue + '-->'
-	    }
-	}
-
-
-	function getAttributes(array) {
-	    var ret = []
-	    for (var i = 0, attr; attr = array[i++]; ) {
-	        if (attr.specified) {
-	            ret.push(attr.name.toLowerCase() + '="' + avalon.escapeHTML(attr.value) + '"')
-	        }
-	    }
-	    var str = ret.join(' ')
-	    return str ? ' ' + str : ''
-	}
-
-	function getChild(el) {
-	    var ret = ''
-	    for (var i = 0, node; node = el.childNodes[i++]; ) {
-	        ret += getHTML(node)
-	    }
-	    return ret
-	}
-
-	module.exports = getHTML
-
-
-/***/ },
+/* 34 */,
 /* 35 */,
 /* 36 */
 /***/ function(module, exports, __webpack_require__) {
@@ -4157,7 +4116,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	//https://github.com/rviscomi/trunk8/blob/master/trunk8.js
 	//判定里面有没有内容
 	var rcontent = /\S/
-	var voidTag = avalon.oneObject('area,base,basefont,br,col,frame,hr,img,input,isindex,link,meta,param,embed')
+	var voidTag = avalon.oneObject('area,base,basefont,bgsound,br,col,command,embed,' +
+	        'frame,hr,img,input,keygen,link,meta,param,source,track,wbr')
 	var plainTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
 	var stringPool = {}
 
@@ -4177,7 +4137,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (str.charAt(0) !== '<') {
 	            var i = str.indexOf('<')
 	            i = i === -1 ? str.length : i
-	            var nodeValue = str.slice(0, i).replace(rfill,fill)
+	            var nodeValue = str.slice(0, i).replace(rfill, fill)
 	            str = str.slice(i)//处理文本节点
 	            node = {type: "#text", nodeType: 3, nodeValue: nodeValue}
 	            if (rcontent.test(nodeValue)) {
@@ -4197,7 +4157,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                collectNodes(node, stack, ret)
 	                if (rmsForEnd.test(nodeValue)) {
 	                    var p = stack.last()
-	                    var nodes = p ? p.children: ret
+	                    var nodes = p ? p.children : ret
 	                    markeRepeatRange(nodes, nodes.pop())
 	                }
 	            }
@@ -4272,7 +4232,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                str = str.slice(match[0].length)
 	            }
 	        }
-	      
+
 	        if (!node || --breakIndex === 0) {
 	            break
 	        }
@@ -4350,7 +4310,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            } else if (rmsForStart.test(start.nodeValue)) {
 	                --deep
 	                if (deep === 0) {
-	                    start.nodeValue =  start.nodeValue.replace(rfill, fill)        //nomalString(start.nodeValue)
+	                    start.nodeValue = start.nodeValue.replace(rfill, fill)        //nomalString(start.nodeValue)
 	                    start.signature = end.signature
 	                    start.dynamic = 'for'
 	                    start.template = array.map(function (a) {
@@ -6662,6 +6622,10 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var scan = __webpack_require__(33)
+	scan.htmlfy = function(el){
+	    return el.outerHTML
+	}
+
 	var document = avalon.document
 	var window = avalon.window
 

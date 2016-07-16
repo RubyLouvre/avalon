@@ -33,4 +33,9 @@ function getChild(el) {
     return ret
 }
 
-module.exports = getHTML
+module.exports = function(el){
+    if(avalon.msie > 8 || !avalon.msie){
+        return el.outerHTML
+    }
+    return getHTML(el)
+}
