@@ -44,6 +44,7 @@ module.exports = function (config) {
             'karma-mocha-reporter',
             'karma-firefox-launcher',
             'karma-chrome-launcher',
+            'karma-ie-launcher',
             'karma-opera-launcher',
             'karma-safari-launcher'
         ]

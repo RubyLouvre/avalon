@@ -21,14 +21,15 @@ avalon.directive('widget', {
     },
     diff: function (copy, src, name) {
         var a = copy[name]
-        var p = src[name]
         src.vmodel = copy.vmodel
         src.local = copy.local
         src.copy = copy
         if (Object(a) === a) {
             a = a.$model || a//安全的遍历VBscript
             if (Array.isArray(a)) {//转换成对象
-                a = avalon.mix.apply({}, a)
+                a.unshift({})// 防止污染旧数据
+                avalon.mix.apply(0, a)
+                a = a.shift()
             }
             var is = a.is || src.props.is
             //如果组件没有初始化,那么先初始化(生成对应的vm,$render)
@@ -125,7 +126,7 @@ avalon.directive('widget', {
         avalon.scopes[vm.$id] = {
             vmodel: vm,
             isMount: 2,
-            local: vdom.local
+            llocal: vdom.local
         }
         //--------------
         update(vdom, function () {

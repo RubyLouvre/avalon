@@ -3,24 +3,54 @@
 
     <head>
         <meta charset="UTF-8">
-        <script src="../dist/avalon.test.js"></script>
+        <script src="../dist/avalon.js"></script>
 
     </head>
 
     <body>
-
-        <script>
-            vm = avalon.define({
-                $id: 'widget0',
-                btn: '这是VM中的TEXT'
-            })
-        </script>
-        <div ms-controller='widget0' >
-            <xmp ms-widget="{is:'ms-button'}">{{@btn}}</xmp>
-            <ms-button>这是标签里面的TEXT</ms-button>
-            <ms-button ms-widget='{buttonText:"这是属性中的TEXT"}'></ms-button>
-            <ms-button></ms-button>
+        <div ms-controller="test">
+            <xmp cached='true' ms-widget="[{is:'ms-gridList',$id:'grid',eee:111},@gridList]"></xmp>
         </div>
+        <script>
+            function heredoc(fn) {
+                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+                replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+            }
+
+            var tpl = heredoc(function() {
+                /*
+            <ul class="gridList-body">
+                <li ms-for="(i,item) in @items" ms-click="@checkOne(item)">
+                     {{item.name}}
+                </li>
+            </ul>
+                 */
+            })
+
+            var vm = avalon.define({
+                $id: 'test',
+                gridList: {
+                    items: [{
+                            "name": "3434",
+                            "desc": "123",
+                            "ddays": 0,
+                            "record_time": "1467715853018"
+                        }, {
+                            "name": "交通安保",
+                            "desc": "交通安保",
+                            "ddays": 0,
+                            "record_time": "0"
+                        }] //实际数据
+                }
+            });
+
+            avalon.component('ms-gridList', {
+                template: tpl,
+                defaults: {
+                    items: []
+                }
+            });
+        </script>
     </body>
 
 </html>

@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-16:12 version 2.17 by 司徒正美
+ * built in 2016-7-17:2 version 2.17 by 司徒正美
  * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
  * 修正tap事件误触发BUG
  * 升级ms-widget的slot机制,让它们的值也放到组件VM中
@@ -79,7 +79,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-7-16:12 version 2.17 by 司徒正美
+	 * built in 2016-7-17:2 version 2.17 by 司徒正美
 	 * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
 	 * 修正tap事件误触发BUG
 	 * 升级ms-widget的slot机制,让它们的值也放到组件VM中
@@ -3451,7 +3451,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		        delete vdom.vmodel
 		        delete vdom.local
 		        var top = avalon.vmodels[id]
-		        var render = avalon.render([vdom], local)
+		        if(vmodel.$element && vmodel.$element.vtree[0] === vdom){
+		            var render = vmodel.$render
+		        }else{
+		            render = avalon.render([vdom], local)
+		        }
 		        vmodel.$render = render
 		        vmodel.$element = dom
 		        reconcile([dom], vdom, parent)
@@ -5646,14 +5650,15 @@ return /******/ (function(modules) { // webpackBootstrap
 		    },
 		    diff: function (copy, src, name) {
 		        var a = copy[name]
-		        var p = src[name]
 		        src.vmodel = copy.vmodel
 		        src.local = copy.local
 		        src.copy = copy
 		        if (Object(a) === a) {
 		            a = a.$model || a//安全的遍历VBscript
 		            if (Array.isArray(a)) {//转换成对象
-		                a = avalon.mix.apply({}, a)
+		                a.unshift({})// 防止污染旧数据
+		                avalon.mix.apply(0, a)
+		                a = a.shift()
 		            }
 		            var is = a.is || src.props.is
 		            //如果组件没有初始化,那么先初始化(生成对应的vm,$render)
@@ -5750,7 +5755,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        avalon.scopes[vm.$id] = {
 		            vmodel: vm,
 		            isMount: 2,
-		            local: vdom.local
+		            llocal: vdom.local
 		        }
 		        //--------------
 		        update(vdom, function () {
@@ -5897,9 +5902,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		    for (var i in slots) {
 		        if (i !== '__sole__') {
 		            var html = toHTML(slots[i])
-		            if (/\S/.test(html)) {
+		            if (/\S/.test(html)) {//如果soleSlot为空,那么就不用赋值了
 		                defaults[i] = html
-		            }//i === slots.__sole__ ? html.join('') : html
+		            }
 		        }
 		    }
 
@@ -5988,10 +5993,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		function collectSlots(node, soleSlot) {
 		    var slots = {}
 		    if (soleSlot) {
-		        // slots[soleSlot] = node.children
-
 		        slots[soleSlot] = toHTML(node.children).join('')
-		        console.log(slots)
 		        slots.__sole__ = soleSlot
 		    } else {
 		        node.children.forEach(function (el) {
@@ -6432,7 +6434,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		    var body = '__local__ = __local__ || {};\n' +
 		            _local.join(';\n')+'\n' + _body
 		    var fn = Function('__vmodel__', '__local__', body)
-
 		    return fn
 		}
 		avalon.render = render
@@ -8661,7 +8662,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 104:
 /***/ function(module, exports) {
 
-	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button /></p>\n</div>"
+	module.exports = "<div>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button /></p>\r\n</div>"
 
 /***/ }
 

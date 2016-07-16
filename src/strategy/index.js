@@ -16,7 +16,6 @@ function render(vtree, local) {
     var body = '__local__ = __local__ || {};\n' +
             _local.join(';\n')+'\n' + _body
     var fn = Function('__vmodel__', '__local__', body)
-
     return fn
 }
 avalon.render = render

@@ -53,7 +53,11 @@ avalon.directive('controller', {
         delete vdom.vmodel
         delete vdom.local
         var top = avalon.vmodels[id]
-        var render = avalon.render([vdom], local)
+        if(vmodel.$element && vmodel.$element.vtree[0] === vdom){
+            var render = vmodel.$render
+        }else{
+            render = avalon.render([vdom], local)
+        }
         vmodel.$render = render
         vmodel.$element = dom
         reconcile([dom], vdom, parent)
