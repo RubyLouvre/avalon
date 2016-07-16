@@ -4,36 +4,23 @@
     <head>
         <meta charset="UTF-8">
         <script src="../dist/avalon.js"></script>
+        <script>
+            avalon.define({
+                $id: 'test',
+                aaa: 111,
+                fix: function(e){
+                    
+                    e.target.value = e.target.value.replace(/\D+/, '')
+                }
+            })
+           
+        </script>
 
     </head>
 
-    <body>
-        <div ms-controller="widget8">
-            <xmp cached='true' ms-widget="{is:'ms-time',$id:'xxx'}"></xmp>
-        </div>   
-        <script>
-            function heredoc(fn) {
-                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
-                        replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
-            }
-            avalon.component('ms-time', {
-                template: "<span ms-click='@click'>{{@aaa}}&nbsp;</span>",
-                defaults: {
-                    aaa: 123
-                }
-            });
-            vm = avalon.define({
-                $id: "widget8"
-            })
-            setTimeout(function () {
-                var span = document.getElementsByTagName('span')[0]
-                console.log(span.firstChild)
-                //  expect(span.firstChild.nodeValue.trim()).to.equal('123')
+    <body :controller="test">
+        <input :duplex-number="@aaa" :input="@fix"/>{{@aaa}}
 
-                //  done()
-
-            }, 750)
-        </script>
     </body>
 
 </html>

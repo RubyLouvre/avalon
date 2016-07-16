@@ -14,45 +14,41 @@
                 return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
                         replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
             }
-            avalon.component('ms-button', {
-                template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
+            avalon.component('ms-aaa', {
+                template: heredoc(function () {
+                    /*
+                     <div>
+                     <slot name='header'/>
+                     <slot name='body'/>
+                     <slot name='footer'/>
+                     </div>
+                     */
+                }),
                 defaults: {
-                    buttonText: "button"
-                },
-                soleSlot: 'buttonText'
-            })
-            var tmpl = heredoc(function () {
-                /*
-                 <div>
-                 <div>
-                 <span :for="($index,el) in @triggers" :click=@onSwitch($index)>{{el}}</span>
-                 </div>
-                 <div :for="($index, el) in @panels" ms-html="el" 
-                      :visible="$index === @selectedIndex">
-                 </div>
-                 </div>
-                 */
-            })
-            avalon.component('ms-tabs', {
-                template: tmpl,
-                defaults: {
-                    triggers: [111, 222, 333],
-                    panels: [],
-                    selectedIndex: 0,
-                    onSwitch: function (i) {
-                        this.selectedIndex = i
-                    }
+                    header: '11',
+                    body: '22',
+                    footer: '33'
                 }
-
             })
+avalon.component('ms-button', {
+    template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
+    defaults: {
+        ddd: '1111',
+        buttonText: "button"
+    },
+    soleSlot: 'buttonText'
+})
+
         </script>
     </head>
     <body :controller="test">
-    <ms-tabs :widget="[{$id:'aaa'}]">
-        <div slot="panels" >面板1</div>
-        <div slot="panels" >面板2</div>
-        <div slot="panels" >面板3</div>
-    </ms-tabs>
-    <ms-button><b>{{@aaa}}</b></ms-button>
+    <ms-aaa :widget="[{$id:'aaa'}]">
+        <div slot="header" >面板1</div>
+        <div slot="body" >面板2</div>
+        <div slot="footer" >面板3</div>
+    </ms-aaa>
+     <ms-button :widget="[{$id:'bbb'}]">
+       {{@ddd}}
+    </ms-button>
 </body>
 </html>

@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-15:13 version 2.17 by 司徒正美
+ * built in 2016-7-16:12 version 2.17 by 司徒正美
  * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
  * 修正tap事件误触发BUG
  * 升级ms-widget的slot机制,让它们的值也放到组件VM中
@@ -79,7 +79,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-7-15:12 version 2.17 by 司徒正美
+	 * built in 2016-7-16:12 version 2.17 by 司徒正美
 	 * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
 	 * 修正tap事件误触发BUG
 	 * 升级ms-widget的slot机制,让它们的值也放到组件VM中
@@ -5895,8 +5895,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		    var defaults = avalon.mix(true, {}, definition.defaults)
 
 		    for (var i in slots) {
-		        if (i !== definition.soleSlot) {
-		            defaults[i] = toHTML(slots[i])
+		        if (i !== '__sole__') {
+		            var html = toHTML(slots[i])
+		            if (/\S/.test(html)) {
+		                defaults[i] = html
+		            }//i === slots.__sole__ ? html.join('') : html
 		        }
 		    }
 
@@ -5952,7 +5955,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		    }
 		    var render = avalon.render(vtree, src.local)
-
 		    vmodel.$render = render
 		    src[is + '-vm'] = vmodel
 		    src[is + '-vtree'] = vtree
@@ -5976,22 +5978,21 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return avalon.vdomAdaptor(e, 'toHTML')
 		        })
 		    }
+		    if (typeof a === 'string') {
+		        return a
+		    }
 		    return avalon.vdomAdaptor(a, 'toHTML')
 		}
 
-		function newText(name) {
-		    return {
-		        nodeType: 3,
-		        nodeValue: '{{##' + name + '}}',
-		        type: "#text",
-		        dynamic: true
-		    }
-		}
 
 		function collectSlots(node, soleSlot) {
 		    var slots = {}
 		    if (soleSlot) {
-		        slots[soleSlot] = node.children
+		        // slots[soleSlot] = node.children
+
+		        slots[soleSlot] = toHTML(node.children).join('')
+		        console.log(slots)
+		        slots.__sole__ = soleSlot
 		    } else {
 		        node.children.forEach(function (el) {
 		            if (el.nodeType === 1) {
@@ -6012,17 +6013,24 @@ return /******/ (function(modules) { // webpackBootstrap
 		    return slots
 		}
 
-		function mergeSlots(vtree, slots) {
+		function mergeSlots(vtree, slots, parent) {
 		    for (var i = 0, node; node = vtree[i++]; ) {
 		        if (node.nodeType === 1) {
 		            if (node.type === 'slot') {
-		                var name = node.props.name
-		                if (slots[name]) {
-		                    var s = slots[name].length ? slots[name] : newText(name)
+		                var name = node.props.name || slots.__sole__
+		                if (!(name in slots)) {
+		                    avalon.error('slot name="', name, '"is undefined')
+		                }
+		                if (name === slots.__sole__) {
+		                    parent.children = []
+		                    parent.props['ms-html'] = '##' + slots.__sole__
+		                    break
+		                } else {
+		                    var s = slots[name]
 		                    vtree.splice.apply(vtree, [i - 1, 1].concat(s))
 		                }
 		            } else {
-		                mergeSlots(node.children, slots)
+		                mergeSlots(node.children, slots, node)
 		            }
 		        }
 		    }
@@ -8622,7 +8630,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	//var avalon = require('avalon')
 
 	avalon.component('ms-button', {
-	    template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
+	    template: '<button type="button"><span><slot /></span></button>',
 	    defaults: {
 	        buttonText: "button"
 	    },
