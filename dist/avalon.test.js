@@ -1,6 +1,12 @@
 /*!
- * built in 2016-7-18:21 version 2.17 by 司徒正美
- * 补充更多空标签到voidTag
+ * built in 2016-7-18:23 version 2.17 by 司徒正美
+ * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
+ * 修正tap事件误触发BUG
+ * 升级ms-widget的slot机制,让它们的值也放到组件VM中
+ * 添加:xxx短指令的支持
+ * 紧急修正了lexer的一些BUG
+ * updatesole机制
+ * 优化ms-for虚拟DOM树的生成
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -75,8 +81,14 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-7-18:21 version 2.17 by 司徒正美
-	 * 补充更多空标签到voidTag
+	 * built in 2016-7-18:23 version 2.17 by 司徒正美
+	 * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
+	 * 修正tap事件误触发BUG
+	 * 升级ms-widget的slot机制,让它们的值也放到组件VM中
+	 * 添加:xxx短指令的支持
+	 * 紧急修正了lexer的一些BUG
+	 * updatesole机制
+	 * 优化ms-for虚拟DOM树的生成
 	 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
@@ -2936,7 +2948,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		var stringify = __webpack_require__(50)
 
 		var Cache = __webpack_require__(28)
-		var cache = new Cache(100)
+		var cache = new Cache(312)
 
 		function enterAction(src, key) {
 		    var tmpl = src.template
@@ -3344,11 +3356,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		    })
 		}
 
-		var skip ={
-		    dom:1,
-		    local:1,
+		var skip = {
+		    dom: 1,
+		    local: 1,
 		    vmodel: 1,
-		    children:1
+		    children: 1
 		}
 		function copyNode(vdom) {
 		    switch (vdom.nodeType) {
@@ -3361,10 +3373,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return stringify(vdom)
 		        case 1:
 		            var copy = {
-		                props: {}
 		            }
-		            for(var i in vdom){
-		                if(!skip[i]){
+		            for (var i in vdom) {
+		                if (!skip[i]) {
 		                    copy[i] = vdom[i]
 		                }
 		            }
