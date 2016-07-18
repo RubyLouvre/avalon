@@ -7,11 +7,7 @@
         <script>
             avalon.define({
                 $id: 'test',
-                aaa: 111,
-                fix: function(e){
-                    
-                    e.target.value = e.target.value.replace(/\D+/, '')
-                }
+                arr: [11,22,33]
             })
            
         </script>
@@ -19,7 +15,9 @@
     </head>
 
     <body :controller="test">
-        <input :duplex-number="@aaa" :input="@fix"/>{{@aaa}}
+        <ul>
+            <li ms-for="el in @arr">{{el}}</li>
+        </ul>
 
     </body>
 

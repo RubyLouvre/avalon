@@ -7,16 +7,36 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../dist/avalon.js"></script>
         <script>
-          var  vm = avalon.define({
-            $id: "if2",
-            curIndex: 1,
-            panels: ["<div>面板1</div>", "<p>面板2</p>", "<strong>面板3</strong>"]
-        })
+            var vm = avalon.define({
+                $id: 'for14',
+                arr: [
+                    {a: 'a1', b: 'b1'}, {a: 'a2', b: 'b2'}, {a: 'a3', b: 'b3'}
+                ]
+            });
         </script>
     </head>
     <body>
-        <div ms-controller='if2'>
-            <div class='panel' ms-for='(jj, el) in @panels' ms-if='jj === @curIndex' ms-html='el'></div>
-        </div>
-    </body>
+        <style>
+            .c-red {
+                color: red;
+            }
+            .c-green {
+                color: green;
+            }
+            .c-blue {
+                color: blue;
+            }
+        </style>
+        <div ms-controller="for14">
+            <!--ms-for:(idx1, item1) in @arr-->
+            <p>Group这是标题</p>
+            <!--ms-for:(idx2, item2) in item1-->
+            <div>内容1</div>
+            <strong :class="'c-' + (idx1 < 1 ? 'red' : idx1 > 1 ? 'green' : 'blue')">
+                内容2 {{ (idx1 < 1 ? 'red' : idx1 > 1 ? 'green' : 'blue') + '-' + item2 }}
+        </strong>
+        <!--ms-for-end:-->
+        <!--ms-for-end:-->
+    </div>
+</body>
 </html>

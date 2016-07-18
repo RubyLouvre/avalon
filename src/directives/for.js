@@ -210,18 +210,15 @@ avalon.directive('for', {
         var endRepeat = range.pop()
         var DOMs = splitDOMs(doms, key)
         var check = doms[doms.length - 1]
+        var first = []
         if (check && check.nodeValue !== key) {
+            var prev = endRepeat.previousSibling
             do {//去掉最初位于循环节点中的内容
-                var prev = endRepeat.previousSibling
                 if (prev === dom || prev.nodeValue === key) {
                     break
                 }
-                if (prev) {
-                    parent.removeChild(prev)
-                } else {
-                    break
-                }
-            } while (true);
+                first.unshift(prev)
+            } while ((prev = prev.previousSibling));
         }
         for (var i = 0, el; el = vdom.removes[i++]; ) {
             var removeNodes = DOMs[el.index]
@@ -253,6 +250,14 @@ avalon.directive('for', {
             }
             keep.push(com)
             if (com.action === 'enter') {
+                if (first.length) {
+                    var a = first[first.length - 1]
+                    var insertPoint = document.createComment(key)
+                    parent.insertBefore(insertPoint, a.nextSibling)
+                    reconcile(first.concat(insertPoint), children, parent)
+                    first.length = 0
+                    continue
+                }
                 if (!domTemplate) {
                     //创建用于拷贝的数据,包括虚拟DOM与真实DOM 
                     domTemplate = avalon.vdomAdaptor(children, 'toDOM')
@@ -288,7 +293,6 @@ avalon.directive('for', {
                 break
             }
         }
-
         vdom.preRepeat.length = 0
         vdom.preItems.length = 0
         keep.forEach(function (el) {
