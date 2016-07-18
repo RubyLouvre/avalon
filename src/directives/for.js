@@ -8,24 +8,31 @@ var rforAs = /\s+as\s+([$\w]+)/
 var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
 var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
 var reconcile = require('../strategy/reconcile')
+var stringify = require('../strategy/parser/stringify')
+
 var Cache = require('../seed/cache')
 var cache = new Cache(100)
 
 function enterAction(src, key) {
-    var tmpl = src.template + '<!--' + src.signature + '-->'
+    var tmpl = src.template
     var t = cache.get(tmpl)
     if (!t) {
         var vdomTemplate = avalon.lexer(tmpl)
         avalon.speedUp(vdomTemplate)
-        t = cache.put(tmpl, vdomTemplate)
+        t = cache.put(tmpl, copyVTree(vdomTemplate))
     }
+    var c = t()
+    c.push({
+        nodeType: 8,
+        type: '#comment',
+        nodeValue: src.signature
+    })
     return {
         action: 'enter',
-        children: avalon.mix(true, [], t),
+        children: c,
         key: key
     }
 }
-
 function getTraceKey(item) {
     var type = typeof item
     return item && type === 'object' ? item.$hashcode : type + ':' + item
@@ -111,19 +118,6 @@ avalon.directive('for', {
         //for指令只做添加删除操作
         var cache = src.cache
         var i, c, p
-        function enterAction2(src, key) {//IE6-8下不能使用缓存
-            var template = src.template + '<!--' + src.signature + '-->'
-            var vdomTemplate = avalon.lexer(template)
-            avalon.speedUp(vdomTemplate)
-            return {
-                action: 'enter',
-                children: vdomTemplate,
-                key: key
-            }
-        }
-        if (avalon.msie <= 8) {
-            enterAction = enterAction2
-        }
 
         if (!cache || isEmptyObject(cache)) {
             /* eslint-disable no-cond-assign */
@@ -423,4 +417,51 @@ var applyEffects = function (nodes, vnodes, opts) {
     vnodes.forEach(function (el, i) {
         avalon.applyEffect(nodes[i], vnodes[i], opts)
     })
+}
+
+
+function copyNode(vdom) {
+    switch (vdom.nodeType) {
+        case 3:
+            if (avalon.config.rexpr.test(vdom.nodeValue)) {
+                return stringify(avalon.mix({dynamic: true}, vdom))
+            }
+            return stringify(vdom)
+        case 8:
+            //  if (vdom.dynamic === 'for')
+            //      return stringify(vdom) + ',[]'
+            return stringify(vdom)
+        case 1:
+            var copy = {
+                props: {},
+                type: vdom.type,
+                nodeType: 1
+            }
+            var copy = avalon.mix({}, vdom)
+             delete copy.dom
+             delete copy.local
+             delete copy.vmodel
+            if (!vdom.isVoidTag) {
+                copy.children = '[' + vdom.children.map(function (e) {
+                    return copyNode(e)
+                }).join(', ') + ']'
+            } else {
+                delete copy.children
+            }
+            return stringify(copy)
+        default:
+            return copyList(vdom)
+    }
+}
+
+
+function copyList(vtree) {
+    var arr = []
+    for (var i = 0, el; el = vtree[i++]; ) {
+        arr.push(copyNode(el))
+    }
+    return '[' + arr.join(', ') + ']'
+}
+function copyVTree(vtree) {
+    return new Function('return ' + copyList(vtree))
 }
