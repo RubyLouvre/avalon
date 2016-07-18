@@ -217,6 +217,7 @@ avalon.directive('for', {
                     break
                 }
                 if (prev) {
+                       console.log(prev,'!!!!')
                     parent.removeChild(prev)
                 } else {
                     break
@@ -256,6 +257,8 @@ avalon.directive('for', {
                 if (!domTemplate) {
                     //创建用于拷贝的数据,包括虚拟DOM与真实DOM 
                     domTemplate = avalon.vdomAdaptor(children, 'toDOM')
+                    emptyArray(domTemplate.childNodes, domTemplate)
+                    console.log(avalon.slice(domTemplate.childNodes))
                 }
                 var newFragment = domTemplate.cloneNode(true)
                 var cnodes = avalon.slice(newFragment.childNodes)
@@ -300,7 +303,22 @@ avalon.directive('for', {
     }
 
 })
+function emptyArray(nodes, p) {
+    var breakI = 0
+    for (var i = 0, el; el = nodes[i]; i++) {
+        if (el.nodeType === 8 && el.nodeValue.indexOf('ms-for:') === 0 && !breakI) {
+            breakI++
+        } else if (el.nodeType === 8 && el.nodeValue.indexOf('ms-for-end:') === 0 && !breakI) {
+            breakI--
+        } else if (breakI) {
+            p.removeChild(el)
+            i--
+        } else if (el.nodeType === 1 &&!breakI ) {
+            emptyArray(el.childNodes, el)
+        }
+    }
 
+}
 function isEmptyObject(a) {
     for (var i in a) {
         return false
@@ -419,11 +437,11 @@ var applyEffects = function (nodes, vnodes, opts) {
     })
 }
 
-var skip ={
-    dom:1,
-    local:1,
+var skip = {
+    dom: 1,
+    local: 1,
     vmodel: 1,
-    children:1
+    children: 1
 }
 function copyNode(vdom) {
     switch (vdom.nodeType) {
@@ -437,8 +455,8 @@ function copyNode(vdom) {
         case 1:
             var copy = {
             }
-            for(var i in vdom){
-                if(!skip[i]){
+            for (var i in vdom) {
+                if (!skip[i]) {
                     copy[i] = vdom[i]
                 }
             }
