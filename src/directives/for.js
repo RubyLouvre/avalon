@@ -419,7 +419,12 @@ var applyEffects = function (nodes, vnodes, opts) {
     })
 }
 
-
+var skip ={
+    dom:1,
+    local:1,
+    vmodel: 1,
+    children:1
+}
 function copyNode(vdom) {
     switch (vdom.nodeType) {
         case 3:
@@ -428,25 +433,19 @@ function copyNode(vdom) {
             }
             return stringify(vdom)
         case 8:
-            //  if (vdom.dynamic === 'for')
-            //      return stringify(vdom) + ',[]'
             return stringify(vdom)
         case 1:
             var copy = {
-                props: {},
-                type: vdom.type,
-                nodeType: 1
             }
-            var copy = avalon.mix({}, vdom)
-             delete copy.dom
-             delete copy.local
-             delete copy.vmodel
+            for(var i in vdom){
+                if(!skip[i]){
+                    copy[i] = vdom[i]
+                }
+            }
             if (!vdom.isVoidTag) {
                 copy.children = '[' + vdom.children.map(function (e) {
                     return copyNode(e)
                 }).join(', ') + ']'
-            } else {
-                delete copy.children
             }
             return stringify(copy)
         default:

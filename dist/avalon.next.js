@@ -1,10 +1,6 @@
 /*!
- * built in 2016-7-17:4 version 2.17 by 司徒正美
- * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
- * 修正tap事件误触发BUG
- * 升级ms-widget的slot机制,让它们的值也放到组件VM中
- * 添加:xxx短指令的支持
- * 紧急修正了lexer的一些BUG
+ * built in 2016-7-18:21 version 2.17 by 司徒正美
+ * 补充更多空标签到voidTag
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -2862,24 +2858,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
 	var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
 	var reconcile = __webpack_require__(39)
+	var stringify = __webpack_require__(50)
+
 	var Cache = __webpack_require__(28)
 	var cache = new Cache(100)
 
 	function enterAction(src, key) {
-	    var tmpl = src.template + '<!--' + src.signature + '-->'
+	    var tmpl = src.template
 	    var t = cache.get(tmpl)
 	    if (!t) {
 	        var vdomTemplate = avalon.lexer(tmpl)
 	        avalon.speedUp(vdomTemplate)
-	        t = cache.put(tmpl, vdomTemplate)
+	        t = cache.put(tmpl, copyVTree(vdomTemplate))
 	    }
+	    var c = t()
+	    c.push({
+	        nodeType: 8,
+	        type: '#comment',
+	        nodeValue: src.signature
+	    })
 	    return {
 	        action: 'enter',
-	        children: avalon.mix(true, [], t),
+	        children: c,
 	        key: key
 	    }
 	}
-
 	function getTraceKey(item) {
 	    var type = typeof item
 	    return item && type === 'object' ? item.$hashcode : type + ':' + item
@@ -2965,19 +2968,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //for指令只做添加删除操作
 	        var cache = src.cache
 	        var i, c, p
-	        function enterAction2(src, key) {//IE6-8下不能使用缓存
-	            var template = src.template + '<!--' + src.signature + '-->'
-	            var vdomTemplate = avalon.lexer(template)
-	            avalon.speedUp(vdomTemplate)
-	            return {
-	                action: 'enter',
-	                children: vdomTemplate,
-	                key: key
-	            }
-	        }
-	        if (avalon.msie <= 8) {
-	            enterAction = enterAction2
-	        }
 
 	        if (!cache || isEmptyObject(cache)) {
 	            /* eslint-disable no-cond-assign */
@@ -3277,6 +3267,53 @@ return /******/ (function(modules) { // webpackBootstrap
 	    vnodes.forEach(function (el, i) {
 	        avalon.applyEffect(nodes[i], vnodes[i], opts)
 	    })
+	}
+
+	var skip ={
+	    dom:1,
+	    local:1,
+	    vmodel: 1,
+	    children:1
+	}
+	function copyNode(vdom) {
+	    switch (vdom.nodeType) {
+	        case 3:
+	            if (avalon.config.rexpr.test(vdom.nodeValue)) {
+	                return stringify(avalon.mix({dynamic: true}, vdom))
+	            }
+	            return stringify(vdom)
+	        case 8:
+	            return stringify(vdom)
+	        case 1:
+	            var copy = {
+	                props: {}
+	            }
+	            for(var i in vdom){
+	                if(!skip[i]){
+	                    copy[i] = vdom[i]
+	                }
+	            }
+	            if (!vdom.isVoidTag) {
+	                copy.children = '[' + vdom.children.map(function (e) {
+	                    return copyNode(e)
+	                }).join(', ') + ']'
+	            }
+	            return stringify(copy)
+	        default:
+	            return copyList(vdom)
+	    }
+	}
+
+
+	function copyList(vtree) {
+	    var arr = []
+	    for (var i = 0, el; el = vtree[i++]; ) {
+	        arr.push(copyNode(el))
+	    }
+	    return '[' + arr.join(', ') + ']'
+	}
+	function copyVTree(vtree) {
+	    return new Function('return ' + copyList(vtree))
 	}
 
 
@@ -6610,12 +6647,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    return this
 	}
-	avalon.$$unbind = function (node) {
-	    var nodes = node.querySelectorAll('[avalon-events]')
-	    avalon.each(nodes, function (i, el) {
-	        avalon.unbind(el)
-	    })
-	}
+
 
 /***/ },
 /* 91 */

@@ -264,9 +264,3 @@ avalon.fn.unbind = function (type, fn, phase) {
     }
     return this
 }
-avalon.$$unbind = function (node) {
-    var nodes = node.querySelectorAll('[avalon-events]')
-    avalon.each(nodes, function (i, el) {
-        avalon.unbind(el)
-    })
-}

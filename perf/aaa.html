@@ -6,49 +6,21 @@
         <meta name="viewport"  content="width=device-width, initial-scale=1.0">
         <script src="../dist/avalon.js"></script>
         <script>
-            var vm = avalon.define({
-                $id: 'test',
-                aaa: 111
+            var vm = vm = avalon.define({
+                $id: 'for1',
+                array: [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
             })
-            function heredoc(fn) {
-                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
-                        replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
-            }
-            avalon.component('ms-aaa', {
-                template: heredoc(function () {
-                    /*
-                     <div>
-                     <slot name='header'/>
-                     <slot name='body'/>
-                     <slot name='footer'/>
-                     </div>
-                     */
-                }),
-                defaults: {
-                    header: '11',
-                    body: '22',
-                    footer: '33'
-                }
-            })
-avalon.component('ms-button', {
-    template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
-    defaults: {
-        ddd: '1111',
-        buttonText: "button"
-    },
-    soleSlot: 'buttonText'
-})
 
         </script>
     </head>
-    <body :controller="test">
-    <ms-aaa :widget="[{$id:'aaa'}]">
-        <div slot="header" >面板1</div>
-        <div slot="body" >面板2</div>
-        <div slot="footer" >面板3</div>
-    </ms-aaa>
-     <ms-button :widget="[{$id:'bbb'}]">
-       {{@ddd}}
-    </ms-button>
-</body>
+    <body >
+        <div ms-controller='for1'>
+            <table>
+                <tr ms-for='tr in @array'>
+                    <td ms-for='td in tr'>{{td}}</td>
+                </tr>
+            </table>
+        </div>
+
+    </body>
 </html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.js"></script>
+        <script>
+          var  vm = avalon.define({
+            $id: "if2",
+            curIndex: 1,
+            panels: ["<div>面板1</div>", "<p>面板2</p>", "<strong>面板3</strong>"]
+        })
+        </script>
+    </head>
+    <body>
+        <div ms-controller='if2'>
+            <div class='panel' ms-for='(jj, el) in @panels' ms-if='jj === @curIndex' ms-html='el'></div>
+        </div>
+    </body>
+</html>
