@@ -19,7 +19,6 @@ function batchUpdate(id) {
     } else {
         renderingID = id
     }
-
     var scope = avalon.scopes[id]
     if (!scope || !document.nodeName || avalon.suspendUpdate) {
         return renderingID = null

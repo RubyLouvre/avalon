@@ -293,6 +293,11 @@ avalon.directive('for', {
                 break
             }
         }
+        if(first.length){
+            first.forEach(function(el){
+                parent.removeChild(el)
+            })
+        }
         vdom.preRepeat.length = 0
         vdom.preItems.length = 0
         keep.forEach(function (el) {

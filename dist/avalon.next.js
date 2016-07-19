@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-19:1 version 2.17 by 司徒正美
+ * built in 2016-7-19:10 version 2.17 by 司徒正美
  * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
  * 修正tap事件误触发BUG
  * 升级ms-widget的slot机制,让它们的值也放到组件VM中
@@ -3070,17 +3070,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (check && check.nodeValue !== key) {
 	            var prev = endRepeat.previousSibling
 	            do {//去掉最初位于循环节点中的内容
-
-
 	                if (prev === dom || prev.nodeValue === key) {
 	                    break
 	                }
-	                // if (prev) {
 	                first.unshift(prev)
-	                // parent.removeChild(prev)
-	                //   } else {
-	               // break
-	                //   }
 	            } while ((prev = prev.previousSibling));
 	        }
 	        for (var i = 0, el; el = vdom.removes[i++]; ) {
@@ -3114,7 +3107,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            keep.push(com)
 	            if (com.action === 'enter') {
 	                if (first.length) {
-
 	                    var a = first[first.length - 1]
 	                    var insertPoint = document.createComment(key)
 	                    parent.insertBefore(insertPoint, a.nextSibling)
@@ -3125,11 +3117,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (!domTemplate) {
 	                    //创建用于拷贝的数据,包括虚拟DOM与真实DOM 
 	                    domTemplate = avalon.vdomAdaptor(children, 'toDOM')
-	                    // console.log(avalon.slice(domTemplate.childNodes))
 	                }
 	                var newFragment = domTemplate.cloneNode(true)
 	                var cnodes = avalon.slice(newFragment.childNodes)
-
 	                reconcile(cnodes, children, parent)//关联新的虚拟DOM与真实DOM
 	                parent.insertBefore(newFragment, insertPoint.nextSibling)
 	                applyEffects(cnodes, children, {
@@ -3158,6 +3148,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (!insertPoint) {
 	                break
 	            }
+	        }
+	        if(first.length){
+	            first.forEach(function(el){
+	                parent.removeChild(el)
+	            })
 	        }
 	        vdom.preRepeat.length = 0
 	        vdom.preItems.length = 0
@@ -4711,7 +4706,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } else {
 	        renderingID = id
 	    }
-
 	    var scope = avalon.scopes[id]
 	    if (!scope || !document.nodeName || avalon.suspendUpdate) {
 	        return renderingID = null
