@@ -6,7 +6,7 @@ var swipeRecognizer = {
        return Math.atan2(y, x) * 180 / Math.PI
     },
     getDirection: function (x, y) {
-        if (abs(x) >= abs(y)) {
+        if (Math.abs(x) >= Math.abs(y)) {
            return x < 0 ? 'left' : 'right'
         }
         return y < 0 ? 'up' : 'down'
