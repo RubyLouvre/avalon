@@ -1,12 +1,11 @@
 /*!
- * built in 2016-7-19:11 version 2.17 by 司徒正美
+ * built in 2016-7-19:11 version 2.18 by 司徒正美
  * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
  * 修正tap事件误触发BUG
  * 升级ms-widget的slot机制,让它们的值也放到组件VM中
  * 添加:xxx短指令的支持
  * 紧急修正了lexer的一些BUG
- * updatesole机制
- * 优化ms-for虚拟DOM树的生成
+ * 优化ms-for虚拟DOM树的生成, 真实节点的重复利用
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -690,7 +689,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return a === 'true'|| a == '1'
 	        }
 	    },
-	    version: "2.17",
+	    version: "2.18",
 	    slice: function (nodes, start, end) {
 	        return _slice.call(nodes, start, end)
 	    },

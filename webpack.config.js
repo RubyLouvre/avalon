@@ -21,8 +21,7 @@ var feather = heredoc(function(){
 升级ms-widget的slot机制,让它们的值也放到组件VM中
 添加:xxx短指令的支持
 紧急修正了lexer的一些BUG
-updatesole机制
-优化ms-for虚拟DOM树的生成
+优化ms-for虚拟DOM树的生成, 真实节点的重复利用
      */
 })
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')
