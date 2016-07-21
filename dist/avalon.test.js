@@ -1,11 +1,7 @@
 /*!
- * built in 2016-7-19:11 version 2.18 by 司徒正美
- * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
- * 修正tap事件误触发BUG
- * 升级ms-widget的slot机制,让它们的值也放到组件VM中
- * 添加:xxx短指令的支持
- * 紧急修正了lexer的一些BUG
- * 优化ms-for虚拟DOM树的生成, 真实节点的重复利用
+ * built in 2016-7-21:13 version 2.18 by 司徒正美
+ * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
+ * 为伪事件对象过滤掉原生事件对象中的常量属性
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -80,14 +76,13 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-7-19:11 version 2.18 by 司徒正美
+	 * built in 2016-7-21:13 version 2.18 by 司徒正美
 	 * 修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
 	 * 修正tap事件误触发BUG
 	 * 升级ms-widget的slot机制,让它们的值也放到组件VM中
 	 * 添加:xxx短指令的支持
 	 * 紧急修正了lexer的一些BUG
-	 * updatesole机制
-	 * 优化ms-for虚拟DOM树的生成
+	 * 优化ms-for虚拟DOM树的生成, 真实节点的重复利用
 	 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
@@ -2954,13 +2949,13 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 		var rmouseEvent = /^(?:mouse|contextmenu|drag)|click/
-		var rvendor = /^(?:ms|webkit|moz)/
+		var rconstant = /^[A-Z_]+$/
 		function avEvent(event) {
 		    if (event.originalEvent) {
 		        return this
 		    }
 		    for (var i in event) {
-		        if (!rvendor.test(i) && typeof event[i] !== 'function') {
+		        if (!rconstant.test(i) && typeof event[i] !== 'function') {
 		            this[i] = event[i]
 		        }
 		    }
@@ -5878,7 +5873,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		var legalTags = {wbr: 1, xmp: 1, template: 1}
 		var events = 'onInit,onReady,onViewChange,onDispose'
 		var componentEvents = avalon.oneObject(events)
-		var protected = events.split(',').concat('is', 'define')
+		var immunity = events.split(',').concat('is', 'define')
 		var onceWarn = true
 		function initComponent(src, copy, is) {
 		    var tag = src.type
@@ -5910,7 +5905,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    if (!definition) {
 		        return
 		    }
-		    var skipProps = protected.concat()
+		    var skipProps = immunity.concat()
 		    //得到组件在顶层vm的配置对象名
 		    var configName = is.replace(/-/g, '_')
 

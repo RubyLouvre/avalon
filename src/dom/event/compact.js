@@ -178,13 +178,13 @@ avalon.fireDom = function (elem, type, opts) {
 }
 
 var rmouseEvent = /^(?:mouse|contextmenu|drag)|click/
-var rvendor = /^(?:ms|webkit|moz)/
+var rconstant = /^[A-Z_]+$/
 function avEvent(event) {
     if (event.originalEvent) {
         return this
     }
     for (var i in event) {
-        if (!rvendor.test(i) && typeof event[i] !== 'function') {
+        if (!rconstant.test(i) && typeof event[i] !== 'function') {
             this[i] = event[i]
         }
     }

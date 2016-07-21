@@ -16,12 +16,8 @@ function heredoc(fn) {
             }
 var feather = heredoc(function(){
     /*
-修正注释节点包括HTML结构(里面有引号),节点对齐算法崩溃的BUG
-修正tap事件误触发BUG
-升级ms-widget的slot机制,让它们的值也放到组件VM中
-添加:xxx短指令的支持
-紧急修正了lexer的一些BUG
-优化ms-for虚拟DOM树的生成, 真实节点的重复利用
+component/initjs中的protected变量更名为immunity,方便在严格模式下运行
+为伪事件对象过滤掉原生事件对象中的常量属性   
      */
 })
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')
@@ -33,8 +29,8 @@ module.exports = {
         avalon: './src/avalon', //我们开发时的入口文件
         'avalon.modern': './src/avalon.modern',
         'avalon.test': './src/avalon.test',
-        'avalon.next': './src/avalon.next'
-      //  'avalon.pager': './src/pager'
+        'avalon.next': './src/avalon.next',
+      //  'avalon.mobile': './src/avalon.mobile'
     },
     output: {
         path: path.join(__dirname, 'dist'),

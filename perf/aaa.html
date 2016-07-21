@@ -8,22 +8,29 @@
         <script>
             var vm = vm = avalon.define({
                 $id: 'for1',
-                array: []
+                array: [],
+                aaa: {}
             })
+            var a = [11,222,444]
+            console.log(avalon.mix([], a))
             setTimeout(function () {
                 console.log('=======')
-                vm.array = [[11, 22, 33], [44, 55, 60], [77, 88, 99]]
+                vm.aaa = {
+                    d:1
+                }
+                vm.array = ["&#xe67c;","&#xe67a;","&#xe67b;"]
             }, 1000)
+            
+           
             
         </script>
     </head>
     <body >
         <div ms-controller='for1'>
-            <table>
-                <tr ms-for='tr in @array'>
-                    <td ms-for='td in tr'>{{td}}</td>
-                </tr>
-            </table>
+            {{@aaa.d}}
+            <ul>
+                <li ms-for="el in @array" ms-text="el"></li>
+            </ul>
         </div>
 
     </body>

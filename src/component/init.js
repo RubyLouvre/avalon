@@ -3,7 +3,7 @@ var skipArray = require('../vmodel/parts/skipArray')
 var legalTags = {wbr: 1, xmp: 1, template: 1}
 var events = 'onInit,onReady,onViewChange,onDispose'
 var componentEvents = avalon.oneObject(events)
-var protected = events.split(',').concat('is', 'define')
+var immunity = events.split(',').concat('is', 'define')
 var onceWarn = true
 function initComponent(src, copy, is) {
     var tag = src.type
@@ -35,7 +35,7 @@ function initComponent(src, copy, is) {
     if (!definition) {
         return
     }
-    var skipProps = protected.concat()
+    var skipProps = immunity.concat()
     //得到组件在顶层vm的配置对象名
     var configName = is.replace(/-/g, '_')
 
