@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <script type="text/javascript" src="../dist/avalon.js"></script>
+    <style>
+        a.black{
+            border:1px solid red;
+        }
+        a.hover{
+            background: orange;
+        }
+        a.active{
+            color:aqua;
+        }
+    </style>
+    <script>
+        var vm = avalon.define({
+            $id: "test",
+            cls:"black",
+            hover:"hover",
+            active:"active"
+        })
+    </script>
+</head>
+<body ms-controller="test">
+    <!--hover 与 active 不能共存?-->
+    <span>hover 与 active 不能共存?(无解决方案)</span>
+    <br/>
+   <a href="#" ms-class="@cls" ms-hover="'hover'">测试hover 与 class -1</a>
+   
+
+</body>
+</html>

@@ -28,7 +28,7 @@ describe('widget', function () {
         body.removeChild(div)
         delete avalon.vmodels[vm.$id]
     })
-    it('inline-block', function (done) {
+    it('ms-button中buttonText', function (done) {
         div.innerHTML = heredoc(function () {
             /*
              <div ms-controller='widget0' >
@@ -443,6 +443,7 @@ describe('widget', function () {
             expect(widget.nodeName.toLowerCase()).to.equal('test')
             expect(widget.title).to.equal('title')
             expect(widget.innerHTML).to.equal('TEST')
+            delete avalon.components['test']
             done()
 
         }, 150)
@@ -469,6 +470,7 @@ describe('widget', function () {
         setTimeout(function () {
             var span = div.getElementsByTagName('kbd')[0]
             expect(span.firstChild.nodeValue.trim()).to.equal('123')
+            delete avalon.components['ms-time']
             delete avalon.scopes.d234234
             delete avalon.vmodels.d234234
             done()
@@ -534,12 +536,103 @@ describe('widget', function () {
                 vm.clickPage1()
                 setTimeout(function () {
                     expect(div.getElementsByTagName('nav').length).to.equal(0)
-                    done()
+
+                    delete avalon.components['ms-pagination2']
                     delete avalon.scopes.xxx_
                     delete avalon.vmodels.xxx_
+                    done()
                 }, 150)
             }, 150)
         }, 150)
 
     })
+
+    it('组件没有cached的情况不断切换里面的事件还能生效', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller="widget10" ms-html="@tpl"></div>
+             */
+        })
+        var v123 = heredoc(function () {
+            /*
+             <div ms-controller="widget10_1">
+             <p ms-click="@alert">123</p>
+             <wbr  ms-widget="{is:'ms-remove'}"/>
+             </div>
+             */
+        })
+        var v456 = heredoc(function () {
+            /*
+             <div ms-controller="widget10_2">
+             <p ms-click="@alert">456</p>
+             <wbr  ms-widget="{is:'ms-remove'}"/>
+             </div>
+             */
+        })
+        var clickIndex = 0
+        avalon.component('ms-remove', {
+            template: "<span ms-click='@click'>{{@ddd}}</span>",
+            defaults: {
+                ddd: '3333',
+                click: function () {
+                    ++clickIndex
+                }
+            }
+        });
+        vm = avalon.define({
+            $id: 'widget10',
+            tpl: v123,
+            switch1: function () {
+                vm.tpl = v123
+            },
+            switch2: function () {
+                vm.tpl = v456
+            }
+        })
+        avalon.define({
+            $id: 'widget10_1',
+            ddd: 'aaaa',
+            alert: function () {
+                avalon.log('????')
+            }
+        });
+
+        avalon.define({
+            $id: 'widget10_2',
+            ddd: 'bbbb',
+            alert: function () {
+                avalon.log('!!!!')
+            }
+        });
+        avalon.scan(div)
+        setTimeout(function () {
+            var spans = div.getElementsByTagName('span')
+            expect(spans.length).to.equal(1)
+            expect(spans[0].innerHTML).to.equal('aaaa')
+            vm.switch2()
+            setTimeout(function () {
+                var spans = div.getElementsByTagName('span')
+                expect(spans.length).to.equal(1)
+                expect(spans[0].innerHTML).to.equal('bbbb')
+                vm.switch1()
+                setTimeout(function () {
+                    var spans = div.getElementsByTagName('span')
+                    expect(spans.length).to.equal(1)
+                    expect(spans[0].innerHTML).to.equal('aaaa')
+                    fireClick(spans[0])
+                    setTimeout(function () {
+                        expect(clickIndex).to.equal(1)
+                        delete avalon.components['ms-remove']
+                        delete avalon.scopes['widget10_1']
+                        delete avalon.scopes['widget10_2']
+                        delete avalon.vmodels['widget10_1']
+                        delete avalon.vmodels['widget10_2']
+                        done()
+                    }, 20)
+                }, 100)
+            }, 100)
+        }, 150)
+
+    })
+
 })

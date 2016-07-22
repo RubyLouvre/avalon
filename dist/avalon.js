@@ -1,9 +1,10 @@
 /*!
- * built in 2016-7-22:17 version 2.18 by 司徒正美
+ * built in 2016-7-22:20 version 2.18 by 司徒正美
  * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
  * 为伪事件对象过滤掉原生事件对象中的常量属性   
  * 修复class,hover,active指令互相干扰的BUG
  * 修复事件绑定中表达式太复杂,不会补上($event)的BUG
+ * 当组件被移出DOM树并且没有被cached时,其虚拟DOM应该清空上面的事件
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -70,7 +71,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(35)
 	__webpack_require__(66)
 	avalon.onComponentDispose = __webpack_require__(73)
-	__webpack_require__(74)
+	__webpack_require__(75)
 
 	module.exports = avalon
 
@@ -7472,9 +7473,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 73 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	
+	var ret = __webpack_require__(74)
+	var fireDisposeHook = ret.fireDisposeHook
+	var fireDisposeHooks = ret.fireDisposeHooks
+	var fireDisposeHookDelay = ret.fireDisposeHookDelay
+
 
 	//http://stackoverflow.com/questions/11425209/are-dom-mutation-observers-slower-than-dom-mutation-events
 	//http://stackoverflow.com/questions/31798816/simple-mutationobserver-version-of-domnoderemovedfromdocument
@@ -7518,7 +7523,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function newSetter(html) {
 	        var all = avalon.slice(this.getElementsByTagName('*'))
 	        oldSetter.call(this, html)
-	        fireDisposedComponents(all)
+	        fireDisposeHooks(all)
 	    }
 	    if (!Object.getOwnPropertyDescriptor) {
 	        oldSetter = ep.__lookupSetter__('innerHTML')
@@ -7580,6 +7585,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
+
+
+/***/ },
+/* 74 */
+/***/ function(module, exports) {
+
 	function inDomTree(el) {
 	    while (el) {
 	        if (el.nodeType === 9) {
@@ -7607,6 +7618,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            delete avalon.scopes[ wid ]
 	            var is = el.getAttribute('is')
 	            var v = el.vtree
+	            detachEvents(v)
 	            if (v) {
 	                v[0][is + '-mount'] = false
 	            }
@@ -7614,20 +7626,39 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return false
 	    }
 	}
-
+	function detachEvents(arr) {
+	    for (var i in arr) {
+	        var el = arr[i]
+	        if (el.nodeType === 1) {
+	            for (var i in el) {
+	                if (i.indexOf('ms-on') === 0) {
+	                    delete el[i]
+	                }
+	            }
+	            if (el.children) {
+	                detachEvents(el.children)
+	            }
+	        }
+	    }
+	}
 	function fireDisposeHookDelay(a) {
 	    setTimeout(function () {
 	        fireDisposeHook(a)
 	    }, 4)
 	}
-	function fireDisposedComponents(nodes) {
+	function fireDisposeHooks(nodes) {
 	    for (var i = 0, el; el = nodes[i++]; ) {
 	        fireDisposeHook(el)
 	    }
 	}
+	module.exports = {
+	    fireDisposeHookDelay: fireDisposeHookDelay,
+	    fireDisposeHooks: fireDisposeHooks,
+	    fireDisposeHook:fireDisposeHook
+	}
 
 /***/ },
-/* 74 */
+/* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -7637,8 +7668,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * ------------------------------------------------------------
 	 */
 
-	var share = __webpack_require__(75)
-	var createViewModel = __webpack_require__(79)
+	var share = __webpack_require__(76)
+	var createViewModel = __webpack_require__(80)
 
 	var isSkip = share.isSkip
 	var toJson = share.toJson
@@ -7928,11 +7959,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	//使用这个AJAX库 https://github.com/matthew-andrews/isomorphic-fetch
 
 /***/ },
-/* 75 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var share = __webpack_require__(76)
-	var canHideProperty = __webpack_require__(78)
+	var share = __webpack_require__(77)
+	var canHideProperty = __webpack_require__(79)
 	var initEvents = share.initEvents
 
 	/*
@@ -8054,13 +8085,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 76 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var $$midway = {}
 	var $$skipArray = __webpack_require__(63)
-	var dispatch = __webpack_require__(77)
+	var dispatch = __webpack_require__(78)
 	var $emit = dispatch.$emit
 	var $watch = dispatch.$watch
 	/*
@@ -8336,7 +8367,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 77 */
+/* 78 */
 /***/ function(module, exports) {
 
 	
@@ -8438,7 +8469,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 78 */
+/* 79 */
 /***/ function(module, exports) {
 
 	//如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
@@ -8455,11 +8486,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = flag
 
 /***/ },
-/* 79 */
+/* 80 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var canHideProperty = __webpack_require__(78)
+	var canHideProperty = __webpack_require__(79)
 	var $$skipArray = __webpack_require__(63)
 
 

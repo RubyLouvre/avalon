@@ -197,7 +197,7 @@ describe('on', function () {
                 setTimeout(function () {
                     i = 2
                     fireClick(divs[0])
-                    setTimeout(function(){
+                    setTimeout(function () {
                         done()
                     })
                 })
@@ -206,7 +206,7 @@ describe('on', function () {
 
 
     })
-    
+
     it('ms-on-dblclick', function (done) {
         //https://github.com/RubyLouvre/avalon/issues/1582
         div.innerHTML = heredoc(function () {
@@ -216,18 +216,46 @@ describe('on', function () {
         })
         var i = 0
         vm = avalon.define({
-            $id: "test",
+            $id: "on6",
             callback: function (e) {
-               ++i
+                ++i
             },
             panels: ["面板1", "面板2", "面板3"]
         })
         avalon.scan(div)
-        setTimeout(function(){
+        setTimeout(function () {
             var divs = div.getElementsByTagName('blockquote')
             fireClick(divs[0])
-            setTimeout(function(){
-                expect(i).to.equal(0) 
+            setTimeout(function () {
+                expect(i).to.equal(0)
+                done()
+            }, 150)
+        }, 150)
+    })
+
+    it('复杂路径的事件绑定', function (done) {
+        //https://github.com/RubyLouvre/avalon/issues/1582
+        div.innerHTML = heredoc(function () {
+            /*
+             <span ms-controller='on7'ms-click='@aaa.bbb' >xxx</span>
+             */
+        })
+        var i = 0
+        vm = avalon.define({
+            $id: "on7",
+            aaa: {
+                bbb: function () {
+                    ++i
+                }
+            }
+
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            var divs = div.getElementsByTagName('span')
+            fireClick(divs[0])
+            setTimeout(function () {
+                expect(i).to.equal(i)
                 done()
             }, 150)
         }, 150)

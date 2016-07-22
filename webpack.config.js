@@ -20,6 +20,7 @@ component/initjs中的protected变量更名为immunity,方便在严格模式下�
 为伪事件对象过滤掉原生事件对象中的常量属性   
 修复class,hover,active指令互相干扰的BUG
 修复事件绑定中表达式太复杂,不会补上($event)的BUG
+当组件被移出DOM树并且没有被cached时,其虚拟DOM应该清空上面的事件
      */
 })
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')

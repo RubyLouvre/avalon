@@ -1,24 +1,101 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <script type="text/javascript" src="../dist/avalon.js"></script>
+    <script>
+        function heredoc(fn) {
+            return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+                    replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+        }
+        var v123 = heredoc(function () {
+            /*
+             <div ms-controller="test2">
+             <p ms-click="@alert">123</p>
+             <wbr  ms-widget="{is:'ms-span'}"/>
+             </div>
+             */
+        })
+        var v456 = heredoc(function () {
+            /*
+             <div ms-controller="test3">
+             <p ms-click="@alert">456</p>
+             <wbr  ms-widget="{is:'ms-span'}"/>
+             </div>
+             */
+        })
+    </script>
+    <script>
 
-    <head>
-        <meta charset="UTF-8">
-        <script src="../dist/avalon.js"></script>
-        <script>
-            avalon.define({
-                $id: 'test',
-                arr: [11,22,33]
-            })
-           
-        </script>
+        var vm = avalon.define({
+            $id: 'test',
+            tpl: "",
+            switch1: function () {
+                setTimeout(function () {
+                    vm.tpl = v123
+                })
 
-    </head>
+            },
+            switch2: function () {
+                setTimeout(function () {
+                    vm.tpl = v456
+                })
 
-    <body :controller="test">
-        <ul>
-            <li ms-for="el in @arr">{{el}}</li>
-        </ul>
+            }
+        });
+        vm.$watch('onReady', function(){
+            avalon.log('vm1 onReady')
+        })
+        var vm2 = avalon.define({
+            $id: 'test2',
+            ddd: 'aaaa',
+            alert: function(){
+                avalon.log('????')
+            }
+        });
+        vm2.$watch('onReady',function(){
+            avalon.log('vm2 onReady')
+        })
+        var vm3 = avalon.define({
+            $id: 'test3',
+            ddd: 'bbbb',
+            alert: function(){
+                avalon.log('!!!!')
+            }
+        });
+        vm3.$watch('onReady',function(){
+            avalon.log('vm3 onReady')
+        })
+        var vm4 = avalon.define({
+            $id: 'test4',
+            fff: 'rrrr',
+            alert: function(){
+                avalon.log('!!!!')
+            }
+        });
+        vm4.$watch('onReady',function(){
+            avalon.log('vm4 onReady')
+        })
+        avalon.component('ms-span', {
+            template: "<span ms-click='@click'>{{@ddd}}</span>",
+            defaults: {
+                ddd:'3333',
+                click: function(){
+                    avalon.log('inner...')
+                }
+            }
+        });
 
-    </body>
+    </script>
+</head>
+<body ms-controller="test">
+<div ms-html="@tpl"></div>
+<button ms-click="@switch1">aaaa</button>
+<button ms-click="@switch2">bbbb</button>
+<div ms-important="test4">
+    {{@fff}}
+</div>
 
+</body>
 </html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>TODO supply a title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../dist/avalon.js"></script>
+    <script>
+       var vm = avalon.define({
+            $id: 'for',
+            buttonText: "点我",
+            array: [[1, 2, 3], [4, 5, 6], [7, 8, 9]],
+            click:function(){
+                vm.array = [[11, 22, 33], [44, 55, 66], [77, 88, 99]]
+            }
+        })
+        </script>
+</head>
+
+<body>
+    <div :controller='for'>
+        <table>
+            <tr :for='tr in @array'>
+                <td :for='td in tr'>{{td}}</td>
+            </tr>
+        </table>
+        <p><button type="button" :click="@click">{{@buttonText}}</button></p>
+    </div>
+</body>
+
+</html>

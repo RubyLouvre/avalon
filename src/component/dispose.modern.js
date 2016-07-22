@@ -1,3 +1,7 @@
+var ret = require('./dispose.share')
+var fireDisposeHook = ret.fireDisposeHook
+var fireDisposeHooks = ret.fireDisposeHooks
+var fireDisposeHookDelay = ret.fireDisposeHookDelay
 
 //用于IE8+, firefox
 function byRewritePrototype() {
@@ -34,7 +38,7 @@ function byRewritePrototype() {
     function newSetter(html) {
         var all = avalon.slice(this.getElementsByTagName('*'))
         oldSetter.call(this, html)
-        fireDisposedComponents(all)
+        fireDisposeHooks(all)
     }
     var obj = Object.getOwnPropertyDescriptor(ep, 'innerHTML')
     var oldSetter = obj.set
@@ -63,49 +67,3 @@ module.exports = function onComponentDispose(dom) {
     byRewritePrototype(dom)
 }
 
-
-function inDomTree(el) {
-    while (el) {
-        if (el.nodeType === 9) {
-            return true
-        }
-        el = el.parentNode
-    }
-    return false
-}
-
-function fireDisposeHook(el) {
-    if (el.nodeType === 1 && el.getAttribute('wid') && !inDomTree(el)) {
-        var wid = el.getAttribute('wid')
-        var docker = avalon.scopes[ wid ]
-        if (!docker)
-            return
-        var vm = docker.vmodel
-        docker.vmodel.$fire("onDispose", {
-            type: 'dispose',
-            target: el,
-            vmodel: vm
-        })
-        if (docker && !el.getAttribute('cached')) {
-            delete docker.vmodel
-            delete avalon.scopes[ wid ]
-            var is = el.getAttribute('is')
-            var v = el.vtree
-            if (v) {
-                v[0][is + '-mount'] = false
-            }
-        }
-        return false
-    }
-}
-function fireDisposeHookDelay(a) {
-    setTimeout(function () {
-        fireDisposeHook(a)
-    }, 4)
-}
-
-function fireDisposedComponents(nodes) {
-    for (var i = 0, el; el = nodes[i++]; ) {
-        fireDisposeHook(el)
-    }
-}

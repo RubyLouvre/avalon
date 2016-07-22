@@ -1,9 +1,10 @@
 /*!
- * built in 2016-7-22:17 version 2.18 by 司徒正美
+ * built in 2016-7-22:20 version 2.18 by 司徒正美
  * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
  * 为伪事件对象过滤掉原生事件对象中的常量属性   
  * 修复class,hover,active指令互相干扰的BUG
  * 修复事件绑定中表达式太复杂,不会补上($event)的BUG
+ * 当组件被移出DOM树并且没有被cached时,其虚拟DOM应该清空上面的事件
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -61,15 +62,15 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var avalon = __webpack_require__(80) 
+	var avalon = __webpack_require__(81) 
 
 	__webpack_require__(8)
-	__webpack_require__(82)
-	__webpack_require__(84)
-	__webpack_require__(92)
+	__webpack_require__(83)
+	__webpack_require__(85)
+	__webpack_require__(93)
 	__webpack_require__(66)
-	__webpack_require__(100)
-	avalon.onComponentDispose = __webpack_require__(99)
+	__webpack_require__(101)
+	avalon.onComponentDispose = __webpack_require__(100)
 
 
 	module.exports = avalon
@@ -5212,15 +5213,85 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 73 */,
-/* 74 */,
+/* 74 */
+/***/ function(module, exports) {
+
+	function inDomTree(el) {
+	    while (el) {
+	        if (el.nodeType === 9) {
+	            return true
+	        }
+	        el = el.parentNode
+	    }
+	    return false
+	}
+
+	function fireDisposeHook(el) {
+	    if (el.nodeType === 1 && el.getAttribute('wid') && !inDomTree(el)) {
+	        var wid = el.getAttribute('wid')
+	        var docker = avalon.scopes[ wid ]
+	        if (!docker)
+	            return
+	        var vm = docker.vmodel
+	        docker.vmodel.$fire("onDispose", {
+	            type: 'dispose',
+	            target: el,
+	            vmodel: vm
+	        })
+	        if (docker && !el.getAttribute('cached')) {
+	            delete docker.vmodel
+	            delete avalon.scopes[ wid ]
+	            var is = el.getAttribute('is')
+	            var v = el.vtree
+	            detachEvents(v)
+	            if (v) {
+	                v[0][is + '-mount'] = false
+	            }
+	        }
+	        return false
+	    }
+	}
+	function detachEvents(arr) {
+	    for (var i in arr) {
+	        var el = arr[i]
+	        if (el.nodeType === 1) {
+	            for (var i in el) {
+	                if (i.indexOf('ms-on') === 0) {
+	                    delete el[i]
+	                }
+	            }
+	            if (el.children) {
+	                detachEvents(el.children)
+	            }
+	        }
+	    }
+	}
+	function fireDisposeHookDelay(a) {
+	    setTimeout(function () {
+	        fireDisposeHook(a)
+	    }, 4)
+	}
+	function fireDisposeHooks(nodes) {
+	    for (var i = 0, el; el = nodes[i++]; ) {
+	        fireDisposeHook(el)
+	    }
+	}
+	module.exports = {
+	    fireDisposeHookDelay: fireDisposeHookDelay,
+	    fireDisposeHooks: fireDisposeHooks,
+	    fireDisposeHook:fireDisposeHook
+	}
+
+/***/ },
 /* 75 */,
-/* 76 */
+/* 76 */,
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var $$midway = {}
 	var $$skipArray = __webpack_require__(63)
-	var dispatch = __webpack_require__(77)
+	var dispatch = __webpack_require__(78)
 	var $emit = dispatch.$emit
 	var $watch = dispatch.$watch
 	/*
@@ -5496,7 +5567,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 77 */
+/* 78 */
 /***/ function(module, exports) {
 
 	
@@ -5598,9 +5669,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 78 */,
 /* 79 */,
-/* 80 */
+/* 80 */,
+/* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -5609,14 +5680,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.shadowCopy(avalon, browser)
 
-	__webpack_require__(81)
+	__webpack_require__(82)
 	__webpack_require__(6)
 	__webpack_require__(7)
 
 	module.exports = avalon
 
 /***/ },
-/* 81 */
+/* 82 */
 /***/ function(module, exports) {
 
 	//这里放置存在异议的方法
@@ -5763,7 +5834,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 82 */
+/* 83 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -5771,7 +5842,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	var VText = __webpack_require__(15)
 	var VComment = __webpack_require__(17)
-	var VElement = __webpack_require__(83)
+	var VElement = __webpack_require__(84)
 
 	avalon.vdomAdaptor = function (obj, method) {
 	    if (!obj) {//obj在ms-for循环里面可能是null
@@ -5810,7 +5881,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 83 */
+/* 84 */
 /***/ function(module, exports) {
 
 	
@@ -5920,7 +5991,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = VElement
 
 /***/ },
-/* 84 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -5929,20 +6000,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *           shim,class,data,css,val,html,event,ready               *
 	 **********************************************************************/
 
-	__webpack_require__(85)
 	__webpack_require__(86)
 	__webpack_require__(87)
 	__webpack_require__(88)
 	__webpack_require__(89)
-	__webpack_require__(27)
 	__webpack_require__(90)
+	__webpack_require__(27)
 	__webpack_require__(91)
+	__webpack_require__(92)
 
 	module.exports = avalon
 
 
 /***/ },
-/* 85 */
+/* 86 */
 /***/ function(module, exports) {
 
 	//safari5+是把contains方法放在Element.prototype上而不是Node.prototype
@@ -5967,7 +6038,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 86 */
+/* 87 */
 /***/ function(module, exports) {
 
 	var rnowhite = /\S+/g
@@ -6006,7 +6077,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 87 */
+/* 88 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var propMap = __webpack_require__(23)
@@ -6068,7 +6139,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = attrUpdate
 
 /***/ },
-/* 88 */
+/* 89 */
 /***/ function(module, exports) {
 
 	var root = avalon.root
@@ -6318,7 +6389,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 89 */
+/* 90 */
 /***/ function(module, exports) {
 
 	function getValType(elem) {
@@ -6387,7 +6458,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 90 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var document = avalon.document
@@ -6659,7 +6730,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 91 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var scan = __webpack_require__(33)
@@ -6701,13 +6772,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 92 */
+/* 93 */
 /***/ function(module, exports, __webpack_require__) {
 
 	__webpack_require__(36)
 	__webpack_require__(38)
 	//处理属性样式
-	__webpack_require__(93)
+	__webpack_require__(94)
 	__webpack_require__(41)
 	__webpack_require__(42)
 	//处理内容
@@ -6717,7 +6788,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	//需要用到事件的
 	__webpack_require__(46)
 	__webpack_require__(47)
-	__webpack_require__(94)
+	__webpack_require__(95)
 	__webpack_require__(57)
 	__webpack_require__(58)
 
@@ -6729,11 +6800,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(64)
 
 /***/ },
-/* 93 */
+/* 94 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var attrUpdate = __webpack_require__(87)
+	var attrUpdate = __webpack_require__(88)
 	var update = __webpack_require__(37)
 
 	avalon.directive('attr', {
@@ -6772,7 +6843,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 94 */
+/* 95 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -6783,10 +6854,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rchangeFilter = /\|\s*change\b/
 	var rcheckedType = /^(?:checkbox|radio)$/
 	var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/
-	var updateModelByEvent = __webpack_require__(95)
+	var updateModelByEvent = __webpack_require__(96)
 	var updateModelByValue = __webpack_require__(54)
 	var updateModel = __webpack_require__(52)
-	var updateView = __webpack_require__(96)
+	var updateView = __webpack_require__(97)
 	var addValidateField = __webpack_require__(56)
 
 
@@ -6951,7 +7022,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 /***/ },
-/* 95 */
+/* 96 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* 
@@ -7081,7 +7152,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = updateModelByEvent
 
 /***/ },
-/* 96 */
+/* 97 */
 /***/ function(module, exports) {
 
 	
@@ -7128,12 +7199,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 97 */,
 /* 98 */,
-/* 99 */
-/***/ function(module, exports) {
+/* 99 */,
+/* 100 */
+/***/ function(module, exports, __webpack_require__) {
 
-	
+	var ret = __webpack_require__(74)
+	var fireDisposeHook = ret.fireDisposeHook
+	var fireDisposeHooks = ret.fireDisposeHooks
+	var fireDisposeHookDelay = ret.fireDisposeHookDelay
+
 	//用于IE8+, firefox
 	function byRewritePrototype() {
 	    if (byRewritePrototype.execute) {
@@ -7169,7 +7244,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    function newSetter(html) {
 	        var all = avalon.slice(this.getElementsByTagName('*'))
 	        oldSetter.call(this, html)
-	        fireDisposedComponents(all)
+	        fireDisposeHooks(all)
 	    }
 	    var obj = Object.getOwnPropertyDescriptor(ep, 'innerHTML')
 	    var oldSetter = obj.set
@@ -7199,55 +7274,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-	function inDomTree(el) {
-	    while (el) {
-	        if (el.nodeType === 9) {
-	            return true
-	        }
-	        el = el.parentNode
-	    }
-	    return false
-	}
-
-	function fireDisposeHook(el) {
-	    if (el.nodeType === 1 && el.getAttribute('wid') && !inDomTree(el)) {
-	        var wid = el.getAttribute('wid')
-	        var docker = avalon.scopes[ wid ]
-	        if (!docker)
-	            return
-	        var vm = docker.vmodel
-	        docker.vmodel.$fire("onDispose", {
-	            type: 'dispose',
-	            target: el,
-	            vmodel: vm
-	        })
-	        if (docker && !el.getAttribute('cached')) {
-	            delete docker.vmodel
-	            delete avalon.scopes[ wid ]
-	            var is = el.getAttribute('is')
-	            var v = el.vtree
-	            if (v) {
-	                v[0][is + '-mount'] = false
-	            }
-	        }
-	        return false
-	    }
-	}
-	function fireDisposeHookDelay(a) {
-	    setTimeout(function () {
-	        fireDisposeHook(a)
-	    }, 4)
-	}
-
-	function fireDisposedComponents(nodes) {
-	    for (var i = 0, el; el = nodes[i++]; ) {
-	        fireDisposeHook(el)
-	    }
-	}
-
 
 /***/ },
-/* 100 */
+/* 101 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -7257,7 +7286,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * http://caniuse.com/#search=Proxy
 	 * ------------------------------------------------------------
 	 */
-	var share = __webpack_require__(76)
+	var share = __webpack_require__(77)
 	var $$midway = share.$$midway
 	var $$skipArray = share.$$skipArray
 	$$skipArray.$compose = true
@@ -7265,7 +7294,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	delete $$skipArray
 	var modelAdaptor = share.modelAdaptor
 	var makeHashCode = avalon.makeHashCode
-	var dispatch = __webpack_require__(77)
+	var dispatch = __webpack_require__(78)
 
 	var $emit = dispatch.$emit
 	var $watch = dispatch.$watch
