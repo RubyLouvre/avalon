@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-21:13 version 2.18 by 司徒正美
+ * built in 2016-7-22:16 version 2.18 by 司徒正美
  * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
  * 为伪事件对象过滤掉原生事件对象中的常量属性
  */
@@ -3820,20 +3820,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var type = name.slice(3)
 	        var copyValue = copy[name]
 	        var srcValue = src[name] || ''
-	        if (!src.classEvent) {
-	            var classEvent = {}
-	            if (type === 'hover') {//在移出移入时切换类名
-	                classEvent.mouseenter = activateClass
-	                classEvent.mouseleave = abandonClass
-	            } else if (type === 'active') {//在获得焦点时切换类名
-	                src.props.tabindex = copy.props.tabindex || -1
-	                classEvent.tabIndex = src.props.tabindex
-	                classEvent.mousedown = activateClass
-	                classEvent.mouseup = abandonClass
-	                classEvent.mouseleave = abandonClass
-	            }
-	            src.classEvent = classEvent
+	        var classEvent = src.classEvent || {}
+	        if (type === 'hover') {//在移出移入时切换类名
+	            classEvent.mouseenter = activateClass
+	            classEvent.mouseleave = abandonClass
+	        } else if (type === 'active') {//在获得焦点时切换类名
+	            src.props.tabindex = copy.props.tabindex || -1
+	            classEvent.tabIndex = src.props.tabindex
+	            classEvent.mousedown = activateClass
+	            classEvent.mouseup = abandonClass
+	            classEvent.mouseleave = abandonClass
 	        }
+	        src.classEvent = classEvent
+
 
 	        var className = classNames(copyValue)
 	        var uniq = {}, arr = []
@@ -3843,9 +3842,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                arr.push(el)
 	            }
 	        })
-	        
+
 	        className = arr.join(' ')
-	       
+
 	        if (srcValue !== className) {
 	            src[name] = className
 	            src['change-' + type] = className
