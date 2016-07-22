@@ -13,7 +13,7 @@ var rpipeline = /\|(?=\w)/
 var ruselessSp = /\s*(\.|\|)\s*/g
 
 var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
-var rhandleName = /^(?:\@|##)[$\w]+$/i
+var rhandleName = /^(?:\@|##)[$\w\.]+$/i
 
 var rfilters = /\|.+/g
 var rvar = /((?:\@|\$|\#\#)?\w+)/g

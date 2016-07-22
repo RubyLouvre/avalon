@@ -1,7 +1,9 @@
 /*!
- * built in 2016-7-22:16 version 2.18 by 司徒正美
+ * built in 2016-7-22:17 version 2.18 by 司徒正美
  * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
- * 为伪事件对象过滤掉原生事件对象中的常量属性
+ * 为伪事件对象过滤掉原生事件对象中的常量属性   
+ * 修复class,hover,active指令互相干扰的BUG
+ * 修复事件绑定中表达式太复杂,不会补上($event)的BUG
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -7278,7 +7280,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var ruselessSp = /\s*(\.|\|)\s*/g
 
 	var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
-	var rhandleName = /^(?:\@|##)[$\w]+$/i
+	var rhandleName = /^(?:\@|##)[$\w\.]+$/i
 
 	var rfilters = /\|.+/g
 	var rvar = /((?:\@|\$|\#\#)?\w+)/g
