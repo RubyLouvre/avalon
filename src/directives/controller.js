@@ -34,12 +34,11 @@ avalon.directive('controller', {
         src.$append = '\n})(__vmodel__);'
     },
     diff: function (copy, src, name) {
-        if (src[name] !== copy[name]) {
+        if (copy === src || src[name] !== copy[name]) {
             src[name] = copy[name]
             src.local = copy.local
             src.vmodel = copy.vmodel
             update(src, this.update)
-
         }
     },
     update: function (dom, vdom, parent, important) {
@@ -53,9 +52,9 @@ avalon.directive('controller', {
         delete vdom.vmodel
         delete vdom.local
         var top = avalon.vmodels[id]
-        if(vmodel.$element && vmodel.$element.vtree[0] === vdom){
+        if (vmodel.$element && vmodel.$element.vtree[0] === vdom) {
             var render = vmodel.$render
-        }else{
+        } else {
             render = avalon.render([vdom], local)
         }
         vmodel.$render = render

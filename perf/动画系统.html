@@ -52,11 +52,11 @@
     </head>
     <body ms-controller="test" >
         <div ms-for="el in @arr">
-            <p class='ani'
+            <xmp class='ani'
                  ms-if="@toggle"
                  ms-widget='{is:"ms-button"}'
-                 ms-effect="{is:'zoom'}">{{@aaa}}</p>
+                 ms-effect="{is:'zoom'}">{{@aaa}}</xmp>
         </div>
-        <button  ms-on-click="@toggle = !@toggle " >点我 </button >
+        <button  ms-on-click="@toggle = !@toggle " >点我 </button>
     </body>
 </html>

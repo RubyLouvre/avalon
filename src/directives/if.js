@@ -6,8 +6,7 @@ avalon.directive('if', {
         var c = !!copy[name]
         if (!c) {
             copy.nodeType = 8
-            copy.order = ''
-            //不再执行子孙节点的操作
+            copy.order = '' //不再执行子孙节点的操作
         }
         if (copy === src || c !== src[name]) {
             src[name] = c

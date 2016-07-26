@@ -68,6 +68,8 @@ avalon.directive('duplex', {
         copy.duplexData = stringify({
             type: dtype, //这个决定绑定什么事件
             vmodel: '__vmodel__',
+            local: '__local__',
+            loop: 'loop',
             isChecked: isChecked,
             isString: !!isString,
             isChanged: isChanged, //这个决定同步的频数
@@ -79,8 +81,8 @@ avalon.directive('duplex', {
 
     },
     diff: function (copy, src) {
-
-        if (!src.duplexData) {
+   
+        if (copy === src || !src.duplexData) {
             //第一次为原始虚拟DOM添加duplexData
             var data = src.duplexData = copy.duplexData
             data.parser = copy.parser ? copy.parser.split(',') : []
@@ -91,12 +93,12 @@ avalon.directive('duplex', {
             var curValue = copy.modelValue
             var preValue = data.modelValue
             //#1502
+            copy.duplexData = 0
             if (!Array.isArray(curValue) &&
                     curValue === preValue) {
                 return
             }
         }
-        copy.duplexData = 0
         if (data.isString) {//输出到页面时要格式化
             var value = data.parse(curValue)
             if (value !== curValue) {

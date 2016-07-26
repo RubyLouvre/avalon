@@ -39,7 +39,8 @@ avalon.directive('on', {
         var search = type.slice(1) + ':' + uuid
         var srcFn = src[name]
         var hasChange = false
-        if (!srcFn || srcFn.uuid !== uuid) {
+        var init = copy === src
+        if (init || !srcFn || srcFn.uuid !== uuid) {
             src[name] = fn
             src.addEvents = src.addEvents || {}
             src.addEvents[search] = fn

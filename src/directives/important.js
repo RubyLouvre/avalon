@@ -15,7 +15,7 @@ avalon.directive('important', {
         src.$append = '\n})();'
     },
     diff: function (copy, src, name) {
-        if (src.vmodel !== copy.vmodel) {
+        if (copy === src || src.vmodel !== copy.vmodel) {
             src['ms-controller'] = copy[name]
             src.local = copy.local
             src.vmodel = copy.vmodel

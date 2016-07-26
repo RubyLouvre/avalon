@@ -9,16 +9,28 @@
         <script>
             var vm = avalon.define({
                 $id: 'test',
-                aaa: 111
+                aaa: 111,
+                bbb: '222',
+                ccc: 'b'
             })
-            
-       
+
+
         </script>
-            
+
     </head>
     <body>
         <div ms-controller="test">
             <input ms-duplex="@aaa|uppercase">{{@aaa}}
+            <select ms-duplex="@bbb">
+                <option>111</option>
+                <option>222</option>
+                <option>333</option>
+            </select>
+            <select ms-duplex="@ccc">
+                <option value="a">444</option>
+                <option value="b">555</option>
+                <option value="c">666</option>
+            </select>
         </div>
     </body>
 </html>

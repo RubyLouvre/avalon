@@ -2,37 +2,44 @@
 
 <html>
 
-<head>
-    <title>TODO supply a title</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="../dist/avalon.js"></script>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.js"></script>
 
 
-</head>
+    </head>
 
-<body>
-    <div ms-controller='widget0'>
-         <ms-button ms-widget='{buttonText:"这是属性中的TEXT"}'></ms-button>
+    <body>
+        <div ms-controller='widget0'>
+            <ms-button>{{@btn}}</ms-button>
+            <ul>
+                <li ms-for="el in [1,2,3]">
+                <ms-button ms-widget='{buttonText:"这是属性"+el,$id:"d"+el}'></ms-button>
+                </li>
+            </ul>
+        </div>
+        <script>
 
-    </div>
-    <script>
-        
-           
-      
-        avalon.component('ms-button', {
-            template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
-            defaults: {
-                buttonText: "button"
-            },
-            soleSlot: 'buttonText'
-        })
-        var vm = avalon.define({
-            $id: 'widget0',
-            btn: '这是VM中的TEXT'
-        })
-        
+    /*
+ 
+     *  
+     */
+    avalon.component('ms-button', {
+        template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
+        defaults: {
+            buttonText: "button"
+        },
+        soleSlot: 'buttonText'
+    })
+
+    var vm = avalon.define({
+        $id: 'widget0',
+        btn: 'XXX'
+    })
+
         </script>
-</body>
+    </body>
 
 </html>

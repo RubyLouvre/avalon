@@ -7,52 +7,53 @@ avalon.directive('effect', {
     diff: function (copy, src, name) {
         var copyObj = copy[name]
         copyObj = copy.$model || copyObj
-        if(typeof copyObj === 'string'){
+        if (typeof copyObj === 'string') {
             var is = copyObj
             copyObj = {
                 is: is
             }
-           
-        }else if (Array.isArray(copyObj)) {
+
+        } else if (Array.isArray(copyObj)) {
             copyObj = avalon.mix.apply({}, copyObj)
         }
-    
+
         copyObj.action = copyObj.action || 'enter'
-       
+
         if (Object(copyObj) === copyObj) {
-            var srcObj = src[name]
-            if ( Object(srcObj) !== srcObj || diffObj(copyObj, srcObj ))  {
+            if (copy === src || diffObj(copyObj, src[name] || {})) {
                 src[name] = copyObj
                 update(src, this.update, 'afterChange')
             }
         }
-        delete copy[name]
+        if (copy !== src) {
+            delete copy[name]
+        }
     },
     update: function (dom, vnode, parent, option) {
-        if(dom.animating ){
+        if (dom.animating) {
             return
         }
         dom.animating = true
         var localeOption = vnode['ms-effect']
         var type = localeOption.is
         option = option || {}
-        if(!type){//如果没有指定类型
+        if (!type) {//如果没有指定类型
             return avalon.warn('need is option')
         }
-      
+
         var effects = avalon.effects
-        if(support.css && !effects[type]){
+        if (support.css && !effects[type]) {
             avalon.effect(type, {})
         }
         var globalOption = effects[type]
-        if(!globalOption){//如果没有定义特效
-            return avalon.warn(type+' effect is undefined')
+        if (!globalOption) {//如果没有定义特效
+            return avalon.warn(type + ' effect is undefined')
         }
         var action = option.action || localeOption.action
         var Effect = avalon.Effect
-        if (typeof Effect.prototype[action] !== 'function'){
-            return avalon.warn(action+' action is undefined')
-        }   
+        if (typeof Effect.prototype[action] !== 'function') {
+            return avalon.warn(action + ' action is undefined')
+        }
         var effect = new Effect(dom)
         var finalOption = avalon.mix(option, globalOption, localeOption)
         if (finalOption.queue) {
@@ -61,15 +62,15 @@ avalon.directive('effect', {
             })
             callNextAnimation()
         } else {
-            setTimeout(function(){
-               effect[action](finalOption)
-            },4)
+            setTimeout(function () {
+                effect[action](finalOption)
+            }, 4)
         }
     }
 })
-function diffObj(a, b){
-    for(var i in a){
-        if(a[i] !== b[i])
+function diffObj(a, b) {
+    for (var i in a) {
+        if (a[i] !== b[i])
             return true
     }
     return false
@@ -81,8 +82,8 @@ function callNextAnimation() {
         return
     var fn = animationQueue[0]
     if (fn) {
-       callNextAnimation.lock = true
-       fn()
+        callNextAnimation.lock = true
+        fn()
     }
 }
 
@@ -123,19 +124,19 @@ Effect.prototype = {
 }
 
 var rsecond = /\d+s$/
-function toMillisecond(str){
-   var ratio = rsecond.test(str) ? 1000 : 1
-   return parseFloat(str) * ratio
+function toMillisecond(str) {
+    var ratio = rsecond.test(str) ? 1000 : 1
+    return parseFloat(str) * ratio
 }
 
 function execHooks(options, name, el) {
     var list = options[name]
     list = Array.isArray(list) ? list : typeof list === 'function' ? [list] : []
     list.forEach(function (fn) {
-       fn && fn(el)
+        fn && fn(el)
     })
 }
- var staggerCache = new Cache(128)
+var staggerCache = new Cache(128)
 
 function createAction(action) {
     var lower = action.toLowerCase()
@@ -144,32 +145,32 @@ function createAction(action) {
         var $el = avalon(elem)
         var enterAnimateDone
         var staggerTime = isFinite(option.stagger) ? option.stagger * 1000 : 0
-        if(staggerTime){
-            if(option.staggerKey){
-                var stagger = staggerCache.get(option.staggerKey) || 
+        if (staggerTime) {
+            if (option.staggerKey) {
+                var stagger = staggerCache.get(option.staggerKey) ||
                         staggerCache.put(option.staggerKey, {
-                    count:0,
-                    items:0
-                })
+                            count: 0,
+                            items: 0
+                        })
                 stagger.count++
                 stagger.items++
             }
         }
         var staggerIndex = stagger && stagger.count || 0
-        var animationDone = function(e) {
+        var animationDone = function (e) {
             var isOk = e !== false
             elem.animating = void 0
             enterAnimateDone = true
             var dirWord = isOk ? 'Done' : 'Abort'
             execHooks(option, 'on' + action + dirWord, elem)
-            avalon.unbind(elem,support.transitionEndEvent)
-            avalon.unbind(elem,support.animationEndEvent)
-            if(stagger){
-                if(--stagger.items === 0){
+            avalon.unbind(elem, support.transitionEndEvent)
+            avalon.unbind(elem, support.animationEndEvent)
+            if (stagger) {
+                if (--stagger.items === 0) {
                     stagger.count = 0
                 }
             }
-            if(option.queue){
+            if (option.queue) {
                 animationQueue.lock = false
                 animationQueue.shift()
                 callNextAnimation()
@@ -182,12 +183,12 @@ function createAction(action) {
                 animationDone(ok !== false)
             })
         } else if (support.css) {
-            
+
             $el.addClass(option[lower + 'Class'])
-            if(lower === 'leave'){
-                $el.removeClass(option.enterClass+' '+option.enterActiveClass)
-            }else if(lower === 'enter'){
-                $el.removeClass(option.leaveClass+' '+option.leaveActiveClass)
+            if (lower === 'leave') {
+                $el.removeClass(option.enterClass + ' ' + option.enterActiveClass)
+            } else if (lower === 'enter') {
+                $el.removeClass(option.leaveClass + ' ' + option.leaveActiveClass)
             }
 
             $el.bind(support.transitionEndEvent, animationDone)
@@ -201,45 +202,45 @@ function createAction(action) {
                 var time = toMillisecond(tranDuration) || toMillisecond(animDuration)
                 if (!time === 0) {
                     animationDone(false)
-                }else if(!staggerTime ){
-                    setTimeout(function(){
-                        if(!enterAnimateDone){
+                } else if (!staggerTime) {
+                    setTimeout(function () {
+                        if (!enterAnimateDone) {
                             animationDone(false)
                         }
-                    },time + 130 )
+                    }, time + 130)
                 }
-            }, 17+ staggerTime * staggerIndex)// = 1000/60
+            }, 17 + staggerTime * staggerIndex)// = 1000/60
         }
     }
 }
 
-avalon.applyEffect = function(node, vnode, opts){
+avalon.applyEffect = function (node, vnode, opts) {
     var cb = opts.cb
     var hook = opts.hook
     var curEffect = vnode['ms-effect']
-    if(curEffect && !avalon.document.hidden ){
+    if (curEffect && !avalon.document.hidden) {
         var old = curEffect[hook]
-        if(cb){
-            if(Array.isArray(old)){
+        if (cb) {
+            if (Array.isArray(old)) {
                 old.push(cb)
-            }else if(old){
+            } else if (old) {
                 curEffect[hook] = [old, cb]
-            }else{
+            } else {
                 curEffect[hook] = [cb]
             }
         }
         getAction(opts)
         node.animate = true
-        avalon.directives.effect.update(node,vnode, 0, avalon.shadowCopy({},opts) ) 
+        avalon.directives.effect.update(node, vnode, 0, avalon.shadowCopy({}, opts))
 
-    }else if(cb){
+    } else if (cb) {
         cb()
     }
 }
 
-function getAction(opts){
-    if(!opts.acton){
-        opts.action = opts.hook.replace(/^on/,'').replace(/Done$/,'').toLowerCase()
+function getAction(opts) {
+    if (!opts.acton) {
+        opts.action = opts.hook.replace(/^on/, '').replace(/Done$/, '').toLowerCase()
     }
 }
 

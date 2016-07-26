@@ -7,50 +7,33 @@
 
     </head>
 
-    <body>
-        <div ms-controller="test">
-            <xmp cached='true' ms-widget="[{is:'ms-gridList',$id:'grid',eee:111},@gridList]"></xmp>
-        </div>
-        <script>
-            function heredoc(fn) {
-                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
-                replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
-            }
 
-            var tpl = heredoc(function() {
-                /*
-            <ul class="gridList-body">
-                <li ms-for="(i,item) in @items" ms-click="@checkOne(item)">
-                     {{item.name}}
-                </li>
-            </ul>
-                 */
+    <body ms-controller="test">
+        <script>
+            avalon.define({
+                $id: 'test',
+                aaa: "aaa bbb ccc",
+                bbb: {
+                    aa: 1,
+                    bb: 2,
+                    cc: 3
+                },
+                ccc: ['xxx', 'yyy', 'zzz'],
+                ddd: 'eee',
+                toggle: true,
+                toggle2: false
             })
 
-            var vm = avalon.define({
-                $id: 'test',
-                gridList: {
-                    items: [{
-                            "name": "3434",
-                            "desc": "123",
-                            "ddays": 0,
-                            "record_time": "1467715853018"
-                        }, {
-                            "name": "交通安保",
-                            "desc": "交通安保",
-                            "ddays": 0,
-                            "record_time": "0"
-                        }] //实际数据
-                }
-            });
-
-            avalon.component('ms-gridList', {
-                template: tpl,
-                defaults: {
-                    items: []
-                }
-            });
         </script>
+
+        <span :active="@aaa">直接引用字符串</span>
+        <span :active="@bbb">直接引用对象</span>
+        <span :active="@ccc">直接引用数组</span>
+        <span :active="{aaa: @toggle, bbb: @toggle2}">使用对象字面量</span>
+        <span :active="['aaa', 'bbb',(@toggle? 'ccc':'ddd')]">选择性添加类名</span>
+        <span :active="[@toggle && 'aaa']">选择性添加类名</span>
+        <span :active="[ @ddd + 4]">动态生成类名</span>
+      
     </body>
 
 </html>

@@ -55,8 +55,7 @@ avalon.directive('class', {
         })
 
         className = arr.join(' ')
-
-        if (src === copy || srcValue !== className) {
+        if (copy === src || srcValue !== className) {
             src[name] = className
             src['change-' + type] = className
             update(src, this.update, type)

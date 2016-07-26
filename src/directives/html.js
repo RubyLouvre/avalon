@@ -14,12 +14,11 @@ avalon.directive('html', {
     },
     diff: function (copy, src, name) {
         var copyValue = copy[name] + ''
-        if (copyValue !== src[name]) {
+        if (copy === src || copyValue !== src[name]) {
             src[name] = copyValue
-            var oldTree = avalon.lexer(copyValue)
-            avalon.speedUp(oldTree)
+            var oldTree = avalon.speedUp(avalon.lexer(copyValue))
             src.children = oldTree
-            var render = avalon.render(oldTree,copy.local)
+            var render = avalon.render(oldTree, copy.local)
             src.render = render
             var newTree = render(copy.vmodel, copy.local)
             copy.children = newTree
@@ -29,7 +28,6 @@ avalon.directive('html', {
             copy.children = newTree
         }
     },
-
     update: function (dom, vdom, parent) {
         avalon.clearHTML(dom)
         var f = avalon.vdomAdaptor(vdom.children)

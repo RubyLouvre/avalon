@@ -11,16 +11,14 @@
             var vm = avalon.define({
                 $id: 'for',
                 buttonText: "点我",
-                array: ['11', 22, 33],
-                arr: [[111, 222, 333], [444, 555, 666]],
+                arr: [[[111,222,333],[444,555,666]], [[1,2,3],[4,5,6]]],
                 aa: function (a) {
                     console.log(a)
                 },
                 a: 1,
                 click: function () {
-                  //  vm.a = '3'
-                //    vm.array = [new Date - 0, (Math.random()+"").slice(-8), (Math.random() * Math.random() + "").slice(-8)]
-                    vm.arr = [[111,22,33],[333,555,888]]
+                 
+                    vm.arr = [ [[1,2,3],[4,5,6]],[[111,222,333],[444,555,666]]]
                 }
             })
            
@@ -36,7 +34,9 @@
           
          <table>
              <tr :for="el in @arr">
-             <td :for="elem in el" :attr="{title:elem}" :text="elem"></td>         
+             <td :for="elem in el" :attr="{title:elem.length}" >
+                  <div :for="item in elem" :html='item'></div>
+             </td>         
              </tr>
              </table> 
             <p><button type="button" :click="@click" >{{@buttonText}}</button></p>

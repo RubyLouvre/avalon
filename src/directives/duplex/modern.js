@@ -80,7 +80,7 @@ avalon.directive('duplex', {
     },
     diff: function (copy, src) {
 
-        if (!src.duplexData) {
+        if (copy === src || !src.duplexData) {
             //第一次为原始虚拟DOM添加duplexData
             var data = src.duplexData = copy.duplexData
             data.parser = copy.parser ? copy.parser.split(',') : []
@@ -91,12 +91,13 @@ avalon.directive('duplex', {
             var curValue = copy.modelValue
             var preValue = data.modelValue
             //#1502
+            copy.duplexData = 0
             if (!Array.isArray(curValue) &&
                     curValue === preValue) {
                 return
             }
         }
-        copy.duplexData = 0
+       
         if (data.isString) {//输出到页面时要格式化
            var value = data.parse(curValue)
            if(value !== curValue){
