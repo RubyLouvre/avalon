@@ -6,12 +6,11 @@ avalon.directive('css', {
         var a = copy[name]
         var p = src[name]
         if (Object(a) === a) {
-            
             a = a.$model || a//安全的遍历VBscript
             if (Array.isArray(a)) {//转换成对象
                 a = avalon.mix.apply({}, a)
             }
-            if (typeof p !== 'object') {//如果一开始为空
+            if (copy === src || typeof p !== 'object') {//如果一开始为空
                 src.changeStyle = src[name] = a
             } else {
                 var patch = {}

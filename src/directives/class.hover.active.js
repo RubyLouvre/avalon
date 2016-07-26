@@ -24,6 +24,8 @@ function classNames() {
     return classes.join(' ')
 }
 
+
+
 var directives = avalon.directives
 avalon.directive('class', {
     diff: function (copy, src, name) {
@@ -43,7 +45,6 @@ avalon.directive('class', {
         }
         src.classEvent = classEvent
 
-
         var className = classNames(copyValue)
         var uniq = {}, arr = []
         className.replace(/\S+/g, function (el) {
@@ -55,7 +56,7 @@ avalon.directive('class', {
 
         className = arr.join(' ')
 
-        if (srcValue !== className) {
+        if (src === copy || srcValue !== className) {
             src[name] = className
             src['change-' + type] = className
             update(src, this.update, type)

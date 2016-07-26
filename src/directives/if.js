@@ -9,7 +9,7 @@ avalon.directive('if', {
             copy.order = ''
             //不再执行子孙节点的操作
         }
-        if (c !== src[name]) {
+        if (copy === src || c !== src[name]) {
             src[name] = c
             if (c && src.nodeType === 1) {
                 return

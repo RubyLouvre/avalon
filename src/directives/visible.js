@@ -27,7 +27,7 @@ avalon.parseDisplay = parseDisplay
 avalon.directive('visible', {
     diff: function (copy, src, name) {
         var c = !!copy[name]
-        if (c !== src[name]) {
+        if (copy === src || c !== src[name]) {
             src[name] = c
             update(src, this.update )
         }

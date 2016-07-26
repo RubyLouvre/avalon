@@ -10,7 +10,7 @@ avalon.directive('attr', {
             if (Array.isArray(a)) {//转换成对象
                 a = avalon.mix.apply({}, a)
             }
-            if (typeof p !== 'object') {//如果一开始为空
+            if (copy === src || typeof p !== 'object') {//如果一开始为空
                 src.changeAttr = src[name] = a
             } else {
                 var patch = {}
@@ -30,7 +30,9 @@ avalon.directive('attr', {
                 update(src, this.update)
             }
         }
-        delete copy[name]//释放内存
+        if (copy !== src) {
+            delete copy[name]//释放内存
+        }
     },
     //dom, vnode
     update: attrUpdate

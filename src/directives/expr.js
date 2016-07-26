@@ -4,7 +4,7 @@ avalon.directive('expr', {
     parse: avalon.noop,
     diff: function (copy, src) {
         var copyValue = copy.nodeValue + ''
-        if (copyValue !== src.nodeValue) {
+        if (copy === src || copyValue !== src.nodeValue) {
             src.nodeValue = copyValue
             update(src, this.update)
         }
