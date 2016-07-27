@@ -23,7 +23,7 @@ npm install avalon2
 
 ###超高性能
 
-<img src='http://avalonjs.coding.me/styles/performance.png' width='778' height='376' />
+<img src='http://avalonjs.coding.me/styles/performance.png' width='770' height='451' />
 
 
 测试页面 perf目录下的index.html, index1.4.html, index-ng.html, index-vue.html,index-react.html
