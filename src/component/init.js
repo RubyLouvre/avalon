@@ -5,8 +5,9 @@ var events = 'onInit,onReady,onViewChange,onDispose'
 var componentEvents = avalon.oneObject(events)
 var immunity = events.split(',').concat('is', 'define')
 var onceWarn = true
-function initComponent(src, copy, is) {
+function initComponent(src, rawOption, topVm, local) {
     var tag = src.type
+    var is =  src.props.is
     //判定用户传入的标签名是否符合规格
     if (!legalTags[tag] && !isCustomTag(tag)) {
         avalon.warn(tag + '不合适做组件的标签')
@@ -16,7 +17,6 @@ function initComponent(src, copy, is) {
     var hooks = {}
     //用户只能操作顶层VM
     //只有$id,is的对象就是emptyOption
-    var rawOption = copy['ms-widget']
     var isEmpty = false
     if (!rawOption) {
         isEmpty = true
@@ -39,7 +39,6 @@ function initComponent(src, copy, is) {
     //得到组件在顶层vm的配置对象名
     var configName = is.replace(/-/g, '_')
 
-    var topVm = copy.vmodel
     try {//如果用户在ms-widget没定义东西那么从vm中取默认东西
         var vmOption = topVm[configName]
         if (isEmpty && vmOption && typeof vmOption === 'object') {
@@ -133,11 +132,9 @@ function initComponent(src, copy, is) {
             })
         }
     }
-    var render = avalon.render(vtree, src.local)
-    vmodel.$render = render
-    src[is + '-vm'] = vmodel
-    src[is + '-vtree'] = vtree
-    return src.is = is
+    src['component-vm:'+is] = vmodel
+    var render = avalon.render(vtree, local)
+    return  vmodel.$render = render
 
 }
 module.exports = initComponent
@@ -158,16 +155,16 @@ function toHTML(a) {
         })
     }
     if (typeof a === 'string') {
-        return a
+        return [a]
     }
     return avalon.vdomAdaptor(a, 'toHTML')
 }
 
-
 function collectSlots(node, soleSlot) {
     var slots = {}
     if (soleSlot) {
-        slots[soleSlot] = toHTML(node.children).join('')
+       
+        slots[soleSlot] = node.children ?  toHTML(node.children).join(''): ''
         slots.__sole__ = soleSlot
     } else {
         node.children.forEach(function (el) {

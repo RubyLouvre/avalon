@@ -8,9 +8,10 @@ var parseExpr = require('./parseExpr')
 var decode = require('../decode')
 var config = avalon.config
 var quote = avalon.quote
-var rident =  /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
+var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
 var rstatement = /^\s*var\s+([$\w]+)\s*\=\s*\S+/
-var skips = {__local__: 1,vmode:1, dom: 1}
+var skips = {__local__: 1, vmode: 1, dom: 1}
+
 
 
 function parseNodes(source, inner) {
@@ -47,9 +48,13 @@ function parseNode(vdom) {
             if (config.rexpr.test(vdom.nodeValue)) {
                 return add(parseText(vdom))
             } else {
-                return addTag(vdom)
+                return add(createCachedNode(vdom))
             }
         case 1:
+
+            if (vdom.skipContent && vdom.skipAttrs) {
+                return add(createCachedNode(vdom))
+            }
             var copy = {
                 props: {},
                 type: vdom.type,
@@ -79,9 +84,12 @@ function parseNode(vdom) {
             }
             if (vdom.skipContent)
                 copy.skipContent = true
-            if (vdom.skipAttrs)
+            if (vdom.skipAttrs) {
                 copy.skipAttrs = true
-
+            }
+            if (vdom.dynamic) {
+                copy.dynamic = true
+            }
             return addTag(copy)
         case 8:
             var nodeValue = vdom.nodeValue
@@ -89,6 +97,7 @@ function parseNode(vdom) {
                 if (nodeValue.indexOf('ms-for:') !== 0) {
                     avalon.error('ms-for指令前不能有空格')
                 }
+               
                 var copy = {
                     dynamic: 'for',
                     vmodel: '__vmodel__'
@@ -100,7 +109,8 @@ function parseNode(vdom) {
                 }
 
                 avalon.directives['for'].parse(copy, vdom, vdom)
-                return addTag(copy)
+                vdom.$append += parseNodes(avalon.speedUp(avalon.lexer(vdom.template)),true)
+                return addTag(copy) 
             } else if (vdom.dynamic) {
                 if (nodeValue.indexOf('ms-for-end:') !== 0) {
                     avalon.error('ms-for-end指令前不能有空格')
@@ -131,12 +141,13 @@ function parseNode(vdom) {
                 }
                 return ret
             } else {
-                return addTag(vdom)
+                return add(createCachedNode(vdom))
             }
-        default:
-            if (Array.isArray(vdom)) {
-                vdom.$append = parseNodes(vdom, true)
-            }
+   //     default:
+//            if (Array.isArray(vdom)) {
+//                console.log(vdom)
+//                vdom.$append = parseNodes(vdom, true)
+//            }
     }
 
 }
@@ -184,11 +195,34 @@ function extractExpr(str) {
             index = str.indexOf(config.closeTag)
             var value = str.slice(0, index)
             ret.push({
-                expr: avalon.unescapeHTML( value.replace(rlineSp, '') ),
+                expr: avalon.unescapeHTML(value.replace(rlineSp, '')),
                 type: '{{}}'
             })
             str = str.slice(index + config.closeTag.length)
         }
     } while (str.length)
-   return ret
+    return ret
+}
+
+function createCachedNode(vdom) {
+    var uuid
+    switch (vdom.nodeType) {
+        case 1:
+            uuid = vdom.type + ';' + Object.keys(vdom.props).sort().map(function (k) {
+                return k + '-' + vdom.props[k]
+            }).join(';') + ';' + avalon.vdomAdaptor(vdom, 'toHTML').length
+            break
+        case 3:
+        case 8:
+            uuid = vdom.nodeType + ';' + vdom.nodeValue
+            break
+    }
+
+    avalon.caches[uuid] = vdom
+
+    return 'avalon.getCachedNode(' + quote(uuid) + ')'
+}
+
+avalon.getCachedNode = function (uuid) {
+    return avalon.caches[uuid]
 }

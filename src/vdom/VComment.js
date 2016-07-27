@@ -17,7 +17,7 @@ VComment.prototype = {
         return document.createComment(this.nodeValue)
     },
     toHTML: function () {
-        return '<!--' + this.nodeValue + '-->'
+        return '<!--' + this.nodeValue + '-->'+(this.template||"")
     }
 }
 

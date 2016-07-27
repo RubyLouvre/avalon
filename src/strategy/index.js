@@ -15,7 +15,11 @@ function render(vtree, local) {
     }
     var body = '__local__ = __local__ || {};\n' +
             _local.join(';\n')+'\n' + _body
+    try{
     var fn = Function('__vmodel__', '__local__', body)
+    }catch(e){
+        avalon.warn(_body, 'parse error')
+    }
     return fn
 }
 avalon.render = render

@@ -16,7 +16,7 @@ var voidTag = avalon.oneObject('area,base,basefont,bgsound,br,col,command,embed,
         'frame,hr,img,input,keygen,link,meta,param,source,track,wbr')
 var plainTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
 var stringPool = {}
-
+require('./optimize')
 
 function lexer(str) {
     stringPool = {}
@@ -35,7 +35,9 @@ function lexer(str) {
             i = i === -1 ? str.length : i
             var nodeValue = str.slice(0, i).replace(rfill, fill)
             str = str.slice(i)//处理文本节点
+            
             node = {type: "#text", nodeType: 3, nodeValue: nodeValue}
+           
             if (rcontent.test(nodeValue)) {
                 collectNodes(node, stack, ret)//不收集空白节点
             }
@@ -50,6 +52,7 @@ function lexer(str) {
                 var nodeValue = str.slice(4, l).replace(rfill, fill)
                 str = str.slice(l + 3)
                 node = {type: "#comment", nodeType: 8, nodeValue: nodeValue}
+              //  console.log(node)
                 collectNodes(node, stack, ret)
                 if (rmsForEnd.test(nodeValue)) {
                     var p = stack.last()
@@ -69,6 +72,7 @@ function lexer(str) {
                 if (attrs) {
                     collectProps(attrs, node.props)
                 }
+              
                 collectNodes(node, stack, ret)
                 str = str.slice(match[0].length)
                 if (isVoidTag) {
@@ -212,7 +216,7 @@ function markeRepeatRange(nodes, end) {
                     start.template = array.map(function (a) {
                         return avalon.vdomAdaptor(a, 'toHTML')
                     }).join('')
-                    nodes.push(start, array, end)
+                    nodes.push(start, [], end)
                     break
                 }
             }
@@ -244,6 +248,7 @@ function collectProps(attrs, props) {
             if (value.indexOf('??') === 0) {
                 value = nomalString(value).
                         replace(rlineSp, '').
+                        replace(/\"/g,"'").
                         slice(1, -1)
             }
         }
@@ -354,74 +359,3 @@ function addTbody(nodes) {
     }
 }
 
-avalon.speedUp = function (arr) {
-    for (var i = 0; i < arr.length; i++) {
-        hasDirective(arr[i])
-    }
-}
-
-function hasDirective(a) {
-    switch (a.nodeType) {
-        case 3:
-            if (avalon.config.rbind.test(a.nodeValue)) {
-                a.dynamic = 'expr'
-                return true
-            } else {
-                a.skipContent = true
-                return false
-            }
-        case 8:
-            if (a.dynamic) {
-                return true
-            } else {
-                a.skipContent = true
-                return false
-            }
-        case 1:
-            if (a.props['ms-skip']) {
-                a.skipAttrs = true
-                a.skipContent = true
-                return false
-            }
-            if (/^ms\-/.test(a.type) || hasDirectiveAttrs(a.props)) {
-                a.dynamic = true
-            } else {
-                a.skipAttrs = true
-            }
-            if (a.isVoidTag && !a.dynamic) {
-                a.skipContent = true
-                return false
-            }
-            var hasDirective = childrenHasDirective(a.children)
-            if (!hasDirective && !a.dynamic) {
-                a.skipContent = true
-                return false
-            }
-            return true
-        default:
-            if (Array.isArray(a)) {
-                return childrenHasDirective(a)
-            }
-    }
-}
-
-function childrenHasDirective(arr) {
-    var ret = false
-    for (var i = 0, el; el = arr[i++]; ) {
-        if (hasDirective(el)) {
-            ret = true
-        }
-    }
-    return ret
-}
-
-function hasDirectiveAttrs(props) {
-    if ('ms-skip' in props)
-        return false
-    for (var i in props) {
-        if (i.indexOf('ms-') === 0) {
-            return true
-        }
-    }
-    return false
-}

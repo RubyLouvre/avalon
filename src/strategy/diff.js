@@ -18,7 +18,7 @@ function diff(copys, sources) {
     for (var i = 0; i < copys.length; i++) {
         var copy = copys[i]
         var src = sources[i] || emptyObj()
-    
+
         switch (copy.nodeType) {
             case 3:
                 if (copy.dynamic) {
@@ -26,27 +26,28 @@ function diff(copys, sources) {
                 }
                 break
             case 8:
-                if (copy.dynamic === 'for') {
-                    directives['for'].diff(copy, src,
-                    copys[i+1],sources[i+1],sources[i+2]) 
-                }else if(src.afterChange){
+                if (copy.dynamic === 'for') {//比较循环区域的元素位置
+                    directives['for'].diff(copy, src, copys, sources, i)
+                } else if (src.afterChange) {
                     execHooks(src, src.afterChange)
                 }
                 break
             case 1:
                 if (copy.order) {
-                    diffProps(copy, src)
+                    diffProps(copys[i], sources[i], copys, sources, i)
                 }
-                if (copy.nodeType === 1 && !copy.skipContent && !copy.isVoidTag ) {
-                    diff(copy.children, src.children || emptyArr, copy)
+                copy = copys[i]
+                src = sources[i]
+                if (copy.nodeType === 1 && !copy.skipContent && !copy.isVoidTag) {
+                    diff(copy.children, src && src.children || [])
                 }
-                if(src.afterChange){
+                if (src && src.afterChange) {
                     execHooks(src, src.afterChange)
                 }
                 break
-            default: 
-                if(Array.isArray(copy)){
-                   diff(copy, src)
+            default:
+                if (Array.isArray(copy)) {
+                    diff(copy, src)//比较循环区域的内容
                 }
                 break
         }
@@ -55,40 +56,47 @@ function diff(copys, sources) {
 
 function execHooks(el, hooks) {
     if (hooks.length) {
-        for (var hook, i = 0; hook = hooks[i++];) {
-           hook(el.dom, el)
+        for (var hook, i = 0; hook = hooks[i++]; ) {
+            hook(el.dom, el)
         }
     }
     delete el.afterChange
 }
 
-function diffProps(copys, sources) {
-    var order = copys.order
+function diffProps(copy, source, copys, sources, index) {
+    var order = copy.order
     if (order) {
         var directiveType
         try {
-           order.replace(avalon.rword, function (name) {
+            order.replace(avalon.rword, function (name) {
                 var match = name.match(rbinding)
                 var type = match && match[1]
                 directiveType = type
                 if (directives[type]) {
-                    directives[type].diff(copys, sources || emptyObj(), name)
+                    directives[type].diff(copy, source || emptyObj(), name, copys, sources, index)
                 }
-                if(copys.order !== order){
+                if (copy.order !== order) {
                     throw 'break'
                 }
             })
-            
+
         } catch (e) {
-            if(e !== 'break'){
+            if (e !== 'break') {
                 avalon.warn(directiveType, e, e.stack || e.message, 'diffProps error')
-            }else{
-                diffProps(copys, sources)
+            } else {
+                diffProps(copy, source, copys, sources, index)
             }
         }
     }
-
-
 }
 avalon.diffProps = diffProps
 module.exports = diff
+/*
+ VstartComment, [VtemplateNode], VendComment
+ startComment, templateNode, endComment
+ 
+ arr.length = 2
+ 
+ VstartComment, [VtemplateNode,VplaceHode, VtemplateNode,VplaceHode], VendComment
+ startComment, templateNode, placeHode, templateNode, placeHode, endComment
+ */

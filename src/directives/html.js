@@ -14,7 +14,7 @@ avalon.directive('html', {
     },
     diff: function (copy, src, name) {
         var copyValue = copy[name] + ''
-        if (copy === src || copyValue !== src[name]) {
+        if (copy === src || !src.render || copyValue !== src[name]) {
             src[name] = copyValue
             var oldTree = avalon.speedUp(avalon.lexer(copyValue))
             src.children = oldTree
@@ -25,7 +25,7 @@ avalon.directive('html', {
             update(src, this.update)
         } else {
             var newTree = src.render(copy.vmodel, copy.local)
-            copy.children = newTree
+          copy.children = newTree
         }
     },
     update: function (dom, vdom, parent) {
