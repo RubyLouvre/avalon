@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.js"></script>
+        <script>
+           var vm = avalon.define({
+                $id: 'test',
+                arr: [[111,222],[333,444]],
+                click: function(){
+                    console.log('xxxxxxxxx')
+                    vm.arr =  [[55,66],[77,88]]
+                }
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <ul>
+            <li ms-for="el in @arr">
+            <span ms-for="elem in el">{{elem}}</span>
+            </li>
+        </ul>
+        <p><button type="button" ms-click="@click">ddd</button></p>
+    </body>
+</html>

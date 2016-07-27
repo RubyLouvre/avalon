@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src='//cdn.bootcss.com/angular.js/1.5.8/angular.min.js'></script>
+        <script>
+            var app = angular.module('myApp', []);
+            var sexMap = {
+                'true': "男",
+                'false': "女"
+            }
+
+            function genData(n) {
+                var ret = []
+                for (var i = 0; i < n; i++) {
+                    ret.push({
+                        name: Math.random(),
+                        age: 3 + Math.ceil((Math.random() * 30)),
+                        sex: sexMap[1 - Math.random() > 0.5],
+                        desc: Math.random()
+                    })
+                }
+                return ret
+            }
+            app.controller('customersCtrl', function ($scope, $interval) {
+
+                var timer = $interval(function () {
+                    $scope.names = genData(1000)
+                }, 300)
+
+                var now = new Date
+                var index = 0
+                var array = []
+              
+                $scope.onEnd = function () {
+                    var cost = new Date - now
+
+                    console.log(array.length, " cost ", cost, 'ms')
+                    array.push(cost)
+                    now = new Date
+                    if (array.length > 60) {
+                        $interval.cancel(timer)
+                        console.log('平均耗时 ', array.reduce(function (a, b) {
+                            return a + b
+                        }, 0) / array.length, 'ms')
+                    }
+                };
+                 $scope.$watchCollection("names", function(newVal, oldVal) {
+                    $scope.onEnd()
+                 });
+            })
+  
+            app.directive("repeatEnd", function () {
+                return {
+                    restrict: "A",
+                    link: function (scope, element, attrs) {
+                       
+                        if (scope.$last) {
+                            scope.$eval(attrs.repeatEnd);
+                        }
+                    }
+                };
+            });
+
+        </script>
+    </head>
+    <body>
+        //repeat-end="onEnd()"
+        <div ng-app="myApp" ng-controller="customersCtrl"> 
+
+            <table>
+                <tr ng-repeat="x in names track by $index"   >
+                    <td ng-repeat='(key,val) in x track by key' ng-attr-align="{{key == 'page'? 'left':'right' }}">{{val}}</td>
+                </tr>
+            </table>
+
+        </div>
+    </body>
+</html>

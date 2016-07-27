@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>TODO supply a title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+</head>
+
+<body>
+    <div id="example"></div>
+    <script type="text/babel">
+    var sexMap = {
+        'true': "男",
+        'false': "女"
+    }
+    function genData(n) {
+        var ret = []
+        for (var i = 0; i < n; i++) {
+            ret.push({
+                name: Math.random(),
+                age: 3 + Math.ceil((Math.random() * 30)),
+                sex: sexMap[1 - Math.random() > 0.5],
+                desc: Math.random()
+            })
+        }
+        return ret
+    }
+   var array = []
+   var time = 0, id, now
+   var Table = React.createClass({
+   getInitialState: function() {
+       now = new Date
+       return {array: genData(1000)}
+   },     
+   componentDidUpdate:function(){
+       var cost = new Date - now
+       console.log('total ' + (cost) + ' ms!', time++)
+       array.push(cost)
+       var that = this
+       if(array.length > 60){
+             console.log('平均耗时 ' + (array.reduce(function (a, b) {
+                        return a + b
+                    }, 0)) / array.length + ' ms!!!')
+        }else{
+            setTimeout(function(){
+                now = new Date - 0
+                 that.setState({
+                  array: genData(1000)
+               })
+            },100)
+        }
+   },
+
+   componentDidMount: function(){
+       
+       var cost = new Date - now
+       console.log('total ' + (cost) + ' ms', time++)
+       array.push(cost)
+      
+        this.setState({
+          array: genData(1000)
+        })  
+   },
+  render: function() {
+    return <table style={{border:'1px solid black'}}>
+            <tbody>
+             {
+                 this.state.array.map(function(obj,index){
+                   return  (<tr key={index}>
+                            {
+                                Object.keys(obj).slice(0,3).map(function(key){
+                                    return <td data-align={key === 'age'? 'left':'right'}  key={key}>{obj[key]}</td>
+                                })
+                            }
+                            </tr>)
+                 })
+            }
+            </tbody>
+            </table>
+  }
+});
+            ReactDOM.render(
+            <Table />,
+            document.getElementById('example')
+            );
+        </script>
+    <script src="//cdn.bootcss.com/react/15.2.1/react.js"></script>
+    <script src="//cdn.bootcss.com/react/15.2.1/react-dom.js"></script>
+    <script src="//cdn.bootcss.com/babel-core/5.8.34/browser.js"></script>
+</body>
+
+</html>

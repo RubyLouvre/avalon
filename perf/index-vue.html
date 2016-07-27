@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src='//cdn.bootcss.com/vue/1.0.25/vue.js'></script>
+
+    </head>
+    <body>
+        <div id="vue"> 
+
+            <table>
+                <tr v-for="x in items" track-by="$index">
+                    <td v-for='y in x' track-by="$index" v-bind:align="y == 'page'? 'left':'right'">{{y}}</td>
+                </tr>
+            </table>
+
+        </div>
+        <script>
+var sexMap = {
+    'true': "男",
+    'false': "女"
+}
+
+function genData(n) {
+    var ret = []
+    for (var i = 0; i < n; i++) {
+        ret.push({
+            name: Math.random(),
+            age: 3 + Math.ceil((Math.random() * 30)),
+            sex: sexMap[1 - Math.random() > 0.5],
+            desc: Math.random()
+        })
+    }
+    return ret
+}
+Vue.config.async = false
+var vm = new Vue({
+    el: '#vue',
+    data: {
+        items: []
+    }
+})
+
+var index = 0
+var array = []
+var timer = setInterval(function () {
+    var now = new Date - 0
+    vm.items = genData(1000)
+    var cost = new Date - now
+    console.log(index, " cost ", cost, 'ms')
+    array.push(cost)
+    now = new Date
+    index++
+    if (array.length > 60) {
+        clearInterval(timer)
+        console.log('平均耗时 ', array.reduce(function (a, b) {
+            return a + b
+        }, 0) / 60, 'ms')
+    }
+}, 270)
+
+
+
+
+        </script>
+    </body>
+</html>
