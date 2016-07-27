@@ -14,8 +14,8 @@ function scan(nodes) {
                 var text = getHTML(elem)//elem.outerHTML
   
                 var now = new Date()
-                elem.vtree = avalon.lexer(text)
-                avalon.speedUp(elem.vtree)   
+                elem.vtree = avalon.speedUp(avalon.lexer(text)) 
+             
                 var now2 = new Date()
                 onceWarn && avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')
                 vm.$render = avalon.render(elem.vtree)

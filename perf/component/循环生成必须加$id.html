@@ -6,14 +6,11 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../dist/avalon.js"></script>
-
-
+        <script src="../../dist/avalon.js"></script>
     </head>
-
     <body>
         <div ms-controller='widget0'>
-            <ms-button>{{@btn}}</ms-button>
+            <p>循环生成组件必须加$id</p>
             <ul>
                 <li ms-for="el in [1,2,3]">
                 <ms-button ms-widget='{buttonText:"这是属性"+el,$id:"d"+el}'></ms-button>
@@ -22,10 +19,6 @@
         </div>
         <script>
 
-    /*
- 
-     *  
-     */
     avalon.component('ms-button', {
         template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
         defaults: {
