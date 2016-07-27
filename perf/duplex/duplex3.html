@@ -4,17 +4,17 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../dist/avalon.js"></script>
+        <script src="../../dist/avalon.js"></script>
         <script>
             avalon.define({
                 $id: "test",
-                arr: [1,2,3]
+                arr: [{name:1},{name:2},{name:3}]
             })
         </script>
     </head>
     <body ms-controller="test">
         <ul>
-            <li ms-for="el in @arr"><input :duplex="el">{{el}}</li>
+            <li ms-for="el in @arr"><input :duplex="el.name">{{el.name}}</li>
         </ul>
     </body>
 </html>

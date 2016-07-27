@@ -5,24 +5,29 @@
     <title>test</title>
     <meta charset="UTF-8">
 
-    <script src="../dist/avalon.js"></script>
+    <script src="../../dist/avalon.js"></script>
 </head>
 
 <body>
     <div ms-controller="test">
         <div>
-            <div ms-for="el in ##data" ms-click="@alert(el)">
+            <div :for="el in ##data" :click="@alert(el)">
                 {{el}}
             </div>
         </div>
+        <button type="button" :click='@sort'>click</button>
     </div>
     <script>
         var vm = avalon.define({
             $id: "test",
             data: [11,22,333,444],
             alert:function(el){
-                alert(el)
+                console.log(el)
+            },
+            sort: function(){
+                vm.data.reverse()
             }
+            
         });
     </script>
 </body>
