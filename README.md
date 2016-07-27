@@ -16,14 +16,10 @@ npm install avalon2
 
 ###谁在用avalon
 
-![](谁在用avalon.png)
+<img src='http://avalonjs.coding.me/styles/logos.jpg' width='639' height='477' />
 
 `欢迎大家提交logo与官网链接`
 
-
-### [avalon2 学习教程(包括组件)](https://segmentfault.com/u/situzhengmei/articles)
-
-<img src='http://avalonjs.coding.me/styles/logos.jpg' width='639' height='477' />
 
 ###超高性能
 
@@ -34,6 +30,9 @@ npm install avalon2
 
 
 thanks http://charts.udpwork.com/
+
+### [avalon2 学习教程(包括组件)](https://segmentfault.com/u/situzhengmei/articles)
+
 
 HTML指南
 
