@@ -42,7 +42,11 @@
                     now = new Date
                     if (array.length > 60) {
                         $interval.cancel(timer)
-                        console.log('平均耗时 ', array.reduce(function (a, b) {
+                        console.log('平均耗时', array.reduce(function (a, b) {
+                            return a + b
+                        }, 0) / array.length, 'ms')
+                        array.shift()
+                         console.log('更新平均耗时', array.reduce(function (a, b) {
                             return a + b
                         }, 0) / array.length, 'ms')
                     }
@@ -67,7 +71,6 @@
         </script>
     </head>
     <body>
-        //repeat-end="onEnd()"
         <div ng-app="myApp" ng-controller="customersCtrl"> 
 
             <table>

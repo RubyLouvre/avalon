@@ -35,13 +35,16 @@
                 vm.list = genData(1000)
                 var cost = Date.now() - t1
                 array.push(cost)
-               
+
                 console.log('total ' + (cost) + ' ms', time++)
                 if (array.length > 60) {
                     console.log('平均耗时 ' + (array.reduce(function (a, b) {
                         return a + b
                     }, 0)) / array.length + ' ms!!!')
-
+                    array.shift()
+                    console.log('更新平均耗时', array.reduce(function (a, b) {
+                        return a + b
+                    }, 0) / array.length, 'ms')
                     clearInterval(id)
                 }
             }, 50)

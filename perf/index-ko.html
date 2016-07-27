@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+        <script src="//cdn.bootcss.com/knockout/3.4.0/knockout-debug.js"></script>
+</head>
+<body>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <td>name</td>
+                <td>age</td>
+                <td>sex</td>
+            </tr>
+        </thead>
+        <tbody data-bind="foreach:data">
+            <tr>
+                <td data-bind="text:name,attr:{algin: 'left'}"></td>
+                <td data-bind="text:age, attr:{algin: 'right'}"> </td>
+                <td data-bind="text:sex, attr:{algin: 'left'}"> </td>
+            </tr>
+        </tbody>
+    </table>
+
+
+    <script>
+        var vm = {
+            data: ko.observableArray([])
+        };
+
+        ko.applyBindings(vm);
+        var sexMap = {
+            'true': "男",
+            'false': "女"
+        };
+        function genData(n) {
+            var ret = []
+            for (var i = 0; i < n; i++) {
+                ret.push({
+                    name: Math.random(),
+                    age: 3 + Math.ceil((Math.random() * 30)),
+                    sex: sexMap[1 - Math.random() > 0.5],
+                    desc: Math.random()
+                })
+            }
+            return ret
+        }
+
+        var time = 0;
+        var array = [];
+        var id = setInterval(function () {
+            var temp = genData(1000);
+            var t1 = Date.now()
+            vm.data(temp);
+
+            var cost = Date.now() - t1
+            array.push(cost)
+
+            console.log('total ' + (cost) + ' ms', time++)
+            if (array.length > 60) {
+                console.log('平均耗时 ' + (array.reduce(function (a, b) {
+                    return a + b
+                }, 0)) / array.length + ' ms!!!')
+                array.shift()
+                console.log('更新平均耗时 ' + (array.reduce(function (a, b) {
+                    return a + b
+                }, 0)) / array.length + ' ms!!!')
+                clearInterval(id)
+            }
+        }, 50)
+
+    </script>
+</body>
+
+</html>

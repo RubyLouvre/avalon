@@ -58,6 +58,10 @@ var timer = setInterval(function () {
         console.log('平均耗时 ', array.reduce(function (a, b) {
             return a + b
         }, 0) / 60, 'ms')
+        array.shift()
+          console.log('更新平均耗时 ', array.reduce(function (a, b) {
+            return a + b
+        }, 0) / 60, 'ms')
     }
 }, 270)
 

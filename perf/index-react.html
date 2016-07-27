@@ -44,6 +44,10 @@
              console.log('平均耗时 ' + (array.reduce(function (a, b) {
                         return a + b
                     }, 0)) / array.length + ' ms!!!')
+              array.shift() 
+              console.log('平均耗时 ' + (array.reduce(function (a, b) {
+                   return a + b
+               }, 0)) / array.length + ' ms!!!')
         }else{
             setTimeout(function(){
                 now = new Date - 0
