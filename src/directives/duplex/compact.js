@@ -69,7 +69,6 @@ avalon.directive('duplex', {
             type: dtype, //这个决定绑定什么事件
             vmodel: '__vmodel__',
             local: '__local__',
-            loop: 'loop',
             isChecked: isChecked,
             isString: !!isString,
             isChanged: isChanged, //这个决定同步的频数
