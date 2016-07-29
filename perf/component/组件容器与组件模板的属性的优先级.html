@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src='../../dist/avalon.js'></script>
+        <script>
+            avalon.component('ms-button', {
+                template: '<button type="button" ms-click="@click"><span><slot /></span></button>',
+                defaults: {
+                    click: function(){
+                        console.log('内部的click')
+                    },
+                    buttonText: "button"
+                },
+                soleSlot: 'buttonText'
+            })
+            vm = avalon.define({
+                $id: 'widget1',
+                aaa: {
+                    buttonText: "vm中的值"
+                },
+                buttonText:'outer',
+                bb: '动态内容',
+                click: function () {
+                    console.log('外面的click')
+                    vm.aaa.buttonText = '更新内容'+(new Date - 0)
+                }
+            })
+        </script>
+    </head>
+    <body>
+        <h1>组件容器与组件模板的属性的优先级</h1>
+        <p>组件容器是用于声明组件的类型与位置,及将它的属性(普通属性与绑定)与属性名与里面slot元素传进组件</p>
+        <p>因此它们的优先级比组件模板中定义的优先级要高</p>
+        <div ms-controller='widget1' >
+            <xmp :widget="[{is:'ms-button'}, @aaa]" :click="@click" :attr="{title:@bb}"></xmp>
+           
+            <p><button :click="@click">click</button></p>
+            <p>{{@buttonText}}</p>
+        </div>
+    </body>
+</html>

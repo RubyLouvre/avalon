@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ms-validate</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <script src="../../dist/avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                toggle: 1,
+                html: "<strong><span>链接</span></strong>",
+                button: {//注意这里不能以 $开头
+                    buttonText: "VM内容"
+                }
+            })
+
+            avalon.component('ms-button', {
+                template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
+                defaults: {
+                    buttonText: "默认内容"
+                },
+                soleSlot: 'buttonText'
+            })
+    
+        </script>
+    </head>
+
+    <body ms-controller="test">
+        <h1>avalon2的组件在高级浏览器拥有4种声明方式</h1>
+        <p>换言之,一共可以用4种元素声明组件,包括ms-button与xmp, wbr, template</p>
+        <p>ms-button为自定义标签, 标签名已经声明了组件的类型, 可以省去ms-widget配置对象</p>
+        <p>其他方式,必须使用ms-widget配置对象,里面的is是必须存在的</p>
+
+    <xmp ms-widget='[{is:"ms-button"},@button]'></xmp>
+    <wbr ms-widget='[{is:"ms-button"},@button]' ms-attr="{title:@toggle}"/>
+    <ms-button><a ms-html='@html'></a></ms-button>
+    <template ms-widget='[{is:"ms-button"}]' ms-attr="{title:@toggle}"></template>
+    <div><ms-button></ms-button></div>
+    <div ms-html="@html"></div>
+</body>
+</html>

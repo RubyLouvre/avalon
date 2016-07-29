@@ -19,7 +19,6 @@
                     buttonText: "button",
                     isShow: false
                 },
-                
                 soleSlot: 'buttonText'
             })
             avalon.component('ms-dialog', {
@@ -42,15 +41,15 @@
                     ngButton: {
                         buttonText: 'cancel'
                     },
-                    onConfirm:function(){
+                    onConfirm: function () {
                         avalon.log('ok')
                     },
-                    onClose:function(){
+                    onClose: function () {
                         avalon.log('close')
                     },
                     cbProxy: function (ok) {
                         var cbName = ok ? 'onConfirm' : 'onClose'
-                       
+
                         if (this.hasOwnProperty(cbName)) {
                             var ret = this[cbName]()
                             if (ret !== false || (ret && typeof ret.next === 'function')) {
@@ -86,7 +85,7 @@
                 click: function () {
                     vm.aaa.isShow = !vm.aaa.isShow
                 },
-                click2: function(){
+                click2: function () {
                     vm.title = new Date - 0
                 }
 
@@ -95,12 +94,14 @@
         </script>
     </head>
     <body ms-controller='widget2'>
+        <h1>ms-dialog里面包括两个ms-button</h1>
+        <p>为了方便外面操作里面的button,dialog组件最好指定它们的配置对象</p>
     <xmp ms-widget="[{is:'ms-dialog'},@aaa]">
         <div slot='title'>这是{{@title}}</div>
         <div slot='content'>这是内容</div>
     </xmp>
-   <button :click="@click" type="button" >点我</button>
-   <button :click="@click2" type="button" >更换标题</button>
+    <button :click="@click" type="button" >点我</button>
+    <button :click="@click2" type="button" >更换标题</button>
 </body>
 
 </html>

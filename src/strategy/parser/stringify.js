@@ -6,16 +6,16 @@ var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete
         "package,private,protected,public,short,static,super,synchronized," +
         "throws,transient,volatile")
 avalon.keyMap = keyMap
-  var quoted = {
-      type: 1,
-      template: 1,
-      order: 1,
-      nodeValue: 1,
-      dynamic: 1,
-      signature: 1,
-      wid: 1,
-      cid: 1
-  }
+var quoted = {
+    type: 1,
+    template: 1,
+    order: 1,
+    nodeValue: 1,
+    dynamic: 1,
+    signature: 1,
+    wid: 1,
+    cid: 1
+}
 
 var rneedQuote = /[W-]/
 var quote = avalon.quote
@@ -37,8 +37,7 @@ function stringify(obj) {
                 arr2.push(fixKey(k) + ': ' + kv)
             }
             arr1.push('props: {' + arr2.join(',\n') + '}')
-        } else if(obj.hasOwnProperty(i) && i !== 'dom') {
-           
+        } else if (obj.hasOwnProperty(i) && i !== 'dom') {
             var v = obj[i]
             if (typeof v === 'string') {
                 v = quoted[i] ? quote(v) : v

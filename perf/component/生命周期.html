@@ -4,11 +4,21 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../dist/avalon.test.js"></script>
+        <script src="../../dist/avalon.js"></script>
         <script>
+            avalon.component('ms-button', {
+                template: '<button type="button"><span><slot /></span></button>',
+                defaults: {
+                    buttonText: "button"
+                },
+                soleSlot: 'buttonText'
+            })
             var index = 0
-            vm = avalon.define({
-                $id: 'widget1',
+            var vm = avalon.define({
+                $id: 'test',
+                click: function () {
+                    vm.config.buttonText = new Date - 0
+                },
                 config: {
                     buttonText: '按钮',
                     onInit: function (e) {
@@ -29,39 +39,36 @@
                     }
                 }
             })
-            var vm2 = avalon.define({
-                $id: 'widget2',
-                panelBody: '这是面板的内容',
-                aaa: {
-                    ms_button: {
-                        buttonText: "vm中的值"
+            function expect(a) {
+                return {
+                    to: {
+                        equal: function (b) {
+                            console.log(a, b, a === b)
+                        }
                     }
                 }
-            })
+            }
             setTimeout(function () {
-                console.log(index)
-                vm2.panelBody = '新页面'
-                vm.config.buttonText = 'change'
-                vm2.aaa.ms_button.buttonText = "新按钮"
+                expect(index).to.equal(2)
+                vm.click()
                 setTimeout(function () {
-                    console.log(index)
+                    expect(index).to.equal(3)
                     document.getElementById('aaa').innerHTML = ''
                     setTimeout(function () {
-                        console.log(index)
-                       
-                    }, 120)
-                })
+                        expect(index).to.equal(4)
+                    }, 500)
+                }, 500)
             }, 500)
+
         </script>
     </head>
     <body>
-        <div>
-        <div ms-controller='widget1' id="aaa" >
+        <h2>通过外部传入生命周期钩子</h2>
+        <div ms-controller='test' id="aaa" >
             <div><wbr ms-widget="[{is:'ms-button'},@config]"/></div>
+            <button ms-click="@click" type="button">change</button>
         </div>
-        </div>
-        <div ms-controller='widget2' >
-             <xmp ms-widget="[{is:'ms-panel'}, @aaa]" style='border:1px solid red;display:block'>{{@panelBody}}</xmp>
-        </div>
+
+
     </body>
 </html>

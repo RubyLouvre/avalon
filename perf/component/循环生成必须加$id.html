@@ -9,8 +9,8 @@
         <script src="../../dist/avalon.js"></script>
     </head>
     <body>
-        <div ms-controller='widget0'>
-            <p>循环生成组件必须加$id</p>
+        <div ms-controller='test'>
+            <h1>循环生成组件必须加$id</h1>
             <ul>
                 <li ms-for="el in [1,2,3]">
                 <ms-button ms-widget='{buttonText:"这是属性"+el,$id:"d"+el}'></ms-button>
@@ -19,18 +19,18 @@
         </div>
         <script>
 
-    avalon.component('ms-button', {
-        template: '<button type="button"><span><slot name="buttonText"></slot></span></button>',
-        defaults: {
-            buttonText: "button"
-        },
-        soleSlot: 'buttonText'
-    })
+            avalon.component('ms-button', {
+                template: '<button type="button"><span><slot/></span></button>',
+                defaults: {
+                    buttonText: "button"
+                },
+                soleSlot: 'buttonText'
+            })
 
-    var vm = avalon.define({
-        $id: 'widget0',
-        btn: 'XXX'
-    })
+            var vm = avalon.define({
+                $id: 'test',
+                btn: 'XXX'
+            })
 
         </script>
     </body>

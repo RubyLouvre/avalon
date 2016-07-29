@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+        <script src="../../dist/avalon.js"></script>
+        <script>
+            function heredoc(fn) {
+                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+                        replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+            }
+           
+            avalon.component('ms-select', {
+                template: heredoc(function () {
+                    /*
+                     <div>
+                     <select ms-duplex="@currentNum">
+                     <option ms-for="el in @numList">{{el}}</option>
+                     </select>
+                     <p>{{@currentNum}}</p>
+                     </div>
+                     */
+                }),
+                defaults: {
+                    numList: [6, 12, 18, 24, 30],
+                    currentNum: 12,
+                    onInit: function () {
+                        console.log('onInit')
+                    },
+                    onReady: function () {
+                        console.log('onReady')
+                    },
+                    onViewChange: function () {
+                        console.log('onViewChange')
+                    },
+                    onDispose: function () {
+                        console.log('onDispose')
+                    }
+                }
+
+            })
+
+            avalon.component('ms-section', {
+                template: '<div><ms-select /></div>'
+            })
+            var vm = avalon.define({
+                $id: 'test',
+                aaa: 'onViewChange的运作机制',
+                dd: '22',
+                cc: "555",
+                click: function () {
+                    console.log('---')
+                    avalon.clearHTML(document.body)
+                }
+            })
+
+        </script>
+    </head>
+
+    <body ms-controller="test">
+        <h1>{{@aaa}}</h1>
+        <p>onViewChange是比较组件的先后innerHTML,不一样才会触发</p>
+        <wbr ms-widget="{is:'ms-section'}"/>
+        <!--111-->
+        <button ms-click="@click" type="button">点我删除</button>
+    </body>
+</html>

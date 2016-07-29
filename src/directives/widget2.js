@@ -39,6 +39,7 @@ avalon.directive('widget', {
             }
             var vmName = 'component-vm:' + is
             src.props.is = is
+            src.vmodel = copy.vmodel
             //如果组件没有初始化,那么先初始化(生成对应的vm,$render)
             if (!src[vmName]) {
                 if (!tryInitComponent(src, copy[name], copy.local, copy.template)) {
@@ -55,12 +56,10 @@ avalon.directive('widget', {
             var comVm = src[vmName]
 
             var render = comVm.$render
-            var tree = render(comVm, copy.local, copy.vmodel)
-
+            var tree = render(comVm, copy.local)
             var component = tree[0]
             if (component && isComponentReady(component)) {
                 component.local = copy.local
-                component.vmodel = copy.vmodel
                 src.dynamic = true
                 Array(
                         vmName,
@@ -70,7 +69,7 @@ avalon.directive('widget', {
                         ).forEach(function (name) {
                     component[name] = src[name]
                 })
-
+                component.vmodel = comVm
                 copyList[index] = component
                 if (src.type !== component.type) {
                     srcList[index] = component
@@ -85,6 +84,10 @@ avalon.directive('widget', {
                 update(src, this.mountComment)
             }
 
+        } else {
+            if (src.props.is === copy.props.is) {
+                update(src, this.updateComponent)
+            }
         }
     },
     mountComment: function (dom, vdom, parent) {

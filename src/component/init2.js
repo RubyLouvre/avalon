@@ -48,7 +48,7 @@ function initComponent(src, rawOption, local, template) {
     //生成组件VM
     var $id = hooks.$id || src.props.wid || 'w' + (new Date - 0)
     var defaults = avalon.mix(true, {}, definition.defaults)
-    mixinHooks(hooks, defaults, false)
+    mixinHooks( hooks, defaults, false)//src.vmodel,
     var skipProps = immunity.concat()
     function sweeper(a, b) {
         skipProps.forEach(function (k) {
@@ -58,7 +58,7 @@ function initComponent(src, rawOption, local, template) {
     }
 
     sweeper.isWidget = true
-    var vmodel = define.apply(sweeper, [defaults].concat(options))
+    var vmodel = define.apply(sweeper, [src.vmodel,defaults].concat(options))
     if (!avalon.modern) {//增强对IE的兼容
         for (var i in vmodel) {
             if (!skipArray[i] && typeof vmodel[i] === 'function') {
@@ -128,7 +128,7 @@ function initComponent(src, rawOption, local, template) {
     var begin = str.indexOf('{') + 1
     var end = str.lastIndexOf("}")
 
-    var lastFn = Function('vm', 'local', 'top', str.slice(begin, end))
+    var lastFn = Function('vm', 'local', str.slice(begin, end))
     vmodel.$render = lastFn
     src['component-vm:' + is] = vmodel
 
@@ -144,20 +144,29 @@ function stringifyAnonymous(fn) {
 
 
 function fnTemplate() {
-    var shell = (XXXXX)(top, local);
+    var shell = (XXXXX)(vm, local);
     var shellRoot = shell[0]
     var vtree = (YYYYY)(vm, local);
     var component = vtree[0]
 
     //处理diff
     var orderUniq = {}
-    String(shellRoot.order + ',' + component.order).
+    String('ms-widget,',shellRoot.order + ',' + component.order).
             replace(avalon.rword, function (a) {
                 if (a !== 'undefined')
                     orderUniq[a] = a
             })
 
     shellRoot.order = Object.keys(orderUniq).join(',')
+    
+//    for( var i in component){
+//        if(i.indexOf('ms-on-') === 0){
+//            var fn = component[i]
+//            component[i] = fn.bind(vm)
+//            component[i].uuid = fn.uuid
+//        }
+//    }
+    
     for (var i in shellRoot) {
         if (i !== 'children' && i !== 'type') {
             if (i === 'props') {
