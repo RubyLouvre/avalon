@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src='../../dist/avalon.js'></script>
+        <script>
+            function heredoc(fn) {
+                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+                        replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+            }
+            avalon.component('ms-tabs', {
+                template: heredoc(function () {
+                    /*
+                     <div>
+                     <div><slot name="buttons"/></div>
+                     <div><slot name="tabs"/></div>
+                     </div>
+                     */
+                }),
+                defaults: {
+                    buttons: [],
+                    tabs: []
+                }
+
+            })
+            var vm = avalon.define({
+                $id: 'widget1',
+                buttons: [111, 222, 333],
+                tabs: [111, 222, 333],
+                active: function (index) {
+                    this.activeIndex = index
+                },
+                activeIndex: 0,
+                bb: '动态内容',
+                ddd: function () {
+                    console.log('xxxx')
+                },
+                click: function () {
+                    vm.bb = '更新内容'
+                }
+            })
+        </script>
+    </head>
+    <body>
+        <h1>soleSlot的使用, 它会组件容器中innerHTML替换生成组件的slot元素</h1>
+        <div ms-controller='widget1' >
+            <xmp :widget="{is:'ms-tabs',buttons: @buttons,tabs:@tabs}">
+                <button ms-for='(index,button) in @buttons'
+                        ms-click='@active(index)'
+                        type='button'
+                        slot='buttons'
+                        >{{button}}</button>
+                <div ms-for='(index,tab) in @tabs'
+                     ms-visible='index === @activeIndex '
+                     slot='tabs'
+                     >{{tab}}</div> 
+            </xmp>
+        </div>
+    </body>
+</html>
