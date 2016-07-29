@@ -129,11 +129,11 @@ function mediatorFactory(before, after) {
         var config
         var configName
         for (var key in obj) {
-            if(!obj.hasOwnProperty(key)){
+            if (!obj.hasOwnProperty(key)) {
                 continue
             }
-            if(key === '$skipArray' && Array.isArray(obj.$skipArray)){
-                obj.$skipArray.forEach(function(el){
+            if (key === '$skipArray' && Array.isArray(obj.$skipArray)) {
+                obj.$skipArray.forEach(function (el) {
                     $skipArray[el] = 1
                 })
             }
@@ -167,18 +167,18 @@ function mediatorFactory(before, after) {
 
     var $vmodel = new Observer()
     $vmodel = createViewModel($vmodel, accessors, keys)
-
+    var isWidget = typeof this === 'function' && this.isWidget
     for (key in keys) {
         if (!accessors[key]) {//添加不可监控的属性
             $vmodel[key] = keys[key]
         }
-        //用于通过配置对象触发组件的$watch回调
-        if (configName && accessors[key] && config.hasOwnProperty(key)) {
-            var $$ = accessors[key]
-            if (!$$.get.$decompose) {
-                $$.get.$decompose = {}
+        //用于通过配置对象触发组件的$watch回调 2.1.8之前的
+        if (isWidget && accessors[key] && config && config.hasOwnProperty(key)) {
+            var GET = accessors[key].get
+            if (!GET.$decompose) {
+                GET.$decompose = {}
             }
-            $$.get.$decompose[configName+'.'+key] = $vmodel
+            GET.$decompose[configName+'.'+key] = $vmodel
         }
 
         if (key in $$skipArray) {

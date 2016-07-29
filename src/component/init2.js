@@ -32,8 +32,7 @@ function initComponent(src, rawOption, local, template) {
     if (!definition) {
         return
     }
-   
-
+  
 
     //得到组件在顶层vm的配置对象名
     if (!hooks.$id && onceWarn) {

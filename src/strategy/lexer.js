@@ -35,9 +35,7 @@ function lexer(str) {
             i = i === -1 ? str.length : i
             var nodeValue = str.slice(0, i).replace(rfill, fill)
             str = str.slice(i)//处理文本节点
-            
             node = {type: "#text", nodeType: 3, nodeValue: nodeValue}
-           
             if (rcontent.test(nodeValue)) {
                 collectNodes(node, stack, ret)//不收集空白节点
             }
@@ -52,7 +50,6 @@ function lexer(str) {
                 var nodeValue = str.slice(4, l).replace(rfill, fill)
                 str = str.slice(l + 3)
                 node = {type: "#comment", nodeType: 8, nodeValue: nodeValue}
-              //  console.log(node)
                 collectNodes(node, stack, ret)
                 if (rmsForEnd.test(nodeValue)) {
                     var p = stack.last()
@@ -72,7 +69,7 @@ function lexer(str) {
                 if (attrs) {
                     collectProps(attrs, node.props)
                 }
-              
+
                 collectNodes(node, stack, ret)
                 str = str.slice(match[0].length)
                 if (isVoidTag) {
@@ -95,6 +92,7 @@ function lexer(str) {
                                         node.children.push({
                                             nodeType: 3,
                                             type: '#text',
+                                            skipContent: true,
                                             nodeValue: nomalString(innerHTML)
                                         })
                                     }
@@ -170,6 +168,10 @@ function fireEnd(node, stack, ret) {
                 if (!props['ms-widget']) {
                     props['ms-widget'] = '{is:' + avalon.quote(type) + '}'
                 }
+            }
+            if (props['ms-widget']) {
+                node.template = avalon.vdomAdaptor(node, 'toHTML')
+
             }
             break
     }
@@ -248,7 +250,7 @@ function collectProps(attrs, props) {
             if (value.indexOf('??') === 0) {
                 value = nomalString(value).
                         replace(rlineSp, '').
-                        replace(/\"/g,"'").
+                        replace(/\"/g, "'").
                         slice(1, -1)
             }
         }

@@ -120,7 +120,7 @@ function mediatorFactory(before, after) {
     var accessors = {}
     var unresolve = {}
     var heirloom = {}
-    var $skipArray ={}
+    var $skipArray = {}
     var arr = avalon.slice(arguments)
     var config
     var configName
@@ -128,11 +128,11 @@ function mediatorFactory(before, after) {
         var obj = arr[i]
         //收集所有键值对及访问器属性
         for (var key in obj) {
-         
+
             keys[key] = obj[key]
-            
-            if(key === '$skipArray' && Array.isArray(obj.$skipArray)){
-                obj.$skipArray.forEach(function(el){
+
+            if (key === '$skipArray' && Array.isArray(obj.$skipArray)) {
+                obj.$skipArray.forEach(function (el) {
                     $skipArray[el] = 1
                 })
             }
@@ -150,7 +150,7 @@ function mediatorFactory(before, after) {
             }
         }
     }
-    if(typeof this === 'function'){
+    if (typeof this === 'function') {
         this(keys, unresolve)
     }
     for (key in unresolve) {
@@ -164,17 +164,18 @@ function mediatorFactory(before, after) {
 
     var $vmodel = new Observer()
     Object.defineProperties($vmodel, accessors)
+    var isWidget = typeof this === 'function' && this.isWidget
 
     for (key in keys) {
         if (!accessors[key]) {//添加不可监控的属性
             $vmodel[key] = keys[key]
         }
-        if (configName && accessors[key] && config.hasOwnProperty(key)) {
-            var $$ = accessors[key]
-            if (!$$.get.$decompose) {
-                $$.get.$decompose = {}
+        if (isWidget && accessors[key] && config && config.hasOwnProperty(key)) {
+            var GET = accessors[key].get
+            if (!GET.$decompose) {
+                GET.$decompose = {}
             }
-            $$.get.$decompose[configName+'.'+key] = $vmodel
+            GET.$decompose[configName + '.' + key] = $vmodel
         }
         keys[key] = true
     }
@@ -236,7 +237,7 @@ __method__.forEach(function (method) {
             var args = [a, b]
             for (var j = 0, jn = neo.length; j < jn; j++) {
                 var item = old[j]
-                args[j + 2] = modelAdaptor(neo[j], item, (item && item.$events||{}), {
+                args[j + 2] = modelAdaptor(neo[j], item, (item && item.$events || {}), {
                     id: this.$id + '.*',
                     master: true
                 })

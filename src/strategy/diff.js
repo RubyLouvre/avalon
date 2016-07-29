@@ -34,7 +34,7 @@ function diff(copys, sources) {
                 break
             case 1:
                 if (copy.order) {
-                    diffProps(copys[i], sources[i], copys, sources, i)
+                    diffProps(copys, sources, i)
                 }
                 copy = copys[i]
                 src = sources[i]
@@ -63,40 +63,38 @@ function execHooks(el, hooks) {
     delete el.afterChange
 }
 
-function diffProps(copy, source, copys, sources, index) {
-    var order = copy.order
+function diffProps(copys, sources, index) {
+    var order = copys[index].order
     if (order) {
-        var directiveType
+        var oldOrder = order
         try {
-            order.replace(avalon.rword, function (name) {
+            var arr = order.match(avalon.rword)
+            var checked = {}
+            for(var i = 0; i < arr.length; i++){
+                var name = arr[i]
+                
+                if (checked[name]) {
+                    continue
+                } else {
+                    checked[name] = 1
+                }
                 var match = name.match(rbinding)
                 var type = match && match[1]
-                directiveType = type
                 if (directives[type]) {
-                    directives[type].diff(copy, source || emptyObj(), name, copys, sources, index)
+                    directives[type].diff(copys[index], sources[index] || emptyObj(), name, copys, sources, index)
                 }
-                if (copy.order !== order) {
-                    throw 'break'
+                var newOrder = copys[index].order
+                if (!newOrder) {
+                    arr.splice(0, arr.length)
+                } else if (newOrder !== oldOrder) {
+                    arr.push.apply(arr, newOrder.match(avalon.rword))
                 }
-            })
+            }
 
         } catch (e) {
-            if (e !== 'break') {
-                avalon.warn(directiveType, e, e.stack || e.message, 'diffProps error')
-            } else {
-                diffProps(copy, source, copys, sources, index)
-            }
+            avalon.warn(type, e, e.stack || e.message, 'diffProps error')
         }
     }
 }
 avalon.diffProps = diffProps
 module.exports = diff
-/*
- VstartComment, [VtemplateNode], VendComment
- startComment, templateNode, endComment
- 
- arr.length = 2
- 
- VstartComment, [VtemplateNode,VplaceHode, VtemplateNode,VplaceHode], VendComment
- startComment, templateNode, placeHode, templateNode, placeHode, endComment
- */

@@ -3,7 +3,7 @@ function heredoc(fn) {
     return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
             replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
 }
-
+var textProp = 'innerText' in document.createElement('div') ? 'innerText' : 'textContent'
 function fireClick(el) {
     if (el.click) {
         el.click()
@@ -45,14 +45,15 @@ describe('widget', function () {
         })
         avalon.scan(div)
         setTimeout(function () {
+           
             var span = div.getElementsByTagName('span')
-            expect(span[0].innerHTML).to.equal('这是VM中的TEXT')
-            expect(span[1].innerHTML).to.equal('这是标签里面的TEXT')
-            expect(span[2].innerHTML).to.equal('这是属性中的TEXT')
-            expect(span[3].innerHTML).to.equal('button')
+            expect(span[0][textProp]).to.equal('这是VM中的TEXT')
+            expect(span[1][textProp]).to.equal('这是标签里面的TEXT')
+            expect(span[2][textProp]).to.equal('这是属性中的TEXT')
+            expect(span[3][textProp]).to.equal('button')
             vm.btn = '改动'
             setTimeout(function () {
-                expect(span[0].innerHTML).to.equal('改动')
+                expect(span[0][textProp]).to.equal('改动')
 
                 done()
             })
@@ -73,10 +74,11 @@ describe('widget', function () {
         })
         vm = avalon.define({
             $id: 'widget1',
-            panelBody: '这是面板的内容',
+          
             aaa: {
-                ms_button: {
-                    buttonText: "vm中的值"
+                panelBody: 'aaa面板',
+                button: {
+                    buttonText: "aaa按钮"
                 }
             }
         })
@@ -92,19 +94,19 @@ describe('widget', function () {
         setTimeout(function () {
             var div2 = getDiv(div)
             var span = div.getElementsByTagName('span')[0]
-            expect(div2.innerHTML).to.equal('这是面板的内容')
-            expect(span.innerHTML).to.equal('vm中的值')
-            vm.panelBody = '新面板'
-            vm.aaa.ms_button.buttonText = "新按钮"
+            expect(div2[textProp]).to.equal('aaa面板')
+            expect(span[textProp]).to.equal('aaa按钮')
+            vm.aaa.panelBody = '新面板'
+            vm.aaa.button.buttonText = "新按钮"
             setTimeout(function () {
-                expect(div2.innerHTML).to.equal('新面板')
-                expect(span.innerHTML).to.equal('新按钮')
-                vm.panelBody = '新面板plus'
-                vm.aaa.ms_button.buttonText = "新按钮plus"
+                expect(div2[textProp]).to.equal('新面板')
+                expect(span[textProp]).to.equal('新按钮')
+                vm.aaa.panelBody = '新面板plus'
+                vm.aaa.button.buttonText = "新按钮plus"
                 setTimeout(function () {
 
-                    expect(div2.innerHTML).to.equal('新面板plus')
-                    expect(span.innerHTML).to.equal('新按钮plus')
+                    expect(div2[textProp]).to.equal('新面板plus')
+                    expect(span[textProp]).to.equal('新按钮plus')
                     done()
                 }, 300)
             }, 300)
@@ -413,7 +415,7 @@ describe('widget', function () {
             vm.config.buttonText = 'change'
             setTimeout(function () {
                 var s = div.getElementsByTagName('span')[0]
-                expect(s.innerHTML).to.equal('change')
+                expect(s[textProp]).to.equal('change')
                 done()
             }, 100)
         }, 150)
@@ -423,11 +425,11 @@ describe('widget', function () {
     it('组件的最外层元素定义其他指令不生效的BUG', function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <div ms-controller="widget7"><wbr ms-widget="[{is : 'test'},@$config]"></div>
+             <div ms-controller="widget7" id="widget7"><wbr ms-widget="[{is : 'test'},@$config]"></div>
              */
         })
         avalon.component("test", {
-            template: "<test ms-attr=\"{title:@aaa}\">{{##bbb}}</test>",
+            template: '<test ms-attr="{title:@aaa}">{{##bbb}}</test>',
             defaults: {
                 bbb: "TEST",
                 aaa: 'title'
@@ -439,7 +441,7 @@ describe('widget', function () {
         })
         avalon.scan(div)
         setTimeout(function () {
-            var widget = div.firstChild.firstChild
+            var widget = div.getElementsByTagName('test')[0]
             expect(widget.nodeName.toLowerCase()).to.equal('test')
             expect(widget.title).to.equal('title')
             expect(widget.innerHTML).to.equal('TEST')

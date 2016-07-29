@@ -54,9 +54,9 @@ avalon.directive('widget', {
                     return
                 }
             }
+
             //如果已经存在于avalon.scopes
             var comVm = src[vmName]
-
             var scope = avalon.scopes[comVm.$id]
             if (scope && scope.vmodel) {
                 var com = scope.vmodel.$element
@@ -75,7 +75,6 @@ avalon.directive('widget', {
                     }, 'afterChange')
                     return
                 }
-
             }
             var render = comVm.$render
             var tree = render(comVm, copy.local)
@@ -93,6 +92,10 @@ avalon.directive('widget', {
                 })
                 component.vmodel = comVm
                 copyList[index] = component
+                if (src.nodeType === 8 && src.comment) {
+                    component.dom = src.comment
+                    src.type = '#comment'
+                }
                 if (src.type !== component.type) {
                     srcList[index] = component
                     update(component, this.mountComponent)
@@ -105,7 +108,6 @@ avalon.directive('widget', {
                 copyList[index] = src
                 update(src, this.mountComment)
             }
-
         } else {
             if (src.props.is === copy.props.is) {
                 update(src, this.updateComponent)

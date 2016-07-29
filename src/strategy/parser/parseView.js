@@ -13,7 +13,6 @@ var rstatement = /^\s*var\s+([$\w]+)\s*\=\s*\S+/
 var skips = {__local__: 1, vmode: 1, dom: 1}
 
 
-
 function parseNodes(source, inner) {
     //ms-important， ms-controller ， ms-for 不可复制，省得死循环
     //ms-important --> ms-controller --> ms-for --> ms-widget --> ms-effect --> ms-if
@@ -45,7 +44,7 @@ function parseNodes(source, inner) {
 function parseNode(vdom) {
     switch (vdom.nodeType) {
         case 3:
-            if (config.rexpr.test(vdom.nodeValue)) {
+            if (config.rexpr.test(vdom.nodeValue) && !vdom.skipContent ) {
                 return add(parseText(vdom))
             } else {
                 return add(createCachedNode(vdom))
@@ -82,6 +81,8 @@ function parseNode(vdom) {
                     }
                 }
             }
+            if (vdom.template)
+                copy.template = vdom.template
             if (vdom.skipContent)
                 copy.skipContent = true
             if (vdom.skipAttrs) {
@@ -111,10 +112,8 @@ function parseNode(vdom) {
                 avalon.directives['for'].parse(copy, vdom, vdom)
                 vdom.$append += parseNodes(avalon.speedUp(avalon.lexer(vdom.template)),true)
                 return addTag(copy) 
-            } else if (vdom.dynamic) {
-                if (nodeValue.indexOf('ms-for-end:') !== 0) {
-                    avalon.error('ms-for-end指令前不能有空格')
-                }
+            } else if (nodeValue === 'ms-for-end:') {
+              
                 vdom.$append = addTag({
                     nodeType: 8,
                     type: '#comment',
@@ -140,7 +139,9 @@ function parseNode(vdom) {
                     avalon.warn(nodeValue + ' parse fail!')
                 }
                 return ret
-            } else {
+            } else if(vdom.dynamic){
+                return addTag(vdom)
+            }else{
                 return add(createCachedNode(vdom))
             }
    //     default:
