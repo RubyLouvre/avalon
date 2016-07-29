@@ -1,6 +1,6 @@
 var update = require('./_update')
 var reconcile = require('../strategy/reconcile')
-var tryInitComponent = require('../component/init')
+var tryInitComponent = require('../component/init2')
 
 avalon.component = function (name, definition) {
     //这是定义组件的分支,并将列队中的同类型对象移除
@@ -9,10 +9,12 @@ avalon.component = function (name, definition) {
     }//这里没有返回值
 }
 avalon.directive('widget', {
+    priority: 4,
     parse: function (copy, src, binding) {
-        src.wid = src.wid || avalon.makeHashCode('w')
+        src.props.wid = src.props.wid || avalon.makeHashCode('w')
         //将渲染函数的某一部分存起来,渲在c方法中转换为函数
         copy[binding.name] = avalon.parseExpr(binding)
+        copy.template = src.template
         copy.vmodel = '__vmodel__'
         copy.local = '__local__'
     },
@@ -23,7 +25,9 @@ avalon.directive('widget', {
         var a = copy[name]
         if (Object(a) === a) {
             //有三个地方可以设置is, 属性,标签名,配置对象
+
             var is = src.props.is || (/^ms\-/.test(src.type) ? src.type : 0)
+
             if (!is) {//开始大费周章地获取组件的类型
                 a = a.$model || a//安全的遍历VBscript
                 if (Array.isArray(a)) {//转换成对象
@@ -37,21 +41,26 @@ avalon.directive('widget', {
             src.props.is = is
             //如果组件没有初始化,那么先初始化(生成对应的vm,$render)
             if (!src[vmName]) {
-                if (!tryInitComponent(src, copy[name], copy.vmodel, copy.local)) {
+                if (!tryInitComponent(src, copy[name], copy.local, copy.template)) {
                     //替换成注释节点
                     src.nodeType = 8
                     src.nodeValue = 'unresolved component placeholder'
                     copyList[index] = src
+
                     update(src, this.mountComment)
                     return
                 }
             }
             //如果已经存在于avalon.scopes
             var comVm = src[vmName]
+
             var render = comVm.$render
-            var tree = render(comVm, copy.local)
+            var tree = render(comVm, copy.local, copy.vmodel)
+
             var component = tree[0]
             if (component && isComponentReady(component)) {
+                component.local = copy.local
+                component.vmodel = copy.vmodel
                 src.dynamic = true
                 Array(
                         vmName,
@@ -61,12 +70,13 @@ avalon.directive('widget', {
                         ).forEach(function (name) {
                     component[name] = src[name]
                 })
+
+                copyList[index] = component
                 if (src.type !== component.type) {
-                    copyList[index] = srcList[index] = component
+                    srcList[index] = component
                     update(component, this.mountComponent)
                 } else {
-                    copyList[index] = component
-                    update(component, this.updateComponent)
+                    update(src, this.updateComponent)
                 }
             } else {
                 src.nodeType = 8
@@ -107,7 +117,7 @@ avalon.directive('widget', {
         //--------------
         avalon.scopes[vm.$id] = {
             vmodel: vm,
-            isMount: 2,
+            top: vdom.vmodel,
             local: vdom.local
         }
         //--------------
@@ -130,7 +140,7 @@ avalon.directive('widget', {
 
 function viewChangeHandle(dom, vdom) {
     var is = vdom.props.is
-    var vm = vdom[is + '-vm']
+    var vm = vdom['component-vm:' + is]
     var html = 'component-html:' + is
     var preHTML = vdom[html]
     var curHTML = avalon.vdomAdaptor(vdom, 'toHTML')

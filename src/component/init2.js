@@ -28,15 +28,14 @@ function initComponent(src, rawOption, local, template) {
         })
     }
     var definition = avalon.components[is]
-    //初始化组件失败,因为连组件的定义都没有加载
+    //如果连组件的定义都没有加载回来,应该立即返回 
     if (!definition) {
         return
     }
-    var skipProps = immunity.concat()
-    //得到组件在顶层vm的配置对象名
+   
 
-    var define = hooks.define
-    define = define || avalon.directives.widget.define
+
+    //得到组件在顶层vm的配置对象名
     if (!hooks.$id && onceWarn) {
         avalon.warn('warning!', is, '组件最好在ms-widget配置对象中指定全局不重复的$id以提高性能!\n',
                 '若在ms-for循环中可以利用 ($index,el) in @array 中的$index拼写你的$id\n',
@@ -44,16 +43,20 @@ function initComponent(src, rawOption, local, template) {
                 )
         onceWarn = false
     }
+    var define = hooks.define
+    define = define || avalon.directives.widget.define
     //生成组件VM
     var $id = hooks.$id || src.props.wid || 'w' + (new Date - 0)
     var defaults = avalon.mix(true, {}, definition.defaults)
     mixinHooks(hooks, defaults, false)
+    var skipProps = immunity.concat()
     function sweeper(a, b) {
         skipProps.forEach(function (k) {
             delete a[k]
             delete b[k]
         })
     }
+
     sweeper.isWidget = true
     var vmodel = define.apply(sweeper, [defaults].concat(options))
     if (!avalon.modern) {//增强对IE的兼容
@@ -63,7 +66,7 @@ function initComponent(src, rawOption, local, template) {
             }
         }
     }
-    console.log(vmodel)
+   
     vmodel.$id = $id
     avalon.vmodels[$id] = vmodel
 
@@ -76,9 +79,10 @@ function initComponent(src, rawOption, local, template) {
         }
     }
 
-    //生成外部的渲染函数
-
-    // template = template.replace(/^<[\w\-]+/, '<cheng7').replace(/[\w\-]+>$/, 'cheng7>')
+    // 生成外部的渲染函数
+    // template保存着最原始的组件容器信息
+    // 我们先将它转换成虚拟DOM,如果是xmp, template,
+    // 它们内部是一个纯文本节点, 需要继续转换为虚拟DOM
     var shell = avalon.lexer(template)
     var shellRoot = shell[0]
     var sc = shellRoot.children
@@ -90,12 +94,13 @@ function initComponent(src, rawOption, local, template) {
     delete shellRoot.template
     delete shellRoot.skipContent
     delete shellRoot.props['ms-widget']
-    shellRoot.tag = 'cheng7'
+    shellRoot.type = 'cheng7'
     shellRoot.children = shellRoot.children || []
     shellRoot.props.is = is
     shellRoot.props.wid = $id
     avalon.speedUp(shell)
     var render = avalon.render(shell, local)
+    
     //生成内部的渲染函数
     var finalTemplate = definition.template.trim()
     if (typeof definition.getTemplate === 'function') {
@@ -143,15 +148,15 @@ function fnTemplate() {
     var shellRoot = shell[0]
     var vtree = (YYYYY)(vm, local);
     var component = vtree[0]
-    
+
     //处理diff
     var orderUniq = {}
-    String('ms-widget,' + shellRoot.order + ',' + component.order).
+    String(shellRoot.order + ',' + component.order).
             replace(avalon.rword, function (a) {
                 if (a !== 'undefined')
                     orderUniq[a] = a
             })
-            
+
     shellRoot.order = Object.keys(orderUniq).join(',')
     for (var i in shellRoot) {
         if (i !== 'children' && i !== 'type') {
@@ -162,7 +167,7 @@ function fnTemplate() {
             }
         }
     }
-  
+
 
     var soleSlot = ZZZZZ
     var slots = avalon.collectSlots(shellRoot, soleSlot)
@@ -181,6 +186,7 @@ function fnTemplate() {
     return vtree
 
 }
+
 function replaceSlot(vtree, slotName) {
     for (var i = 0, el; el = vtree[i]; i++) {
         if (el.type === 'slot') {

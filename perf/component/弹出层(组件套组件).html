@@ -2,92 +2,105 @@
 
 <html>
 
-<head>
-    <title>TODO supply a title</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="../../dist/avalon.test.js"></script>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../../dist/avalon.js"></script>
+        <script>
 
-
-</head>
-<body>
-
-    <script>
-            var div = document.createElement('div')
-            var body = document.body
-            body.appendChild(div)
             function heredoc(fn) {
                 return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
-                     replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+                        replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
             }
-            function fireClick(el) {
-                if (el.click) {
-                    el.click()
-                } else {
-            //https://developer.mozilla.org/samples/domref/dispatchEvent.html
-                    var evt = document.createEvent('MouseEvents')
-                    evt.initMouseEvent('click', true, true, window,
-                            0, 0, 0, 0, 0, false, false, false, false, 0, null);
-                    !el.dispatchEvent(evt);
-                }
-            }
-            function expect(a){
-                return {
-                    to: {
-                        equal:function(b){
-                          console.log(a,b,a===b)
+            avalon.component('ms-button', {
+                template: '<button type="button"><span><slot /></span></button>',
+                defaults: {
+                    buttonText: "button",
+                    isShow: false
+                },
+                
+                soleSlot: 'buttonText'
+            })
+            avalon.component('ms-dialog', {
+                template: heredoc(function () {
+                    /*
+                     <div class="dialog" :attr="{a:@isShow}" ms-visible="@isShow">
+                     <slot name="title"/>
+                     <div class="body"><slot name="content"/></div>
+                     <div class="footer">
+                     <ms-button :click="@cbProxy(true)" :widget="@okButton" />
+                     <ms-button :click="@cbProxy(false)" :widget="@ngButton" />
+                     </div>
+                     </div>
+                     */
+                }),
+                defaults: {
+                    okButton: {
+                        buttonText: 'ok'
+                    },
+                    ngButton: {
+                        buttonText: 'cancel'
+                    },
+                    onConfirm:function(){
+                        avalon.log('ok')
+                    },
+                    onClose:function(){
+                        avalon.log('close')
+                    },
+                    cbProxy: function (ok) {
+                        var cbName = ok ? 'onConfirm' : 'onClose'
+                       
+                        if (this.hasOwnProperty(cbName)) {
+                            var ret = this[cbName]()
+                            if (ret !== false || (ret && typeof ret.next === 'function')) {
+                                this.isShow = false
+                            }
+                        } else {
+                            this.isShow = false
                         }
+                    },
+                    isShow: false,
+                    onReady: function () {
+                        var el = this.$element
+                        el.style.display = 'none'//强制阻止动画发生
+                        this.$watch('isShow', function (a) {
+                            avalon.log('isShow change', a)
+                            if (a) {
+                                document.body.style.overflow = 'hidden'
+                            } else {
+                                document.body.style.overflow = ''
+                            }
+                        })
                     }
                 }
-            }
-             div.innerHTML = heredoc(function () {
-            /*
-             <div ms-controller='widget2' >
-             <xmp ms-widget="[{is:'ms-panel'}, @aaa]" style='border:1px solid red;display:block'>{{@panelBody}}</xmp>
-             </div>
-             */
-        })
-        vm = avalon.define({
-            $id: 'widget2',
-            panelBody: '这是面板的内容',
-            aaa: {
-                ms_button: {
-                    buttonText: "vm中的值"
-                }
-            }
-        })
-        avalon.scan(div)
-        function getDiv(el) {
-            if (el.querySelector) {
-                return el.querySelector('.body')
-            } else {
-                return el.getElementsByTagName('div')[0].
-                        getElementsByTagName('div')[0]
-            }
-        }
-        setTimeout(function () {
-            var div2 = getDiv(div)
-            var span = div.getElementsByTagName('span')[0]
-            expect(div2.innerHTML).to.equal('这是面板的内容')
-            expect(span.innerHTML).to.equal('vm中的值')
-            return
-            vm.panelBody = '新面板'
-            vm.aaa.ms_button.buttonText = "新按钮"
-            setTimeout(function () {
-                expect(div2.innerHTML).to.equal('新面板')
-                expect(span.innerHTML).to.equal('新按钮')
-                vm.panelBody = '新面板plus'
-                vm.aaa.ms_button.buttonText = "新按钮plus"
-                setTimeout(function () {
+            })
 
-                    expect(div2.innerHTML).to.equal('新面板plus')
-                    expect(span.innerHTML).to.equal('新按钮plus')
-                   
-                }, 300)
-            }, 300)
-        }, 300)
-       
+
+            var vm = avalon.define({
+                $id: 'widget2',
+                aaa: {
+                    isShow: false
+                },
+                title: '标题',
+                click: function () {
+                    vm.aaa.isShow = !vm.aaa.isShow
+                },
+                click2: function(){
+                    vm.title = new Date - 0
+                }
+
+            })
+
         </script>
+    </head>
+    <body ms-controller='widget2'>
+    <xmp ms-widget="[{is:'ms-dialog'},@aaa]">
+        <div slot='title'>这是{{@title}}</div>
+        <div slot='content'>这是内容</div>
+    </xmp>
+   <button :click="@click" type="button" >点我</button>
+   <button :click="@click2" type="button" >更换标题</button>
 </body>
 
 </html>

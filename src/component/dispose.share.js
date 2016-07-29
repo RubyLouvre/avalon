@@ -28,6 +28,7 @@ function fireDisposeHook(el) {
             detachEvents(v)
             if (v) {
                 v[0][is + '-mount'] = false
+                v[0]['component-ready:' + is] = false
             }
         }
         return false
@@ -61,5 +62,5 @@ function fireDisposeHooks(nodes) {
 module.exports = {
     fireDisposeHookDelay: fireDisposeHookDelay,
     fireDisposeHooks: fireDisposeHooks,
-    fireDisposeHook:fireDisposeHook
+    fireDisposeHook: fireDisposeHook
 }
