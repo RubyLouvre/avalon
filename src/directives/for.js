@@ -116,14 +116,14 @@ avalon.directive('for', {
                 c.action = 'enter'
                 saveInCache(cache, c)
             }
-            
+
             src.cache = cache
             /* eslint-enable no-cond-assign */
         } else if (!cache) {//二维数组最开始初始化时
             var cache = {}
             src.coms = coms
-            for (i = 0; c = coms[i]; i++) {
-                saveInCache(cache, c)
+            for (i = 0; i < coms.length; i++) {
+                saveInCache(cache, coms[i])
             }
             src.cache = cache
             return
@@ -156,7 +156,6 @@ avalon.directive('for', {
                 } else {
                     p = c
                     p.action = 'enter'
-                    // p.index = c.index
                     src.coms.push(p)
                 }
                 saveInCache(newCache, p)
@@ -164,7 +163,7 @@ avalon.directive('for', {
             src.coms.sort(function (a, b) {
                 return a.index - b.index
             })
-            
+
             /* eslint-enable no-cond-assign */
             src.cache = newCache
             for (var i in cache) {
@@ -204,7 +203,7 @@ avalon.directive('for', {
         var doms = range.slice(1, -1)//
         range.pop()
         var DOMs = splitDOMs(doms, key)
-        var first = []
+
         for (var i = 0, el; el = vdom.removes[i++]; ) {
             var removeNodes = DOMs[el.index]
             if (removeNodes) {
@@ -273,11 +272,7 @@ avalon.directive('for', {
                 break
             }
         }
-        if (first.length) {
-            first.forEach(function (el) {
-                parent.removeChild(el)
-            })
-        }
+
         vdom.preRepeat.length = 0
         vdom.coms.length = 0
         keep.forEach(function (el) {

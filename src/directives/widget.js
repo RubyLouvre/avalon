@@ -1,6 +1,6 @@
 var update = require('./_update')
 var reconcile = require('../strategy/reconcile')
-var tryInitComponent = require('../component/init2')
+var tryInitComponent = require('../component/init')
 
 avalon.component = function (name, definition) {
     //这是定义组件的分支,并将列队中的同类型对象移除

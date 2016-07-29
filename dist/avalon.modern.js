@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-29:23 version 2.18 by 司徒正美
+ * built in 2016-7-30:1 version 2.18 by 司徒正美
  * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
  * 为伪事件对象过滤掉原生事件对象中的常量属性   
  * 修复class,hover,active指令互相干扰的BUG
@@ -2963,14 +2963,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                c.action = 'enter'
 	                saveInCache(cache, c)
 	            }
-	            
+
 	            src.cache = cache
 	            /* eslint-enable no-cond-assign */
 	        } else if (!cache) {//二维数组最开始初始化时
 	            var cache = {}
 	            src.coms = coms
-	            for (i = 0; c = coms[i]; i++) {
-	                saveInCache(cache, c)
+	            for (i = 0; i < coms.length; i++) {
+	                saveInCache(cache, coms[i])
 	            }
 	            src.cache = cache
 	            return
@@ -3003,7 +3003,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                } else {
 	                    p = c
 	                    p.action = 'enter'
-	                    // p.index = c.index
 	                    src.coms.push(p)
 	                }
 	                saveInCache(newCache, p)
@@ -3011,7 +3010,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            src.coms.sort(function (a, b) {
 	                return a.index - b.index
 	            })
-	            
+
 	            /* eslint-enable no-cond-assign */
 	            src.cache = newCache
 	            for (var i in cache) {
@@ -3051,7 +3050,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var doms = range.slice(1, -1)//
 	        range.pop()
 	        var DOMs = splitDOMs(doms, key)
-	        var first = []
+
 	        for (var i = 0, el; el = vdom.removes[i++]; ) {
 	            var removeNodes = DOMs[el.index]
 	            if (removeNodes) {
@@ -3120,11 +3119,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                break
 	            }
 	        }
-	        if (first.length) {
-	            first.forEach(function (el) {
-	                parent.removeChild(el)
-	            })
-	        }
+
 	        vdom.preRepeat.length = 0
 	        vdom.coms.length = 0
 	        keep.forEach(function (el) {
@@ -3511,8 +3506,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!definition) {
 	        return
 	    }
-	   
-
+	  
 
 	    //得到组件在顶层vm的配置对象名
 	    if (!hooks.$id && onceWarn) {

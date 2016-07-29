@@ -20,7 +20,7 @@ require('./rules')
 require('./if')
 require('./for')
 //
-require('./widget2')
+require('./widget')
 require('./effect')
 //优先级 ms-important, ms-controller, ms-for, ms-widget, ms-effect, ms-if
 //.......

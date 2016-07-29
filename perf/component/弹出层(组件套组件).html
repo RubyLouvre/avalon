@@ -7,6 +7,17 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="../../dist/avalon.js"></script>
+        <style>
+            .dialog{
+                width:300px;
+                height:200px;
+                background: #f4f4f4;
+            }
+            .title{
+                height:40px;
+                line-height: 40px;                
+            }
+        </style>
         <script>
 
             function heredoc(fn) {
@@ -20,6 +31,13 @@
                     isShow: false
                 },
                 soleSlot: 'buttonText'
+            })
+            avalon.component('ms-title', {
+                template: '<p class="title"><slot /><span style="float:right">X</span></p>',
+                defaults: {
+                    title: "标题"
+                },
+                soleSlot: 'title'
             })
             avalon.component('ms-dialog', {
                 template: heredoc(function () {
@@ -81,7 +99,7 @@
                 aaa: {
                     isShow: false
                 },
-                title: '标题',
+                title: '标题!',
                 click: function () {
                     vm.aaa.isShow = !vm.aaa.isShow
                 },
@@ -97,7 +115,7 @@
         <h1>ms-dialog里面包括两个ms-button</h1>
         <p>为了方便外面操作里面的button,dialog组件最好指定它们的配置对象</p>
     <xmp ms-widget="[{is:'ms-dialog'},@aaa]">
-        <div slot='title'>这是{{@title}}</div>
+        <ms-title slot='title'>这是{{@title}}</ms-title>
         <div slot='content'>这是内容</div>
     </xmp>
     <button :click="@click" type="button" >点我</button>
