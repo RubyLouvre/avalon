@@ -5,7 +5,7 @@ avalon.component('ms-panel', {
     template: tmpl,
     defaults: {
         body: "&nbsp;&nbsp;",
-        'ms_button': {
+        button: {
             buttonText: 'click me!'
         }
     },

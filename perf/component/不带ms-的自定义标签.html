@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+        <script src="../../dist/avalon.js"></script>
+        <script>
+            function heredoc(fn) {
+                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+                        replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+            }
+
+            avalon.component("test", {
+                template: '<test ms-attr="{title:@aaa}">{{##bbb}}</test>',
+                defaults: {
+                    bbb: "TEST",
+                    aaa: 'title'
+                }
+            })
+
+            vm = avalon.define({
+                $id: "widget7",
+                $config: {}
+            })
+
+        </script>
+    </head>
+
+    <body>
+        <h1>不带ms-的自定义标签</h1>
+        <div ms-controller="widget7">
+            <wbr ms-widget="[{is : 'test'},@$config]">
+        </div>
+    </body>
+</html>

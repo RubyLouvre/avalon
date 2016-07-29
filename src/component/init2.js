@@ -151,22 +151,15 @@ function fnTemplate() {
 
     //处理diff
     var orderUniq = {}
-    String('ms-widget,',shellRoot.order + ',' + component.order).
+   
+    String('ms-widget,'+shellRoot.order + ',' + component.order).
             replace(avalon.rword, function (a) {
                 if (a !== 'undefined')
                     orderUniq[a] = a
             })
 
     shellRoot.order = Object.keys(orderUniq).join(',')
-    
-//    for( var i in component){
-//        if(i.indexOf('ms-on-') === 0){
-//            var fn = component[i]
-//            component[i] = fn.bind(vm)
-//            component[i].uuid = fn.uuid
-//        }
-//    }
-    
+
     for (var i in shellRoot) {
         if (i !== 'children' && i !== 'type') {
             if (i === 'props') {

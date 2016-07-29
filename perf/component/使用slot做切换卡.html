@@ -22,7 +22,11 @@
                 }),
                 defaults: {
                     buttons: [],
-                    tabs: []
+                    tabs: [],
+                    active: function (index) {
+                        this.activeIndex = index
+                    },
+                    activeIndex: 0,
                 }
 
             })
@@ -30,10 +34,6 @@
                 $id: 'widget1',
                 buttons: [111, 222, 333],
                 tabs: [111, 222, 333],
-                active: function (index) {
-                    this.activeIndex = index
-                },
-                activeIndex: 0,
                 bb: '动态内容',
                 ddd: function () {
                     console.log('xxxx')
@@ -45,14 +45,15 @@
         </script>
     </head>
     <body>
-        <h1>soleSlot的使用, 它会组件容器中innerHTML替换生成组件的slot元素</h1>
+        <h1>slot的使用</h1>
+        <p>对slot元素使用循环绑定生成大量元素,一起迁进组件内部</p>
         <div ms-controller='widget1' >
             <xmp :widget="{is:'ms-tabs',buttons: @buttons,tabs:@tabs}">
                 <button ms-for='(index,button) in @buttons'
-                        ms-click='@active(index)'
-                        type='button'
-                        slot='buttons'
-                        >{{button}}</button>
+                    ms-click='@active(index)'
+                    type='button'
+                    slot='buttons'
+                    >{{button}}</button>
                 <div ms-for='(index,tab) in @tabs'
                      ms-visible='index === @activeIndex '
                      slot='tabs'

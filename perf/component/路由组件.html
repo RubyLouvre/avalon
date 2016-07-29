@@ -1,61 +1,70 @@
 <!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <title>SPA</title>
-    <script src="../dist/avalon.js"></script>
-    <script>
-        avalon.component('ms-pager',{
-            template:'<div cached="true">{{@num}}<input type="text" ms-duplex-number="@num"/><button type="button" ms-on-click="@onPlus">+++</button></div>',
-            defaults:{
-                num:1,
-                onPlus:function(){
-                    this.num++;
-                },
-                onDispose:function(){
-                    console.log('dispose')
-                }
+    <head>
+        <meta charset="UTF-8" />
+        <title>SPA</title>
+        <script src="../../dist/avalon.js"></script>
+        <script>
+            function heredoc(fn) {
+                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+                        replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
             }
-        });
-        var tpl ='<div cached="true"><h4>{{@title}}</h4><h5>{{@random}}</h5><button type="button" ms-on-click="@onChangeTitle">点击改变title</button><button type="button" ms-on-click="@onRandom">获取随机数</button></div>';
-        avalon.component('ms-header',{
-            template:tpl,
-            defaults:{
-                title:"这是标题",
-                random:0,
-                onChangeTitle:function(e){
-                    e.preventDefault()
-                    this.title = '改变了title'+(new Date-0);
-                },
-                onDispose:function(){
-                    console.log('dispose')
-                },
-                onRandom:function(e){
-                    e.preventDefault()
-                    this.random = Math.floor(Math.random()*100)
+            avalon.component('ms-number', {
+                template: heredoc(function () {
+                    /*
+                     <div cached="true">{{@num}}<input :duplex-number="@num"/>
+                     <button type="button" :on-click="@onPlus">+++</button>
+                     </div>
+                     */
+                }),
+                defaults: {
+                    num: 1,
+                    onPlus: function () {
+                        this.num++;
+                    },
+                    onDispose: function () {
+                        console.log('dispose')
+                    }
                 }
-            }
-        });
+            });
 
-        var vm = avalon.define({
-            $id:'test',
-            tpl:'',
-            dd:'22',
-            cc:"555"
-        })
-        window.addEventListener('hashchange',function(e){
-            var hash = e.newURL.split('#/')[1];
-            vm.tpl = '<'+hash+' cached=\"true\" ms-widget=\"{$id:"'+hash+'"}\"></'+hash+'>'
-        })
-    </script>
-</head>
-<body ms-controller="test">
-    <ul>
-        <li><a href="#/ms-header">ms-header</a></li>
-        <li><a href="#/ms-pager">ms-pager</a></li>
-    </ul>
-    <div style="background-color:#f0f0f0;" ms-html="@tpl">
+            avalon.component('ms-header', {
+                template: heredoc(function () {
+                    /*
+                     <div cached="true">
+                     <h4>{{@title}}</h4>
+                     <p><button type="button" :on-click="@onChangeTitle">change</button></p>
+                     </div>
+                     */
+                }),
+                defaults: {
+                    title: "这是标题",
+                    onChangeTitle: function (e) {
+                        this.title = '改变了title' + (new Date - 0);
+                    },
+                    onDispose: function () {
+                        console.log('dispose')
+                    }
+                }
+            });
 
-    </div>
-</body>
+            var vm = avalon.define({
+                $id: 'test',
+                view: ''
+            })
+            window.addEventListener('hashchange', function (e) {
+                var hash = e.newURL.split('#/')[1];
+                vm.view = '<' + hash + ' cached="true" ms-widget="{$id:\'' + hash + '\'}"></' + hash + '>'
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <ul>
+            <li><a href="#/ms-header">ms-header</a></li>
+            <li><a href="#/ms-number">ms-number</a></li>
+        </ul>
+        <div style="background-color:#f0f0f0;" ms-html="@view">
+
+        </div>
+    </body>
 </html>

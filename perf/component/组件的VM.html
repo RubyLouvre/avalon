@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../../dist/avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                bbb: '其他内容',
+                show: function () {
+                    console.log('这是页面的事件')
+                }
+            });
+            function heredoc(fn) {
+                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+                        replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+            }
+            avalon.component('ms-number', {
+                template: heredoc(function () {
+                    /*
+                     <div>
+                     <button type="button"  :on-click="@reduce">--</button>
+                     <input readonly :attr="{value:@num}">
+                     <button type="button"  :on-click="@add" :on-click-2="@show">++</button>
+                     </div>
+                     */
+                }),
+                defaults: {
+                    num: 21,
+                    reduce: function () {
+                        var a = this.num
+                        a -= 1;
+                        this.num = a < 0 ? 0 : a
+                    },
+                    add: function () {
+                        this.num += 1;
+                        console.log(this.$hashcode, 'hash')
+                    }
+                }
+            })
+
+        </script>
+    </head>
+    <body>
+        <h1>组件的VM</h1>
+        <p>组件的VM理论上是继承了它上方的所有组件的属性与方法, 
+            但本例直接在组件模板上使用defaults中没有声明的方法是一个不好的写法</p>
+        <div ms-controller="test">
+            <xmp ms-widget='{is:"ms-number"}' ></xmp>
+            {{@bbb}}
+        </div>
+    </body>
+</html>

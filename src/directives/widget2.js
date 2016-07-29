@@ -23,6 +23,7 @@ avalon.directive('widget', {
     },
     diff: function (copy, src, name, copyList, srcList, index) {
         var a = copy[name]
+
         if (Object(a) === a) {
             //有三个地方可以设置is, 属性,标签名,配置对象
 
@@ -38,6 +39,7 @@ avalon.directive('widget', {
                 is = a.is
             }
             var vmName = 'component-vm:' + is
+
             src.props.is = is
             src.vmodel = copy.vmodel
             //如果组件没有初始化,那么先初始化(生成对应的vm,$render)
@@ -55,6 +57,26 @@ avalon.directive('widget', {
             //如果已经存在于avalon.scopes
             var comVm = src[vmName]
 
+            var scope = avalon.scopes[comVm.$id]
+            if (scope && scope.vmodel) {
+                var com = scope.vmodel.$element
+                if (src.dom !== com) {
+                    var component = com.vtree[0]
+                    srcList[index] = copyList[index] = component
+                    src.com = com
+                    if (!component.skipContent) {
+                        component.skipContent = 'optimize'
+                    }
+                    update(src, this.replaceCachedComponent)
+                    update(component, function () {
+                        if (component.skipContent === 'optimize') {
+                            component.skipContent = true
+                        }
+                    }, 'afterChange')
+                    return
+                }
+
+            }
             var render = comVm.$render
             var tree = render(comVm, copy.local)
             var component = tree[0]
@@ -89,6 +111,11 @@ avalon.directive('widget', {
                 update(src, this.updateComponent)
             }
         }
+    },
+    replaceCachedComponent: function (dom, vdom, parent) {
+        var com = vdom.com
+        parent.replaceChild(com, dom)
+        delete vdom.com
     },
     mountComment: function (dom, vdom, parent) {
         var comment = document.createComment(vdom.nodeValue)
