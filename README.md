@@ -28,6 +28,8 @@ npm install avalon2
 
 测试页面 perf目录下的index.html, index1.4.html, index-ng.html, index-vue.html,index-react.html
 
+亮点,如果页面上存在一个大表格或列表,其他框架会在浏览器加载页面时会卡一下(白屏), 
+而avalon则平缓多了
 
 thanks http://charts.udpwork.com/
 
