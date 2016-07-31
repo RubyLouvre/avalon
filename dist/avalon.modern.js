@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-31:15 version 2.18 by 司徒正美
+ * built in 2016-7-31:15 version 2.19 by 司徒正美
  * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
  * 为伪事件对象过滤掉原生事件对象中的常量属性   
  * 修复class,hover,active指令互相干扰的BUG
@@ -231,7 +231,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return a === 'true'|| a == '1'
 	        }
 	    },
-	    version: "2.18",
+	    version: "2.19",
 	    slice: function (nodes, start, end) {
 	        return _slice.call(nodes, start, end)
 	    },
