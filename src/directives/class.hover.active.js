@@ -46,15 +46,7 @@ avalon.directive('class', {
         src.classEvent = classEvent
 
         var className = classNames(copyValue)
-        var uniq = {}, arr = []
-        className.replace(/\S+/g, function (el) {
-            if (!uniq[el]) {
-                uniq[el] = 1
-                arr.push(el)
-            }
-        })
-
-        className = arr.join(' ')
+       
         if (copy === src || srcValue !== className) {
             src[name] = className
             src['change-' + type] = className

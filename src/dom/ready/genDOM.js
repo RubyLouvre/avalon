@@ -29,9 +29,10 @@ function getAttributes(node) {
         ret.style = style
     }
     var className = node.className
-    if (className){
-        ret['class'] = className
+    if (className) {
+        ret['staic-class'] = className
     }
+    //类名 = 去重(静态类名+动态类名+ hover类名? + active类名)
     if (ret.type === 'select-one') {
         ret.selectedIndex = node.selectedIndex
     }
@@ -147,6 +148,110 @@ function renderFormDOMs(nodes, parent) {
     }
     return arr
 }
+function toObject(node, oldvdom) {
+    var type = typeof node;
+    if (type === 'string') {
+        //转换为文本节点
+        node = {nodeName: '#', children: node};
+    } else if (type === 'function') {
+        node = node(oldvdom);
+        node = (node === undefined) ? oldvdom : norm(node, oldvdom);
+    }
+    return node;
+}
+function update(oldvdom, vdom) {
+    var activeElement = document.activeElement;
+    vdom = toObject(vdom, oldvdom);
+    updateNode(oldvdom, vdom, oldvdom.dom.parentNode);
+    copyObjectProps(vdom, oldvdom);
+    maintainFocus(activeElement);
+    return oldvdom;
+}
+
+function updateNode(oldvdom, node, domParent, parentNs, nextChildChildren, nextChildIndex, outerNextChild, isOnlyDomChild) {
+    if (node === oldvdom) {
+        return;
+    }
+    var nodeName = node.nodeName;
+    if (oldvdom.nodeName !== nodeName) {//如果元素类型不一样,替换掉
+        createNode(node, domParent, parentNs, oldvdom, true);
+    } else {
+        var domNode = oldvdom.dom,
+                oldChildren = oldvdom.children, children = node.children;
+        switch (nodeName) {
+            case undefined:
+                var nextChild = (nextChildChildren && nextChildIndex < nextChildChildren.length) ? nextChildChildren[nextChildIndex] : outerNextChild;
+                updateFragment(oldvdom, oldChildren, node, children, domParent, parentNs, nextChild);
+                break;
+            case '#':
+            case '!':
+                if (oldChildren !== children) {
+                    domNode.nodeValue = children;
+                }
+                break;
+            case '<':
+
+                break;
+            default:
+                var attrs = node.props, oldAttrs = oldvdom.attrs;
+                if ((attrs && attrs.is) !== (oldAttrs && oldAttrs.is)) {
+                    createNode(node, domParent, parentNs, oldvdom, true);
+                    return;
+                }
+
+                var ns = oldvdom.ns;
+                if (ns)
+                    node.ns = ns;
+                node.dom = domNode;
+                if (children !== oldChildren) {
+                    updateChildren(domNode, node, ns, oldChildren, children, false);
+                }
+
+                // node.className
+                var events = node.events, oldEvents = oldvdom.events;
+
+                if (node['ms-class']) {
+                    node['ms-class'] = className(node['ms-class'])
+                    if (oldvdom['ms-class'] !== node['ms-class']) {
+                        oldvdom.dom.className = node['ms-class'] + node.props['class']
+                    }
+                }
+                if (node['ms-hover']) {
+                    node['ms-hover'] = className(node['ms-hover'])
+                }
+                if (node['ms-acive']) {
+                    node['ms-acive'] = className(node['ms-acive'])
+                }
+                if(node.ddStyle){
+                    
+                }
+                if (attrs !== oldAttrs) {
+                    var changedHandlers = events && events.$changed;
+                    var changes = updateAttributes(domNode, nodeName, ns, attrs, oldAttrs, !!changedHandlers);
+                    if (changes) {
+                        triggerLight(changedHandlers, '$changed', domNode, node, 'changes', changes);
+                    }
+                }
+                if (events !== oldEvents) {
+                    updateEvents(domNode, node, events, oldEvents);
+                }
+                break;
+        }
+    }
+}
+
+
+function copyObjectProps(oldvdom, vdom) {
+    var key;
+    for (key in vdom) {
+        oldvdom[key] = vdom[key];
+    }
+    for (key in vdom) {
+        if (oldvdom[key] === undefined) {
+            vdom[key] = undefined;
+        }
+    }
+}
 
 var f = document.createDocumentFragment()
 function remove(node) {
@@ -197,14 +302,14 @@ function createNodeHTML(node, context) {
 
         default:
             var html = ''
-            var tag = node.nodeName
-            if (tag) {
+            var nodeName = node.nodeName
+            if (nodeName) {
                 var attrs = node.props;
-                if (tag === 'select' && attrs) {
+                if (nodeName === 'select' && attrs) {
                     context = {selectedIndex: attrs.selectedIndex,
                         value: attrs.value,
                         optionIndex: 0};
-                } else if (tag === 'option' && context) {
+                } else if (nodeName === 'option' && context) {
                     if ((context.value && context.value === attrs.value) ||
                             (context.selectedIndex !== undefined
                                     && context.selectedIndex === context.optionIndex)) {
@@ -212,16 +317,16 @@ function createNodeHTML(node, context) {
                     }
                     context.optionIndex++;
                 }
-                // TODO validate tag name
-                html = '<' + tag;
+                // TODO validate nodeName name
+                html = '<' + nodeName;
                 if (attrs) {
                     html += ' ';
                     for (var attrName in attrs) {
                         var attrValue = attrs[attrName];
                         if (attrValue === false ||
-                                (tag === 'select' && (attrName === 'value' || attrName === 'selectedIndex'))) {
+                                (nodeName === 'select' && (attrName === 'value' || attrName === 'selectedIndex'))) {
                             continue;
-                        } else if (tag === 'textarea' && attrName === 'value') {
+                        } else if (nodeName === 'textarea' && attrName === 'value') {
                             children = attrValue;
                             continue;
                         } else if (attrValue === true) {
@@ -246,8 +351,8 @@ function createNodeHTML(node, context) {
                     html += createNodeHTML(children[i], context);
                 }
             }
-            if (tag) {
-                html += node.isVoidTag ? '/> ' : '</' + tag + '>'
+            if (nodeName) {
+                html += node.isVoidTag ? '/> ' : '</' + nodeName + '>'
             }
             return html;
     }
@@ -260,6 +365,11 @@ function parseNodes(source, inner) {
 
     for (var i = 0, el; el = source[i++]; ) {
         var vnode = parseNode(el)
+        if (el.nodeType === 3) {
+            buffer.push(vnode)
+            continue
+        }
+
         if (el.$prepend) {
             buffer.push(el.$prepend)
         }
@@ -287,17 +397,15 @@ function parseNodes(source, inner) {
 
     for (var i = 0, el; el = source[i++]; ) {
         var vnode = parseNode(el)
-        if (el.$prepend) {
-            buffer.push(el.$prepend)
+        if (vnode.$prepend) {
+            buffer.push(vnode.$prepend)
         }
-        var append = el.$append
-        delete el.$append
-        delete el.$prepend
-        if (vnode) {
-            buffer.push(vnode + '\n')
+
+        if (vnode.$middle) {
+            buffer.push(vnode.$middle + '\n')
         }
-        if (append) {
-            buffer.push(append)
+        if (vnode.$append) {
+            buffer.push(vnode.$append)
         }
     }
     if (!inner) {
@@ -311,10 +419,10 @@ function parseNodes(source, inner) {
 function parseNode(vdom) {
     switch (vdom.nodeType) {
         case 3:
-            if (config.rexpr.test(vdom.nodeValue) ) {
-                return add(parseText(vdom))
+            if (config.rexpr.test(vdom.nodeValue)) {
+                return 'vnodes.push(' + parseText(vdom) + ')'
             } else {
-                return add(createCachedNode(vdom))
+                return 'vnodes.push(' + avalon.quote(vdom.nodeValue) + ')'
             }
         case 1:
 
@@ -333,7 +441,7 @@ function parseNode(vdom) {
                 avalon.directives[b.type].parse(copy, vdom, b)
                 copy.dynamic = true
             }).join(',')
-          
+
             if (vdom.isVoidTag) {
                 copy.isVoidTag = true
             } else {
@@ -348,7 +456,7 @@ function parseNode(vdom) {
             }
             if (vdom.template)
                 copy.template = vdom.template
-            
+
             if (vdom.dynamic) {
                 copy.dynamic = true
             }
@@ -359,7 +467,7 @@ function parseNode(vdom) {
                 if (nodeValue.indexOf('ms-for:') !== 0) {
                     avalon.error('ms-for指令前不能有空格')
                 }
-               
+
                 var copy = {
                     dynamic: 'for',
                     vmodel: '__vmodel__'
@@ -371,10 +479,10 @@ function parseNode(vdom) {
                 }
 
                 avalon.directives['for'].parse(copy, vdom, vdom)
-                vdom.$append += parseNodes(avalon.speedUp(avalon.lexer(vdom.template)),true)
-                return addTag(copy) 
+                vdom.$append += parseNodes(avalon.speedUp(avalon.lexer(vdom.template)), true)
+                return addTag(copy)
             } else if (nodeValue === 'ms-for-end:') {
-              
+
                 vdom.$append = addTag({
                     nodeType: 8,
                     type: '#comment',
@@ -400,12 +508,12 @@ function parseNode(vdom) {
                     avalon.warn(nodeValue + ' parse fail!')
                 }
                 return ret
-            } else if(vdom.dynamic){
+            } else if (vdom.dynamic) {
                 return addTag(vdom)
-            }else{
+            } else {
                 return add(createCachedNode(vdom))
             }
-   //     default:
+            //     default:
 //            if (Array.isArray(vdom)) {
 //                console.log(vdom)
 //                vdom.$append = parseNodes(vdom, true)
@@ -413,6 +521,21 @@ function parseNode(vdom) {
     }
 
 }
+var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
 
+function wrapDelimiter(expr) {
+    return rident.test(expr) ? expr : parseExpr(expr, 'text')
+}
+function parseText(el) {
+    var array = extractExpr(el.nodeValue)//返回一个数组
+    if (array.length === 1) {
+        return  wrapDelimiter(array[0].expr)
+    } else {
+        var token = array.map(function (el) {
+            return el.type ? wrapDelimiter(el.expr) : quote(el.expr)
+        }).join(' + ')
+        return 'String(' + token + ')'
+    }
+}
 
 module.exports = render
