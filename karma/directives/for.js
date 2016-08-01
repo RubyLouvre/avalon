@@ -102,7 +102,7 @@ describe('for', function () {
         })
         vm = avalon.define({
             $id: 'for1',
-            array: [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+            array: [[1, 2, 3], [4, 5, 6], [7, 8, 9, 10]]
         })
         avalon.scan(div)
         setTimeout(function () {
@@ -117,6 +117,7 @@ describe('for', function () {
             expect(tds[6].innerHTML).to.equal('7')
             expect(tds[7].innerHTML).to.equal('8')
             expect(tds[8].innerHTML).to.equal('9')
+            expect(tds[9].innerHTML).to.equal('10')
             avalon.each(tds, function (i, el) {
                 el.title = el.innerHTML
             })
@@ -607,5 +608,30 @@ describe('for', function () {
             expect(strongs.length).to.equal(6)
             done()
         }, 150)
+    })
+
+    it('修正误用前面的节点当循环区域的父节点的问题', function (done) {
+        //https://github.com/RubyLouvre/avalon/issues/1646
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller="for15">
+             <div :for="item in @data1" aa='99'>{{item}}</div>
+             <div id='for15'>
+             <div :for="item in @data2">{{item}}</div>
+             </div>
+             </div>
+             */
+        })
+
+        vm = avalon.define({
+            $id: 'for15',
+            data1: [1, 2, 3, 4, 5],
+            data2: [11, 22, 33, 44, 55]
+        })
+        setTimeout(function(){
+          var el = document.getElementById('for15')
+           expect(!!el).to.equal(true)
+           done()
+        },300)
     })
 })

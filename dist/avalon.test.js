@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-1:12 version 2.19 by 司徒正美
+ * built in 2016-8-1:23 version 2.19 by 司徒正美
  * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
  * 为伪事件对象过滤掉原生事件对象中的常量属性   
  * 修复class,hover,active指令互相干扰的BUG
@@ -80,7 +80,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-8-1:12 version 2.19 by 司徒正美
+	 * built in 2016-8-1:23 version 2.19 by 司徒正美
 	 * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
 	 * 为伪事件对象过滤掉原生事件对象中的常量属性   
 	 * 修复class,hover,active指令互相干扰的BUG
@@ -3456,7 +3456,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		        vmodel.$render = render
 		        vmodel.$element = dom
-		        reconcile([dom], vdom, parent)
+		      
+		        reconcile([dom], [vdom], parent)
 		        dom.vtree = [vdom]
 		        if (top !== vmodel) {
 		            top.$render = top.$render || render
@@ -3517,8 +3518,12 @@ return /******/ (function(modules) { // webpackBootstrap
 		            break
 		        }
 		        var vtype = el && getType(el)
-		        var v = newNodes.length
+		        var v = newNodes.length, check
 		        if (map[v] === vtype) {
+		            if (check && el.nodeType === 1 && (el.getAttribute(':for')||el.getAttribute('ms-for'))) {
+		                check = false
+		                continue
+		            }
 		            newNodes.push(el)
 		            var vnode = vnodes[v]
 
@@ -3543,7 +3548,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		                var nn = document.createComment(vv.nodeValue)
 		                vv.dom = nn
 		                newNodes.push(nn)
+		                if (vv.dynamic == 'for') {
+		                    check = true
+		                }
 		                i = Math.max(0, --i)
+
 		            }
 		        }
 		        if (newNodes.length === vn) {
@@ -3568,7 +3577,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		function getType(node) {
 		    switch (node.nodeType) {
 		        case 3:
-		            return '3' + rwhiteRetain.test(node.nodeValue) 
+		            return '3' + rwhiteRetain.test(node.nodeValue)
 		        case 1:
 		            return '1' + (node.nodeName || node.type).toLowerCase()
 		        case 8:
@@ -6650,14 +6659,15 @@ return /******/ (function(modules) { // webpackBootstrap
 		    var forExpr = props['ms-for']
 		    if (forExpr) {
 		        delete props['ms-for']
+		        node.xxx = 1
 		        var p = stack.last()
 		        var arr = p ? p.children : ret
 		        arr.splice(arr.length - 1, 0, {
+		            add:1,
 		            nodeType: 8,
 		            type: '#comment',
 		            nodeValue: 'ms-for:' + forExpr
 		        })
-
 		        var cb = props['data-for-rendered']
 		        var cid = cb + ':cb'
 
@@ -6666,6 +6676,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 
 		        markeRepeatRange(arr, {
+		            add: 1,
 		            nodeType: 8,
 		            type: '#comment',
 		            nodeValue: 'ms-for-end:'

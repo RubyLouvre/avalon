@@ -59,7 +59,8 @@ avalon.directive('controller', {
         }
         vmodel.$render = render
         vmodel.$element = dom
-        reconcile([dom], vdom, parent)
+      
+        reconcile([dom], [vdom], parent)
         dom.vtree = [vdom]
         if (top !== vmodel) {
             top.$render = top.$render || render
