@@ -237,11 +237,12 @@ avalon.directive('for', {
 
             keep.push(com)
             if (com.action === 'enter') {
-                if (!domTemplate) {
-                    //创建用于拷贝的数据,包括虚拟DOM与真实DOM 
-                    domTemplate = avalon.vdomAdaptor(children, 'toDOM')
-                }
-                var newFragment = domTemplate.cloneNode(true)
+//                if (!domTemplate) {
+//                    //创建用于拷贝的数据,包括虚拟DOM与真实DOM 
+//                  domTemplate = avalon.vdomAdaptor(children, 'toDOM')
+//                }
+//                var newFragment = domTemplate.cloneNode(true)
+                var newFragment = avalon.vdomAdaptor(children, 'toDOM')
                 var cnodes = avalon.slice(newFragment.childNodes)
                 reconcile(cnodes, children, parent)//关联新的虚拟DOM与真实DOM
                 parent.insertBefore(newFragment, insertPoint.nextSibling)

@@ -1,5 +1,5 @@
 /*!
- * built in 2016-7-31:15 version 2.19 by 司徒正美
+ * built in 2016-8-1:12 version 2.19 by 司徒正美
  * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
  * 为伪事件对象过滤掉原生事件对象中的常量属性   
  * 修复class,hover,active指令互相干扰的BUG
@@ -3078,11 +3078,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            keep.push(com)
 	            if (com.action === 'enter') {
-	                if (!domTemplate) {
-	                    //创建用于拷贝的数据,包括虚拟DOM与真实DOM 
-	                    domTemplate = avalon.vdomAdaptor(children, 'toDOM')
-	                }
-	                var newFragment = domTemplate.cloneNode(true)
+	//                if (!domTemplate) {
+	//                    //创建用于拷贝的数据,包括虚拟DOM与真实DOM 
+	//                  domTemplate = avalon.vdomAdaptor(children, 'toDOM')
+	//                }
+	//                var newFragment = domTemplate.cloneNode(true)
+	                var newFragment = avalon.vdomAdaptor(children, 'toDOM')
 	                var cnodes = avalon.slice(newFragment.childNodes)
 	                reconcile(cnodes, children, parent)//关联新的虚拟DOM与真实DOM
 	                parent.insertBefore(newFragment, insertPoint.nextSibling)
