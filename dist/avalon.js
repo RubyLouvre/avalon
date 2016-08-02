@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-1:23 version 2.19 by 司徒正美
+ * built in 2016-8-2:11 version 2.110 by 司徒正美
  * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
  * 为伪事件对象过滤掉原生事件对象中的常量属性   
  * 修复class,hover,active指令互相干扰的BUG
@@ -689,7 +689,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return a === 'true'|| a == '1'
 	        }
 	    },
-	    version: "2.19",
+	    version: "2.110",
 	    slice: function (nodes, start, end) {
 	        return _slice.call(nodes, start, end)
 	    },
@@ -3467,11 +3467,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var nn = document.createComment(vv.nodeValue)
 	                vv.dom = nn
 	                newNodes.push(nn)
-	                if (vv.dynamic == 'for') {
+	                if (vv.dynamic === 'for') {
 	                    check = true
 	                }
 	                i = Math.max(0, --i)
-
 	            }
 	        }
 	        if (newNodes.length === vn) {
@@ -6578,15 +6577,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var forExpr = props['ms-for']
 	    if (forExpr) {
 	        delete props['ms-for']
-	        node.xxx = 1
 	        var p = stack.last()
 	        var arr = p ? p.children : ret
 	        arr.splice(arr.length - 1, 0, {
-	            add:1,
 	            nodeType: 8,
 	            type: '#comment',
 	            nodeValue: 'ms-for:' + forExpr
 	        })
+
 	        var cb = props['data-for-rendered']
 	        var cid = cb + ':cb'
 
@@ -6595,7 +6593,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        markeRepeatRange(arr, {
-	            add: 1,
 	            nodeType: 8,
 	            type: '#comment',
 	            nodeValue: 'ms-for-end:'

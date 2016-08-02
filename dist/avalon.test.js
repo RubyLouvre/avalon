@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-1:23 version 2.19 by 司徒正美
+ * built in 2016-8-2:11 version 2.110 by 司徒正美
  * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
  * 为伪事件对象过滤掉原生事件对象中的常量属性   
  * 修复class,hover,active指令互相干扰的BUG
