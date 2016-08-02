@@ -108,7 +108,6 @@ function renderFormDOMs(nodes, parent) {
                     }
 
                 } else {
-                    console.log(node)
                     arr.push(renderFormDOM(node))
                 }
                 break
@@ -140,7 +139,6 @@ function renderFormDOMs(nodes, parent) {
                     for (var j = 0; j < old.length; j++) {
                         remove(old[j])
                     }
-
                 } else {
                     arr.push(renderFormDOM(node))
                 }
@@ -222,9 +220,7 @@ function updateNode(oldvdom, node, domParent, parentNs, nextChildChildren, nextC
                 if (node['ms-acive']) {
                     node['ms-acive'] = className(node['ms-acive'])
                 }
-                if(node.ddStyle){
-                    
-                }
+              
                 if (attrs !== oldAttrs) {
                     var changedHandlers = events && events.$changed;
                     var changes = updateAttributes(domNode, nodeName, ns, attrs, oldAttrs, !!changedHandlers);
@@ -290,6 +286,64 @@ function escapedAttr(name, value) {
     }
     // TODO validate attribute name
     return name + '="' + value + '"';
+}
+function reconcile2(nodes, vnodes, parent) {
+    //遍平化虚拟DOM树
+    var ww = flatten(vnodes)
+    var b = []
+    var remove = 0
+    for (var i = 0, el; el = nodes[i++]; ) {
+        if (el.nodeType === 8) {
+            if (el.nodeValue.indexOf('ms-for:') === 0) {
+                b.push(el)
+                remove++
+            } else if (el.nodeValue.indexOf('ms-for-end:') == 0) {
+                remove--
+                if (remove === 0) {
+                    b.push(el)
+                }
+            } else if (!remove) {
+                b.push(el)
+            }
+        } else {
+            if (!remove) {
+                if (el.nodeType === 1) {
+                    var start = el.getAttribute('ms-for') || el.getAttribute(':for')
+                    if (start) {
+                        b.push(document.createComment('ms-for:' + start),
+                                document.createComment('ms-for-end:'))
+                    } else {
+                        b.push(el)
+                    }
+                } else if (el.nodeType === 3) {
+                    if (rwhiteRetain.test(el.nodeValue)) {
+                        b.push(el)
+                    }
+                }
+            }
+        }
+    }
+    // parent = parent //|| nodes[i].parentNode
+
+    while (parent.firstChild) {
+        parent.removeChild(parent.firstChild)
+    }
+  console.log(b, ww, parent)
+    for (var i = 0, el; el = b[i]; i++) {
+
+        var v = ww[i]
+      
+        if (v) {
+            v.dom = el
+
+            parent.appendChild(el)
+            if (v && v.nodeType === 1 && !v.isVoidTag) {
+                //   console.log(ww[i], '---')
+                reconcile2(el.childNodes, v.children, el)
+            }
+        }
+    }
+
 }
 
 function createNodeHTML(node, context) {
