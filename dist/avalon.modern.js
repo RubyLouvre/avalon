@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-2:11 version 2.110 by 司徒正美
+ * built in 2016-8-3:2 version 2.110 by 司徒正美
  * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
  * 为伪事件对象过滤掉原生事件对象中的常量属性   
  * 修复class,hover,active指令互相干扰的BUG
@@ -845,12 +845,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var stype = avalon.type(search)
 	    if (stype === 'function') {
 	        var criteria = search
-	    } else if (stype === 'string' || stype === 'number' ) {
+	    } else if (stype === 'string' || stype === 'number') {
 	        if (search === '') {
 	            return array
 	        } else {
 	            var reg = new RegExp(avalon.escapeRegExp(search), 'i')
-	            criteria = function(el){
+	            criteria = function (el) {
 	                return reg.test(el)
 	            }
 	        }
@@ -859,7 +859,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    array = convertArray(array).filter(function (el, i) {
-	        return !!criteria.apply(el, [el.value,i].concat(args) )
+	        return !!criteria.apply(el, [el.value, i].concat(args))
 	    })
 	    var isArray = type === 'array'
 	    var target = isArray ? [] : {}
@@ -891,13 +891,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var type = avalon.type(input)
 	    if (type !== 'array' && type !== 'object')
 	        throw 'limitBy只能处理对象或数组'
-	    //尝试将limit转换数值
-	    if (Math.abs(Number(limit)) === Infinity) {
-	        limit = Number(limit)
-	    } else {
-	        limit = parseInt(limit, 10)
+	    //必须是数值
+	    if (typeof limit !== 'number') {
+	        return input
 	    }
-	    //转换不了返回
+	    //不能为NaN
 	    if (Number.isNaN(limit)) {
 	        return input
 	    }
@@ -905,15 +903,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (type === 'object') {
 	        input = convertArray(input)
 	    }
-	    limit = Math.min(input.length, limit)
-	    begin = (!begin || Number.isNaN(begin)) ? 0 : ~~begin
+	    var n = input.length
+	    limit = Math.min(n, limit)
+	    begin = typeof begin === 'number' ? begin : 0
 	    if (begin < 0) {
-	        begin = Math.max(0, input.length + begin)
+	        begin = Math.max(0, n + begin)
 	    }
 
 	    var data = []
-	    for (var i = begin; i < limit; i++) {
+	    for (var i = begin; i < n; i++) {
 	        data.push(input[i])
+	        if (data.length === limit) {
+	            break
+	        }
 	    }
 	    var isArray = type === 'array'
 	    if (isArray) {
