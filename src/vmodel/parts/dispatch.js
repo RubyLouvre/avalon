@@ -42,7 +42,7 @@ function addFuzzy(add, obj, expr) {
 function $watch(expr, callback) {
     var fuzzy = expr.indexOf('.*') > 0 || expr === '*'
     var vm = fuzzy ? this : $watch.adjust(this, expr)
-    var hive = vm.$events
+    var hive = this.$events
     var list = hive[expr] || (hive[expr] = [])
     if (fuzzy) {
         list.reg = list.reg || toRegExp(expr)

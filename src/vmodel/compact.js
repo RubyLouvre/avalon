@@ -154,7 +154,6 @@ function mediatorFactory(before, after) {
             if (accessors[key] && avalon.isObject(cur)) {//处理子vm
                 delete accessors[key]
             }
-
             if ($accessors && $accessors[key]) {
                 accessors[key] = $accessors[key]
             } else if (typeof keys[key] !== 'function') {
@@ -172,6 +171,7 @@ function mediatorFactory(before, after) {
         if ($$skipArray[key] || accessors[key])
             continue
         if (!isSkip(key, keys[key], $skipArray)) {
+         
             accessors[key] = makeAccessor(before.$id, key, heirloom)
             accessors[key].set(keys[key])
         }
@@ -179,14 +179,15 @@ function mediatorFactory(before, after) {
 
     var $vmodel = new Observer()
     $vmodel = createViewModel($vmodel, accessors, keys)
-
     for (key in keys) {
         if (!accessors[key]) {//添加不可监控的属性
+           
             $vmodel[key] = keys[key]
         }
         //用于通过配置对象触发组件的$watch回调
         if (isWidget && config && accessors[key] && config.hasOwnProperty(key)) {
             var GET = accessors[key].get
+          //  GET.heirloom = heirloom
             if (!GET.$decompose) {
                 GET.$decompose = {}
             }

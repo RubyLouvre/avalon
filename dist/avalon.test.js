@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-3:2 version 2.110 by 司徒正美
+ * built in 2016-8-4:17 version 2.110 by 司徒正美
  * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
  * 为伪事件对象过滤掉原生事件对象中的常量属性   
  * 修复class,hover,active指令互相干扰的BUG
@@ -80,7 +80,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-8-3:2 version 2.110 by 司徒正美
+	 * built in 2016-8-4:17 version 2.110 by 司徒正美
 	 * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
 	 * 为伪事件对象过滤掉原生事件对象中的常量属性   
 	 * 修复class,hover,active指令互相干扰的BUG
@@ -6075,7 +6075,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		var rcustomTag = /^[a-z]([a-z\d]+\-)+[a-z\d]+$/
 
 		function isCustomTag(type) {
-		    return rcustomTag.test(type)
+		    return rcustomTag.test(type) || avalon.components[type]
 		}
 
 		function mixinHooks(target, option, overwrite) {
@@ -7907,40 +7907,53 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		function mediatorFactory(before, after) {
 		    var keys = {}, key
-		    var accessors = {}
-		    var unresolve = {}
+		    var accessors = {}//新vm的访问器
+		    var unresolve = {}//需要转换的属性集合
 		    var heirloom = {}
 		    var arr = avalon.slice(arguments)
 		    var $skipArray = {}
+		    var isWidget = typeof this === 'function' && this.isWidget
+		    var config
+		    var configName
 		    for (var i = 0; i < arr.length; i++) {
 		        var obj = arr[i]
 		        //收集所有键值对及访问器属性
-		        var config
-		        var configName
+		        var $accessors = obj.$accessors
 		        for (var key in obj) {
 		            if (!obj.hasOwnProperty(key)) {
 		                continue
 		            }
-		            if (key === '$skipArray' && Array.isArray(obj.$skipArray)) {
-		                obj.$skipArray.forEach(function (el) {
-		                    $skipArray[el] = 1
-		                })
-		            }
-		            keys[key] = obj[key]
-		            var $accessors = obj.$accessors
-		            if ($accessors && $accessors[key]) {
-		                if (arr.indexOf(obj[key]) === -1) {
-		                    accessors[key] = $accessors[key]
-		                } else { //去掉vm那个配置对象
-		                    config = keys[key]
-		                    configName = key
-		                    delete keys[key]
+		            var cur = obj[key]
+		            if (key === '$skipArray') {//处理$skipArray
+		                if (Array.isArray(cur)) {
+		                    cur.forEach(function (el) {
+		                        $skipArray[el] = 1
+		                    })
 		                }
+		                continue
+		            }
+
+		            if (isWidget && arr.indexOf(cur) !== -1) {//处理配置对象
+		                config = cur
+		                configName = key
+		              //  console.log(key)
+		                continue
+		            }
+
+		            keys[key] = cur
+		            if (accessors[key] && avalon.isObject(cur)) {//处理子vm
+		                delete accessors[key]
+		            }
+		            if ($accessors && $accessors[key]) {
+		      
+		                accessors[key] = $accessors[key]
 		            } else if (typeof keys[key] !== 'function') {
 		                unresolve[key] = 1
 		            }
 		        }
 		    }
+
+
 		    if (typeof this === 'function') {
 		        this(keys, unresolve)
 		    }
@@ -7949,6 +7962,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        if ($$skipArray[key] || accessors[key])
 		            continue
 		        if (!isSkip(key, keys[key], $skipArray)) {
+		         
 		            accessors[key] = makeAccessor(before.$id, key, heirloom)
 		            accessors[key].set(keys[key])
 		        }
@@ -7956,18 +7970,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		    var $vmodel = new Observer()
 		    $vmodel = createViewModel($vmodel, accessors, keys)
-		    var isWidget = typeof this === 'function' && this.isWidget
 		    for (key in keys) {
 		        if (!accessors[key]) {//添加不可监控的属性
+		           
 		            $vmodel[key] = keys[key]
 		        }
-		        //用于通过配置对象触发组件的$watch回调 2.1.8之前的
-		        if (isWidget && accessors[key] && config && config.hasOwnProperty(key)) {
+		        //用于通过配置对象触发组件的$watch回调
+		        if (isWidget && config && accessors[key] && config.hasOwnProperty(key)) {
 		            var GET = accessors[key].get
+		          //  GET.heirloom = heirloom
 		            if (!GET.$decompose) {
 		                GET.$decompose = {}
 		            }
-		            GET.$decompose[configName+'.'+key] = $vmodel
+		            GET.$decompose[configName + '.' + key] = $vmodel
 		        }
 
 		        if (key in $$skipArray) {
@@ -8541,7 +8556,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		function $watch(expr, callback) {
 		    var fuzzy = expr.indexOf('.*') > 0 || expr === '*'
 		    var vm = fuzzy ? this : $watch.adjust(this, expr)
-		    var hive = vm.$events
+		    var hive = this.$events
 		    var list = hive[expr] || (hive[expr] = [])
 		    if (fuzzy) {
 		        list.reg = list.reg || toRegExp(expr)
