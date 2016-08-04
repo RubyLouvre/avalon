@@ -15,8 +15,8 @@
                 template: heredoc(function () {
                     /*
                      <div>
-                     <div><slot name="buttons"/></div>
-                     <div><slot name="tabs"/></div>
+                     <div><slot name="btn"/></div>
+                     <div><slot name="tab"/></div>
                      </div>
                      */
                 }),
@@ -33,31 +33,36 @@
             var vm = avalon.define({
                 $id: 'widget1',
                 buttons: [111, 222, 333],
-                tabs: [111, 222, 333],
-                bb: '动态内容',
+                aa: '动态内容',
                 ddd: function () {
                     console.log('xxxx')
                 },
-                click: function () {
-                    vm.bb = '更新内容'
+                change: function () {
+                    vm.aa = '更新内容'+(new Date -0)
                 }
             })
         </script>
     </head>
     <body>
         <h1>slot的使用</h1>
-        <p>对slot元素使用循环绑定生成大量元素,一起迁进组件内部</p>
         <div ms-controller='widget1' >
-            <xmp :widget="{is:'ms-tabs',buttons: @buttons,tabs:@tabs}">
+            <xmp :widget="{is:'ms-tabs',buttons: @buttons}">
                 <button ms-for='(index,button) in @buttons'
                     ms-click='@active(index)'
                     type='button'
-                    slot='buttons'
+                    slot='btn'
                     >{{button}}</button>
-                <div ms-for='(index,tab) in @tabs'
-                     ms-visible='index === @activeIndex '
-                     slot='tabs'
-                     >{{tab}}</div> 
+                <div slot="tab" ms-visible="0 == @activeIndex">
+                    <p>这是面板1</p>
+                        
+                </div>
+                 <div slot="tab" ms-visible="1 == @activeIndex">
+                    {{@aa}} <button ms-click="@change" type="button">change</button>
+
+                </div>
+                 <div slot="tab" ms-visible="2 == @activeIndex">
+                    这是面板3
+                </div>
             </xmp>
         </div>
     </body>
