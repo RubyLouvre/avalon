@@ -252,7 +252,7 @@ avalon.collectSlots = function (node, soleSlot) {
 var rcustomTag = /^[a-z]([a-z\d]+\-)+[a-z\d]+$/
 
 function isCustomTag(type) {
-    return rcustomTag.test(type)
+    return rcustomTag.test(type) || avalon.components[type]
 }
 
 function mixinHooks(target, option, overwrite) {

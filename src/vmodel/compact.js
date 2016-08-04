@@ -118,40 +118,52 @@ $$midway.slaveFactory = slaveFactory
 
 function mediatorFactory(before, after) {
     var keys = {}, key
-    var accessors = {}
-    var unresolve = {}
+    var accessors = {}//新vm的访问器
+    var unresolve = {}//需要转换的属性集合
     var heirloom = {}
     var arr = avalon.slice(arguments)
     var $skipArray = {}
+    var isWidget = typeof this === 'function' && this.isWidget
+    var config
+    var configName
     for (var i = 0; i < arr.length; i++) {
         var obj = arr[i]
         //收集所有键值对及访问器属性
-        var config
-        var configName
+        var $accessors = obj.$accessors
         for (var key in obj) {
             if (!obj.hasOwnProperty(key)) {
                 continue
             }
-            if (key === '$skipArray' && Array.isArray(obj.$skipArray)) {
-                obj.$skipArray.forEach(function (el) {
-                    $skipArray[el] = 1
-                })
-            }
-            keys[key] = obj[key]
-            var $accessors = obj.$accessors
-            if ($accessors && $accessors[key]) {
-                if (arr.indexOf(obj[key]) === -1) {
-                    accessors[key] = $accessors[key]
-                } else { //去掉vm那个配置对象
-                    config = keys[key]
-                    configName = key
-                    delete keys[key]
+            var cur = obj[key]
+            if (key === '$skipArray') {//处理$skipArray
+                if (Array.isArray(cur)) {
+                    cur.forEach(function (el) {
+                        $skipArray[el] = 1
+                    })
                 }
+                continue
+            }
+
+            if (isWidget && arr.indexOf(cur) !== -1) {//处理配置对象
+                config = cur
+                configName = key
+                continue
+            }
+
+            keys[key] = cur
+            if (accessors[key] && avalon.isObject(cur)) {//处理子vm
+                delete accessors[key]
+            }
+
+            if ($accessors && $accessors[key]) {
+                accessors[key] = $accessors[key]
             } else if (typeof keys[key] !== 'function') {
                 unresolve[key] = 1
             }
         }
     }
+
+
     if (typeof this === 'function') {
         this(keys, unresolve)
     }
@@ -167,18 +179,18 @@ function mediatorFactory(before, after) {
 
     var $vmodel = new Observer()
     $vmodel = createViewModel($vmodel, accessors, keys)
-    var isWidget = typeof this === 'function' && this.isWidget
+
     for (key in keys) {
         if (!accessors[key]) {//添加不可监控的属性
             $vmodel[key] = keys[key]
         }
-        //用于通过配置对象触发组件的$watch回调 2.1.8之前的
-        if (isWidget && accessors[key] && config && config.hasOwnProperty(key)) {
+        //用于通过配置对象触发组件的$watch回调
+        if (isWidget && config && accessors[key] && config.hasOwnProperty(key)) {
             var GET = accessors[key].get
             if (!GET.$decompose) {
                 GET.$decompose = {}
             }
-            GET.$decompose[configName+'.'+key] = $vmodel
+            GET.$decompose[configName + '.' + key] = $vmodel
         }
 
         if (key in $$skipArray) {
