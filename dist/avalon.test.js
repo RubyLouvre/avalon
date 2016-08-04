@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-4:17 version 2.110 by 司徒正美
+ * built in 2016-8-4:19 version 2.110 by 司徒正美
  * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
  * 为伪事件对象过滤掉原生事件对象中的常量属性   
  * 修复class,hover,active指令互相干扰的BUG
@@ -80,7 +80,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-8-4:17 version 2.110 by 司徒正美
+	 * built in 2016-8-4:19 version 2.110 by 司徒正美
 	 * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
 	 * 为伪事件对象过滤掉原生事件对象中的常量属性   
 	 * 修复class,hover,active指令互相干扰的BUG
@@ -7936,7 +7936,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		            if (isWidget && arr.indexOf(cur) !== -1) {//处理配置对象
 		                config = cur
 		                configName = key
-		              //  console.log(key)
 		                continue
 		            }
 
@@ -7945,7 +7944,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		                delete accessors[key]
 		            }
 		            if ($accessors && $accessors[key]) {
-		      
 		                accessors[key] = $accessors[key]
 		            } else if (typeof keys[key] !== 'function') {
 		                unresolve[key] = 1
@@ -8564,7 +8562,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		    addFuzzy(fuzzy, hive, expr)
 		    if (vm !== this) {
 		        addFuzzy(fuzzy, this.$events, expr)
-		        this.$events[expr] = list
 		    }
 
 		    avalon.Array.ensure(list, callback)

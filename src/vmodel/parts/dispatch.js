@@ -50,7 +50,6 @@ function $watch(expr, callback) {
     addFuzzy(fuzzy, hive, expr)
     if (vm !== this) {
         addFuzzy(fuzzy, this.$events, expr)
-        this.$events[expr] = list
     }
 
     avalon.Array.ensure(list, callback)
