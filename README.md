@@ -33,6 +33,10 @@ npm install avalon2
 
 thanks http://charts.udpwork.com/
 
+### QQ学习群
+
+314247255
+
 ### [avalon2 学习教程(包括组件)](https://segmentfault.com/u/situzhengmei/articles)
 
 

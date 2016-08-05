@@ -45,16 +45,25 @@
                 aaa: function (e) {
                     e.vmodel.$watch('currentPage', function (a) {
                         vm.start = a - 1
-                        console.log(vm.start)
+                        avalon.log(vm.start)
                     })
                 },
                 ddd: 'bbb'
             })
 
             avalon.component("ms-pager", {
-                template: '<div class="pagination">' +
-                        '<ul><li ms-for="el in @pages" ms-attr="{class:(el == @currentPage ? \'active\' : \'\')}"><a href="javascript:void(0)" ms-click="@gotoPage(el, $event)">{{el}}</a></li></ul>' +
-                        '</div>',
+                template:heredoc(function(){
+                    /*
+                      <div class="pagination">
+                        <ul>
+                        <li :for="el in @pages" 
+                           :class="[ el == @currentPage && 'active' ]">
+                           <a href="javascript:void(0)" :click="@gotoPage(el, $event)">{{el}}</a>
+                        </li>
+                        </ul>
+                      </div>
+                     */
+                }),
                 defaults: {
                     totalPage: 25,
                     currentPage: 1,
