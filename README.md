@@ -1,6 +1,6 @@
 #avalon 2 
 
-avalon2是基于虚拟DOM的超高性能MVVM框架,兼容到IE6.
+avalon2是基于虚拟DOM的超高性能MVVM框架,兼容到IE6.(QQ学习群 314247255)
 
 ###[avalon电子文档](avalon%20cookbook.pdf)
 
@@ -33,9 +33,6 @@ npm install avalon2
 
 thanks http://charts.udpwork.com/
 
-### QQ学习群
-
-314247255
 
 ### [avalon2 学习教程(包括组件)](https://segmentfault.com/u/situzhengmei/articles)
 
