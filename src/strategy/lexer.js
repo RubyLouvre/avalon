@@ -186,13 +186,6 @@ function fireEnd(node, stack, ret) {
             nodeValue: 'ms-for:' + forExpr
         })
 
-        var cb = props['data-for-rendered']
-        var cid = cb + ':cb'
-
-        if (cb && !avalon.caches[cid]) {
-            avalon.caches[cid] = Function('return ' + avalon.parseExpr(cb, 'on'))()
-        }
-
         markeRepeatRange(arr, {
             nodeType: 8,
             type: '#comment',
@@ -218,6 +211,17 @@ function markeRepeatRange(nodes, end) {
                     start.template = array.map(function (a) {
                         return avalon.vdomAdaptor(a, 'toHTML')
                     }).join('')
+                    var element = array[0]
+                    if (element.props) {
+                        var cb = element.props['data-for-rendered']
+                        if (cb) {
+                            var wid = cb + ':cb'
+                            if (!avalon.caches[wid]) {
+                                avalon.caches[wid] = Function('return ' + avalon.parseExpr(cb, 'on'))()
+                            }
+                            start.wid = wid
+                        }
+                    }
                     nodes.push(start, [], end)
                     break
                 }

@@ -181,7 +181,7 @@ avalon.directive('for', {
 
         }
         src.removes = removes
-        var cb = avalon.caches[src.cid]
+        var cb = avalon.caches[src.wid]
         var vm = copy.vmodel
         if (end && cb) {
             end.afterChange = [function (dom) {

@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-4:19 version 2.110 by 司徒正美
+ * built in 2016-8-7:17 version 2.110 by 司徒正美
  * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
  * 为伪事件对象过滤掉原生事件对象中的常量属性   
  * 修复class,hover,active指令互相干扰的BUG
@@ -2223,8 +2223,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    nodeValue: 1,
 	    dynamic: 1,
 	    signature: 1,
-	    wid: 1,
-	    cid: 1
+	    wid: 1
 	}
 
 	var rneedQuote = /[W-]/
@@ -3032,7 +3031,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        }
 	        src.removes = removes
-	        var cb = avalon.caches[src.cid]
+	        var cb = avalon.caches[src.wid]
 	        var vm = copy.vmodel
 	        if (end && cb) {
 	            end.afterChange = [function (dom) {
@@ -4324,13 +4323,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            nodeValue: 'ms-for:' + forExpr
 	        })
 
-	        var cb = props['data-for-rendered']
-	        var cid = cb + ':cb'
-
-	        if (cb && !avalon.caches[cid]) {
-	            avalon.caches[cid] = Function('return ' + avalon.parseExpr(cb, 'on'))()
-	        }
-
 	        markeRepeatRange(arr, {
 	            nodeType: 8,
 	            type: '#comment',
@@ -4356,6 +4348,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    start.template = array.map(function (a) {
 	                        return avalon.vdomAdaptor(a, 'toHTML')
 	                    }).join('')
+	                    var element = array[0]
+	                    if (element.props) {
+	                        var cb = element.props['data-for-rendered']
+	                        if (cb) {
+	                            var wid = cb + ':cb'
+	                            if (!avalon.caches[wid]) {
+	                                avalon.caches[wid] = Function('return ' + avalon.parseExpr(cb, 'on'))()
+	                            }
+	                            start.wid = wid
+	                        }
+	                    }
 	                    nodes.push(start, [], end)
 	                    break
 	                }

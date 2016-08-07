@@ -30,7 +30,7 @@ describe('for', function () {
             /*
              <div ms-controller='for0' >
              <ul>
-             <li ms-for='($index, el) in @array | limitBy(4)'>{{$index}}::{{el}}</li>
+             <li ms-for='($index, el) in @array | limitBy(4)' data-for-rendered="@fn">{{$index}}::{{el}}</li>
              </ul>
              <ol>
              <li ms-for='($key, $val) in @object'>{{$key}}::{{$val}}</li>
@@ -41,9 +41,13 @@ describe('for', function () {
              </div>
              */
         })
+        var called = false
         vm = avalon.define({
             $id: 'for0',
             array: [1, 2, 3, 4, 5],
+            fn: function () {
+                called = true
+            },
             object: {
                 a: 11,
                 b: 22,
@@ -70,6 +74,7 @@ describe('for', function () {
             expect(ps[2].innerHTML).to.equal('3')
             expect(ps[3].innerHTML).to.equal('4')
             expect(ps[4].innerHTML).to.equal('5')
+            expect(called).to.equal(true)
             vm.array.reverse()
             vm.array.unshift(9)
             setTimeout(function () {
@@ -628,10 +633,10 @@ describe('for', function () {
             data1: [1, 2, 3, 4, 5],
             data2: [11, 22, 33, 44, 55]
         })
-        setTimeout(function(){
-          var el = document.getElementById('for15')
-           expect(!!el).to.equal(true)
-           done()
-        },300)
+        setTimeout(function () {
+            var el = document.getElementById('for15')
+            expect(!!el).to.equal(true)
+            done()
+        }, 300)
     })
 })
