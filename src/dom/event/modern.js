@@ -101,6 +101,8 @@ function collectHandlers(elem, type, handlers) {
 }
 
 var rhandleHasVm = /^e/
+var stopImmediate = false
+
 function dispatch(event) {
     event = new avEvent(event)
     var type = event.type
@@ -111,8 +113,11 @@ function dispatch(event) {
     while ((handler = handlers[i++]) && !event.cancelBubble) {
         var host = event.currentTarget = handler.elem
         j = 0
-        while ((uuid = handler.uuids[ j++ ]) &&
-                !event.isImmediatePropagationStopped) {
+        while ((uuid = handler.uuids[ j++ ])) {
+            if (stopImmediate) {
+                stopImmediate = false
+                break
+            }
             var fn = avalon.eventListeners[uuid]
             if (fn) {
                 var vm = rhandleHasVm.test(uuid) ? handler.elem._ms_context_ : 0
@@ -165,28 +170,25 @@ function avEvent(event) {
 }
 avEvent.prototype = {
     preventDefault: function () {
-        var e = this.originalEvent
+        var e = this.originalEvent || {}
         this.returnValue = false
-        if (e) {
-            e.returnValue = false
+        if (e.preventDefault) {
             e.preventDefault()
         }
     },
     stopPropagation: function () {
-        var e = this.originalEvent
+        var e = this.originalEvent || {}
         this.cancelBubble = true
-        if (e) {
-            e.cancelBubble = true
+        if (e.stopPropagation) {
             e.stopPropagation()
         }
     },
     stopImmediatePropagation: function () {
-        var e = this.originalEvent
-        this.isImmediatePropagationStopped = true
-        if (e.stopImmediatePropagation) {
-            e.stopImmediatePropagation()
-        }
+        stopImmediate = true
         this.stopPropagation()
+    },
+    toString: function () {
+        return '[object Event]'//#1619
     }
 }
 
