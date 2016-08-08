@@ -144,11 +144,6 @@ function parseNode(vdom) {
             }else{
                 return add(createCachedNode(vdom))
             }
-   //     default:
-//            if (Array.isArray(vdom)) {
-//                console.log(vdom)
-//                vdom.$append = parseNodes(vdom, true)
-//            }
     }
 
 }
