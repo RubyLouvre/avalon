@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-8:16 version 2.111 by 司徒正美
+ * built in 2016-8-9:0 version 2.111 by 司徒正美
  * 修正 ms-click 在 ms-if 下失效的问题 #1652
  * 修正 limitBy BUG
  * 修正 节点对齐算法 BUG

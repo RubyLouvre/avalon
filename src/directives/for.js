@@ -223,7 +223,6 @@ avalon.directive('for', {
         }
         vdom.removes = []
         var insertPoint = dom
-        var fragment = avalon.avalonFragment
         var domTemplate
         var keep = []
 
@@ -254,7 +253,7 @@ avalon.directive('for', {
 
                 var cnodes = DOMs[com.oldIndex] || []
                 if (com.index !== com.oldIndex) {
-                    var moveFragment = fragment.cloneNode(false)
+                    var moveFragment = document.createDocumentFragment()
                     for (var k = 0, cc; cc = cnodes[k++]; ) {
                         moveFragment.appendChild(cc)
                     }

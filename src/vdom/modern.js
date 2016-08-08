@@ -8,7 +8,7 @@ var VElement = require('./VElement.modern')
 avalon.vdomAdaptor = function (obj, method) {
     if (!obj) {//obj在ms-for循环里面可能是null
         return (method === "toHTML" ? '' :
-            avalon.avalonFragment.cloneNode(false))
+            document.createDocumentFragment())
     }
     switch (obj.nodeType) {
         case 3:
@@ -24,7 +24,7 @@ avalon.vdomAdaptor = function (obj, method) {
                         return avalon.vdomAdaptor(a, 'toHTML')
                     }).join('')
                 } else {
-                    var f = avalon.avalonFragment.cloneNode(false)
+                    var f = document.createDocumentFragment()
                     obj.forEach(function (a) {
                         f.appendChild(avalon.vdomAdaptor(a, 'toDOM'))
                     })

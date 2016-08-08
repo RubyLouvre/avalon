@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-8:16 version 2.111 by 司徒正美
+ * built in 2016-8-9:0 version 2.111 by 司徒正美
  * 修正 ms-click 在 ms-if 下失效的问题 #1652
  * 修正 limitBy BUG
  * 修正 节点对齐算法 BUG
@@ -3074,7 +3074,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        vdom.removes = []
 	        var insertPoint = dom
-	        var fragment = avalon.avalonFragment
 	        var domTemplate
 	        var keep = []
 
@@ -3105,7 +3104,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	                var cnodes = DOMs[com.oldIndex] || []
 	                if (com.index !== com.oldIndex) {
-	                    var moveFragment = fragment.cloneNode(false)
+	                    var moveFragment = document.createDocumentFragment()
 	                    for (var k = 0, cc; cc = cnodes[k++]; ) {
 	                        moveFragment.appendChild(cc)
 	                    }
@@ -5893,7 +5892,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.vdomAdaptor = function (obj, method) {
 	    if (!obj) {//obj在ms-for循环里面可能是null
 	        return (method === "toHTML" ? '' :
-	            avalon.avalonFragment.cloneNode(false))
+	            document.createDocumentFragment())
 	    }
 	    switch (obj.nodeType) {
 	        case 3:
@@ -5909,7 +5908,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        return avalon.vdomAdaptor(a, 'toHTML')
 	                    }).join('')
 	                } else {
-	                    var f = avalon.avalonFragment.cloneNode(false)
+	                    var f = document.createDocumentFragment()
 	                    obj.forEach(function (a) {
 	                        f.appendChild(avalon.vdomAdaptor(a, 'toDOM'))
 	                    })
