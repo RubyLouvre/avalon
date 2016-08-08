@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-8:11 version 2.110 by 司徒正美
+ * built in 2016-8-8:16 version 2.111 by 司徒正美
  * 修正 ms-click 在 ms-if 下失效的问题 #1652
  * 修正 limitBy BUG
  * 修正 节点对齐算法 BUG
@@ -230,7 +230,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return a === 'true'|| a == '1'
 	        }
 	    },
-	    version: "2.110",
+	    version: "2.111",
 	    slice: function (nodes, start, end) {
 	        return _slice.call(nodes, start, end)
 	    },
@@ -2644,17 +2644,14 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	avalon.directive('rules', {
-	    parse: function (copy, src, binding) {
-	        var rules = binding.expr
-	        if (/{.+}/.test(rules)) {
-	            copy[binding.name] = avalon.parseExpr(binding)
-	        }
-	    },
 	    diff: function (copy, src, name) {
-	        src[name] = copy[name]
-	        var field = src.dom && src.dom.__ms_duplex__
-	        if (field) {
-	            field.rules = copy[name]
+	        var neo = copy[name]
+	        if (neo && Object.prototype.toString.call(neo) === '[object Object]') {
+	            src[name] = neo.$model || neo
+	            var field = src.dom && src.dom.__ms_duplex__
+	            if (field) {
+	                field.rules = copy[name]
+	            }
 	        }
 	    }
 	})

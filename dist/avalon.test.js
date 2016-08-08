@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-8:11 version 2.110 by 司徒正美
+ * built in 2016-8-8:16 version 2.111 by 司徒正美
  * 修正 ms-click 在 ms-if 下失效的问题 #1652
  * 修正 limitBy BUG
  * 修正 节点对齐算法 BUG
@@ -79,13 +79,12 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-8-8:11 version 2.110 by 司徒正美
-	 * component/initjs中的protected变量更名为immunity,方便在严格模式下运行
-	 * 为伪事件对象过滤掉原生事件对象中的常量属性   
-	 * 修复class,hover,active指令互相干扰的BUG
-	 * 修复事件绑定中表达式太复杂,不会补上($event)的BUG
-	 * 当组件被移出DOM树并且没有被cached时,其虚拟DOM应该清空上面的事件
-	 * 重写for, widget指令,
+	 * built in 2016-8-8:16 version 2.111 by 司徒正美
+	 * 修正 ms-click 在 ms-if 下失效的问题 #1652
+	 * 修正 limitBy BUG
+	 * 修正 节点对齐算法 BUG
+	 * 优化 mediatorFactory
+	 * 修正 data-for-rendered BUG
 	 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
@@ -311,7 +310,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return a === 'true'|| a == '1'
 		        }
 		    },
-		    version: "2.110",
+		    version: "2.111",
 		    slice: function (nodes, start, end) {
 		        return _slice.call(nodes, start, end)
 		    },
@@ -2725,17 +2724,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	/***/ function(module, exports) {
 
 		avalon.directive('rules', {
-		    parse: function (copy, src, binding) {
-		        var rules = binding.expr
-		        if (/{.+}/.test(rules)) {
-		            copy[binding.name] = avalon.parseExpr(binding)
-		        }
-		    },
 		    diff: function (copy, src, name) {
-		        src[name] = copy[name]
-		        var field = src.dom && src.dom.__ms_duplex__
-		        if (field) {
-		            field.rules = copy[name]
+		        var neo = copy[name]
+		        if (neo && Object.prototype.toString.call(neo) === '[object Object]') {
+		            src[name] = neo.$model || neo
+		            var field = src.dom && src.dom.__ms_duplex__
+		            if (field) {
+		                field.rules = copy[name]
+		            }
 		        }
 		    }
 		})

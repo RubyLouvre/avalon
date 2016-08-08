@@ -1,15 +1,12 @@
 avalon.directive('rules', {
-    parse: function (copy, src, binding) {
-        var rules = binding.expr
-        if (/{.+}/.test(rules)) {
-            copy[binding.name] = avalon.parseExpr(binding)
-        }
-    },
     diff: function (copy, src, name) {
-        src[name] = copy[name]
-        var field = src.dom && src.dom.__ms_duplex__
-        if (field) {
-            field.rules = copy[name]
+        var neo = copy[name]
+        if (neo && Object.prototype.toString.call(neo) === '[object Object]') {
+            src[name] = neo.$model || neo
+            var field = src.dom && src.dom.__ms_duplex__
+            if (field) {
+                field.rules = copy[name]
+            }
         }
     }
 })
