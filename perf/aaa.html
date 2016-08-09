@@ -1,66 +1,27 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
     <head>
-        <title>ms-validate</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
-        <script src="../dist/avalon.js"></script>
+        <title>first example</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.next.js"></script>
         <script>
-            avalon.component('ms-button', {
-                template: '<button type="button"><span ms-click="@change">{{@buttonText}}</span></button>',
-                defaults: {
-                    buttonText: "默认内容",
-                    change:function(){
-                        this.buttonText=123456;
-                    },
-                    myInit:function(){},
-                    onInit:function(e){
-                        var vm=this;
-                        this.myInit();
-                     
-                        vm.$watch('buttonText',function(a, b){
-                            console.log(a, b);
-                           
-                        })
-                    }
-                }
-            })
-
-            var buttonVm1,buttonVm2;
             var vm = avalon.define({
-                $id: 'test',
-                click1:function(){
-                    this.button.buttonText="aaaa";
-                },
-                click2:function(){
-                    this.button2.buttonText="bbbb";
-                },
-                button: {//注意这里不能以 $开头
-                    buttonText:"按钮改变一",
-                    myInit:function(){
-                        buttonVm1=this;
-                    }
-                },
-                button2: {//注意这里不能以 $开头
-                    buttonText:"按钮改变ER",
-                    myInit:function(){
-                        buttonVm2=this;
-                    }
-                }
+                $id: "test",
+                name: "司徒正美",
+                array: [11,22,33]
             })
-
-
-
+            setTimeout(function(){
+               vm.array.set(0, 444)
+            }, 3000)
         </script>
     </head>
 
     <body ms-controller="test">
-    <button ms-click="@click1">按钮一</button>
-    <button ms-click="@click2">按钮二</button>
-    <hr/>
-    <ms-button ></ms-button>
-    <xmp ms-widget='[{is:"ms-button",$id:"test1"},@button]'></xmp>
-    <wbr ms-widget='[{is:"ms-button",$id:"test2"},@button2]'/>
-    <template ms-widget='{is:"ms-button"}'></template>
-</body>
+        <input ms-duplex="@name">
+        <p>Hello,{{@name}}!</p>
+        <ul>
+           <li ms-for="($index,el) in @array">{{$index}}--{{el}}</li>
+        </ul>
+    </body>
 </html>

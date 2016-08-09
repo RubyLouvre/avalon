@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-9:0 version 2.111 by 司徒正美
+ * built in 2016-8-9:11 version 2.111 by 司徒正美
  * 修正 ms-click 在 ms-if 下失效的问题 #1652
  * 修正 limitBy BUG
  * 修正 节点对齐算法 BUG
@@ -999,7 +999,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var decode = __webpack_require__(16)
 	function VText(text) {
 	    if (typeof text === 'string') {
-	        this.type = '#text'
+	        this.nodeName = '#text'
 	        this.nodeValue = text
 	        this.skipContent = !rexpr.test(text)
 	        this.nodeType = 3
@@ -1051,7 +1051,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	function VComment(text) {
 	    if (typeof text === 'string') {
-	        this.type = '#comment'
+	        this.nodeName = '#comment'
 	        this.nodeValue = text
 	        this.skipContent = true
 	        this.nodeType = 8
@@ -1344,7 +1344,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            dest.outerHTML = src.outerHTML
 	        }
 
-	    } else if (nodeName === 'input' && rcheckedType.test(src.type)) {
+	    } else if (nodeName === 'input' && rcheckedType.test(src.nodeName)) {
 
 	        dest.defaultChecked = dest.checked = src.checked
 
@@ -1674,7 +1674,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                vnode.dom = el
 	            }
 
-	            if (el.nodeType === 1 && !vnode.isVoidTag && !plainTag[vnode.type]) {
+	            if (el.nodeType === 1 && !vnode.isVoidTag && !plainTag[vnode.nodeName]) {
 	                if (el.type === 'select-one') {
 	                    //在chrome与firefox下删掉select中的空白节点，会影响到selectedIndex
 	                    var fixIndex = el.selectedIndex
@@ -1721,7 +1721,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        case 3:
 	            return '3' + rwhiteRetain.test(node.nodeValue)
 	        case 1:
-	            return '1' + (node.nodeName || node.type).toLowerCase()
+	            return '1' + node.nodeName.toLowerCase()
 	        case 8:
 	            return '8' + rforHolder.test(node.nodeValue)
 	    }
@@ -2215,9 +2215,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        "throws,transient,volatile")
 	avalon.keyMap = keyMap
 	var quoted = {
-	    type: 1,
+	    nodeName: 1,
 	    template: 1,
 	    order: 1,
+	    type: 1,
 	    nodeValue: 1,
 	    dynamic: 1,
 	    signature: 1,
@@ -3288,7 +3289,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (Object(a) === a) {
 	            //有三个地方可以设置is, 属性,标签名,配置对象
 
-	            var is = src.props.is || (/^ms\-/.test(src.type) ? src.type : 0)
+	            var is = src.props.is || (/^ms\-/.test(src.nodeName) ? src.nodeName : 0)
 
 	            if (!is) {//开始大费周章地获取组件的类型
 	                a = a.$model || a//安全的遍历VBscript
@@ -3355,9 +3356,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                copyList[index] = component
 	                if (src.nodeType === 8 && src.comment) {
 	                    component.dom = src.comment
-	                    src.type = '#comment'
+	                    src.nodeName = '#comment'
 	                }
-	                if (src.type !== component.type) {
+	                if (src.nodeName !== component.nodeName) {
 	                    srcList[index] = component
 	                    update(component, this.mountComponent)
 	                } else {
@@ -3484,7 +3485,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var immunity = events.split(',').concat('is', 'define')
 	var onceWarn = true
 	function initComponent(src, rawOption, local, template) {
-	    var tag = src.type
+	    var tag = src.nodeName
 	    var is = src.props.is
 	    //判定用户传入的标签名是否符合规格
 	    if (!legalTags[tag] && !isCustomTag(tag)) {
@@ -3571,7 +3572,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    delete shellRoot.template
 	    delete shellRoot.skipContent
 	    delete shellRoot.props['ms-widget']
-	    shellRoot.type = 'cheng7'
+	    shellRoot.nodeName = 'cheng7'
 	    shellRoot.children = shellRoot.children || []
 	    shellRoot.props.is = is
 	    shellRoot.props.wid = $id
@@ -3638,7 +3639,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    shellRoot.order = Object.keys(orderUniq).join(',')
 
 	    for (var i in shellRoot) {
-	        if (i !== 'children' && i !== 'type') {
+	        if (i !== 'children' && i !== 'nodeName') {
 	            if (i === 'props') {
 	                avalon.mix(component.props, shellRoot.props)
 	            } else {
@@ -3653,7 +3654,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (soleSlot && (!slots[soleSlot] || !slots[soleSlot].length)) {
 	        slots[soleSlot] = [{
 	                nodeType: 3,
-	                type: '#text',
+	                nodeName: '#text',
 	                nodeValue: vm[soleSlot],
 	                dynamic: true
 	            }]
@@ -3668,14 +3669,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function replaceSlot(vtree, slotName) {
 	    for (var i = 0, el; el = vtree[i]; i++) {
-	        if (el.type === 'slot') {
+	        if (el.nodeName === 'slot') {
 	            vtree.splice(i, 1, {
-	                type: '#comment',
+	                nodeName: '#comment',
 	                nodeValue: 'slot:' + (el.props.name || slotName),
 	                nodeType: 8,
 	                dynamic: (el.props.name || slotName)
 	            }, {
-	                type: '#comment',
+	                nodeName: '#comment',
 	                nodeValue: 'slot-end:',
 	                nodeType: 8
 	            })
@@ -4172,7 +4173,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            i = i === -1 ? str.length : i
 	            var nodeValue = str.slice(0, i).replace(rfill, fill)
 	            str = str.slice(i)//处理文本节点
-	            node = {type: "#text", nodeType: 3, nodeValue: nodeValue}
+	            node = {nodeName: "#text", nodeType: 3, nodeValue: nodeValue}
 	            if (rcontent.test(nodeValue)) {
 	                collectNodes(node, stack, ret)//不收集空白节点
 	            }
@@ -4186,7 +4187,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	                var nodeValue = str.slice(4, l).replace(rfill, fill)
 	                str = str.slice(l + 3)
-	                node = {type: "#comment", nodeType: 8, nodeValue: nodeValue}
+	                node = {nodeName: "#comment", nodeType: 8, nodeValue: nodeValue}
 	                collectNodes(node, stack, ret)
 	                if (rmsForEnd.test(nodeValue)) {
 	                    var p = stack.last()
@@ -4199,9 +4200,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!node) {
 	            var match = str.match(ropenTag)
 	            if (match) {
-	                var type = match[1].toLowerCase()
-	                var isVoidTag = voidTag[type] || match[3] === '\/'
-	                node = {type: type, nodeType: 1, props: {}, children: [], isVoidTag: isVoidTag}
+	                var nodeName = match[1].toLowerCase()
+	                var isVoidTag = voidTag[nodeName] || match[3] === '\/'
+	                node = {nodeName: nodeName, nodeType: 1, props: {}, children: [], isVoidTag: isVoidTag}
 	                var attrs = match[2]
 	                if (attrs) {
 	                    collectProps(attrs, node.props)
@@ -4213,12 +4214,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    node.fire = node.isVoidTag = true
 	                } else {
 	                    stack.push(node)
-	                    if (plainTag[type]) {
-	                        var index = str.indexOf("</" + type + '>')
+	                    if (plainTag[nodeName]) {
+	                        var index = str.indexOf("</" + nodeName + '>')
 	                        var innerHTML = str.slice(0, index).trim()
 	                        str = str.slice(index)
 	                        if (innerHTML) {
-	                            switch (type) {
+	                            switch (nodeName) {
 	                                case 'style':
 	                                case 'script':
 	                                case 'noscript':
@@ -4228,7 +4229,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                    if (innerHTML) {
 	                                        node.children.push({
 	                                            nodeType: 3,
-	                                            type: '#text',
+	                                            nodeName: '#text',
 	                                            skipContent: true,
 	                                            nodeValue: nomalString(innerHTML)
 	                                        })
@@ -4242,7 +4243,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                case 'option':
 	                                    node.children.push({
 	                                        nodeType: 3,
-	                                        type: '#text',
+	                                        nodeName: '#text',
 	                                        nodeValue: nomalString(trimHTML(innerHTML))
 	                                    })
 	                                    break
@@ -4255,12 +4256,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!node) {
 	            var match = str.match(rendTag)
 	            if (match) {
-	                var type = match[1].toLowerCase()
+	                var nodeName = match[1].toLowerCase()
 	                var last = stack.last()
 	                if (!last) {
-	                    avalon.error(match[0] + '前面缺少<' + type + '>')
-	                } else if (last.type !== type) {
-	                    avalon.error(last.type + '没有闭合')
+	                    avalon.error(match[0] + '前面缺少<' + nodeName + '>')
+	                } else if (last.nodeName !== nodeName) {
+	                    avalon.error(last.nodeName + '没有闭合')
 	                }
 	                node = stack.pop()
 	                node.fire = true
@@ -4285,25 +4286,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = lexer
 
 	function fireEnd(node, stack, ret) {
-	    var type = node.type
+	    var nodeName = node.nodeName
 	    var props = node.props
-	    switch (type) {
+	    switch (nodeName) {
 	        case 'input':
 	            if (!props.type) {
 	                props.type = 'text'
 	            }
 	            break
 	        case 'select':
-	            props.type = type + '-' + props.hasOwnProperty('multiple') ? 'multiple' : 'one'
+	            props.type = nodeName + '-' + props.hasOwnProperty('multiple') ? 'multiple' : 'one'
 	            break
 	        case 'table':
 	            addTbody(node.children)
 	            break
 	        default:
-	            if (type.indexOf('ms-') === 0) {
-	                props.is = type
+	            if (nodeName.indexOf('ms-') === 0) {
+	                props.is = nodeName
 	                if (!props['ms-widget']) {
-	                    props['ms-widget'] = '{is:' + avalon.quote(type) + '}'
+	                    props['ms-widget'] = '{is:' + avalon.quote(nodeName) + '}'
 	                }
 	            }
 	            if (props['ms-widget']) {
@@ -4319,13 +4320,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var arr = p ? p.children : ret
 	        arr.splice(arr.length - 1, 0, {
 	            nodeType: 8,
-	            type: '#comment',
+	            nodeName: '#comment',
 	            nodeValue: 'ms-for:' + forExpr
 	        })
 
 	        markeRepeatRange(arr, {
 	            nodeType: 8,
-	            type: '#comment',
+	            nodeName: '#comment',
 	            nodeValue: 'ms-for-end:'
 	        })
 	    }
@@ -4464,10 +4465,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (var i = 0; i < n; i++) {
 	        var node = nodes[i]
 	        if (!tbody) {
-	            if (node.type === 'tr') {
+	            if (node.nodeName === 'tr') {
 	                tbody = {
 	                    nodeType: 1,
-	                    type: 'tbody',
+	                    nodeName: 'tbody',
 	                    children: [],
 	                    props: {}
 	                }
@@ -4478,7 +4479,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                nodes[i] = tbody
 	            }
 	        } else {
-	            if (node.type !== 'tr' && node.nodeType === 1) {
+	            if (node.nodeName !== 'tr' && node.nodeType === 1) {
 	                tbody = false
 	            } else {
 	                tbody.children.push(node)
@@ -4538,7 +4539,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                a.skipContent = true
 	                return false
 	            }
-	            if (/^ms\-/.test(a.type) || hasDirectiveAttrs(a.props)) {
+	            if (/^ms\-/.test(a.nodeName) || hasDirectiveAttrs(a.props)) {
 	                a.dynamic = true
 	            } else {
 	                a.skipAttrs = true
@@ -4810,7 +4811,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            var copy = {
 	                props: {},
-	                type: vdom.type,
+	                nodeName: vdom.nodeName,
 	                nodeType: 1
 	            }
 	            var bindings = extractBindings(copy, vdom.props)
@@ -4870,13 +4871,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	              
 	                vdom.$append = addTag({
 	                    nodeType: 8,
-	                    type: '#comment',
+	                    nodeName: '#comment',
 	                    nodeValue: vdom.signature,
 	                    key: 'traceKey'
 	                }) + '\n},__local__,vnodes)\n' +
 	                        addTag({
 	                            nodeType: 8,
-	                            type: "#comment",
+	                            nodeName: "#comment",
 	                            signature: vdom.signature,
 	                            nodeValue: "ms-for-end:"
 	                        }) + '\n'
@@ -4898,11 +4899,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }else{
 	                return add(createCachedNode(vdom))
 	            }
-	   //     default:
-	//            if (Array.isArray(vdom)) {
-	//                console.log(vdom)
-	//                vdom.$append = parseNodes(vdom, true)
-	//            }
 	    }
 
 	}
@@ -4963,7 +4959,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var uuid
 	    switch (vdom.nodeType) {
 	        case 1:
-	            uuid = vdom.type + ';' + Object.keys(vdom.props).sort().map(function (k) {
+	            uuid = vdom.nodeName + ';' + Object.keys(vdom.props).sort().map(function (k) {
 	                return k + '-' + vdom.props[k]
 	            }).join(';') + ';' + avalon.vdomAdaptor(vdom, 'toHTML').length
 	            break
@@ -5937,7 +5933,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    } else {
 	        this.nodeType = 1
-	        this.type = type
+	        this.nodeName = type
 	        this.props = props
 	        this.children = children
 	    }
@@ -5959,7 +5955,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	VElement.prototype = {
 	    constructor: VElement,
 	    toDOM: function () {
-	        var dom, tagName = this.type
+	        var dom, tagName = this.nodeName
 	        if (avalon.modern && svgTags[tagName]) {
 	            dom = createSVG(tagName)
 	        } else {
@@ -5986,7 +5982,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        var c = this.children || []
 	        var template = c[0] ? c[0].nodeValue : ''
-	        switch (this.type) {
+	        switch (this.nodeName) {
 	            case 'xmp':
 	            case 'script':
 	            case 'style':
@@ -6019,7 +6015,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	        arr = arr.length ? ' ' + arr.join(' ') : ''
-	        var str = '<' + this.type + arr
+	        var str = '<' + this.nodeName + arr
 	        if (this.isVoidTag) {
 	            return str + '/>'
 	        }
@@ -6029,7 +6025,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return c ? avalon.vdomAdaptor(c, 'toHTML') : ''
 	            }).join('')
 	        }
-	        return str + '</' + this.type + '>'
+	        return str + '</' + this.nodeName + '>'
 	    }
 	}
 
@@ -6931,12 +6927,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            dtype = 'radio'
 	        }
 
-	        if (!/input|textarea|select/.test(src.type)) {
+	        if (!/input|textarea|select/.test(src.nodeName)) {
 	            if ('contenteditable' in src.props) {
 	                dtype = 'contenteditable'
 	            }
 	        } else if (!dtype) {
-	            dtype = src.type === 'select' ? 'select' :
+	            dtype = src.nodeName === 'select' ? 'select' :
 	                    etype === 'checkbox' ? 'checkbox' :
 	                    etype === 'radio' ? 'radio' :
 	                    'input'

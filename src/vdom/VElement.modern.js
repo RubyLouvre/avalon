@@ -6,7 +6,7 @@ function VElement(type, props, children) {
         }
     } else {
         this.nodeType = 1
-        this.type = type
+        this.nodeName = type
         this.props = props
         this.children = children
     }
@@ -28,7 +28,7 @@ var supportTemplate = 'content' in document.createElement('template')
 VElement.prototype = {
     constructor: VElement,
     toDOM: function () {
-        var dom, tagName = this.type
+        var dom, tagName = this.nodeName
         if (avalon.modern && svgTags[tagName]) {
             dom = createSVG(tagName)
         } else {
@@ -55,7 +55,7 @@ VElement.prototype = {
         }
         var c = this.children || []
         var template = c[0] ? c[0].nodeValue : ''
-        switch (this.type) {
+        switch (this.nodeName) {
             case 'xmp':
             case 'script':
             case 'style':
@@ -88,7 +88,7 @@ VElement.prototype = {
             }
         }
         arr = arr.length ? ' ' + arr.join(' ') : ''
-        var str = '<' + this.type + arr
+        var str = '<' + this.nodeName + arr
         if (this.isVoidTag) {
             return str + '/>'
         }
@@ -98,7 +98,7 @@ VElement.prototype = {
                 return c ? avalon.vdomAdaptor(c, 'toHTML') : ''
             }).join('')
         }
-        return str + '</' + this.type + '>'
+        return str + '</' + this.nodeName + '>'
     }
 }
 

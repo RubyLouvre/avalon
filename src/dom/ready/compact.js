@@ -40,9 +40,11 @@ if (document.readyState === 'complete') {
         doScrollCheck()
     }
 }
+
 if (window.document) {
     avalon.bind(window, 'load', fireReady)
 }
+
 avalon.ready = function (fn) {
     if (!isReady) {
         readyList.push(fn)

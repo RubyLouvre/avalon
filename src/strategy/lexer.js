@@ -35,7 +35,7 @@ function lexer(str) {
             i = i === -1 ? str.length : i
             var nodeValue = str.slice(0, i).replace(rfill, fill)
             str = str.slice(i)//处理文本节点
-            node = {type: "#text", nodeType: 3, nodeValue: nodeValue}
+            node = {nodeName: "#text", nodeType: 3, nodeValue: nodeValue}
             if (rcontent.test(nodeValue)) {
                 collectNodes(node, stack, ret)//不收集空白节点
             }
@@ -49,7 +49,7 @@ function lexer(str) {
                 }
                 var nodeValue = str.slice(4, l).replace(rfill, fill)
                 str = str.slice(l + 3)
-                node = {type: "#comment", nodeType: 8, nodeValue: nodeValue}
+                node = {nodeName: "#comment", nodeType: 8, nodeValue: nodeValue}
                 collectNodes(node, stack, ret)
                 if (rmsForEnd.test(nodeValue)) {
                     var p = stack.last()
@@ -62,9 +62,9 @@ function lexer(str) {
         if (!node) {
             var match = str.match(ropenTag)
             if (match) {
-                var type = match[1].toLowerCase()
-                var isVoidTag = voidTag[type] || match[3] === '\/'
-                node = {type: type, nodeType: 1, props: {}, children: [], isVoidTag: isVoidTag}
+                var nodeName = match[1].toLowerCase()
+                var isVoidTag = voidTag[nodeName] || match[3] === '\/'
+                node = {nodeName: nodeName, nodeType: 1, props: {}, children: [], isVoidTag: isVoidTag}
                 var attrs = match[2]
                 if (attrs) {
                     collectProps(attrs, node.props)
@@ -76,12 +76,12 @@ function lexer(str) {
                     node.fire = node.isVoidTag = true
                 } else {
                     stack.push(node)
-                    if (plainTag[type]) {
-                        var index = str.indexOf("</" + type + '>')
+                    if (plainTag[nodeName]) {
+                        var index = str.indexOf("</" + nodeName + '>')
                         var innerHTML = str.slice(0, index).trim()
                         str = str.slice(index)
                         if (innerHTML) {
-                            switch (type) {
+                            switch (nodeName) {
                                 case 'style':
                                 case 'script':
                                 case 'noscript':
@@ -91,7 +91,7 @@ function lexer(str) {
                                     if (innerHTML) {
                                         node.children.push({
                                             nodeType: 3,
-                                            type: '#text',
+                                            nodeName: '#text',
                                             skipContent: true,
                                             nodeValue: nomalString(innerHTML)
                                         })
@@ -105,7 +105,7 @@ function lexer(str) {
                                 case 'option':
                                     node.children.push({
                                         nodeType: 3,
-                                        type: '#text',
+                                        nodeName: '#text',
                                         nodeValue: nomalString(trimHTML(innerHTML))
                                     })
                                     break
@@ -118,12 +118,12 @@ function lexer(str) {
         if (!node) {
             var match = str.match(rendTag)
             if (match) {
-                var type = match[1].toLowerCase()
+                var nodeName = match[1].toLowerCase()
                 var last = stack.last()
                 if (!last) {
-                    avalon.error(match[0] + '前面缺少<' + type + '>')
-                } else if (last.type !== type) {
-                    avalon.error(last.type + '没有闭合')
+                    avalon.error(match[0] + '前面缺少<' + nodeName + '>')
+                } else if (last.nodeName !== nodeName) {
+                    avalon.error(last.nodeName + '没有闭合')
                 }
                 node = stack.pop()
                 node.fire = true
@@ -148,25 +148,25 @@ function lexer(str) {
 module.exports = lexer
 
 function fireEnd(node, stack, ret) {
-    var type = node.type
+    var nodeName = node.nodeName
     var props = node.props
-    switch (type) {
+    switch (nodeName) {
         case 'input':
             if (!props.type) {
                 props.type = 'text'
             }
             break
         case 'select':
-            props.type = type + '-' + props.hasOwnProperty('multiple') ? 'multiple' : 'one'
+            props.type = nodeName + '-' + props.hasOwnProperty('multiple') ? 'multiple' : 'one'
             break
         case 'table':
             addTbody(node.children)
             break
         default:
-            if (type.indexOf('ms-') === 0) {
-                props.is = type
+            if (nodeName.indexOf('ms-') === 0) {
+                props.is = nodeName
                 if (!props['ms-widget']) {
-                    props['ms-widget'] = '{is:' + avalon.quote(type) + '}'
+                    props['ms-widget'] = '{is:' + avalon.quote(nodeName) + '}'
                 }
             }
             if (props['ms-widget']) {
@@ -182,13 +182,13 @@ function fireEnd(node, stack, ret) {
         var arr = p ? p.children : ret
         arr.splice(arr.length - 1, 0, {
             nodeType: 8,
-            type: '#comment',
+            nodeName: '#comment',
             nodeValue: 'ms-for:' + forExpr
         })
 
         markeRepeatRange(arr, {
             nodeType: 8,
-            type: '#comment',
+            nodeName: '#comment',
             nodeValue: 'ms-for-end:'
         })
     }
@@ -327,10 +327,10 @@ function addTbody(nodes) {
     for (var i = 0; i < n; i++) {
         var node = nodes[i]
         if (!tbody) {
-            if (node.type === 'tr') {
+            if (node.nodeName === 'tr') {
                 tbody = {
                     nodeType: 1,
-                    type: 'tbody',
+                    nodeName: 'tbody',
                     children: [],
                     props: {}
                 }
@@ -341,7 +341,7 @@ function addTbody(nodes) {
                 nodes[i] = tbody
             }
         } else {
-            if (node.type !== 'tr' && node.nodeType === 1) {
+            if (node.nodeName !== 'tr' && node.nodeType === 1) {
                 tbody = false
             } else {
                 tbody.children.push(node)

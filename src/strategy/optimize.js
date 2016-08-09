@@ -28,7 +28,7 @@ function hasDirective(a) {
                 a.skipContent = true
                 return false
             }
-            if (/^ms\-/.test(a.type) || hasDirectiveAttrs(a.props)) {
+            if (/^ms\-/.test(a.nodeName) || hasDirectiveAttrs(a.props)) {
                 a.dynamic = true
             } else {
                 a.skipAttrs = true

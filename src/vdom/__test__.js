@@ -19,7 +19,7 @@ describe('vdom', function () {
             expect(el).to.have.property('toDOM')
             expect(el).to.have.property('toHTML')
             expect(el.nodeValue).to.equal('aaa')
-            expect(el.type).to.equal('#comment')
+            expect(el.type||el.nodeName).to.equal('#comment')
         })
     })
 
@@ -30,7 +30,7 @@ describe('vdom', function () {
             expect(el).to.have.property('toDOM')
             expect(el).to.have.property('toHTML')
             expect(el.nodeValue).to.equal('aaa')
-            expect(el.type).to.equal('#text')
+            expect(el.type||el.nodeName).to.equal('#text')
         })
     })
 

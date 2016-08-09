@@ -10,7 +10,7 @@ describe('strategy', function () {
             var nodes = avalon.lexer("<div>aaa</div>")
             expect(nodes.length).to.equal(1)
             var div = nodes[0]
-            expect(div.type).to.equal("div")
+            expect(div.nodeName).to.equal("div")
             expect(div.template).to.equal("aaa")
             expect(div.props).to.eql({})
             expect(div.children).to.eql([])
@@ -20,7 +20,7 @@ describe('strategy', function () {
 
             expect(nodes.length).to.equal(1)
             var div = nodes[0]
-            expect(div.type).to.equal("br")
+            expect(div.nodeName).to.equal("br")
             expect(div.template).to.equal("")
             expect(div.isVoidTag).to.equal(true)
 
@@ -32,46 +32,46 @@ describe('strategy', function () {
 
             expect(nodes.length).to.equal(3)
 
-            expect(nodes[0].type).to.equal("div")
-            expect(nodes[1].type).to.equal("div")
-            expect(nodes[2].type).to.equal("div")
+            expect(nodes[0].nodeName).to.equal("div")
+            expect(nodes[1].nodeName).to.equal("div")
+            expect(nodes[2].nodeName).to.equal("div")
         })
         it("多个div,div套div", function () {
             var str = "<div><div>01</div><div>02</div></div><div>222</div><div>333</div>"
             var nodes = avalon.lexer(str)
             expect(nodes.length).to.equal(3)
-            expect(nodes[0].type).to.equal("div")
+            expect(nodes[0].nodeName).to.equal("div")
             expect(nodes[0].template).to.equal("<div>01</div><div>02</div>")
-            expect(nodes[1].type).to.equal("div")
-            expect(nodes[2].type).to.equal("div")
+            expect(nodes[1].nodeName).to.equal("div")
+            expect(nodes[2].nodeName).to.equal("div")
         })
         it("多个div,div套div2", function () {
             var str = "<div><div><div></div><div></div></div><div>02</div></div><div>222</div><div>333</div>"
             var nodes = avalon.lexer(str)
             expect(nodes.length).to.equal(3)
-            expect(nodes[0].type).to.equal("div")
+            expect(nodes[0].nodeName).to.equal("div")
             expect(nodes[0].template).to.equal("<div><div></div><div></div></div><div>02</div>")
-            expect(nodes[1].type).to.equal("div")
-            expect(nodes[2].type).to.equal("div")
+            expect(nodes[1].nodeName).to.equal("div")
+            expect(nodes[2].nodeName).to.equal("div")
         })
         it("多个div,div套div3", function () {
             var str = "<div id='<div></div><div></div>'><div><div></div><div></div></div><div>02</div></div><div>222</div>"
             var nodes = avalon.lexer(str)
             expect(nodes.length).to.equal(2)
-            expect(nodes[0].type).to.equal("div")
+            expect(nodes[0].nodeName).to.equal("div")
             expect(nodes[0].props.id).to.equal('<div></div><div></div>')
             expect(nodes[0].template).to.equal("<div><div></div><div></div></div><div>02</div>")
-            expect(nodes[1].type).to.equal("div")
+            expect(nodes[1].nodeName).to.equal("div")
 
         })
         it("ms-repeat", function () {
             var str = "<hr/><ul ms-controller=aa><li ms-repeat=array>{{el}}</li></ul>"
             var nodes = avalon.lexer(str)
             expect(nodes.length).to.equal(2)
-            expect(nodes[0].type).to.equal("hr")
-            expect(nodes[1].type).to.equal("ul")
+            expect(nodes[0].nodeName).to.equal("hr")
+            expect(nodes[1].nodeName).to.equal("ul")
             var li = nodes[1].children[0]
-            expect(li.type).to.equal("li")
+            expect(li.nodeName).to.equal("li")
             expect(li.template).to.equal("{{el}}")
         })
         it("voidTag", function () {
@@ -81,17 +81,17 @@ describe('strategy', function () {
                 "col", "command", "embed", "keygen", "param", "source", "track", "wbr"
             ]
             for (var i = 0, el; el = nodes[i]; i++) {
-                expect(el.type).to.equal(types[i])
+                expect(el.nodeName).to.equal(types[i])
             }
         })
         it("comment", function () {
             var str = "<!--<br><div></div>-->xxx<div>yyy</div><!--aaa-->"
             var nodes = avalon.lexer(str)
             expect(nodes.length).to.equal(4)
-            expect(nodes[0].type).to.equal("#comment")
-            expect(nodes[1].type).to.equal("#text")
-            expect(nodes[2].type).to.equal("div")
-            expect(nodes[3].type).to.equal("#comment")
+            expect(nodes[0].nodeName).to.equal("#comment")
+            expect(nodes[1].nodeName).to.equal("#text")
+            expect(nodes[2].nodeName).to.equal("div")
+            expect(nodes[3].nodeName).to.equal("#comment")
         })
         it('tbody', function () {
             var str = heredoc(function () {
@@ -111,26 +111,26 @@ describe('strategy', function () {
                  */
             })
             var nodes = avalon.lexer(str)
-            expect(nodes[0].type).to.equal("table")
+            expect(nodes[0].nodeName).to.equal("table")
             var children = nodes[0].children
-            expect(children[0].type).to.equal("#text")
-            expect(children[1].type).to.equal("thead")
-            expect(children[2].type).to.equal("#text")
-            expect(children[3].type).to.equal("tfoot")
-            expect(children[4].type).to.equal("#text")
-            expect(children[5].type).to.equal("tbody")
-            expect(children[6].type).to.equal("tfoot")
-            expect(children[7].type).to.equal("#text")
-            expect(children[8].type).to.equal("tbody")
+            expect(children[0].nodeName).to.equal("#text")
+            expect(children[1].nodeName).to.equal("thead")
+            expect(children[2].nodeName).to.equal("#text")
+            expect(children[3].nodeName).to.equal("tfoot")
+            expect(children[4].nodeName).to.equal("#text")
+            expect(children[5].nodeName).to.equal("tbody")
+            expect(children[6].nodeName).to.equal("tfoot")
+            expect(children[7].nodeName).to.equal("#text")
+            expect(children[8].nodeName).to.equal("tbody")
             var c = children[5].children
             expect(c.length).to.equal(6)
 
-            expect(c[0].type).to.equal("tr")
-            expect(c[1].type).to.equal("#text")
-            expect(c[2].type).to.equal("tr")
-            expect(c[3].type).to.equal("#text")
-            expect(c[4].type).to.equal("tr")
-            expect(c[5].type).to.equal("#text")
+            expect(c[0].nodeName).to.equal("tr")
+            expect(c[1].nodeName).to.equal("#text")
+            expect(c[2].nodeName).to.equal("tr")
+            expect(c[3].nodeName).to.equal("#text")
+            expect(c[4].nodeName).to.equal("tr")
+            expect(c[5].nodeName).to.equal("#text")
         })
 
 
@@ -154,11 +154,11 @@ describe('strategy', function () {
                  */
             }).trim()
             var nodes = avalon.lexer(str)
-            expect(nodes[0].type).to.equal("body")
+            expect(nodes[0].nodeName).to.equal("body")
             var c = nodes[0].children
-            expect(c[0].type).to.equal("#text")
-            expect(c[1].type).to.equal("div")
-            expect(c[2].type).to.equal("#text")
+            expect(c[0].nodeName).to.equal("#text")
+            expect(c[1].nodeName).to.equal("div")
+            expect(c[2].nodeName).to.equal("#text")
 
         })
 

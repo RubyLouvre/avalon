@@ -56,7 +56,7 @@ function parseNode(vdom) {
             }
             var copy = {
                 props: {},
-                type: vdom.type,
+                nodeName: vdom.nodeName,
                 nodeType: 1
             }
             var bindings = extractBindings(copy, vdom.props)
@@ -116,13 +116,13 @@ function parseNode(vdom) {
               
                 vdom.$append = addTag({
                     nodeType: 8,
-                    type: '#comment',
+                    nodeName: '#comment',
                     nodeValue: vdom.signature,
                     key: 'traceKey'
                 }) + '\n},__local__,vnodes)\n' +
                         addTag({
                             nodeType: 8,
-                            type: "#comment",
+                            nodeName: "#comment",
                             signature: vdom.signature,
                             nodeValue: "ms-for-end:"
                         }) + '\n'
@@ -204,7 +204,7 @@ function createCachedNode(vdom) {
     var uuid
     switch (vdom.nodeType) {
         case 1:
-            uuid = vdom.type + ';' + Object.keys(vdom.props).sort().map(function (k) {
+            uuid = vdom.nodeName + ';' + Object.keys(vdom.props).sort().map(function (k) {
                 return k + '-' + vdom.props[k]
             }).join(';') + ';' + avalon.vdomAdaptor(vdom, 'toHTML').length
             break

@@ -10,7 +10,7 @@ function fix(dest, src) {
             dest.outerHTML = src.outerHTML
         }
 
-    } else if (nodeName === 'input' && rcheckedType.test(src.type)) {
+    } else if (nodeName === 'input' && rcheckedType.test(src.nodeName)) {
 
         dest.defaultChecked = dest.checked = src.checked
 

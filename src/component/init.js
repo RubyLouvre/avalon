@@ -6,7 +6,7 @@ var componentEvents = avalon.oneObject(events)
 var immunity = events.split(',').concat('is', 'define')
 var onceWarn = true
 function initComponent(src, rawOption, local, template) {
-    var tag = src.type
+    var tag = src.nodeName
     var is = src.props.is
     //判定用户传入的标签名是否符合规格
     if (!legalTags[tag] && !isCustomTag(tag)) {
@@ -93,7 +93,7 @@ function initComponent(src, rawOption, local, template) {
     delete shellRoot.template
     delete shellRoot.skipContent
     delete shellRoot.props['ms-widget']
-    shellRoot.type = 'cheng7'
+    shellRoot.nodeName = 'cheng7'
     shellRoot.children = shellRoot.children || []
     shellRoot.props.is = is
     shellRoot.props.wid = $id
@@ -160,7 +160,7 @@ function fnTemplate() {
     shellRoot.order = Object.keys(orderUniq).join(',')
 
     for (var i in shellRoot) {
-        if (i !== 'children' && i !== 'type') {
+        if (i !== 'children' && i !== 'nodeName') {
             if (i === 'props') {
                 avalon.mix(component.props, shellRoot.props)
             } else {
@@ -175,7 +175,7 @@ function fnTemplate() {
     if (soleSlot && (!slots[soleSlot] || !slots[soleSlot].length)) {
         slots[soleSlot] = [{
                 nodeType: 3,
-                type: '#text',
+                nodeName: '#text',
                 nodeValue: vm[soleSlot],
                 dynamic: true
             }]
@@ -190,14 +190,14 @@ function fnTemplate() {
 
 function replaceSlot(vtree, slotName) {
     for (var i = 0, el; el = vtree[i]; i++) {
-        if (el.type === 'slot') {
+        if (el.nodeName === 'slot') {
             vtree.splice(i, 1, {
-                type: '#comment',
+                nodeName: '#comment',
                 nodeValue: 'slot:' + (el.props.name || slotName),
                 nodeType: 8,
                 dynamic: (el.props.name || slotName)
             }, {
-                type: '#comment',
+                nodeName: '#comment',
                 nodeValue: 'slot-end:',
                 nodeType: 8
             })

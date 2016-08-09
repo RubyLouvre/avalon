@@ -34,12 +34,12 @@ avalon.directive('duplex', {
             dtype = 'radio'
         }
 
-        if (!/input|textarea|select/.test(src.type)) {
+        if (!/input|textarea|select/.test(src.nodeName)) {
             if ('contenteditable' in src.props) {
                 dtype = 'contenteditable'
             }
         } else if (!dtype) {
-            dtype = src.type === 'select' ? 'select' :
+            dtype = src.nodeName === 'select' ? 'select' :
                     etype === 'checkbox' ? 'checkbox' :
                     etype === 'radio' ? 'radio' :
                     'input'

@@ -7,9 +7,10 @@ var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete
         "throws,transient,volatile")
 avalon.keyMap = keyMap
 var quoted = {
-    type: 1,
+    nodeName: 1,
     template: 1,
     order: 1,
+    type: 1,
     nodeValue: 1,
     dynamic: 1,
     signature: 1,

@@ -1,7 +1,7 @@
 
 function VComment(text) {
     if (typeof text === 'string') {
-        this.type = '#comment'
+        this.nodeName = '#comment'
         this.nodeValue = text
         this.skipContent = true
         this.nodeType = 8

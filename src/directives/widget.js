@@ -27,7 +27,7 @@ avalon.directive('widget', {
         if (Object(a) === a) {
             //有三个地方可以设置is, 属性,标签名,配置对象
 
-            var is = src.props.is || (/^ms\-/.test(src.type) ? src.type : 0)
+            var is = src.props.is || (/^ms\-/.test(src.nodeName) ? src.nodeName : 0)
 
             if (!is) {//开始大费周章地获取组件的类型
                 a = a.$model || a//安全的遍历VBscript
@@ -94,9 +94,9 @@ avalon.directive('widget', {
                 copyList[index] = component
                 if (src.nodeType === 8 && src.comment) {
                     component.dom = src.comment
-                    src.type = '#comment'
+                    src.nodeName = '#comment'
                 }
-                if (src.type !== component.type) {
+                if (src.nodeName !== component.nodeName) {
                     srcList[index] = component
                     update(component, this.mountComponent)
                 } else {

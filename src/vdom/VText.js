@@ -2,7 +2,7 @@ var rexpr = avalon.config.rexpr
 var decode = require('../strategy/decode')
 function VText(text) {
     if (typeof text === 'string') {
-        this.type = '#text'
+        this.nodeName = '#text'
         this.nodeValue = text
         this.skipContent = !rexpr.test(text)
         this.nodeType = 3
