@@ -25,41 +25,11 @@ Thank you for contributing! Please carefully read the following before opening y
 
 - 在avalon什么版本下? 你如果打开avalon源码,将最开头的那段注释贴上来!
 
-- 提供一个可以运行的例子,比如像这人
+- 提供一个可以运行的例子,比如像这人,请认真用``` code ```及与markdown语法编写ISSUE
 
 https://github.com/RubyLouvre/avalon/issues/1665
 
-```
-组件监听无法触发
-built in 2016-8-4:19 version 2.110 by 司徒正美 谷歌浏览器
 
-    <body ms-controller="test">
-        <xmp ms-widget="{is:'ms-div',$id:'123',Sesshoumaru:@Sesshoumaru}"></xmp>
-        <button ms-click="@click">123</button>
-        <script>
-            avalon.component('ms-div', {
-                template: '<div></div>',
-                defaults: {
-                    Sesshoumaru: '',
-                    onInit: function() {
-                        this.$watch('Sesshoumaru', function() {
-                            console.log('Inuyasha love Sesshoumaru') //此处无法触发
-                        });
-                    }
-                }
-            })
-
-            var vm = avalon.define({
-                $id: 'test',
-                Sesshoumaru: '',
-                click: function() {
-                    this.Sesshoumaru = 567;
-                },
-            });
-        </script>
-    </body>
-
-```
 
 - 想快点得到解决,请提供具体的操作步骤
 
