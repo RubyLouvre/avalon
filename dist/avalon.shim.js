@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.5.6 built in 2016.6.30
+ avalon.shim.js 1.5.6 built in 2016.8.12
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -2784,7 +2784,7 @@ function getIdent(input, lastIndex) {
                     var content = input.slice(i + 1, innerResult.i)
                     try {
                         var text = (scpCompile(["return " + content]))()
-                        result[lastLength - 1] = last + "." + text
+                        result[lastLength - 1] = last + "[" + text + "]"
                     } catch (e) {
                     }
                 }
@@ -2825,11 +2825,22 @@ function addAssign(vars, vmodel, name, binding) {
     var ret = [],
             prefix = " = " + name + "."
     for (var i = vars.length, prop; prop = vars[--i]; ) {
-        var arr = prop.split("."), a
+        
+        //修改prop格式： arr[0].pro1 ==> arr.0.pro1,
+        var arr, a ,oldprop = prop
+        if( prop.indexOf('[') >= 0 ){
+            prop = prop.replace('[','.').replace(']','')
+        }
+        arr = prop.split(".")
         var first = arr[0]
         while (a = arr.shift()) {
             if (vmodel.hasOwnProperty(a)) {
                 ret.push(first + prefix + first)
+                
+                //bugfix:https://github.com/RubyLouvre/avalon/issues/1682
+                //对于由于expr中可能存在不可达的语句如：j5son[0].cn1 ==='' || j5son[0].cn2 ===''造成当cn2改变时dom未修改
+                //解决办法：对于vars数组里的所有变量，都取一次值，保证可以触发依赖收集。但不影响表达式的结果
+                ret.push(generateID('_nousevar_' + i) + ' = '+ oldprop)
                 binding.observers.push({
                     v: vmodel,
                     p: prop
