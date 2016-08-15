@@ -60,6 +60,7 @@ avalon.injectBinding = function (binding) {
                         a = binding.getter.apply(0, binding.args)
                     } catch(e) {
                         a = null
+                        avalon.log(e)
                     }
                 }
             } else {

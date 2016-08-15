@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.shim.js 1.5.6 built in 2016.8.12
+ avalon.shim.js 1.5.6 built in 2016.8.15
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -1849,6 +1849,7 @@ avalon.injectBinding = function (binding) {
                         a = binding.getter.apply(0, binding.args)
                     } catch(e) {
                         a = null
+                        avalon.log(e)
                     }
                 }
             } else {
@@ -2947,9 +2948,26 @@ function parseExpr(expr, vmodels, binding) {
     } else {
         expr = "\nreturn " + expr + ";" //IE全家 Function("return ")出错，需要Function("return ;")
     }
+    
+    
+    var assignstr = []
+    avalon.each(assigns,function(idx,el){
+        // 这里跟上面 //bugfix:https://github.com/RubyLouvre/avalon/issues/1682 是相对应的。
+        if(el.indexOf('_nousevar_')>-1){
+            
+            //子属性还没有创建，这里避免报错
+            assignstr.push("try{var " + el + "}catch(e){}")
+        }
+        else{
+            
+            assignstr.push("var " + el )
+            
+        }
+        
+    });
+    
     /* jshint ignore:start */
-    getter = scpCompile(names.concat("'use strict';\nvar " +
-            assigns.join(",\n") + expr))
+    getter = scpCompile(names.concat("'use strict';\n" + assignstr.join(";\n") + expr))
     /* jshint ignore:end */
 
     return evaluatorPool.put(exprId, getter)
