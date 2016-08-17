@@ -5,19 +5,23 @@ module.exports = function addTbody(nodes) {
     for (var i = 0; i < n; i++) {
         var node = nodes[i]
         if (!tbody) {
-            if (node.nodeName === 'tr') {
+            if ((node.type || node.nodeName) === 'tr') {
+                //收集tr及tr两旁的注释节点
                 tbody = {
                     nodeName: 'tbody',
                     children: []
                 }
                 tbody.children.push(node)
+                if (node.type) {
+                    delete node.type
+                }
                 needAddTbody = true
                 if (start === 0)
                     start = i
                 nodes[i] = tbody
             }
         } else {
-            if (node.nodeName !== 'tr' && node.nodeType === 1) {
+            if (node.nodeName !== 'tr' && node.children) {
                 tbody = false
             } else {
                 tbody.children.push(node)
