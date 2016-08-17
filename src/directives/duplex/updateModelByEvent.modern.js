@@ -13,7 +13,7 @@ var document = avalon.document
 
 function updateModelByEvent(node, vnode) {
     var events = {}
-    var data = vnode.duplexData
+    var data = vnode['ms-duplex']
     data.update = updateModel
     //添加需要监听的事件
     switch (data.type) {

@@ -12,7 +12,7 @@ var window = avalon.window
 var document = avalon.document
 function updateModelByEvent(node, vnode) {
     var events = {}
-    var data = vnode.duplexData
+    var data = vnode['ms-duplex']
     data.update = updateModel
     //添加需要监听的事件
     switch (data.type) {
@@ -181,14 +181,14 @@ var getCaret = function (target) {
     var len
     var endRange
 
-    if (typeof target.selectionStart == "number" && typeof target.selectionEnd == "number") {
+    if (typeof target.selectionStart == 'number' && typeof target.selectionEnd == 'number') {
         start = target.selectionStart
     } else {
         range = document.selection.createRange()
 
         if (range && range.parentElement() == target) {
             len = target.value.length
-            normalizedValue = target.value.replace(/\r\n/g, "\n")
+            normalizedValue = target.value.replace(/\r\n/g, '\n')
 
             textInputRange = target.createTextRange()
             textInputRange.moveToBookmark(range.getBookmark())
@@ -196,11 +196,11 @@ var getCaret = function (target) {
             endRange = target.createTextRange()
             endRange.collapse(false)
 
-            if (textInputRange.compareEndPoints("StartToEnd", endRange) > -1) {
+            if (textInputRange.compareEndPoints('StartToEnd', endRange) > -1) {
                 start = len
             } else {
-                start = -textInputRange.moveStart("character", -len)
-                start += normalizedValue.slice(0, start).split("\n").length - 1
+                start = -textInputRange.moveStart('character', -len)
+                start += normalizedValue.slice(0, start).split('\n').length - 1
             }
         }
     }

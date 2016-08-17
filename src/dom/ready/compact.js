@@ -1,5 +1,4 @@
 var scan = require('./scan')
-scan.htmlfy = require('./htmlfy')
 var document = avalon.document
 var window = avalon.window
 var root = avalon.root

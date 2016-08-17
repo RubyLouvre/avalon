@@ -5,7 +5,7 @@ avalon.directive('text', {
     parse: function (copy, src, binding) {
         copy[binding.name] = 1
         src.children = []
-        copy.children = '[{\nnodeType:3,\ntype:"#text",\ndynamic:true,' +
+        copy.children = '[{\nnodeName:"#text",\ndynamic:true,' +
                 '\nnodeValue:avalon.parsers.string(' +
                 avalon.parseExpr(binding) + ')}]'
     },
@@ -22,7 +22,7 @@ avalon.directive('text', {
             }
             var dom = document.createTextNode('x')
             parent.appendChild(dom)
-            var a = {nodeType: 3, type:'#text', dom: dom}
+            var a = {nodeType: 3, nodeName:'#text', dom: dom}
             vdom.children.push(a)
         }
     }

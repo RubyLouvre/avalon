@@ -1,13 +1,16 @@
 var updateModelMethods = require('./updateModelMethods')
 
-function updateModelHandle(e) {
+function updateModelHandle(event) {
     var elem = this
     var field = this.__ms_duplex__
-    if (elem.composing || field.parse(elem.value) === field.lastViewValue){
+    if (elem.composing) {
         //防止onpropertychange引发爆栈
         return
     }
-   if (elem.caret) {
+    if (elem.value === field.value) {
+        return
+    }
+    if (elem.caret) {
         try {
             var pos = field.getCaret(elem)
             field.pos = pos
@@ -15,6 +18,7 @@ function updateModelHandle(e) {
             avalon.warn('fixCaret error', e)
         }
     }
+    
     if (field.debounceTime > 4) {
         var timestamp = new Date()
         var left = timestamp - field.time || 0

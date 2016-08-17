@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html ng-app="app">
+<head>
+<meta name="description" content="DBMON Angular" />
+<script src="../dist/avalon.js"></script>
+  <link href="./styles.css" rel="stylesheet" type="text/css" />
+  <meta charset="utf-8">
+  <title>dbmon (angular)</title>
+</head>
+<body ms-controller="DBMonCtrl">
+  <!-- DBMon -->
+  <div>
+    <table class="table table-striped latest-data">
+      <tbody>
+        <!-- Database -->
+        <tr ms-for="db in @databases">
+          <td class="dbname">
+            {{db.dbname}}
+          </td>
+          <!-- Sample -->
+          <td class="query-count">
+            <span >
+              {{db.lastSample.nbQueries}}
+            </span>
+          </td>
+          <!-- Query -->
+          <td ms-for="q in db.lastSample.topFiveQueries" >
+            {{q.formatElapsed}}
+            
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <script src="./ENV.js"></script>
+  <script src="./memory-stats.js"></script>
+  <script src="./monitor.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

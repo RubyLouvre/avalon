@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                quesArray: [
+                    {
+                        name: 'ques-1',
+                        isFlag: true
+                    },
+                    {
+                        name: 'ques-2',
+                        isFlag: false
+                    }
+                ],
+                changeFlag: function (index) {
+                    var _this = this.quesArray[index];
+                    _this.isFlag = !_this.isFlag;
+                },
+                show: function (index) {
+                    alert(index);
+                }
+            })
+        </script>
+    </head>
+    <body ms-controller="test">
+        <div ms-for="($index,ques) in @quesArray">
+            <span ms-text="ques.name"></span>
+            <button ms-click='@changeFlag($index)'>changeFlag</button>
+            <span ms-if="ques.isFlag">
+                <button ms-click="@show($index)" ms-attr="{title:$index}">显示 $index</button>
+            </span>    
+        </div>              
+    </body>
+</html>

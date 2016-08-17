@@ -9,10 +9,9 @@ avalon.keyMap = keyMap
 var quoted = {
     nodeName: 1,
     template: 1,
-    order: 1,
+    forExpr: 1,
     type: 1,
     nodeValue: 1,
-    dynamic: 1,
     signature: 1,
     wid: 1
 }
@@ -27,19 +26,27 @@ function stringify(obj) {
     var arr1 = []
 //字符不用东西包起来就变成变量
     for (var i in obj) {
-        if (i === 'props') {
-            var arr2 = []
-            for (var k in obj.props) {
-                var kv = obj.props[k]
-                if (typeof kv === 'string') {
-                    kv = quote(kv)
+        var type = typeof obj[i]
+        if (type === 'object') {
+            if (i === 'props' ) {
+                var arr2 = []
+                for (var k in obj.props) {
+                    var kv = obj.props[k]
+                    if (typeof kv === 'string') {
+                        kv = quote(kv)
+                    }
+                    arr2.push(fixKey(k) + ': ' + kv)
                 }
-                arr2.push(fixKey(k) + ': ' + kv)
+                arr1.push(i+': {' + arr2.join(',\n') + '}')
+
+            } else if (i === 'children') {
+                arr1.push('children: [' + obj[i].map(function (a) {
+                    return stringify(a)
+                }) + ']')
             }
-            arr1.push('props: {' + arr2.join(',\n') + '}')
-        } else if (obj.hasOwnProperty(i) && i !== 'dom') {
+        } else if (obj.hasOwnProperty(i)) {
             var v = obj[i]
-            if (typeof v === 'string') {
+            if (type === 'string') {
                 v = quoted[i] ? quote(v) : v
             }
             arr1.push(fixKey(i) + ':' + v)

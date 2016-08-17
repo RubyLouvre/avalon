@@ -71,8 +71,8 @@ function parseExpr(str, category) {
 
     var input = str.replace(rregexp, dig).//移除所有正则
             replace(rstring, dig).//移除所有字符串
-            
-   // input = avalon.unescapeHTML(input).
+
+            // input = avalon.unescapeHTML(input).
             replace(rshortCircuit, dig).//移除所有短路或
             replace(ruselessSp, '$1').//移除. |两端空白
             split(rpipeline) //使用管道符分离所有过滤器及表达式的正体
@@ -135,16 +135,6 @@ function parseExpr(str, category) {
         filters.unshift(2, 0)
     } else if (category === 'duplex') {
 
-//从vm中得到当前属性的值
-        var getterBody = [
-            'function (__vmodel__){',
-            'try{',
-            'return ' + body + '\n',
-            '}catch(e){',
-            quoteError(str, category).replace('parse', 'get'),
-            '}',
-            '}']
-        evaluatorPool.put('duplex:' + cacheID, getterBody.join('\n'))
         //给vm同步某个属性
         var setterBody = [
             'function (__vmodel__,__value__){',
@@ -156,19 +146,20 @@ function parseExpr(str, category) {
             '}']
         evaluatorPool.put('duplex:set:' + cacheID, setterBody.join('\n'))
         //对某个值进行格式化
-        if (input.length) {
-            var formatBody = [
-                'function (__vmodel__, __value__){',
-                'try{',
-                filters.join('\n'),
-                'return __value__\n',
-                '}catch(e){',
-                quoteError(str, category).replace('parse', 'format'),
-                '}',
-                '}']
-            evaluatorPool.put('duplex:format:' + cacheID, formatBody.join('\n'))
-        }
-        return  evaluatorPool.get('duplex:' + cacheID)
+
+        var getterBody = [
+            'function (__vmodel__){',
+            'try{',
+            'var __value__ = ' + body + '\n',
+            filters.join('\n'),
+            'return __value__\n',
+            '}catch(e){',
+            quoteError(str, category).replace('parse', 'get'),
+            '}',
+            '}'].join('\n')
+        evaluatorPool.put('duplex:get:' + cacheID, getterBody)
+
+        return  getterBody
     } else {
         ret = [
             '(function(){',

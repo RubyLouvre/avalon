@@ -1,41 +1,32 @@
 /**
- * 虚拟DOM的3大构造器
+ * 虚拟DOM的4大构造器
  */
 var VText = require('./VText')
 var VComment = require('./VComment')
 var VElement = require('./VElement.modern')
+var VFragment = require('./VFragment')
 
 avalon.vdomAdaptor = function (obj, method) {
     if (!obj) {//obj在ms-for循环里面可能是null
-        return (method === "toHTML" ? '' :
-            document.createDocumentFragment())
+        return method === "toHTML" ? '' : document.createDocumentFragment()
     }
-    switch (obj.nodeType) {
-        case 3:
+    switch (obj.nodeName) {
+        case '#text':
             return VText.prototype[method].call(obj)
-        case 8:
+        case '#comment':
             return VComment.prototype[method].call(obj)
-        case 1:
-            return VElement.prototype[method].call(obj)
+        case '#document-fragment':
+            return VFragment.prototype[method].call(obj)
+        case void(0):
+            return (new VFragment(obj))[method]()
         default:
-            if (Array.isArray(obj)) {
-                if (method === "toHTML") {
-                    return obj.map(function (a) {
-                        return avalon.vdomAdaptor(a, 'toHTML')
-                    }).join('')
-                } else {
-                    var f = document.createDocumentFragment()
-                    obj.forEach(function (a) {
-                        f.appendChild(avalon.vdomAdaptor(a, 'toDOM'))
-                    })
-                    return f
-                }
-            }
+            return VElement.prototype[method].call(obj)
     }
 }
 
 module.exports = {
     VText: VText,
     VComment: VComment,
-    VElement: VElement
+    VElement: VElement,
+    VFragment: VFragment
 }

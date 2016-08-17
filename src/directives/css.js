@@ -10,7 +10,7 @@ avalon.directive('css', {
             if (Array.isArray(a)) {//转换成对象
                 a = avalon.mix.apply({}, a)
             }
-            if (copy === src || typeof p !== 'object') {//如果一开始为空
+            if (!src.dynamic[name] || !p) {//如果一开始为空
                 src.changeStyle = src[name] = a
             } else {
                 var patch = {}
@@ -35,6 +35,7 @@ avalon.directive('css', {
     update: function (dom, vdom) {
         var change = vdom.changeStyle
         var wrap = avalon(dom)
+        vdom.dynamic['ms-css'] = 1
         for (var name in change) {
             wrap.css(name, change[name])
         }

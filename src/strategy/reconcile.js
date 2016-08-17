@@ -61,7 +61,7 @@ function reconcile(nodes, vnodes, parent) {
                 var nn = document.createComment(vv.nodeValue)
                 vv.dom = nn
                 newNodes.push(nn)
-                if (vv.dynamic === 'for') {
+                if (vv.forExpr) {
                     check = true
                 }
                 i = Math.max(0, --i)

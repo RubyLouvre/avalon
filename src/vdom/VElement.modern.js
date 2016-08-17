@@ -1,15 +1,9 @@
 
 function VElement(type, props, children) {
-    if (typeof type === 'object') {
-        for (var i in type) {
-            this[i] = type[i]
-        }
-    } else {
-        this.nodeType = 1
-        this.nodeName = type
-        this.props = props
-        this.children = children
-    }
+    this.nodeName = type
+    this.props = props
+    this.children = children
+
 }
 function skipFalseAndFunction(a) {
     return a !== false && (Object(a) !== a)
@@ -28,14 +22,17 @@ var supportTemplate = 'content' in document.createElement('template')
 VElement.prototype = {
     constructor: VElement,
     toDOM: function () {
+        if (this.dom)
+            return this.dom
         var dom, tagName = this.nodeName
         if (avalon.modern && svgTags[tagName]) {
             dom = createSVG(tagName)
         } else {
             dom = document.createElement(tagName)
         }
-        var wid = this.props['ms-important'] ||
-                this.props['ms-controller'] || this.wid
+        var props = this.props || {}
+        var wid = props['ms-important'] ||
+                props['ms-controller'] || this.wid
         if (wid) {
             var scope = avalon.scopes[wid]
             var element = scope && scope.vmodel && scope.vmodel.$element
@@ -47,8 +44,8 @@ VElement.prototype = {
                 return element
             }
         }
-        for (var i in this.props) {
-            var val = this.props[i]
+        for (var i in props) {
+            var val = props[i]
             if (skipFalseAndFunction(val)) {
                 dom.setAttribute(i, val + '')
             }
@@ -77,14 +74,15 @@ VElement.prototype = {
                 }
                 break
         }
-        return dom
+        return this.dom = dom
     },
     toHTML: function () {
         var arr = []
-        for (var i in this.props) {
-            var val = this.props[i]
+        var props = this.props || {}
+        for (var i in props) {
+            var val = props[i]
             if (skipFalseAndFunction(val)) {
-                arr.push(i + '=' + avalon.quote(this.props[i] + ''))
+                arr.push(i + '=' + avalon.quote(props[i] + ''))
             }
         }
         arr = arr.length ? ' ' + arr.join(' ') : ''
@@ -93,7 +91,7 @@ VElement.prototype = {
             return str + '/>'
         }
         str += '>'
-        if (this.children.length) {
+        if (this.children) {
             str += this.children.map(function (c) {
                 return c ? avalon.vdomAdaptor(c, 'toHTML') : ''
             }).join('')

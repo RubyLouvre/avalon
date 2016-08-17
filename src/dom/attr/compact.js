@@ -10,6 +10,7 @@ function attrUpdate(node, vnode) {
         return
     }
     if (attrs) {
+        vnode.dynamic['ms-attr'] = 1
         for (var attrName in attrs) {
             var val = attrs[attrName]
             // 处理路径属性

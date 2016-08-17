@@ -47,7 +47,6 @@ describe('duplex', function () {
             bbb: '123a',
             ccc: 'true',
             ddd: true
-
         })
         avalon.scan(div, vm)
         setTimeout(function () {
@@ -55,13 +54,13 @@ describe('duplex', function () {
             var spans = div.getElementsByTagName('span')
 
             expect(inputs[0].value).to.equal('1234')
-            expect(vm.aaa).to.equal('1234')
-            expect(spans[0].innerHTML).to.equal('1234')
+            expect(vm.aaa).to.equal(1234567)
+            expect(spans[0].innerHTML).to.equal('1234567')
             expect(inputs[1].value).to.equal('123')
-            expect(vm.bbb).to.equal(123)
-            expect(spans[1].innerHTML).to.equal('123')
+            expect(vm.bbb).to.equal('123a')
+            expect(spans[1].innerHTML).to.equal('123a')
             expect(inputs[2].value).to.equal('true')
-            expect(vm.ccc).to.equal(true)
+            expect(vm.ccc).to.equal('true')
             expect(spans[2].innerHTML).to.equal('true')
             expect(vm.ddd).to.equal(true)
             expect(spans[3].innerHTML).to.equal('true')
@@ -71,11 +70,11 @@ describe('duplex', function () {
             vm.ddd = false
             setTimeout(function () {
                 expect(inputs[1].value).to.equal('333')
-                expect(vm.bbb).to.equal(333)
-                expect(spans[1].innerHTML).to.equal('333')
+                expect(vm.bbb).to.equal('333b')
+                expect(spans[1].innerHTML).to.equal('333b')
                 expect(inputs[2].value).to.equal('false')
-                expect(vm.ccc).to.equal(false)
-                expect(spans[2].innerHTML).to.equal('false')
+                expect(vm.ccc).to.equal('NaN')
+                expect(spans[2].innerHTML).to.equal('NaN')
                 expect(spans[3].innerHTML).to.equal('false')
                 expect(inputs[3].checked).to.equal(false)
                 done()
@@ -207,23 +206,23 @@ describe('duplex', function () {
             var options = div.getElementsByTagName('option')
             var inputs = div.getElementsByTagName('input')
             var spans = div.getElementsByTagName('span')
-            
-            expect(options[0].selected+"1").to.equal(false+"1")
-            expect(options[1].selected+"2").to.equal(false+"2")
-            expect(options[2].selected+"3").to.equal(true+"3")
+
+            expect(options[0].selected + "1").to.equal(false + "1")
+            expect(options[1].selected + "2").to.equal(false + "2")
+            expect(options[2].selected + "3").to.equal(true + "3")
             expect(options[3].selected).to.equal(false)
 
             expect(spans[0].innerHTML).to.equal('ccc')
             expect(inputs[0].value).to.equal('ccc')
             inputs[0].value = 'bbb'
-            avalon.fireDom(div.getElementsByTagName('select')[0],'change')
+            avalon.fireDom(div.getElementsByTagName('select')[0], 'change')
             setTimeout(function () {
 //                expect(options[0].selected).to.equal(false)
 //                expect(options[1].selected).to.equal(true)
 //                expect(options[2].selected).to.equal(false)
 //                expect(options[3].selected).to.equal(false)
 //                expect(spans[0].innerHTML).to.equal('bbb')
-              
+
                 done()
             })
 
@@ -270,22 +269,22 @@ describe('duplex', function () {
             options[1].selected = true
             options[2].selected = true
             options[3].selected = false
-            avalon.fireDom(div.getElementsByTagName('select')[0],'change')
-             setTimeout(function () {
+            avalon.fireDom(div.getElementsByTagName('select')[0], 'change')
+            setTimeout(function () {
                 expect(vm.arr.concat()).to.eql([222, 333])
-                expect(ps[0].innerHTML).to.eql([222, 333]+"")
+                expect(ps[0].innerHTML).to.eql([222, 333] + "")
                 done()
-             })
-        },100)
+            })
+        }, 100)
     })
-    
+
     it('通过更新修改checkbox中的ms-duplex', function (done) {
         div.innerHTML = heredoc(function () {
             /*
              <div ms-controller='duplex7' >
-            <label ms-for="el in @list">
-            <input ms-duplex="@topic" type="checkbox" ms-attr="{id:el.name,value:el.value}" name="topic">{{el.name}}
-            </label>
+             <label ms-for="el in @list">
+             <input ms-duplex="@topic" type="checkbox" ms-attr="{id:el.name,value:el.value}" name="topic">{{el.name}}
+             </label>
              </div>
              */
         })
@@ -298,85 +297,85 @@ describe('duplex', function () {
         setTimeout(function () {
 
             var inputs = div.getElementsByTagName('input')
-           
+
             expect(inputs[0].checked).to.equal(true)
             expect(inputs[1].checked).to.equal(true)
             expect(inputs[2].checked).to.equal(false)
-            
-            vm.topic = ['1','3']
+
+            vm.topic = ['1', '3']
             setTimeout(function () {
-                 expect(inputs[0].checked).to.equal(true)
-                 expect(inputs[1].checked).to.equal(false)
-                 expect(inputs[2].checked).to.equal(true)
-                 done()
-             },100)
-        },100)
+                expect(inputs[0].checked).to.equal(true)
+                expect(inputs[1].checked).to.equal(false)
+                expect(inputs[2].checked).to.equal(true)
+                done()
+            }, 100)
+        }, 100)
     })
-    it('ms-duplex+radio', function(done){
-         div.innerHTML = heredoc(function () {
+    it('ms-duplex+radio', function (done) {
+        div.innerHTML = heredoc(function () {
             /*
              <div ms-controller='duplex8' >
-           <label><input type="radio" ms-duplex-string="@isChecked" name="check" value="true">是</label>
-           <label><input type="radio" ms-duplex-string="@isChecked" name="check" value="false">否</label>
-            <p ms-text="@isChecked"></p>
+             <label><input type="radio" ms-duplex-string="@isChecked" name="check" value="true">是</label>
+             <label><input type="radio" ms-duplex-string="@isChecked" name="check" value="false">否</label>
+             <p ms-text="@isChecked"></p>
              </div>
              */
         })
         vm = avalon.define({
-            $id:'duplex8',
-            isChecked:''
+            $id: 'duplex8',
+            isChecked: ''
         })
         avalon.scan(div)
         setTimeout(function () {
 
             var inputs = div.getElementsByTagName('input')
-           
+
             expect(inputs[0].checked).to.equal(false)
             expect(inputs[1].checked).to.equal(false)
             fireClick(inputs[0])
             setTimeout(function () {
-                 expect(vm.isChecked).to.equal('true')
-                
-                 fireClick(inputs[1])
-                 setTimeout(function () {
+                expect(vm.isChecked).to.equal('true')
+
+                fireClick(inputs[1])
+                setTimeout(function () {
                     expect(vm.isChecked).to.equal('false')
-                  
+
                     fireClick(inputs[0])
                     setTimeout(function () {
                         expect(vm.isChecked).to.equal('true')
-                         done()
-                    },100)
-                },100)
-             },100)
-        },100)
-   
+                        done()
+                    }, 100)
+                }, 100)
+            }, 100)
+        }, 100)
+
     })
-     it('ms-duplex事件触发问题', function(done){
-         div.innerHTML = heredoc(function () {
+    it('ms-duplex事件触发问题', function (done) {
+        div.innerHTML = heredoc(function () {
             /*
              <div ms-controller='duplex9' >
-          <input ms-duplex="@aaa"/><em>{{@aaa}}</em>
+             <input ms-duplex="@aaa"/><em>{{@aaa}}</em>
              </div>
              */
         })
         vm = avalon.define({
-            $id:'duplex9',
-            aaa:''
+            $id: 'duplex9',
+            aaa: ''
         })
         avalon.scan(div)
         setTimeout(function () {
 
             var input = div.getElementsByTagName('input')[0]
             input.value = 999
-            avalon.fireDom(input,'input')
-            avalon.fireDom(input,'propertychange')
+            avalon.fireDom(input, 'input')
+            avalon.fireDom(input, 'propertychange')
             setTimeout(function () {
                 expect(vm.aaa).to.equal('999')
                 var em = div.getElementsByTagName('em')[0]
                 expect(em.innerHTML).to.equal('999')
                 done()
-             },100)
-        },100)
-   
+            }, 100)
+        }, 100)
+
     })
 })

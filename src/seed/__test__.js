@@ -342,7 +342,7 @@ describe('测试config文件的API', function () {
             expect(avalon.config).to.be.a('function')
             expect(avalon.config).to.have.all.keys(
                     [
-                        'openTag', 'closeTag', 'rbind', 'rexpr', 'rexprg', 'plugins', 'debug'
+                        'openTag', 'closeTag', 'rexpr', 'plugins', 'debug'
                     ])
             expect(avalon.config.openTag).to.equal('{{')
             expect(avalon.config.closeTag).to.equal('}}')

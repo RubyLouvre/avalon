@@ -1,6 +1,8 @@
 var onceWarn = true //只警告一次
+var dom2vdom = require('../../strategy/dom2vdom')
+
 function scan(nodes) {
-    var getHTML = avalon.scan.htmlfy
+    //var getHTML = avalon.scan.htmlfy
     for (var i = 0, elem; elem = nodes[i++]; ) {
         if (elem.nodeType === 1) {
             var $id = getController(elem)
@@ -9,16 +11,19 @@ function scan(nodes) {
             if (vm && !vm.$element) {
                 avalon(elem).removeClass('ms-controller')
                 vm.$element = elem
-             
+
                 //IE6-8下元素的outerHTML前面会有空白
-                var text = getHTML(elem)//elem.outerHTML
-  
+                //第一次扫描就清空所有空白节点,并生成最初的vtree
+                var vtree = dom2vdom(elem)
+
                 var now = new Date()
-                elem.vtree = avalon.speedUp(avalon.lexer(text)) 
-             
+                elem.vtree = avalon.speedUp(vtree)
+
                 var now2 = new Date()
                 onceWarn && avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')
+
                 vm.$render = avalon.render(elem.vtree)
+
                 avalon.scopes[vm.$id] = {
                     vmodel: vm,
                     local: {},
@@ -46,8 +51,8 @@ module.exports = avalon.scan = function (a) {
     }
     scan([a])
 }
-
+// vm.$watch = [{expr:expr,cb:cb,args:args, vm:vm,type:type.    }]
 function getController(a) {
-    return a.getAttribute('ms-controller') || 
-            a.getAttribute(':controller') 
+    return a.getAttribute('ms-controller') ||
+            a.getAttribute(':controller')
 }

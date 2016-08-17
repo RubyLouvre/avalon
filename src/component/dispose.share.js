@@ -34,10 +34,11 @@ function fireDisposeHook(el) {
         return false
     }
 }
+var rtag = /^\w/
 function detachEvents(arr) {
     for (var i in arr) {
         var el = arr[i]
-        if (el.nodeType === 1) {
+        if (rtag.test(el.nodeName)) {
             for (var i in el) {
                 if (i.indexOf('ms-on') === 0) {
                     delete el[i]

@@ -5,7 +5,7 @@ module.exports = function addField(node, vnode) {
     if (rules && !field.validator) {
         while (node && node.nodeType === 1) {
             var validator = node._ms_validator_
-            if (validator) {
+            if (validator ) {
                 field.rules = rules
                 field.validator = validator
                 if(avalon.Array.ensure(validator.fields, field)){

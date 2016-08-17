@@ -29,7 +29,7 @@ avalon.shadowCopy(avalon, {
         boolean: function (a) {
             if(a === '')
                 return a
-            return a === 'true'|| a == '1'
+            return a === 'true'|| a == '1' 
         }
     },
     version: "2.111",

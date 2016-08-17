@@ -46,8 +46,8 @@ avalon.directive('class', {
         src.classEvent = classEvent
 
         var className = classNames(copyValue)
-       
-        if (copy === src || srcValue !== className) {
+
+        if (!src.dynamic[name] || srcValue !== className) {
             src[name] = className
             src['change-' + type] = className
             update(src, this.update, type)
@@ -56,6 +56,7 @@ avalon.directive('class', {
     update: function (dom, vdom) {
         if (!dom || dom.nodeType !== 1)
             return
+
         var classEvent = vdom.classEvent
         if (classEvent) {
             for (var i in classEvent) {
@@ -73,6 +74,7 @@ avalon.directive('class', {
             var value = vdom[name]
             if (value === void 0)
                 return
+            vdom.dynamic['ms-' + type] = 1
             if (type === 'class') {
                 dom && setClass(dom, vdom)
             } else {

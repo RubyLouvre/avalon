@@ -16,11 +16,9 @@ function heredoc(fn) {
             }
 var feather = heredoc(function(){
     /*
-修正 ms-click 在 ms-if 下失效的问题 #1652
-修正 limitBy BUG
-修正 节点对齐算法 BUG
-优化 mediatorFactory
-修正 data-for-rendered BUG
+修正 ms-skip BUG
+去掉节点生成算法
+首先渲染改成根据真实DOM生成虚拟DOM
      */
 })
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')

@@ -14,24 +14,27 @@ avalon.directive('html', {
     },
     diff: function (copy, src, name) {
         var copyValue = copy[name] + ''
-        if (copy === src || !src.render || copyValue !== src[name]) {
+
+        if (!src.dynamic['ms-html'] || !src.render || copyValue !== src[name]) {
             src[name] = copyValue
+           
             var oldTree = avalon.speedUp(avalon.lexer(copyValue))
-            src.children = oldTree
+
             var render = avalon.render(oldTree, copy.local)
             src.render = render
+
             var newTree = render(copy.vmodel, copy.local)
-            copy.children = newTree
+            
+            src.children = copy.children = newTree
             update(src, this.update)
-        } else {
+        } else if (src.render) {
             var newTree = src.render(copy.vmodel, copy.local)
-          copy.children = newTree
+            copy.children = newTree
         }
     },
     update: function (dom, vdom, parent) {
+        vdom.dynamic['ms-html'] = 1
         avalon.clearHTML(dom)
-        var f = avalon.vdomAdaptor(vdom.children)
-        reconcile(f.childNodes, vdom.children, f)
-        dom.appendChild(f)
+        dom.appendChild(avalon.domize(vdom.children))
     }
 })

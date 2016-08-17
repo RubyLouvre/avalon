@@ -45,7 +45,7 @@ describe('widget', function () {
         })
         avalon.scan(div)
         setTimeout(function () {
-           
+
             var span = div.getElementsByTagName('span')
             expect(span[0][textProp]).to.equal('这是VM中的TEXT')
             expect(span[1][textProp]).to.equal('这是标签里面的TEXT')
@@ -74,7 +74,6 @@ describe('widget', function () {
         })
         vm = avalon.define({
             $id: 'widget1',
-          
             aaa: {
                 panelBody: 'aaa面板',
                 button: {
@@ -635,6 +634,56 @@ describe('widget', function () {
             }, 100)
         }, 150)
 
-    })
 
+
+
+    })
+    it('skipContent导致组件渲染异常', function (done) {
+
+        div.innerHTML = heredoc(function () {
+            /*
+             <div :controller="vmRoot">
+             <xmp :widget='{is:"CoursePlanCard", $id:"CoursePlanCard"}'></xmp>
+             </div>
+             */
+        })
+        avalon.component("CoursePlanCard", {
+            template: heredoc(function () {
+                /*
+                 <div class="CoursePlanCard" >
+                 <div class="CoursePlanCard-info">
+                 <p class="CoursePlanCard-tip" id='aass'>
+                 <span>计划类型:</span>{{''}}</p>
+                 <p class="CoursePlanCard-tip">
+                 <span>计划时间:</span>{{''}}</p>  
+                 <p class="CoursePlanCard-tip">
+                 <span>必修学分:</span>{{''}}</p>
+                 <p class="CoursePlanCard-tip">
+                 <span>选修学分:</span>{{''}}</p>
+                 </div>
+                 </div>
+                 */
+            }),
+            defaults: {
+                onInit: function (a) {
+                    console.log(a)
+                }
+            }
+        })
+
+        vm = avalon.define({
+            $id: "vmRoot"
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            expect(div.getElementsByTagName('span').length).to.equal(4)
+            delete avalon.components['CoursePlanCard']
+            delete avalon.scopes['vmRoot']
+            delete avalon.scopes['CoursePlanCard']
+            delete avalon.vmodels['vmRoot']
+            delete avalon.vmodels['CoursePlanCard']
+            done()
+        }, 150)
+
+    })
 })

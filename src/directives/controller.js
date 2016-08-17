@@ -1,6 +1,6 @@
 // 抽离出来公用
 var update = require('./_update')
-var reconcile = require('../strategy/reconcile')
+//var reconcile = require('../strategy/reconcile')
 
 var cache = {}
 avalon.mediatorFactoryCache = function (__vmodel__, __present__) {
@@ -17,8 +17,8 @@ avalon.directive('controller', {
     priority: 2,
     parse: function (copy, src, binding) {
         var quoted = avalon.quote(binding.expr)
-        copy[binding.name] = quoted
         copy.local = '__local__'
+        copy[binding.name] = 1
         copy.vmodel = [
             '(function(){',
             'var vm = avalon.vmodels[' + quoted + ']',
@@ -34,8 +34,7 @@ avalon.directive('controller', {
         src.$append = '\n})(__vmodel__);'
     },
     diff: function (copy, src, name) {
-        if (copy === src || src[name] !== copy[name]) {
-            src[name] = copy[name]
+        if (!src.dynamic[name]) {
             src.local = copy.local
             src.vmodel = copy.vmodel
             update(src, this.update)
@@ -44,7 +43,9 @@ avalon.directive('controller', {
     update: function (dom, vdom, parent, important) {
         var vmodel = vdom.vmodel
         var local = vdom.local
-        var id = vdom['ms-controller']
+        var name = important ? 'ms-important' : 'ms-controller'
+        vdom.dynamic[name] = 1
+        var id = vdom.props[name]
         var scope = avalon.scopes[id]
         if (scope) {
             return
@@ -59,8 +60,6 @@ avalon.directive('controller', {
         }
         vmodel.$render = render
         vmodel.$element = dom
-      
-        reconcile([dom], [vdom], parent)
         dom.vtree = [vdom]
         if (top !== vmodel) {
             top.$render = top.$render || render

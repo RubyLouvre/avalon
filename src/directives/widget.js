@@ -1,5 +1,5 @@
 var update = require('./_update')
-var reconcile = require('../strategy/reconcile')
+//var reconcile = require('../strategy/reconcile')
 var tryInitComponent = require('../component/init')
 
 avalon.component = function (name, definition) {
@@ -46,10 +46,8 @@ avalon.directive('widget', {
             if (!src[vmName]) {
                 if (!tryInitComponent(src, copy[name], copy.local, copy.template)) {
                     //替换成注释节点
-                    src.nodeType = 8
                     src.nodeValue = 'unresolved component placeholder'
                     copyList[index] = src
-
                     update(src, this.mountComment)
                     return
                 }
@@ -67,7 +65,9 @@ avalon.directive('widget', {
                     if (!component.skipContent) {
                         component.skipContent = 'optimize'
                     }
+                   
                     update(src, this.replaceCachedComponent)
+                    
                     update(component, function () {
                         if (component.skipContent === 'optimize') {
                             component.skipContent = true
@@ -81,7 +81,6 @@ avalon.directive('widget', {
             var component = tree[0]
             if (component && isComponentReady(component)) {
                 component.local = copy.local
-                src.dynamic = true
                 Array(
                         vmName,
                         'component-html:' + is,
@@ -92,9 +91,9 @@ avalon.directive('widget', {
                 })
                 component.vmodel = comVm
                 copyList[index] = component
-                if (src.nodeType === 8 && src.comment) {
+                // 如果与ms-if配合使用, 会跑这分支
+                if (src.comment && src.nodeValue) {
                     component.dom = src.comment
-                    src.nodeName = '#comment'
                 }
                 if (src.nodeName !== component.nodeName) {
                     srcList[index] = component
@@ -103,9 +102,12 @@ avalon.directive('widget', {
                     update(src, this.updateComponent)
                 }
             } else {
-                src.nodeType = 8
+             
                 src.nodeValue = 'unresolved component placeholder'
-                copyList[index] = src
+                copyList[index] = {
+                   nodeValue: 'unresolved component placeholder',
+                   nodeName: '#comment'
+                }
                 update(src, this.mountComment)
             }
         } else {
@@ -117,6 +119,7 @@ avalon.directive('widget', {
     replaceCachedComponent: function (dom, vdom, parent) {
         var com = vdom.com
         parent.replaceChild(com, dom)
+        vdom.dom = com
         delete vdom.com
     },
     mountComment: function (dom, vdom, parent) {
@@ -132,7 +135,9 @@ avalon.directive('widget', {
         }
     },
     mountComponent: function (dom, vdom, parent) {
+        delete vdom.dom
         var com = avalon.vdomAdaptor(vdom, 'toDOM')
+       
         var is = vdom.props.is
         var vm = vdom['component-vm:' + is]
         vm.$fire('onInit', {
@@ -140,8 +145,9 @@ avalon.directive('widget', {
             vmodel: vm,
             is: is
         })
-        reconcile([com], [vdom])
+      
         parent.replaceChild(com, dom)
+   
         vdom.dom = vm.$element = com
         com.vtree = [vdom]
         avalon.onComponentDispose(com)
@@ -201,7 +207,7 @@ function isComponentReady(vnode) {
 
 function hasUnresolvedComponent(vnode) {
     vnode.children.forEach(function (el) {
-        if (el.nodeType === 8) {
+        if (el.nodeName === '#comment') {
             if (el.nodeValue === 'unresolved component placeholder') {
                 throw 'unresolved'
             }

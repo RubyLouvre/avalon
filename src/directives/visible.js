@@ -27,7 +27,7 @@ avalon.parseDisplay = parseDisplay
 avalon.directive('visible', {
     diff: function (copy, src, name) {
         var c = !!copy[name]
-        if (copy === src || c !== src[name]) {
+        if (!src.dynamic[name] || c !== src[name]) {
             src[name] = c
             update(src, this.update )
         }
@@ -36,6 +36,7 @@ avalon.directive('visible', {
         if(!dom || dom.nodeType !== 1){
             return
         }
+        vdom.dynamic['ms-visible'] = 1
         var show = vdom['ms-visible']
         var display = dom.style.display
         var value

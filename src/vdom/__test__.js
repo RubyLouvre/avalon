@@ -3,7 +3,7 @@ var vdom = require('./index')
 describe('vdom', function () {
     describe('VElement', function () {
         it('test', function () {
-            var el = new vdom.VElement({type: 'p', props: {title: '111'}, children: []})
+            var el = new vdom.VElement('p', {title: '111'}, [])
             expect(el).to.be.instanceof(vdom.VElement)
             expect(el).to.have.property('toDOM')
             expect(el).to.have.property('toHTML')
@@ -19,7 +19,7 @@ describe('vdom', function () {
             expect(el).to.have.property('toDOM')
             expect(el).to.have.property('toHTML')
             expect(el.nodeValue).to.equal('aaa')
-            expect(el.type||el.nodeName).to.equal('#comment')
+            expect(el.type || el.nodeName).to.equal('#comment')
         })
     })
 
@@ -30,7 +30,7 @@ describe('vdom', function () {
             expect(el).to.have.property('toDOM')
             expect(el).to.have.property('toHTML')
             expect(el.nodeValue).to.equal('aaa')
-            expect(el.type||el.nodeName).to.equal('#text')
+            expect(el.type || el.nodeName).to.equal('#text')
         })
     })
 

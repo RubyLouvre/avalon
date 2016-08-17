@@ -5,20 +5,17 @@ var updateModelMethods = {
         var dom = data.dom
         var rawValue = dom[prop]
         var parsedValue = data.parse(rawValue)
-        var formatedValue = data.format(data.vmodel, parsedValue)
-        data.lastViewValue = formatedValue
+
         //有时候parse后一致,vm不会改变,但input里面的值
-        if (parsedValue !== data.modelValue) {
-            data.set(data.vmodel, parsedValue)
-            callback(data)
-        }
-       
-        dom[prop] = formatedValue
-      
+        data.value = rawValue
+        data.set(data.vmodel, parsedValue)
+        callback(data)
+
+
         var pos = data.pos
-        if (dom.caret ) {
+        if (dom.caret) {
             data.setCaret(dom, pos)
-         }
+        }
         //vm.aaa = '1234567890'
         //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
 
@@ -26,23 +23,22 @@ var updateModelMethods = {
     radio: function () {
         var data = this
         if (data.isChecked) {
-            var val = !data.modelValue
+            var val = !data.value
             data.set(data.vmodel, val)
             callback(data)
         } else {
             updateModelMethods.input.call(data)
-            data.lastViewValue = NaN
+            data.value = NaN
         }
     },
     checkbox: function () {
         var data = this
-        var array = data.modelValue
+        var array = data.value
         if (!Array.isArray(array)) {
             avalon.warn('ms-duplex应用于checkbox上要对应一个数组')
             array = [array]
         }
         var method = data.dom.checked ? 'ensure' : 'remove'
-        
         if (array[method]) {
             var val = data.parse(data.dom.value)
             array[method](val)
@@ -53,7 +49,7 @@ var updateModelMethods = {
     select: function () {
         var data = this
         var val = avalon(data.dom).val() //字符串或字符串数组
-        if (val + '' !== this.modelValue + '') {
+        if (val + '' !== this.value + '') {
             if (Array.isArray(val)) { //转换布尔数组或其他
                 val = val.map(function (v) {
                     return data.parse(v)

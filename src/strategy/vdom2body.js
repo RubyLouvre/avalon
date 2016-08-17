@@ -2,10 +2,10 @@
  * 本模块是用于将虚拟DOM变成一个函数
  */
 
-var extractBindings = require('./extractBindings')
-var stringify = require('./stringify')
-var parseExpr = require('./parseExpr')
-var decode = require('../decode')
+var extractBindings = require('./parser/extractBindings')
+var stringify = require('./parser/stringify')
+var parseExpr = require('./parser/parseExpr')
+var decode = require('./parser/decode')
 var config = avalon.config
 var quote = avalon.quote
 var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
@@ -42,65 +42,21 @@ function parseNodes(source, inner) {
 
 
 function parseNode(vdom) {
-    switch (vdom.nodeType) {
-        case 3:
-            if (config.rexpr.test(vdom.nodeValue) && !vdom.skipContent ) {
+    if (!vdom.nodeName)
+        return false
+    switch (vdom.nodeName) {
+        case '#text':
+            if (vdom.dynamic) {
                 return add(parseText(vdom))
             } else {
-                return add(createCachedNode(vdom))
+                return addTag(vdom)
             }
-        case 1:
 
-            if (vdom.skipContent && vdom.skipAttrs) {
-                return add(createCachedNode(vdom))
-            }
-            var copy = {
-                props: {},
-                nodeName: vdom.nodeName,
-                nodeType: 1
-            }
-            var bindings = extractBindings(copy, vdom.props)
-            var order = bindings.map(function (b) {
-                //将ms-*的值变成函数,并赋给copy.props[ms-*]
-                //如果涉及到修改结构,则在source添加$append,$prepend
-                avalon.directives[b.type].parse(copy, vdom, b)
-                return b.name
-            }).join(',')
-            if (order) {
-                copy.order = order
-            }
-            if (vdom.isVoidTag) {
-                copy.isVoidTag = true
-            } else {
-                if (!('children' in copy)) {
-                    var c = vdom.children
-                    if (c.length) {
-                        copy.children = '(function(){' + parseNodes(c) + '})()'
-                    } else {
-                        copy.children = '[]'
-                    }
-                }
-            }
-            if (vdom.template)
-                copy.template = vdom.template
-            if (vdom.skipContent)
-                copy.skipContent = true
-            if (vdom.skipAttrs) {
-                copy.skipAttrs = true
-            }
-            if (vdom.dynamic) {
-                copy.dynamic = true
-            }
-            return addTag(copy)
-        case 8:
+        case '#comment':
             var nodeValue = vdom.nodeValue
-            if (vdom.dynamic === 'for') {// 处理ms-for指令
-                if (nodeValue.indexOf('ms-for:') !== 0) {
-                    avalon.error('ms-for指令前不能有空格')
-                }
-               
+            if (vdom.forExpr) {// 处理ms-for指令
                 var copy = {
-                    dynamic: 'for',
+                    dynamic: true,
                     vmodel: '__vmodel__'
                 }
                 for (var i in vdom) {
@@ -108,20 +64,18 @@ function parseNode(vdom) {
                         copy[i] = vdom[i]
                     }
                 }
-
                 avalon.directives['for'].parse(copy, vdom, vdom)
-                vdom.$append += parseNodes(avalon.speedUp(avalon.lexer(vdom.template)),true)
-                return addTag(copy) 
+
+                vdom.$append += avalon.caches[vdom.signature] //vdom.template
+                return addTag(copy)
             } else if (nodeValue === 'ms-for-end:') {
-              
                 vdom.$append = addTag({
-                    nodeType: 8,
                     nodeName: '#comment',
-                    nodeValue: vdom.signature,
-                    key: 'traceKey'
-                }) + '\n},__local__,vnodes)\n' +
+                    nodeValue: vdom.signature
+
+                }) +
+                        ' return vnodes}\n })\n},__local__,vnodes)\n' +
                         addTag({
-                            nodeType: 8,
                             nodeName: "#comment",
                             signature: vdom.signature,
                             nodeValue: "ms-for-end:"
@@ -139,11 +93,68 @@ function parseNode(vdom) {
                     avalon.warn(nodeValue + ' parse fail!')
                 }
                 return ret
-            } else if(vdom.dynamic){
+            } else {
                 return addTag(vdom)
-            }else{
-                return add(createCachedNode(vdom))
             }
+        default:
+            if (!vdom.dynamic && vdom.skipContent) {
+                return addTag(vdom)
+            }
+
+            var copy = {
+                nodeName: vdom.nodeName
+            }
+            var props = vdom.props
+            if (vdom.dynamic) {
+                copy.dynamic = '{}'
+
+                var bindings = extractBindings(copy, props)
+                bindings.map(function (b) {
+                    //将ms-*的值变成函数,并赋给copy.props[ms-*]
+                    //如果涉及到修改结构,则在source添加$append,$prepend
+                    avalon.directives[b.type].parse(copy, vdom, b)
+                    return b.name
+                })
+
+            } else if (props) {
+                copy.props = {}
+                for (var i in props) {
+                    copy.props[i] = props[i]
+                }
+            }
+
+            if (vdom.isVoidTag) {
+                copy.isVoidTag = true
+            } else {
+                if (!('children' in copy)) {
+                    var c = vdom.children
+                    if (c) {
+                        if (vdom.skipContent) {
+                            copy.children = '[' + c.map(function (a) {
+                                return stringify(a)
+                            }) + ']'
+                        } else if (c.length === 1 && c[0].nodeName === '#text') {
+
+                            if (c[0].dynamic) {
+                                copy.children = '[' + parseText(c[0]) + ']'
+                            } else {
+                                copy.children = '[' + stringify(c[0]) + ']'
+                            }
+
+                        } else {
+
+                            copy.children = '(function(){' + parseNodes(c) + '})()'
+                        }
+                    }
+                }
+            }
+            if (vdom.template)
+                copy.template = vdom.template
+            if (vdom.skipContent)
+                copy.skipContent = true
+
+            return addTag(copy)
+
     }
 
 }
@@ -172,7 +183,7 @@ function parseText(el) {
         }).join(' + ')
         nodeValue = 'String(' + token + ')'
     }
-    return '{\ntype: "#text",\nnodeType:3,\ndynamic:true,\nnodeValue: ' + nodeValue + '\n}'
+    return '{\nnodeName: "#text",\ndynamic:true,\nnodeValue: ' + nodeValue + '\n}'
 }
 
 var rlineSp = /\n\s*/g
@@ -198,27 +209,4 @@ function extractExpr(str) {
         }
     } while (str.length)
     return ret
-}
-
-function createCachedNode(vdom) {
-    var uuid
-    switch (vdom.nodeType) {
-        case 1:
-            uuid = vdom.nodeName + ';' + Object.keys(vdom.props).sort().map(function (k) {
-                return k + '-' + vdom.props[k]
-            }).join(';') + ';' + avalon.vdomAdaptor(vdom, 'toHTML').length
-            break
-        case 3:
-        case 8:
-            uuid = vdom.nodeType + ';' + vdom.nodeValue
-            break
-    }
-
-    avalon.caches[uuid] = vdom
-
-    return 'avalon.getCachedNode(' + quote(uuid) + ')'
-}
-
-avalon.getCachedNode = function (uuid) {
-    return avalon.caches[uuid]
 }

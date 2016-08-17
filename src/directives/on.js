@@ -10,7 +10,7 @@ var rfilters = /\|.+/g
 var rfilters = /\|.+/g
 var rvar = /((?:\@|\$|\#\#)?\w+)/g
 var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
-
+var rmson = /^ms\-on\-(\w+)/
 //基于事件代理的高性能事件绑定
 avalon.directive('on', {
     priority: 3000,
@@ -35,19 +35,17 @@ avalon.directive('on', {
     diff: function (copy, src, name) {
         var fn = copy[name]
         var uuid = fn.uuid
-        var type = uuid.split('_').shift()
-        var search = type.slice(1) + ':' + uuid
-        var srcFn = src[name]
+        var srcFn = src[name] || {}
         var hasChange = false
-        var init = copy === src
-        if (init || !srcFn || srcFn.uuid !== uuid) {
+       
+      
+        if (!src.dynamic[name] || srcFn.uuid !== uuid) {
             src[name] = fn
-            src.addEvents = src.addEvents || {}
-            src.addEvents[search] = fn
             avalon.eventListeners.uuid = fn
             hasChange = true
         }
-        if (diffObj(src.local|| {}, copy.local)) {
+    
+        if (diffObj(src.local || {}, copy.local)) {
             hasChange = true
         }
         if (hasChange) {
@@ -59,15 +57,17 @@ avalon.directive('on', {
     update: function (dom, vdom) {
         if (!dom || dom.nodeType > 1) //在循环绑定中，这里为null
             return
-        var key, type, listener
+        var key, listener
         dom._ms_context_ = vdom.vmodel
         dom._ms_local = vdom.local
-        for (key in vdom.addEvents) {
-            type = key.split(':').shift()
-            listener = vdom.addEvents[key]
-            avalon.bind(dom, type, listener)
+        for (key in vdom) {
+            var match = key.match(rmson)
+            if (match) {
+                listener = vdom[key]
+                vdom.dynamic[key] = 1
+                avalon.bind(dom, match[1], listener)
+            }
         }
-        delete vdom.addEvents
     }
 })
 
@@ -79,3 +79,4 @@ function diffObj(a, b) {
     }
     return false
 }
+

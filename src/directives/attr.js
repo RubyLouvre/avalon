@@ -11,7 +11,7 @@ avalon.directive('attr', {
             if (Array.isArray(a)) {//转换成对象
                 a = avalon.mix.apply({}, a)
             }
-            if (copy === src || typeof p !== 'object') {//如果一开始为空
+            if (!src.dynamic[name] || !p) {//如果一开始为空
                 src.changeAttr = src[name] = a
             } else {
                 var patch = {}

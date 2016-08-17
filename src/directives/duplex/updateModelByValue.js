@@ -1,12 +1,14 @@
 var valueHijack = false
 try { //#272 IE9-IE11, firefox
+    
     var setters = {}
     var aproto = HTMLInputElement.prototype
     var bproto = HTMLTextAreaElement.prototype
     function newSetter(value) { // jshint ignore:line
         setters[this.tagName].call(this, value)
-        if (!this.caret && this.__ms_duplex__) {
-            this.__ms_duplex__.update.call(this)
+        var data = this.__ms_duplex__
+        if (!this.caret && data && data.isString) {
+            data.update.call(this, {type: 'setter'})
         }
     }
     var inputProto = HTMLInputElement.prototype

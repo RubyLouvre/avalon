@@ -20,7 +20,7 @@ avalon.directive('effect', {
         copyObj.action = copyObj.action || 'enter'
 
         if (Object(copyObj) === copyObj) {
-            if (copy === src || diffObj(copyObj, src[name] || {})) {
+            if (!src.dynamic[name] || diffObj(copyObj, src[name] || {})) {
                 src[name] = copyObj
                 update(src, this.update, 'afterChange')
             }
@@ -29,18 +29,18 @@ avalon.directive('effect', {
             delete copy[name]
         }
     },
-    update: function (dom, vnode, parent, option) {
+    update: function (dom, vdom, parent, option) {
         if (dom.animating) {
             return
         }
         dom.animating = true
-        var localeOption = vnode['ms-effect']
+        var localeOption = vdom['ms-effect']
         var type = localeOption.is
         option = option || {}
         if (!type) {//如果没有指定类型
             return avalon.warn('need is option')
         }
-
+        vdom.dynamic['ms-effect'] = 1
         var effects = avalon.effects
         if (support.css && !effects[type]) {
             avalon.effect(type, {})
@@ -216,9 +216,9 @@ function createAction(action) {
 
 avalon.applyEffect = function (node, vnode, opts) {
     var cb = opts.cb
-    var hook = opts.hook
     var curEffect = vnode['ms-effect']
-    if (curEffect && !avalon.document.hidden) {
+    if (curEffect) {
+        var hook = opts.hook
         var old = curEffect[hook]
         if (cb) {
             if (Array.isArray(old)) {
