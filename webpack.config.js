@@ -16,9 +16,12 @@ function heredoc(fn) {
             }
 var feather = heredoc(function(){
     /*
+2.1.4 and npm 2.1.12
 修正 ms-skip BUG
 去掉节点生成算法
 首先渲染改成根据真实DOM生成虚拟DOM
+重构 avalon.speedUp
+去掉avalon.config中已经没有用rbind, rexprg
      */
 })
 fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')
