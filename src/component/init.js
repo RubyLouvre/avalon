@@ -77,26 +77,19 @@ function initComponent(src, rawOption, local, template) {
             })
         }
     }
-
     // 生成外部的渲染函数
     // template保存着最原始的组件容器信息
     // 我们先将它转换成虚拟DOM,如果是xmp, template,
     // 它们内部是一个纯文本节点, 需要继续转换为虚拟DOM
     var shell = avalon.lexer(template)
+    
+  
     var shellRoot = shell[0]
-    var sc = shellRoot.children
-    if (sc && sc.length === 1 && sc[0].nodeValue) {
-        shellRoot.children = avalon.lexer(sc[0].nodeValue)
-    }
-
-    delete shellRoot.isVoidTag
-    delete shellRoot.template
-    delete shellRoot.props['ms-widget']
-    shellRoot.nodeName = 'cheng7'
     shellRoot.children = shellRoot.children || []
     shellRoot.props.is = is
     shellRoot.props.wid = $id
     avalon.speedUp(shell)
+   
     var render = avalon.render(shell, local)
 
     //生成内部的渲染函数
@@ -122,11 +115,11 @@ function initComponent(src, rawOption, local, template) {
             replace('XXXXX', stringifyAnonymous(render)).
             replace('YYYYY', stringifyAnonymous(render2)).
             replace('ZZZZZ', zzzzz)
-
     var begin = str.indexOf('{') + 1
     var end = str.lastIndexOf("}")
 
     var lastFn = Function('vm', 'local', str.slice(begin, end))
+   
     vmodel.$render = lastFn
 
     src['component-vm:' + is] = vmodel

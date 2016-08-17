@@ -15,15 +15,13 @@ function scan(nodes) {
                 //IE6-8下元素的outerHTML前面会有空白
                 //第一次扫描就清空所有空白节点,并生成最初的vtree
                 var vtree = dom2vdom(elem)
-
                 var now = new Date()
                 elem.vtree = avalon.speedUp(vtree)
-
+                 
                 var now2 = new Date()
                 onceWarn && avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')
 
                 vm.$render = avalon.render(elem.vtree)
-
                 avalon.scopes[vm.$id] = {
                     vmodel: vm,
                     local: {},
