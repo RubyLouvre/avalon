@@ -21,7 +21,7 @@
                      </div>
                      */
                 }),
-                defaults: {  }
+                defaults: {}
             })
 
             function genData(n) {
@@ -38,7 +38,7 @@
             }
             var vm = avalon.define({
                 $id: 'widget1',
-                header: ['aaa','bbb','ccc'],
+                header: ['aaa', 'bbb', 'ccc'],
                 start: 0,
                 count: 10,
                 data: genData(300),
@@ -52,16 +52,16 @@
             })
 
             avalon.component("ms-pager", {
-                template:heredoc(function(){
+                template: heredoc(function () {
                     /*
-                      <div class="pagination">
-                        <ul>
-                        <li :for="el in @pages" 
-                           :class="[ el == @currentPage && 'active' ]">
-                           <a href="javascript:void(0)" :click="@gotoPage(el, $event)">{{el}}</a>
-                        </li>
-                        </ul>
-                      </div>
+                     <div class="pagination">
+                     <ul>
+                     <li :for="el in @pages" 
+                     :class="[ el == @currentPage && 'active' ]">
+                     <a href="javascript:void(0)" :click="@gotoPage(el, $event)">{{el}}</a>
+                     </li>
+                     </ul>
+                     </div>
                      */
                 }),
                 defaults: {
@@ -96,6 +96,7 @@
                     }
                 }
             });
+            //
         </script>
     </head>
     <body>
@@ -123,7 +124,7 @@
                 border:1px solid #000;
                 height: 30px;
             }
-           
+
             .pagination ul{
                 list-style: none;
                 margin: 0;
@@ -141,7 +142,7 @@
                 text-align: center;
                 background: #fafafa;
                 color:#000;
-               
+
             }
             .pagination .active a{
                 background: #009a61;
@@ -153,12 +154,13 @@
             }
             .pager > *{
                 float: right;
-                
+
             }
+
         </style>
         <div ms-controller='widget1' >
 
-        <xmp :widget="{is:'ms-grid'}">
+            <xmp :widget="{is:'ms-grid'}">
                 <table slot='header' class="header">
                     <tr>
                         <td :for="el in @header" style="width:200px" >
@@ -167,14 +169,14 @@
                 </tr>
             </table>
             <table slot="tbody" class="tbody">
-                <tr :for="obj in @data |limitBy(@count, @start)">
+                <tr :for="obj in @data | limitBy(@count, @start)">
                     <td :for="el in obj | selectBy(@header)" style="width:200px">{{el}}</td>
                 </tr>
             </table> 
             <ms-pager slot="pager" :widget="{onReady:@aaa}" />
-        </xmp>
+    </xmp>
 
-    </div>
-
+</div>
+需要写一个渲染GRID的组件测试
 </body>
 </html>
