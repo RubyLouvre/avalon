@@ -112,7 +112,15 @@ function hasDirective(node) {
                 childDir = true
                 delDir(props, 'html', 'widget')
                 delDir(props, 'text', 'widget')
-                node.template = avalon.vdomAdaptor(node, 'toHTML')
+                var clone = avalon.mix({}, node)
+                var cprops = avalon.mix({}, node.props)
+                delete cprops['ms-widget']
+                delete clone.isVoidTag
+                clone.nodeName = "cheng"
+                clone.props = cprops
+                node.template = avalon.vdomAdaptor(clone, 'toHTML')
+                if (!node.isVoidTag)
+                    node.children = []
             }
             if (props['ms-text']) {
                 childDir = true

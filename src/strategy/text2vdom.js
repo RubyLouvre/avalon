@@ -74,11 +74,6 @@ function lexer(str) {
                     nodeValue: nodeValue
                 }
                 collectNodes(node, stack, ret)
-//                if (rmsForEnd.test(nodeValue)) {
-//                    var p = stack.last()
-//                    var nodes = p ? p.children : ret
-//                    markeRepeatRange(nodes, nodes.pop())
-//                }
             }
 
         }
@@ -156,18 +151,19 @@ function fixTbodyAndRepeat(node, stack, ret) {
         addTbody(node.children)
     }
     var forExpr = props['ms-for']
-   
+    //tr两旁的注释节点还会在addTbody中挪一下位置
     if (forExpr) {
         delete props['ms-for']
         var p = stack.last()
         var arr = p ? p.children : ret
-        
         arr.splice(arr.length - 1, 1, {
             nodeName: '#comment',
-            nodeValue: 'ms-for:' + forExpr
+            nodeValue: 'ms-for:' + forExpr,
+            type: nodeName
         }, node, {
             nodeName: '#comment',
-            nodeValue: 'ms-for-end:'
+            nodeValue: 'ms-for-end:',
+            type: nodeName
         })
 
     }
@@ -245,41 +241,3 @@ function readString(str) {
     }
     return ret
 }
-
-//function markeRepeatRange(nodes, end) {
-//    end.dynamic = true
-//    end.signature = avalon.makeHashCode('for')
-//    var array = [], start, deep = 1
-//    while (start = nodes.pop()) {
-//        if (start.nodeType === 8) {
-//            if (rmsForEnd.test(start.nodeValue)) {
-//                ++deep
-//            } else if (rmsForStart.test(start.nodeValue)) {
-//                --deep
-//                if (deep === 0) {
-//                   
-//                    start.nodeValue = start.nodeValue.replace(rfill, fill)        //nomalString(start.nodeValue)
-//                    start.forExpr = start.nodeValue.replace(/ms\-for:\s+/,'')
-//                    start.signature = end.signature
-//                    start.dynamic = true
-//                    start.template = avalon.vdomAdaptor(array, 'toHTML')
-//                  
-//                    var element = array[0]
-//                    if (element && element.props) {
-//                        var cb = element.props['data-for-rendered']
-//                        if (cb) {
-//                            var wid = cb + ':cb'
-//                            if (!avalon.caches[wid]) {
-//                                avalon.caches[wid] = Function('return ' + avalon.parseExpr(cb, 'on'))()
-//                            }
-//                            start.wid = wid
-//                        }
-//                    }
-//                    nodes.push(start, [], end)
-//                    break
-//                }
-//            }
-//        }
-//        array.unshift(start)
-//    }
-//}
