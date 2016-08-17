@@ -2,20 +2,21 @@
 
 var voidTag = require('./voidTag')
 var vdom2body = require('./vdom2body')
-
+var rformElement = /input|textarea|select/i
+var rcolon = /^\:/
 function getAttributes(node) {
     var attrs = node.attributes, ret = {}
-    for (var i = 0; i < attrs.length; i++) {
+    for (var i = 0, n = attrs.length; i < n; i++) {
         var attr = attrs[i]
         if (attr.specified) {
             var name = attr.name
             if (name.charAt(0) === ':') {
-                name = name.replace(/^\:/, 'ms-')
+                name = name.replace(rcolon, 'ms-')
             }
             ret[name] = attr.value
         }
     }
-    if (/input|textarea|select/i.test(node.nodeName)) {
+    if (rformElement.test(node.nodeName)) {
         ret.type = node.type
     }
     var style = node.style.cssText
@@ -38,6 +39,7 @@ function isEmpty(a) {
     }
     return true
 }
+
 function toHTML(a) {
     return avalon.vdomAdaptor(a, 'toHTML')
 }
@@ -106,12 +108,12 @@ function createVDOMs(nodes, parent) {
                 }
                 break
             case 8:
-
                 arr.push(createVDOM(node))
         }
     }
     return arr
 }
+
 var f = document.documentElement
 function removeNode(node) {
     f.appendChild(node)

@@ -2200,7 +2200,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var Cache = __webpack_require__(29)
 	//缓存求值函数，以便多次利用
-	module.exports = new Cache(512)
+	module.exports = new Cache(888)
 
 
 /***/ },

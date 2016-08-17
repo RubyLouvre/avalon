@@ -80,10 +80,13 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-8-17:21 version 2.111 by 司徒正美
+	 * built in 2016-8-17:22 version 2.111 by 司徒正美
+	 * 2.1.4 and npm 2.1.12
 	 * 修正 ms-skip BUG
 	 * 去掉节点生成算法
 	 * 首先渲染改成根据真实DOM生成虚拟DOM
+	 * 重构 avalon.speedUp
+	 * 去掉avalon.config中已经没有用rbind, rexprg
 	 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
@@ -2278,7 +2281,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		
 		var Cache = __webpack_require__(29)
 		//缓存求值函数，以便多次利用
-		module.exports = new Cache(512)
+		module.exports = new Cache(888)
 
 
 	/***/ },

@@ -30,10 +30,10 @@
     </head>
     <body ms-controller="test">
         <div ms-for="($index,ques) in @quesArray">
-            <span ms-text="ques.name"></span>
-            <button ms-click='@changeFlag($index)'>changeFlag</button>
+            <span :text="ques.name"></span>
+            <button :click='@changeFlag($index)'>changeFlag</button>
             <span ms-if="ques.isFlag">
-                <button ms-click="@show($index)" ms-attr="{title:$index}">显示 $index</button>
+                <button :click="@show($index)" ms-attr="{title:$index}">显示 $index</button>
             </span>    
         </div>              
     </body>
