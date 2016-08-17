@@ -189,7 +189,7 @@ function replaceSlot(vtree, slotName) {
                 type: name
             }, {
                 nodeName: '#comment',
-                nodeValue: 'slot-end:',
+                nodeValue: 'slot-end:'
             })
             i++
         } else if (el.children) {

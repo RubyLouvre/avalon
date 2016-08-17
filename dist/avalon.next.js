@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-17:22 version 2.111 by 司徒正美
+ * built in 2016-8-17:23 version 2.111 by 司徒正美
  * 2.1.4 and npm 2.1.12
  * 修正 ms-skip BUG
  * 去掉节点生成算法
@@ -4257,7 +4257,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                type: name
 	            }, {
 	                nodeName: '#comment',
-	                nodeValue: 'slot-end:',
+	                nodeValue: 'slot-end:'
 	            })
 	            i++
 	        } else if (el.children) {
