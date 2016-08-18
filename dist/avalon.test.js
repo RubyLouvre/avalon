@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-18:15 version 2.111 by 司徒正美
+ * built in 2016-8-18:16 version 2.111 by 司徒正美
  * 2.1.4 and npm 2.1.12
  * 修正 ms-skip BUG
  * 去掉节点生成算法
@@ -80,7 +80,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-8-18:13 version 2.111 by 司徒正美
+	 * built in 2016-8-18:16 version 2.111 by 司徒正美
 	 * 2.1.4 and npm 2.1.12
 	 * 修正 ms-skip BUG
 	 * 去掉节点生成算法
@@ -3878,18 +3878,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		var rfuzzy = /^(string|number|boolean)/
 		var rkfuzzy = /^_*(string|number|boolean)/
-		function fuzzyMatchCache(cache, id) {
-		    var m = id.match(rfuzzy)
-		    if (m) {
-		        var fid = m[1]
-		        for (var i in cache) {
-		            var n = i.match(rkfuzzy)
-		            if (n && n[1] === fid) {
-		                return isInCache(cache, i)
-		            }
-		        }
+		function fuzzyMatchCache(cache) {
+		    var key
+		    for (var id in cache) {
+		        var key = id
+		        break
+		    }
+		    if (key) {
+		        return isInCache(cache, key)
 		    }
 		}
+
+
 
 		// 新位置: 旧位置
 		function isInCache(cache, id) {
@@ -3970,10 +3970,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                }
 		                break
 		            case void(0):
-		               
-		              //  if (Array.isArray(copy)) {
-		                     diff(copy, src)//比较循环区域的内容
-		                
+		                diff(copy, src)//比较循环区域的内容
 		                break
 		            case '#document-fragment':
 		                diff(copy.children, src.children)//比较循环区域的内容
