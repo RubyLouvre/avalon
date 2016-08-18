@@ -1,25 +1,31 @@
 <!DOCTYPE html>
-
 <html>
     <head>
-        <title>TODO supply a title</title>
+        <title>first example</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.js"></script>
 
-        <script src='../dist/avalon.js'></script>
+    </head>
+
+    <body ms-controller="test">
         <script>
-           var vm = avalon.define({
+            avalon.define({
                 $id: 'test',
-                arr: [111, 222, 333, 444]
+                obj: {color: 'blue', 'text-algin': 'center'}, //属性名带-,必须用引号括起
+                active: {color: 'red'},
+                width: 111,
+                height: 222,
+                toggle: false,
+                array: [{width: 1}, {height: 2}]
             })
 
-
-
         </script>
-    </head>
-    <body ms-controller="test">
-        <ul>
-            <li :for="(index,el) in @arr">{{el}}--{{index}}</li>
-        </ul>
+        <span ms-css="@obj">直接引用对象</span>
+        <span :css="{width: @width, height: @height}">使用对象字面量</span>
+        <span :css="@array">直接引用数组</span>
+        <span :css="[@obj1, @toggle && @active ]" :click="@active = !@active">选择性添加多余属性或重写已有属性</span>
+
+
     </body>
 </html>

@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-18:20 version 2.111 by 司徒正美
+ * built in 2016-8-18:22 version 2.111 by 司徒正美
  * 2.1.4 and npm 2.1.12
  * 修正 ms-skip BUG
  * 去掉节点生成算法
@@ -1599,13 +1599,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var node = nodes[i]
 	        switch (node.nodeType) {
 	            case 1:
-	                var value = node.getAttribute('ms-for')
-	                        || node.getAttribute(':for')
-	                if (value) {
-	                    var start = document.createComment('ms-for:' + value)
+	             
+	                var a =  node.getAttributeNode(':for') || node.getAttributeNode('ms-for') 
+	      
+	                if (a) {
+	                    var start = document.createComment('ms-for:' + a.value)
 	                    var end = document.createComment('ms-for-end:')
-	                    node.removeAttribute('ms-for')
-	                    node.removeAttribute(':for')
+	                    node.removeAttributeNode(a)
+	                   
 	                    if (parent) {
 	                        parent.insertBefore(end, node.nextSibling)
 	                        parent.insertBefore(start, node)
@@ -4993,8 +4994,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            el.signature = uuid
 
 	            start.forExpr = start.nodeValue.replace(/ms\-for:\s*/, '')
-	 
-
 	            if (old.length === 1) {
 	                var element = old[0]
 	                if (element.props) {
