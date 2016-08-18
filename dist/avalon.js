@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-18:16 version 2.111 by 司徒正美
+ * built in 2016-8-18:20 version 2.111 by 司徒正美
  * 2.1.4 and npm 2.1.12
  * 修正 ms-skip BUG
  * 去掉节点生成算法
@@ -70,7 +70,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(14)
 	__webpack_require__(20)
 	__webpack_require__(42)
-	__webpack_require__(72)
+	__webpack_require__(71)
 	avalon.onComponentDispose = __webpack_require__(78)
 	__webpack_require__(80)
 
@@ -3918,8 +3918,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(64)
 	__webpack_require__(65)
 	//
-	__webpack_require__(67)
-	__webpack_require__(70)
+	__webpack_require__(66)
+	__webpack_require__(69)
 	//优先级 ms-important, ms-controller, ms-for, ms-widget, ms-effect, ms-if
 	//.......
 	//ms-duplex
@@ -5711,29 +5711,23 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var update = __webpack_require__(44)
 
-	var rforPrefix = /ms-for\:\s*/
-	var rforLeft = /^\s*\(\s*/
-	var rforRight = /\s*\)\s*$/
-	var rforSplit = /\s*,\s*/
 	var rforAs = /\s+as\s+([$\w]+)/
 	var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
 	var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
-	//var reconcile = require('../strategy/reconcile')
-	//var stringify = require('../strategy/parser/stringify')
-	var diff = __webpack_require__(66)
+	var rargs = /[$\w]+/g
 
 	function getTraceKey(item) {
 	    var type = typeof item
 	    return item && type === 'object' ? item.$hashcode : type + ':' + item
 	}
-	//IE6-8,function后面没有空格
-	var rfunction = /^\s*function\s*\(([^\)]+)\)/
+
 	avalon._each = function (obj, fn, local, vnodes) {
 	    var repeat = []
 	    vnodes.push(repeat)
-	    var str = (fn + "").match(rfunction)
-	    var args = str[1]
-	    var arr = args.match(avalon.rword)
+	    var arr = (fn + "").match(rargs)
+	   
+	    arr.shift()
+	    
 	    if (Array.isArray(obj)) {
 	        for (var i = 0; i < obj.length; i++) {
 	            iterator(i, obj[i], local, fn, arr[0], arr[1], repeat, true)
@@ -5764,7 +5758,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.directive('for', {
 	    priority: 3,
 	    parse: function (copy, src, binding) {
-	        var str = src.nodeValue, aliasAs
+	        var str = src.forExpr, aliasAs
 	        str = str.replace(rforAs, function (a, b) {
 	            if (!rident.test(b) || rinvalid.test(b)) {
 	                avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.')
@@ -5774,10 +5768,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return ''
 	        })
 
-	        var arr = str.replace(rforPrefix, '').split(' in ')
+	        var arr = str.split(' in ')
 	        var assign = 'var loop = ' + avalon.parseExpr(arr[1]) + ' \n'
 	        var alias = aliasAs ? 'var ' + aliasAs + ' = loop\n' : ''
-	        var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
+	        var kv = arr[0].match(rargs)
 
 	        if (kv.length === 1) {//确保avalon._each的回调有三个参数
 	            kv.unshift('$key')
@@ -6049,120 +6043,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 66 */
-/***/ function(module, exports) {
-
-	/**
-	 * ------------------------------------------------------------
-	 * diff 对比新旧两个虚拟DOM树,根据directive中的diff方法为新虚拟DOM树
-	 * 添加change, afterChange更新钩子
-	 * ------------------------------------------------------------
-	 */
-	var emptyArr = []
-	// 防止被引用
-	var emptyObj = function () {
-	    return {
-	        children: [], props: {}
-	    }
-	}
-	var directives = avalon.directives
-	var rbinding = /^ms-(\w+)-?(.*)/
-
-	function diff(copys, sources) {
-	    for (var i = 0; i < copys.length; i++) {
-	        var copy = copys[i]
-	        var src = sources[i] || copys[i]
-	        switch (copy.nodeName) {
-	            case '#text':
-	                if (copy.dynamic) {
-	                    var curValue = copy.nodeValue + ''
-	                    if (curValue !== src.nodeValue) {
-	                        src.nodeValue = curValue
-	                        if (src.dom) {
-	                            src.dom.nodeValue = curValue
-	                        }
-	                    }
-	                }
-	                break
-	            case '#comment':
-	                if (copy.forExpr) {//比较循环区域的元素位置
-	                    directives['for'].diff(copy, src, copys, sources, i)
-	                } else if (src.afterChange) {
-	                    execHooks(src, src.afterChange)
-	                }
-	                break
-	            case void(0):
-	                diff(copy, src)//比较循环区域的内容
-	                break
-	            case '#document-fragment':
-	                diff(copy.children, src.children)//比较循环区域的内容
-	                break
-	            default:
-	                if (copy.dynamic) {
-	                    var index = i
-	                    if (copy['ms-widget']) {
-	                        avalon.directives['widget'].diff(copy, src, 'ms-widget', copys, sources, index)
-	                        copy = copys[i]
-	                        src = sources[i] || emptyObj()
-	                        delete copy['ms-widget']
-	                    }
-
-	                    if ('ms-if' in copy) {
-	                        avalon.directives['if'].diff(copy, src, 'ms-if', copys, sources, index)
-	                        copy = copys[i]
-	                        src = sources[i] || emptyObj()
-	                        delete copy['ms-if']
-	                    }
-	                    diffProps(copy, src)
-	                }
-
-	                if (/^\w/.test(copy.nodeName) && !copy.skipContent && !copy.isVoidTag) {
-	                    diff(copy.children, src.children || [])
-	                }
-
-	                if (src.afterChange) {
-	                    execHooks(src, src.afterChange)
-	                }
-	                break
-	        }
-	    }
-	}
-
-	function execHooks(el, hooks) {
-	    if (hooks.length) {
-	        for (var hook, i = 0; hook = hooks[i++]; ) {
-	            hook(el.dom, el)
-	        }
-	    }
-	    delete el.afterChange
-	}
-
-	function diffProps(copy, source) {
-	    var directives = avalon.directives
-	    try {
-	        for (var name in copy) {
-	            var match = name.match(rbinding)
-	            var type = match && match[1]
-	            if (directives[type]) {
-	                directives[type].diff(copy, source, name)
-	            }
-	        }
-
-	    } catch (e) {
-	        avalon.warn(type, e, e.stack || e.message, 'diffProps error')
-	    }
-	}
-	avalon.diff = diff
-	avalon.diffProps = diffProps
-	module.exports = diff
-
-
-/***/ },
-/* 67 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var update = __webpack_require__(44)
 	//var reconcile = require('../strategy/reconcile')
-	var tryInitComponent = __webpack_require__(68)
+	var tryInitComponent = __webpack_require__(67)
 
 	avalon.component = function (name, definition) {
 	    //这是定义组件的分支,并将列队中的同类型对象移除
@@ -6380,10 +6265,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 68 */
+/* 67 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var skipArray = __webpack_require__(69)
+	var skipArray = __webpack_require__(68)
 
 	var legalTags = {wbr: 1, xmp: 1, template: 1}
 	var events = 'onInit,onReady,onViewChange,onDispose'
@@ -6643,7 +6528,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 69 */
+/* 68 */
 /***/ function(module, exports) {
 
 	/**
@@ -6659,10 +6544,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = avalon.oneObject('$id,$render,$track,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,$run,$wait,__proxy__,__data__,__const__')
 
 /***/ },
-/* 70 */
+/* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var support = __webpack_require__(71)
+	var support = __webpack_require__(70)
 	var Cache = __webpack_require__(29)
 	var update = __webpack_require__(44)
 
@@ -6911,7 +6796,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 71 */
+/* 70 */
 /***/ function(module, exports) {
 
 	/**
@@ -6990,12 +6875,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 72 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	avalon.lexer = __webpack_require__(73)
-	avalon.diff = __webpack_require__(66)
+	avalon.lexer = __webpack_require__(72)
+	avalon.diff = __webpack_require__(76)
 	avalon.batch = __webpack_require__(77)
 	// dispatch与patch 为内置模块
 	var vdom2body = __webpack_require__(37)
@@ -7025,7 +6910,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 73 */
+/* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -7035,10 +6920,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * 此阶段只会生成VElement,VText,VComment
 	 * ------------------------------------------------------------
 	 */
-	__webpack_require__(74)
+	__webpack_require__(73)
 	var voidTag = __webpack_require__(36)
-	var addTbody = __webpack_require__(75)
-	var fixPlainTag = __webpack_require__(76)
+	var addTbody = __webpack_require__(74)
+	var fixPlainTag = __webpack_require__(75)
 	var plainTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
 
 	var ropenTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
@@ -7274,7 +7159,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 74 */
+/* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -7310,6 +7195,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            el.signature = uuid
 
 	            start.forExpr = start.nodeValue.replace(/ms\-for:\s*/, '')
+	 
+
 	            if (old.length === 1) {
 	                var element = old[0]
 	                if (element.props) {
@@ -7467,7 +7354,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 75 */
+/* 74 */
 /***/ function(module, exports) {
 
 	
@@ -7520,7 +7407,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 76 */
+/* 75 */
 /***/ function(module, exports) {
 
 	/* 
@@ -7565,6 +7452,115 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	module.exports = fixPlainTag
+
+/***/ },
+/* 76 */
+/***/ function(module, exports) {
+
+	/**
+	 * ------------------------------------------------------------
+	 * diff 对比新旧两个虚拟DOM树,根据directive中的diff方法为新虚拟DOM树
+	 * 添加change, afterChange更新钩子
+	 * ------------------------------------------------------------
+	 */
+	var emptyArr = []
+	// 防止被引用
+	var emptyObj = function () {
+	    return {
+	        children: [], props: {}
+	    }
+	}
+	var directives = avalon.directives
+	var rbinding = /^ms-(\w+)-?(.*)/
+
+	function diff(copys, sources) {
+	    for (var i = 0; i < copys.length; i++) {
+	        var copy = copys[i]
+	        var src = sources[i] || copys[i]
+	        switch (copy.nodeName) {
+	            case '#text':
+	                if (copy.dynamic) {
+	                    var curValue = copy.nodeValue + ''
+	                    if (curValue !== src.nodeValue) {
+	                        src.nodeValue = curValue
+	                        if (src.dom) {
+	                            src.dom.nodeValue = curValue
+	                        }
+	                    }
+	                }
+	                break
+	            case '#comment':
+	                if (copy.forExpr) {//比较循环区域的元素位置
+	                    directives['for'].diff(copy, src, copys, sources, i)
+	                } else if (src.afterChange) {
+	                    execHooks(src, src.afterChange)
+	                }
+	                break
+	            case void(0):
+	                diff(copy, src)//比较循环区域的内容
+	                break
+	            case '#document-fragment':
+	                diff(copy.children, src.children)//比较循环区域的内容
+	                break
+	            default:
+	                if (copy.dynamic) {
+	                    var index = i
+	                    if (copy['ms-widget']) {
+	                        avalon.directives['widget'].diff(copy, src, 'ms-widget', copys, sources, index)
+	                        copy = copys[i]
+	                        src = sources[i] || emptyObj()
+	                        delete copy['ms-widget']
+	                    }
+
+	                    if ('ms-if' in copy) {
+	                        avalon.directives['if'].diff(copy, src, 'ms-if', copys, sources, index)
+	                        copy = copys[i]
+	                        src = sources[i] || emptyObj()
+	                        delete copy['ms-if']
+	                    }
+	                    diffProps(copy, src)
+	                }
+
+	                if (/^\w/.test(copy.nodeName) && !copy.skipContent && !copy.isVoidTag) {
+	                    diff(copy.children, src.children || [])
+	                }
+
+	                if (src.afterChange) {
+	                    execHooks(src, src.afterChange)
+	                }
+	                break
+	        }
+	    }
+	}
+
+	function execHooks(el, hooks) {
+	    if (hooks.length) {
+	        for (var hook, i = 0; hook = hooks[i++]; ) {
+	            hook(el.dom, el)
+	        }
+	    }
+	    delete el.afterChange
+	}
+
+	function diffProps(copy, source) {
+	    var directives = avalon.directives
+	    try {
+	        for (var name in copy) {
+	            var match = name.match(rbinding)
+	            var type = match && match[1]
+	            if (directives[type]) {
+	                directives[type].diff(copy, source, name)
+	            }
+	        }
+
+	    } catch (e) {
+	        avalon.warn(type, e, e.stack || e.message, 'diffProps error')
+	    }
+	}
+	avalon.diff = diff
+	avalon.diffProps = diffProps
+	module.exports = diff
+
 
 /***/ },
 /* 77 */
@@ -8260,7 +8256,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	var $$midway = {}
-	var $$skipArray = __webpack_require__(69)
+	var $$skipArray = __webpack_require__(68)
 	var dispatch = __webpack_require__(83)
 	var $emit = dispatch.$emit
 	var $watch = dispatch.$watch
@@ -8665,7 +8661,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	var canHideProperty = __webpack_require__(84)
-	var $$skipArray = __webpack_require__(69)
+	var $$skipArray = __webpack_require__(68)
 
 
 	var defineProperties = Object.defineProperties

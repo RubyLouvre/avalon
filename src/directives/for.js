@@ -1,28 +1,22 @@
 var update = require('./_update')
 
-var rforPrefix = /ms-for\:\s*/
-var rforLeft = /^\s*\(\s*/
-var rforRight = /\s*\)\s*$/
-var rforSplit = /\s*,\s*/
 var rforAs = /\s+as\s+([$\w]+)/
 var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
 var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
-//var reconcile = require('../strategy/reconcile')
-//var stringify = require('../strategy/parser/stringify')
-var diff = require('../strategy/diff')
+var rargs = /[$\w]+/g
 
 function getTraceKey(item) {
     var type = typeof item
     return item && type === 'object' ? item.$hashcode : type + ':' + item
 }
-//IE6-8,function后面没有空格
-var rfunction = /^\s*function\s*\(([^\)]+)\)/
+
 avalon._each = function (obj, fn, local, vnodes) {
     var repeat = []
     vnodes.push(repeat)
-    var str = (fn + "").match(rfunction)
-    var args = str[1]
-    var arr = args.match(avalon.rword)
+    var arr = (fn + "").match(rargs)
+   
+    arr.shift()
+    
     if (Array.isArray(obj)) {
         for (var i = 0; i < obj.length; i++) {
             iterator(i, obj[i], local, fn, arr[0], arr[1], repeat, true)
@@ -53,7 +47,7 @@ function iterator(index, item, vars, fn, k1, k2, repeat, isArray) {
 avalon.directive('for', {
     priority: 3,
     parse: function (copy, src, binding) {
-        var str = src.nodeValue, aliasAs
+        var str = src.forExpr, aliasAs
         str = str.replace(rforAs, function (a, b) {
             if (!rident.test(b) || rinvalid.test(b)) {
                 avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.')
@@ -63,10 +57,10 @@ avalon.directive('for', {
             return ''
         })
 
-        var arr = str.replace(rforPrefix, '').split(' in ')
+        var arr = str.split(' in ')
         var assign = 'var loop = ' + avalon.parseExpr(arr[1]) + ' \n'
         var alias = aliasAs ? 'var ' + aliasAs + ' = loop\n' : ''
-        var kv = arr[0].replace(rforLeft, '').replace(rforRight, '').split(rforSplit)
+        var kv = arr[0].match(rargs)
 
         if (kv.length === 1) {//确保avalon._each的回调有三个参数
             kv.unshift('$key')
