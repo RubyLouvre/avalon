@@ -86,10 +86,12 @@ function createVDOMs(nodes, parent) {
         switch (node.nodeType) {
             case 1:
                 var value = node.getAttribute('ms-for')
+                        || node.getAttribute(':for')
                 if (value) {
                     var start = document.createComment('ms-for:' + value)
                     var end = document.createComment('ms-for-end:')
                     node.removeAttribute('ms-for')
+                    node.removeAttribute(':for')
                     if (parent) {
                         parent.insertBefore(end, node.nextSibling)
                         parent.insertBefore(start, node)

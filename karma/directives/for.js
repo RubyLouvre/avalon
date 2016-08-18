@@ -128,7 +128,7 @@ describe('for', function () {
             })
             vm.array = [[11, 22, 33], [44, 55, 66], [77, 88, 99]]
             setTimeout(function () {
-
+                expect(tds.length).to.equal(9)
                 expect(tds[0].innerHTML).to.equal('11')
                 expect(tds[1].innerHTML).to.equal('22')
                 expect(tds[2].innerHTML).to.equal('33')

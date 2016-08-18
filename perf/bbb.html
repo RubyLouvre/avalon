@@ -4,37 +4,25 @@
         <title></title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../dist/avalon.js"></script>
+
+    </head>
+    <body >
+       <script src='//cdn.bootcss.com/avalon.js/2.1.3/avalon.js'></script>
+
         <script>
-            var vm = avalon.define({
-                $id: 'test',
-                quesArray: [
-                    {
-                        name: 'ques-1',
-                        isFlag: true
-                    },
-                    {
-                        name: 'ques-2',
-                        isFlag: false
-                    }
-                ],
-                changeFlag: function (index) {
-                    var _this = this.quesArray[index];
-                    _this.isFlag = !_this.isFlag;
-                },
-                show: function (index) {
-                    alert(index);
+            avalon.component('ms-button', {
+                template: '<button type="button"><span><slot name="buttonText"/></span></button>',
+                defaults: {
+                    buttonText: "button"
                 }
+            });
+            avalon.define({
+                $id: 'test'
             })
         </script>
-    </head>
-    <body ms-controller="test">
-        <div ms-for="($index,ques) in @quesArray">
-            <span :text="ques.name"></span>
-            <button :click='@changeFlag($index)'>changeFlag</button>
-            <span ms-if="ques.isFlag">
-                <button :click="@show($index)" ms-attr="{title:$index}">显示 $index</button>
-            </span>    
-        </div>              
+        <div ms-controller="test">
+            <xmp ms-widget="{is:'ms-button'}"><i slot="buttonText">ddd</i></xmp>
+            <ms-button><span slot="buttonText">ddd</span></ms-button>  
+        </div>
     </body>
 </html>

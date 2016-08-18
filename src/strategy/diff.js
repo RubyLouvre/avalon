@@ -38,9 +38,7 @@ function diff(copys, sources) {
                 }
                 break
             case void(0):
-                if (Array.isArray(copy)) {
-                     diff(copy, src)//比较循环区域的内容
-                }
+                diff(copy, src)//比较循环区域的内容
                 break
             case '#document-fragment':
                 diff(copy.children, src.children)//比较循环区域的内容
@@ -53,8 +51,8 @@ function diff(copys, sources) {
                         copy = copys[i]
                         src = sources[i] || emptyObj()
                         delete copy['ms-widget']
-                    }   
-                
+                    }
+
                     if ('ms-if' in copy) {
                         avalon.directives['if'].diff(copy, src, 'ms-if', copys, sources, index)
                         copy = copys[i]

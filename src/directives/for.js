@@ -9,7 +9,7 @@ var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
 var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
 //var reconcile = require('../strategy/reconcile')
 //var stringify = require('../strategy/parser/stringify')
-
+var diff = require('../strategy/diff')
 
 function getTraceKey(item) {
     var type = typeof item
@@ -96,7 +96,6 @@ avalon.directive('for', {
         var curRepeat = cpList[index + 1]
         var end = spList[index + 2]
         //preRepeat不为空时
-
         var cache = src.cache || {}
         //for指令只做添加删除操作
         var i, c, p
@@ -154,6 +153,7 @@ avalon.directive('for', {
             for (var i in cache) {
                 p = cache[i]
                 p.action = 'leave'
+                avalon.Array.remove(srcRepeat, p)
                 removes.push(p)
                 if (p.arr) {
                     p.arr.forEach(function (m) {
@@ -183,6 +183,7 @@ avalon.directive('for', {
                 }]
         }
         src.list = srcRepeat
+
         update(src, this.update)
         return true
 
@@ -198,8 +199,10 @@ avalon.directive('for', {
         for (var i = 0, item; item = vdom.removes[i++]; ) {
             if (item.dom) {
                 item.num = 0
+
                 if (vdom.hasEffect) {
                     var nodes = moveItem(item, dom)
+
                     applyEffects(nodes, item.children, {
                         hook: 'onLeaveDone',
                         staggerKey: signature + 'leave',
@@ -225,9 +228,11 @@ avalon.directive('for', {
             if (!el.dom) {
                 el.dom = avalon.domize(el)
             }
+
             var f = el.dom
             if (el.oldIndex === void 0) {
                 var nodes = avalon.slice(f.childNodes)
+
                 if (i === 0 && vdom.action === 'init') {
                     parent.appendChild(f)
                 } else {
@@ -283,18 +288,18 @@ avalon.domize = function (a) {
 
 var rfuzzy = /^(string|number|boolean)/
 var rkfuzzy = /^_*(string|number|boolean)/
-function fuzzyMatchCache(cache, id) {
-    var m = id.match(rfuzzy)
-    if (m) {
-        var fid = m[1]
-        for (var i in cache) {
-            var n = i.match(rkfuzzy)
-            if (n && n[1] === fid) {
-                return isInCache(cache, i)
-            }
-        }
+function fuzzyMatchCache(cache) {
+    var key
+    for (var id in cache) {
+        var key = id
+        break
+    }
+    if (key) {
+        return isInCache(cache, key)
     }
 }
+
+
 
 // 新位置: 旧位置
 function isInCache(cache, id) {

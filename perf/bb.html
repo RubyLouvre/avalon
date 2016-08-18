@@ -5,44 +5,21 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-       
- <script src='//cdn.bootcss.com/react/15.3.0/react.js'></script>
-        <script src='./t7.js'></script>
-        <script>
-        var a  = t7.setOutput(t7.Outputs.Universal);
-        var items = ['Ball', 'Boat'];
-var welcome = "World";
 
-var b = t7`
-  <div class="foo">
-    <h1>Hello ${ welcome }</h1>
-    <ul id="bar">
-      ${
-        items.map( (item, index) => t7`
-          <li class="item" title="111">
-            <span key="${ index }">The item is: ${ item }</span>
-          </li>
-        `)
-      }
-      <li>dddd</li>
-      ${
-        items.map( (item, index) => t7`
-          <li class="item" title="111">
-            <span key="${ index }">The item is: ${ item }</span>
-          </li>
-        `)
-      }
-    </ul>
-  </div>
-`;
-console.log(b)
-console.log(JSON.stringify(b))
+        <script src='../dist/avalon.js'></script>
+        <script>
+           var vm = avalon.define({
+                $id: 'test',
+                arr: [111, 222, 333, 444]
+            })
 
 
 
         </script>
     </head>
-    <body>
-        
+    <body ms-controller="test">
+        <ul>
+            <li :for="(index,el) in @arr">{{el}}--{{index}}</li>
+        </ul>
     </body>
 </html>
