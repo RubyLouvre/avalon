@@ -12,7 +12,7 @@ var dir = avalon.directive('validate', {
             if (validator.$id) {//转换为普通对象
                 validator = validator.$model
             }
-           
+
             src[name] = validator
             for (var name in dir.defaults) {
                 if (!validator.hasOwnProperty(name)) {
@@ -28,23 +28,24 @@ var dir = avalon.directive('validate', {
         var validator = vdom['ms-validate']
         dom._ms_validator_ = validator
         validator.dom = dom
-        var v = vdom.vmValidator 
-        try{
-           v.onManual = onManual
-        }catch(e){}
-        delete vdom.vmValidator 
-        dom.setAttribute("novalidate", "novalidate")
+        var v = vdom.vmValidator
+        try {
+            v.onManual = onManual
+        } catch (e) {
+        }
+        delete vdom.vmValidator
+        dom.setAttribute('novalidate', 'novalidate')
         function onManual() {
             dir.validateAll.call(validator, validator.onValidateAll)
         }
         if (validator.validateAllInSubmit) {
-            avalon.bind(dom, "submit", function (e) {
+            avalon.bind(dom, 'submit', function (e) {
                 e.preventDefault()
                 onManual()
             })
         }
-       
-        if (typeof validator.onInit === "function") { //vmodels是不包括vmodel的
+
+        if (typeof validator.onInit === 'function') { //vmodels是不包括vmodel的
             validator.onInit.call(dom, {
                 type: 'init',
                 target: dom,
@@ -54,7 +55,7 @@ var dir = avalon.directive('validate', {
     },
     validateAll: function (callback) {
         var validator = this
-        var fn = typeof callback === "function" ? callback : validator.onValidateAll
+        var fn = typeof callback === 'function' ? callback : validator.onValidateAll
         var promise = validator.fields.filter(function (field) {
             var el = field.dom
             return el && !el.disabled && validator.dom.contains(el)
@@ -70,7 +71,7 @@ var dir = avalon.directive('validate', {
                 var uniq = {}
                 reasons = reasons.filter(function (field) {
                     var el = field.dom
-                    var uuid = el.uniqueID || (el.uniqueID = setTimeout("1"))
+                    var uuid = el.uniqueID || (el.uniqueID = setTimeout('1'))
                     if (uniq[uuid]) {
                         return false
                     } else {
@@ -103,7 +104,7 @@ var dir = avalon.directive('validate', {
     },
     validate: function (field, isValidateAll, event) {
         var promises = []
-        var value = field.modelValue
+        var value = field.value
         var elem = field.dom
         var validator = field.validator
         if (elem.disabled)
@@ -119,7 +120,7 @@ var dir = avalon.directive('validate', {
                 reject = b
             }))
             var next = function (a) {
-                if (field.norequired && value === "") {
+                if (field.norequired && value === '') {
                     a = true
                 }
                 if (a) {
@@ -128,7 +129,7 @@ var dir = avalon.directive('validate', {
                     var reason = {
                         element: elem,
                         data: field.data,
-                        message: elem.getAttribute("data-" + ruleName + "-message") || elem.getAttribute("data-message") || hook.message,
+                        message: elem.getAttribute('data-' + ruleName + '-message') || elem.getAttribute('data-message') || hook.message,
                         validateRule: ruleName,
                         getMessage: getMessage
                     }
@@ -143,7 +144,7 @@ var dir = avalon.directive('validate', {
         //如果promises不为空，说明经过验证拦截器
         var lastPromise = Promise.all(promises).then(function (array) {
             for (var i = 0, el; el = array[i++]; ) {
-                if (typeof el === "object") {
+                if (typeof el === 'object') {
                     reasons.push(el)
                 }
             }
@@ -166,11 +167,11 @@ var rformat = /\\?{{([^{}]+)\}}/gm
 function getMessage() {
     var data = this.data || {}
     return this.message.replace(rformat, function (_, name) {
-        return data[name] == null ? "" : data[name]
+        return data[name] == null ? '' : data[name]
     })
 }
 dir.defaults = {
-    addField: dir.addField,//供内部使用,收集此元素底下的所有ms-duplex的域对象
+    addField: dir.addField, //供内部使用,收集此元素底下的所有ms-duplex的域对象
     onError: avalon.noop,
     onSuccess: avalon.noop,
     onComplete: avalon.noop,

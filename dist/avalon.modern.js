@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-18:20 version 2.111 by 司徒正美
+ * built in 2016-8-19:11 version 2.111 by 司徒正美
  * 2.1.4 and npm 2.1.12
  * 修正 ms-skip BUG
  * 去掉节点生成算法
@@ -2073,7 +2073,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var input = str.replace(rregexp, dig).//移除所有正则
 	            replace(rstring, dig).//移除所有字符串
 
-	            // input = avalon.unescapeHTML(input).
 	            replace(rshortCircuit, dig).//移除所有短路或
 	            replace(ruselessSp, '$1').//移除. |两端空白
 	            split(rpipeline) //使用管道符分离所有过滤器及表达式的正体
@@ -2124,7 +2123,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            })
 	        }
 
-	        ret = ['function ms_on($event, __local__){',
+	        ret = ['function ($event, __local__){',
 	            'try{',
 	            extLocal(local).join('\n'),
 	            '\tvar __vmodel__ = this;',
@@ -2189,7 +2188,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            avalon.quote('parse ' + type + ' binding【 ' + str + ' 】fail')
 	            + ')'
 	}
-
 	module.exports = avalon.parseExpr = parseExpr
 
 
@@ -2480,15 +2478,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var update = __webpack_require__(44)
 
 	avalon.directive('expr', {
-	    parse: avalon.noop,
-
-	    update: function (dom, vdom) {
-	        if (dom) {
-	            dom.nodeValue = vdom.nodeValue
-	        } else {
-	            avalon.warn('[', vdom.nodeValue, ']找不到对应的文本节点赋值')
-	        }
-	    }
+	    parse: avalon.noop
 	})
 
 
@@ -3125,7 +3115,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (validator.$id) {//转换为普通对象
 	                validator = validator.$model
 	            }
-	           
+
 	            src[name] = validator
 	            for (var name in dir.defaults) {
 	                if (!validator.hasOwnProperty(name)) {
@@ -3141,23 +3131,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var validator = vdom['ms-validate']
 	        dom._ms_validator_ = validator
 	        validator.dom = dom
-	        var v = vdom.vmValidator 
-	        try{
-	           v.onManual = onManual
-	        }catch(e){}
-	        delete vdom.vmValidator 
-	        dom.setAttribute("novalidate", "novalidate")
+	        var v = vdom.vmValidator
+	        try {
+	            v.onManual = onManual
+	        } catch (e) {
+	        }
+	        delete vdom.vmValidator
+	        dom.setAttribute('novalidate', 'novalidate')
 	        function onManual() {
 	            dir.validateAll.call(validator, validator.onValidateAll)
 	        }
 	        if (validator.validateAllInSubmit) {
-	            avalon.bind(dom, "submit", function (e) {
+	            avalon.bind(dom, 'submit', function (e) {
 	                e.preventDefault()
 	                onManual()
 	            })
 	        }
-	       
-	        if (typeof validator.onInit === "function") { //vmodels是不包括vmodel的
+
+	        if (typeof validator.onInit === 'function') { //vmodels是不包括vmodel的
 	            validator.onInit.call(dom, {
 	                type: 'init',
 	                target: dom,
@@ -3167,7 +3158,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    validateAll: function (callback) {
 	        var validator = this
-	        var fn = typeof callback === "function" ? callback : validator.onValidateAll
+	        var fn = typeof callback === 'function' ? callback : validator.onValidateAll
 	        var promise = validator.fields.filter(function (field) {
 	            var el = field.dom
 	            return el && !el.disabled && validator.dom.contains(el)
@@ -3183,7 +3174,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var uniq = {}
 	                reasons = reasons.filter(function (field) {
 	                    var el = field.dom
-	                    var uuid = el.uniqueID || (el.uniqueID = setTimeout("1"))
+	                    var uuid = el.uniqueID || (el.uniqueID = setTimeout('1'))
 	                    if (uniq[uuid]) {
 	                        return false
 	                    } else {
@@ -3216,7 +3207,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    validate: function (field, isValidateAll, event) {
 	        var promises = []
-	        var value = field.modelValue
+	        var value = field.value
 	        var elem = field.dom
 	        var validator = field.validator
 	        if (elem.disabled)
@@ -3232,7 +3223,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                reject = b
 	            }))
 	            var next = function (a) {
-	                if (field.norequired && value === "") {
+	                if (field.norequired && value === '') {
 	                    a = true
 	                }
 	                if (a) {
@@ -3241,7 +3232,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    var reason = {
 	                        element: elem,
 	                        data: field.data,
-	                        message: elem.getAttribute("data-" + ruleName + "-message") || elem.getAttribute("data-message") || hook.message,
+	                        message: elem.getAttribute('data-' + ruleName + '-message') || elem.getAttribute('data-message') || hook.message,
 	                        validateRule: ruleName,
 	                        getMessage: getMessage
 	                    }
@@ -3256,7 +3247,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //如果promises不为空，说明经过验证拦截器
 	        var lastPromise = Promise.all(promises).then(function (array) {
 	            for (var i = 0, el; el = array[i++]; ) {
-	                if (typeof el === "object") {
+	                if (typeof el === 'object') {
 	                    reasons.push(el)
 	                }
 	            }
@@ -3279,11 +3270,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	function getMessage() {
 	    var data = this.data || {}
 	    return this.message.replace(rformat, function (_, name) {
-	        return data[name] == null ? "" : data[name]
+	        return data[name] == null ? '' : data[name]
 	    })
 	}
 	dir.defaults = {
-	    addField: dir.addField,//供内部使用,收集此元素底下的所有ms-duplex的域对象
+	    addField: dir.addField, //供内部使用,收集此元素底下的所有ms-duplex的域对象
 	    onError: avalon.noop,
 	    onSuccess: avalon.noop,
 	    onComplete: avalon.noop,
@@ -3335,7 +3326,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    pattern: {
 	        message: '必须匹配{{pattern}}这样的格式',
 	        get: function (value, field, next) {
-	            var elem = field.element
+	            var elem = field.element 
 	            var data = field.data
 	            if (!isRegExp(data.pattern)) {
 	                var h5pattern = elem.getAttribute("pattern")
@@ -3522,10 +3513,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon._each = function (obj, fn, local, vnodes) {
 	    var repeat = []
 	    vnodes.push(repeat)
-	    var arr = (fn + "").match(rargs)
-	   
+	    var arr = (fn + '').slice(0,40).match(rargs)
+
 	    arr.shift()
-	    
+
 	    if (Array.isArray(obj)) {
 	        for (var i = 0; i < obj.length; i++) {
 	            iterator(i, obj[i], local, fn, arr[0], arr[1], repeat, true)
@@ -3731,20 +3722,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (!el.dom) {
 	                el.dom = avalon.domize(el)
 	            }
-
 	            var f = el.dom
 	            if (el.oldIndex === void 0) {
-	                var nodes = avalon.slice(f.childNodes)
-
 	                if (i === 0 && vdom.action === 'init') {
 	                    parent.appendChild(f)
 	                } else {
 	                    parent.insertBefore(f, before.nextSibling)
 	                }
-	                vdom.hasEffect && applyEffects(nodes, el.children, {
-	                    hook: 'onEnterDone',
-	                    staggerKey: signature + 'enter'
-	                })
+	                if (vdom.hasEffect) {
+	                    var nodes = avalon.slice(f.childNodes)
+	                    applyEffects(nodes, el.children, {
+	                        hook: 'onEnterDone',
+	                        staggerKey: signature + 'enter'
+	                    })
+	                }
 	            } else if (el.index !== el.oldIndex) {
 	                var nodes = moveItem(el, dom, 'add')
 	                parent.insertBefore(el.dom, before.nextSibling)
@@ -4693,7 +4684,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    var body = '__local__ = __local__ || {};\n' +
 	            _local.join(';\n')+'\n' + _body
-	    
+	    body = body.replace(/}\);\s+vnodes\.push\(/g,'}\n,')
 	    try{
 	    var fn = Function('__vmodel__', '__local__', body)
 	    }catch(e){
@@ -4993,8 +4984,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            el.signature = uuid
 
 	            start.forExpr = start.nodeValue.replace(/ms\-for:\s*/, '')
-	 
-
 	            if (old.length === 1) {
 	                var element = old[0]
 	                if (element.props) {
@@ -7171,7 +7160,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (dom && dom.nodeType === 1) {
 	            vdom.dynamic[duplexDir] = 1
 	            if (!dom.__ms_duplex__) {
-	                dom.__ms_duplex__ = vdom[duplexDir]
+	                dom.__ms_duplex__ = avalon.mix(vdom[duplexDir],{dom:dom})
 	                //绑定事件
 	                updateModelByEvent(dom, vdom)
 	                //添加验证

@@ -7,19 +7,164 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <script src='../dist/avalon.js'></script>
-        <script>
-           var vm = avalon.define({
-                $id: 'test',
-                arr: [111, 222, 333, 444]
-            })
 
-
-
-        </script>
     </head>
-    <body ms-controller="test">
-        <ul>
-            <li :for="(index,el) in @arr">{{el}}--{{index}}</li>
-        </ul>
+    <body>
+        <script>
+            var vm = avalon.define({
+                $id: "validate2",
+                firstname: '司徒正美',
+                lastname: '',
+                username: '',
+                password: '',
+                confirm_password: '',
+                email: '',
+                agree: false,
+                topic: [],
+                toggle: false,
+                validate: {
+                    onError: function (reasons) {
+                        reasons.forEach(function (reason) {
+                            console.log(reason.getMessage())
+                        })
+                    },
+                    onValidateAll: function (reasons) {
+                        if (reasons.length) {
+                            console.log('有表单没有通过')
+                        } else {
+                            console.log('全部通过')
+                        }
+                    }
+                }
+            })
+            avalon.validators.checked = {
+                message: '必须扣上',
+                get: function (value, field, next) {
+                    next(value)
+                    return value
+                }
+            }
+            avalon.validators.selecttwo = {
+                message: '至少选择两个',
+                get: function (value, field, next) {
+                    next(!vm.toggle || value.length >= 2)
+                    return value
+                }
+            }
+        </script>
+
+        <div ms-controller="validate2">
+            <form class="cmxform" ms-validate="@validate" >
+                <fieldset>
+                    <legend>验证完整的表单</legend>
+                    <p>
+                        <label for="firstname">名字</label>
+                        <input id="firstname" 
+                               name="firstname" 
+                               ms-duplex="@firstname"
+                               ms-rules="{required:true}" 
+                               data-required-message="请输入您的名字" >
+                    </p>
+                    <p>
+                        <label for="lastname">姓氏</label>
+                        <input id="lastname" 
+                               name="lastname"
+                               ms-duplex="@lastname"
+                               ms-rules="{required:true}" 
+                               data-required-message="请输入您的姓氏"
+                               >
+                    </p>
+                    <p>
+                        <label for="username">用户名</label>
+                        <input id="username" 
+                               name="username"
+                               ms-duplex="@username | change"
+                               ms-rules="{required:true, minlength:2}" 
+                               >
+                    </p>
+                    <p>
+                        <label for="password">密码</label>
+                        <input id="password" 
+                               name="password" 
+                               type="password"
+                               ms-duplex="@password"
+                               ms-rules="{required:true,minlength:5}" 
+                               data-required-message="请输入密码"
+                               data-required-message="密码长度不能小于 5 个字母"
+
+                               >
+                    </p>
+                    <p>
+                        <label for="confirm_password">验证密码</label>
+                        <input id="confirm_password" 
+                               name="confirm_password" 
+                               type="password"
+                               ms-duplex="@confirm_password | change"
+                               ms-rules="{required:true,equalto:'password'}" 
+                               data-equalto-message="两次密码输入不一致"
+                               >
+                    </p>
+                    <p>
+                        <label for="email">Email</label>
+                        <input id="email" 
+                               name="email" 
+                               type="email"
+                               ms-duplex="@email"
+                               ms-rules="{email:true}" 
+                               data-email-message="请输入一个正确的邮箱"
+                               >
+                    </p>
+                    <p>
+                        <label for="agree">请同意我们的声明</label>
+                        <input type="checkbox" class="checkbox" id="agree" name="agree"
+                               ms-duplex-checked="@agree"
+                               ms-rules="{checked:true}" 
+                               >
+                    </p>
+                    <p>
+                        <label for="newsletter">我乐意接收新信息</label>
+                        <input type="checkbox" class="checkbox" 
+                               id="newsletter" 
+                               name="newsletter"
+                               ms-duplex-checked="@toggle"
+                               >
+                    </p>
+                    <fieldset id="newsletter_topics" ms-visible="@toggle" >
+                        <legend>主题 (至少选择两个) </legend>
+                        <label for="topic_marketflash">
+                            <input type="checkbox" 
+                                   id="topic_marketflash" 
+                                   value="marketflash" 
+                                   name="topic[]" 
+                                   ms-duplex="@topic"
+                                   ms-rules="{selecttwo:true}"
+                                   >Marketflash
+                        </label>
+                        <label for="topic_fuzz">
+                            <input type="checkbox"
+                                   id="topic_fuzz"
+                                   value="fuzz"
+                                   name="topic[]"
+                                   ms-duplex="@topic"
+                                   ms-rules="{selecttwo:true}"
+                                   >Latest fuzz
+                        </label>
+                        <label for="topic_digester">
+                            <input type="checkbox" 
+                                   id="topic_digester"
+                                   value="digester"
+                                   name="topic[]"
+                                   ms-duplex="@topic"
+                                   ms-rules="{selecttwo:true}"
+                                   >Mailing list digester
+                        </label>
+                        <label for="topic" class="error" style="display:none">至少选择两个</label>
+                    </fieldset>
+                    <p>
+                        <input class="submit" type="submit" value="提交">
+                    </p>
+                </fieldset>
+            </form>
+        </div>
     </body>
 </html>

@@ -13,10 +13,10 @@ function getTraceKey(item) {
 avalon._each = function (obj, fn, local, vnodes) {
     var repeat = []
     vnodes.push(repeat)
-    var arr = (fn + "").match(rargs)
-   
+    var arr = (fn + '').slice(0,40).match(rargs)
+
     arr.shift()
-    
+
     if (Array.isArray(obj)) {
         for (var i = 0; i < obj.length; i++) {
             iterator(i, obj[i], local, fn, arr[0], arr[1], repeat, true)
@@ -222,20 +222,20 @@ avalon.directive('for', {
             if (!el.dom) {
                 el.dom = avalon.domize(el)
             }
-
             var f = el.dom
             if (el.oldIndex === void 0) {
-                var nodes = avalon.slice(f.childNodes)
-
                 if (i === 0 && vdom.action === 'init') {
                     parent.appendChild(f)
                 } else {
                     parent.insertBefore(f, before.nextSibling)
                 }
-                vdom.hasEffect && applyEffects(nodes, el.children, {
-                    hook: 'onEnterDone',
-                    staggerKey: signature + 'enter'
-                })
+                if (vdom.hasEffect) {
+                    var nodes = avalon.slice(f.childNodes)
+                    applyEffects(nodes, el.children, {
+                        hook: 'onEnterDone',
+                        staggerKey: signature + 'enter'
+                    })
+                }
             } else if (el.index !== el.oldIndex) {
                 var nodes = moveItem(el, dom, 'add')
                 parent.insertBefore(el.dom, before.nextSibling)

@@ -117,7 +117,7 @@ avalon.directive('duplex', {
         if (dom && dom.nodeType === 1) {
             vdom.dynamic[duplexDir] = 1
             if (!dom.__ms_duplex__) {
-                dom.__ms_duplex__ = vdom[duplexDir]
+                dom.__ms_duplex__ = avalon.mix(vdom[duplexDir],{dom:dom})
                 //绑定事件
                 updateModelByEvent(dom, vdom)
                 //添加验证

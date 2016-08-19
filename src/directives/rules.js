@@ -32,7 +32,7 @@ avalon.shadowCopy(avalon.validators, {
     pattern: {
         message: '必须匹配{{pattern}}这样的格式',
         get: function (value, field, next) {
-            var elem = field.element
+            var elem = field.element 
             var data = field.data
             if (!isRegExp(data.pattern)) {
                 var h5pattern = elem.getAttribute("pattern")

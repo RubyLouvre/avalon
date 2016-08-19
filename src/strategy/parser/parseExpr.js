@@ -72,7 +72,6 @@ function parseExpr(str, category) {
     var input = str.replace(rregexp, dig).//移除所有正则
             replace(rstring, dig).//移除所有字符串
 
-            // input = avalon.unescapeHTML(input).
             replace(rshortCircuit, dig).//移除所有短路或
             replace(ruselessSp, '$1').//移除. |两端空白
             split(rpipeline) //使用管道符分离所有过滤器及表达式的正体
@@ -123,7 +122,7 @@ function parseExpr(str, category) {
             })
         }
 
-        ret = ['function ms_on($event, __local__){',
+        ret = ['function ($event, __local__){',
             'try{',
             extLocal(local).join('\n'),
             '\tvar __vmodel__ = this;',
@@ -188,7 +187,6 @@ function quoteError(str, type) {
             avalon.quote('parse ' + type + ' binding【 ' + str + ' 】fail')
             + ')'
 }
-
 module.exports = avalon.parseExpr = parseExpr
 
 
