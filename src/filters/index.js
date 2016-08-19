@@ -1,10 +1,12 @@
 
+var avalon = require('../seed/core')
 var number = require("./number")
 var sanitize = require("./sanitize")
 var date = require("./date")
 var arrayFilters = require("./array")
 var eventFilters = require("./event")
 var filters = avalon.filters
+var escape = avalon.escapeHtml = require("./escape")
 
 function K(a) {
     return a
@@ -36,7 +38,7 @@ avalon.mix(filters, {
     },
     camelize: avalon.camelize,
     date: date,
-    escape: avalon.escapeHtml,
+    escape: escape,
     sanitize: sanitize,
     number: number,
     currency: function (amount, symbol, fractionSize) {

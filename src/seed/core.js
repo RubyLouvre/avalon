@@ -3,17 +3,11 @@ function avalon(el) {
     return new avalon.init(el)
 }
 
-//if(typeof window !== 'undefined'){
-//    window.avalon = avalon
-//}
-
 avalon.init = function (el) {
     this[0] = this.element = el
 }
 
-
 avalon.fn = avalon.prototype = avalon.init.prototype
-
 
 avalon.shadowCopy = function (destination, source) {
     for (var property in source) {

@@ -1,3 +1,4 @@
+var avalon = require('../seed/core')
 
 function orderBy(array, criteria, reverse) {
     var type = avalon.type(array)
@@ -56,9 +57,9 @@ function filterBy(array, search) {
     }
 
     array = convertArray(array).filter(function (el, i) {
-        
         return !!criteria.apply(el, [el.value, i].concat(args))
     })
+    
     var isArray = type === 'array'
     var target = isArray ? [] : {}
     return recovery(target, array, function (el) {

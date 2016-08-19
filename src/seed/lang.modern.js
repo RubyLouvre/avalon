@@ -4,7 +4,6 @@ var tos = avalon.inspect
 var rwindow = /^\[object (?:Window|DOMWindow|global)\]$/
 var rarraylike = /(Array|List|Collection|Map|Arguments)\]$/
 
-avalon.quote = JSON.stringify
 
 // avalon.type
 var class2type = {}
@@ -21,6 +20,8 @@ avalon.type = function (obj) { //取得目标的类型
             class2type[tos.call(obj)] || 'object' :
             typeof obj
 }
+
+avalon.quote = JSON.stringify
 
 
 avalon.isFunction = function (fn) {
