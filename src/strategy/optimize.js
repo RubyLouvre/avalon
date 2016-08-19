@@ -46,8 +46,9 @@ var hasDirectives = function (arr) {
             }
             for (var j = 0; j < old.length; j++) {
                 var el = old[j]
-                if (el.dom) {//移除真实节点
-                    removeNode(el.dom)
+                var elem = el.dom
+                if (elem && elem.parentNode) {//移除真实节点
+                    elem.parentNode.removeChild(elem)
                 }
             }
             start.hasEffect = hasEffect(old)
@@ -168,13 +169,6 @@ function delDir(props, a, b) {
         avalon.warn(a, '指令不能与', b, '指令共存于同一个元素')
         delete props['ms-' + a]
     }
-}
-
-var f = document.documentElement
-function removeNode(node) {
-    f.appendChild(node)
-    f.removeChild(node)
-    return node
 }
 
 function hasEffect(arr) {
