@@ -77,7 +77,7 @@ function timeZoneGetter(date) {
     return paddedZone
 }
 //取得上午下午
-
+var tos = Object.prototype.toString
 function ampmGetter(date, formats) {
     return date.getHours() < 12 ? formats.AMPMS[0] : formats.AMPMS[1]
 }
@@ -164,7 +164,7 @@ function dateFilter(date, format) {
     if (typeof date === 'number') {
         date = new Date(date)
     }
-    if (avalon.type(date) !== 'date') {
+    if (tos.call(date) !== '[object Date]') {
         return
     }
     while (format) {

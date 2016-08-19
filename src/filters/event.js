@@ -9,7 +9,7 @@ var eventFilters = {
         return e
     }
 }
-var keyCode = {
+var keys = {
     esc: 27,
     tab: 9,
     enter: 13,
@@ -20,14 +20,16 @@ var keyCode = {
     right: 39,
     down: 40
 }
-
-avalon.each(keyCode, function (name, keyCode) {
-    eventFilters[name] = function (e) {
-        if (e.which !== keyCode) {
-            e.$return = true
+for (var name in keys) {
+    (function (filter, key) {
+        eventFilters[filter] = function (e) {
+            if (e.which !== key) {
+                e.$return = true
+            }
+            return e
         }
-        return e
-    }
-})
+    })(name, keys[name])
+}
+
 
 module.exports = eventFilters

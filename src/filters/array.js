@@ -35,7 +35,6 @@ function orderBy(array, criteria, reverse) {
 }
 
 function filterBy(array, search) {
-    console.log(array, search)
     var type = avalon.type(array)
     if (type !== 'array' && type !== 'object')
         throw 'filterBy只能处理对象或数组'
@@ -48,9 +47,7 @@ function filterBy(array, search) {
             return array
         } else {
             var reg = new RegExp(avalon.escapeRegExp(search), 'i')
-            console.log(reg)
             criteria = function (el) {
-                console.log(el)
                 return reg.test(el)
             }
         }
