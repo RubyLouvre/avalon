@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-19:12 version 2.112 by 司徒正美
+ * built in 2016-8-19:17 version 2.112 by 司徒正美
  * 2.1.4 and npm 2.1.12
  * 修正 ms-skip BUG
  * 去掉节点生成算法
@@ -81,21 +81,65 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 1 */,
 /* 2 */,
 /* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var avalon = __webpack_require__(4)
+	var window = Function(' return this')() || this
+	var browser = {
+	    window: window,
+	    document: {//方便在nodejs环境不会报错
+	        createElement: function () {
+	            return {}
+	        },
+	        createElementNS: function () {
+	            return {}
+	        },
+	        contains: Boolean
+	    },
+	    root: {
+	        outerHTML: 'x'
+	    },
+	    msie: NaN,
+	    modern: true,
+	    avalonDiv: {},
+	    avalonFragment: null
+	}
+	window.avalon = avalon
+
+	if (window.location && window.navigator && window.window) {
+	    var document = window.document
+	    browser.document = document
+	    browser.modern = window.dispatchEvent
+	    browser.root = document.documentElement
+	    browser.avalonDiv = document.createElement('div')
+	    browser.avalonFragment = document.createDocumentFragment()
+	    if (window.VBArray) {
+	        browser.msie = document.documentMode || (window.XMLHttpRequest ? 7 : 6)
+	    }
+	}
+
+	avalon.shadowCopy(avalon, browser)
+
+
+
+
+/***/ },
+/* 4 */
 /***/ function(module, exports) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {//avalon的核心,这里都是一些不存在异议的*核心*方法与属性
+	//avalon的核心,这里都是一些不存在异议的*核心*方法与属性
 	function avalon(el) {
 	    return new avalon.init(el)
 	}
 
-	global.avalon = avalon
-	if(typeof window !== 'undefined'){
-	    window.avalon = avalon
-	}
+	//if(typeof window !== 'undefined'){
+	//    window.avalon = avalon
+	//}
 
 	avalon.init = function (el) {
 	    this[0] = this.element = el
 	}
+
 
 	avalon.fn = avalon.prototype = avalon.init.prototype
 
@@ -109,7 +153,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var rword = /[^, ]+/g
 
-	var hasConsole = global.console
+	var hasConsole = typeof console === 'object'
 
 	avalon.shadowCopy(avalon, {
 	    noop: function () {
@@ -150,54 +194,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 	module.exports = avalon
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ },
-/* 4 */
-/***/ function(module, exports) {
-
-	/* WEBPACK VAR INJECTION */(function(global) {var window = global
-	var browser = {
-	    window: window,
-	    document: {//方便在nodejs环境不会报错
-	        createElement: function () {
-	            return {}
-	        },
-	        createElementNS: function(){
-	            return {}
-	        },
-	        contains: Boolean
-	    },
-	    root: {
-	        outerHTML: 'x'
-	    },
-	    msie: NaN,
-	    modern: true,
-	    avalonDiv: {},
-	    avalonFragment: null
-	}
-
-	if(window.location && window.navigator && window.window){
-	    var document = window.document
-	    browser.document = document
-	    browser.modern = window.dispatchEvent
-	    browser.root = document.documentElement
-	    browser.avalonDiv = document.createElement('div')
-	    browser.avalonFragment = document.createDocumentFragment()
-	    if (window.VBArray) {
-	        browser.msie = document.documentMode || (window.XMLHttpRequest ? 7 : 6)
-	    }
-	}
-
-
-	module.exports = browser
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
 /* 5 */,
 /* 6 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
+	var avalon = __webpack_require__(4)
 	var cssHooks = {}
 	var rhyphen = /([a-z\d])([A-Z]+)/g
 	var rcamelize = /[-_][^-_]/g
@@ -370,9 +373,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 7 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	
+	var avalon = __webpack_require__(4)
 	function kernel(settings) {
 	    for (var p in settings) {
 	        if (!avalon.ohasOwn.call(settings, p))
@@ -420,6 +423,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    debug: true
 	})
 
+	module.exports = avalon
 
 /***/ },
 /* 8 */
@@ -4719,8 +4723,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var ropenTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
 	var rendTag = /^<\/([^>]+)>/
-	var rmsForStart = /^\s*ms\-for\:/
-	var rmsForEnd = /^\s*ms\-for\-end/
 	//https://github.com/rviscomi/trunk8/blob/master/trunk8.js
 	//判定里面有没有内容
 	var rcontent = /\S/
@@ -5880,24 +5882,18 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 86 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
-	var avalon = __webpack_require__(3)
-	var browser = __webpack_require__(4)
-
-	avalon.shadowCopy(avalon, browser)
-
+	__webpack_require__(3)
 	__webpack_require__(87)
 	__webpack_require__(6)
-	__webpack_require__(7)
+	module.exports = __webpack_require__(7)
 
-	module.exports = avalon
 
 /***/ },
 /* 87 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	//这里放置存在异议的方法
-
+	var avalon = __webpack_require__(4)
 	var serialize = avalon.inspect
 	var rwindow = /^\[object (?:Window|DOMWindow|global)\]$/
 	var rarraylike = /(Array|List|Collection|Map|Arguments)\]$/
