@@ -1,4 +1,5 @@
 var Cache = require('../../seed/cache')
+var avalon = require('../../seed/core')
 
 var fixCloneNode = require('./fixCloneNode')
 

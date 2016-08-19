@@ -1,5 +1,5 @@
+var avalon = require('../../seed/core')
 var rnowhite = /\S+/g
-
 'add,remove'.replace(avalon.rword, function (method) {
     avalon.fn[method + 'Class'] = function (cls) {
         var el = this[0] || {}

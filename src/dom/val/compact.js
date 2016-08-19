@@ -1,3 +1,4 @@
+var avalon = require('../../seed/core')
 function getValType(elem) {
     var ret = elem.tagName.toLowerCase()
     return ret === 'input' && /checkbox|radio/.test(elem.type) ? 'checked' : ret

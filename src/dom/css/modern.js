@@ -1,3 +1,4 @@
+var avalon = require('../../seed/core')
 var root = avalon.root
 var camelize = avalon.camelize
 var cssHooks = avalon.cssHooks
@@ -65,6 +66,7 @@ avalon.fn.position = function () {
         left: offset.left - parentOffset.left - avalon.css(elem, "marginLeft", true)
     }
 }
+
 avalon.fn.offsetParent = function () {
     var offsetParent = this[0].offsetParent
     while (offsetParent && avalon.css(offsetParent, "position") === "static") {
@@ -91,6 +93,7 @@ cssHooks["@:get"] = function (node, name) {
     }
     return ret
 }
+
 cssHooks["opacity:get"] = function (node) {
     var ret = cssHooks["@:get"](node, "opacity")
     return ret === "" ? "1" : ret

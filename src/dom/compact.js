@@ -4,6 +4,7 @@
  * shim,class,data,css,val,html,event,ready  
  * ------------------------------------------------------------
  */
+
 require('./shim/compact')
 require('./class/compact')
 require('./attr/compact')

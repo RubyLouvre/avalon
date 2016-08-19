@@ -1,5 +1,5 @@
+var avalon = require('../../seed/core')
 var document = avalon.document
-var window = avalon.window
 var root = avalon.root
 
 var getShortID = require('../../seed/lang.share').getShortID
@@ -20,6 +20,10 @@ avalon.bind = function (elem, type, fn) {
                 fn = hook.fix(elem, fn)
                 fn.uuid = uuid
             }
+        }
+        //fix 移动端浏览器:click不触发的BUG
+        if(type === 'click' && !elem.onclick){
+            elem.onclick = ''
         }
         var key = type + ':' + uuid
         avalon.eventListeners[fn.uuid] = fn
@@ -199,7 +203,7 @@ avalon.fireDom = function (elem, type, opts) {
     elem.dispatchEvent(hackEvent)
 }
 
-var eventHooks = avalon.eventHooks
+
 //针对firefox, chrome修正mouseenter, mouseleave(chrome30+)
 if (!('onmouseenter' in root)) {
     avalon.each({

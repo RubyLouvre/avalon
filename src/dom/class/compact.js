@@ -1,3 +1,4 @@
+var avalon = require('../../seed/core')
 var rnowhite = /\S+/g
 var fakeClassListMethods = {
     _toString: function () {

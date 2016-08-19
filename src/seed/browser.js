@@ -25,6 +25,7 @@ if (window.location && window.navigator && window.window) {
     var document = window.document
     browser.document = document
     browser.modern = window.dispatchEvent
+    browser.browser = true
     browser.root = document.documentElement
     browser.avalonDiv = document.createElement('div')
     browser.avalonFragment = document.createDocumentFragment()
