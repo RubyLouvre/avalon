@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-19:12 version 2.111 by 司徒正美
+ * built in 2016-8-19:12 version 2.112 by 司徒正美
  * 2.1.4 and npm 2.1.12
  * 修正 ms-skip BUG
  * 去掉节点生成算法
@@ -689,7 +689,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return a === 'true'|| a == '1' 
 	        }
 	    },
-	    version: "2.111",
+	    version: "2.112",
 	    slice: function (nodes, start, end) {
 	        return _slice.call(nodes, start, end)
 	    },
