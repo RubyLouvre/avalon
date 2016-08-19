@@ -43,7 +43,16 @@ function byRewritePrototype() {
     var obj = Object.getOwnPropertyDescriptor(ep, 'innerHTML')
     var oldSetter = obj.set
     obj.set = newSetter
-    Object.defineProperty(ep, 'innerHTML', obj)
+    try {
+        Object.defineProperty(ep, 'innerHTML', obj)
+    } catch (e) {
+        //safari 9.1.2使用Object.defineProperty重写innerHTML会抛
+        // Attempting to change the setter of an unconfigurable property.
+        if (ep._lookupSetter__) {
+            oldSetter = ep.__lookupSetter__('innerHTML')
+            ep.__defineSetter__('innerHTML', newSetter)
+        }
+    }
 
 
     rewite('appendChild', function (fn, a) {

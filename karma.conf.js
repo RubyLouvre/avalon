@@ -38,12 +38,13 @@ module.exports = function (config) {
 //autoWatch为true,Karma将自动执行测试用例
         autoWatch: true,
 //http://www.cnblogs.com/NetSos/p/4371075.html
-        browsers: ['Chrome','IE'],
+        browsers: ['Firefox'],
         singleRun: false,
         plugins: [
             'karma-mocha',
             'karma-mocha-reporter',
             'karma-firefox-launcher',
+            'karma-safari-launcher',
             'karma-chrome-launcher',
             'karma-ie-launcher',
             'karma-opera-launcher',

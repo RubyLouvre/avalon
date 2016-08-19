@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-19:11 version 2.111 by 司徒正美
+ * built in 2016-8-19:12 version 2.111 by 司徒正美
  * 2.1.4 and npm 2.1.12
  * 修正 ms-skip BUG
  * 去掉节点生成算法
@@ -7432,7 +7432,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var obj = Object.getOwnPropertyDescriptor(ep, 'innerHTML')
 	    var oldSetter = obj.set
 	    obj.set = newSetter
-	    Object.defineProperty(ep, 'innerHTML', obj)
+	    try {
+	        Object.defineProperty(ep, 'innerHTML', obj)
+	    } catch (e) {
+	        //safari 9.1.2使用Object.defineProperty重写innerHTML会抛
+	        // Attempting to change the setter of an unconfigurable property.
+	        if (ep._lookupSetter__) {
+	            oldSetter = ep.__lookupSetter__('innerHTML')
+	            ep.__defineSetter__('innerHTML', newSetter)
+	        }
+	    }
 
 
 	    rewite('appendChild', function (fn, a) {

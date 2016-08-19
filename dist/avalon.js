@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-19:11 version 2.111 by 司徒正美
+ * built in 2016-8-19:12 version 2.111 by 司徒正美
  * 2.1.4 and npm 2.1.12
  * 修正 ms-skip BUG
  * 去掉节点生成算法
