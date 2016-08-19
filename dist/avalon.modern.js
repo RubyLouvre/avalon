@@ -1599,13 +1599,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var node = nodes[i]
 	        switch (node.nodeType) {
 	            case 1:
-	                var value = node.getAttribute('ms-for')
-	                        || node.getAttribute(':for')
-	                if (value) {
-	                    var start = document.createComment('ms-for:' + value)
+	             
+	                var a =  node.getAttributeNode(':for') || node.getAttributeNode('ms-for') 
+	      
+	                if (a) {
+	                    var start = document.createComment('ms-for:' + a.value)
 	                    var end = document.createComment('ms-for-end:')
-	                    node.removeAttribute('ms-for')
-	                    node.removeAttribute(':for')
+	                    node.removeAttributeNode(a)
+	                   
 	                    if (parent) {
 	                        parent.insertBefore(end, node.nextSibling)
 	                        parent.insertBefore(start, node)
@@ -4684,7 +4685,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    var body = '__local__ = __local__ || {};\n' +
 	            _local.join(';\n')+'\n' + _body
-	    body = body.replace(/}\);\s+vnodes\.push\(/g,'}\n,')
+	    
 	    try{
 	    var fn = Function('__vmodel__', '__local__', body)
 	    }catch(e){
