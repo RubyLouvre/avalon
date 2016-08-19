@@ -1,11 +1,12 @@
-var window = global
+var avalon = require('./core')
+var window = Function(' return this')() || this
 var browser = {
     window: window,
     document: {//方便在nodejs环境不会报错
         createElement: function () {
             return {}
         },
-        createElementNS: function(){
+        createElementNS: function () {
             return {}
         },
         contains: Boolean
@@ -18,8 +19,9 @@ var browser = {
     avalonDiv: {},
     avalonFragment: null
 }
+window.avalon = avalon
 
-if(window.location && window.navigator && window.window){
+if (window.location && window.navigator && window.window) {
     var document = window.document
     browser.document = document
     browser.modern = window.dispatchEvent
@@ -31,5 +33,6 @@ if(window.location && window.navigator && window.window){
     }
 }
 
+avalon.shadowCopy(avalon, browser)
 
-module.exports = browser
+

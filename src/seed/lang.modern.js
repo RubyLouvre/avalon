@@ -1,6 +1,6 @@
 //这里放置存在异议的方法
-
-var serialize = avalon.inspect
+var avalon = require('./core')
+var tos = avalon.inspect
 var rwindow = /^\[object (?:Window|DOMWindow|global)\]$/
 var rarraylike = /(Array|List|Collection|Map|Arguments)\]$/
 
@@ -18,7 +18,7 @@ avalon.type = function (obj) { //取得目标的类型
     }
     // 早期的webkit内核浏览器实现了已废弃的ecma262v4标准，可以将正则字面量当作函数使用，因此typeof在判定正则时会返回function
     return typeof obj === 'object' || typeof obj === 'function' ?
-            class2type[serialize.call(obj)] || 'object' :
+            class2type[tos.call(obj)] || 'object' :
             typeof obj
 }
 
@@ -28,14 +28,14 @@ avalon.isFunction = function (fn) {
 }
 
 avalon.isWindow = function (obj) {
-    return rwindow.test(serialize.call(obj))
+    return rwindow.test(tos.call(obj))
 }
 
 
 /*判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例*/
 avalon.isPlainObject = function (obj) {
     // 简单的 typeof obj === 'object'检测，会致使用isPlainObject(window)在opera下通不过
-    return serialize.call(obj) === '[object Object]' &&
+    return tos.call(obj) === '[object Object]' &&
             Object.getPrototypeOf(obj) === Object.prototype
 }
 
@@ -104,7 +104,7 @@ avalon.mix = avalon.fn.mix = function () {
 function isArrayLike(obj) {
     if (obj && typeof obj === 'object') {
         var n = obj.length,
-                str = serialize.call(obj)
+                str = tos.call(obj)
         if (rarraylike.test(str)) {
             return true
         } else if (str === '[object Object]' && n === (n >>> 0)) {

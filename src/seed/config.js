@@ -1,4 +1,4 @@
-
+var avalon = require('./core')
 function kernel(settings) {
     for (var p in settings) {
         if (!avalon.ohasOwn.call(settings, p))
@@ -45,3 +45,5 @@ avalon.config({
     interpolate: ['{{', '}}'],
     debug: true
 })
+
+module.exports = avalon

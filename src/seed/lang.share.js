@@ -1,3 +1,4 @@
+var avalon = require('./core')
 var cssHooks = {}
 var rhyphen = /([a-z\d])([A-Z]+)/g
 var rcamelize = /[-_][^-_]/g
