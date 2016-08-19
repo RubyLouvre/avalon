@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-19:18 version 2.112 by 司徒正美
+ * built in 2016-8-20:1 version 2.112 by 司徒正美
  * 2.1.4 and npm 2.1.12
  * 修正 ms-skip BUG
  * 去掉节点生成算法
@@ -319,14 +319,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	window.avalon = avalon
 
 	if (window.location && window.navigator && window.window) {
-	    var document = window.document
-	    browser.document = document
+	    var doc = window.document
+	    browser.browser = true
+	    browser.document = doc
 	    browser.modern = window.dispatchEvent
-	    browser.root = document.documentElement
-	    browser.avalonDiv = document.createElement('div')
-	    browser.avalonFragment = document.createDocumentFragment()
+	    browser.root = doc.documentElement
+	    browser.avalonDiv = doc.createElement('div')
+	    browser.avalonFragment = doc.createDocumentFragment()
 	    if (window.VBArray) {
-	        browser.msie = document.documentMode || (window.XMLHttpRequest ? 7 : 6)
+	        browser.msie = doc.documentMode || (window.XMLHttpRequest ? 7 : 6)
 	    }
 	}
 
@@ -1777,6 +1778,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * shim,class,data,css,val,html,event,ready  
 	 * ------------------------------------------------------------
 	 */
+
 	__webpack_require__(22)
 	__webpack_require__(23)
 	__webpack_require__(24)
@@ -1790,7 +1792,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 22 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
+
+	var avalon = __webpack_require__(4)
 
 	function fixContains(root, el) {
 	    try { //IE6-8,游离于DOM树外的文本节点，访问parentNode有时会抛错
@@ -1805,25 +1809,27 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.contains = fixContains
 	//IE6-11的文档对象没有contains
-	if (!avalon.document.contains) {
-	    avalon.document.contains = function (b) {
-	        return fixContains(document, b)
+	if (avalon.browser) {
+	    if (!document.contains) {
+	        document.contains = function (b) {
+	            return fixContains(document, b)
+	        }
 	    }
-	}
-
-	if (window.Node && !document.createTextNode('x').contains) {
-	    Node.prototype.contains = function (arg) {//IE6-8没有Node对象
-	        return !!(this.compareDocumentPosition(arg) & 16)
+	    if (window.Node && !document.createTextNode('x').contains) {
+	        Node.prototype.contains = function (arg) {//IE6-8没有Node对象
+	            return !!(this.compareDocumentPosition(arg) & 16)
+	        }
 	    }
-	}
 
 	//firefox 到11时才有outerHTML
-	if (window.HTMLElement && !avalon.root.outerHTML) {
-	    HTMLElement.prototype.__defineGetter__('outerHTML', function () {
-	        var div = document.createElement('div')
-	        div.appendChild(this)
-	        return div.innerHTML
-	    })
+	    if (window.HTMLElement && !avalon.root.outerHTML) {
+	        HTMLElement.prototype.__defineGetter__('outerHTML', function () {
+	            var div = document.createElement('div')
+	            div.appendChild(this)
+	            return div.innerHTML
+	        })
+	    }
+
 	}
 
 
@@ -1831,8 +1837,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 23 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
+	var avalon = __webpack_require__(4)
 	var rnowhite = /\S+/g
 	var fakeClassListMethods = {
 	    _toString: function () {
@@ -1913,7 +1920,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
+	var avalon = __webpack_require__(4)
 	var propMap = __webpack_require__(25)
 	var isVML = __webpack_require__(26)
 	var rsvg =/^\[object SVG\w*Element\]$/
@@ -1982,7 +1989,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    rvalidescape = /\\(?:["\\\/bfnrt]|u[\da-fA-F]{4})/g,
 	    rvalidtokens = /"[^"\\\r\n]*"|true|false|null|-?(?:\d+\.|)\d+(?:[eE][+-]?\d+|)/g
 
-	avalon.parseJSON = avalon.window.JSON ? JSON.parse : function (data) {
+	avalon.parseJSON = typeof JSON === 'object' ? JSON.parse : function (data) {
 	    if (typeof data === 'string') {
 	        data = data.trim()
 	        if (data) {
@@ -2066,16 +2073,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 27 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
+	var avalon = __webpack_require__(4)
 	var root = avalon.root
-	var window = avalon.window
 	var camelize = avalon.camelize
 	var cssHooks = avalon.cssHooks
 
 	var prefixes = ['', '-webkit-', '-o-', '-moz-', '-ms-']
 	var cssMap = {
-	    'float': window.Range ? 'cssFloat' : 'styleFloat'
+	    'float': avalon.modern ? 'cssFloat' : 'styleFloat'
 	}
 	avalon.cssNumber = avalon.oneObject('animationIterationCount,columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom')
 
@@ -2135,6 +2142,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        left: offset.left - parentOffset.left - avalon.css(elem, 'marginLeft', true)
 	    }
 	}
+
 	avalon.fn.offsetParent = function () {
 	    var offsetParent = this[0].offsetParent
 	    while (offsetParent && avalon.css(offsetParent, 'position') === 'static') {
@@ -2152,7 +2160,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-	if (window.getComputedStyle) {
+	if (typeof getComputedStyle === 'function') {
 	    cssHooks['@:get'] = function (node, name) {
 	        if (!node || !node.style) {
 	            throw new Error('getComputedStyle要求传入一个节点 ' + node)
@@ -2174,7 +2182,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var rnumnonpx = /^-?(?:\d*\.)?\d+(?!px)[^\d\s]+$/i
 	    var rposition = /^(top|right|bottom|left)$/
 	    var ralpha = /alpha\([^)]*\)/i
-	    var ie8 = !!window.XDomainRequest
+	    var ie8 = avalon.msie === 8
 	    var salpha = 'DXImageTransform.Microsoft.Alpha'
 	    var border = {
 	        thin: ie8 ? '1px' : '2px',
@@ -2268,6 +2276,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	}
+
 	avalon.each({
 	    Width: 'width',
 	    Height: 'height'
@@ -2398,8 +2407,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 28 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
+	var avalon = __webpack_require__(4)
 	function getValType(elem) {
 	    var ret = elem.tagName.toLowerCase()
 	    return ret === 'input' && /checkbox|radio/.test(elem.type) ? 'checked' : ret
@@ -2476,6 +2486,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var Cache = __webpack_require__(30)
+	var avalon = __webpack_require__(4)
 
 	var fixCloneNode = __webpack_require__(31)
 
@@ -2683,9 +2694,11 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var avalon = __webpack_require__(4)
 	var document = avalon.document
-	var window = avalon.window
 	var root = avalon.root
+	var window = avalon.window
+
 	var W3C = avalon.modern
 
 	var getShortID = __webpack_require__(6).getShortID
@@ -3051,10 +3064,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var avalon = __webpack_require__(4)
 	var scan = __webpack_require__(35)
 	var document = avalon.document
-	var window = avalon.window
-	var root = avalon.root
 
 	var readyList = [], isReady
 	var fireReady = function (fn) {
@@ -3064,39 +3076,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        fn(avalon)
 	    }
 	}
-
-	function doScrollCheck() {
-	    try { //IE下通过doScrollCheck检测DOM树是否建完
-	        root.doScroll('left')
-	        fireReady()
-	    } catch (e) {
-	        setTimeout(doScrollCheck)
-	    }
-	}
-
-	if (document.readyState === 'complete') {
-	    setTimeout(fireReady) //如果在domReady之外加载
-	} else if (document.addEventListener) {
-	    document.addEventListener('DOMContentLoaded', fireReady)
-	} else if (document.attachEvent) {
-	    document.attachEvent('onreadystatechange', function () {
-	        if (document.readyState === 'complete') {
-	            fireReady()
-	        }
-	    })
-	    try {
-	        var isTop = window.frameElement === null
-	    } catch (e) {
-	    }
-	    if (root.doScroll && isTop && window.external) {//fix IE iframe BUG
-	        doScrollCheck()
-	    }
-	}
-
-	if (window.document) {
-	    avalon.bind(window, 'load', fireReady)
-	}
-
 	avalon.ready = function (fn) {
 	    if (!isReady) {
 	        readyList.push(fn)
@@ -3105,9 +3084,47 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-	avalon.ready(function(){
+	avalon.ready(function () {
 	    scan(document.body)
 	})
+
+	new function () {
+	    if (!avalon.browser)
+	        return
+	    var root = avalon.root
+
+	    function doScrollCheck() {
+	        try { //IE下通过doScrollCheck检测DOM树是否建完
+	            root.doScroll('left')
+	            fireReady()
+	        } catch (e) {
+	            setTimeout(doScrollCheck)
+	        }
+	    }
+
+	    if (document.readyState === 'complete') {
+	        setTimeout(fireReady) //如果在domReady之外加载
+	    } else if (document.addEventListener) {
+	        document.addEventListener('DOMContentLoaded', fireReady)
+	    } else if (document.attachEvent) {
+	        document.attachEvent('onreadystatechange', function () {
+	            if (document.readyState === 'complete') {
+	                fireReady()
+	            }
+	        })
+	        try {
+	            var isTop = window.frameElement === null
+	        } catch (e) {
+	        }
+	        if (root.doScroll && isTop && window.external) {//fix IE iframe BUG
+	            doScrollCheck()
+	        }
+	    }
+
+	    avalon.bind(window, 'load', fireReady)
+	}
+
+
 
 
 
@@ -3119,7 +3136,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var dom2vdom = __webpack_require__(36)
 
 	function scan(nodes) {
-	    //var getHTML = avalon.scan.htmlfy
 	    for (var i = 0, elem; elem = nodes[i++]; ) {
 	        if (elem.nodeType === 1) {
 	            var $id = getController(elem)
@@ -3134,7 +3150,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var vtree = dom2vdom(elem)
 	                var now = new Date()
 	                elem.vtree = avalon.speedUp(vtree)
-	                 
+
 	                var now2 = new Date()
 	                onceWarn && avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')
 
@@ -3166,7 +3182,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    scan([a])
 	}
-	// vm.$watch = [{expr:expr,cb:cb,args:args, vm:vm,type:type.    }]
+
 	function getController(a) {
 	    return a.getAttribute('ms-controller') ||
 	            a.getAttribute(':controller')
@@ -3295,7 +3311,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return arr
 	}
 
-	var f = document.documentElement
+	var f = avalon.avalonFragment
 	function removeNode(node) {
 	    f.appendChild(node)
 	    f.removeChild(node)
@@ -7177,8 +7193,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            for (var j = 0; j < old.length; j++) {
 	                var el = old[j]
-	                if (el.dom) {//移除真实节点
-	                    removeNode(el.dom)
+	                var elem = el.dom
+	                if (elem && elem.parentNode) {//移除真实节点
+	                    elem.parentNode.removeChild(elem)
 	                }
 	            }
 	            start.hasEffect = hasEffect(old)
@@ -7299,13 +7316,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        avalon.warn(a, '指令不能与', b, '指令共存于同一个元素')
 	        delete props['ms-' + a]
 	    }
-	}
-
-	var f = document.documentElement
-	function removeNode(node) {
-	    f.appendChild(node)
-	    f.removeChild(node)
-	    return node
 	}
 
 	function hasEffect(arr) {
