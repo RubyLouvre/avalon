@@ -13,8 +13,6 @@ var plainTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,templ
 
 var ropenTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
 var rendTag = /^<\/([^>]+)>/
-var rmsForStart = /^\s*ms\-for\:/
-var rmsForEnd = /^\s*ms\-for\-end/
 //https://github.com/rviscomi/trunk8/blob/master/trunk8.js
 //判定里面有没有内容
 var rcontent = /\S/
