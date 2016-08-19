@@ -22,15 +22,15 @@ var browser = {
 window.avalon = avalon
 
 if (window.location && window.navigator && window.window) {
-    var document = window.document
-    browser.document = document
-    browser.modern = window.dispatchEvent
+    var doc = window.document
     browser.browser = true
-    browser.root = document.documentElement
-    browser.avalonDiv = document.createElement('div')
-    browser.avalonFragment = document.createDocumentFragment()
+    browser.document = doc
+    browser.modern = window.dispatchEvent
+    browser.root = doc.documentElement
+    browser.avalonDiv = doc.createElement('div')
+    browser.avalonFragment = doc.createDocumentFragment()
     if (window.VBArray) {
-        browser.msie = document.documentMode || (window.XMLHttpRequest ? 7 : 6)
+        browser.msie = doc.documentMode || (window.XMLHttpRequest ? 7 : 6)
     }
 }
 

@@ -117,7 +117,7 @@ function createVDOMs(nodes, parent) {
     return arr
 }
 
-var f = document.documentElement
+var f = avalon.avalonFragment
 function removeNode(node) {
     f.appendChild(node)
     f.removeChild(node)

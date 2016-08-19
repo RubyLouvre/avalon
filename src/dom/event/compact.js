@@ -1,6 +1,8 @@
 var avalon = require('../../seed/core')
 var document = avalon.document
 var root = avalon.root
+var window = avalon.window
+
 var W3C = avalon.modern
 
 var getShortID = require('../../seed/lang.share').getShortID

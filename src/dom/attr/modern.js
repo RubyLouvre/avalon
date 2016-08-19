@@ -1,3 +1,4 @@
+var avalon = require('../../seed/core')
 var propMap = require('./propMap')
 var rsvg = /^\[object SVG\w*Element\]$/
 
