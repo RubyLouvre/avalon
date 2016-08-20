@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-21:2 version 2.112 by 司徒正美
+ * built in 2016-8-21:3 version 2.112 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -1083,7 +1083,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this.dom = document.createComment(this.nodeValue)
 	    },
 	    toHTML: function () {
-	        return '<!--' + this.nodeValue + '-->' //+ (this.template || "")
+	        return '<!--' + this.nodeValue + '-->' 
 	    }
 	}
 
@@ -2353,38 +2353,45 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (Object(a) === a) {
 	            a = a.$model || a//安全的遍历VBscript
 	            if (Array.isArray(a)) {//转换成对象
-	                a = avalon.mix.apply({}, a)
+	                var b = {}
+	                a.forEach(function (el) {
+	                    el && avalon.shadowCopy(b, el)
+	                })
+	                a = b
 	            }
+	            var hasChange = false
 	            if (!src.dynamic[name] || !p) {//如果一开始为空
-	                src.changeStyle = src[name] = a
+	                src[name] = a
+	                hasChange = true
 	            } else {
 	                var patch = {}
-	                var hasChange = false
 	                for (var i in a) {//diff差异点
 	                    if (a[i] !== p[i]) {
 	                        hasChange = true
-	                        patch[i] = a[i]
+	                    }
+	                    patch[i] = a[i]
+	                }
+	                for (var i in p) {
+	                    if (!(i in patch)) {
+	                        hasChange = true
+	                        patch[i] = ''
 	                    }
 	                }
-	                if (hasChange) {
-	                    src[name] = a
-	                    src.changeStyle = patch
-	                }
+	                src[name] = patch
 	            }
-	            if (src.changeStyle) {
+	            if (hasChange) {
 	                update(src, this.update)
 	            }
 	        }
 	        delete copy[name]//释放内存
 	    },
 	    update: function (dom, vdom) {
-	        var change = vdom.changeStyle
 	        var wrap = avalon(dom)
 	        vdom.dynamic['ms-css'] = 1
+	        var change = vdom['ms-css']
 	        for (var name in change) {
 	            wrap.css(name, change[name])
 	        }
-	        delete vdom.changeStyle
 	    }
 	})
 
