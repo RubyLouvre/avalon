@@ -7,11 +7,11 @@ avalon.directive('important', {
         var quoted = avalon.quote(binding.expr)
         copy.local = '{}'
         copy[binding.name] = 1
-        copy.vmodel = '(function(){ return __vmodel__ = avalon.vmodels[' + quoted + ']})()'
+        var vmodel = '(function(){ return __vmodel__ = avalon.vmodels[' + quoted + ']})()'
         src.$prepend = ['(function(__vmodel__){',
             'var important = avalon.scopes[' + quoted + ']',
             'if(important){avalon.log("不进入"+' + quoted + ');return }',
-        ].join('\n') + '\n'
+        ].join('\n') + '\n' + vmodel
         src.$append = '\n})();'
     },
     diff: function (copy, src, name) {

@@ -8,8 +8,21 @@ function scan(nodes) {
 
             var vm = avalon.vmodels[$id]
             if (vm && !vm.$element) {
-                avalon(elem).removeClass('ms-controller')
                 vm.$element = elem
+
+                if (avalon.serverFiles && avalon.serverFiles[$id]) {
+                    var tmpl = avalon.serverFiles[$id]
+                    var oldTree = avalon.speedUp(avalon.lexer(tmpl))
+                    var render = avalon.render(oldTree)
+                    var vtree = render(vm)
+                    var dom = avalon.vdomAdaptor(vtree[0], 'toDOM')
+                    vm.$element = dom
+                    dom.vtree = vtree
+                    vm.$render = render
+                    elem.parentNode.replaceChild(dom, elem)
+                    avalon.diff(vtree, vtree)
+                    continue
+                }
 
                 //IE6-8下元素的outerHTML前面会有空白
                 //第一次扫描就清空所有空白节点,并生成最初的vtree

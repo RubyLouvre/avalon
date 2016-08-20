@@ -5,6 +5,8 @@
  * 此阶段只会生成VElement,VText,VComment
  * ------------------------------------------------------------
  */
+var avalon = require('../seed/core')
+
 require('./optimize')
 var voidTag = require('./voidTag')
 var addTbody = require('./parser/addTbody')

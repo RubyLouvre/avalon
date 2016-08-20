@@ -19,7 +19,7 @@ avalon.directive('controller', {
         var quoted = avalon.quote(binding.expr)
         copy.local = '__local__'
         copy[binding.name] = 1
-        copy.vmodel = [
+        var vmodel = [
             '(function(){',
             'var vm = avalon.vmodels[' + quoted + ']',
             'if(vm && __vmodel__&& vm !== __vmodel__){',
@@ -27,16 +27,17 @@ avalon.directive('controller', {
             '}else if(vm){',
             'return __vmodel__ = vm',
             '}',
-            '})()'
-        ].join('\n')
+            '})();'
+        ].join('\n')+'console.log(__vmodel__)'
 
-        src.$prepend = '(function(__vmodel__){'
+        src.$prepend = '(function(__vmodel__){'+  vmodel
         src.$append = '\n})(__vmodel__);'
     },
     diff: function (copy, src, name) {
         if (!src.dynamic[name]) {
             src.local = copy.local
             src.vmodel = copy.vmodel
+           
             update(src, this.update)
         }
     },
@@ -50,8 +51,7 @@ avalon.directive('controller', {
         if (scope) {
             return
         }
-        delete vdom.vmodel
-        delete vdom.local
+       
         var top = avalon.vmodels[id]
         if (vmodel.$element && vmodel.$element.vtree[0] === vdom) {
             var render = vmodel.$render
@@ -71,6 +71,7 @@ avalon.directive('controller', {
             local: local
         }
         update(vdom, function () {
+            avalon(dom).removeClass('ms-controller')
             var events = needFire.$events["onReady"]
             if (events) {
                 needFire.$fire('onReady')
