@@ -41,7 +41,7 @@ avalon.directive('on', {
       
         if (!src.dynamic[name] || srcFn.uuid !== uuid) {
             src[name] = fn
-            avalon.eventListeners.uuid = fn
+            avalon.eventListeners[uuid] = fn
             hasChange = true
         }
     
