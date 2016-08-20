@@ -33,6 +33,10 @@ npm install avalon2
 
 thanks http://charts.udpwork.com/
 
+###支持后端渲染
+
+avalon2.1.5起支持后端渲染,详见[这里](https://github.com/RubyLouvre/avalon-server-render-example)
+
 
 ### [avalon2 学习教程(包括组件)](https://segmentfault.com/u/situzhengmei/articles)
 

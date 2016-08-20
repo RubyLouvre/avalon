@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-21:0 version 2.112 by 司徒正美
+ * built in 2016-8-21:2 version 2.112 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -1577,7 +1577,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this.dom = document.createComment(this.nodeValue)
 	    },
 	    toHTML: function () {
-	        return '<!--' + this.nodeValue + '-->' + (this.template || "")
+	        return '<!--' + this.nodeValue + '-->' //+ (this.template || "")
 	    }
 	}
 

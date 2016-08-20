@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-21:0 version 2.112 by 司徒正美
+ * built in 2016-8-21:2 version 2.112 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -80,12 +80,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	/*!
 	 * built in 2016-8-21:0 version 2.112 by 司徒正美
-	 * 2.1.4 and npm 2.1.12
-	 *      修正 ms-skip BUG
-	 *      去掉节点生成算法
-	 *      首先渲染改成根据真实DOM生成虚拟DOM
-	 *      重构 avalon.speedUp
-	 *      去掉avalon.config中已经没有用rbind, rexprg
+	 * 2.1.5 and npm 2.1.15
+	 *     修正 ms-controller, ms-important的移除类名的实现
+	 *     实现后端渲染,
+	 *     分离DOM API
+	 *     fix ms-on BUG
 	 */
 	(function webpackUniversalModuleDefinition(root, factory) {
 		if(true)
