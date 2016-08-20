@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-20:1 version 2.112 by 司徒正美
+ * built in 2016-8-21:0 version 2.112 by 司徒正美
  * 2.1.4 and npm 2.1.12
  * 修正 ms-skip BUG
  * 去掉节点生成算法
@@ -1441,8 +1441,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            var vm = avalon.vmodels[$id]
 	            if (vm && !vm.$element) {
-	                avalon(elem).removeClass('ms-controller')
 	                vm.$element = elem
+
+	                if (avalon.serverTemplates && avalon.serverTemplates[$id]) {
+	                    var tmpl = avalon.serverTemplates[$id]
+	                    var oldTree = avalon.speedUp(avalon.lexer(tmpl))
+	                    var render = avalon.render(oldTree)
+	                    var vtree = render(vm)
+	                    var dom = avalon.vdomAdaptor(vtree[0], 'toDOM')
+	                    vm.$element = dom
+	                    dom.vtree = vtree
+	                    vm.$render = render
+	                    elem.parentNode.replaceChild(dom, elem)
+	                    avalon.diff(vtree, vtree)
+	                    continue
+	                }
 
 	                //IE6-8下元素的outerHTML前面会有空白
 	                //第一次扫描就清空所有空白节点,并生成最初的vtree
@@ -2196,12 +2209,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parse: function (copy, src, binding) {
 	        var quoted = avalon.quote(binding.expr)
 	        copy.local = '{}'
+	        copy.vmodel = '__vmodel__'
 	        copy[binding.name] = 1
-	        copy.vmodel = '(function(){ return __vmodel__ = avalon.vmodels[' + quoted + ']})()'
+	        
+	        var vmodel = '(function(){ return __vmodel__ = avalon.vmodels[' + quoted + ']})()'
 	        src.$prepend = ['(function(__vmodel__){',
 	            'var important = avalon.scopes[' + quoted + ']',
 	            'if(important){avalon.log("不进入"+' + quoted + ');return }',
-	        ].join('\n') + '\n'
+	        ].join('\n') + '\n' + vmodel
 	        src.$append = '\n})();'
 	    },
 	    diff: function (copy, src, name) {
@@ -2256,8 +2271,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parse: function (copy, src, binding) {
 	        var quoted = avalon.quote(binding.expr)
 	        copy.local = '__local__'
+	        copy.vmodel = '__vmodel__'
 	        copy[binding.name] = 1
-	        copy.vmodel = [
+
+	        var vmodel = [
 	            '(function(){',
 	            'var vm = avalon.vmodels[' + quoted + ']',
 	            'if(vm && __vmodel__&& vm !== __vmodel__){',
@@ -2265,16 +2282,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	            '}else if(vm){',
 	            'return __vmodel__ = vm',
 	            '}',
-	            '})()'
-	        ].join('\n')
+	            '})();'
+	        ].join('\n') 
 
-	        src.$prepend = '(function(__vmodel__){'
+	        src.$prepend = '(function(__vmodel__){' + vmodel
 	        src.$append = '\n})(__vmodel__);'
 	    },
 	    diff: function (copy, src, name) {
 	        if (!src.dynamic[name]) {
 	            src.local = copy.local
 	            src.vmodel = copy.vmodel
+
 	            update(src, this.update)
 	        }
 	    },
@@ -2288,8 +2306,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (scope) {
 	            return
 	        }
-	        delete vdom.vmodel
-	        delete vdom.local
+
 	        var top = avalon.vmodels[id]
 	        if (vmodel.$element && vmodel.$element.vtree[0] === vdom) {
 	            var render = vmodel.$render
@@ -2309,6 +2326,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            local: local
 	        }
 	        update(vdom, function () {
+	            avalon(dom).removeClass('ms-controller')
 	            var events = needFire.$events["onReady"]
 	            if (events) {
 	                needFire.$fire('onReady')
@@ -2842,7 +2860,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      
 	        if (!src.dynamic[name] || srcFn.uuid !== uuid) {
 	            src[name] = fn
-	            avalon.eventListeners.uuid = fn
+	            avalon.eventListeners[uuid] = fn
 	            hasChange = true
 	        }
 	    
@@ -3493,7 +3511,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon._each = function (obj, fn, local, vnodes) {
 	    var repeat = []
 	    vnodes.push(repeat)
-	    var arr = (fn + '').slice(0,40).match(rargs)
+	    var arr = (fn + '').slice(0, 40).match(rargs)
 
 	    arr.shift()
 
@@ -3589,7 +3607,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                saveInCache(cache, c)
 	            })
 	            src.cache = cache
-	            return
+	            var noUpdate = true
 	        } else {
 	            src.action = 'update'
 	            var newCache = {}
@@ -3656,9 +3674,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    })
 	                }]
 	        }
-	        src.list = srcRepeat
-
-	        update(src, this.update)
+	        if (!noUpdate) {
+	            src.list = srcRepeat
+	            update(src, this.update)
+	        }
 	        return true
 
 	    },
@@ -4689,6 +4708,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * 此阶段只会生成VElement,VText,VComment
 	 * ------------------------------------------------------------
 	 */
+	var avalon = __webpack_require__(4)
+
 	__webpack_require__(74)
 	var voidTag = __webpack_require__(37)
 	var addTbody = __webpack_require__(75)
@@ -4967,6 +4988,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (element.props) {
 	                    var cb = element.props['data-for-rendered']
 	                    if (cb) {
+	                        delete element.props['data-for-rendered']
 	                        var wid = cb + ':cb'
 	                        if (!avalon.caches[wid]) {
 	                            avalon.caches[wid] = Function('return ' + avalon.parseExpr(cb, 'on'))()

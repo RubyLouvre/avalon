@@ -28,16 +28,17 @@ fs.writeFileSync('./src/seed/lang.share.js', text, 'utf8')
 var now = new Date
 var snow = now.getFullYear()+'-'+ (now.getMonth()+1) +
         '-'+ now.getDate()+':'+ now.getHours()
+//var a = __dirname.replace('avalon','koa2')
 module.exports = {
     entry: {
         avalon: './src/avalon', //我们开发时的入口文件
         'avalon.modern': './src/avalon.modern',
         'avalon.test': './src/avalon.test',
         'avalon.next': './src/avalon.next',
-      //  'avalon.mobile': './src/avalon.mobile'
+        'avalon.mobile': './src/avalon.mobile'
     },
     output: {
-        path: path.join(__dirname, 'dist'),
+        path: path.join( __dirname, 'dist'),
         filename: '[name].js',
         libraryTarget: 'umd',
         library: 'avalon'

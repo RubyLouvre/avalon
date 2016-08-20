@@ -13,7 +13,7 @@ function getTraceKey(item) {
 avalon._each = function (obj, fn, local, vnodes) {
     var repeat = []
     vnodes.push(repeat)
-    var arr = (fn + '').slice(0,40).match(rargs)
+    var arr = (fn + '').slice(0, 40).match(rargs)
 
     arr.shift()
 
@@ -109,7 +109,7 @@ avalon.directive('for', {
                 saveInCache(cache, c)
             })
             src.cache = cache
-            return
+            var noUpdate = true
         } else {
             src.action = 'update'
             var newCache = {}
@@ -176,9 +176,10 @@ avalon.directive('for', {
                     })
                 }]
         }
-        src.list = srcRepeat
-
-        update(src, this.update)
+        if (!noUpdate) {
+            src.list = srcRepeat
+            update(src, this.update)
+        }
         return true
 
     },

@@ -18,7 +18,9 @@ avalon.directive('controller', {
     parse: function (copy, src, binding) {
         var quoted = avalon.quote(binding.expr)
         copy.local = '__local__'
+        copy.vmodel = '__vmodel__'
         copy[binding.name] = 1
+
         var vmodel = [
             '(function(){',
             'var vm = avalon.vmodels[' + quoted + ']',
@@ -28,16 +30,16 @@ avalon.directive('controller', {
             'return __vmodel__ = vm',
             '}',
             '})();'
-        ].join('\n')+'console.log(__vmodel__)'
+        ].join('\n') 
 
-        src.$prepend = '(function(__vmodel__){'+  vmodel
+        src.$prepend = '(function(__vmodel__){' + vmodel
         src.$append = '\n})(__vmodel__);'
     },
     diff: function (copy, src, name) {
         if (!src.dynamic[name]) {
             src.local = copy.local
             src.vmodel = copy.vmodel
-           
+
             update(src, this.update)
         }
     },
@@ -51,7 +53,7 @@ avalon.directive('controller', {
         if (scope) {
             return
         }
-       
+
         var top = avalon.vmodels[id]
         if (vmodel.$element && vmodel.$element.vtree[0] === vdom) {
             var render = vmodel.$render

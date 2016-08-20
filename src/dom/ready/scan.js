@@ -10,8 +10,8 @@ function scan(nodes) {
             if (vm && !vm.$element) {
                 vm.$element = elem
 
-                if (avalon.serverFiles && avalon.serverFiles[$id]) {
-                    var tmpl = avalon.serverFiles[$id]
+                if (avalon.serverTemplates && avalon.serverTemplates[$id]) {
+                    var tmpl = avalon.serverTemplates[$id]
                     var oldTree = avalon.speedUp(avalon.lexer(tmpl))
                     var render = avalon.render(oldTree)
                     var vtree = render(vm)

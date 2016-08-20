@@ -6,7 +6,9 @@ avalon.directive('important', {
     parse: function (copy, src, binding) {
         var quoted = avalon.quote(binding.expr)
         copy.local = '{}'
+        copy.vmodel = '__vmodel__'
         copy[binding.name] = 1
+        
         var vmodel = '(function(){ return __vmodel__ = avalon.vmodels[' + quoted + ']})()'
         src.$prepend = ['(function(__vmodel__){',
             'var important = avalon.scopes[' + quoted + ']',

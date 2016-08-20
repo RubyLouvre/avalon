@@ -36,6 +36,7 @@ var hasDirectives = function (arr) {
                 if (element.props) {
                     var cb = element.props['data-for-rendered']
                     if (cb) {
+                        delete element.props['data-for-rendered']
                         var wid = cb + ':cb'
                         if (!avalon.caches[wid]) {
                             avalon.caches[wid] = Function('return ' + avalon.parseExpr(cb, 'on'))()
