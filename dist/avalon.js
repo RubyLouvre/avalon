@@ -1,11 +1,10 @@
 /*!
  * built in 2016-8-21:0 version 2.112 by 司徒正美
- * 2.1.4 and npm 2.1.12
- * 修正 ms-skip BUG
- * 去掉节点生成算法
- * 首先渲染改成根据真实DOM生成虚拟DOM
- * 重构 avalon.speedUp
- * 去掉avalon.config中已经没有用rbind, rexprg
+ * 2.1.5 and npm 2.1.15
+ *     修正 ms-controller, ms-important的移除类名的实现
+ *     实现后端渲染,
+ *     分离DOM API
+ *     fix ms-on BUG
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -6808,40 +6807,41 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * 检测浏览器对CSS动画的支持与API名
 	 * ------------------------------------------------------------
 	 */
-	var supportTransition = false
-	var supportAnimation = false
-	var supportCSS = false
-	var transitionEndEvent
-	var animationEndEvent
-	var transitionDuration = avalon.cssName('transition-duration')
-	var animationDuration = avalon.cssName('animation-duration')
+	if (avalon.browser) {
+	    var supportTransition = false
+	    var supportAnimation = false
+	    var supportCSS = false
+	    var transitionEndEvent
+	    var animationEndEvent
+	    var transitionDuration = avalon.cssName('transition-duration')
+	    var animationDuration = avalon.cssName('animation-duration')
 
-	var checker = {
-	    TransitionEvent: 'transitionend',
-	    WebKitTransitionEvent: 'webkitTransitionEnd',
-	    OTransitionEvent: 'oTransitionEnd',
-	    otransitionEvent: 'otransitionEnd'
-	}
-	var window = avalon.window
-	var tran
+	    var checker = {
+	        TransitionEvent: 'transitionend',
+	        WebKitTransitionEvent: 'webkitTransitionEnd',
+	        OTransitionEvent: 'oTransitionEnd',
+	        otransitionEvent: 'otransitionEnd'
+	    }
+	    var window = avalon.window
+	    var tran
 	//有的浏览器同时支持私有实现与标准写法，比如webkit支持前两种，Opera支持1、3、4
-	for (var name in checker) {
-	    if (window[name]) {
-	        tran = checker[name]
-	        break
+	    for (var name in checker) {
+	        if (window[name]) {
+	            tran = checker[name]
+	            break
+	        }
+	        try {
+	            var a = document.createEvent(name)
+	            tran = checker[name]
+	            break
+	        } catch (e) {
+	        }
 	    }
-	    try {
-	        var a = document.createEvent(name)
-	        tran = checker[name]
-	        break
-	    } catch (e) {
+	    if (typeof tran === 'string') {
+	        supportTransition = true
+	        supportCSS = true
+	        transitionEndEvent = tran
 	    }
-	}
-	if (typeof tran === 'string') {
-	    supportTransition = true
-	    supportCSS = true
-	    transitionEndEvent = tran
-	}
 
 	//animationend有两个可用形态
 	//IE10+, Firefox 16+ & Opera 12.1+: animationend
@@ -6851,23 +6851,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	//  el.addEventListener('MSAnimationEnd', function(e) {
 	//     alert(e.type)// animationend！！！
 	// })
-	checker = {
-	    'AnimationEvent': 'animationend',
-	    'WebKitAnimationEvent': 'webkitAnimationEnd'
-	}
-	var ani
-	for (name in checker) {
-	    if (window[name]) {
-	        ani = checker[name]
-	        break
+	    checker = {
+	        'AnimationEvent': 'animationend',
+	        'WebKitAnimationEvent': 'webkitAnimationEnd'
+	    }
+	    var ani
+	    for (name in checker) {
+	        if (window[name]) {
+	            ani = checker[name]
+	            break
+	        }
+	    }
+	    if (typeof ani === 'string') {
+	        supportAnimation = true
+	        supportCSS = true
+	        animationEndEvent = ani
 	    }
 	}
-	if (typeof ani === 'string') {
-	    supportAnimation = true
-	    supportCSS = true
-	    animationEndEvent = ani
-	}
-
 	module.exports = {
 	    transition: supportTransition,
 	    animation: supportAnimation,

@@ -18,7 +18,9 @@ var svgTags = avalon.oneObject('circle,defs,ellipse,image,line,' +
 
 
 var rvml = /^\w+\:\w+/
-var supportTemplate = 'content' in document.createElement('template')
+if (avalon.browser) {
+    var supportTemplate = 'content' in document.createElement('template')
+}
 VElement.prototype = {
     constructor: VElement,
     toDOM: function () {

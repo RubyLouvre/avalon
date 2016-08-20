@@ -3,40 +3,41 @@
  * 检测浏览器对CSS动画的支持与API名
  * ------------------------------------------------------------
  */
-var supportTransition = false
-var supportAnimation = false
-var supportCSS = false
-var transitionEndEvent
-var animationEndEvent
-var transitionDuration = avalon.cssName('transition-duration')
-var animationDuration = avalon.cssName('animation-duration')
+if (avalon.browser) {
+    var supportTransition = false
+    var supportAnimation = false
+    var supportCSS = false
+    var transitionEndEvent
+    var animationEndEvent
+    var transitionDuration = avalon.cssName('transition-duration')
+    var animationDuration = avalon.cssName('animation-duration')
 
-var checker = {
-    TransitionEvent: 'transitionend',
-    WebKitTransitionEvent: 'webkitTransitionEnd',
-    OTransitionEvent: 'oTransitionEnd',
-    otransitionEvent: 'otransitionEnd'
-}
-var window = avalon.window
-var tran
+    var checker = {
+        TransitionEvent: 'transitionend',
+        WebKitTransitionEvent: 'webkitTransitionEnd',
+        OTransitionEvent: 'oTransitionEnd',
+        otransitionEvent: 'otransitionEnd'
+    }
+    var window = avalon.window
+    var tran
 //有的浏览器同时支持私有实现与标准写法，比如webkit支持前两种，Opera支持1、3、4
-for (var name in checker) {
-    if (window[name]) {
-        tran = checker[name]
-        break
+    for (var name in checker) {
+        if (window[name]) {
+            tran = checker[name]
+            break
+        }
+        try {
+            var a = document.createEvent(name)
+            tran = checker[name]
+            break
+        } catch (e) {
+        }
     }
-    try {
-        var a = document.createEvent(name)
-        tran = checker[name]
-        break
-    } catch (e) {
+    if (typeof tran === 'string') {
+        supportTransition = true
+        supportCSS = true
+        transitionEndEvent = tran
     }
-}
-if (typeof tran === 'string') {
-    supportTransition = true
-    supportCSS = true
-    transitionEndEvent = tran
-}
 
 //animationend有两个可用形态
 //IE10+, Firefox 16+ & Opera 12.1+: animationend
@@ -46,23 +47,23 @@ if (typeof tran === 'string') {
 //  el.addEventListener('MSAnimationEnd', function(e) {
 //     alert(e.type)// animationend！！！
 // })
-checker = {
-    'AnimationEvent': 'animationend',
-    'WebKitAnimationEvent': 'webkitAnimationEnd'
-}
-var ani
-for (name in checker) {
-    if (window[name]) {
-        ani = checker[name]
-        break
+    checker = {
+        'AnimationEvent': 'animationend',
+        'WebKitAnimationEvent': 'webkitAnimationEnd'
+    }
+    var ani
+    for (name in checker) {
+        if (window[name]) {
+            ani = checker[name]
+            break
+        }
+    }
+    if (typeof ani === 'string') {
+        supportAnimation = true
+        supportCSS = true
+        animationEndEvent = ani
     }
 }
-if (typeof ani === 'string') {
-    supportAnimation = true
-    supportCSS = true
-    animationEndEvent = ani
-}
-
 module.exports = {
     transition: supportTransition,
     animation: supportAnimation,
