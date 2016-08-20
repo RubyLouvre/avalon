@@ -35,7 +35,6 @@ function VElement(type, props, children) {
     this.children = children
 }
 
-var rvml = /^\w+\:\w+/
 function classNames() {
     var classes = []
     for (var i = 0; i < arguments.length; i++) {
@@ -100,7 +99,6 @@ VElement.prototype = {
             if (i.indexOf('ms-') === 0) {
                 if (dir) {
                     arr.push(i.replace(/^ms\-/, ':') + '=' + avalon.quote(val + ''))
-
                 } else {
                     if (i === 'ms-controller' || i === 'ms-important') {
                         arr.push(i + '=' + avalon.quote(val + ''))
@@ -120,7 +118,6 @@ VElement.prototype = {
         str += '>'
         if (this.children) {
             str += this.children.map(function (c) {
-
                 return c ? avalon.vdomAdaptor(c, 'toHTML', dir) : ''
             }).join('')
         }
