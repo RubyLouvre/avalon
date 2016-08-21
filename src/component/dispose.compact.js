@@ -48,14 +48,18 @@ function byRewritePrototype() {
         oldSetter.call(this, html)
         fireDisposeHooks(all)
     }
-    if (!Object.getOwnPropertyDescriptor) {
-        oldSetter = ep.__lookupSetter__('innerHTML')
-        ep.__defineSetter__('innerHTML', newSetter)
-    } else {
+    try {
         var obj = Object.getOwnPropertyDescriptor(ep, 'innerHTML')
-        oldSetter = obj.set
+        var oldSetter = obj.set
         obj.set = newSetter
         Object.defineProperty(ep, 'innerHTML', obj)
+    } catch (e) {
+        //safari 9.1.2使用Object.defineProperty重写innerHTML会抛
+        // Attempting to change the setter of an unconfigurable property.
+        if (ep && ep._lookupSetter__) {
+            oldSetter = ep.__lookupSetter__('innerHTML')
+            ep.__defineSetter__('innerHTML', newSetter)
+        }
     }
 
     rewite('appendChild', function (fn, a) {
