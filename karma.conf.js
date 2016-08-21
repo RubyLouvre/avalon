@@ -7,6 +7,7 @@ module.exports = function (config) {
             'dist/avalon.test.js',
            // 'karma/reconcile.js',
             'karma/$watch.js',
+            'karma/other.js',
             'karma/directives/text.js',
             'karma/directives/controller.js',
             'karma/directives/expr.js',

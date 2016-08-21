@@ -34,13 +34,7 @@ avalon.parseHTML = function (html) {
 }
 
 avalon.innerHTML = function (node, html) {
-    if (!avalon.modern && (!rcreate.test(html) && !rnest.test(html))) {
-        try {
-            node.innerHTML = html
-            return
-        } catch (e) {
-        }
-    }
+   
     var parsed = this.parseHTML(html)
     this.clearHTML(node).appendChild(parsed)
 }

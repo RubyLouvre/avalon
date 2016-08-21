@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-21:3 version 2.112 by 司徒正美
+ * built in 2016-8-21:18 version 2.112 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -2520,13 +2520,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	avalon.innerHTML = function (node, html) {
-	    if (!avalon.modern && (!rcreate.test(html) && !rnest.test(html))) {
-	        try {
-	            node.innerHTML = html
-	            return
-	        } catch (e) {
-	        }
-	    }
+	   
 	    var parsed = this.parseHTML(html)
 	    this.clearHTML(node).appendChild(parsed)
 	}
