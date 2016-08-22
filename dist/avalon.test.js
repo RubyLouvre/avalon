@@ -3,6 +3,7 @@
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
+ *     fix safari, 微信不支持使用Object.defineProperty重写元素属性的BUG
  *     分离DOM API
  *     fix ms-on BUG
  */
@@ -79,7 +80,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-8-22:0 version 2.112 by 司徒正美
+	 * built in 2016-8-22:11 version 2.112 by 司徒正美
 	 * 2.1.5 and npm 2.1.15
 	 *     修正 ms-controller, ms-important的移除类名的实现
 	 *     实现后端渲染,
@@ -7803,7 +7804,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    } catch (e) {
 		        //safari 9.1.2使用Object.defineProperty重写innerHTML会抛
 		        // Attempting to change the setter of an unconfigurable property.
-		        if (ep && ep._lookupSetter__) {
+		        if (ep && ep.__lookupSetter__) {
 		            oldSetter = ep.__lookupSetter__('innerHTML')
 		            ep.__defineSetter__('innerHTML', newSetter)
 		        }

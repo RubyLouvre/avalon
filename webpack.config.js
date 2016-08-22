@@ -19,6 +19,7 @@ var feather = heredoc(function () {
      2.1.5 and npm 2.1.15
     修正 ms-controller, ms-important的移除类名的实现
     实现后端渲染,
+    fix safari, 微信不支持使用Object.defineProperty重写元素属性的BUG
     分离DOM API
     fix ms-on BUG 
      */
