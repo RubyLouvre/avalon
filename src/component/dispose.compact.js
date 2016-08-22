@@ -56,7 +56,7 @@ function byRewritePrototype() {
     } catch (e) {
         //safari 9.1.2使用Object.defineProperty重写innerHTML会抛
         // Attempting to change the setter of an unconfigurable property.
-        if (ep && ep._lookupSetter__) {
+        if (ep && ep.__lookupSetter__) {
             oldSetter = ep.__lookupSetter__('innerHTML')
             ep.__defineSetter__('innerHTML', newSetter)
         }
