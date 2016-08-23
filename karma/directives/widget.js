@@ -642,7 +642,7 @@ describe('widget', function () {
 
         div.innerHTML = heredoc(function () {
             /*
-             <div :controller="vmRoot">
+             <div :controller="widget11">
              <xmp :widget='{is:"CoursePlanCard", $id:"CoursePlanCard"}'></xmp>
              </div>
              */
@@ -672,18 +672,86 @@ describe('widget', function () {
         })
 
         vm = avalon.define({
-            $id: "vmRoot"
+            $id: "widget11"
         })
         avalon.scan(div)
         setTimeout(function () {
             expect(div.getElementsByTagName('span').length).to.equal(4)
             delete avalon.components['CoursePlanCard']
-            delete avalon.scopes['vmRoot']
+            delete avalon.scopes['widget11']
             delete avalon.scopes['CoursePlanCard']
-            delete avalon.vmodels['vmRoot']
+            delete avalon.vmodels['widget11']
             delete avalon.vmodels['CoursePlanCard']
             done()
         }, 150)
+
+    })
+
+    it('对循环区域取slot', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='widget12' >
+             <xmp :widget="{is:'ms-tabs',buttons: @buttons}">
+             <button ms-for='(index,button) in @buttons'
+             ms-click='@active(index)'
+             type='button'
+             slot='btn'
+             >{{button}}</button>
+             <div slot="tab" ms-visible="0 == @activeIndex">
+             <p>这是面板1</p>
+             
+             </div>
+             <div slot="tab" ms-visible="1 == @activeIndex">
+             {{@aa}} <input ms-click="@change" type="button"/>change
+             
+             </div>
+             <div slot="tab" ms-visible="2 == @activeIndex">
+             这是面板3
+             </div>
+             </xmp>
+             </div>
+             */
+        })
+        avalon.component('ms-tabs', {
+            template: heredoc(function () {
+                /*
+                 <div>
+                 <div><slot name="btn"/></div>
+                 <div><slot name="tab"/></div>
+                 </div>
+                 */
+            }),
+            defaults: {
+                buttons: [],
+                tabs: [],
+                active: function (index) {
+                    this.activeIndex = index
+                },
+                activeIndex: 0,
+            }
+
+        })
+        var vm = avalon.define({
+            $id: 'widget12',
+            buttons: [111, 222, 333],
+            aa: '动态内容',
+            ddd: function () {
+
+            },
+            change: function () {
+                vm.aa = '更新内容' + (new Date - 0)
+            }
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            expect(div.getElementsByTagName('button').length).to.equal(3)
+            delete avalon.components['ms-tabs']
+            delete avalon.scopes['ms-tabs']
+            delete avalon.scopes['widget12']
+
+            done()
+        }, 350)
+
 
     })
 })

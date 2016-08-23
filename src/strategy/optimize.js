@@ -29,11 +29,14 @@ var hasDirectives = function (arr) {
             el.dynamic = true
             var uuid = start.signature || (start.signature = avalon.makeHashCode('for'))
             el.signature = uuid
-
+            
             start.forExpr = start.nodeValue.replace(/ms\-for:\s*/, '')
             if (old.length === 1) {
                 var element = old[0]
                 if (element.props) {
+                    if(element.props.slot){
+                        start.props = '{slot: "'+element.props.slot+'"}'
+                    }
                     var cb = element.props['data-for-rendered']
                     if (cb) {
                         delete element.props['data-for-rendered']

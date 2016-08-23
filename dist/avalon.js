@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-23:10 version 2.113 by 司徒正美
+ * built in 2016-8-23:17 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -6398,14 +6398,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // 我们先将它转换成虚拟DOM,如果是xmp, template,
 	    // 它们内部是一个纯文本节点, 需要继续转换为虚拟DOM
 	    var shell = avalon.lexer(template)
-	    
-	  
+
+
 	    var shellRoot = shell[0]
 	    shellRoot.children = shellRoot.children || []
 	    shellRoot.props.is = is
 	    shellRoot.props.wid = $id
 	    avalon.speedUp(shell)
-	   
+
 	    var render = avalon.render(shell, local)
 
 	    //生成内部的渲染函数
@@ -6435,7 +6435,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var end = str.lastIndexOf("}")
 
 	    var lastFn = Function('vm', 'local', str.slice(begin, end))
-	   
+
 	    vmodel.$render = lastFn
 
 	    src['component-vm:' + is] = vmodel
@@ -6491,6 +6491,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (var i = 0, el; el = vtree[i]; i++) {
 	        if (el.nodeName === 'slot') {
 	            var name = el.props.name || slotName
+
 	            vtree.splice(i, 1, {
 	                nodeName: '#comment',
 	                nodeValue: 'slot:' + name,
@@ -6510,7 +6511,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	avalon.insertSlots = function (vtree, slots) {
 	    for (var i = 0, el; el = vtree[i]; i++) {
+	        //   console.log(el.type)
 	        if (el.nodeName === '#comment' && slots[el.type]) {
+	            // console.log(slots[el.type])
 	            var args = [i + 1, 0].concat(slots[el.type])
 	            vtree.splice.apply(vtree, args)
 	            i += slots[el.type].length
@@ -6527,19 +6530,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        slots.__sole__ = soleSlot
 	    } else {
 	        node.children.forEach(function (el, i) {
-	            if (/^\w/.test(el.nodeName)) {
-	                var name = el.props.slot
-	                if (name) {
-	                    // delete el.props.slot
-	                    if (Array.isArray(slots[name])) {
-	                        slots[name].push(el)
-	                    } else {
-	                        slots[name] = [el]
-	                    }
+	            var name = el.props && el.props.name
+	            if (el.forExpr) {
+	                slots[name] = node.children.slice(i, i + 2)
+	            } else {
+	                if (Array.isArray(slots[name])) {
+	                    slots[name].push(el)
+	                } else {
+	                    slots[name] = [el]
 	                }
-	            } else if (el.forExpr && /slot=['"](\w+)/.test(el.template)) {
-	                var a = RegExp.$1
-	                slots[a] = node.children.slice(i, i + 2)
 	            }
 	        })
 	    }
@@ -7240,11 +7239,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            el.dynamic = true
 	            var uuid = start.signature || (start.signature = avalon.makeHashCode('for'))
 	            el.signature = uuid
-
+	            
 	            start.forExpr = start.nodeValue.replace(/ms\-for:\s*/, '')
 	            if (old.length === 1) {
 	                var element = old[0]
 	                if (element.props) {
+	                    if(element.props.slot){
+	                        start.props = '{slot: "'+element.props.slot+'"}'
+	                    }
 	                    var cb = element.props['data-for-rendered']
 	                    if (cb) {
 	                        delete element.props['data-for-rendered']
