@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-23:17 version 2.113 by 司徒正美
+ * built in 2016-8-23:18 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -6530,7 +6530,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        slots.__sole__ = soleSlot
 	    } else {
 	        node.children.forEach(function (el, i) {
-	            var name = el.props && el.props.name
+	            var name = el.props && el.props.slot
 	            if (el.forExpr) {
 	                slots[name] = node.children.slice(i, i + 2)
 	            } else {

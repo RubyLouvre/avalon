@@ -214,7 +214,7 @@ avalon.collectSlots = function (node, soleSlot) {
         slots.__sole__ = soleSlot
     } else {
         node.children.forEach(function (el, i) {
-            var name = el.props && el.props.name
+            var name = el.props && el.props.slot
             if (el.forExpr) {
                 slots[name] = node.children.slice(i, i + 2)
             } else {
