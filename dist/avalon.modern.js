@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-23:18 version 2.113 by 司徒正美
+ * built in 2016-8-25:1 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -3728,7 +3728,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            parent = document.createDocumentFragment()
 	        }
 	        var before = dom
-	        var signature = dom.signature
+	        var signature = vdom.signature
 
 	        for (var i = 0, item; item = vdom.removes[i++]; ) {
 	            if (item.dom) {
@@ -3764,13 +3764,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	            var f = el.dom
 	            if (el.oldIndex === void 0) {
+	                if (vdom.hasEffect)
+	                    var nodes = avalon.slice(f.childNodes)
 	                if (i === 0 && vdom.action === 'init') {
 	                    parent.appendChild(f)
 	                } else {
 	                    parent.insertBefore(f, before.nextSibling)
 	                }
 	                if (vdom.hasEffect) {
-	                    var nodes = avalon.slice(f.childNodes)
 	                    applyEffects(nodes, el.children, {
 	                        hook: 'onEnterDone',
 	                        staggerKey: signature + 'enter'
@@ -3864,8 +3865,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	var applyEffects = function (nodes, vnodes, opts) {
-	    vnodes.forEach(function (el, i) {
-	        avalon.applyEffect(nodes[i], vnodes[i], opts)
+	    vnodes.forEach(function (vdom, i) {
+	        avalon.applyEffect(nodes[i], vdom, opts)
 	    })
 	}
 
@@ -4395,7 +4396,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        copyObj.action = copyObj.action || 'enter'
-
 	        if (Object(copyObj) === copyObj) {
 	            if (!src.dynamic[name] || diffObj(copyObj, src[name] || {})) {
 	                src[name] = copyObj
@@ -4412,12 +4412,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        dom.animating = true
 	        var localeOption = vdom['ms-effect']
+	        if (!vdom.dynamic['ms-effect']) {
+	            var a = localeOption.cb || avalon.noop
+	            localeOption.cb = [function () {
+	                    vdom.dynamic['ms-effect'] = 1
+	                    localeOption.cb = a
+	                }].concat(a)
+	        }
 	        var type = localeOption.is
 	        option = option || {}
 	        if (!type) {//如果没有指定类型
 	            return avalon.warn('need is option')
 	        }
-	        vdom.dynamic['ms-effect'] = 1
 	        var effects = avalon.effects
 	        if (support.css && !effects[type]) {
 	            avalon.effect(type, {})
@@ -4560,7 +4566,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                animationDone(ok !== false)
 	            })
 	        } else if (support.css) {
-
 	            $el.addClass(option[lower + 'Class'])
 	            if (lower === 'leave') {
 	                $el.removeClass(option.enterClass + ' ' + option.enterActiveClass)
@@ -4607,7 +4612,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	        getAction(opts)
-	        node.animate = true
 	        avalon.directives.effect.update(node, vnode, 0, avalon.shadowCopy({}, opts))
 
 	    } else if (cb) {

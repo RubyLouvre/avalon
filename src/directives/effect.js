@@ -18,7 +18,6 @@ avalon.directive('effect', {
         }
 
         copyObj.action = copyObj.action || 'enter'
-
         if (Object(copyObj) === copyObj) {
             if (!src.dynamic[name] || diffObj(copyObj, src[name] || {})) {
                 src[name] = copyObj
@@ -35,12 +34,18 @@ avalon.directive('effect', {
         }
         dom.animating = true
         var localeOption = vdom['ms-effect']
+        if (!vdom.dynamic['ms-effect']) {
+            var a = localeOption.cb || avalon.noop
+            localeOption.cb = [function () {
+                    vdom.dynamic['ms-effect'] = 1
+                    localeOption.cb = a
+                }].concat(a)
+        }
         var type = localeOption.is
         option = option || {}
         if (!type) {//如果没有指定类型
             return avalon.warn('need is option')
         }
-        vdom.dynamic['ms-effect'] = 1
         var effects = avalon.effects
         if (support.css && !effects[type]) {
             avalon.effect(type, {})
@@ -183,7 +188,6 @@ function createAction(action) {
                 animationDone(ok !== false)
             })
         } else if (support.css) {
-
             $el.addClass(option[lower + 'Class'])
             if (lower === 'leave') {
                 $el.removeClass(option.enterClass + ' ' + option.enterActiveClass)
@@ -230,7 +234,6 @@ avalon.applyEffect = function (node, vnode, opts) {
             }
         }
         getAction(opts)
-        node.animate = true
         avalon.directives.effect.update(node, vnode, 0, avalon.shadowCopy({}, opts))
 
     } else if (cb) {

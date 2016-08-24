@@ -189,7 +189,7 @@ avalon.directive('for', {
             parent = document.createDocumentFragment()
         }
         var before = dom
-        var signature = dom.signature
+        var signature = vdom.signature
 
         for (var i = 0, item; item = vdom.removes[i++]; ) {
             if (item.dom) {
@@ -225,13 +225,14 @@ avalon.directive('for', {
             }
             var f = el.dom
             if (el.oldIndex === void 0) {
+                if (vdom.hasEffect)
+                    var nodes = avalon.slice(f.childNodes)
                 if (i === 0 && vdom.action === 'init') {
                     parent.appendChild(f)
                 } else {
                     parent.insertBefore(f, before.nextSibling)
                 }
                 if (vdom.hasEffect) {
-                    var nodes = avalon.slice(f.childNodes)
                     applyEffects(nodes, el.children, {
                         hook: 'onEnterDone',
                         staggerKey: signature + 'enter'
@@ -325,7 +326,7 @@ function saveInCache(cache, component) {
 }
 
 var applyEffects = function (nodes, vnodes, opts) {
-    vnodes.forEach(function (el, i) {
-        avalon.applyEffect(nodes[i], vnodes[i], opts)
+    vnodes.forEach(function (vdom, i) {
+        avalon.applyEffect(nodes[i], vdom, opts)
     })
 }
