@@ -27,10 +27,10 @@ function fix(dest, src) {
 
 
 function getAll(context) {
-    return typeof context.getElementsByTagName !== "undefined" ?
-            context.getElementsByTagName("*") :
-            typeof context.querySelectorAll !== "undefined" ?
-            context.querySelectorAll("*") : []
+    return typeof context.getElementsByTagName !== 'undefined' ?
+            context.getElementsByTagName('*') :
+            typeof context.querySelectorAll !== 'undefined' ?
+            context.querySelectorAll('*') : []
 }
 
 function fixCloneNode(src) {

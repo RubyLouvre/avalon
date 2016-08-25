@@ -53,7 +53,7 @@ function lexer(str) {
             var nodeValue = str.slice(0, i).replace(rfill, fill)
             str = str.slice(i)
             node = {
-                nodeName: "#text",
+                nodeName: '#text',
                 nodeValue: nodeValue
             }
             if (rcontent.test(nodeValue)) {
@@ -65,12 +65,12 @@ function lexer(str) {
             if (i === 0) {
                 var l = str.indexOf('-->')
                 if (l === -1) {
-                    avalon.error("注释节点没有闭合" + str)
+                    avalon.error('注释节点没有闭合' + str)
                 }
                 var nodeValue = str.slice(4, l).replace(rfill, fill)
                 str = str.slice(l + 3)
                 node = {
-                    nodeName: "#comment",
+                    nodeName: '#comment',
                     nodeValue: nodeValue
                 }
                 collectNodes(node, stack, ret)
@@ -89,7 +89,7 @@ function lexer(str) {
                     children: [],
                     isVoidTag: isVoidTag
                 }
-               
+
                 var attrs = match[2]
                 if (attrs) {
                     collectProps(attrs, node.props)
@@ -101,7 +101,7 @@ function lexer(str) {
                 } else {
                     stack.push(node)
                     if (plainTag[nodeName]) {
-                        var index = str.indexOf("</" + nodeName + '>')
+                        var index = str.indexOf('</' + nodeName + '>')
                         var innerHTML = str.slice(0, index).trim()
                         str = str.slice(index)
 
@@ -193,7 +193,7 @@ function collectProps(attrs, props) {
             if (value.indexOf('??') === 0) {
                 value = nomalString(value).
                         replace(rlineSp, '').
-                        replace(/\"/g, "'").
+                        //  replace(/\"/g, "'").
                         slice(1, -1)
             }
         }
