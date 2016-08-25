@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-25:10 version 2.113 by 司徒正美
+ * built in 2016-8-25:11 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -80,7 +80,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-8-25:10 version 2.113 by 司徒正美
+	 * built in 2016-8-25:11 version 2.113 by 司徒正美
 	 * 2.1.5 and npm 2.1.15
 	 *     修正 ms-controller, ms-important的移除类名的实现
 	 *     实现后端渲染,
@@ -1006,7 +1006,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    sanitize: sanitize,
 		    number: number,
 		    currency: function (amount, symbol, fractionSize) {
-		        return (symbol || '¥') +
+		        return (symbol || '\u00a5') +
 		                number(amount,
 		                        isFinite(fractionSize) ? fractionSize : 2)
 		    }
