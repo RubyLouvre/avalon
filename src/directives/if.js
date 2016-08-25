@@ -24,12 +24,13 @@ avalon.directive('if', {
                 parent = comment.parentNode
                 if (parent)
                     parent.replaceChild(dom, comment)
+                delete vdom.comment
                 avalon.applyEffect(dom, vdom, {
                     hook: 'onEnterDone'
                 })
             }
         } else {
-
+           
             //要移除元素节点,在对应位置上插入注释节点
             if (!vdom.comment) {
                 vdom.comment = document.createComment('if')

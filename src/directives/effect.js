@@ -29,6 +29,10 @@ avalon.directive('effect', {
         }
     },
     update: function (dom, vdom, parent, option) {
+        if(!dom || dom.nodeType !== 1){
+            return
+        }
+        
         if (dom.animating) {
             return
         }
@@ -221,7 +225,7 @@ function createAction(action) {
 avalon.applyEffect = function (node, vnode, opts) {
     var cb = opts.cb
     var curEffect = vnode['ms-effect']
-    if (curEffect) {
+    if (curEffect && node && node.nodeType === 1) {
         var hook = opts.hook
         var old = curEffect[hook]
         if (cb) {
@@ -237,7 +241,7 @@ avalon.applyEffect = function (node, vnode, opts) {
         avalon.directives.effect.update(node, vnode, 0, avalon.shadowCopy({}, opts))
 
     } else if (cb) {
-        cb()
+        cb(node)
     }
 }
 

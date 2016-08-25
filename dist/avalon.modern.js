@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-25:15 version 2.113 by 司徒正美
+ * built in 2016-8-25:19 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -1274,34 +1274,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	var p = LRU.prototype
 
 	p.put = function (key, value) {
-	    var removed
+	    var entry = {
+	        key: key,
+	        value: value
+	    }
+	    this._keymap[key] = entry
+	    if (this.tail) {
+	        // 如果存在tail（缓存数组的长度不为0），将tail指向新的 entry
 
-	    var entry = this.get(key, true)
-	    // 如果不存在 key 这样属性的缓存对象，才能调用 put 方法
-	    if (!entry) {
-	        if (this.size === this.limit) {
-	            // 如果缓存数组达到上限，则先删除 head 指向的缓存对象
-	            removed = this.shift()
-	        }
-	        // 初始化赋值
-	        entry = {
-	            key: key
-	        }
-	        this._keymap[key] = entry
-	        if (this.tail) {
-	            // 如果存在tail（缓存数组的长度不为0），将tail指向新的 entry
-	            this.tail.newer = entry
-	            entry.older = this.tail
-	        } else {
-	            // 如果缓存数组的长度为0，将head指向新的entry
-	            this.head = entry
-	        }
-	        this.tail = entry
+	        this.tail.newer = entry
+	        entry.older = this.tail
+	    } else {
+	        // 如果缓存数组的长度为0，将head指向新的entry
+	        this.head = entry
+	    }
+	    this.tail = entry
+	    // 如果缓存数组达到上限，则先删除 head 指向的缓存对象
+	    if (this.size === this.limit) {
+	        this.shift()
+	    } else {
 	        this.size++
 	    }
-	    entry.value = value
-
-	    return removed
+	    return value
 	}
 
 	p.shift = function () {
@@ -1309,19 +1303,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (entry) {
 	        // 删除 head ，并改变指向
 	        this.head = this.head.newer
-	        this.head.older = undefined
-	        entry.newer = entry.older = undefined
 	        // 同步更新 _keymap 里面的属性值
-	        this._keymap[entry.key] = undefined
+	        this.head.older =
+	                entry.newer =
+	                entry.older =
+	                this._keymap[entry.key] =
+	                void 0
+	        delete this._keymap[entry.key] //#1029
 	        // 同步更新 缓存数组的长度
 	        this.size--
 	    }
-	    return entry
 	}
 	p.get = function (key) {
 	    var entry = this._keymap[key]
 	    // 如果查找不到含有`key`这个属性的缓存对象
-	    if (entry === undefined)
+	    if (entry === void 0)
 	        return
 	    // 如果查找到的缓存对象已经是 tail (最近使用过的)
 	    if (entry === this.tail) {
@@ -1349,7 +1345,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        entry.older.newer = entry.newer // C. --> E
 	    }
 	    // 处理所查找到的对象的 newer 以及 older 指向
-	    entry.newer = undefined // D --x
+	    entry.newer = void 0 // D --x
 	    // older指向之前使用过的变量，即D指向E
 	    entry.older = this.tail // D. --> E
 	    if (this.tail) {
@@ -1397,10 +1393,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	function getAll(context) {
-	    return typeof context.getElementsByTagName !== "undefined" ?
-	            context.getElementsByTagName("*") :
-	            typeof context.querySelectorAll !== "undefined" ?
-	            context.querySelectorAll("*") : []
+	    return typeof context.getElementsByTagName !== 'undefined' ?
+	            context.getElementsByTagName('*') :
+	            typeof context.querySelectorAll !== 'undefined' ?
+	            context.querySelectorAll('*') : []
 	}
 
 	function fixCloneNode(src) {
@@ -2421,11 +2417,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        delete copy[name]//释放内存
 	    },
 	    update: function (dom, vdom) {
-	        var wrap = avalon(dom)
-	        vdom.dynamic['ms-css'] = 1
-	        var change = vdom['ms-css']
-	        for (var name in change) {
-	            wrap.css(name, change[name])
+	        if (dom && dom.nodeType === 1) {
+	            var wrap = avalon(dom)
+	            vdom.dynamic['ms-css'] = 1
+	            var change = vdom['ms-css']
+	            for (var name in change) {
+	                wrap.css(name, change[name])
+	            }
 	        }
 	    }
 	})
@@ -2466,45 +2464,45 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var c = !!copy[name]
 	        if (!src.dynamic[name] || c !== src[name]) {
 	            src[name] = c
-	            update(src, this.update )
+	            update(src, this.update)
 	        }
 	    },
-	    update: function (dom, vdom) { 
-	        if(!dom || dom.nodeType !== 1){
-	            return
-	        }
-	        vdom.dynamic['ms-visible'] = 1
-	        var show = vdom['ms-visible']
-	        var display = dom.style.display
-	        var value
-	        if (show) {
-	            if (display === none) {
-	                value = vdom.displayValue
-	                if (!value) {
-	                    dom.style.display = ''
+	    update: function (dom, vdom) {
+	        if (dom && dom.nodeType === 1) {
+	            vdom.dynamic['ms-visible'] = 1
+	            var show = vdom['ms-visible']
+	            var display = dom.style.display
+	            var value
+	            if (show) {
+	                if (display === none) {
+	                    value = vdom.displayValue
+	                    if (!value) {
+	                        dom.style.display = ''
+	                    }
+	                }
+	                if (dom.style.display === '' && avalon(dom).css('display') === none &&
+	                        // fix firefox BUG,必须挂到页面上
+	                        avalon.contains(dom.ownerDocument, dom)) {
+
+	                    value = parseDisplay(dom)
+	                }
+	            } else {
+	                if (display !== none) {
+	                    value = none
+	                    vdom.displayValue = display
 	                }
 	            }
-	            if (dom.style.display === '' && avalon(dom).css('display') === none &&
-	                    // fix firefox BUG,必须挂到页面上
-	                    avalon.contains(dom.ownerDocument, dom)) {
+	            function cb() {
+	                if (value !== void 0) {
+	                    dom.style.display = value
+	                }
+	            }
+	            avalon.applyEffect(dom, vdom, {
+	                hook: show ? 'onEnterDone' : 'onLeaveDone',
+	                cb: cb
+	            })
+	        }
 
-	                value = parseDisplay(dom)
-	            }
-	        } else {
-	            if (display !== none) {
-	                value = none
-	                vdom.displayValue = display
-	            }
-	        }
-	        function cb(){
-	           if (value !== void 0) {
-	              dom.style.display = value
-	           }
-	        }
-	        avalon.applyEffect(dom, vdom, {
-	            hook: show ? 'onEnterDone': 'onLeaveDone',
-	            cb: cb
-	        })
 	    }
 	})
 
@@ -2897,14 +2895,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var uuid = fn.uuid
 	        var srcFn = src[name] || {}
 	        var hasChange = false
-	       
-	      
+
+
 	        if (!src.dynamic[name] || srcFn.uuid !== uuid) {
 	            src[name] = fn
 	            avalon.eventListeners[uuid] = fn
 	            hasChange = true
 	        }
-	    
+
 	        if (diffObj(src.local || {}, copy.local)) {
 	            hasChange = true
 	        }
@@ -2915,17 +2913,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    update: function (dom, vdom) {
-	        if (!dom || dom.nodeType > 1) //在循环绑定中，这里为null
-	            return
-	        var key, listener
-	        dom._ms_context_ = vdom.vmodel
-	        dom._ms_local = vdom.local
-	        for (key in vdom) {
-	            var match = key.match(rmson)
-	            if (match) {
-	                listener = vdom[key]
-	                vdom.dynamic[key] = 1
-	                avalon.bind(dom, match[1], listener)
+	        if (dom && dom.nodeType === 1) { //在循环绑定中，这里为null
+	            var key, listener
+	            dom._ms_context_ = vdom.vmodel
+	            dom._ms_local = vdom.local
+	            for (key in vdom) {
+	                var match = key.match(rmson)
+	                if (match) {
+	                    listener = vdom[key]
+	                    vdom.dynamic[key] = 1
+	                    avalon.bind(dom, match[1], listener)
+	                }
 	            }
 	        }
 	    }
@@ -3502,12 +3500,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                parent = comment.parentNode
 	                if (parent)
 	                    parent.replaceChild(dom, comment)
+	                delete vdom.comment
 	                avalon.applyEffect(dom, vdom, {
 	                    hook: 'onEnterDone'
 	                })
 	            }
 	        } else {
-
+	           
 	            //要移除元素节点,在对应位置上插入注释节点
 	            if (!vdom.comment) {
 	                vdom.comment = document.createComment('if')
@@ -3732,33 +3731,32 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        for (var i = 0, item; item = vdom.removes[i++]; ) {
 	            if (item.dom) {
-	                item.num = 0
 
+	                delete item.split
 	                if (vdom.hasEffect) {
-	                    var nodes = moveItem(item, dom)
-
-	                    applyEffects(nodes, item.children, {
-	                        hook: 'onLeaveDone',
-	                        staggerKey: signature + 'leave',
-	                        cb: function (node) {
-	                            ++item.num
-	                            item.dom.appendChild(node)
-	                            if (item.num === item.children.length) {
-	                                delete item.dom
-	                                delete item.split
-	                                item.children.length = 0
+	                    !function (obj) {
+	                        var nodes = moveItem(obj)
+	                        var children = obj.children.concat()
+	                        obj.children.length = 0
+	                        applyEffects(nodes, children, {
+	                            hook: 'onLeaveDone',
+	                            staggerKey: signature + 'leave',
+	                            cb: function (node) {
+	                                if (node.parentNode) {
+	                                    node.parentNode.removeChild(node)
+	                                }
 	                            }
-	                        }
-	                    })
+	                        })
+	                    }(item)
 	                } else {
-	                    moveItem(item, dom, 'add')
-	                    delete item.dom
-	                    delete item.split
+	                    moveItem(item, 'add')
 	                }
 
 	            }
 	        }
 	        vdom.list.forEach(function (el, i) {
+	            if (el.action === 'leave')
+	                return
 	            if (!el.dom) {
 	                el.dom = avalon.domize(el)
 	            }
@@ -3778,7 +3776,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    })
 	                }
 	            } else if (el.index !== el.oldIndex) {
-	                var nodes = moveItem(el, dom, 'add')
+	                var nodes = moveItem(el, 'add')
 	                parent.insertBefore(el.dom, before.nextSibling)
 	                vdom.hasEffect && applyEffects(nodes, el.children, {
 	                    hook: 'onMoveDone',
@@ -3794,27 +3792,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	})
 
-	function moveItem(item, first, add) {
-	    var last = item.split //分割用的注释节点
-	    var signature = last.nodeValue
-	    var doms = []
-	    var cur = last.previousSibling
-	    doms.unshift(last)
-	    do {
-	        if (!cur || cur === first || cur.nodeValue === signature) {
-	            break
-	        }
-	        var prev = cur.previousSibling
-	        doms.unshift(cur)
-	        cur = prev
-	    } while (1);
-	    if (add) {
-	        doms.forEach(function (el) {
+	function moveItem(item, addToFragment) {
+	    var nodes = item.children.map(function (el) {
+	        return el['ms-if'] ? el.comment : el.dom
+	    })
+	    if (addToFragment) {
+	        nodes.forEach(function (el) {
 	            item.dom.appendChild(el)
 	        })
 	    }
-	    return doms
+	    return nodes
 	}
+
 
 	avalon.domize = function (a) {
 	    return avalon.vdomAdaptor(a, 'toDOM')
@@ -4407,6 +4396,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    update: function (dom, vdom, parent, option) {
+	        if(!dom || dom.nodeType !== 1){
+	            return
+	        }
+	        
 	        if (dom.animating) {
 	            return
 	        }
@@ -4599,7 +4592,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.applyEffect = function (node, vnode, opts) {
 	    var cb = opts.cb
 	    var curEffect = vnode['ms-effect']
-	    if (curEffect) {
+	    if (curEffect && node && node.nodeType === 1) {
 	        var hook = opts.hook
 	        var old = curEffect[hook]
 	        if (cb) {
@@ -4615,7 +4608,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        avalon.directives.effect.update(node, vnode, 0, avalon.shadowCopy({}, opts))
 
 	    } else if (cb) {
-	        cb()
+	        cb(node)
 	    }
 	}
 
@@ -4717,7 +4710,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.batch = __webpack_require__(78)
 	// dispatch与patch 为内置模块
 	var vdom2body = __webpack_require__(38)
-
+	var rquoteEscapes = /\\\\(['"])/g
 	function render(vtree, local) {
 	    var _body = Array.isArray(vtree) ? vdom2body(vtree) : vtree
 	    var _local = []
@@ -4726,6 +4719,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            _local.push('var ' + i + ' = __local__['+avalon.quote(i)+']')
 	        }
 	    }
+	    //处理 props: {"ms-effect": "{is:\\'star\\',action:@action}" 的情况 
+	    _body = _body.replace(rquoteEscapes,"$1")
 	    var body = '__local__ = __local__ || {};\n' +
 	            _local.join(';\n')+'\n' + _body
 	    
@@ -4801,7 +4796,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var nodeValue = str.slice(0, i).replace(rfill, fill)
 	            str = str.slice(i)
 	            node = {
-	                nodeName: "#text",
+	                nodeName: '#text',
 	                nodeValue: nodeValue
 	            }
 	            if (rcontent.test(nodeValue)) {
@@ -4813,12 +4808,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (i === 0) {
 	                var l = str.indexOf('-->')
 	                if (l === -1) {
-	                    avalon.error("注释节点没有闭合" + str)
+	                    avalon.error('注释节点没有闭合' + str)
 	                }
 	                var nodeValue = str.slice(4, l).replace(rfill, fill)
 	                str = str.slice(l + 3)
 	                node = {
-	                    nodeName: "#comment",
+	                    nodeName: '#comment',
 	                    nodeValue: nodeValue
 	                }
 	                collectNodes(node, stack, ret)
@@ -4837,7 +4832,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    children: [],
 	                    isVoidTag: isVoidTag
 	                }
-	               
+
 	                var attrs = match[2]
 	                if (attrs) {
 	                    collectProps(attrs, node.props)
@@ -4849,7 +4844,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                } else {
 	                    stack.push(node)
 	                    if (plainTag[nodeName]) {
-	                        var index = str.indexOf("</" + nodeName + '>')
+	                        var index = str.indexOf('</' + nodeName + '>')
 	                        var innerHTML = str.slice(0, index).trim()
 	                        str = str.slice(index)
 
@@ -4941,7 +4936,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (value.indexOf('??') === 0) {
 	                value = nomalString(value).
 	                        replace(rlineSp, '').
-	                        replace(/\"/g, "'").
+	                        //  replace(/\"/g, "'").
 	                        slice(1, -1)
 	            }
 	        }

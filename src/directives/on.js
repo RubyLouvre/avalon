@@ -37,14 +37,14 @@ avalon.directive('on', {
         var uuid = fn.uuid
         var srcFn = src[name] || {}
         var hasChange = false
-       
-      
+
+
         if (!src.dynamic[name] || srcFn.uuid !== uuid) {
             src[name] = fn
             avalon.eventListeners[uuid] = fn
             hasChange = true
         }
-    
+
         if (diffObj(src.local || {}, copy.local)) {
             hasChange = true
         }
@@ -55,17 +55,17 @@ avalon.directive('on', {
         }
     },
     update: function (dom, vdom) {
-        if (!dom || dom.nodeType > 1) //在循环绑定中，这里为null
-            return
-        var key, listener
-        dom._ms_context_ = vdom.vmodel
-        dom._ms_local = vdom.local
-        for (key in vdom) {
-            var match = key.match(rmson)
-            if (match) {
-                listener = vdom[key]
-                vdom.dynamic[key] = 1
-                avalon.bind(dom, match[1], listener)
+        if (dom && dom.nodeType === 1) { //在循环绑定中，这里为null
+            var key, listener
+            dom._ms_context_ = vdom.vmodel
+            dom._ms_local = vdom.local
+            for (key in vdom) {
+                var match = key.match(rmson)
+                if (match) {
+                    listener = vdom[key]
+                    vdom.dynamic[key] = 1
+                    avalon.bind(dom, match[1], listener)
+                }
             }
         }
     }

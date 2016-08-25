@@ -193,33 +193,32 @@ avalon.directive('for', {
 
         for (var i = 0, item; item = vdom.removes[i++]; ) {
             if (item.dom) {
-                item.num = 0
 
+                delete item.split
                 if (vdom.hasEffect) {
-                    var nodes = moveItem(item, dom)
-
-                    applyEffects(nodes, item.children, {
-                        hook: 'onLeaveDone',
-                        staggerKey: signature + 'leave',
-                        cb: function (node) {
-                            ++item.num
-                            item.dom.appendChild(node)
-                            if (item.num === item.children.length) {
-                                delete item.dom
-                                delete item.split
-                                item.children.length = 0
+                    !function (obj) {
+                        var nodes = moveItem(obj)
+                        var children = obj.children.concat()
+                        obj.children.length = 0
+                        applyEffects(nodes, children, {
+                            hook: 'onLeaveDone',
+                            staggerKey: signature + 'leave',
+                            cb: function (node) {
+                                if (node.parentNode) {
+                                    node.parentNode.removeChild(node)
+                                }
                             }
-                        }
-                    })
+                        })
+                    }(item)
                 } else {
-                    moveItem(item, dom, 'add')
-                    delete item.dom
-                    delete item.split
+                    moveItem(item, 'add')
                 }
 
             }
         }
         vdom.list.forEach(function (el, i) {
+            if (el.action === 'leave')
+                return
             if (!el.dom) {
                 el.dom = avalon.domize(el)
             }
@@ -239,7 +238,7 @@ avalon.directive('for', {
                     })
                 }
             } else if (el.index !== el.oldIndex) {
-                var nodes = moveItem(el, dom, 'add')
+                var nodes = moveItem(el, 'add')
                 parent.insertBefore(el.dom, before.nextSibling)
                 vdom.hasEffect && applyEffects(nodes, el.children, {
                     hook: 'onMoveDone',
@@ -255,27 +254,18 @@ avalon.directive('for', {
 
 })
 
-function moveItem(item, first, add) {
-    var last = item.split //分割用的注释节点
-    var signature = last.nodeValue
-    var doms = []
-    var cur = last.previousSibling
-    doms.unshift(last)
-    do {
-        if (!cur || cur === first || cur.nodeValue === signature) {
-            break
-        }
-        var prev = cur.previousSibling
-        doms.unshift(cur)
-        cur = prev
-    } while (1);
-    if (add) {
-        doms.forEach(function (el) {
+function moveItem(item, addToFragment) {
+    var nodes = item.children.map(function (el) {
+        return el['ms-if'] ? el.comment : el.dom
+    })
+    if (addToFragment) {
+        nodes.forEach(function (el) {
             item.dom.appendChild(el)
         })
     }
-    return doms
+    return nodes
 }
+
 
 avalon.domize = function (a) {
     return avalon.vdomAdaptor(a, 'toDOM')

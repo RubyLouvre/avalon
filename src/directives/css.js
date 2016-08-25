@@ -41,11 +41,13 @@ avalon.directive('css', {
         delete copy[name]//释放内存
     },
     update: function (dom, vdom) {
-        var wrap = avalon(dom)
-        vdom.dynamic['ms-css'] = 1
-        var change = vdom['ms-css']
-        for (var name in change) {
-            wrap.css(name, change[name])
+        if (dom && dom.nodeType === 1) {
+            var wrap = avalon(dom)
+            vdom.dynamic['ms-css'] = 1
+            var change = vdom['ms-css']
+            for (var name in change) {
+                wrap.css(name, change[name])
+            }
         }
     }
 })

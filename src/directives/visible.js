@@ -29,45 +29,45 @@ avalon.directive('visible', {
         var c = !!copy[name]
         if (!src.dynamic[name] || c !== src[name]) {
             src[name] = c
-            update(src, this.update )
+            update(src, this.update)
         }
     },
-    update: function (dom, vdom) { 
-        if(!dom || dom.nodeType !== 1){
-            return
-        }
-        vdom.dynamic['ms-visible'] = 1
-        var show = vdom['ms-visible']
-        var display = dom.style.display
-        var value
-        if (show) {
-            if (display === none) {
-                value = vdom.displayValue
-                if (!value) {
-                    dom.style.display = ''
+    update: function (dom, vdom) {
+        if (dom && dom.nodeType === 1) {
+            vdom.dynamic['ms-visible'] = 1
+            var show = vdom['ms-visible']
+            var display = dom.style.display
+            var value
+            if (show) {
+                if (display === none) {
+                    value = vdom.displayValue
+                    if (!value) {
+                        dom.style.display = ''
+                    }
+                }
+                if (dom.style.display === '' && avalon(dom).css('display') === none &&
+                        // fix firefox BUG,必须挂到页面上
+                        avalon.contains(dom.ownerDocument, dom)) {
+
+                    value = parseDisplay(dom)
+                }
+            } else {
+                if (display !== none) {
+                    value = none
+                    vdom.displayValue = display
                 }
             }
-            if (dom.style.display === '' && avalon(dom).css('display') === none &&
-                    // fix firefox BUG,必须挂到页面上
-                    avalon.contains(dom.ownerDocument, dom)) {
+            function cb() {
+                if (value !== void 0) {
+                    dom.style.display = value
+                }
+            }
+            avalon.applyEffect(dom, vdom, {
+                hook: show ? 'onEnterDone' : 'onLeaveDone',
+                cb: cb
+            })
+        }
 
-                value = parseDisplay(dom)
-            }
-        } else {
-            if (display !== none) {
-                value = none
-                vdom.displayValue = display
-            }
-        }
-        function cb(){
-           if (value !== void 0) {
-              dom.style.display = value
-           }
-        }
-        avalon.applyEffect(dom, vdom, {
-            hook: show ? 'onEnterDone': 'onLeaveDone',
-            cb: cb
-        })
     }
 })
 
