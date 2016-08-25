@@ -46,16 +46,33 @@ describe('core', function () {
         expect(avalon.ohasOwn).to.be.equal(Object.prototype.hasOwnProperty)
     })
     it('log', function () {
-
+       
+        expect(avalon.log(11, 22)).to.be.equal(void 0)
         expect(avalon.log).to.be.a('function')
     })
     it('warn', function () {
+        expect(avalon.warn(11, 22)).to.be.equal(void 0)
 
         expect(avalon.warn).to.be.a('function')
+        // expect(avalon.warn('aaa')).to.be.a('function')
     })
     it('error', function () {
 
         expect(avalon.error).to.be.a('function')
+
+        try {
+            avalon.error('aaa')
+        } catch (e) {
+            expect(e.message).to.be.equal('aaa')
+            expect(e).to.be.instanceof(Error)
+        }
+        try {
+            avalon.error('eee', TypeError)
+        } catch (e) {
+            expect(e.message).to.be.equal('eee')
+            expect(e).to.be.instanceof(TypeError)
+        }
+
     })
     it('oneObject', function () {
 
@@ -65,6 +82,7 @@ describe('core', function () {
             bb: 1,
             cc: 1
         })
+        expect(avalon.oneObject('')).to.eql({})
         expect(avalon.oneObject([1, 2, 3], false)).to.eql({
             1: false,
             2: false,

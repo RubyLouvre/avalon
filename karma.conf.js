@@ -1,9 +1,12 @@
+
 module.exports = function (config) {
     config.set({
         basePath: '',
         frameworks: ['mocha'],
         files: [
+            //  {pattern: 'node_modules/sinon/chai.js', include: true},
             {pattern: 'node_modules/chai/chai.js', include: true},
+            {pattern: 'node_modules/sinon/pkg/sinon.js', include: true},
             'dist/avalon.test.js',
             // 'karma/reconcile.js',
             'karma/seed/core.js',
@@ -11,6 +14,7 @@ module.exports = function (config) {
             'karma/seed/lang.js',
             'karma/seed/cache.js',
             'karma/seed/config.js',
+            'karma/filters/index.js',
             'karma/$watch.js',
             'karma/other.js',
             'karma/directives/text.js',
@@ -59,7 +63,7 @@ module.exports = function (config) {
         singleRun: false,
         plugins: [
             'karma-mocha',
-           
+            'karma-sinon',
             'karma-coverage',
             'karma-mocha-reporter',
             'karma-firefox-launcher',

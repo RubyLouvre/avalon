@@ -22,7 +22,7 @@ avalon.shadowCopy(avalon, {
     cssHooks: cssHooks,
     parsers: {
         number: function (a) {
-            return a === '' ? '' : /\d\.$/.test(a) ? a : parseFloat(a) || 0
+            return a === '' ? '' : parseFloat(a) || 0
         },
         string: function (a) {
             return a === null || a === void 0 ? '' : a + ''
@@ -46,7 +46,7 @@ avalon.shadowCopy(avalon, {
             return
         }
         var prop = avalon.camelize(name)
-        name = avalon.cssName(prop) || prop
+        name = avalon.cssName(prop) ||  /* istanbul ignore next*/ prop
         if (value === void 0 || typeof value === 'boolean') { //获取样式
             fn = cssHooks[prop + ':get'] || cssHooks['@:get']
             if (name === 'background') {
@@ -68,7 +68,7 @@ avalon.shadowCopy(avalon, {
         }
     },
     directive: function (name, definition) {
-        definition.parse = definition.parse || defaultParse
+        definition.parse = definition.parse ||/* istanbul ignore next*/ defaultParse
         return this.directives[name] = definition
     },
     isObject: function (a) {//1.6新增
@@ -115,6 +115,7 @@ avalon.shadowCopy(avalon, {
     },
     //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
     makeHashCode: function (prefix) {
+       /* istanbul ignore next*/
         prefix = prefix || 'avalon'
         return String(Math.random() + Math.random()).replace(rhashcode, prefix)
     },
@@ -150,7 +151,7 @@ avalon.shadowCopy(avalon, {
 
 if(typeof performance !== 'undefined' && performance.now){
     avalon.makeHashCode = function (prefix) {
-        prefix = prefix || 'avalon'
+        prefix = prefix ||  /* istanbul ignore next*/ 'avalon'
         return (prefix + performance.now()).replace('.', '')
     }
 }
@@ -160,10 +161,12 @@ module.exports = {
     //生成事件回调的UUID(用户通过ms-on指令)
     avalon: avalon,
     getLongID: function (fn) {
+        /* istanbul ignore next */
         return fn.uuid || (fn.uuid = avalon.makeHashCode('e'))
     },
     //生成事件回调的UUID(用户通过avalon.bind)
     getShortID: function (fn) {
+        /* istanbul ignore next */
         return fn.uuid || (fn.uuid = '_' + (++UUID))
     }
 }

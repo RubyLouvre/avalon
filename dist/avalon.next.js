@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-25:23 version 2.113 by 司徒正美
+ * built in 2016-8-26:2 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -168,7 +168,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    warn: function () {
 	        if (hasConsole && avalon.config.debug) {
-	            var method = console.warn || console.log
+	            var method = console.warn ||/* istanbul ignore next*/ console.log
 	            // http://qiang106.iteye.com/blog/1721425
 	            Function.apply.call(method, console, arguments)
 	        }
@@ -179,7 +179,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //将一个以空格或逗号隔开的字符串或数组,转换成一个键值都为1的对象
 	    oneObject: function (array, val) {
 	        if (typeof array === 'string') {
-	            array = array.match(rword) || []
+	            array = array.match(rword) || /* istanbul ignore next*/[]
 	        }
 	        var result = {},
 	                value = val !== void 0 ? val : 1
@@ -222,7 +222,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    cssHooks: cssHooks,
 	    parsers: {
 	        number: function (a) {
-	            return a === '' ? '' : /\d\.$/.test(a) ? a : parseFloat(a) || 0
+	            return a === '' ? '' : parseFloat(a) || 0
 	        },
 	        string: function (a) {
 	            return a === null || a === void 0 ? '' : a + ''
@@ -246,7 +246,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return
 	        }
 	        var prop = avalon.camelize(name)
-	        name = avalon.cssName(prop) || prop
+	        name = avalon.cssName(prop) ||  /* istanbul ignore next*/ prop
 	        if (value === void 0 || typeof value === 'boolean') { //获取样式
 	            fn = cssHooks[prop + ':get'] || cssHooks['@:get']
 	            if (name === 'background') {
@@ -268,7 +268,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    },
 	    directive: function (name, definition) {
-	        definition.parse = definition.parse || defaultParse
+	        definition.parse = definition.parse ||/* istanbul ignore next*/ defaultParse
 	        return this.directives[name] = definition
 	    },
 	    isObject: function (a) {//1.6新增
@@ -315,6 +315,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
 	    makeHashCode: function (prefix) {
+	       /* istanbul ignore next*/
 	        prefix = prefix || 'avalon'
 	        return String(Math.random() + Math.random()).replace(rhashcode, prefix)
 	    },
@@ -350,7 +351,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	if(typeof performance !== 'undefined' && performance.now){
 	    avalon.makeHashCode = function (prefix) {
-	        prefix = prefix || 'avalon'
+	        prefix = prefix ||  /* istanbul ignore next*/ 'avalon'
 	        return (prefix + performance.now()).replace('.', '')
 	    }
 	}
@@ -360,10 +361,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    //生成事件回调的UUID(用户通过ms-on指令)
 	    avalon: avalon,
 	    getLongID: function (fn) {
+	        /* istanbul ignore next */
 	        return fn.uuid || (fn.uuid = avalon.makeHashCode('e'))
 	    },
 	    //生成事件回调的UUID(用户通过avalon.bind)
 	    getShortID: function (fn) {
+	        /* istanbul ignore next */
 	        return fn.uuid || (fn.uuid = '_' + (++UUID))
 	    }
 	}
