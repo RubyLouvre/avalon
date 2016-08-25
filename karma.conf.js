@@ -5,7 +5,12 @@ module.exports = function (config) {
         files: [
             {pattern: 'node_modules/chai/chai.js', include: true},
             'dist/avalon.test.js',
-           // 'karma/reconcile.js',
+            // 'karma/reconcile.js',
+            'karma/seed/core.js',
+            'karma/seed/browser.js',
+            'karma/seed/lang.js',
+            'karma/seed/cache.js',
+            'karma/seed/config.js',
             'karma/$watch.js',
             'karma/other.js',
             'karma/directives/text.js',
@@ -24,7 +29,6 @@ module.exports = function (config) {
             'karma/directives/widget.js'
         ],
         exclude: [],
-        reporters: ['mocha'],
         mochaReporter: {
             output: 'autowatch',
             colors: {
@@ -33,6 +37,17 @@ module.exports = function (config) {
                 warning: 'cyan',
                 error: 'bgRed'
             }
+        },
+        reporters: ['mocha', 'coverage'],
+        preprocessors: {
+            // source files, that you wanna generate coverage for
+            // do not include tests or libraries
+            // (these files will be instrumented by Istanbul)
+            'dist/avalon.test.js': ['coverage']
+        },
+        coverageReporter: {
+            type: 'html',
+            dir: 'coverage/'
         },
         port: 9858,
         colors: true,
@@ -44,6 +59,8 @@ module.exports = function (config) {
         singleRun: false,
         plugins: [
             'karma-mocha',
+           
+            'karma-coverage',
             'karma-mocha-reporter',
             'karma-firefox-launcher',
             'karma-safari-launcher',

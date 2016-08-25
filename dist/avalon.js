@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-25:19 version 2.113 by 司徒正美
+ * built in 2016-8-25:23 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -314,22 +314,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	        outerHTML: 'x'
 	    },
 	    msie: NaN,
+	    browser: false,
 	    modern: true,
 	    avalonDiv: {},
 	    avalonFragment: null
 	}
 	window.avalon = avalon
-
+	/* istanbul ignore if  */
 	if (window.location && window.navigator && window.window) {
 	    var doc = window.document
 	    browser.browser = true
 	    browser.document = doc
-	    browser.modern = window.dispatchEvent
 	    browser.root = doc.documentElement
 	    browser.avalonDiv = doc.createElement('div')
 	    browser.avalonFragment = doc.createDocumentFragment()
 	    if (window.VBArray) {
 	        browser.msie = doc.documentMode || (window.XMLHttpRequest ? 7 : 6)
+	        browser.modern = browser.msie > 8
+	    } else {
+	        browser.modern = true
 	    }
 	}
 
@@ -832,6 +835,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var avalon = __webpack_require__(4)
 	function kernel(settings) {
 	    for (var p in settings) {
+	         /* istanbul ignore if */
 	        if (!avalon.ohasOwn.call(settings, p))
 	            continue
 	        var val = settings[p]
@@ -853,12 +857,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var openTag = array[0]
 	        var closeTag = array[1]
 	        /*eslint-disable */
+	         /* istanbul ignore if */
 	        if (openTag === closeTag) {
 	            throw new SyntaxError('openTag!==closeTag')
 	        }
 	        var test = openTag + 'test' + closeTag
 	        var div = avalon.avalonDiv
 	        div.innerHTML = test
+	         /* istanbul ignore if */
 	        if (div.innerHTML !== test && div.innerHTML.indexOf('&lt;') > -1) {
 	            throw new SyntaxError('此定界符不合法')
 	        }

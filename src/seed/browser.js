@@ -15,22 +15,25 @@ var browser = {
         outerHTML: 'x'
     },
     msie: NaN,
+    browser: false,
     modern: true,
     avalonDiv: {},
     avalonFragment: null
 }
 window.avalon = avalon
-
+/* istanbul ignore if  */
 if (window.location && window.navigator && window.window) {
     var doc = window.document
     browser.browser = true
     browser.document = doc
-    browser.modern = window.dispatchEvent
     browser.root = doc.documentElement
     browser.avalonDiv = doc.createElement('div')
     browser.avalonFragment = doc.createDocumentFragment()
     if (window.VBArray) {
         browser.msie = doc.documentMode || (window.XMLHttpRequest ? 7 : 6)
+        browser.modern = browser.msie > 8
+    } else {
+        browser.modern = true
     }
 }
 
