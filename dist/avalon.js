@@ -925,7 +925,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    sanitize: sanitize,
 	    number: number,
 	    currency: function (amount, symbol, fractionSize) {
-	        return (symbol || '￥') +
+	        return (symbol || '¥') +
 	                number(amount,
 	                        isFinite(fractionSize) ? fractionSize : 2)
 	    }
