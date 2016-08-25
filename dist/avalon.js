@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-25:11 version 2.113 by 司徒正美
+ * built in 2016-8-25:15 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -101,8 +101,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 	var ohasOwn = Object.prototype.hasOwnProperty
-
-	if (!'司徒正美'.trim) {
+	function isNative(fn){
+	    return /\[native code\]/.test(fn)
+	}
+	if (!isNative('司徒正美'.trim)) {
 	    var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
 	    String.prototype.trim = function () {
 	        return this.replace(rtrim, '')
@@ -123,7 +125,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            'constructor'
 	        ],
 	        dontEnumsLength = dontEnums.length;
-	if (!Object.keys) {
+	if (!isNative(Object.keys)) {
 	    Object.keys = function (object) { //ecma262v5 15.2.3.14
 	        var theKeys = []
 	        var skipProto = hasProtoEnumBug && typeof object === 'function'
@@ -153,13 +155,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return theKeys
 	    }
 	}
-	if (!Array.isArray) {
+	if (!isNative(Array.isArray)) {
 	    Array.isArray = function (a) {
 	        return Object.prototype.toString.call(a) === '[object Array]'
 	    }
 	}
 
-	if (!Array.isArray.bind) {
+	if (!isNative(isNative.bind)) {
 	    Function.prototype.bind = function (scope) {
 	        if (arguments.length < 2 && scope === void 0)
 	            return this
@@ -186,8 +188,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	* for the 2nd argument (as in Firefox), and prevents errors when
 	* called on other DOM objects.
 	*/
+	var ap = Array.prototype
 
-	var _slice = Array.prototype.slice
+	var _slice = ap.slice
 	try {
 	    // Can't be used with DOM elements in IE < 9
 	    _slice.call(document.documentElement)
@@ -196,7 +199,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // NamedNodeMap (attributes, entities, notations),
 	    // NodeList (e.g., getElementsByTagName), HTMLCollection (e.g., childNodes),
 	    // and will not fail on other DOM objects (as do DOM elements in IE < 9)
-	    Array.prototype.slice = function (begin, end) {
+	    ap.slice = function (begin, end) {
 	        // IE < 9 gets unhappy with an undefined end argument
 	        end = (typeof end !== 'undefined') ? end : this.length
 
@@ -248,8 +251,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    /* jshint ignore:end */
 	}
 
-	var ap = Array.prototype
-	if (!/\[native code\]/.test(ap.map)) {
+	if (!isNative(ap.map)) {
 	    var shim = {
 	        //定位操作，返回数组中第一个等于给定参数的元素的索引值。
 	        indexOf: function (item, index) {
