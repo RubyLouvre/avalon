@@ -5,7 +5,7 @@ function serverRender(vm, str) {
     var oldTree = avalon.speedUp(vdom)
     var render = avalon.render(oldTree)
     var vtree = render(vm)
-    var html = avalon.vdomAdaptor(vtree, 'toHTML', false)
+    var html = avalon.vdom(vtree, 'toHTML', false)
     return {
         templates: templates,
         html: html
@@ -118,7 +118,7 @@ VElement.prototype = {
         str += '>'
         if (this.children) {
             str += this.children.map(function (c) {
-                return c ? avalon.vdomAdaptor(c, 'toHTML', dir) : ''
+                return c ? avalon.vdom(c, 'toHTML', dir) : ''
             }).join('')
         }
         return str + '</' + this.nodeName + '>'
@@ -157,13 +157,13 @@ VFragment.prototype = {
     constructor: VFragment,
     toHTML: function (dir) {
         return this.children.map(function (a) {
-            return avalon.vdomAdaptor(a, 'toHTML', dir)
+            return avalon.vdom(a, 'toHTML', dir)
         }).join('')
     }
 }
 
 
-avalon.vdomAdaptor = function (obj, method, dir) {
+avalon.vdom = function (obj, method, dir) {
     switch (obj.nodeName) {
         case '#text':
             return VText.prototype[method].call(obj)

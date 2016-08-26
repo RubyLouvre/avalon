@@ -123,7 +123,7 @@ function hasDirective(node) {
                 delete clone.isVoidTag
                 clone.nodeName = "cheng"
                 clone.props = cprops
-                node.template = avalon.vdomAdaptor(clone, 'toHTML')
+                node.template = avalon.vdom(clone, 'toHTML')
                 if (!node.isVoidTag)
                     node.children = []
             }

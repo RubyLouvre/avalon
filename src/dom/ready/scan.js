@@ -15,7 +15,7 @@ function scan(nodes) {
                     var oldTree = avalon.speedUp(avalon.lexer(tmpl))
                     var render = avalon.render(oldTree)
                     var vtree = render(vm)
-                    var dom = avalon.vdomAdaptor(vtree[0], 'toDOM')
+                    var dom = avalon.vdom(vtree[0], 'toDOM')
                     vm.$element = dom
                     dom.vtree = vtree
                     vm.$render = render

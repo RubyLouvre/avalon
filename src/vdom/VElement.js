@@ -113,7 +113,7 @@ VElement.prototype = {
             default:
                 if (!this.isVoidTag) {
                     this.children.forEach(function (c) {
-                        c && dom.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
+                        c && dom.appendChild(avalon.vdom(c, 'toDOM'))
                     })
                 }
                 break
@@ -137,7 +137,7 @@ VElement.prototype = {
         str += '>'
         if (this.children) {
             str += this.children.map(function (c) {
-                return c ? avalon.vdomAdaptor(c, 'toHTML') : ''
+                return c ? avalon.vdom(c, 'toHTML') : ''
             }).join('')
         }
         return str + '</' + this.nodeName + '>'

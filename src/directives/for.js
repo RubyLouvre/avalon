@@ -268,7 +268,7 @@ function moveItem(item, addToFragment) {
 
 
 avalon.domize = function (a) {
-    return avalon.vdomAdaptor(a, 'toDOM')
+    return avalon.vdom(a, 'toDOM')
 }
 
 

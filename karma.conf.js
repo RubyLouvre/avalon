@@ -15,6 +15,8 @@ module.exports = function (config) {
             'karma/seed/cache.js',
             'karma/seed/config.js',
             'karma/filters/index.js',
+            'karma/vdom/index.js',
+              
             'karma/$watch.js',
             'karma/other.js',
             'karma/directives/text.js',

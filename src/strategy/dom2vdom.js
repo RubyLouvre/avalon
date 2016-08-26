@@ -41,7 +41,7 @@ function isEmpty(a) {
 }
 
 function toHTML(a) {
-    return avalon.vdomAdaptor(a, 'toHTML')
+    return avalon.vdom(a, 'toHTML')
 }
 
 function createVDOM(node) {

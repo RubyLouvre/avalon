@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-26:14 version 2.113 by 司徒正美
+ * built in 2016-8-26:21 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -1510,7 +1510,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var VElement = __webpack_require__(19)
 	var VFragment = __webpack_require__(20)
 
-	avalon.vdomAdaptor = function (obj, method) {
+	avalon.vdom = avalon.vdomAdaptor = function (obj, method) {
 	    if (!obj) {//obj在ms-for循环里面可能是null
 	        return method === "toHTML" ? '' : document.createDocumentFragment()
 	    }
@@ -1527,13 +1527,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return VElement.prototype[method].call(obj)
 	    }
 	}
-
-	module.exports = {
+	var mix = {
 	    VText: VText,
 	    VComment: VComment,
 	    VElement: VElement,
 	    VFragment: VFragment
 	}
+	avalon.shadowCopy(avalon.vdom, mix)
+
+	module.exports = mix
 
 
 /***/ },
@@ -1726,7 +1728,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            default:
 	                if (!this.isVoidTag) {
 	                    this.children.forEach(function (c) {
-	                        c && dom.appendChild(avalon.vdomAdaptor(c, 'toDOM'))
+	                        c && dom.appendChild(avalon.vdom(c, 'toDOM'))
 	                    })
 	                }
 	                break
@@ -1750,7 +1752,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        str += '>'
 	        if (this.children) {
 	            str += this.children.map(function (c) {
-	                return c ? avalon.vdomAdaptor(c, 'toHTML') : ''
+	                return c ? avalon.vdom(c, 'toHTML') : ''
 	            }).join('')
 	        }
 	        return str + '</' + this.nodeName + '>'
@@ -1775,14 +1777,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return this.dom
 	        var f = document.createDocumentFragment()
 	        for (var i = 0, el; el = this.children[i++]; ) {
-	            f.appendChild(avalon.vdomAdaptor(el, 'toDOM'))
+	            f.appendChild(avalon.vdom(el, 'toDOM'))
 	        }
 	        this.split = f.lastChild
 	        return  this.dom = f
 	    },
 	    toHTML: function () {
 	        return this.children.map(function (a) {
-	            return avalon.vdomAdaptor(a, 'toHTML')
+	            return avalon.vdom(a, 'toHTML')
 	        }).join('')
 	    }
 	}
@@ -2591,7 +2593,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    var vnodes = avalon.lexer(html)
 	    for (var i = 0, el; el = vnodes[i++]; ) {
-	        fragment.appendChild(avalon.vdomAdaptor(el, 'toDOM'))
+	        fragment.appendChild(avalon.vdom(el, 'toDOM'))
 	    }
 	    if (html.length < 1024) {
 	        htmlCache.put(html, fragment)
@@ -3206,7 +3208,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    var oldTree = avalon.speedUp(avalon.lexer(tmpl))
 	                    var render = avalon.render(oldTree)
 	                    var vtree = render(vm)
-	                    var dom = avalon.vdomAdaptor(vtree[0], 'toDOM')
+	                    var dom = avalon.vdom(vtree[0], 'toDOM')
 	                    vm.$element = dom
 	                    dom.vtree = vtree
 	                    vm.$render = render
@@ -3305,7 +3307,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function toHTML(a) {
-	    return avalon.vdomAdaptor(a, 'toHTML')
+	    return avalon.vdom(a, 'toHTML')
 	}
 
 	function createVDOM(node) {
@@ -6049,7 +6051,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	avalon.domize = function (a) {
-	    return avalon.vdomAdaptor(a, 'toDOM')
+	    return avalon.vdom(a, 'toDOM')
 	}
 
 
@@ -6245,7 +6247,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    },
 	    mountComponent: function (dom, vdom, parent) {
 	        delete vdom.dom
-	        var com = avalon.vdomAdaptor(vdom, 'toDOM')
+	        var com = avalon.vdom(vdom, 'toDOM')
 	       
 	        var is = vdom.props.is
 	        var vm = vdom['component-vm:' + is]
@@ -6278,7 +6280,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }, 'afterChange')
 
 	        update(vdom, function () {
-	            vdom[ 'component-html:' + is] = avalon.vdomAdaptor(vdom, 'toHTML')
+	            vdom[ 'component-html:' + is] = avalon.vdom(vdom, 'toHTML')
 	        }, 'afterChange')
 	    }
 	})
@@ -6290,7 +6292,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var vm = vdom['component-vm:' + is]
 	    var html = 'component-html:' + is
 	    var preHTML = vdom[html]
-	    var curHTML = avalon.vdomAdaptor(vdom, 'toHTML')
+	    var curHTML = avalon.vdom(vdom, 'toHTML')
 	    if (preHTML !== curHTML) {
 	        vdom[html] = curHTML
 	        vm.$fire('onViewChange', {
@@ -7358,7 +7360,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                delete clone.isVoidTag
 	                clone.nodeName = "cheng"
 	                clone.props = cprops
-	                node.template = avalon.vdomAdaptor(clone, 'toHTML')
+	                node.template = avalon.vdom(clone, 'toHTML')
 	                if (!node.isVoidTag)
 	                    node.children = []
 	            }

@@ -136,7 +136,7 @@ avalon.directive('widget', {
     },
     mountComponent: function (dom, vdom, parent) {
         delete vdom.dom
-        var com = avalon.vdomAdaptor(vdom, 'toDOM')
+        var com = avalon.vdom(vdom, 'toDOM')
        
         var is = vdom.props.is
         var vm = vdom['component-vm:' + is]
@@ -169,7 +169,7 @@ avalon.directive('widget', {
         }, 'afterChange')
 
         update(vdom, function () {
-            vdom[ 'component-html:' + is] = avalon.vdomAdaptor(vdom, 'toHTML')
+            vdom[ 'component-html:' + is] = avalon.vdom(vdom, 'toHTML')
         }, 'afterChange')
     }
 })
@@ -181,7 +181,7 @@ function viewChangeHandle(dom, vdom) {
     var vm = vdom['component-vm:' + is]
     var html = 'component-html:' + is
     var preHTML = vdom[html]
-    var curHTML = avalon.vdomAdaptor(vdom, 'toHTML')
+    var curHTML = avalon.vdom(vdom, 'toHTML')
     if (preHTML !== curHTML) {
         vdom[html] = curHTML
         vm.$fire('onViewChange', {

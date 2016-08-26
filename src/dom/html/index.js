@@ -24,7 +24,7 @@ avalon.parseHTML = function (html) {
     }
     var vnodes = avalon.lexer(html)
     for (var i = 0, el; el = vnodes[i++]; ) {
-        fragment.appendChild(avalon.vdomAdaptor(el, 'toDOM'))
+        fragment.appendChild(avalon.vdom(el, 'toDOM'))
     }
     if (html.length < 1024) {
         htmlCache.put(html, fragment)
