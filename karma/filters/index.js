@@ -231,10 +231,6 @@ describe('filters', function () {
             expect(fn('\/Date(1216796600500)\/', 'yyyy-MM-dd')).to.equal('2008-07-23')
             expect(fn(1373021259229, format)).to.equal('2013 07 05:18:47:39')
 
-        })
-
-        it('test2', function () {
-
             expect(fn(new Date('2014/4/1'), 'yyyy MM dd:HH:mm:ss')).to.equal('2014 04 01:00:00:00')
             expect(fn('1373021259229', 'yyyy MM dd:HH:mm:ss')).to.equal('2013 07 05:18:47:39')
             expect(fn(1373021259229, 'yyyy MM dd:HH:mm:ss')).to.equal('2013 07 05:18:47:39')
@@ -267,7 +263,30 @@ describe('filters', function () {
 
 
     })
+    describe('事件过滤器', function () {
 
+        it("$return", function () {
+            var fn = avalon.filters.enter
+            var e = {which: 11}
+            fn(e)
+            expect(e.$return).to.equal(true)
+            var e = {which: 13}
+            fn(e)
+            expect(e.$return).to.equal(void 0)
+        })
+
+        it('stop and prevent', function () {
+            var e = {
+                stopPropagation: sinon.spy(),
+                preventDefault: sinon.spy()
+            }
+            avalon.filters.stop(e)
+            avalon.filters.prevent(e)
+            expect(e.stopPropagation.called).to.equal(true)
+            expect(e.preventDefault.called).to.equal(true)
+
+        })
+    })
 
 })
 
