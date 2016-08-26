@@ -59,7 +59,7 @@ function filterBy(array, search) {
     array = convertArray(array).filter(function (el, i) {
         return !!criteria.apply(el, [el.value, i].concat(args))
     })
-    
+
     var isArray = type === 'array'
     var target = isArray ? [] : {}
     return recovery(target, array, function (el) {
@@ -82,7 +82,7 @@ function selectBy(data, array, defaults) {
     }
 }
 
-Number.isNaN = Number.isNaN || function (a) {
+Number.isNaN = Number.isNaN || /* istanbul ignore next*/ function (a) {
     return a !== a
 }
 
@@ -108,13 +108,12 @@ function limitBy(input, limit, begin) {
     if (begin < 0) {
         begin = Math.max(0, n + begin)
     }
-
     var data = []
     for (var i = begin; i < n; i++) {
-        data.push(input[i])
-        if (data.length === limit) {
+        if (data.length >= limit) {
             break
         }
+        data.push(input[i])
     }
     var isArray = type === 'array'
     if (isArray) {

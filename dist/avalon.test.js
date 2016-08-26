@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-26:2 version 2.113 by 司徒正美
+ * built in 2016-8-26:13 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -197,7 +197,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-8-26:2 version 2.113 by 司徒正美
+	 * built in 2016-8-26:13 version 2.113 by 司徒正美
 	 * 2.1.5 and npm 2.1.15
 	 *     修正 ms-controller, ms-important的移除类名的实现
 	 *     实现后端渲染,
@@ -285,9 +285,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		var browser = {
 		    window: window,
 		    document: {//方便在nodejs环境不会报错
+		        /* istanbul ignore next*/ 
 		        createElement: function () {
 		            return {}
 		        },
+		        /* istanbul ignore next*/ 
 		        createElementNS: function () {
 		            return {}
 		        },
@@ -647,7 +649,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		avalon.__format__ = function (name) {
 		    var fn = filters[name]
 		    if (fn) {
-		        return fn.get ? fn.get : fn
+		        return fn
 		    }
 		    return K
 		}
@@ -660,13 +662,19 @@ return /******/ (function(modules) { // webpackBootstrap
 		    lowercase: function (str) {
 		        return String(str).toLowerCase()
 		    },
-		    truncate: function (str, length, truncation) {
+		    truncate: function (str, length, end) {
 		        //length，新字符串长度，truncation，新字符串的结尾的字段,返回新字符串
-		        length = length || 30
-		        truncation = typeof truncation === "string" ? truncation : "..."
+		        if (!str) {
+		            return ''
+		        }
+		        str = String(str)
+		        if (isNaN(length)) {
+		            length = 30
+		        }
+		        end = typeof end === "string" ? end : "..."
 		        return str.length > length ?
-		                str.slice(0, length - truncation.length) + truncation :
-		                String(str)
+		                str.slice(0, length - end.length) + end :
+		                str
 		    },
 		    camelize: avalon.camelize,
 		    date: date,
@@ -1068,7 +1076,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    array = convertArray(array).filter(function (el, i) {
 		        return !!criteria.apply(el, [el.value, i].concat(args))
 		    })
-		    
+
 		    var isArray = type === 'array'
 		    var target = isArray ? [] : {}
 		    return recovery(target, array, function (el) {
@@ -1091,7 +1099,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    }
 		}
 
-		Number.isNaN = Number.isNaN || function (a) {
+		Number.isNaN = Number.isNaN || /* istanbul ignore next*/ function (a) {
 		    return a !== a
 		}
 
@@ -1117,13 +1125,15 @@ return /******/ (function(modules) { // webpackBootstrap
 		    if (begin < 0) {
 		        begin = Math.max(0, n + begin)
 		    }
-
 		    var data = []
+		    console.log(limit, n)
 		    for (var i = begin; i < n; i++) {
-		        data.push(input[i])
-		        if (data.length === limit) {
+
+		        console.log(data.length, '!')
+		        if (data.length >= limit) {
 		            break
 		        }
+		        data.push(input[i])
 		    }
 		    var isArray = type === 'array'
 		    if (isArray) {
@@ -5595,7 +5605,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	/***/ },
 	/* 78 */
-	/***/ function(module, exports, __webpack_require__) {
+	/***/ function(module, exports) {
 
 		
 		/**
@@ -5604,7 +5614,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		 * ------------------------------------------------------------
 		 */
 
-		var reconcile = __webpack_require__(53)
+		//var reconcile = require('./reconcile')
 
 		//如果正在更新一个子树,那么将它放到
 		var needRenderIds = []

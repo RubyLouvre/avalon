@@ -55,52 +55,127 @@ describe('filters', function () {
         var fn = avalon.filters.truncate
         it('test', function () {
             expect(fn('大跃进大发展', 5, '***')).to.equal('大跃***')
+            expect(fn('1122dsfdsfdsfdsfdffsfdsfewrewrw5')).to.equal('1122dsfdsfdsfdsfdffsfdsfewr...')
+            expect(fn('1122dsfdsfdsfdsfdffsfdsfewrewrw5', -5)).to.equal('1122dsfdsfdsfdsfdffsfdsf...')
+            expect(fn(null)).to.equal('')
+            expect(fn('')).to.equal('')
+        })
+    })
+
+    describe('avalon.__format__', function () {
+        it('test', function () {
+            var fn = avalon.filters.filterBy
+            expect(avalon.__format__('filterBy')).to.equal(fn)
+            expect(avalon.__format__('aaa4')).to.match(/return\s+a/)
         })
     })
 
     describe('filterBy', function () {
         var fn = avalon.filters.filterBy
         it('test', function () {
-            var array = fn(['aaa', 'bbaa', 'ccc', 'daad'], 'aa')
-            delete array.$id
-            delete array.$hashcode
 
-            expect(array).to.eql(['aaa', 'bbaa', 'daad'])
+            try {
+                fn(111)
+            } catch (e) {
+                expect(e).to.equal('filterBy只能处理对象或数组')
+            }
+
+
+            expect(fn(['aaa', 'bbaa', 'ccc', 'daad'], 'aa')).to.eql(['aaa', 'bbaa', 'daad'])
+            expect(fn(['aaa', 'bbaa', 'ccc', 'ddd'], '')).to.eql(['aaa', 'bbaa', 'ccc', 'ddd'])
+            expect(fn(['aa11', '1122', '66', '2113'], 11)).to.eql(['aa11', '1122', '2113'])
+            expect(fn(['aaa', 'bbaa', 'ccc', 'ddd'], true)).to.eql(['aaa', 'bbaa', 'ccc', 'ddd'])
+
+            expect(fn(['aa11', '1122', '66', '2113'], function (a) {
+                return /2/.test(a)
+            })).to.eql(['1122', '2113'])
+            expect(fn({
+                a: 111,
+                b: 212,
+                c: 332
+            }, function (a) {
+                return /2/.test(a)
+            })).to.eql({
+                b: 212,
+                c: 332
+            })
+
         })
     })
-    describe('limitBy', function () {
-        var items = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'],
-                str = 'tuvwxyz',
-                number = 100.045;
-        var fn = avalon.filters.limitBy
-        var limitTo = fn
-       
+    describe('selectBy', function () {
+        var fn = avalon.filters.selectBy
+        it('test', function () {
 
-        it('should return entire array when X cannot be parsed', function () {
-            expect(limitTo(items, 'bogus')).to.eql(items);
-            expect(limitTo(items, 'null')).to.eql(items);
-            expect(limitTo(items, 'undefined')).to.eql(items);
-            expect(limitTo(items, null)).to.eql(items);
-            expect(limitTo(items, undefined)).to.eql(items);
-        });
+            expect(fn('aaa', 'aa')).to.eql('aaa')
+            expect(fn(['aaa', 'bbaa', 'ccc', 'ddd'], '')).to.eql(['aaa', 'bbaa', 'ccc', 'ddd'])
+            expect(fn({
+                aaa: 1,
+                bbb: 2,
+                ccc: 3
+            }, ['aaa', 'bbb'])).to.eql([1, 2])
+            expect(fn({
+                aaa: 1,
+                bbb: 2,
+                ccc: 3
+            }, ['aaa', 'bbb', 'ddd'], {ddd: 4})).to.eql([1, 2, 4])
 
-      
 
-        it('should take 0 as beginning index value when Y cannot be parsed', function () {
-            expect(limitTo(items, 3, 'bogus')).to.eql(limitTo(items, 3, 0));
-            expect(limitTo(items, -3, 'null')).to.eql(limitTo(items, -3));
-            expect(limitTo(items, '3', 'undefined')).to.eql(limitTo(items, '3', 0));
-            expect(limitTo(items, '-3', null)).to.eql(limitTo(items, '-3'));
-            expect(limitTo(items, 3, undefined)).to.eql(limitTo(items, 3, 0));
-          
-        });
-
-        it('should return input if not String or Array or Number', function () {
-           
-            expect(limitTo({}, 1)).to.eql({});
-        });
+        })
     })
 
+    describe('limitBy', function () {
+        var fn = avalon.filters.limitBy
+
+        it('test', function () {
+            try {
+                fn(1111)
+            } catch (e) {
+                expect(e).to.eql('limitBy只能处理对象或数组');
+            }
+            expect(fn([11], 'ddd')).to.eql([11])
+            expect(fn([11], NaN)).to.eql([11])
+            expect(fn({a: 1, b: 2, c: 3}, 2)).to.eql({a: 1, b: 2})
+            expect(fn([111, 222, 333, 444, 555], 2)).to.eql([111, 222])
+            expect(fn([111, 222, 333, 444, 555], 7)).to.eql([111, 222, 333, 444, 555])
+            expect(fn([111, 222, 333, 444, 555], 2, 2)).to.eql([333, 444])
+            expect(fn([111, 222, 333, 444, 555, 666], 2, -2)).to.eql([555, 666])
+            expect(fn([111, 222, 333, 444, 555, 666], 3.5)).to.eql([111, 222, 333])
+
+        })
+    })
+
+    describe('orderBy', function () {
+        var fn = avalon.filters.orderBy
+
+        it('test', function () {
+            try {
+                fn(1111)
+            } catch (e) {
+                expect(e).to.eql('orderBy只能处理对象或数组');
+            }
+            expect(fn([{a: 1}, {a: 3}, {a: 2}, {a: 4}], 'a', 1)).to.eql([{a: 1}, {a: 2}, {a: 3}, {a: 4}])
+            expect(fn([{a: 1}, {a: 3}, {a: 2}, {a: 4}], 'a', -1)).to.eql([{a: 4}, {a: 3}, {a: 2}, {a: 1}])
+            expect(fn([{a: 1}, {a: NaN}, {a: 2}, {a: NaN}], 'a')).to.eql([{a: 1}, {a: NaN}, {a: 2}, {a: NaN}])
+
+
+            expect(fn([111, 222, 33, 444, 5585], function (a) {
+                return  String(a).length
+            })).to.eql([33, 111, 222, 444, 5585])
+            expect(fn({
+                a: {v: 4},
+                d: {v: 1},
+                rr: {v: 3},
+                e33: {v: 2},
+            }, 'v')).to.eql({
+                d: {v: 1},
+                e33: {v: 2},
+                rr: {v: 3},
+                a: {v: 4}
+            })
+
+
+        })
+    })
 
     describe('date', function () {
         var fn = avalon.filters.date
@@ -119,6 +194,7 @@ describe('filters', function () {
             expect(fn('2015-01-31 00:00:00', 'yyyy-MM-dd')).to.equal('2015-01-31')
             expect(fn('\/Date(1216796600500)\/', 'yyyy-MM-dd')).to.equal('2008-07-23')
             expect(fn(1373021259229, format)).to.equal('2013 07 05:18:47:39')
+
         })
 
         it('test2', function () {
@@ -130,8 +206,31 @@ describe('filters', function () {
             expect(fn('\/Date(1373021259229)\/', 'yyyy MM dd:HH:mm:ss')).to.equal('2013 07 05:18:47:39')
 
         })
-    })
 
+        it('EEE', function () {
+            var date = new Date(2016, 7, 26)
+            expect(fn(date, 'EEEE')).to.equal('星期五')
+            expect(fn(date, 'EEE')).to.equal('周五')
+            expect(fn(date, 'MMMM')).to.equal('8月')
+            expect(fn(date, 'MMM')).to.equal('8月')
+        })
+
+        it('Z', function () {
+            var date = new Date(2016, 7, 26)
+            expect(fn(date, 'Z')).to.equal('+0800')
+        })
+
+        it('shortName', function () {
+            var date = new Date(2016, 7, 26, 12, 4, 5)
+            expect(fn(date)).to.equal('2016-8-26')
+            expect(fn(date, 'medium')).to.equal('2016-8-26 12:04:05')
+            expect(fn(date, 'short')).to.equal('16-8-26 下午12:04')
+            expect(fn(date, 'fullDate')).to.equal('2016年8月26日星期五')
+
+        })
+
+
+    })
 
 
 })

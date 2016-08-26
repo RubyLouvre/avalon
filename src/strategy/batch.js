@@ -5,7 +5,7 @@
  * ------------------------------------------------------------
  */
 
-var reconcile = require('./reconcile')
+//var reconcile = require('./reconcile')
 
 //如果正在更新一个子树,那么将它放到
 var needRenderIds = []

@@ -15,7 +15,7 @@ function K(a) {
 avalon.__format__ = function (name) {
     var fn = filters[name]
     if (fn) {
-        return fn.get ? fn.get : fn
+        return fn
     }
     return K
 }
@@ -28,13 +28,19 @@ avalon.mix(filters, {
     lowercase: function (str) {
         return String(str).toLowerCase()
     },
-    truncate: function (str, length, truncation) {
+    truncate: function (str, length, end) {
         //length，新字符串长度，truncation，新字符串的结尾的字段,返回新字符串
-        length = length || 30
-        truncation = typeof truncation === "string" ? truncation : "..."
+        if (!str) {
+            return ''
+        }
+        str = String(str)
+        if (isNaN(length)) {
+            length = 30
+        }
+        end = typeof end === "string" ? end : "..."
         return str.length > length ?
-                str.slice(0, length - truncation.length) + truncation :
-                String(str)
+                str.slice(0, length - end.length) + end :
+                str
     },
     camelize: avalon.camelize,
     date: date,
