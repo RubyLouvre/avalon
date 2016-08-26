@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-26:13 version 2.113 by 司徒正美
+ * built in 2016-8-26:14 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -923,14 +923,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        input = convertArray(input)
 	    }
 	    var n = input.length
-	    limit = Math.min(n, limit)
+	    limit = Math.floor(Math.min(n, limit))
 	    begin = typeof begin === 'number' ? begin : 0
 	    if (begin < 0) {
 	        begin = Math.max(0, n + begin)
 	    }
 	    var data = []
 	    for (var i = begin; i < n; i++) {
-	        if (data.length >= limit) {
+	        if (data.length === limit) {
 	            break
 	        }
 	        data.push(input[i])
@@ -1015,26 +1015,29 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 14 */
 /***/ function(module, exports) {
 
-	var rsurrogate = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g
-	var rnoalphanumeric = /([^\#-~| |!])/g
-
+	
+	//https://github.com/teppeis/htmlspecialchars
 	function escape(str) {
-	    //将字符串经过 str 转义得到适合在页面中显示的内容, 例如替换 < 为 &lt 
+	    if (str == null)
+	        return ''
+
 	    return String(str).
 	            replace(/&/g, '&amp;').
-	            replace(rsurrogate, function (value) {
-	                var hi = value.charCodeAt(0)
-	                var low = value.charCodeAt(1)
-	                return '&#' + (((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000) + ';'
-	            }).
-	            replace(rnoalphanumeric, function (value) {
-	                return '&#' + value.charCodeAt(0) + ';'
-	            }).
 	            replace(/</g, '&lt;').
-	            replace(/>/g, '&gt;')
+	            replace(/>/g, '&gt;').
+	            replace(/"/g, '&quot;').
+	            replace(/'/g, '&#039;')
 	}
 
 	module.exports = escape
+
+
+
+	      
+
+
+
+
 
 /***/ },
 /* 15 */,

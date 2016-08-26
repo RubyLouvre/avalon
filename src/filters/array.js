@@ -103,14 +103,14 @@ function limitBy(input, limit, begin) {
         input = convertArray(input)
     }
     var n = input.length
-    limit = Math.min(n, limit)
+    limit = Math.floor(Math.min(n, limit))
     begin = typeof begin === 'number' ? begin : 0
     if (begin < 0) {
         begin = Math.max(0, n + begin)
     }
     var data = []
     for (var i = begin; i < n; i++) {
-        if (data.length >= limit) {
+        if (data.length === limit) {
             break
         }
         data.push(input[i])

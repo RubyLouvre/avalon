@@ -16,9 +16,36 @@ describe('filters', function () {
 
     describe('escape', function () {
         var fn = avalon.filters.escape
-        it('test', function () {
-            expect(fn('<s>a</s>')).to.equal('&lt;s&gt;a&lt;/s&gt;')
-        })
+        it('escapes "&" to "&amp;"', function () {
+            expect(fn('&')).to.equal('&amp;');
+        });
+        it('escapes "<" to "&lt;"', function () {
+            expect(fn('<')).to.equal('&lt;');
+        });
+        it('escapes ">" to "&gt;"', function () {
+            expect(fn('>')).to.equal('&gt;');
+        });
+        it('escapes \'"\' to "&quot;"', function () {
+            expect(fn('"')).to.equal('&quot;');
+        });
+        it('escapes "\'" to "&#039;"', function () {
+            expect(fn("'")).to.equal('&#039;');
+        });
+        it('escapes all special chars', function () {
+            expect(fn("<&<&")).to.equal('&lt;&amp;&lt;&amp;');
+        });
+        it('returns an empty string for null', function () {
+            expect(fn(null)).to.equal('');
+        });
+        it('returns an empty string for undefined', function () {
+            expect(fn(null)).to.equal('');
+        });
+        it('stringify non-string value', function () {
+            expect(fn(1)).to.equal('1');
+        });
+        it('returns "false" for false', function () {
+            expect(fn(false)).to.equal('false');
+        });
     })
 
     describe('sanitize', function () {
@@ -46,6 +73,7 @@ describe('filters', function () {
     describe('number', function () {
         var fn = avalon.filters.number
         it('test', function () {
+            expect(fn(1.234567, 1)).to.equal('1.2')
             expect(fn(1111111111)).to.equal('1,111,111,111.000')
             expect(fn(1111111111, 2, '.', '-')).to.equal('1-111-111-111.00')
         })
@@ -59,6 +87,14 @@ describe('filters', function () {
             expect(fn('1122dsfdsfdsfdsfdffsfdsfewrewrw5', -5)).to.equal('1122dsfdsfdsfdsfdffsfdsf...')
             expect(fn(null)).to.equal('')
             expect(fn('')).to.equal('')
+        })
+    })
+
+    describe('currency', function () {
+        var fn = avalon.filters.currency
+        it('test', function () {
+            expect(fn(2500)).to.equal('¥2,500.00')
+            expect(fn(2500, 'RMB')).to.equal('RMB2,500.00')
         })
     })
 
@@ -190,7 +226,7 @@ describe('filters', function () {
             expect(fn('3 14,2000', format)).to.equal('2000 03 14:00:00:00')
             expect(fn('1373021259229', format)).to.equal('2013 07 05:18:47:39')
             expect(fn('2014-06-10T15:21:2', format)).to.equal('2014 06 10:15:21:02')
-            expect(fn('2014-12-07T22:50:58+08:00', format)).to.equal('2014 12 07:22:50:58')
+            expect(fn('2014-12-07T22:50:58.33+08:00', format)).to.equal('2014 12 07:22:50:58')
             expect(fn('2015-01-31 00:00:00', 'yyyy-MM-dd')).to.equal('2015-01-31')
             expect(fn('\/Date(1216796600500)\/', 'yyyy-MM-dd')).to.equal('2008-07-23')
             expect(fn(1373021259229, format)).to.equal('2013 07 05:18:47:39')
