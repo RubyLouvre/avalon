@@ -1801,11 +1801,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 	__webpack_require__(22)
-	__webpack_require__(23)
 	__webpack_require__(24)
-	__webpack_require__(27)
+	__webpack_require__(25)
 	__webpack_require__(28)
 	__webpack_require__(29)
+	__webpack_require__(30)
 	__webpack_require__(32)
 	__webpack_require__(34)
 
@@ -1816,6 +1816,11 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var avalon = __webpack_require__(4)
+
+	var fixCloneNode = __webpack_require__(23)
+	avalon.cloneNode = function (a) {
+	    return a.cloneNode(true)
+	}
 
 	function fixContains(root, el) {
 	    try { //IE6-8,游离于DOM树外的文本节点，访问parentNode有时会抛错
@@ -1831,6 +1836,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.contains = fixContains
 	//IE6-11的文档对象没有contains
 	if (avalon.browser) {
+	    if (avalon.msie < 10) {
+	        avalon.cloneNode = fixCloneNode
+	    }
 	    if (!document.contains) {
 	        document.contains = function (b) {
 	            return fixContains(document, b)
@@ -1858,6 +1866,57 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 23 */
+/***/ function(module, exports) {
+
+	var rcheckedType = /radio|checkbox/
+
+	function fix(dest, src) {
+	    if (dest.nodeType !== 1) {
+	        return
+	    }
+	    var nodeName = dest.nodeName.toLowerCase()
+	    if (nodeName === 'object') {
+	        if (dest.parentNode) {
+	            dest.outerHTML = src.outerHTML
+	        }
+
+	    } else if (nodeName === 'input' && rcheckedType.test(src.nodeName)) {
+
+	        dest.defaultChecked = dest.checked = src.checked
+
+	        if (dest.value !== src.value) {
+	            dest.value = src.value
+	        }
+
+	    } else if (nodeName === 'option') {
+	        dest.defaultSelected = dest.selected = src.defaultSelected
+	    } else if (nodeName === 'input' || nodeName === 'textarea') {
+	        dest.defaultValue = src.defaultValue
+	    }
+	}
+
+
+	function getAll(context) {
+	    return typeof context.getElementsByTagName !== 'undefined' ?
+	            context.getElementsByTagName('*') :
+	            typeof context.querySelectorAll !== 'undefined' ?
+	            context.querySelectorAll('*') : []
+	}
+
+	function fixCloneNode(src) {
+	    var target = src.cloneNode(true)
+	    var t = getAll(target)
+	    var s = getAll(src)
+	    avalon.each(s, function (i) {
+	        fix(t[i], s[i])
+	    })
+	    return target
+	}
+
+	module.exports = fixCloneNode
+
+/***/ },
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var avalon = __webpack_require__(4)
@@ -1938,12 +1997,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 24 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var avalon = __webpack_require__(4)
-	var propMap = __webpack_require__(25)
-	var isVML = __webpack_require__(26)
+	var propMap = __webpack_require__(26)
+	var isVML = __webpack_require__(27)
 	var rsvg =/^\[object SVG\w*Element\]$/
 	var ramp = /&amp;/g
 
@@ -2038,7 +2097,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = attrUpdate
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports) {
 
 	var propMap = {//不规则的属性名映射
@@ -2082,7 +2141,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 26 */
+/* 27 */
 /***/ function(module, exports) {
 
 	function isVML(src) {
@@ -2093,7 +2152,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = isVML
 
 /***/ },
-/* 27 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var avalon = __webpack_require__(4)
@@ -2427,7 +2486,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 28 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var avalon = __webpack_require__(4)
@@ -2503,13 +2562,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 29 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cache = __webpack_require__(30)
+	var Cache = __webpack_require__(31)
 	var avalon = __webpack_require__(4)
 
-	var fixCloneNode = __webpack_require__(31)
 
 	var rhtml = /<|&#?\w+;/
 	var htmlCache = new Cache(128)
@@ -2529,14 +2587,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    html = html.replace(rxhtml, '<$1></$2>').trim()
 	    var hasCache = htmlCache.get(html)
 	    if (hasCache) {
-	        return fixCloneNode(hasCache)
+	        return avalon.cloneNode(hasCache)
 	    }
 	    var vnodes = avalon.lexer(html)
 	    for (var i = 0, el; el = vnodes[i++]; ) {
 	        fragment.appendChild(avalon.vdomAdaptor(el, 'toDOM'))
 	    }
 	    if (html.length < 1024) {
-	        htmlCache.put(html, fixCloneNode(fragment))
+	        htmlCache.put(html, fragment)
 	    }
 	    return fragment
 	}
@@ -2575,7 +2633,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 30 */
+/* 31 */
 /***/ function(module, exports) {
 
 	
@@ -2688,59 +2746,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = LRU
 
-
-/***/ },
-/* 31 */
-/***/ function(module, exports) {
-
-	var rcheckedType = /radio|checkbox/
-
-	function fix(dest, src) {
-	    if (dest.nodeType !== 1) {
-	        return
-	    }
-	    var nodeName = dest.nodeName.toLowerCase()
-	    if (nodeName === 'object') {
-	        if (dest.parentNode) {
-	            dest.outerHTML = src.outerHTML
-	        }
-
-	    } else if (nodeName === 'input' && rcheckedType.test(src.nodeName)) {
-
-	        dest.defaultChecked = dest.checked = src.checked
-
-	        if (dest.value !== src.value) {
-	            dest.value = src.value
-	        }
-
-	    } else if (nodeName === 'option') {
-	        dest.defaultSelected = dest.selected = src.defaultSelected
-	    } else if (nodeName === 'input' || nodeName === 'textarea') {
-	        dest.defaultValue = src.defaultValue
-	    }
-	}
-
-
-	function getAll(context) {
-	    return typeof context.getElementsByTagName !== 'undefined' ?
-	            context.getElementsByTagName('*') :
-	            typeof context.querySelectorAll !== 'undefined' ?
-	            context.querySelectorAll('*') : []
-	}
-
-	function fixCloneNode(src) {
-	    var target = src.cloneNode(true)
-	    if (avalon.modern)
-	        return target
-	    var t = getAll(target)
-	    var s = getAll(src)
-	    avalon.each(s, function (i) {
-	        fix(t[i], s[i])
-	    })
-	    return target
-	}
-
-	module.exports = fixCloneNode
 
 /***/ },
 /* 32 */
@@ -3944,7 +3949,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var Cache = __webpack_require__(30)
+	var Cache = __webpack_require__(31)
 	//缓存求值函数，以便多次利用
 	module.exports = new Cache(888)
 
@@ -4129,7 +4134,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var attrUpdate = __webpack_require__(24)
+	var attrUpdate = __webpack_require__(25)
 	var update = __webpack_require__(45)
 
 	avalon.directive('attr', {
@@ -4656,7 +4661,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Cache = __webpack_require__(30)
+	var Cache = __webpack_require__(31)
 	var eventCache = new Cache(128)
 	var update = __webpack_require__(45)
 	var markID = __webpack_require__(6).getLongID
@@ -6604,7 +6609,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var support = __webpack_require__(71)
-	var Cache = __webpack_require__(30)
+	var Cache = __webpack_require__(31)
 	var update = __webpack_require__(45)
 
 	avalon.directive('effect', {

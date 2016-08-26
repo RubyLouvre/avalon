@@ -7,7 +7,9 @@ if (typeof Node === 'function') {
         }
     }
 }
-
+avalon.cloneNode = function(a){
+    return a.cloneNode(true)
+}
 avalon.contains = function (root, el) {
     try {
         while ((el = el.parentNode))

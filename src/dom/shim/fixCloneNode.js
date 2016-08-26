@@ -35,8 +35,6 @@ function getAll(context) {
 
 function fixCloneNode(src) {
     var target = src.cloneNode(true)
-    if (avalon.modern)
-        return target
     var t = getAll(target)
     var s = getAll(src)
     avalon.each(s, function (i) {

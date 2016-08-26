@@ -1,7 +1,6 @@
 var Cache = require('../../seed/cache')
 var avalon = require('../../seed/core')
 
-var fixCloneNode = require('./fixCloneNode')
 
 var rhtml = /<|&#?\w+;/
 var htmlCache = new Cache(128)
@@ -21,14 +20,14 @@ avalon.parseHTML = function (html) {
     html = html.replace(rxhtml, '<$1></$2>').trim()
     var hasCache = htmlCache.get(html)
     if (hasCache) {
-        return fixCloneNode(hasCache)
+        return avalon.cloneNode(hasCache)
     }
     var vnodes = avalon.lexer(html)
     for (var i = 0, el; el = vnodes[i++]; ) {
         fragment.appendChild(avalon.vdomAdaptor(el, 'toDOM'))
     }
     if (html.length < 1024) {
-        htmlCache.put(html, fixCloneNode(fragment))
+        htmlCache.put(html, fragment)
     }
     return fragment
 }

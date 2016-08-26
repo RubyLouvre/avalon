@@ -1,5 +1,10 @@
 var avalon = require('../../seed/core')
 
+var fixCloneNode = require('./fixCloneNode')
+avalon.cloneNode = function (a) {
+    return a.cloneNode(true)
+}
+
 function fixContains(root, el) {
     try { //IE6-8,游离于DOM树外的文本节点，访问parentNode有时会抛错
         while ((el = el.parentNode))
@@ -14,6 +19,9 @@ function fixContains(root, el) {
 avalon.contains = fixContains
 //IE6-11的文档对象没有contains
 if (avalon.browser) {
+    if (avalon.msie < 10) {
+        avalon.cloneNode = fixCloneNode
+    }
     if (!document.contains) {
         document.contains = function (b) {
             return fixContains(document, b)
