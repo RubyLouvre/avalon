@@ -7,8 +7,6 @@ function kernel(settings) {
         var val = settings[p]
         if (typeof kernel.plugins[p] === 'function') {
             kernel.plugins[p](val)
-        } else if (typeof kernel[p] === 'object') {
-            avalon.shadowCopy(kernel[p], val)
         } else {
             kernel[p] = val
         }

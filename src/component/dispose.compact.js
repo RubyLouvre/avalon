@@ -59,6 +59,8 @@ function byRewritePrototype() {
         if (ep && ep.__lookupSetter__) {
             oldSetter = ep.__lookupSetter__('innerHTML')
             ep.__defineSetter__('innerHTML', newSetter)
+        } else {
+            throw e
         }
     }
 
@@ -105,10 +107,12 @@ function byPolling(dom) {
 module.exports = function onComponentDispose(dom) {
     if (window.chrome && window.MutationEvent) {
         byMutationEvent(dom)
-    } else if (avalon.modern && typeof window.Node === 'function') {
-        byRewritePrototype(dom)
     } else {
-        byPolling(dom)
+        try {
+            byRewritePrototype(dom)
+        } catch (e) {
+            byPolling(dom)
+        }
     }
 }
 

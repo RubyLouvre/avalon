@@ -1,5 +1,4 @@
 var update = require('./_update')
-//var reconcile = require('../strategy/reconcile')
 var tryInitComponent = require('../component/init')
 
 avalon.component = function (name, definition) {

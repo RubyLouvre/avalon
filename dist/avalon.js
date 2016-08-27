@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-27:13 version 2.113 by 司徒正美
+ * built in 2016-8-28:0 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -846,8 +846,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var val = settings[p]
 	        if (typeof kernel.plugins[p] === 'function') {
 	            kernel.plugins[p](val)
-	        } else if (typeof kernel[p] === 'object') {
-	            avalon.shadowCopy(kernel[p], val)
 	        } else {
 	            kernel[p] = val
 	        }
@@ -5987,7 +5985,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var update = __webpack_require__(45)
-	//var reconcile = require('../strategy/reconcile')
 	var tryInitComponent = __webpack_require__(67)
 
 	avalon.component = function (name, definition) {
@@ -7633,6 +7630,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (ep && ep.__lookupSetter__) {
 	            oldSetter = ep.__lookupSetter__('innerHTML')
 	            ep.__defineSetter__('innerHTML', newSetter)
+	        } else {
+	            throw e
 	        }
 	    }
 
@@ -7679,10 +7678,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = function onComponentDispose(dom) {
 	    if (window.chrome && window.MutationEvent) {
 	        byMutationEvent(dom)
-	    } else if (avalon.modern && typeof window.Node === 'function') {
-	        byRewritePrototype(dom)
 	    } else {
-	        byPolling(dom)
+	        try {
+	            byRewritePrototype(dom)
+	        } catch (e) {
+	            byPolling(dom)
+	        }
 	    }
 	}
 

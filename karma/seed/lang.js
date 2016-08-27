@@ -225,6 +225,6 @@ describe('测试lang.share文件的API', function () {
         })
     })
 
-
-
 })
+
+

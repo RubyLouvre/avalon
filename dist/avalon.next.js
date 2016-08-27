@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-27:13 version 2.113 by 司徒正美
+ * built in 2016-8-28:0 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -70,8 +70,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(90)
 	__webpack_require__(98)
 	__webpack_require__(71)
-	__webpack_require__(106)
-	avalon.onComponentDispose = __webpack_require__(105)
+	__webpack_require__(105)
+	avalon.onComponentDispose = __webpack_require__(106)
 
 
 	module.exports = avalon
@@ -387,8 +387,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var val = settings[p]
 	        if (typeof kernel.plugins[p] === 'function') {
 	            kernel.plugins[p](val)
-	        } else if (typeof kernel[p] === 'object') {
-	            avalon.shadowCopy(kernel[p], val)
 	        } else {
 	            kernel[p] = val
 	        }
@@ -3709,7 +3707,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var update = __webpack_require__(45)
-	//var reconcile = require('../strategy/reconcile')
 	var tryInitComponent = __webpack_require__(67)
 
 	avalon.component = function (name, definition) {
@@ -7285,91 +7282,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 105 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ret = __webpack_require__(79)
-	var fireDisposeHook = ret.fireDisposeHook
-	var fireDisposeHooks = ret.fireDisposeHooks
-	var fireDisposeHookDelay = ret.fireDisposeHookDelay
-
-	//用于IE8+, firefox
-	function byRewritePrototype() {
-	    if (byRewritePrototype.execute) {
-	        return
-	    }
-	//https://www.web-tinker.com/article/20618.html?utm_source=tuicool&utm_medium=referral
-	//IE6-8虽然暴露了Element.prototype,但无法重写已有的DOM API
-	    byRewritePrototype.execute = true
-	    var p = Node.prototype
-	    function rewite(name, fn) {
-	        var cb = p[name]
-	        p[name] = function (a, b) {
-	            return  fn.call(this, cb, a, b)
-	        }
-	    }
-	    rewite('removeChild', function (fn, a, b) {
-	        fn.call(this, a, b)
-	        if (a.nodeType === 1) {
-	            fireDisposeHookDelay(a)
-	        }
-	        return a
-	    })
-
-	    rewite('replaceChild', function (fn, a, b) {
-	        fn.call(this, a, b)
-	        if (a.nodeType === 1) {
-	            fireDisposeHookDelay(a)
-	        }
-	        return a
-	    })
-	    //访问器属性需要用getOwnPropertyDescriptor处理
-	    var ep = Element.prototype
-	    function newSetter(html) {
-	        var all = avalon.slice(this.getElementsByTagName('*'))
-	        oldSetter.call(this, html)
-	        fireDisposeHooks(all)
-	    }
-
-	    try {
-	        var obj = Object.getOwnPropertyDescriptor(ep, 'innerHTML')
-	        var oldSetter = obj.set
-	        obj.set = newSetter
-	        Object.defineProperty(ep, 'innerHTML', obj)
-	    } catch (e) {
-	        //safari 9.1.2使用Object.defineProperty重写innerHTML会抛
-	        // Attempting to change the setter of an unconfigurable property.
-	        if (ep && ep.__lookupSetter__) {
-	            oldSetter = ep.__lookupSetter__('innerHTML')
-	            ep.__defineSetter__('innerHTML', newSetter)
-	        }
-	    }
-
-
-	    rewite('appendChild', function (fn, a) {
-	        fn.call(this, a)
-	        if (a.nodeType === 1 && this.nodeType === 11) {
-	            fireDisposeHookDelay(a)
-	        }
-	        return a
-	    })
-
-	    rewite('insertBefore', function (fn, a, b) {
-	        fn.call(this, a, b)
-	        if (a.nodeType === 1 && this.nodeType === 11) {
-	            fireDisposeHookDelay(a)
-	        }
-	        return a
-	    })
-	}
-
-	module.exports = function onComponentDispose(dom) {
-	    byRewritePrototype(dom)
-	}
-
-
-
-/***/ },
-/* 106 */
-/***/ function(module, exports, __webpack_require__) {
-
 	/**
 	 * ------------------------------------------------------------
 	 * avalon基于Proxy的vm工厂 
@@ -7725,6 +7637,91 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	module.exports = avalon
+
+/***/ },
+/* 106 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var ret = __webpack_require__(79)
+	var fireDisposeHook = ret.fireDisposeHook
+	var fireDisposeHooks = ret.fireDisposeHooks
+	var fireDisposeHookDelay = ret.fireDisposeHookDelay
+
+	//用于IE8+, firefox
+	function byRewritePrototype() {
+	    if (byRewritePrototype.execute) {
+	        return
+	    }
+	//https://www.web-tinker.com/article/20618.html?utm_source=tuicool&utm_medium=referral
+	//IE6-8虽然暴露了Element.prototype,但无法重写已有的DOM API
+	    byRewritePrototype.execute = true
+	    var p = Node.prototype
+	    function rewite(name, fn) {
+	        var cb = p[name]
+	        p[name] = function (a, b) {
+	            return  fn.call(this, cb, a, b)
+	        }
+	    }
+	    rewite('removeChild', function (fn, a, b) {
+	        fn.call(this, a, b)
+	        if (a.nodeType === 1) {
+	            fireDisposeHookDelay(a)
+	        }
+	        return a
+	    })
+
+	    rewite('replaceChild', function (fn, a, b) {
+	        fn.call(this, a, b)
+	        if (a.nodeType === 1) {
+	            fireDisposeHookDelay(a)
+	        }
+	        return a
+	    })
+	    //访问器属性需要用getOwnPropertyDescriptor处理
+	    var ep = Element.prototype
+	    function newSetter(html) {
+	        var all = avalon.slice(this.getElementsByTagName('*'))
+	        oldSetter.call(this, html)
+	        fireDisposeHooks(all)
+	    }
+
+	    try {
+	        var obj = Object.getOwnPropertyDescriptor(ep, 'innerHTML')
+	        var oldSetter = obj.set
+	        obj.set = newSetter
+	        Object.defineProperty(ep, 'innerHTML', obj)
+	    } catch (e) {
+	        //safari 9.1.2使用Object.defineProperty重写innerHTML会抛
+	        // Attempting to change the setter of an unconfigurable property.
+	        if (ep && ep.__lookupSetter__) {
+	            oldSetter = ep.__lookupSetter__('innerHTML')
+	            ep.__defineSetter__('innerHTML', newSetter)
+	        }
+	    }
+
+
+	    rewite('appendChild', function (fn, a) {
+	        fn.call(this, a)
+	        if (a.nodeType === 1 && this.nodeType === 11) {
+	            fireDisposeHookDelay(a)
+	        }
+	        return a
+	    })
+
+	    rewite('insertBefore', function (fn, a, b) {
+	        fn.call(this, a, b)
+	        if (a.nodeType === 1 && this.nodeType === 11) {
+	            fireDisposeHookDelay(a)
+	        }
+	        return a
+	    })
+	}
+
+	module.exports = function onComponentDispose(dom) {
+	    byRewritePrototype(dom)
+	}
+
+
 
 /***/ }
 /******/ ])
