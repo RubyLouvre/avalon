@@ -70,9 +70,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(15)
 	__webpack_require__(21)
 	__webpack_require__(43)
-	__webpack_require__(72)
-	avalon.onComponentDispose = __webpack_require__(79)
-	__webpack_require__(81)
+	__webpack_require__(71)
+	avalon.onComponentDispose = __webpack_require__(78)
+	__webpack_require__(80)
 
 	module.exports = avalon
 
@@ -3796,8 +3796,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        binding = str
 	        str = binding.expr
 	    }
-	    if (typeof str !== 'string')
-	        return ''
+	   
 	    var cacheID = str
 	    var cacheStr = evaluatorPool.get(category + ':' + cacheID)
 
@@ -3833,12 +3832,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    body = body.replace(rAt, '$1__vmodel__.')
-	    if (category === 'js') {
-	        return evaluatorPool.put(category + ':' + cacheID, body)
-	    } else if (category === 'on') {
+	   
+	    if (category === 'on') {
 	        collectLocal(_body, local)
+	    } else  if (category === 'js') {
+	        return evaluatorPool.put(category + ':' + cacheID, body)
 	    }
-
 	//处理表达式的过滤器部分
 
 	    var filters = input.map(function (str) {
@@ -3967,18 +3966,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(51)
 	__webpack_require__(52)
 	////需要用到事件的
+	__webpack_require__(53)
 	__webpack_require__(54)
 	__webpack_require__(55)
-	__webpack_require__(56)
+	__webpack_require__(62)
 	__webpack_require__(63)
-	__webpack_require__(64)
 	//
 	////处理逻辑
+	__webpack_require__(64)
 	__webpack_require__(65)
-	__webpack_require__(66)
 	//
-	__webpack_require__(67)
-	__webpack_require__(70)
+	__webpack_require__(66)
+	__webpack_require__(69)
 	//优先级 ms-important, ms-controller, ms-for, ms-widget, ms-effect, ms-if
 	//.......
 	//ms-duplex
@@ -4362,7 +4361,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var update = __webpack_require__(45)
-	var reconcile = __webpack_require__(53)
+	//var reconcile = require('../strategy/reconcile')
 
 	avalon.directive('html', {
 	    parse: function (copy, src, binding) {
@@ -4405,123 +4404,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 53 */
-/***/ function(module, exports) {
-
-	/*
-	 * 
-	 节点对齐算法
-	 元素节点是1＋其类型
-	 文本节点是3＋其是否能移除
-	 注释节点是8＋其内容
-	 发现不一样，就对真实DOM树添加或删除
-	 添加的是 ms-for,ms-for-end占位的注释节点
-	 删除的是多余的空白文本节点,与IE6-8私下添加的奇怪节点
-	 */
-	var rforHolder = /^ms\-for/
-	var rwhiteRetain = /[\S\xA0]/
-	var plainTag = avalon.oneObject('script,style,xmp,template,noscript,textarea')
-
-	function reconcile(nodes, vnodes, parent) {
-	    //遍平化虚拟DOM树
-	    vnodes = flatten(vnodes)
-	    var map = {}
-	    var vn = vnodes.length
-	    if (vn === 0)
-	        return
-
-	    vnodes.forEach(function (el, index) {
-	        map[index] = getType(el)
-	    })
-	    var newNodes = [], change = false, el, i = 0
-	    var breakLoop = 0
-	    while (true) {
-	        el = nodes[i++]
-	        if (breakLoop++ > 5000) {
-	            break
-	        }
-	        var vtype = el && getType(el)
-	        var v = newNodes.length, check
-	        if (map[v] === vtype) {
-	            if (check && el.nodeType === 1 && (el.getAttribute(':for')||el.getAttribute('ms-for'))) {
-	                check = false
-	                continue
-	            }
-	            newNodes.push(el)
-	            var vnode = vnodes[v]
-
-	            if (vnode.dynamic) {
-	                vnode.dom = el
-	            }
-
-	            if (el.nodeType === 1 && !vnode.isVoidTag && !plainTag[vnode.nodeName]) {
-	                if (el.type === 'select-one') {
-	                    //在chrome与firefox下删掉select中的空白节点，会影响到selectedIndex
-	                    var fixIndex = el.selectedIndex
-	                }
-	                reconcile(el.childNodes, vnode.children, el)
-	                if (el.type === 'select-one') {
-	                    el.selectedIndex = fixIndex
-	                }
-	            }
-	        } else {
-	            change = true
-	            if (map[v] === '8true') {
-	                var vv = vnodes[v]
-	                var nn = document.createComment(vv.nodeValue)
-	                vv.dom = nn
-	                newNodes.push(nn)
-	                if (vv.forExpr) {
-	                    check = true
-	                }
-	                i = Math.max(0, --i)
-	            }
-	        }
-	        if (newNodes.length === vn) {
-	            break
-	        }
-	    }
-	    if (change) {
-	        var f = document.createDocumentFragment(), i = 0
-	        while (el = newNodes[i++]) {
-	            f.appendChild(el)
-	        }
-	        while (parent.firstChild) {
-	            parent.removeChild(parent.firstChild)
-	        }
-	        parent.appendChild(f)
-	    }
-	}
-
-	module.exports = reconcile
-
-
-	function getType(node) {
-	    switch (node.nodeType) {
-	        case 3:
-	            return '3' + rwhiteRetain.test(node.nodeValue)
-	        case 1:
-	            return '1' + node.nodeName.toLowerCase()
-	        case 8:
-	            return '8' + rforHolder.test(node.nodeValue)
-	    }
-	}
-
-	function flatten(nodes) {
-	    var arr = []
-	    for (var i = 0, el; el = nodes[i]; i++) {
-	        if (Array.isArray(el)) {
-	            arr = arr.concat(flatten(el))
-	        } else {
-	            arr.push(el)
-	        }
-	    }
-	    return arr
-	}
-
-
-
-/***/ },
-/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
 	//根据VM的属性值或表达式的值切换类名，ms-class='xxx yyy zzz:flag'
@@ -4655,7 +4537,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 55 */
+/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var Cache = __webpack_require__(31)
@@ -4743,7 +4625,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 56 */
+/* 55 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -4754,11 +4636,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	var rchangeFilter = /\|\s*change\b/
 	var rcheckedType = /^(?:checkbox|radio)$/
 	var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/
-	var updateModelByEvent = __webpack_require__(57)
-	var updateModelByValue = __webpack_require__(60)
-	var updateModel = __webpack_require__(58)
-	var updateView = __webpack_require__(61)
-	var addValidateField = __webpack_require__(62)
+	var updateModelByEvent = __webpack_require__(56)
+	var updateModelByValue = __webpack_require__(59)
+	var updateModel = __webpack_require__(57)
+	var updateView = __webpack_require__(60)
+	var addValidateField = __webpack_require__(61)
 	var duplexDir = 'ms-duplex'
 
 
@@ -4913,7 +4795,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 57 */
+/* 56 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* 
@@ -4923,7 +4805,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * 2. value属性重写
 	 * 3. 定时器轮询
 	 */
-	var updateModel = __webpack_require__(58)
+	var updateModel = __webpack_require__(57)
 	var markID = __webpack_require__(6).getShortID
 	var msie = avalon.msie
 	var window = avalon.window
@@ -5129,10 +5011,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = updateModelByEvent
 
 /***/ },
-/* 58 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var updateModelMethods = __webpack_require__(59)
+	var updateModelMethods = __webpack_require__(58)
 
 	function updateModelHandle(event) {
 	    var elem = this
@@ -5173,7 +5055,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = updateModelHandle
 
 /***/ },
-/* 59 */
+/* 58 */
 /***/ function(module, exports) {
 
 	var updateModelMethods = {
@@ -5259,7 +5141,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 60 */
+/* 59 */
 /***/ function(module, exports) {
 
 	var valueHijack = false
@@ -5295,7 +5177,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = valueHijack
 
 /***/ },
-/* 61 */
+/* 60 */
 /***/ function(module, exports) {
 
 	
@@ -5350,7 +5232,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 62 */
+/* 61 */
 /***/ function(module, exports) {
 
 	
@@ -5375,7 +5257,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 63 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var update = __webpack_require__(45)
@@ -5566,7 +5448,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 64 */
+/* 63 */
 /***/ function(module, exports) {
 
 	avalon.directive('rules', {
@@ -5711,7 +5593,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 65 */
+/* 64 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var update = __webpack_require__(45)
@@ -5773,7 +5655,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 66 */
+/* 65 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var update = __webpack_require__(45)
@@ -6101,12 +5983,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 67 */
+/* 66 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var update = __webpack_require__(45)
 	//var reconcile = require('../strategy/reconcile')
-	var tryInitComponent = __webpack_require__(68)
+	var tryInitComponent = __webpack_require__(67)
 
 	avalon.component = function (name, definition) {
 	    //这是定义组件的分支,并将列队中的同类型对象移除
@@ -6324,10 +6206,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 68 */
+/* 67 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var skipArray = __webpack_require__(69)
+	var skipArray = __webpack_require__(68)
 
 	var legalTags = {wbr: 1, xmp: 1, template: 1}
 	var events = 'onInit,onReady,onViewChange,onDispose'
@@ -6586,7 +6468,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 69 */
+/* 68 */
 /***/ function(module, exports) {
 
 	/**
@@ -6602,10 +6484,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = avalon.oneObject('$id,$render,$track,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,$run,$wait,__proxy__,__data__,__const__')
 
 /***/ },
-/* 70 */
+/* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var support = __webpack_require__(71)
+	var support = __webpack_require__(70)
 	var Cache = __webpack_require__(31)
 	var update = __webpack_require__(45)
 
@@ -6861,7 +6743,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 71 */
+/* 70 */
 /***/ function(module, exports) {
 
 	/**
@@ -6941,13 +6823,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 72 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	avalon.lexer = __webpack_require__(73)
-	avalon.diff = __webpack_require__(77)
-	avalon.batch = __webpack_require__(78)
+	avalon.lexer = __webpack_require__(72)
+	avalon.diff = __webpack_require__(76)
+	avalon.batch = __webpack_require__(77)
 	// dispatch与patch 为内置模块
 	var vdom2body = __webpack_require__(38)
 	var rquoteEscapes = /\\\\(['"])/g
@@ -6978,7 +6860,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 73 */
+/* 72 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -6990,10 +6872,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	var avalon = __webpack_require__(4)
 
-	__webpack_require__(74)
+	__webpack_require__(73)
 	var voidTag = __webpack_require__(37)
-	var addTbody = __webpack_require__(75)
-	var fixPlainTag = __webpack_require__(76)
+	var addTbody = __webpack_require__(74)
+	var fixPlainTag = __webpack_require__(75)
 	var plainTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
 
 	var ropenTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
@@ -7227,7 +7109,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 74 */
+/* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -7418,7 +7300,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 75 */
+/* 74 */
 /***/ function(module, exports) {
 
 	
@@ -7471,7 +7353,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 76 */
+/* 75 */
 /***/ function(module, exports) {
 
 	/* 
@@ -7518,7 +7400,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = fixPlainTag
 
 /***/ },
-/* 77 */
+/* 76 */
 /***/ function(module, exports) {
 
 	/**
@@ -7627,7 +7509,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 78 */
+/* 77 */
 /***/ function(module, exports) {
 
 	
@@ -7687,10 +7569,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 79 */
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ret = __webpack_require__(80)
+	var ret = __webpack_require__(79)
 	var fireDisposeHook = ret.fireDisposeHook
 	var fireDisposeHooks = ret.fireDisposeHooks
 	var fireDisposeHookDelay = ret.fireDisposeHookDelay
@@ -7807,7 +7689,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 80 */
+/* 79 */
 /***/ function(module, exports) {
 
 	function inDomTree(el) {
@@ -7879,7 +7761,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 81 */
+/* 80 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -7889,8 +7771,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * ------------------------------------------------------------
 	 */
 
-	var share = __webpack_require__(82)
-	var createViewModel = __webpack_require__(86)
+	var share = __webpack_require__(81)
+	var createViewModel = __webpack_require__(85)
 
 	var isSkip = share.isSkip
 	var toJson = share.toJson
@@ -8193,11 +8075,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	//使用这个AJAX库 https://github.com/matthew-andrews/isomorphic-fetch
 
 /***/ },
-/* 82 */
+/* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var share = __webpack_require__(83)
-	var canHideProperty = __webpack_require__(85)
+	var share = __webpack_require__(82)
+	var canHideProperty = __webpack_require__(84)
 	var initEvents = share.initEvents
 
 	/*
@@ -8319,13 +8201,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 83 */
+/* 82 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var $$midway = {}
-	var $$skipArray = __webpack_require__(69)
-	var dispatch = __webpack_require__(84)
+	var $$skipArray = __webpack_require__(68)
+	var dispatch = __webpack_require__(83)
 	var $emit = dispatch.$emit
 	var $watch = dispatch.$watch
 	/*
@@ -8606,7 +8488,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 84 */
+/* 83 */
 /***/ function(module, exports) {
 
 	
@@ -8707,7 +8589,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 85 */
+/* 84 */
 /***/ function(module, exports) {
 
 	//如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
@@ -8724,12 +8606,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = flag
 
 /***/ },
-/* 86 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var canHideProperty = __webpack_require__(85)
-	var $$skipArray = __webpack_require__(69)
+	var canHideProperty = __webpack_require__(84)
+	var $$skipArray = __webpack_require__(68)
 
 
 	var defineProperties = Object.defineProperties

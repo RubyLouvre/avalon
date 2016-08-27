@@ -47,8 +47,7 @@ function parseExpr(str, category) {
         binding = str
         str = binding.expr
     }
-    if (typeof str !== 'string')
-        return ''
+   
     var cacheID = str
     var cacheStr = evaluatorPool.get(category + ':' + cacheID)
 
@@ -84,12 +83,12 @@ function parseExpr(str, category) {
     }
 
     body = body.replace(rAt, '$1__vmodel__.')
-    if (category === 'js') {
-        return evaluatorPool.put(category + ':' + cacheID, body)
-    } else if (category === 'on') {
+   
+    if (category === 'on') {
         collectLocal(_body, local)
+    } else  if (category === 'js') {
+        return evaluatorPool.put(category + ':' + cacheID, body)
     }
-
 //处理表达式的过滤器部分
 
     var filters = input.map(function (str) {

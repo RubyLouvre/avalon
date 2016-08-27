@@ -58,6 +58,12 @@ describe('测试dom模块', function () {
             expect(avalon.parseHTML('<div></div>').nodeType).to.equal(11)
             expect(avalon.parseHTML('<div></div>').nodeType).to.equal(11)
 
+            var table = document.createElement('table')
+            avalon.innerHTML(table, '<tr><td>111</td></tr>')
+            expect(table.getElementsByTagName('td').length).to.equal(1)
+            avalon.clearHTML(table)
+            expect(table.childNodes.length).to.equal(0)
+
             expect(avalon.parseHTML).to.be.a('function')
             expect(avalon.innerHTML).to.be.a('function')
             expect(avalon.clearHTML).to.be.a('function')
@@ -82,8 +88,8 @@ describe('测试dom模块', function () {
             it('it is the reverse of escape-html', function () {
                 var str1 = '<strong> & <a> are examples of "HTML Tags"'
                 var str2 = '&amp; & &gt; are examples of \'HTML entities\''
-                expect(fn(avalon.filters.escape(str1)+"!!")).to.be.equal(str1+"!!")
-                
+                expect(fn(avalon.filters.escape(str1) + "!!")).to.be.equal(str1 + "!!")
+
                 expect(fn(avalon.filters.escape(str2))).to.be.equal(str2)
             })
         })
