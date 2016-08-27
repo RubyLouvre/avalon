@@ -28,8 +28,8 @@ describe('filters', function () {
         it('escapes \'"\' to "&quot;"', function () {
             expect(fn('"')).to.equal('&quot;');
         });
-        it('escapes "\'" to "&#039;"', function () {
-            expect(fn("'")).to.equal('&#039;');
+        it('escapes "\'" to "&#39;"', function () {
+            expect(fn("'")).to.equal('&#39;');
         });
         it('escapes all special chars', function () {
             expect(fn("<&<&")).to.equal('&lt;&amp;&lt;&amp;');

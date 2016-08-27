@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-26:21 version 2.113 by 司徒正美
+ * built in 2016-8-27:13 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -1026,7 +1026,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            replace(/</g, '&lt;').
 	            replace(/>/g, '&gt;').
 	            replace(/"/g, '&quot;').
-	            replace(/'/g, '&#039;')
+	            replace(/'/g, '&#39;')
 	}
 
 	module.exports = escape
@@ -1238,20 +1238,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.clearHTML(node).appendChild(parsed)
 	}
 
-	var reunescapeHTML = /&(?:amp|lt|gt|quot|#39|#96);/g
-	var htmlUnescapes = {
-	    '&amp;': '&',
-	    '&lt;': '<',
-	    '&gt;': '>',
-	    '&quot;': '"',
-	    '&#39;': "'",
-	    '&#96;': '`'
-	}
-	avalon.unescapeHTML = function (string) {
-	    var str = '' + string
-	    return str.replace(reunescapeHTML, function (c) {
-	        return htmlUnescapes[c]
-	    })
+
+	avalon.unescapeHTML = function (html) {
+	     return String(html)
+	    .replace(/&quot;/g, '"')
+	    .replace(/&#39;/g, '\'')
+	    .replace(/&#96;/g, '`')
+	    .replace(/&lt;/g, '<')
+	    .replace(/&gt;/g, '>')
+	    .replace(/&amp;/g, '&')
 	}
 
 

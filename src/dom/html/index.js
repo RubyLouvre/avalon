@@ -38,20 +38,15 @@ avalon.innerHTML = function (node, html) {
     this.clearHTML(node).appendChild(parsed)
 }
 
-var reunescapeHTML = /&(?:amp|lt|gt|quot|#39|#96);/g
-var htmlUnescapes = {
-    '&amp;': '&',
-    '&lt;': '<',
-    '&gt;': '>',
-    '&quot;': '"',
-    '&#39;': "'",
-    '&#96;': '`'
-}
-avalon.unescapeHTML = function (string) {
-    var str = '' + string
-    return str.replace(reunescapeHTML, function (c) {
-        return htmlUnescapes[c]
-    })
+
+avalon.unescapeHTML = function (html) {
+     return String(html)
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, '\'')
+    .replace(/&#96;/g, '`')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
 }
 
 
