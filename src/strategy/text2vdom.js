@@ -180,28 +180,31 @@ function collectNodes(node, stack, ret) {
         ret.push(node)
     }
 }
-
+var rattrs = /([^=\s]+)(?:\s*=\s*(\S+))?/
 function collectProps(attrs, props) {
-    attrs.replace(rnowhite, function (prop) {
-        var arr = prop.split('=')
-        var name = arr[0]
-        var value = arr[1] || ''
-        if (name.charAt(0) === ':') {
-            name = 'ms-' + name.slice(1)
-        }
-        if (value) {
-            if (value.indexOf('??') === 0) {
-                value = nomalString(value).
-                        replace(rlineSp, '').
-                        //  replace(/\"/g, "'").
-                        slice(1, -1)
+    while (attrs) {
+        var arr = rattrs.exec(attrs)
+        if (arr) {
+            var name = arr[1]
+            var value = arr[2] || ''
+            attrs = attrs.replace(arr[0], '')
+            if (name.charAt(0) === ':') {
+                name = 'ms-' + name.slice(1)
             }
+            if (value) {
+                if (value.indexOf('??') === 0) {
+                    value = nomalString(value).
+                            replace(rlineSp, '').
+                            slice(1, -1)
+                }
+            }
+            if (!(name in props)) {
+                props[name] = value
+            }
+        } else {
+            break
         }
-        if (!(name in props)) {
-            props[name] = value
-        }
-    })
-
+    }
 }
 function nomalString(str) {
     return avalon.unescapeHTML(str.replace(rfill, fill))
