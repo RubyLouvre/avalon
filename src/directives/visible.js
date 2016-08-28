@@ -8,11 +8,7 @@ function parseDisplay(elem, val) {
     var key = '_' + nodeName
     if (!parseDisplay[key]) {
         var temp = doc.body.appendChild(doc.createElement(nodeName))
-        if (avalon.modern) {
-            val = getComputedStyle(temp, null).display
-        } else {
-            val = temp.currentStyle.display
-        }
+        val = avalon.css(temp, 'display')
         doc.body.removeChild(temp)
         if (val === none) {
             val = 'block'

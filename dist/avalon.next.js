@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-28:12 version 2.113 by 司徒正美
+ * built in 2016-8-29:1 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -1231,20 +1231,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	avalon.innerHTML = function (node, html) {
-	   
+
 	    var parsed = this.parseHTML(html)
 	    this.clearHTML(node).appendChild(parsed)
 	}
 
-
+	//https://github.com/karloespiritu/escapehtmlent/blob/master/index.js
 	avalon.unescapeHTML = function (html) {
-	     return String(html)
-	    .replace(/&quot;/g, '"')
-	    .replace(/&#39;/g, '\'')
-	    .replace(/&#96;/g, '`')
-	    .replace(/&lt;/g, '<')
-	    .replace(/&gt;/g, '>')
-	    .replace(/&amp;/g, '&')
+	    return String(html)
+	            .replace(/&quot;/g, '"')
+	            .replace(/&#39;/g, '\'')
+	            .replace(/&lt;/g, '<')
+	            .replace(/&gt;/g, '>')
+	            .replace(/&amp;/g, '&')
 	}
 
 
@@ -1257,6 +1256,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return node
 	}
 
+	       
 
 /***/ },
 /* 31 */
@@ -2402,11 +2402,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var key = '_' + nodeName
 	    if (!parseDisplay[key]) {
 	        var temp = doc.body.appendChild(doc.createElement(nodeName))
-	        if (avalon.modern) {
-	            val = getComputedStyle(temp, null).display
-	        } else {
-	            val = temp.currentStyle.display
-	        }
+	        val = avalon.css(temp, 'display')
 	        doc.body.removeChild(temp)
 	        if (val === none) {
 	            val = 'block'

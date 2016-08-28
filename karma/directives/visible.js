@@ -15,6 +15,29 @@ describe('visible', function () {
         body.removeChild(div)
         delete avalon.vmodels[vm.$id]
     })
+    
+    it('parseDisplay', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <table class="ddd" ms-controller="visible2" ms-visible="@a">
+             <tr><td>222</td></tr>
+             </table>
+             <style>
+             .ddd{display:none;}
+             </style>
+             */
+        })
+        vm = avalon.define({
+            $id: 'visible2',
+            a: true
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            expect(avalon(div.firstChild).css('display')).to.not.equal('none')
+            done()
+        })
+    })
+    
     it('inline-block', function (done) {
         div.innerHTML = heredoc(function () {
             /*
@@ -54,4 +77,5 @@ describe('visible', function () {
         })
 
     })
+
 })

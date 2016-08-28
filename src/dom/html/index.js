@@ -33,20 +33,19 @@ avalon.parseHTML = function (html) {
 }
 
 avalon.innerHTML = function (node, html) {
-   
+
     var parsed = this.parseHTML(html)
     this.clearHTML(node).appendChild(parsed)
 }
 
-
+//https://github.com/karloespiritu/escapehtmlent/blob/master/index.js
 avalon.unescapeHTML = function (html) {
-     return String(html)
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, '\'')
-    .replace(/&#96;/g, '`')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
+    return String(html)
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, '\'')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&')
 }
 
 
@@ -58,3 +57,5 @@ avalon.clearHTML = function (node) {
     }
     return node
 }
+
+       

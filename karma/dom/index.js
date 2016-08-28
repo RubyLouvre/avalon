@@ -64,6 +64,9 @@ describe('测试dom模块', function () {
             avalon.clearHTML(table)
             expect(table.childNodes.length).to.equal(0)
 
+            var f = avalon.parseHTML('<div></div><div></div>')
+            avalon.clearHTML(f)
+            expect(f.childNodes.length).to.equal(0)
             expect(avalon.parseHTML).to.be.a('function')
             expect(avalon.innerHTML).to.be.a('function')
             expect(avalon.clearHTML).to.be.a('function')
