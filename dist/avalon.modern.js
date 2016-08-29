@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-29:17 version 2.113 by 司徒正美
+ * built in 2016-8-29:19 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -2549,7 +2549,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            copy.children = newTree
 	        }
 	    },
-	    update: function (dom, vdom, parent) {
+	    update: function (dom, vdom) {
 	        vdom.dynamic['ms-html'] = 1
 	        avalon.clearHTML(dom)
 	        dom.appendChild(avalon.domize(vdom.children))
@@ -3456,13 +3456,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //如果这个元素没有插入
 	        if (avalon.callArray) {
 	            if (src.list && src.forExpr.indexOf(avalon.callArray) === -1) {
-	                return
+	                return 
 	            }
-	        } else {
-	            if (src.list) {
-	                return
-	            }
-	        }
+	        } 
+
 
 	        var srcRepeat = spList[index + 1]
 	        var curRepeat = cpList[index + 1]
@@ -3484,6 +3481,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            src.cache = cache
 	        } else if (srcRepeat === curRepeat) {
 	            curRepeat.forEach(function (c) {
+	                c.action = 'move'
 	                saveInCache(cache, c)
 	            })
 	            src.cache = cache
@@ -3623,6 +3621,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    staggerKey: signature + 'move'
 	                })
 	            }
+	            
 	            before = el.split
 	        })
 	        if (vdom.action === 'init') {

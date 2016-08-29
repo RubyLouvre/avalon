@@ -78,13 +78,10 @@ avalon.directive('for', {
         //如果这个元素没有插入
         if (avalon.callArray) {
             if (src.list && src.forExpr.indexOf(avalon.callArray) === -1) {
-                return
+                return 
             }
-        } else {
-            if (src.list) {
-                return
-            }
-        }
+        } 
+
 
         var srcRepeat = spList[index + 1]
         var curRepeat = cpList[index + 1]
@@ -106,6 +103,7 @@ avalon.directive('for', {
             src.cache = cache
         } else if (srcRepeat === curRepeat) {
             curRepeat.forEach(function (c) {
+                c.action = 'move'
                 saveInCache(cache, c)
             })
             src.cache = cache
@@ -245,6 +243,7 @@ avalon.directive('for', {
                     staggerKey: signature + 'move'
                 })
             }
+            
             before = el.split
         })
         if (vdom.action === 'init') {

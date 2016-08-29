@@ -32,7 +32,7 @@ avalon.directive('html', {
             copy.children = newTree
         }
     },
-    update: function (dom, vdom, parent) {
+    update: function (dom, vdom) {
         vdom.dynamic['ms-html'] = 1
         avalon.clearHTML(dom)
         dom.appendChild(avalon.domize(vdom.children))
