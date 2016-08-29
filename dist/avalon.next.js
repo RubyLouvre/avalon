@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-29:14 version 2.113 by 司徒正美
+ * built in 2016-8-29:16 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -2200,13 +2200,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        copy.local = '{}'
 	        copy.vmodel = '__vmodel__'
 	        copy[binding.name] = 1
-	        
+	        //如果important没有定义可以进入
+	        //如果important定义了,并且__vmodel__== important也可以进入
 	        var vmodel = '(function(){ return __vmodel__ = avalon.vmodels[' + quoted + ']})()'
 	        src.$prepend = ['(function(__vmodel__){',
-	            'var important = avalon.scopes[' + quoted + ']',
-	            'if(important){avalon.log("不进入"+' + quoted + ');return }',
+	            'var __i = avalon.scopes[' + quoted + ']',
+	            'var ok = !__i || __i.vmodel === __vmodel__',
+	            'if( !ok ){avalon.log("不进入"+' + quoted + ');return }',
 	        ].join('\n') + '\n' + vmodel
-	        src.$append = '\n})();'
+	        src.$append = '\n})(__vmodel__);'
 	    },
 	    diff: function (copy, src, name) {
 	        if (!src.dynamic[name]) {
@@ -4119,12 +4121,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-
 	avalon.insertSlots = function (vtree, slots) {
 	    for (var i = 0, el; el = vtree[i]; i++) {
-	        //   console.log(el.type)
 	        if (el.nodeName === '#comment' && slots[el.type]) {
-	            // console.log(slots[el.type])
 	            var args = [i + 1, 0].concat(slots[el.type])
 	            vtree.splice.apply(vtree, args)
 	            i += slots[el.type].length
@@ -4660,7 +4659,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        if (!node) {
 	            var match = str.match(ropenTag)//处理元素节点开始部分
-	            //console.log(match)
 	            if (match) {
 	                var nodeName = match[1].toLowerCase()
 	                var isVoidTag = voidTag[nodeName] || match[3] === '\/'

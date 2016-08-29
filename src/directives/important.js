@@ -8,13 +8,15 @@ avalon.directive('important', {
         copy.local = '{}'
         copy.vmodel = '__vmodel__'
         copy[binding.name] = 1
-        
+        //如果important没有定义可以进入
+        //如果important定义了,并且__vmodel__== important也可以进入
         var vmodel = '(function(){ return __vmodel__ = avalon.vmodels[' + quoted + ']})()'
         src.$prepend = ['(function(__vmodel__){',
-            'var important = avalon.scopes[' + quoted + ']',
-            'if(important){avalon.log("不进入"+' + quoted + ');return }',
+            'var __i = avalon.scopes[' + quoted + ']',
+            'var ok = !__i || __i.vmodel === __vmodel__',
+            'if( !ok ){avalon.log("不进入"+' + quoted + ');return }',
         ].join('\n') + '\n' + vmodel
-        src.$append = '\n})();'
+        src.$append = '\n})(__vmodel__);'
     },
     diff: function (copy, src, name) {
         if (!src.dynamic[name]) {

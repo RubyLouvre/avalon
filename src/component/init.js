@@ -192,12 +192,9 @@ function replaceSlot(vtree, slotName) {
     }
 }
 
-
 avalon.insertSlots = function (vtree, slots) {
     for (var i = 0, el; el = vtree[i]; i++) {
-        //   console.log(el.type)
         if (el.nodeName === '#comment' && slots[el.type]) {
-            // console.log(slots[el.type])
             var args = [i + 1, 0].concat(slots[el.type])
             vtree.splice.apply(vtree, args)
             i += slots[el.type].length

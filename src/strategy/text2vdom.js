@@ -79,7 +79,6 @@ function lexer(str) {
         }
         if (!node) {
             var match = str.match(ropenTag)//处理元素节点开始部分
-            //console.log(match)
             if (match) {
                 var nodeName = match[1].toLowerCase()
                 var isVoidTag = voidTag[nodeName] || match[3] === '\/'
