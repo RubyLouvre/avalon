@@ -35,17 +35,18 @@ function initComponent(src, rawOption, local, template) {
 
 
     //得到组件在顶层vm的配置对象名
-    if (!hooks.$id && onceWarn) {
+    var id = hooks.id || hooks.$id
+    if (!id && onceWarn) {
         avalon.warn('warning!', is, '组件最好在ms-widget配置对象中指定全局不重复的$id以提高性能!\n',
                 '若在ms-for循环中可以利用 ($index,el) in @array 中的$index拼写你的$id\n',
-                '如 ms-widget="{is:\'ms-button\',$id:\'btn\'+$index}"'
+                '如 ms-widget="{is:\'ms-button\',id:\'btn\'+$index}"'
                 )
         onceWarn = false
     }
     var define = hooks.define
     define = define || avalon.directives.widget.define
     //生成组件VM
-    var $id = hooks.$id || src.props.wid || 'w' + (new Date - 0)
+    var $id = id || src.props.id || 'w' + (new Date - 0)
     var defaults = avalon.mix(true, {}, definition.defaults)
     mixinHooks(hooks, defaults, false)//src.vmodel,
     var skipProps = immunity.concat()
@@ -87,7 +88,7 @@ function initComponent(src, rawOption, local, template) {
     var shellRoot = shell[0]
     shellRoot.children = shellRoot.children || []
     shellRoot.props.is = is
-    shellRoot.props.wid = $id
+    shellRoot.props.id = $id
     avalon.speedUp(shell)
 
     var render = avalon.render(shell, local)

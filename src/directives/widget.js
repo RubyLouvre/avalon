@@ -10,7 +10,7 @@ avalon.component = function (name, definition) {
 avalon.directive('widget', {
     priority: 4,
     parse: function (copy, src, binding) {
-        src.props.wid = src.props.wid || avalon.makeHashCode('w')
+        src.props.id = src.props.id || avalon.makeHashCode('w')
         //将渲染函数的某一部分存起来,渲在c方法中转换为函数
         copy[binding.name] = avalon.parseExpr(binding)
         copy.template = src.template

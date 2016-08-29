@@ -33,10 +33,10 @@ VElement.prototype = {
             dom = document.createElement(tagName)
         }
         var props = this.props || {}
-        var wid = props['ms-important'] ||
-                props['ms-controller'] || this.wid
-        if (wid) {
-            var scope = avalon.scopes[wid]
+        var id = props['ms-important'] ||
+                props['ms-controller'] || this.id
+        if (id) {
+            var scope = avalon.scopes[id]
             var element = scope && scope.vmodel && scope.vmodel.$element
             if (element) {
                 var oldVdom = element.vtree[0]

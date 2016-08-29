@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-29:20 version 2.113 by 司徒正美
+ * built in 2016-8-29:21 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -1933,7 +1933,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    type: 1,
 	    nodeValue: 1,
 	    signature: 1,
-	    wid: 1
+	    id: 1
 	}
 
 	var rneedQuote = /[W-]/
@@ -3542,7 +3542,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            })
 	        }
 	        src.removes = removes
-	        var cb = avalon.caches[src.wid]
+	        var cb = avalon.caches[src.id]
 	        var vm = copy.vmodel
 	        if (end && cb) {
 	            end.afterChange = [function (dom) {
@@ -3716,7 +3716,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.directive('widget', {
 	    priority: 4,
 	    parse: function (copy, src, binding) {
-	        src.props.wid = src.props.wid || avalon.makeHashCode('w')
+	        src.props.id = src.props.id || avalon.makeHashCode('w')
 	        //将渲染函数的某一部分存起来,渲在c方法中转换为函数
 	        copy[binding.name] = avalon.parseExpr(binding)
 	        copy.template = src.template
@@ -3963,17 +3963,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	    //得到组件在顶层vm的配置对象名
-	    if (!hooks.$id && onceWarn) {
+	    var id = hooks.id || hooks.$id
+	    if (!id && onceWarn) {
 	        avalon.warn('warning!', is, '组件最好在ms-widget配置对象中指定全局不重复的$id以提高性能!\n',
 	                '若在ms-for循环中可以利用 ($index,el) in @array 中的$index拼写你的$id\n',
-	                '如 ms-widget="{is:\'ms-button\',$id:\'btn\'+$index}"'
+	                '如 ms-widget="{is:\'ms-button\',id:\'btn\'+$index}"'
 	                )
 	        onceWarn = false
 	    }
 	    var define = hooks.define
 	    define = define || avalon.directives.widget.define
 	    //生成组件VM
-	    var $id = hooks.$id || src.props.wid || 'w' + (new Date - 0)
+	    var $id = id || src.props.id || 'w' + (new Date - 0)
 	    var defaults = avalon.mix(true, {}, definition.defaults)
 	    mixinHooks(hooks, defaults, false)//src.vmodel,
 	    var skipProps = immunity.concat()
@@ -4015,7 +4016,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var shellRoot = shell[0]
 	    shellRoot.children = shellRoot.children || []
 	    shellRoot.props.is = is
-	    shellRoot.props.wid = $id
+	    shellRoot.props.id = $id
 	    avalon.speedUp(shell)
 
 	    var render = avalon.render(shell, local)
@@ -4870,11 +4871,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    var cb = element.props['data-for-rendered']
 	                    if (cb) {
 	                        delete element.props['data-for-rendered']
-	                        var wid = cb + ':cb'
-	                        if (!avalon.caches[wid]) {
-	                            avalon.caches[wid] = Function('return ' + avalon.parseExpr(cb, 'on'))()
+	                        var id = cb + ':cb'
+	                        if (!avalon.caches[id]) {
+	                            avalon.caches[id] = Function('return ' + avalon.parseExpr(cb, 'on'))()
 	                        }
-	                        start.wid = wid
+	                        start.id = id
 	                    }
 	                }
 	            }
@@ -5300,8 +5301,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function fireDisposeHook(el) {
-	    if (el.nodeType === 1 && el.getAttribute('wid') && !inDomTree(el)) {
-	        var wid = el.getAttribute('wid')
+	    if (el.nodeType === 1 && el.id && !inDomTree(el)) {
+	        var wid = el.id
 	        var docker = avalon.scopes[ wid ]
 	        if (!docker)
 	            return
@@ -5987,10 +5988,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            dom = document.createElement(tagName)
 	        }
 	        var props = this.props || {}
-	        var wid = props['ms-important'] ||
-	                props['ms-controller'] || this.wid
-	        if (wid) {
-	            var scope = avalon.scopes[wid]
+	        var id = props['ms-important'] ||
+	                props['ms-controller'] || this.id
+	        if (id) {
+	            var scope = avalon.scopes[id]
 	            var element = scope && scope.vmodel && scope.vmodel.$element
 	            if (element) {
 	                var oldVdom = element.vtree[0]

@@ -10,7 +10,7 @@ module.exports = function (config) {
             'dist/avalon.test.js',
             // 'karma/reconcile.js',
             'karma/seed/core.js',
-            'karma/seed/browser.js',
+         /*   'karma/seed/browser.js',
             'karma/seed/lang.js',
             'karma/seed/cache.js',
             'karma/seed/config.js',
@@ -24,7 +24,7 @@ module.exports = function (config) {
             'karma/directives/controller.js',
             'karma/directives/important.js',
             'karma/directives/expr.js',
-            'karma/directives/effect.js',
+            'karma/directives/effect.js',*/
             'karma/directives/class.js',
             'karma/directives/css.js',
             'karma/directives/attr.js',
