@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-29:21 version 2.113 by 司徒正美
+ * built in 2016-8-29:22 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -1679,10 +1679,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        
 	        var props = this.props || {}
-	        var id = (props['ms-important'] ||
-	                props['ms-controller'] || this.id)
-	        if (id) {
-	            var scope = avalon.scopes[id]
+	        var wid = (props['ms-important'] ||
+	                props['ms-controller'] || this.wid)
+	        if (wid) {
+	            var scope = avalon.scopes[wid]
 	            var element = scope && scope.vmodel && scope.vmodel.$element
 	            if (element) {
 	                var oldVdom = element.vtree[0]
@@ -3696,7 +3696,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    type: 1,
 	    nodeValue: 1,
 	    signature: 1,
-	    id: 1
+	    wid: 1
 	}
 
 	var rneedQuote = /[W-]/
@@ -5820,7 +5820,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            })
 	        }
 	        src.removes = removes
-	        var cb = avalon.caches[src.id]
+	        var cb = avalon.caches[src.wid]
 	        var vm = copy.vmodel
 	        if (end && cb) {
 	            end.afterChange = [function (dom) {
@@ -5994,7 +5994,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.directive('widget', {
 	    priority: 4,
 	    parse: function (copy, src, binding) {
-	        src.props.id = src.props.id || avalon.makeHashCode('w')
+	        src.props.wid = src.props.wid || avalon.makeHashCode('w')
 	        //将渲染函数的某一部分存起来,渲在c方法中转换为函数
 	        copy[binding.name] = avalon.parseExpr(binding)
 	        copy.template = src.template
@@ -6294,7 +6294,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var shellRoot = shell[0]
 	    shellRoot.children = shellRoot.children || []
 	    shellRoot.props.is = is
-	    shellRoot.props.id = $id
+	    shellRoot.props.wid = $id
 	    avalon.speedUp(shell)
 
 	    var render = avalon.render(shell, local)
@@ -7149,11 +7149,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    var cb = element.props['data-for-rendered']
 	                    if (cb) {
 	                        delete element.props['data-for-rendered']
-	                        var id = cb + ':cb'
-	                        if (!avalon.caches[id]) {
-	                            avalon.caches[id] = Function('return ' + avalon.parseExpr(cb, 'on'))()
+	                        var wid = cb + ':cb'
+	                        if (!avalon.caches[wid]) {
+	                            avalon.caches[wid] = Function('return ' + avalon.parseExpr(cb, 'on'))()
 	                        }
-	                        start.id = id
+	                        start.wid = wid
 	                    }
 	                }
 	            }
@@ -7702,8 +7702,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	function fireDisposeHook(el) {
-	    if (el.nodeType === 1 && el.id && !inDomTree(el)) {
-	        var wid = el.id
+	    if (el.nodeType === 1 && el.getAttribute('wid') && !inDomTree(el)) {
+	        var wid = el.getAttribute('wid')
 	        var docker = avalon.scopes[ wid ]
 	        if (!docker)
 	            return

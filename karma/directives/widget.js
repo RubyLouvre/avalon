@@ -3,7 +3,7 @@ function heredoc(fn) {
     return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
             replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
 }
-var textProp = 'innerText' in document.createElement('div') ? 'innerText' : 'textContent'
+var textProp = 'textContent' in document ? 'textContent': 'innerText' 
 function fireClick(el) {
     if (el.click) {
         el.click()
@@ -155,7 +155,7 @@ describe('widget', function () {
         div.innerHTML = heredoc(function () {
             /*
              <form ms-controller='widget3'>
-             <wbr ms-widget="[{is:'ms-dialog',$id:'aaa'},@config]" />
+             <wbr ms-widget="[{is:'ms-dialog',id:'aaa'},@config]" />
              </form>
              */
         })
@@ -329,7 +329,7 @@ describe('widget', function () {
             hash: ''
         })
         function changePanel(v) {
-            vm.panel = '<' + v + ' ms-widget=\"{$id:"' + v + '"}\"></' + v + '>'
+            vm.panel = '<' + v + ' ms-widget=\"{id:"' + v + '"}\"></' + v + '>'
         }
         vm.$watch('hash', changePanel)
         vm.hash = 'ms-hasha'
@@ -454,7 +454,7 @@ describe('widget', function () {
         div.innerHTML = heredoc(function () {
             /*
              <div ms-controller="widget8">
-             <xmp cached='true' ms-widget="{is:'ms-time',$id:'d234234'}"></xmp>
+             <xmp cached='true' ms-widget="{is:'ms-time',id:'d234234'}"></xmp>
              </div>             
              */
         })
@@ -484,7 +484,7 @@ describe('widget', function () {
         //https://github.com/RubyLouvre/avalon/issues/1584
         div.innerHTML = heredoc(function () {
             /*
-             <div ms-controller="widget9"><wbr ms-widget="[{is:'ms-pagination2', $id:'xxx_'}, @configPagination]"/></div>
+             <div ms-controller="widget9"><wbr ms-widget="[{is:'ms-pagination2', id:'xxx_'}, @configPagination]"/></div>
              */
         })
         vm = avalon.define({
@@ -643,7 +643,7 @@ describe('widget', function () {
         div.innerHTML = heredoc(function () {
             /*
              <div :controller="widget11">
-             <xmp :widget='{is:"CoursePlanCard", $id:"CoursePlanCard"}'></xmp>
+             <xmp :widget='{is:"CoursePlanCard", id:"CoursePlanCard"}'></xmp>
              </div>
              */
         })

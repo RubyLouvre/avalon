@@ -13,7 +13,7 @@ var quoted = {
     type: 1,
     nodeValue: 1,
     signature: 1,
-    id: 1
+    wid: 1
 }
 
 var rneedQuote = /[W-]/

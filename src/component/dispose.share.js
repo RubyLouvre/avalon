@@ -9,8 +9,8 @@ function inDomTree(el) {
 }
 
 function fireDisposeHook(el) {
-    if (el.nodeType === 1 && el.id && !inDomTree(el)) {
-        var wid = el.id
+    if (el.nodeType === 1 && el.getAttribute('wid') && !inDomTree(el)) {
+        var wid = el.getAttribute('wid')
         var docker = avalon.scopes[ wid ]
         if (!docker)
             return
