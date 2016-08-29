@@ -22,6 +22,7 @@ describe('important', function () {
              </div>
              */
         })
+       var callback = sinon.spy()
         avalon.define({
             $id: 'wrapper',
             aaa: 111
@@ -30,12 +31,19 @@ describe('important', function () {
             $id: 'important1',
             aaa: 111
         })
+        vm.$watch('onReady', callback)   
+       
         avalon.scan(div)
         expect(div.innerText || div.textContent).to.equal('111')
         setTimeout(function () {
             vm.aaa = 222
+            expect(callback.called).to.equal(true)
             setTimeout(function () {
                 expect(div.innerText || div.textContent).to.equal('222')
+                delete avalon.vmodels.important1
+                delete avalon.vmodels.wrapper
+                delete avalon.scopes.important1
+                delete avalon.scopes.wrapper
                 done()
             })
 

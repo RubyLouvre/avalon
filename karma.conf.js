@@ -35,7 +35,9 @@ module.exports = function (config) {
             'karma/directives/duplex.js',
             'karma/directives/for.js',
             'karma/directives/widget.js',
-            'karma/directives/rules.js'
+            'karma/directives/rules.js',
+            'karma/directives/hover.js',
+            'karma/directives/active.js'
         ],
         exclude: [],
         mochaReporter: {
