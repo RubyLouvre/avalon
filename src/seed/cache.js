@@ -30,7 +30,6 @@ p.put = function (key, value) {
     this._keymap[key] = entry
     if (this.tail) {
         // 如果存在tail（缓存数组的长度不为0），将tail指向新的 entry
-
         this.tail.newer = entry
         entry.older = this.tail
     } else {
@@ -39,6 +38,7 @@ p.put = function (key, value) {
     }
     this.tail = entry
     // 如果缓存数组达到上限，则先删除 head 指向的缓存对象
+    /* istanbul ignore if */
     if (this.size === this.limit) {
         this.shift()
     } else {
@@ -48,7 +48,9 @@ p.put = function (key, value) {
 }
 
 p.shift = function () {
+    /* istanbul ignore next */
     var entry = this.head
+    /* istanbul ignore if */
     if (entry) {
         // 删除 head ，并改变指向
         this.head = this.head.newer
@@ -69,6 +71,7 @@ p.get = function (key) {
     if (entry === void 0)
         return
     // 如果查找到的缓存对象已经是 tail (最近使用过的)
+    /* istanbul ignore if */
     if (entry === this.tail) {
         return entry.value
     }

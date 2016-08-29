@@ -9,7 +9,7 @@ function scan(nodes) {
             var vm = avalon.vmodels[$id]
             if (vm && !vm.$element) {
                 vm.$element = elem
-
+                /* istanbul ignore if */
                 if (avalon.serverTemplates && avalon.serverTemplates[$id]) {
                     var tmpl = avalon.serverTemplates[$id]
                     var oldTree = avalon.speedUp(avalon.lexer(tmpl))
@@ -55,6 +55,7 @@ function scan(nodes) {
 }
 
 module.exports = avalon.scan = function (a) {
+     /* istanbul ignore if */
     if (!a || !a.nodeType) {
         avalon.warn('[avalon.scan] first argument must be element , documentFragment, or document')
         return

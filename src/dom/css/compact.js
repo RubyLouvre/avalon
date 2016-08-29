@@ -45,8 +45,10 @@ avalon.fn.position = function () {
     if (!elem) {
         return parentOffset
     }
+    /* istanbul ignore if*/
     if (this.css('position') === 'fixed') {
         offset = elem.getBoundingClientRect()
+    /* istanbul ignore else*/
     } else {
         offsetParent = this.offsetParent() //得到真正的offsetParent
         offset = this.offset() // 得到正确的offsetParent
@@ -82,7 +84,7 @@ cssHooks['@:set'] = function (node, name, value) {
     } catch (e) {
     }
 }
-
+/* istanbul ignore else */
 if (typeof getComputedStyle === 'function') {
     cssHooks['@:get'] = function (node, name) {
         if (!node || !node.style) {

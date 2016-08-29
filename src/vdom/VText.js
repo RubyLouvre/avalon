@@ -9,6 +9,7 @@ function VText(text) {
 VText.prototype = {
     constructor: VText,
     toDOM: function () {
+        /* istanbul ignore if*/
         if(this.dom)
             return this.dom
         var v = decode(this.nodeValue)

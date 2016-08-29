@@ -206,6 +206,7 @@ avalon.fireDom = function (elem, type, opts) {
 
 
 //针对firefox, chrome修正mouseenter, mouseleave(chrome30+)
+/* istanbul ignore if */
 if (!('onmouseenter' in root)) {
     avalon.each({
         mouseenter: 'mouseover',
@@ -237,7 +238,7 @@ avalon.each({
         }
     }
 })
-
+/* istanbul ignore if */
 if (document.onmousewheel === void 0) {
     /* IE6-11 chrome mousewheel wheelDetla 下 -120 上 120
      firefox DOMMouseScroll detail 下3 上-3

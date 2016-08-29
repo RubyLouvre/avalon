@@ -52,6 +52,7 @@ avalon.unescapeHTML = function (html) {
 
 avalon.clearHTML = function (node) {
     node.textContent = ''
+    /* istanbul ignore next */
     while (node.lastChild) {
         node.removeChild(node.lastChild)
     }

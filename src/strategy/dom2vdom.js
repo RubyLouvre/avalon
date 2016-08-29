@@ -40,10 +40,6 @@ function isEmpty(a) {
     return true
 }
 
-function toHTML(a) {
-    return avalon.vdom(a, 'toHTML')
-}
-
 function createVDOM(node) {
     var ret = {}
     var type = node.nodeName.toLowerCase()

@@ -86,11 +86,11 @@ function parseExpr(str, category) {
    
     if (category === 'on') {
         collectLocal(_body, local)
+    /* istanbul ignore else  */
     } else  if (category === 'js') {
         return evaluatorPool.put(category + ':' + cacheID, body)
     }
-//处理表达式的过滤器部分
-
+    //处理表达式的过滤器部分
     var filters = input.map(function (str) {
         collectLocal(str.replace(/^\w+/g, ""), local)
         str = str.replace(rfill, fill).replace(rAt, '$1__vmodel__.') //还原
@@ -115,6 +115,7 @@ function parseExpr(str, category) {
         if (filters.length) {
             filters.push('if($event.$return){\n\treturn;\n}')
         }
+        /* istanbul ignore if  */
         if (!avalon.modern) {
             body = body.replace(/__vmodel__\.([^(]+)\(([^)]*)\)/, function (a, b, c) {
                 return '__vmodel__.' + b + ".call(__vmodel__" + (/\S/.test(c) ? ',' + c : "") + ")"

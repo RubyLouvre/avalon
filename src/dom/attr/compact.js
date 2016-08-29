@@ -9,6 +9,7 @@ function attrUpdate(node, vnode) {
     if (!node || node.nodeType !== 1 ) {
         return
     }
+    /* istanbul ignore if*/
     if (attrs) {
         vnode.dynamic['ms-attr'] = 1
         for (var attrName in attrs) {

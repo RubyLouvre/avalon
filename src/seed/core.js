@@ -34,8 +34,9 @@ avalon.shadowCopy(avalon, {
         }
     },
     warn: function () {
+        /* istanbul ignore if*/
         if (hasConsole && avalon.config.debug) {
-            var method = console.warn ||/* istanbul ignore next*/ console.log
+            var method = console.warn || console.log
             // http://qiang106.iteye.com/blog/1721425
             Function.apply.call(method, console, arguments)
         }
@@ -45,8 +46,9 @@ avalon.shadowCopy(avalon, {
     },
     //将一个以空格或逗号隔开的字符串或数组,转换成一个键值都为1的对象
     oneObject: function (array, val) {
+        /* istanbul ignore if*/
         if (typeof array === 'string') {
-            array = array.match(rword) || /* istanbul ignore next*/[]
+            array = array.match(rword) ||[]
         }
         var result = {},
                 value = val !== void 0 ? val : 1

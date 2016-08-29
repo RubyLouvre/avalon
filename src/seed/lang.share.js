@@ -117,6 +117,7 @@ avalon.shadowCopy(avalon, {
     makeHashCode: function (prefix) {
        /* istanbul ignore next*/
         prefix = prefix || 'avalon'
+        /* istanbul ignore next*/
         return String(Math.random() + Math.random()).replace(rhashcode, prefix)
     },
     escapeRegExp: function (target) {
@@ -148,10 +149,10 @@ avalon.shadowCopy(avalon, {
         }
     }
 })
-
+/* istanbul ignore if*/
 if(typeof performance !== 'undefined' && performance.now){
     avalon.makeHashCode = function (prefix) {
-        prefix = prefix ||  /* istanbul ignore next*/ 'avalon'
+        prefix = prefix || 'avalon'
         return (prefix + performance.now()).replace('.', '')
     }
 }

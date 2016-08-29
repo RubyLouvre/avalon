@@ -196,6 +196,7 @@ function isArrayLike(obj) {
     if (!obj)
         return false
     var n = obj.length
+    /* istanbul ignore if*/
     if (n === (n >>> 0)) { //检测length属性是否为非负整数
         var type = tos.call(obj).slice(8, -1)
         if (rarraylike.test(type))

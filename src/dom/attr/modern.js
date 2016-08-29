@@ -4,6 +4,7 @@ var rsvg = /^\[object SVG\w*Element\]$/
 
 function attrUpdate(node, vnode) {
     var attrs = vnode.changeAttr
+    /* istanbul ignore if*/
     if (attrs) {
         vnode.dynamic['ms-attr'] = 1
         for (var attrName in attrs) {

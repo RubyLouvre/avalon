@@ -175,6 +175,7 @@ avalon.fireDom = function (elem, type, opts) {
         avalon.shadowCopy(hackEvent, opts)
 
         elem.dispatchEvent(hackEvent)
+        /* istanbul ignore else */
     } else if (root.contains(elem)) {//IE6-8触发事件必须保证在DOM树中,否则报'SCRIPT16389: 未指明的错误'
         hackEvent = document.createEventObject()
         avalon.shadowCopy(hackEvent, opts)
@@ -197,8 +198,10 @@ function avEvent(event) {
         this.target = event.srcElement
     }
     var target = this.target
+    /* istanbul ignore if */
     if (this.which == null && event.type.indexOf('key') === 0) {
         this.which = event.charCode != null ? event.charCode : event.keyCode
+    /* istanbul ignore else */
     } else if (rmouseEvent.test(event.type) && !('pageX' in this)) {
         var doc = target.ownerDocument || document
         var box = doc.compatMode === 'BackCompat' ? doc.body : doc.documentElement
@@ -235,6 +238,7 @@ avEvent.prototype = {
 }
 
 //针对firefox, chrome修正mouseenter, mouseleave
+/* istanbul ignore if */
 if (!('onmouseenter' in root)) {
     avalon.each({
         mouseenter: 'mouseover',
@@ -267,6 +271,7 @@ avalon.each({
     }
 })
 //针对IE6-8修正input
+/* istanbul ignore if */
 if (!('oninput' in document.createElement('input'))) {
     eventHooks.input = {
         type: 'propertychange',
@@ -280,6 +285,7 @@ if (!('oninput' in document.createElement('input'))) {
         }
     }
 }
+/* istanbul ignore if */
 if (document.onmousewheel === void 0) {
     /* IE6-11 chrome mousewheel wheelDetla 下 -120 上 120
      firefox DOMMouseScroll detail 下3 上-3

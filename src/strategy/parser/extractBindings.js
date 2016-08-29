@@ -11,6 +11,7 @@ function extractBindings(cur, props) {
         var value = props[i], match
         attrs[i] = props[i]
         if ((match = i.match(rbinding))) {
+            /* istanbul ignore if  */
             if (skip)
                 continue
 

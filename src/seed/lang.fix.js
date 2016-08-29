@@ -7,6 +7,7 @@ var ohasOwn = Object.prototype.hasOwnProperty
 function isNative(fn){
     return /\[native code\]/.test(fn)
 }
+/* istanbul ignore if*/
 if (!isNative('司徒正美'.trim)) {
     var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
     String.prototype.trim = function () {
@@ -28,6 +29,7 @@ var hasDontEnumBug = !({
             'constructor'
         ],
         dontEnumsLength = dontEnums.length;
+/* istanbul ignore if*/
 if (!isNative(Object.keys)) {
     Object.keys = function (object) { //ecma262v5 15.2.3.14
         var theKeys = []
@@ -58,12 +60,13 @@ if (!isNative(Object.keys)) {
         return theKeys
     }
 }
+/* istanbul ignore if*/
 if (!isNative(Array.isArray)) {
     Array.isArray = function (a) {
         return Object.prototype.toString.call(a) === '[object Array]'
     }
 }
-
+/* istanbul ignore if*/
 if (!isNative(isNative.bind)) {
     Function.prototype.bind = function (scope) {
         if (arguments.length < 2 && scope === void 0)
@@ -153,7 +156,7 @@ function iterator(vars, body, ret) {
     return Function('fn,scope', fun)
     /* jshint ignore:end */
 }
-
+/* istanbul ignore if*/
 if (!isNative(ap.map)) {
     var shim = {
         //定位操作，返回数组中第一个等于给定参数的元素的索引值。

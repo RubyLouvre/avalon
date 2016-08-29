@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-29:22 version 2.113 by 司徒正美
+ * built in 2016-8-30:1 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -112,7 +112,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this._keymap[key] = entry
 	    if (this.tail) {
 	        // 如果存在tail（缓存数组的长度不为0），将tail指向新的 entry
-
 	        this.tail.newer = entry
 	        entry.older = this.tail
 	    } else {
@@ -121,6 +120,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    this.tail = entry
 	    // 如果缓存数组达到上限，则先删除 head 指向的缓存对象
+	    /* istanbul ignore if */
 	    if (this.size === this.limit) {
 	        this.shift()
 	    } else {
@@ -130,7 +130,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	p.shift = function () {
+	    /* istanbul ignore next */
 	    var entry = this.head
+	    /* istanbul ignore if */
 	    if (entry) {
 	        // 删除 head ，并改变指向
 	        this.head = this.head.newer
@@ -151,6 +153,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (entry === void 0)
 	        return
 	    // 如果查找到的缓存对象已经是 tail (最近使用过的)
+	    /* istanbul ignore if */
 	    if (entry === this.tail) {
 	        return entry.value
 	    }
@@ -197,7 +200,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-8-29:22 version 2.113 by 司徒正美
+	 * built in 2016-8-30:1 version 2.113 by 司徒正美
 	 * 2.1.5 and npm 2.1.15
 	 *     修正 ms-controller, ms-important的移除类名的实现
 	 *     实现后端渲染,
@@ -285,14 +288,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		var browser = {
 		    window: window,
 		    document: {//方便在nodejs环境不会报错
-		        /* istanbul ignore next*/ 
-		        createElement: function () {
-		            return {}
-		        },
-		        /* istanbul ignore next*/ 
-		        createElementNS: function () {
-		            return {}
-		        },
+		        createElement: Object,
+		        createElementNS: Object,
 		        contains: Boolean
 		    },
 		    root: {
@@ -366,8 +363,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		    },
 		    warn: function () {
+		        /* istanbul ignore if*/
 		        if (hasConsole && avalon.config.debug) {
-		            var method = console.warn ||/* istanbul ignore next*/ console.log
+		            var method = console.warn || console.log
 		            // http://qiang106.iteye.com/blog/1721425
 		            Function.apply.call(method, console, arguments)
 		        }
@@ -377,8 +375,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		    },
 		    //将一个以空格或逗号隔开的字符串或数组,转换成一个键值都为1的对象
 		    oneObject: function (array, val) {
+		        /* istanbul ignore if*/
 		        if (typeof array === 'string') {
-		            array = array.match(rword) || /* istanbul ignore next*/[]
+		            array = array.match(rword) ||[]
 		        }
 		        var result = {},
 		                value = val !== void 0 ? val : 1
@@ -516,6 +515,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    makeHashCode: function (prefix) {
 		       /* istanbul ignore next*/
 		        prefix = prefix || 'avalon'
+		        /* istanbul ignore next*/
 		        return String(Math.random() + Math.random()).replace(rhashcode, prefix)
 		    },
 		    escapeRegExp: function (target) {
@@ -547,10 +547,10 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		    }
 		})
-
+		/* istanbul ignore if*/
 		if(typeof performance !== 'undefined' && performance.now){
 		    avalon.makeHashCode = function (prefix) {
-		        prefix = prefix ||  /* istanbul ignore next*/ 'avalon'
+		        prefix = prefix || 'avalon'
 		        return (prefix + performance.now()).replace('.', '')
 		    }
 		}
@@ -641,6 +641,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		var escape = avalon.escapeHtml = __webpack_require__(14)
 
 		function K(a) {
+		    /* istanbul ignore next*/
 		    return a
 		}
 
@@ -671,7 +672,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		        end = typeof end === "string" ? end : "..."
 		        return str.length > length ?
-		                str.slice(0, length - end.length) + end :
+		                str.slice(0, length - end.length) + end :/* istanbul ignore else*/
 		                str
 		    },
 		    camelize: avalon.camelize,
@@ -682,7 +683,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    currency: function (amount, symbol, fractionSize) {
 		        return (symbol || '\u00a5') +
 		                number(amount,
-		                        isFinite(fractionSize) ? fractionSize : 2)
+		                        isFinite(fractionSize) ?/* istanbul ignore if*/ fractionSize : 2)
 		    }
 		}, arrayFilters, eventFilters)
 
@@ -1250,6 +1251,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		VText.prototype = {
 		    constructor: VText,
 		    toDOM: function () {
+		        /* istanbul ignore if*/
 		        if(this.dom)
 		            return this.dom
 		        var v = decode(this.nodeValue)
@@ -1447,6 +1449,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		avalon.clearHTML = function (node) {
 		    node.textContent = ''
+		    /* istanbul ignore next */
 		    while (node.lastChild) {
 		        node.removeChild(node.lastChild)
 		    }
@@ -1491,7 +1494,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		    this._keymap[key] = entry
 		    if (this.tail) {
 		        // 如果存在tail（缓存数组的长度不为0），将tail指向新的 entry
-
 		        this.tail.newer = entry
 		        entry.older = this.tail
 		    } else {
@@ -1500,6 +1502,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    }
 		    this.tail = entry
 		    // 如果缓存数组达到上限，则先删除 head 指向的缓存对象
+		    /* istanbul ignore if */
 		    if (this.size === this.limit) {
 		        this.shift()
 		    } else {
@@ -1509,7 +1512,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 		p.shift = function () {
+		    /* istanbul ignore next */
 		    var entry = this.head
+		    /* istanbul ignore if */
 		    if (entry) {
 		        // 删除 head ，并改变指向
 		        this.head = this.head.newer
@@ -1530,6 +1535,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    if (entry === void 0)
 		        return
 		    // 如果查找到的缓存对象已经是 tail (最近使用过的)
+		    /* istanbul ignore if */
 		    if (entry === this.tail) {
 		        return entry.value
 		    }
@@ -1629,7 +1635,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            var vm = avalon.vmodels[$id]
 		            if (vm && !vm.$element) {
 		                vm.$element = elem
-
+		                /* istanbul ignore if */
 		                if (avalon.serverTemplates && avalon.serverTemplates[$id]) {
 		                    var tmpl = avalon.serverTemplates[$id]
 		                    var oldTree = avalon.speedUp(avalon.lexer(tmpl))
@@ -1675,6 +1681,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 		module.exports = avalon.scan = function (a) {
+		     /* istanbul ignore if */
 		    if (!a || !a.nodeType) {
 		        avalon.warn('[avalon.scan] first argument must be element , documentFragment, or document')
 		        return
@@ -1731,10 +1738,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		        return false
 		    }
 		    return true
-		}
-
-		function toHTML(a) {
-		    return avalon.vdom(a, 'toHTML')
 		}
 
 		function createVDOM(node) {
@@ -1916,7 +1919,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                            nodeValue: "ms-for-end:"
 		                        }) + '\n'
 		                return ''
-
+		            /* istanbul ignore else  */
 		            } else if (nodeValue.indexOf('ms-js:') === 0) {//插入JS声明语句
 		                var statement = parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
 		                var ret = addTag(vdom)
@@ -2064,6 +2067,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        var value = props[i], match
 		        attrs[i] = props[i]
 		        if ((match = i.match(rbinding))) {
+		            /* istanbul ignore if  */
 		            if (skip)
 		                continue
 
@@ -2267,11 +2271,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		   
 		    if (category === 'on') {
 		        collectLocal(_body, local)
+		    /* istanbul ignore else  */
 		    } else  if (category === 'js') {
 		        return evaluatorPool.put(category + ':' + cacheID, body)
 		    }
-		//处理表达式的过滤器部分
-
+		    //处理表达式的过滤器部分
 		    var filters = input.map(function (str) {
 		        collectLocal(str.replace(/^\w+/g, ""), local)
 		        str = str.replace(rfill, fill).replace(rAt, '$1__vmodel__.') //还原
@@ -2296,6 +2300,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        if (filters.length) {
 		            filters.push('if($event.$return){\n\treturn;\n}')
 		        }
+		        /* istanbul ignore if  */
 		        if (!avalon.modern) {
 		            body = body.replace(/__vmodel__\.([^(]+)\(([^)]*)\)/, function (a, b, c) {
 		                return '__vmodel__.' + b + ".call(__vmodel__" + (/\S/.test(c) ? ',' + c : "") + ")"
@@ -6189,6 +6194,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		/*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
 		function isArrayLike(obj) {
+		    /* istanbul ignore if*/
 		    if (obj && typeof obj === 'object') {
 		        var n = obj.length,
 		                str = tos.call(obj)
@@ -6477,6 +6483,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		function attrUpdate(node, vnode) {
 		    var attrs = vnode.changeAttr
+		    /* istanbul ignore if*/
 		    if (attrs) {
 		        vnode.dynamic['ms-attr'] = 1
 		        for (var attrName in attrs) {
@@ -6583,8 +6590,10 @@ return /******/ (function(modules) { // webpackBootstrap
 		    if (!elem) {
 		        return parentOffset
 		    }
+		    /* istanbul ignore if*/
 		    if (this.css("position") === "fixed") {
 		        offset = elem.getBoundingClientRect()
+		    /* istanbul ignore else*/
 		    } else {
 		        offsetParent = this.offsetParent() //得到真正的offsetParent
 		        offset = this.offset() // 得到正确的offsetParent
@@ -7067,6 +7076,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 		//针对firefox, chrome修正mouseenter, mouseleave(chrome30+)
+		/* istanbul ignore if */
 		if (!('onmouseenter' in root)) {
 		    avalon.each({
 		        mouseenter: 'mouseover',
@@ -7098,7 +7108,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		    }
 		})
-
+		/* istanbul ignore if */
 		if (document.onmousewheel === void 0) {
 		    /* IE6-11 chrome mousewheel wheelDetla 下 -120 上 120
 		     firefox DOMMouseScroll detail 下3 上-3

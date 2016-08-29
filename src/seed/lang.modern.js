@@ -103,6 +103,7 @@ avalon.mix = avalon.fn.mix = function () {
 
 /*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
 function isArrayLike(obj) {
+    /* istanbul ignore if*/
     if (obj && typeof obj === 'object') {
         var n = obj.length,
                 str = tos.call(obj)

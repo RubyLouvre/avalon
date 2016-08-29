@@ -46,8 +46,10 @@ avalon.fn.position = function () {
     if (!elem) {
         return parentOffset
     }
+    /* istanbul ignore if*/
     if (this.css("position") === "fixed") {
         offset = elem.getBoundingClientRect()
+    /* istanbul ignore else*/
     } else {
         offsetParent = this.offsetParent() //得到真正的offsetParent
         offset = this.offset() // 得到正确的offsetParent

@@ -3,14 +3,8 @@ var window = Function(' return this')() || this
 var browser = {
     window: window,
     document: {//方便在nodejs环境不会报错
-        /* istanbul ignore next*/ 
-        createElement: function () {
-            return {}
-        },
-        /* istanbul ignore next*/ 
-        createElementNS: function () {
-            return {}
-        },
+        createElement: Object,
+        createElementNS: Object,
         contains: Boolean
     },
     root: {

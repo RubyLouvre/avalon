@@ -9,6 +9,7 @@ var filters = avalon.filters
 var escape = avalon.escapeHtml = require("./escape")
 
 function K(a) {
+    /* istanbul ignore next*/
     return a
 }
 
@@ -39,7 +40,7 @@ avalon.mix(filters, {
         }
         end = typeof end === "string" ? end : "..."
         return str.length > length ?
-                str.slice(0, length - end.length) + end :
+                str.slice(0, length - end.length) + end :/* istanbul ignore else*/
                 str
     },
     camelize: avalon.camelize,
@@ -50,7 +51,7 @@ avalon.mix(filters, {
     currency: function (amount, symbol, fractionSize) {
         return (symbol || '\u00a5') +
                 number(amount,
-                        isFinite(fractionSize) ? fractionSize : 2)
+                        isFinite(fractionSize) ?/* istanbul ignore else*/ fractionSize : 2)
     }
 }, arrayFilters, eventFilters)
 
