@@ -30,7 +30,9 @@ describe('验证规则', function () {
             /*
              <div ms-controller="validate1">
              <form ms-validate="@validate" action='javascript:void(0)'>
-             <p><input ms-duplex="@aaa" ms-rules='{required:@ddd}' >{{@aaa}}</p>
+             <p><input ms-duplex="@aaa" ms-rules='{required:@bbb}' >{{@aaa}}</p>
+             <p><input id="vd1" ms-duplex="@ddd" ms-rules="{equalto:'vd2'}" >{{@ddd}}</p>
+             <p><input id="vd2" value='333' /></p>
              <button type='submit'>dddd</button>
              </form>
              </div>
@@ -40,7 +42,8 @@ describe('验证规则', function () {
         vm = avalon.define({
             $id: "validate1",
             aaa: "",
-            ddd: true,
+            bbb: true,
+            ddd: '333',
             validate: {
                 onValidateAll: function (reasons) {
                     if (reasons.length) {
@@ -53,6 +56,7 @@ describe('验证规则', function () {
         })
         avalon.scan(div)
         var btn = div.getElementsByTagName('button')[0]
+
         fireClick(btn)
         setTimeout(function () {
             expect(flag).to.equal(1)
@@ -148,6 +152,10 @@ describe('验证规则', function () {
         v.date.get(elem.value, field, function (v) {
             expect(v).to.equal(false)
         })
+        elem.value = ''
+        v.date.get(elem.value, field, function (v) {
+            expect(v).to.equal(false)
+        })
     })
 
     it('url', function () {
@@ -232,4 +240,44 @@ describe('验证规则', function () {
             expect(v).to.equal(false)
         })
     })
+    it('max and min', function () {
+        var elem = document.createElement('input')
+        var v = avalon.validators
+        elem.value = '44'
+        var field = {
+            data: {
+                min: 7,
+                max: 52
+            },
+            dom: elem
+        }
+        v.min.get(elem.value, field, function (v) {
+            expect(v).to.equal(true)
+        })
+        v.max.get(elem.value, field, function (v) {
+            expect(v).to.equal(true)
+        })
+        field.data.min = 46
+        v.min.get(elem.value, field, function (v) {
+            expect(v).to.equal(false)
+        })
+    })
+    it('chs', function () {
+        var elem = document.createElement('input')
+        var v = avalon.validators
+        elem.value = '44'
+        var field = {
+            data: {},
+            dom: elem
+        }
+        v.chs.get(elem.value, field, function (v) {
+            expect(v).to.equal(false)
+        })
+        elem.value = '司徒正美'
+        v.chs.get(elem.value, field, function (v) {
+            expect(v).to.equal(true)
+        })
+
+    })
+
 })

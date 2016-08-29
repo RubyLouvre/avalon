@@ -17,9 +17,13 @@ describe('测试dom模块', function () {
         })
 
     })
-    describe('data', function () {
+    describe('attr', function () {
         it('test', function () {
             expect(avalon.fn.attr).to.be.a('function')
+            var body = document.body
+            avalon(body).attr("aaa", '444')
+            expect(avalon(body).attr('aaa')).to.equal('444')
+            body.removeAttribute('aaa')
         })
     })
     describe('css', function () {
