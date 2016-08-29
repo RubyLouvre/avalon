@@ -14,7 +14,7 @@ function fireClick(el) {
         !el.dispatchEvent(evt);
     }
 }
-describe('effect', function () {
+describe('验证规则', function () {
     var body = document.body, div, vm
     beforeEach(function () {
         div = document.createElement('div')
@@ -25,7 +25,7 @@ describe('effect', function () {
         delete avalon.vmodels[vm.$id]
     })
 
-    it('required', function (done) {
+    it('validate+rules', function (done) {
         div.innerHTML = heredoc(function () {
             /*
              <div ms-controller="validate1">
@@ -69,4 +69,167 @@ describe('effect', function () {
 
     })
 
+    it('pattern', function () {
+        var elem = document.createElement('input')
+        var v = avalon.validators
+        elem.setAttribute("pattern", "[a-z]{3}")
+        var field = {
+            data: {},
+            dom: elem
+        }
+        v.pattern.get(elem.value, field, function (v) {
+            expect(v).to.equal(false)
+        })
+        elem.value = 'asd'
+        v.pattern.get(elem.value, field, function (v) {
+            expect(v).to.equal(true)
+        })
+        field.data.pattern = /[\u4e00-\u9fa5a-z]{3}/
+        elem.value = '1234'
+        v.pattern.get(elem.value, field, function (v) {
+            expect(v).to.equal(false)
+        })
+        elem.value = '你好啊'
+        v.pattern.get(elem.value, field, function (v) {
+            expect(v).to.equal(true)
+        })
+    })
+
+    it('digits', function () {
+        var elem = document.createElement('input')
+        var v = avalon.validators
+        elem.value = '124.5'
+        var field = {
+            data: {},
+            dom: elem
+        }
+        v.digits.get(elem.value, field, function (v) {
+            expect(v).to.equal(false)
+        })
+        elem.value = '1245'
+        v.digits.get(elem.value, field, function (v) {
+            expect(v).to.equal(true)
+        })
+    })
+    it('required', function () {
+        var elem = document.createElement('input')
+        var v = avalon.validators
+        elem.value = '124.5'
+        var field = {
+            data: {},
+            dom: elem
+        }
+        v.required.get(elem.value, field, function (v) {
+            expect(v).to.equal(true)
+        })
+        elem.value = ''
+        v.required.get(elem.value, field, function (v) {
+            expect(v).to.equal(false)
+        })
+    })
+    it('date', function () {
+        var elem = document.createElement('input')
+        var v = avalon.validators
+        elem.value = '1984-02-18'
+        var field = {
+            data: {
+                date: /^\d{4}-\d{2}-\d{2}$/
+            },
+            dom: elem
+        }
+        v.date.get(elem.value, field, function (v) {
+            expect(v).to.equal(true)
+        })
+        delete field.data.date
+        v.date.get(elem.value, field, function (v) {
+            expect(v).to.equal(true)
+        })
+        elem.value = '1984-13-87'
+        v.date.get(elem.value, field, function (v) {
+            expect(v).to.equal(false)
+        })
+    })
+
+    it('url', function () {
+        var obj = {valid: [
+                'http://www.foobar.com/'
+                        , 'http://www.foobar.com:23/'
+                        , 'http://www.foobar.com:65535/'
+                        , 'http://www.foobar.com:5/'
+                        , 'https://www.foobar.com/'
+                        , 'ftp://www.foobar.com/'
+                        , 'http://www.foobar.com/~foobar'
+                        , 'http://user:pass@www.foobar.com/'
+                        , 'http://user:@www.foobar.com/'
+                        , 'http://127.0.0.1/'
+                        , 'http://10.0.0.0/'
+                        , 'http://189.123.14.13/'
+                        , 'http://duckduckgo.com/?q=%2F'
+                        , 'http://foobar.com/t$-_.+!*\'(),'
+                        , 'http://localhost:3000/'
+                        , 'http://foobar.com/?foo=bar#baz=qux'
+                        , 'http://foobar.com?foo=bar'
+                        , 'http://foobar.com#baz=qux'
+                        , 'http://www.xn--froschgrn-x9a.net/'
+                        , 'http://xn--froschgrn-x9a.com/'
+                        , 'http://foo--bar.com'
+                        , 'http://høyfjellet.no'
+                        , 'http://xn--j1aac5a4g.xn--j1amh'
+                        , 'http://кулік.укр'
+            ]
+        }
+        var elem = document.createElement('input')
+        var v = avalon.validators
+        var field = {
+            data: {},
+            dom: elem
+        }
+        obj.valid.forEach(function (url) {
+            elem.value = url
+            v.url.get(elem.value, field, function (v) {
+                expect(v).to.equal(true)
+            })
+        })
+
+    })
+    it('email', function () {
+        var elem = document.createElement('input')
+        var v = avalon.validators
+        elem.value = 'test@example.com'
+        var field = {
+            data: {},
+            dom: elem
+        }
+        v.email.get(elem.value, field, function (v) {
+            expect(v).to.equal(true)
+        })
+    })
+    it('minlength', function () {
+        var elem = document.createElement('input')
+        var v = avalon.validators
+        elem.value = 'test2example.com'
+        var field = {
+            data: {
+                minlength: 12
+            },
+            dom: elem
+        }
+        v.minlength.get(elem.value, field, function (v) {
+            expect(v).to.equal(true)
+        })
+    })
+    it('maxlength', function () {
+        var elem = document.createElement('input')
+        var v = avalon.validators
+        elem.value = 'test2example.com'
+        var field = {
+            data: {
+                minlength: 7
+            },
+            dom: elem
+        }
+        v.maxlength.get(elem.value, field, function (v) {
+            expect(v).to.equal(false)
+        })
+    })
 })

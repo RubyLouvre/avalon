@@ -105,7 +105,7 @@ var dir = avalon.directive('validate', {
     validate: function (field, isValidateAll, event) {
         var promises = []
         var value = field.value
-        var elem = field.dom
+        var elem = field.dom 
         var validator = field.validator
         if (elem.disabled)
             return

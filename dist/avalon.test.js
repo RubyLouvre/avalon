@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-29:1 version 2.113 by 司徒正美
+ * built in 2016-8-29:14 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
@@ -197,7 +197,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-8-29:1 version 2.113 by 司徒正美
+	 * built in 2016-8-29:13 version 2.113 by 司徒正美
 	 * 2.1.5 and npm 2.1.15
 	 *     修正 ms-controller, ms-important的移除类名的实现
 	 *     实现后端渲染,
@@ -3280,7 +3280,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    validate: function (field, isValidateAll, event) {
 		        var promises = []
 		        var value = field.value
-		        var elem = field.dom
+		        var elem = field.dom 
 		        var validator = field.validator
 		        if (elem.disabled)
 		            return
@@ -3398,7 +3398,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    pattern: {
 		        message: '必须匹配{{pattern}}这样的格式',
 		        get: function (value, field, next) {
-		            var elem = field.element 
+		            var elem = field.dom 
 		            var data = field.data
 		            if (!isRegExp(data.pattern)) {
 		                var h5pattern = elem.getAttribute("pattern")
@@ -3442,7 +3442,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        message: '日期格式不正确',
 		        get: function (value, field, next) {
 		            var data = field.data
-		            if (avalon.type(data.date) === 'regexp') {
+		            if (isRegExp(data.date)) {
 		                next(data.date.test(value))
 		            } else {
 		                next(isCorrectDate(value))
