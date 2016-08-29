@@ -683,7 +683,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    currency: function (amount, symbol, fractionSize) {
 		        return (symbol || '\u00a5') +
 		                number(amount,
-		                        isFinite(fractionSize) ?/* istanbul ignore if*/ fractionSize : 2)
+		                        isFinite(fractionSize) ?/* istanbul ignore else*/ fractionSize : 2)
 		    }
 		}, arrayFilters, eventFilters)
 

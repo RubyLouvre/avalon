@@ -115,6 +115,22 @@ describe('验证规则', function () {
             expect(v).to.equal(true)
         })
     })
+    it('number', function () {
+        var elem = document.createElement('input')
+        var v = avalon.validators
+        elem.value = '124.5'
+        var field = {
+            data: {},
+            dom: elem
+        }
+        v.number.get(elem.value, field, function (v) {
+            expect(v).to.equal(true)
+        })
+        elem.value = 'NaN'
+        v.number.get(elem.value, field, function (v) {
+            expect(v).to.equal(false)
+        })
+    })
     it('required', function () {
         var elem = document.createElement('input')
         var v = avalon.validators
