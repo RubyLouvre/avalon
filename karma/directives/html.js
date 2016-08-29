@@ -175,17 +175,52 @@ describe('html', function () {
              <div ms-controller="html6" ms-html="@tpl"></div>
              */
         })
-      
+
         vm = avalon.define({
             $id: 'html6',
             tpl: ""
         });
-       
+
         avalon.scan(div)
-        setTimeout(function(){
+        setTimeout(function () {
             vm.tpl = '<xmp><input /></xmp>'
             expect(div.getElementsByTagName('input').length).to.equal(0)
             done()
         }, 300)
+    })
+    it('双重循环+ms-html', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller="html7">
+             <div ms-for="page in @pages">
+             <div ms-for="(index,el) in page">
+             <div ms-html="@tpl[el.type]"></div>
+             </div>
+             </div>
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: "html7",
+            tpl: {
+                'img': '<p ms-text="el.val"></p>',
+                'text': '<p ms-text="el.val"></p>'
+            },
+            pages: [
+                [{type: 'img', val: 'img'}, {type: 'text', val: 'text'}]
+            ],
+            btn: function () {
+                vm.pages[0].push({type: 'img', val: 'push'})
+                vm.pages[0].push({type: 'text', val: 'push2'})
+            }
+        })
+        avalon.scan(div)
+        expect(div.getElementsByTagName('p').length).to.equal(2)
+        setTimeout(function () {
+            vm.btn()
+            expect(div.getElementsByTagName('p').length).to.equal(4)
+            done()
+
+        },300)
     })
 })

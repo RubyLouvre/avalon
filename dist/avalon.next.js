@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-29:19 version 2.113 by 司徒正美
+ * built in 2016-8-29:20 version 2.113 by 司徒正美
  * 2.1.5 and npm 2.1.15
  *     修正 ms-controller, ms-important的移除类名的实现
  *     实现后端渲染,
