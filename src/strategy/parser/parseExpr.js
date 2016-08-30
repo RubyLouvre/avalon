@@ -83,10 +83,9 @@ function parseExpr(str, category) {
     }
 
     body = body.replace(rAt, '$1__vmodel__.')
-   
+    /* istanbul ignore else  */
     if (category === 'on') {
         collectLocal(_body, local)
-    /* istanbul ignore else  */
     } else  if (category === 'js') {
         return evaluatorPool.put(category + ':' + cacheID, body)
     }

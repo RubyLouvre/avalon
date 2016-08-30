@@ -113,4 +113,34 @@ describe('css', function () {
         })
     })
 
+    it('array', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='css5' ms-css='[@aa,@bb]'>测试样式</div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'css5',
+            aa: {
+                background: 'red'
+            },
+            bb: {
+                width: 200,
+                height: 200
+            }
+        })
+        avalon.scan(div)
+        var el = avalon(div.children[0])
+        expect(el.width()).to.equal(200)
+        expect(el.height()).to.equal(200)
+        expect(vm.aa).to.not.have.property('width')
+        expect(el.css('backgroundColor')).to.match(/red|rgb\(255,\s*0,\s*0\)/)
+        setTimeout(function () {
+            vm.aa = {}
+            expect(el.css('backgroundColor')).to.match(/rgba\(0,\s*0,\s*0,\s*0\)/)
+            done()
+        })
+
+    })
+
 })

@@ -258,6 +258,9 @@ describe('filters', function () {
             expect(fn(date, 'medium')).to.equal('2016-8-26 12:04:05')
             expect(fn(date, 'short')).to.equal('16-8-26 下午12:04')
             expect(fn(date, 'fullDate')).to.equal('2016年8月26日星期五')
+            expect(fn(date, 'yyyy-MM-dd a')).to.equal('2016-08-26 下午')
+            date = new Date(2016, 7, 26, 8, 4, 5)
+            expect(fn(date, 'yyyy-MM-dd a')).to.equal('2016-08-26 上午')
 
         })
 

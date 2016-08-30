@@ -19,6 +19,7 @@ function orderBy(array, criteria, reverse) {
     array.sort(function (left, right) {
         var a = left.order
         var b = right.order
+        /* istanbul ignore if */
         if (Number.isNaN(a) && Number.isNaN(b)) {
             return 0
         }

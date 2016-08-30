@@ -104,7 +104,7 @@ function byPolling(dom) {
 }
 
 
-module.exports = function onComponentDispose(dom) {
+function fn(dom) {
     if (window.chrome && window.MutationEvent) {
         byMutationEvent(dom)
     } else {
@@ -115,4 +115,8 @@ module.exports = function onComponentDispose(dom) {
         }
     }
 }
+fn.byMutationEvent = byMutationEvent
+fn.byRewritePrototype = byRewritePrototype
+fn.byPolling = byPolling
 
+module.exports = fn

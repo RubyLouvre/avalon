@@ -172,7 +172,7 @@ function emitWildcard(obj, vm, spath, val, older) {
 
 function define(definition) {
     var $id = definition.$id
-    if (!$id && avalon.config.debug) {
+    if (!$id) {
         avalon.warn('vm.$id must be specified')
     }
     if (avalon.vmodels[$id]) {

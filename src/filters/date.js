@@ -164,11 +164,10 @@ function dateFilter(date, format) {
     if (typeof date === 'number') {
         date = new Date(date)
     }
-    if (tos.call(date) !== '[object Date]') {
-        return
-    }
+
     while (format) {
         match = rdateFormat.exec(format)
+        /* istanbul ignore else */
         if (match) {
             parts = parts.concat(match.slice(1))
             format = parts.pop()

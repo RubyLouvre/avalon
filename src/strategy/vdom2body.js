@@ -54,6 +54,7 @@ function parseNode(vdom) {
 
         case '#comment':
             var nodeValue = vdom.nodeValue
+            /* istanbul ignore else  */
             if (vdom.forExpr) {// 处理ms-for指令
                 var copy = {
                     dynamic: true,
@@ -81,7 +82,6 @@ function parseNode(vdom) {
                             nodeValue: "ms-for-end:"
                         }) + '\n'
                 return ''
-            /* istanbul ignore else  */
             } else if (nodeValue.indexOf('ms-js:') === 0) {//插入JS声明语句
                 var statement = parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
                 var ret = addTag(vdom)

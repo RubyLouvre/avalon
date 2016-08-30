@@ -169,13 +169,12 @@ function delegateEvent(type) {
 }
 
 avalon.fireDom = function (elem, type, opts) {
+     /* istanbul ignore else */
     if (document.createEvent) {
         var hackEvent = document.createEvent('Events')
         hackEvent.initEvent(type, true, true, opts)
         avalon.shadowCopy(hackEvent, opts)
-
-        elem.dispatchEvent(hackEvent)
-        /* istanbul ignore else */
+        elem.dispatchEvent(hackEvent)  
     } else if (root.contains(elem)) {//IE6-8触发事件必须保证在DOM树中,否则报'SCRIPT16389: 未指明的错误'
         hackEvent = document.createEventObject()
         avalon.shadowCopy(hackEvent, opts)
@@ -199,9 +198,9 @@ function avEvent(event) {
     }
     var target = this.target
     /* istanbul ignore if */
+    /* istanbul ignore else */
     if (this.which == null && event.type.indexOf('key') === 0) {
         this.which = event.charCode != null ? event.charCode : event.keyCode
-    /* istanbul ignore else */
     } else if (rmouseEvent.test(event.type) && !('pageX' in this)) {
         var doc = target.ownerDocument || document
         var box = doc.compatMode === 'BackCompat' ? doc.body : doc.documentElement

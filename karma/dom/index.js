@@ -14,6 +14,16 @@ describe('测试dom模块', function () {
             expect(avalon.fn.removeClass).to.be.a('function')
             expect(avalon.fn.hasClass).to.be.a('function')
             expect(avalon.fn.toggleClass).to.be.a('function')
+
+            var el = avalon(document.body)
+            el.toggleClass('aaa', true)
+            expect(el.hasClass('aaa')).to.equal(true)
+            el.toggleClass('aaa', false)
+            expect(el.hasClass('aaa')).to.equal(false)
+            el.toggleClass('bbb')
+            expect(el.hasClass('bbb')).to.equal(true)
+            el.toggleClass('bbb')
+            expect(el.hasClass('bbb')).to.equal(false)
         })
 
     })

@@ -37,6 +37,38 @@ describe('测试strategy模块', function () {
                 done()
             }, 300)
         })
+
+        it('remove empty text node', function () {
+            var f = document.createElement('div')
+            f.appendChild(document.createTextNode('xxx'))
+            var p = document.createElement('p')
+            p.setAttribute(':for', 'el in @arr')
+            f.appendChild(p)
+            f.appendChild(document.createTextNode(''))
+            f.appendChild(document.createTextNode('&nbsp;'))
+            var a = avalon.scan.dom2vdom(f)
+            expect(f.childNodes.length).to.equal(5)
+            expect(a.children.length).to.equal(5)
+
+
+        })
+
+        it('selectedIndex', function (done) {
+            div.innerHTML = heredoc(function () {
+                /*
+                 <select>
+                 <option>1</option>
+                 <option selected >2</option>
+                 <option>3</option>
+                 </select>
+                 */
+            })
+            avalon.scan.dom2vdom(div)
+            var select = div.children[0]
+
+            expect(select.selectedIndex).to.equal(1)
+            done()
+        })
     })
 
     describe('text2vdom', function () {
@@ -58,4 +90,8 @@ describe('测试strategy模块', function () {
 
 
     })
+
+
+
+
 })

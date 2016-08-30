@@ -6,39 +6,7 @@ function testCase(current, version) {
 
     describe('avalon.define[ ' + version + ' ]', function () {
 
-        it('vm的方法与属性[ ' + version + ' ]', function () {
-            var vm = define({
-                $id: "a1111",
-                a: 111,
-                b: true
-            })
-
-            expect(vm.$id).to.equal("a1111")
-            expect(avalon.vmodels.a1111).to.equal(vm)
-            if (version === "compact") {
-                expect(vm.$accessors.a).to.be.a("object")
-            } else {
-                var descriptor = Object.getOwnPropertyDescriptor(vm, "a")
-                expect(descriptor).to.be.a("object")
-                expect(descriptor.get).to.be.a("function")
-                expect(descriptor.set).to.be.a("function")
-            }
-            expect(/\$\d+/.test(vm.$hashcode)).to.be.ok
-            expect(vm.$watch).to.be.a("function")
-            expect(vm.$fire).to.be.a("function")
-            expect(vm.$events).to.be.a("object")
-            expect(vm.$model).to.eql({
-                a: 111,
-                b: true
-            })
-            expect(vm.hasOwnProperty("a")).to.be.ok
-            expect(vm.hasOwnProperty("$id")).to.not.be.ok
-            if (Object.getOwnPropertyDescriptor) {
-                expect(vm.$model).to.have.all.keys('a', 'b')
-            }
-            delete avalon.vmodels.a1111
-            vm.$hashcode = false
-        })
+       
         it('$watch[ ' + version + " ]", function (done) {
             var vm = define({
                 $id: "test",

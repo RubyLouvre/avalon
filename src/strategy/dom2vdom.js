@@ -55,40 +55,36 @@ function createVDOM(node) {
         if (voidTag[type]) {
             ret.isVoidTag = true
         }
-        if (props) {
-            ret.props = props
-        }
-
-        ret.children = createVDOMs(node.childNodes, node)
-        if (props && 'selectedIndex' in ret) {
+        
+        ret.children = createVDOMBatch(node)
+        if ('selectedIndex' in ret) {
             node.selectedIndex = ret.selectedIndex
             delete ret.selectedIndex
-            if (isEmpty(props)) {
-                delete ret.props
-            }
+        }
+        if (props) {
+            ret.props = props
         }
     }
     return ret
 }
-//根据 outerHTML 创建 虚拟DOM
-function render(node) {
-    return createVDOMs([node], null)
-}
-function createVDOMs(nodes, parent) {
+//将当前元素的孩子转换成VDOM
+function createVDOMBatch(parent) {
     var arr = []
-    nodes = avalon.slice(nodes)
-    for (var i = 0; i < nodes.length; i++) {
-        var node = nodes[i]
+    var node = parent.firstChild
+    if (!node) {
+        return arr
+    }
+    do {
+        var next = node.nextSibling
         switch (node.nodeType) {
             case 1:
-             
-                var a =  node.getAttributeNode(':for') || node.getAttributeNode('ms-for') 
-      
+                var a = node.getAttributeNode(':for') || node.getAttributeNode('ms-for')
+
                 if (a) {
                     var start = document.createComment('ms-for:' + a.value)
                     var end = document.createComment('ms-for-end:')
                     node.removeAttributeNode(a)
-                   
+
                     if (parent) {
                         parent.insertBefore(end, node.nextSibling)
                         parent.insertBefore(start, node)
@@ -108,8 +104,11 @@ function createVDOMs(nodes, parent) {
                 break
             case 8:
                 arr.push(createVDOM(node))
+
         }
-    }
+        node = next
+
+    } while (node)
     return arr
 }
 
@@ -121,5 +120,5 @@ function removeNode(node) {
 }
 
 
-module.exports = render
+module.exports = createVDOM
 
