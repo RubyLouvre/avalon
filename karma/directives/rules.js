@@ -28,7 +28,7 @@ describe('验证规则', function () {
     it('validate+rules', function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <div ms-controller="validate1">
+             <div ms-controller="rules1">
              <form ms-validate="@validate" action='javascript:void(0)'>
              <p><input ms-duplex="@aaa" ms-rules='{required:@bbb}' >{{@aaa}}</p>
              <p><input id="vd1" ms-duplex="@ddd" ms-rules="{equalto:'vd2'}" >{{@ddd}}</p>
@@ -40,7 +40,7 @@ describe('验证规则', function () {
         })
         var flag = 0
         vm = avalon.define({
-            $id: "validate1",
+            $id: "rules1",
             aaa: "",
             bbb: true,
             ddd: '333',
@@ -59,10 +59,10 @@ describe('验证规则', function () {
 
         fireClick(btn)
         setTimeout(function () {
-            expect(flag).to.equal(1)
+            expect(flag).to.equal(1) //true
             setTimeout(function () {
                 flag = 0
-                vm.aaa = '22'
+                vm.aaa = '22' 
                 fireClick(btn)
                 setTimeout(function () {
                     expect(flag).to.equal(2)
