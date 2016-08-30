@@ -16,7 +16,7 @@ var quoted = {
     wid: 1
 }
 
-var rneedQuote = /[W-]/
+var rneedQuote = /[W\:-]/
 var quote = avalon.quote
 function fixKey(k) {
     return (rneedQuote.test(k) || keyMap[k]) ? quote(k) : k

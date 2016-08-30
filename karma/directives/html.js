@@ -221,6 +221,25 @@ describe('html', function () {
             expect(div.getElementsByTagName('p').length).to.equal(4)
             done()
 
-        },300)
+        }, 300)
+    })
+    it('svg', function () {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller="html8">
+             <div ms-html="@svg1" style="width:100px;height:100px;position:absolute"></div>
+             <div ms-html="@svg2" style="width:100px;height:100px;position:absolute;top:200px"></div>
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: "html8",
+            svg1: '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none meet" style="position: absolute; width: 100%; height: 100%;" viewBox="0 0 200 200"><g><g transform="scale(0.1953125, 0.1953125)"><path d="M512 512m-505.429418 0a10 10 0 1 0 1010.858835 0 10 10 0 1 0-1010.858835 0Z" fill="#eb4f38"></path></g></g></svg>',
+            svg2: '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="none meet" style="position: absolute; width: 100%; height: 100%;" viewBox="0 0 200 200"><g><g transform="scale(0.1953125, 0.1953125)"><path d="M512 512m-505.429418 0a10 10 0 1 0 1010.858835 0 10 10 0 1 0-1010.858835 0Z" fill="#eb4f38"></path></g></g></svg>'
+        })
+        avalon.scan(div)
+        expect(div.getElementsByTagName('svg').length).to.equal(2)
+        delete avalon.scopes.html8
+        delete avalon.vmodels.html8
     })
 })

@@ -9,6 +9,7 @@ function initComponent(src, rawOption, local, template) {
     var tag = src.nodeName
     var is = src.props.is
     //判定用户传入的标签名是否符合规格
+    /* istanbul ignore if */
     if (!legalTags[tag] && !isCustomTag(tag)) {
         avalon.warn(tag + '不合适做组件的标签')
         return
@@ -17,6 +18,7 @@ function initComponent(src, rawOption, local, template) {
     var hooks = {}
     //用户只能操作顶层VM
     //只有$id,is的对象就是emptyOption
+    /* istanbul ignore if */
     if (!rawOption) {
         options = []
     } else {
@@ -29,6 +31,7 @@ function initComponent(src, rawOption, local, template) {
     }
     var definition = avalon.components[is]
     //如果连组件的定义都没有加载回来,应该立即返回 
+    /* istanbul ignore if */
     if (!definition) {
         return
     }
@@ -59,7 +62,9 @@ function initComponent(src, rawOption, local, template) {
 
     sweeper.isWidget = true
     var vmodel = define.apply(sweeper, [src.vmodel, defaults].concat(options))
-    if (!avalon.modern) {//增强对IE的兼容
+    //增强对IE的兼容
+    /* istanbul ignore if */
+    if (!avalon.modern) {
         for (var i in vmodel) {
             if (!skipArray[i] && typeof vmodel[i] === 'function') {
                 vmodel[i] = vmodel[i].bind(vmodel)

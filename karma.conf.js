@@ -18,15 +18,17 @@ module.exports = function (config) {
             'karma/vdom/index.js',
             'karma/dom/index.js',
             'karma/strategy/index.js',
-            
-            'karma/$watch.js',
+            'karma/component/index.js',
+            'karma/vmodel/index.js',
             'karma/directives/text.js',
+             'karma/directives/css.js',
+             
             'karma/directives/controller.js',
             'karma/directives/important.js',
             'karma/directives/expr.js',
             'karma/directives/effect.js',
             'karma/directives/class.js',
-            'karma/directives/css.js',
+           
             'karma/directives/attr.js',
             'karma/directives/html.js',
             'karma/directives/visible.js',

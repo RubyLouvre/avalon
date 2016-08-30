@@ -3,6 +3,7 @@ var tryInitComponent = require('../component/init')
 
 avalon.component = function (name, definition) {
     //这是定义组件的分支,并将列队中的同类型对象移除
+    /* istanbul ignore if */
     if (!avalon.components[name]) {
         avalon.components[name] = definition
     }//这里没有返回值
@@ -22,7 +23,7 @@ avalon.directive('widget', {
     },
     diff: function (copy, src, name, copyList, srcList, index) {
         var a = copy[name]
-
+        /* istanbul ignore else */
         if (Object(a) === a) {
             //有三个地方可以设置is, 属性,标签名,配置对象
 
@@ -43,6 +44,7 @@ avalon.directive('widget', {
             src.vmodel = copy.vmodel
             //如果组件没有初始化,那么先初始化(生成对应的vm,$render)
             if (!src[vmName]) {
+                /* istanbul ignore if */
                 if (!tryInitComponent(src, copy[name], copy.local, copy.template)) {
                     //替换成注释节点
                     src.nodeValue = 'unresolved component placeholder'
@@ -78,6 +80,8 @@ avalon.directive('widget', {
             var render = comVm.$render
             var tree = render(comVm, copy.local)
             var component = tree[0]
+            /* istanbul ignore if */
+            /* istanbul ignore else */
             if (component && isComponentReady(component)) {
                 component.local = copy.local
                 Array(

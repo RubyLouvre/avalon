@@ -49,6 +49,7 @@ avalon.directive('for', {
     parse: function (copy, src, binding) {
         var str = src.forExpr, aliasAs
         str = str.replace(rforAs, function (a, b) {
+            /* istanbul ignore if */
             if (!rident.test(b) || rinvalid.test(b)) {
                 avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.')
             } else {
@@ -157,7 +158,8 @@ avalon.directive('for', {
             }
 
         }
-        if (removes.length > 1) {
+        /* istanbul ignore if */
+        if (removes.length > 1) {   
             removes.sort(function (a, b) {
                 return a.index - b.index
             })

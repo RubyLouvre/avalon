@@ -29,10 +29,11 @@ avalon.directive('effect', {
         }
     },
     update: function (dom, vdom, parent, option) {
+        /* istanbul ignore if */
         if(!dom || dom.nodeType !== 1){
             return
         }
-        
+        /* istanbul ignore if */
         if (dom.animating) {
             return
         }
@@ -47,24 +48,28 @@ avalon.directive('effect', {
         }
         var type = localeOption.is
         option = option || {}
+        /* istanbul ignore if */
         if (!type) {//如果没有指定类型
             return avalon.warn('need is option')
         }
         var effects = avalon.effects
+        /* istanbul ignore if */
         if (support.css && !effects[type]) {
             avalon.effect(type, {})
         }
         var globalOption = effects[type]
+        /* istanbul ignore if */
         if (!globalOption) {//如果没有定义特效
             return avalon.warn(type + ' effect is undefined')
         }
         var action = option.action || localeOption.action
         var Effect = avalon.Effect
-        if (typeof Effect.prototype[action] !== 'function') {
-            return avalon.warn(action + ' action is undefined')
-        }
+        /* istanbul ignore if */
+       
         var effect = new Effect(dom)
         var finalOption = avalon.mix(option, globalOption, localeOption)
+        /* istanbul ignore if */
+        /* istanbul ignore else */
         if (finalOption.queue) {
             animationQueue.push(function () {
                 effect[action](finalOption)
@@ -154,6 +159,7 @@ function createAction(action) {
         var $el = avalon(elem)
         var enterAnimateDone
         var staggerTime = isFinite(option.stagger) ? option.stagger * 1000 : 0
+        /* istanbul ignore if */
         if (staggerTime) {
             if (option.staggerKey) {
                 var stagger = staggerCache.get(option.staggerKey) ||
@@ -186,7 +192,8 @@ function createAction(action) {
             }
         }
         execHooks(option, 'onBefore' + action, elem)
-
+       /* istanbul ignore if */
+       /* istanbul ignore else */
         if (option[lower]) {
             option[lower](elem, function (ok) {
                 animationDone(ok !== false)
