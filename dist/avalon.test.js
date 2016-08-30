@@ -1,11 +1,12 @@
 /*!
  * built in 2016-8-30:17 version 2.114 by 司徒正美
- * 2.1.5 and npm 2.1.15
- *     修正 ms-controller, ms-important的移除类名的实现
- *     实现后端渲染,
- *     fix safari, 微信不支持使用Object.defineProperty重写元素属性的BUG
- *     分离DOM API
- *     fix ms-on BUG
+ * npm 2.1.14
+ *     修正 ms-important的BUG
+ *     重构 escapeHTML与unescapeHTML方法
+ *     改用id来定义组件VM的$id
+ *     修正pattern验证规则
+ *     添加大量测试,覆盖率达到90%
+ *     增强对SVG的支持
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -200,7 +201,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-8-30:17 version 2.113 by 司徒正美
+	 * built in 2016-8-30:17 version 2.114 by 司徒正美
 	 * 2.1.5 and npm 2.1.15
 	 *     修正 ms-controller, ms-important的移除类名的实现
 	 *     实现后端渲染,
@@ -895,7 +896,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return a === 'true'|| a == '1' 
 		        }
 		    },
-		    version: "2.113",
+		    version: "2.114",
 		    slice: function (nodes, start, end) {
 		        return _slice.call(nodes, start, end)
 		    },
