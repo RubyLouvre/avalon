@@ -51,3 +51,5 @@ avalon.directive('css', {
         }
     }
 })
+
+module.exports = avalon.directives.css

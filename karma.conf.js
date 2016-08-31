@@ -14,6 +14,7 @@ module.exports = function (config) {
             'karma/seed/lang.js',
             'karma/seed/cache.js',
             'karma/seed/config.js',
+          
             'karma/filters/index.js',
             'karma/vdom/index.js',
             'karma/dom/index.js',
@@ -21,7 +22,7 @@ module.exports = function (config) {
             'karma/component/index.js',
             'karma/vmodel/index.js',
             'karma/directives/text.js',
-             'karma/directives/css.js',
+            'karma/directives/css.js',
              
             'karma/directives/controller.js',
             'karma/directives/important.js',
@@ -37,9 +38,11 @@ module.exports = function (config) {
             'karma/directives/duplex.js',
             'karma/directives/for.js',
             'karma/directives/widget.js',
-            'karma/directives/rules.js',
+           
             'karma/directives/hover.js',
-            'karma/directives/active.js'
+            'karma/directives/active.js',
+            'karma/directives/validate.js',
+             'karma/directives/rules.js',
         ],
         exclude: [],
         mochaReporter: {

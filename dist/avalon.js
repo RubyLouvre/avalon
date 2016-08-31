@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-30:20 version 2.114 by 司徒正美
+ * built in 2016-8-31:15 version 2.114 by 司徒正美
  * npm 2.1.14
  *     修正 ms-important的BUG
  *     重构 escapeHTML与unescapeHTML方法
@@ -2007,72 +2007,67 @@ return /******/ (function(modules) { // webpackBootstrap
 	var avalon = __webpack_require__(4)
 	var propMap = __webpack_require__(26)
 	var isVML = __webpack_require__(27)
-	var rsvg =/^\[object SVG\w*Element\]$/
+	var rsvg = /^\[object SVG\w*Element\]$/
 	var ramp = /&amp;/g
 
 	function attrUpdate(node, vnode) {
-	    var attrs = vnode.changeAttr
-	    if (!node || node.nodeType !== 1 ) {
+	   /* istanbul ignore if*/
+	    if (!node || node.nodeType !== 1) {
 	        return
 	    }
-	    /* istanbul ignore if*/
-	    if (attrs) {
-	        vnode.dynamic['ms-attr'] = 1
-	        for (var attrName in attrs) {
-	            var val = attrs[attrName]
-	            // 处理路径属性
-	            if (attrName === 'href' || attrName === 'src') {
-	                if (!node.hasAttribute) {
-	                    val = String(val).replace(ramp, '&') //处理IE67自动转义的问题
-	                }
-	                node[attrName] = val
-	                if (window.chrome && node.tagName === 'EMBED') {
-	                    var parent = node.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
-	                    var comment = document.createComment('ms-src')
-	                    parent.replaceChild(comment, node)
-	                    parent.replaceChild(node, comment)
-	                }
-	                //处理HTML5 data-*属性
-	            } else if (attrName.indexOf('data-') === 0) {
-	                node.setAttribute(attrName, val)
+	    vnode.dynamic['ms-attr'] = 1
+	    var attrs = vnode['ms-attr']
+	    for (var attrName in attrs) {
+	        var val = attrs[attrName]
+	        // 处理路径属性
+	        if (attrName === 'href' || attrName === 'src') {
+	            if (!node.hasAttribute) {
+	                val = String(val).replace(ramp, '&') //处理IE67自动转义的问题
+	            }
+	            node[attrName] = val
+	            if (window.chrome && node.tagName === 'EMBED') {
+	                var parent = node.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
+	                var comment = document.createComment('ms-src')
+	                parent.replaceChild(comment, node)
+	                parent.replaceChild(node, comment)
+	            }
+	            //处理HTML5 data-*属性
+	        } else if (attrName.indexOf('data-') === 0) {
+	            node.setAttribute(attrName, val)
 
-	            } else {
-	                var propName = propMap[attrName] || attrName
-	                if (typeof node[propName] === 'boolean') {
-	                    node[propName] = !!val
-	                  
-	                    //布尔属性必须使用el.xxx = true|false方式设值
-	                    //如果为false, IE全系列下相当于setAttribute(xxx,''),
-	                    //会影响到样式,需要进一步处理
-	                }
+	        } else {
+	            var propName = propMap[attrName] || attrName
+	            if (typeof node[propName] === 'boolean') {
+	                node[propName] = !!val
 
-	                if (val === false ) {//移除属性
-	                    node.removeAttribute(propName)
-	                    continue
-	                }
-	                //SVG只能使用setAttribute(xxx, yyy), VML只能使用node.xxx = yyy ,
-	                //HTML的固有属性必须node.xxx = yyy
-	             
-	                var isInnate = rsvg.test(node) ? false :
-	                        (!avalon.modern && isVML(node)) ? true :
-	                        attrName in node.cloneNode(false)
-	                if (isInnate) {
-	                    node[propName] = val + ''
-	                } else {
-	                    node.setAttribute(attrName, val)
-	                }
-
+	                //布尔属性必须使用el.xxx = true|false方式设值
+	                //如果为false, IE全系列下相当于setAttribute(xxx,''),
+	                //会影响到样式,需要进一步处理
 	            }
 
+	            if (val === false) {//移除属性
+	                node.removeAttribute(propName)
+	                continue
+	            }
+	            //SVG只能使用setAttribute(xxx, yyy), VML只能使用node.xxx = yyy ,
+	            //HTML的固有属性必须node.xxx = yyy
+
+	            var isInnate = rsvg.test(node) ? false :
+	                    (!avalon.modern && isVML(node)) ? true :
+	                    attrName in node.cloneNode(false)
+	            if (isInnate) {
+	                node[propName] = val + ''
+	            } else {
+	                node.setAttribute(attrName, val)
+	            }
 	        }
-	        vnode.changeAttr = null
 	    }
 	}
 
 	var rvalidchars = /^[\],:{}\s]*$/,
-	    rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g,
-	    rvalidescape = /\\(?:["\\\/bfnrt]|u[\da-fA-F]{4})/g,
-	    rvalidtokens = /"[^"\\\r\n]*"|true|false|null|-?(?:\d+\.|)\d+(?:[eE][+-]?\d+|)/g
+	        rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g,
+	        rvalidescape = /\\(?:["\\\/bfnrt]|u[\da-fA-F]{4})/g,
+	        rvalidtokens = /"[^"\\\r\n]*"|true|false|null|-?(?:\d+\.|)\d+(?:[eE][+-]?\d+|)/g
 
 	avalon.parseJSON = typeof JSON === 'object' ? JSON.parse : function (data) {
 	    if (typeof data === 'string') {
@@ -4143,45 +4138,12 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 47 */
 /***/ function(module, exports, __webpack_require__) {
 
-	
-	var attrUpdate = __webpack_require__(25)
-	var update = __webpack_require__(45)
+	var cssDir = __webpack_require__(48)
+	var update = __webpack_require__(25)
 
 	avalon.directive('attr', {
-	    diff: function (copy, src, name) {
-	        var a = copy[name]
-	        var p = src[name]
-	        if (a && typeof a === 'object') {
-	            a = a.$model || a //安全的遍历VBscript
-	            if (Array.isArray(a)) {//转换成对象
-	                a = avalon.mix.apply({}, a)
-	            }
-	            if (!src.dynamic[name] || !p) {//如果一开始为空
-	                src.changeAttr = src[name] = a
-	            } else {
-	                var patch = {}
-	                var hasChange = false
-	                for (var i in a) {//diff差异点
-	                    if (a[i] !== p[i]) {
-	                        hasChange = true
-	                        patch[i] = a[i]
-	                    }
-	                }
-	                if (hasChange) {
-	                    src[name] = a
-	                    src.changeAttr = patch
-	                }
-	            }
-	            if (src.changeAttr) {
-	                update(src, this.update )
-	            }
-	        }
-	        if(copy !== src){
-	            delete copy[name]//释放内存
-	        }
-	    },
-	    //dom, vnode
-	    update: attrUpdate
+	    diff: cssDir.diff,
+	    update: update
 	})
 
 
@@ -4242,6 +4204,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	})
+
+	module.exports = avalon.directives.css
 
 
 /***/ },

@@ -146,4 +146,35 @@ describe('attr', function () {
 
     })
 
+    it("toggle", function (done) {
+
+        div.innerHTML = heredoc(function () {
+            /*
+             <input ms-controller='attr6' ms-attr='[@toggle && @active]'>
+             */
+        })
+
+        vm = avalon.define({
+            $id: "attr6",
+            toggle: false,
+            active: {
+                title: 'active'
+            }
+        })
+
+        avalon.scan(div)
+        expect(div.children[0].title).to.equal('')
+        vm.toggle = true
+        setTimeout(function () {
+            expect(div.children[0].title).to.equal('active')
+            vm.toggle = false
+            setTimeout(function () {
+                expect(div.children[0].title).to.equal('')
+            
+                done()
+            })
+        })
+
+    })
+
 })
