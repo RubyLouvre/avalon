@@ -72,7 +72,7 @@ describe('测试strategy模块', function () {
     })
 
     describe('text2vdom', function () {
-        it('avalon.lexer', function () {
+        it('自动为table为tbody', function () {
             var str = heredoc(function () {
                 /*
                  <table ms-controller="render1">
@@ -87,10 +87,57 @@ describe('测试strategy模块', function () {
             var table = f.childNodes[0]
             expect(table.getElementsByTagName('tbody').length).to.equal(1)
         })
+        it('自动移除option下面的标签', function () {
+            var str = heredoc(function () {
+                /*
+                 <select ms-controller="render2">
+                 <option><span>111</span><i>222</i></option>
+                 <option><span><span>222</span></span></option>
+                 </select>
+                 */
+            })
+            var select = avalon.speedUp(avalon.lexer(str))[0]
 
+            expect(select.children[0].children[0].nodeValue).to.equal('111222')
+            expect(select.children[1].children[0].nodeValue).to.equal('222')
 
+        })
+        it('将textarea里面的内容变成value', function () {
+            var str = heredoc(function () {
+                /*
+                 
+                 <textarea ms-controller="render3"><span>333</span></textarea>
+                 
+                 */
+            })
+            var textarea = avalon.speedUp(avalon.lexer(str))[0]
+
+            expect(textarea.children.length).to.equal(0)
+            expect(textarea.props.value).to.equal('<span>333</span>')
+
+        })
+        it('将script/noscript/xmp/template的内容变成文本节点', function () {
+            var str = heredoc(function () {
+                /*
+                 <div ms-controller="render4">
+                 <script><span>333</span></script>
+                 <noscript><span>333</span></noscript>
+                 <xmp><span>333</span></xmp>
+                 <template><span>333</span></template>
+                 </div>
+                 */
+            })
+            var div = avalon.speedUp(avalon.lexer(str))[0]
+
+            expect(div.children.length).to.equal(4)
+            var c = div.children
+            expect(c[0].children[0].nodeValue).to.equal('<span>333</span>')
+            expect(c[1].children[0].nodeValue).to.equal('<span>333</span>')
+            expect(c[2].children[0].nodeValue).to.equal('<span>333</span>')
+//            expect(c[3].children[0].nodeValue).to.equal('<span>333</span>')
+        })
     })
-    
-   
+
+
 
 })

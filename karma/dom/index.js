@@ -115,6 +115,13 @@ describe('测试dom模块', function () {
         it('test', function () {
             expect(avalon.fn.bind).to.be.a('function')
             expect(avalon.fn.unbind).to.be.a('function')
+            var el = avalon(document.body)
+            var fn = function () {
+            }
+            el.bind('keyup', fn)
+            expect(el[0].getAttribute('avalon-events')).to.match(/keyup/)
+            el.unbind('keyup', fn)
+            expect(el[0].getAttribute('avalon-events')).to.equal('')
         })
     })
     describe('ready', function () {
