@@ -36,7 +36,6 @@ function initComponent(src, rawOption, local, template) {
         return
     }
 
-
     //得到组件在顶层vm的配置对象名
     var id = hooks.id || hooks.$id
     if (!id && onceWarn) {
@@ -51,13 +50,20 @@ function initComponent(src, rawOption, local, template) {
     //生成组件VM
     var $id = id || src.props.id || 'w' + (new Date - 0)
     var defaults = avalon.mix(true, {}, definition.defaults)
+
     mixinHooks(hooks, defaults, false)//src.vmodel,
+
     var skipProps = immunity.concat()
-    function sweeper(a, b) {
+    function sweeper(a, b, c) {
         skipProps.forEach(function (k) {
             delete a[k]
             delete b[k]
         })
+        for (var k in c) {
+            if (hooks[k]) {
+                delete a[k]
+            }
+        }
     }
 
     sweeper.isWidget = true

@@ -164,8 +164,9 @@ function mediatorFactory(before, after) {
 
 
     if (typeof this === 'function') {
-        this(keys, unresolve)
+        this(keys, unresolve, accessors)
     }
+
     for (key in unresolve) {
         //系统属性跳过,已经有访问器的属性跳过
         if ($$skipArray[key] || accessors[key])

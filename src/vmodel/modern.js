@@ -158,7 +158,7 @@ function mediatorFactory(before, after) {
         }
     }
     if (typeof this === 'function') {
-        this(keys, unresolve)
+        this(keys, unresolve, accessor)
     }
     for (key in unresolve) {
         if ($$skipArray[key] || accessors[key])

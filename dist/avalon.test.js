@@ -1,5 +1,5 @@
 /*!
- * built in 2016-9-1:11 version 2.114 by 司徒正美
+ * built in 2016-9-1:17 version 2.114 by 司徒正美
  * npm 2.1.14
  *     修正 ms-important的BUG
  *     重构 escapeHTML与unescapeHTML方法
@@ -200,7 +200,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-9-1:11 version 2.114 by 司徒正美
+	 * built in 2016-9-1:17 version 2.114 by 司徒正美
 	 * npm 2.1.14
 	 *     修正 ms-important的BUG
 	 *     重构 escapeHTML与unescapeHTML方法
@@ -5536,9 +5536,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return dir.validate(field, true)
 		        })
 
-		        Promise.all(promise).then(function (array) {
+		        return Promise.all(promise).then(function (array) {
 		            var reasons = array.concat.apply([], array)
-
 		            if (validator.deduplicateInValidateAll) {
 		                var uniq = {}
 		                reasons = reasons.filter(function (reason) {
@@ -5619,9 +5618,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		            field.data[ruleName] = ruleValue
 		            hook.get(value, field, next)
 		        }
-		        //
 		        //如果promises不为空，说明经过验证拦截器
-		        var lastPromise = Promise.all(promises).then(function (array) {
+		        return Promise.all(promises).then(function (array) {
 		            var reasons = array.filter(function (el) {
 		                return typeof el === 'object'
 		            })
@@ -5635,7 +5633,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		            }
 		            return reasons
 		        })
-		        return lastPromise
 		    }
 		})
 
@@ -5661,6 +5658,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		    resetInFocus: true, //@config {Boolean} true，在focus事件中执行onReset回调,
 		    deduplicateInValidateAll: false //@config {Boolean} false，在validateAll回调中对reason数组根据元素节点进行去重
 		}
+
+
 
 	/***/ },
 	/* 64 */
@@ -5721,7 +5720,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    number: {
 		        message: '必须数字',
 		        get: function (value, field, next) {//数值
-		            next(isFinite(value))
+		            next(!!value && isFinite(value))// isFinite('') --> true
 		            return value
 		        }
 		    },
@@ -6467,7 +6466,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		        return
 		    }
 
-
 		    //得到组件在顶层vm的配置对象名
 		    var id = hooks.id || hooks.$id
 		    if (!id && onceWarn) {
@@ -6482,13 +6480,20 @@ return /******/ (function(modules) { // webpackBootstrap
 		    //生成组件VM
 		    var $id = id || src.props.id || 'w' + (new Date - 0)
 		    var defaults = avalon.mix(true, {}, definition.defaults)
+
 		    mixinHooks(hooks, defaults, false)//src.vmodel,
+
 		    var skipProps = immunity.concat()
-		    function sweeper(a, b) {
+		    function sweeper(a, b, c) {
 		        skipProps.forEach(function (k) {
 		            delete a[k]
 		            delete b[k]
 		        })
+		        for (var k in c) {
+		            if (hooks[k]) {
+		                delete a[k]
+		            }
+		        }
 		    }
 
 		    sweeper.isWidget = true
@@ -8170,8 +8175,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 		    if (typeof this === 'function') {
-		        this(keys, unresolve)
+		        this(keys, unresolve, accessors)
 		    }
+
 		    for (key in unresolve) {
 		        //系统属性跳过,已经有访问器的属性跳过
 		        if ($$skipArray[key] || accessors[key])

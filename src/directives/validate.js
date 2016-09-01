@@ -66,9 +66,8 @@ var dir = avalon.directive('validate', {
             return dir.validate(field, true)
         })
 
-        Promise.all(promise).then(function (array) {
+        return Promise.all(promise).then(function (array) {
             var reasons = array.concat.apply([], array)
-
             if (validator.deduplicateInValidateAll) {
                 var uniq = {}
                 reasons = reasons.filter(function (reason) {
@@ -149,9 +148,8 @@ var dir = avalon.directive('validate', {
             field.data[ruleName] = ruleValue
             hook.get(value, field, next)
         }
-        //
         //如果promises不为空，说明经过验证拦截器
-        var lastPromise = Promise.all(promises).then(function (array) {
+        return Promise.all(promises).then(function (array) {
             var reasons = array.filter(function (el) {
                 return typeof el === 'object'
             })
@@ -165,7 +163,6 @@ var dir = avalon.directive('validate', {
             }
             return reasons
         })
-        return lastPromise
     }
 })
 
@@ -191,3 +188,4 @@ dir.defaults = {
     resetInFocus: true, //@config {Boolean} true，在focus事件中执行onReset回调,
     deduplicateInValidateAll: false //@config {Boolean} false，在validateAll回调中对reason数组根据元素节点进行去重
 }
+

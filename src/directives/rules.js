@@ -53,7 +53,7 @@ avalon.shadowCopy(avalon.validators, {
     number: {
         message: '必须数字',
         get: function (value, field, next) {//数值
-            next(isFinite(value))
+            next(!!value && isFinite(value))// isFinite('') --> true
             return value
         }
     },

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+        <script src="../lib/avalon.js"></script>
+        <link href="./index.css" rel="stylesheet" />
+        <script>
+
+            var vm = avalon.define({
+                $id: "test-ant",
+                size: "small",
+                shape: "circle-outline",
+                type: "ghost"
+            })
+            avalon.component("ms-icon", {
+                template: "<i ms-class='[\"anticon\",\"anticon-\"+@type]'></i>",
+                defaults: {
+                    type: ''
+                }
+
+
+            })
+            avalon.component("ms-button", {
+                defaults: {
+                    prefixCls: 'ant-btn',
+                    type: undefined,
+                    htmlType: 'button',
+                    shape: undefined,
+                    size: undefined,
+                    loading: false,
+                    className: '',
+                    sizeCls: function () {
+                        if (this.size) {
+                            return this.prefixCls + "-" + ({
+                                large: 'lg',
+                                small: 'sm'
+                            })[this.size];
+                        }
+                        return ""
+                    },
+                    getCls: function (k) {
+                        return this[k] ? this.prefixCls + "-" + this[k] : "";
+                    },
+                    buttonText: "test"
+                },
+                soleSlot: "buttonText",
+                template: '<button ms-attr="{type:@htmlType}" ms-class="[@prefixCls,@sizeCls(),@getCls(\'type\'),@getCls(\'shape\'),@getCls(\'loading\')]"><slot name="buttonText"></slot></button>'
+            })
+        </script>
+    </head>
+    <body ms-controller="test-ant" style="padding: 50px">
+
+    <ms-button ms-widget="{type:@type}"><ms-icon ms-widget="{type:'search'}"></ms-icon></ms-button>
+</body>
+</html>
