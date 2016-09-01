@@ -20,6 +20,7 @@ function render(vtree, local) {
     
     try{
     var fn = Function('__vmodel__', '__local__', body)
+    fn.body = body
     }catch(e){
         avalon.warn(_body, 'render parse error')
     }

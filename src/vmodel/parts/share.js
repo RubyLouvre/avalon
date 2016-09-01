@@ -112,7 +112,7 @@ function makeAccessor(sid, spath, heirloom) {
                 //如果这个属性存在通配符
                 emitWildcard(get.heirloom, vm, spath, val, older)
                 vm.$events.$$dirty$$ = false
-                batchUpdateView(vm.$id)
+                batchUpdateView(vm.$id, spath)
             }
         },
         enumerable: true,
@@ -120,13 +120,13 @@ function makeAccessor(sid, spath, heirloom) {
     }
 }
 
-function batchUpdateView(id) {
+function batchUpdateView(id, spath) {
     avalon.rerenderStart = new Date
     var dotIndex = id.indexOf('.')
     if (dotIndex > 0) {
-        avalon.batch(id.slice(0, dotIndex))
+        avalon.batch(id.slice(0, dotIndex), spath)
     } else {
-        avalon.batch(id)
+        avalon.batch(id, spath)
     }
 }
 

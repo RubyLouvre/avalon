@@ -5,7 +5,7 @@ avalon.directive('text', {
     parse: function (copy, src, binding) {
         copy[binding.name] = 1
         src.children = []
-        copy.children = '[{\nnodeName:"#text",\ndynamic:true,' +
+        copy.children = '[{\nnodeName:"#text",\ndynamic:{/*'+binding.expr+'*/},' +
                 '\nnodeValue:avalon.parsers.string(' +
                 avalon.parseExpr(binding) + ')}]'
     },

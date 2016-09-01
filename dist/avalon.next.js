@@ -1,5 +1,5 @@
 /*!
- * built in 2016-9-1:17 version 2.114 by 司徒正美
+ * built in 2016-9-1:23 version 2.114 by 司徒正美
  * npm 2.1.14
  *     修正 ms-important的BUG
  *     重构 escapeHTML与unescapeHTML方法
@@ -2610,7 +2610,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    parse: function (copy, src, binding) {
 	        copy[binding.name] = 1
 	        src.children = []
-	        copy.children = '[{\nnodeName:"#text",\ndynamic:true,' +
+	        copy.children = '[{\nnodeName:"#text",\ndynamic:{/*'+binding.expr+'*/},' +
 	                '\nnodeValue:avalon.parsers.string(' +
 	                avalon.parseExpr(binding) + ')}]'
 	    },
@@ -4714,6 +4714,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    
 	    try{
 	    var fn = Function('__vmodel__', '__local__', body)
+	    fn.body = body
 	    }catch(e){
 	        avalon.warn(_body, 'render parse error')
 	    }
@@ -5394,7 +5395,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var renderingID = false
 	avalon.suspendUpdate = 0
 
-	function batchUpdate(id) {
+	function batchUpdate(id, spath) {
 	    if (renderingID) {
 	        return avalon.Array.ensure(needRenderIds, id)
 	    } else {
@@ -5408,16 +5409,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var dom = vm.$element
 	    var source = dom.vtree || []
 	    var renderFn = vm.$render
+	  /*  if (spath) {
+	        var newBody = renderFn.body.replace(/dynamic\:{[^}]+}/g, function (str) {
+	            if (str.indexOf(spath) === -1) {
+	                return "dynamic:0"
+	            } else {
+	                return str
+	            }
+	        })
+	        var copy = Function('__vmodel__', '__local__', newBody)(scope.vmodel, scope.local)
+	    } else {
+	        var copy = renderFn(scope.vmodel, scope.local)
+	    }*/
 	    var copy = renderFn(scope.vmodel, scope.local)
+
 	    if (scope.isTemp) {
 	        //在最开始时,替换作用域的所有节点,确保虚拟DOM与真实DOM是对齐的
 	        delete avalon.scopes[id]
 	    }
-	    
-	  
+
+
 	    avalon.diff(copy, source)
-	    
-	 
+
+
 	    var index = needRenderIds.indexOf(renderingID)
 	    renderingID = 0
 	    if (index > -1) {
@@ -5756,7 +5770,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                //如果这个属性存在通配符
 	                emitWildcard(get.heirloom, vm, spath, val, older)
 	                vm.$events.$$dirty$$ = false
-	                batchUpdateView(vm.$id)
+	                batchUpdateView(vm.$id, spath)
 	            }
 	        },
 	        enumerable: true,
@@ -5764,13 +5778,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 
-	function batchUpdateView(id) {
+	function batchUpdateView(id, spath) {
 	    avalon.rerenderStart = new Date
 	    var dotIndex = id.indexOf('.')
 	    if (dotIndex > 0) {
-	        avalon.batch(id.slice(0, dotIndex))
+	        avalon.batch(id.slice(0, dotIndex), spath)
 	    } else {
-	        avalon.batch(id)
+	        avalon.batch(id, spath)
 	    }
 	}
 
