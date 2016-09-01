@@ -47,6 +47,16 @@ module.exports = {
     plugins: [//
         new webpack.BannerPlugin('built in ' + snow + ' version ' + v + ' by 司徒正美\n' + feather)
     ],
+//    loaders: [
+//        {
+//            test: /\.js$/,
+//            exclude: /node_modules/,
+//            loader: 'babel',
+//            query: {
+//                presets: ['es2015','stage-0','stage-1','stage-2','stage-3']
+//            }
+//        }
+//    ],
     module: {
     },
     eslint: {

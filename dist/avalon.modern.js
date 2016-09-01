@@ -1,5 +1,5 @@
 /*!
- * built in 2016-8-31:17 version 2.114 by 司徒正美
+ * built in 2016-9-1:11 version 2.114 by 司徒正美
  * npm 2.1.14
  *     修正 ms-important的BUG
  *     重构 escapeHTML与unescapeHTML方法
@@ -1279,7 +1279,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // 标识缓存数组能达到的最大长度
 	    this.limit = maxLength
 	    //  head（最不常用的项），tail（最常用的项）全部初始化为undefined
-
 	    this.head = this.tail = void 0
 	    this._keymap = {}
 	}
@@ -3106,6 +3105,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    diff: function (copy, src, name) {
 	        var validator = copy[name]
 	        var p = src[name]
+	        /* istanbul ignore if */
+	        /* istanbul ignore else */
 	        if (p && p.onError && p.addField) {
 	            return
 	        } else if (Object(validator) === validator) {
@@ -3139,13 +3140,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        function onManual() {
 	            dir.validateAll.call(validator, validator.onValidateAll)
 	        }
+	        /* istanbul ignore if */
 	        if (validator.validateAllInSubmit) {
 	            avalon.bind(dom, 'submit', function (e) {
 	                e.preventDefault()
 	                onManual()
 	            })
 	        }
-
+	         /* istanbul ignore if */
 	        if (typeof validator.onInit === 'function') { //vmodels是不包括vmodel的
 	            validator.onInit.call(dom, {
 	                type: 'init',
@@ -3163,14 +3165,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }).map(function (field) {
 	            return dir.validate(field, true)
 	        })
-	        
+
 	        Promise.all(promise).then(function (array) {
 	            var reasons = array.concat.apply([], array)
-	            
+
 	            if (validator.deduplicateInValidateAll) {
 	                var uniq = {}
 	                reasons = reasons.filter(function (reason) {
-	                    var el = reason.element 
+	                    var el = reason.element
 	                    var uuid = el.uniqueID || (el.uniqueID = setTimeout('1'))
 	                    if (uniq[uuid]) {
 	                        return false
@@ -3185,16 +3187,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    addField: function (field) {
 	        var validator = this
 	        var node = field.dom
+	        /* istanbul ignore if */
 	        if (validator.validateInKeyup && (!field.isChanged && !field.debounceTime)) {
 	            avalon.bind(node, 'keyup', function (e) {
 	                dir.validate(field, 0, e)
 	            })
 	        }
+	        /* istanbul ignore if */
 	        if (validator.validateInBlur) {
 	            avalon.bind(node, 'blur', function (e) {
 	                dir.validate(field, 0, e)
 	            })
 	        }
+	        /* istanbul ignore if */
 	        if (validator.resetInFocus) {
 	            avalon.bind(node, 'focus', function (e) {
 	                validator.onReset.call(node, e, field)
@@ -3204,8 +3209,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    validate: function (field, isValidateAll, event) {
 	        var promises = []
 	        var value = field.value
-	        var elem = field.dom 
+	        var elem = field.dom
 	        var validator = field.validator
+	        /* istanbul ignore if */
+	        if (typeof Promise !== 'function') {
+	            avalon.error('please npm install avalon-promise or bluebird')
+	        }
+	        /* istanbul ignore if */
 	        if (elem.disabled)
 	            return
 	        for (var ruleName in field.rules) {
@@ -3242,7 +3252,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //
 	        //如果promises不为空，说明经过验证拦截器
 	        var lastPromise = Promise.all(promises).then(function (array) {
-	            var reasons = array.filter(function(el){
+	            var reasons = array.filter(function (el) {
 	                return typeof el === 'object'
 	            })
 	            if (!isValidateAll) {

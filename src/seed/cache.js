@@ -15,7 +15,6 @@ function LRU(maxLength) {
     // 标识缓存数组能达到的最大长度
     this.limit = maxLength
     //  head（最不常用的项），tail（最常用的项）全部初始化为undefined
-
     this.head = this.tail = void 0
     this._keymap = {}
 }

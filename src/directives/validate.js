@@ -5,6 +5,8 @@ var dir = avalon.directive('validate', {
     diff: function (copy, src, name) {
         var validator = copy[name]
         var p = src[name]
+        /* istanbul ignore if */
+        /* istanbul ignore else */
         if (p && p.onError && p.addField) {
             return
         } else if (Object(validator) === validator) {
@@ -38,13 +40,14 @@ var dir = avalon.directive('validate', {
         function onManual() {
             dir.validateAll.call(validator, validator.onValidateAll)
         }
+        /* istanbul ignore if */
         if (validator.validateAllInSubmit) {
             avalon.bind(dom, 'submit', function (e) {
                 e.preventDefault()
                 onManual()
             })
         }
-
+         /* istanbul ignore if */
         if (typeof validator.onInit === 'function') { //vmodels是不包括vmodel的
             validator.onInit.call(dom, {
                 type: 'init',
@@ -62,14 +65,14 @@ var dir = avalon.directive('validate', {
         }).map(function (field) {
             return dir.validate(field, true)
         })
-        
+
         Promise.all(promise).then(function (array) {
             var reasons = array.concat.apply([], array)
-            
+
             if (validator.deduplicateInValidateAll) {
                 var uniq = {}
                 reasons = reasons.filter(function (reason) {
-                    var el = reason.element 
+                    var el = reason.element
                     var uuid = el.uniqueID || (el.uniqueID = setTimeout('1'))
                     if (uniq[uuid]) {
                         return false
@@ -84,16 +87,19 @@ var dir = avalon.directive('validate', {
     addField: function (field) {
         var validator = this
         var node = field.dom
+        /* istanbul ignore if */
         if (validator.validateInKeyup && (!field.isChanged && !field.debounceTime)) {
             avalon.bind(node, 'keyup', function (e) {
                 dir.validate(field, 0, e)
             })
         }
+        /* istanbul ignore if */
         if (validator.validateInBlur) {
             avalon.bind(node, 'blur', function (e) {
                 dir.validate(field, 0, e)
             })
         }
+        /* istanbul ignore if */
         if (validator.resetInFocus) {
             avalon.bind(node, 'focus', function (e) {
                 validator.onReset.call(node, e, field)
@@ -103,8 +109,13 @@ var dir = avalon.directive('validate', {
     validate: function (field, isValidateAll, event) {
         var promises = []
         var value = field.value
-        var elem = field.dom 
+        var elem = field.dom
         var validator = field.validator
+        /* istanbul ignore if */
+        if (typeof Promise !== 'function') {
+            avalon.error('please npm install avalon-promise or bluebird')
+        }
+        /* istanbul ignore if */
         if (elem.disabled)
             return
         for (var ruleName in field.rules) {
@@ -141,7 +152,7 @@ var dir = avalon.directive('validate', {
         //
         //如果promises不为空，说明经过验证拦截器
         var lastPromise = Promise.all(promises).then(function (array) {
-            var reasons = array.filter(function(el){
+            var reasons = array.filter(function (el) {
                 return typeof el === 'object'
             })
             if (!isValidateAll) {
