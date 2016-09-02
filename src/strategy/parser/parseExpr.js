@@ -1,5 +1,4 @@
 
-
 //缓存求值函数，以便多次利用
 var evaluatorPool = require('./evaluatorPool')
 
@@ -13,22 +12,20 @@ var rpipeline = /\|(?=\w)/
 var ruselessSp = /\s*(\.|\|)\s*/g
 
 var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
-var rhandleName = /^(?:\@|##)[$\w\.]+$/i
+var rhandleName = /^__vmodel__\.[$\w\.]+$/i
 
-var rfilters = /\|.+/g
-var rvar = /((?:\@|\$|\#\#)?\w+)/g
+var rfilters = /\.[\w\.\$]+/g
+var rvar = /\b[$a-zA-Z_][$a-zA-Z0-9_]*\b/g
 
 function collectLocal(str, ret) {
-    var arr = str.replace(rfilters, '').match(rvar)
-    if (arr) {
-        arr.filter(function (el) {
-            if (!/^[@\d\-]/.test(el) &&
-                    el.slice(0, 2) !== '##' &&
-                    el !== '$event' && !avalon.keyMap[el]) {
-                ret[el] = 1
-            }
-        })
-    }
+
+    str.replace(/__vmodel__/, ' ').
+            replace(rfilters, ' ').
+            replace(rvar, function (el) {
+                if (el !== '$event' && !avalon.keyMap[el]) {
+                    ret[el] = 1
+                }
+            })
 }
 
 function extLocal(ret) {
@@ -47,7 +44,7 @@ function parseExpr(str, category) {
         binding = str
         str = binding.expr
     }
-   
+
     var cacheID = str
     var cacheStr = evaluatorPool.get(category + ':' + cacheID)
 
@@ -70,29 +67,26 @@ function parseExpr(str, category) {
 
     var input = str.replace(rregexp, dig).//移除所有正则
             replace(rstring, dig).//移除所有字符串
-
             replace(rshortCircuit, dig).//移除所有短路或
             replace(ruselessSp, '$1').//移除. |两端空白
             split(rpipeline) //使用管道符分离所有过滤器及表达式的正体
     //还原body
-    var _body = input.shift()
+    var _body = input.shift().replace(rAt, '$1__vmodel__.')
     var local = {}
     var body = _body.replace(rfill, fill).trim()
-    if (category === 'on' && rhandleName.test(body)) {
-        body = body + '($event)'
-    }
 
-    body = body.replace(rAt, '$1__vmodel__.')
     /* istanbul ignore else  */
-    if (category === 'on') {
-        collectLocal(_body, local)
-    } else  if (category === 'js') {
+
+    if (category === 'js') {
         return evaluatorPool.put(category + ':' + cacheID, body)
     }
     //处理表达式的过滤器部分
     var filters = input.map(function (str) {
-        collectLocal(str.replace(/^\w+/g, ""), local)
-        str = str.replace(rfill, fill).replace(rAt, '$1__vmodel__.') //还原
+        str = str.replace(rAt, '$1__vmodel__.')
+        if (category === 'on') {
+            collectLocal(str.replace(/^\w+/g, ""), local)
+        }
+        str = str.replace(rfill, fill) //还原
         var hasBracket = false
         str = str.replace(brackets, function (a, b) {
             hasBracket = true
@@ -108,6 +102,10 @@ function parseExpr(str, category) {
     })
     var ret = []
     if (category === 'on') {
+        if (rhandleName.test(body)) {
+            body = body + '($event)'
+        }
+        collectLocal(_body, local)
         filters = filters.map(function (el) {
             return el.replace(/__value__/g, '$event')
         })
@@ -187,5 +185,3 @@ function quoteError(str, type) {
             + ')'
 }
 module.exports = avalon.parseExpr = parseExpr
-
-

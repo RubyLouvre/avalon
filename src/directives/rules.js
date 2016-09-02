@@ -33,7 +33,7 @@ avalon.shadowCopy(avalon.validators, {
     pattern: {
         message: '必须匹配{{pattern}}这样的格式',
         get: function (value, field, next) {
-            var elem = field.dom 
+            var elem = field.dom
             var data = field.data
             if (!isRegExp(data.pattern)) {
                 var h5pattern = elem.getAttribute("pattern")
@@ -54,6 +54,13 @@ avalon.shadowCopy(avalon.validators, {
         message: '必须数字',
         get: function (value, field, next) {//数值
             next(!!value && isFinite(value))// isFinite('') --> true
+            return value
+        }
+    },
+    norequired: {
+        message: '',
+        get: function (value, field, next) {
+            next(true)
             return value
         }
     },

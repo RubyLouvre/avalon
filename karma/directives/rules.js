@@ -147,6 +147,22 @@ describe('验证规则', function () {
             expect(v).to.equal(false)
         })
     })
+    it('norequired', function () {
+        var elem = document.createElement('input')
+        var v = avalon.validators
+        elem.value = '124.5'
+        var field = {
+            data: {},
+            dom: elem
+        }
+        v.norequired.get(elem.value, field, function (v) {
+            expect(v).to.equal(true)
+        })
+        elem.value = ''
+        v.norequired.get(elem.value, field, function (v) {
+            expect(v).to.equal(true)
+        })
+    })
     it('date', function () {
         var elem = document.createElement('input')
         var v = avalon.validators
@@ -228,21 +244,22 @@ describe('验证规则', function () {
             expect(v).to.equal(true)
         })
     })
-    it('minlength', function () {
+
+    it('maxlength', function () {
         var elem = document.createElement('input')
         var v = avalon.validators
         elem.value = 'test2example.com'
         var field = {
             data: {
-                minlength: 12
+                minlength: 7
             },
             dom: elem
         }
-        v.minlength.get(elem.value, field, function (v) {
-            expect(v).to.equal(true)
+        v.maxlength.get(elem.value, field, function (v) {
+            expect(v).to.equal(false)
         })
     })
-    it('maxlength', function () {
+     it('norequired', function () {
         var elem = document.createElement('input')
         var v = avalon.validators
         elem.value = 'test2example.com'

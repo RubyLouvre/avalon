@@ -47,7 +47,7 @@ var dir = avalon.directive('validate', {
                 onManual()
             })
         }
-         /* istanbul ignore if */
+        /* istanbul ignore if */
         if (typeof validator.onInit === 'function') { //vmodels是不包括vmodel的
             validator.onInit.call(dom, {
                 type: 'init',
@@ -117,37 +117,38 @@ var dir = avalon.directive('validate', {
         /* istanbul ignore if */
         if (elem.disabled)
             return
-        for (var ruleName in field.rules) {
-            var ruleValue = field.rules[ruleName]
-            if (ruleValue === false)
-                continue
-            var hook = avalon.validators[ruleName]
-            var resolve, reject
-            promises.push(new Promise(function (a, b) {
-                resolve = a
-                reject = b
-            }))
-            var next = function (a) {
-                if (field.norequired && value === '') {
-                    a = true
-                }
-                if (a) {
-                    resolve(true)
-                } else {
-                    var reason = {
-                        element: elem,
-                        data: field.data,
-                        message: elem.getAttribute('data-' + ruleName + '-message') || elem.getAttribute('data-message') || hook.message,
-                        validateRule: ruleName,
-                        getMessage: getMessage
+        var rules = field.rules
+        if (!(rules.norequired && value === '')) {
+            for (var ruleName in rules) {
+                var ruleValue = rules[ruleName]
+                if (ruleValue === false)
+                    continue
+                var hook = avalon.validators[ruleName]
+                var resolve, reject
+                promises.push(new Promise(function (a, b) {
+                    resolve = a
+                    reject = b
+                }))
+                var next = function (a) {
+                    if (a) {
+                        resolve(true)
+                    } else {
+                        var reason = {
+                            element: elem,
+                            data: field.data,
+                            message: elem.getAttribute('data-' + ruleName + '-message') || elem.getAttribute('data-message') || hook.message,
+                            validateRule: ruleName,
+                            getMessage: getMessage
+                        }
+                        resolve(reason)
                     }
-                    resolve(reason)
                 }
+                field.data = {}
+                field.data[ruleName] = ruleValue
+                hook.get(value, field, next)
             }
-            field.data = {}
-            field.data[ruleName] = ruleValue
-            hook.get(value, field, next)
         }
+
         //如果promises不为空，说明经过验证拦截器
         return Promise.all(promises).then(function (array) {
             var reasons = array.filter(function (el) {

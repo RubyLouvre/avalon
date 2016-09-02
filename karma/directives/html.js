@@ -242,4 +242,22 @@ describe('html', function () {
         delete avalon.scopes.html8
         delete avalon.vmodels.html8
     })
+    
+    it('ms-html遇到br', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller="html9">
+             <br ms-html="@aaa" />
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: "html9",
+            aaa: '<i>222</i>'
+        })
+        avalon.scan(div)
+        expect(div.getElementsByTagName('i').length).to.equal(0)
+        delete avalon.scopes.html9
+        delete avalon.vmodels.html9
+    })
 })

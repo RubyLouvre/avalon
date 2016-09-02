@@ -1,5 +1,5 @@
 /*!
- * built in 2016-9-1:23 version 2.114 by 司徒正美
+ * built in 2016-9-2:14 version 2.114 by 司徒正美
  * npm 2.1.14
  *     修正 ms-important的BUG
  *     重构 escapeHTML与unescapeHTML方法
@@ -2098,7 +2098,6 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	
-
 	//缓存求值函数，以便多次利用
 	var evaluatorPool = __webpack_require__(43)
 
@@ -2112,22 +2111,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	var ruselessSp = /\s*(\.|\|)\s*/g
 
 	var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
-	var rhandleName = /^(?:\@|##)[$\w\.]+$/i
+	var rhandleName = /^__vmodel__\.[$\w\.]+$/i
 
-	var rfilters = /\|.+/g
-	var rvar = /((?:\@|\$|\#\#)?\w+)/g
+	var rfilters = /\.[\w\.\$]+/g
+	var rvar = /\b[$a-zA-Z_][$a-zA-Z0-9_]*\b/g
 
 	function collectLocal(str, ret) {
-	    var arr = str.replace(rfilters, '').match(rvar)
-	    if (arr) {
-	        arr.filter(function (el) {
-	            if (!/^[@\d\-]/.test(el) &&
-	                    el.slice(0, 2) !== '##' &&
-	                    el !== '$event' && !avalon.keyMap[el]) {
-	                ret[el] = 1
-	            }
-	        })
-	    }
+
+	    str.replace(/__vmodel__/, ' ').
+	            replace(rfilters, ' ').
+	            replace(rvar, function (el) {
+	                if (el !== '$event' && !avalon.keyMap[el]) {
+	                    ret[el] = 1
+	                }
+	            })
 	}
 
 	function extLocal(ret) {
@@ -2146,7 +2143,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        binding = str
 	        str = binding.expr
 	    }
-	   
+
 	    var cacheID = str
 	    var cacheStr = evaluatorPool.get(category + ':' + cacheID)
 
@@ -2169,29 +2166,26 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var input = str.replace(rregexp, dig).//移除所有正则
 	            replace(rstring, dig).//移除所有字符串
-
 	            replace(rshortCircuit, dig).//移除所有短路或
 	            replace(ruselessSp, '$1').//移除. |两端空白
 	            split(rpipeline) //使用管道符分离所有过滤器及表达式的正体
 	    //还原body
-	    var _body = input.shift()
+	    var _body = input.shift().replace(rAt, '$1__vmodel__.')
 	    var local = {}
 	    var body = _body.replace(rfill, fill).trim()
-	    if (category === 'on' && rhandleName.test(body)) {
-	        body = body + '($event)'
-	    }
 
-	    body = body.replace(rAt, '$1__vmodel__.')
 	    /* istanbul ignore else  */
-	    if (category === 'on') {
-	        collectLocal(_body, local)
-	    } else  if (category === 'js') {
+
+	    if (category === 'js') {
 	        return evaluatorPool.put(category + ':' + cacheID, body)
 	    }
 	    //处理表达式的过滤器部分
 	    var filters = input.map(function (str) {
-	        collectLocal(str.replace(/^\w+/g, ""), local)
-	        str = str.replace(rfill, fill).replace(rAt, '$1__vmodel__.') //还原
+	        str = str.replace(rAt, '$1__vmodel__.')
+	        if (category === 'on') {
+	            collectLocal(str.replace(/^\w+/g, ""), local)
+	        }
+	        str = str.replace(rfill, fill) //还原
 	        var hasBracket = false
 	        str = str.replace(brackets, function (a, b) {
 	            hasBracket = true
@@ -2207,6 +2201,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    })
 	    var ret = []
 	    if (category === 'on') {
+	        if (rhandleName.test(body)) {
+	            body = body + '($event)'
+	        }
+	        collectLocal(_body, local)
 	        filters = filters.map(function (el) {
 	            return el.replace(/__value__/g, '$event')
 	        })
@@ -2286,9 +2284,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            + ')'
 	}
 	module.exports = avalon.parseExpr = parseExpr
-
-
-
 
 /***/ },
 /* 43 */
@@ -3147,7 +3142,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                onManual()
 	            })
 	        }
-	         /* istanbul ignore if */
+	        /* istanbul ignore if */
 	        if (typeof validator.onInit === 'function') { //vmodels是不包括vmodel的
 	            validator.onInit.call(dom, {
 	                type: 'init',
@@ -3217,37 +3212,38 @@ return /******/ (function(modules) { // webpackBootstrap
 	        /* istanbul ignore if */
 	        if (elem.disabled)
 	            return
-	        for (var ruleName in field.rules) {
-	            var ruleValue = field.rules[ruleName]
-	            if (ruleValue === false)
-	                continue
-	            var hook = avalon.validators[ruleName]
-	            var resolve, reject
-	            promises.push(new Promise(function (a, b) {
-	                resolve = a
-	                reject = b
-	            }))
-	            var next = function (a) {
-	                if (field.norequired && value === '') {
-	                    a = true
-	                }
-	                if (a) {
-	                    resolve(true)
-	                } else {
-	                    var reason = {
-	                        element: elem,
-	                        data: field.data,
-	                        message: elem.getAttribute('data-' + ruleName + '-message') || elem.getAttribute('data-message') || hook.message,
-	                        validateRule: ruleName,
-	                        getMessage: getMessage
+	        var rules = field.rules
+	        if (!(rules.norequired && value === '')) {
+	            for (var ruleName in rules) {
+	                var ruleValue = rules[ruleName]
+	                if (ruleValue === false)
+	                    continue
+	                var hook = avalon.validators[ruleName]
+	                var resolve, reject
+	                promises.push(new Promise(function (a, b) {
+	                    resolve = a
+	                    reject = b
+	                }))
+	                var next = function (a) {
+	                    if (a) {
+	                        resolve(true)
+	                    } else {
+	                        var reason = {
+	                            element: elem,
+	                            data: field.data,
+	                            message: elem.getAttribute('data-' + ruleName + '-message') || elem.getAttribute('data-message') || hook.message,
+	                            validateRule: ruleName,
+	                            getMessage: getMessage
+	                        }
+	                        resolve(reason)
 	                    }
-	                    resolve(reason)
 	                }
+	                field.data = {}
+	                field.data[ruleName] = ruleValue
+	                hook.get(value, field, next)
 	            }
-	            field.data = {}
-	            field.data[ruleName] = ruleValue
-	            hook.get(value, field, next)
 	        }
+
 	        //如果promises不为空，说明经过验证拦截器
 	        return Promise.all(promises).then(function (array) {
 	            var reasons = array.filter(function (el) {
@@ -3330,7 +3326,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    pattern: {
 	        message: '必须匹配{{pattern}}这样的格式',
 	        get: function (value, field, next) {
-	            var elem = field.dom 
+	            var elem = field.dom
 	            var data = field.data
 	            if (!isRegExp(data.pattern)) {
 	                var h5pattern = elem.getAttribute("pattern")
@@ -3351,6 +3347,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        message: '必须数字',
 	        get: function (value, field, next) {//数值
 	            next(!!value && isFinite(value))// isFinite('') --> true
+	            return value
+	        }
+	    },
+	    norequired: {
+	        message: '',
+	        get: function (value, field, next) {
+	            next(true)
 	            return value
 	        }
 	    },
