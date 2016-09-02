@@ -259,5 +259,6 @@ describe('html', function () {
         expect(div.getElementsByTagName('i').length).to.equal(0)
         delete avalon.scopes.html9
         delete avalon.vmodels.html9
+        done()
     })
 })
