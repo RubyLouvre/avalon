@@ -1,5 +1,5 @@
 /*!
- * built in 2016-9-2:14 version 2.114 by 司徒正美
+ * built in 2016-9-3:1 version 2.114 by 司徒正美
  * npm 2.1.14
  *     修正 ms-important的BUG
  *     重构 escapeHTML与unescapeHTML方法
@@ -1629,6 +1629,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    "class": function (dom, val) {
 	        dom.className = val
 	    },
+	    type: function(dom, val){
+	        try{
+	            dom.type = val
+	        }catch(e){}
+	    },
 	    style: function (dom, val) {
 	        dom.style.cssText = val
 	    },
@@ -1698,6 +1703,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        for (var i in props) {
 	            var val = props[i]
+	            //textarea 元素在IE7-不能设置 type 属性
 	            if (skipFalseAndFunction(val)) {
 	                if (specal[i] && avalon.msie < 8) {
 	                    specal[i](dom, val)
@@ -2761,10 +2767,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var getShortID = __webpack_require__(6).getShortID
 	//http://www.feiesoft.com/html/events.html
 	//http://segmentfault.com/q/1010000000687977/a-1020000000688757
-	var canBubbleUp = __webpack_require__(33)
-	var share = __webpack_require__(34)
+	var share = __webpack_require__(33)
 	var avEvent = share.avEvent
 	var dispatch = share.dispatch
+	var canBubbleUp = share.canBubbleUp
 
 	if (!W3C) {
 	    delete canBubbleUp.change
@@ -2998,51 +3004,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 33 */
-/***/ function(module, exports) {
-
-	//http://www.feiesoft.com/html/events.html
-	//http://segmentfault.com/q/1010000000687977/a-1020000000688757
-	module.exports = {
-	    click: true,
-	    dblclick: true,
-	    keydown: true,
-	    keypress: true,
-	    keyup: true,
-	    mousedown: true,
-	    mousemove: true,
-	    mouseup: true,
-	    mouseover: true,
-	    mouseout: true,
-	    wheel: true,
-	    mousewheel: true,
-	    input: true,
-	    change: true,
-	    beforeinput: true,
-	    compositionstart: true,
-	    compositionupdate: true,
-	    compositionend: true,
-	    select: true,
-	    //http://blog.csdn.net/lee_magnum/article/details/17761441
-	    cut: true,
-	    copy: true,
-	    paste: true,
-	    beforecut: true,
-	    beforecopy: true,
-	    beforepaste: true,
-	    focusin: true,
-	    focusout: true,
-	    DOMFocusIn: true,
-	    DOMFocusOut: true,
-	    DOMActivate: true,
-	    dragend: true,
-	    datasetchanged: true
-	}
-
-/***/ },
-/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var canBubbleUp = __webpack_require__(33)
+	var canBubbleUp = __webpack_require__(34)
 
 	var rconstant = /^[A-Z_]+$/
 	var rhandleHasVm = /^e/
@@ -3149,8 +3113,51 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	module.exports = {
+	    canBubbleUp: canBubbleUp,
 	    avEvent: avEvent,
 	    dispatch: dispatch
+	}
+
+/***/ },
+/* 34 */
+/***/ function(module, exports) {
+
+	//http://www.feiesoft.com/html/events.html
+	//http://segmentfault.com/q/1010000000687977/a-1020000000688757
+	module.exports = {
+	    click: true,
+	    dblclick: true,
+	    keydown: true,
+	    keypress: true,
+	    keyup: true,
+	    mousedown: true,
+	    mousemove: true,
+	    mouseup: true,
+	    mouseover: true,
+	    mouseout: true,
+	    wheel: true,
+	    mousewheel: true,
+	    input: true,
+	    change: true,
+	    beforeinput: true,
+	    compositionstart: true,
+	    compositionupdate: true,
+	    compositionend: true,
+	    select: true,
+	    //http://blog.csdn.net/lee_magnum/article/details/17761441
+	    cut: true,
+	    copy: true,
+	    paste: true,
+	    beforecut: true,
+	    beforecopy: true,
+	    beforepaste: true,
+	    focusin: true,
+	    focusout: true,
+	    DOMFocusIn: true,
+	    DOMFocusOut: true,
+	    DOMActivate: true,
+	    dragend: true,
+	    datasetchanged: true
 	}
 
 /***/ },
@@ -7417,9 +7424,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            break
 	        case 'textarea':
 	            var props = node.props
-	            props.type = 'textarea'
+	            props.type = nodeName
 	            props.value = innerHTML
-	            node.children = []
+	            node.children = [{
+	                  nodeName: '#text',
+	                  nodeValue: innerHTML
+	            }]
 	            break
 	        case 'option':
 	            node.children = [{

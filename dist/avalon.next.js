@@ -1,5 +1,5 @@
 /*!
- * built in 2016-9-2:14 version 2.114 by 司徒正美
+ * built in 2016-9-3:1 version 2.114 by 司徒正美
  * npm 2.1.14
  *     修正 ms-important的BUG
  *     重构 escapeHTML与unescapeHTML方法
@@ -1379,51 +1379,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 /* 32 */,
 /* 33 */
-/***/ function(module, exports) {
-
-	//http://www.feiesoft.com/html/events.html
-	//http://segmentfault.com/q/1010000000687977/a-1020000000688757
-	module.exports = {
-	    click: true,
-	    dblclick: true,
-	    keydown: true,
-	    keypress: true,
-	    keyup: true,
-	    mousedown: true,
-	    mousemove: true,
-	    mouseup: true,
-	    mouseover: true,
-	    mouseout: true,
-	    wheel: true,
-	    mousewheel: true,
-	    input: true,
-	    change: true,
-	    beforeinput: true,
-	    compositionstart: true,
-	    compositionupdate: true,
-	    compositionend: true,
-	    select: true,
-	    //http://blog.csdn.net/lee_magnum/article/details/17761441
-	    cut: true,
-	    copy: true,
-	    paste: true,
-	    beforecut: true,
-	    beforecopy: true,
-	    beforepaste: true,
-	    focusin: true,
-	    focusout: true,
-	    DOMFocusIn: true,
-	    DOMFocusOut: true,
-	    DOMActivate: true,
-	    dragend: true,
-	    datasetchanged: true
-	}
-
-/***/ },
-/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var canBubbleUp = __webpack_require__(33)
+	var canBubbleUp = __webpack_require__(34)
 
 	var rconstant = /^[A-Z_]+$/
 	var rhandleHasVm = /^e/
@@ -1530,8 +1488,51 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 	module.exports = {
+	    canBubbleUp: canBubbleUp,
 	    avEvent: avEvent,
 	    dispatch: dispatch
+	}
+
+/***/ },
+/* 34 */
+/***/ function(module, exports) {
+
+	//http://www.feiesoft.com/html/events.html
+	//http://segmentfault.com/q/1010000000687977/a-1020000000688757
+	module.exports = {
+	    click: true,
+	    dblclick: true,
+	    keydown: true,
+	    keypress: true,
+	    keyup: true,
+	    mousedown: true,
+	    mousemove: true,
+	    mouseup: true,
+	    mouseover: true,
+	    mouseout: true,
+	    wheel: true,
+	    mousewheel: true,
+	    input: true,
+	    change: true,
+	    beforeinput: true,
+	    compositionstart: true,
+	    compositionupdate: true,
+	    compositionend: true,
+	    select: true,
+	    //http://blog.csdn.net/lee_magnum/article/details/17761441
+	    cut: true,
+	    copy: true,
+	    paste: true,
+	    beforecut: true,
+	    beforecopy: true,
+	    beforepaste: true,
+	    focusin: true,
+	    focusout: true,
+	    DOMFocusIn: true,
+	    DOMFocusOut: true,
+	    DOMActivate: true,
+	    dragend: true,
+	    datasetchanged: true
 	}
 
 /***/ },
@@ -5249,9 +5250,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            break
 	        case 'textarea':
 	            var props = node.props
-	            props.type = 'textarea'
+	            props.type = nodeName
 	            props.value = innerHTML
-	            node.children = []
+	            node.children = [{
+	                  nodeName: '#text',
+	                  nodeValue: innerHTML
+	            }]
 	            break
 	        case 'option':
 	            node.children = [{
@@ -6267,8 +6271,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var svgTags = avalon.oneObject('circle,defs,ellipse,image,line,' +
 	        'path,polygon,polyline,rect,symbol,text,use,g,svg')
 
-
-	var rvml = /^\w+\:\w+/
 	if (avalon.browser) {
 	    var supportTemplate = 'content' in document.createElement('template')
 	}
@@ -6844,9 +6846,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	var root = avalon.root
 
 	var getShortID = __webpack_require__(6).getShortID
-	var canBubbleUp = __webpack_require__(33)
-	var share = __webpack_require__(34)
+	var share = __webpack_require__(33)
 	var dispatch = share.dispatch
+	var canBubbleUp = share.canBubbleUp
 
 	var eventHooks = avalon.eventHooks
 	/*绑定事件*/

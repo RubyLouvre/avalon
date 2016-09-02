@@ -105,6 +105,7 @@ function collectHandlers(elem, type, handlers) {
 }
 
 module.exports = {
+    canBubbleUp: canBubbleUp,
     avEvent: avEvent,
     dispatch: dispatch
 }

@@ -1,31 +1,37 @@
 <!DOCTYPE html>
-
 <html lang="en">
     <head>
         <meta charset="UTF-8">
         <title>Document</title>
-        <script src="https://cdn.bootcss.com/avalon.js/2.1.5/avalon.js"></script>
+        <script type="text/javascript" src="../dist/avalon.js"></script>
     </head>
-    <script>
-
-        var vm = avalon.define({
-            $id: "test",
-            tree: [
-                {name: "篮球", calss: 1},
-                {name: "羽毛球", calss: 2},
-                {name: "排球", calss: 2},
-                {name: "水球", calss: 2},
-            ],
-            template: ["<div>0</div>", "<span>1</span>", "<p>2</p>", "<em>3</em>"]
-        });
-
-
-
-    </script>
-    <body ms-controller="test">
-        <div ms-for="($index,el) in ##tree">
-            {{el.name}}---class---{{el.calss}}
-            <div ms-html="##template[$index]"></div>
+    <body>
+        <div ms-controller="test">
+            <div class="form-group form-required">
+                <label>短信验证码</label>
+                <div class="input-group">
+                    <span class="input-group-btn">
+                        <button class="btn btn-info" type="button" ms-if="@_sendMsgWaitingTime <= 0" ms-click="@sendVerificationCode">获取短信验证码</button>
+                        <button class="btn btn-info" type="button" ms-if="@_sendMsgWaitingTime > 0" disabled>请等候<span ms-text="@_sendMsgWaitingTime"></span>秒</button>
+                    </span>
+                </div>
+            </div>
         </div>
+        <script type="text/javascript">
+            var vm = avalon.define({
+                $id: 'test',
+                aaa: 0, // 本来应该是无关的属性却成为了导火线
+                _sendMsgWaitingTime: 0,
+                sendVerificationCode: function () {
+                    vm._sendMsgWaitingTime = 120;
+                }
+            });
+            // vm.aaa = 2; // 在avalon.scan()之前修改aaa，一切正常
+            avalon.scan(document.body);
+
+            vm.aaa = 2; // 在avalon.scan()后修改aaa，将导致异常
+
+
+        </script>
     </body>
 </html>

@@ -4,9 +4,9 @@ var window = avalon.window
 var root = avalon.root
 
 var getShortID = require('../../seed/lang.share').getShortID
-var canBubbleUp = require('./canBubbleUp')
 var share = require('./share')
 var dispatch = share.dispatch
+var canBubbleUp = share.canBubbleUp
 
 var eventHooks = avalon.eventHooks
 /*绑定事件*/

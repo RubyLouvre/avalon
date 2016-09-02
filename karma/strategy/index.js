@@ -111,8 +111,8 @@ describe('测试strategy模块', function () {
                  */
             })
             var textarea = avalon.speedUp(avalon.lexer(str))[0]
-
-            expect(textarea.children.length).to.equal(0)
+            expect(textarea.props.type).to.equal('textarea')
+            expect(textarea.children.length).to.equal(1)
             expect(textarea.props.value).to.equal('<span>333</span>')
 
         })

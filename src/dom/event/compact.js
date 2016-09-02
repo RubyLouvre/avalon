@@ -8,10 +8,10 @@ var W3C = avalon.modern
 var getShortID = require('../../seed/lang.share').getShortID
 //http://www.feiesoft.com/html/events.html
 //http://segmentfault.com/q/1010000000687977/a-1020000000688757
-var canBubbleUp = require('./canBubbleUp')
 var share = require('./share')
 var avEvent = share.avEvent
 var dispatch = share.dispatch
+var canBubbleUp = share.canBubbleUp
 
 if (!W3C) {
     delete canBubbleUp.change

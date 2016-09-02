@@ -19,9 +19,12 @@ function fixPlainTag(node, nodeName, innerHTML) {
             break
         case 'textarea':
             var props = node.props
-            props.type = 'textarea'
+            props.type = nodeName
             props.value = innerHTML
-            node.children = []
+            node.children = [{
+                  nodeName: '#text',
+                  nodeValue: innerHTML
+            }]
             break
         case 'option':
             node.children = [{
