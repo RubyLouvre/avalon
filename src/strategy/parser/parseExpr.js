@@ -60,11 +60,9 @@ function parseExpr(str, category) {
         maps[key] = a
         return key
     }
-
     function fill(a) {
         return maps[a]
     }
-
     var input = str.replace(rregexp, dig).//移除所有正则
             replace(rstring, dig).//移除所有字符串
             replace(rshortCircuit, dig).//移除所有短路或
