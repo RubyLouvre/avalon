@@ -1,5 +1,5 @@
 /*!
- * built in 2016-9-3:1 version 2.114 by 司徒正美
+ * built in 2016-9-5:15 version 2.114 by 司徒正美
  * npm 2.1.14
  *     修正 ms-important的BUG
  *     重构 escapeHTML与unescapeHTML方法
@@ -71,9 +71,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(15)
 	__webpack_require__(21)
 	__webpack_require__(44)
-	__webpack_require__(72)
-	avalon.onComponentDispose = __webpack_require__(79)
-	__webpack_require__(81)
+	__webpack_require__(73)
+	__webpack_require__(80)
 
 	module.exports = avalon
 
@@ -1630,7 +1629,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        dom.className = val
 	    },
 	    type: function(dom, val){
-	        try{
+	        try{ //textarea,button 元素在IE6,7设置 type 属性会抛错
 	            dom.type = val
 	        }catch(e){}
 	    },
@@ -1703,7 +1702,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        for (var i in props) {
 	            var val = props[i]
-	            //textarea 元素在IE7-不能设置 type 属性
 	            if (skipFalseAndFunction(val)) {
 	                if (specal[i] && avalon.msie < 8) {
 	                    specal[i](dom, val)
@@ -3853,11 +3851,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        maps[key] = a
 	        return key
 	    }
-
 	    function fill(a) {
 	        return maps[a]
 	    }
-
 	    var input = str.replace(rregexp, dig).//移除所有正则
 	            replace(rstring, dig).//移除所有字符串
 	            replace(rshortCircuit, dig).//移除所有短路或
@@ -4016,7 +4012,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(66)
 	//
 	__webpack_require__(67)
-	__webpack_require__(70)
+	__webpack_require__(71)
 	//优先级 ms-important, ms-controller, ms-for, ms-widget, ms-effect, ms-if
 	//.......
 	//ms-duplex
@@ -6012,7 +6008,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	var update = __webpack_require__(46)
-	var tryInitComponent = __webpack_require__(68)
+	var initComponent = __webpack_require__(68)
+	var disposeComponent = __webpack_require__(70)
+	avalon._disposeComponent = disposeComponent
 
 	avalon.component = function (name, definition) {
 	    //这是定义组件的分支,并将列队中的同类型对象移除
@@ -6058,7 +6056,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            //如果组件没有初始化,那么先初始化(生成对应的vm,$render)
 	            if (!src[vmName]) {
 	                /* istanbul ignore if */
-	                if (!tryInitComponent(src, copy[name], copy.local, copy.template)) {
+	                if (!initComponent(src, copy[name], copy.local, copy.template)) {
 	                    //替换成注释节点
 	                    src.nodeValue = 'unresolved component placeholder'
 	                    copyList[index] = src
@@ -6166,7 +6164,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	   
 	        vdom.dom = vm.$element = com
 	        com.vtree = [vdom]
-	        avalon.onComponentDispose(com)
+	        disposeComponent(com)
 	        vdom['component-ready:' + is] = true
 	        //--------------
 	        avalon.scopes[vm.$id] = {
@@ -6522,9 +6520,196 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 70 */
+/***/ function(module, exports) {
+
+	function inDomTree(el) {
+	    while (el) {
+	        if (el.nodeType === 9) {
+	            return true
+	        }
+	        el = el.parentNode
+	    }
+	    return false
+	}
+
+	function fireDisposeHook(el) {
+	    if (el.nodeType === 1 && el.getAttribute('wid') && !inDomTree(el)) {
+	        var wid = el.getAttribute('wid')
+	        var docker = avalon.scopes[ wid ]
+	        if (!docker)
+	            return
+	        var vm = docker.vmodel
+	        docker.vmodel.$fire("onDispose", {
+	            type: 'dispose',
+	            target: el,
+	            vmodel: vm
+	        })
+	        if (docker && !el.getAttribute('cached')) {
+	            delete docker.vmodel
+	            delete avalon.scopes[ wid ]
+	            var is = el.getAttribute('is')
+	            var v = el.vtree
+	            detachEvents(v)
+	            if (v) {
+	                v[0][is + '-mount'] = false
+	                v[0]['component-ready:' + is] = false
+	            }
+	        }
+	        return false
+	    }
+	}
+	var rtag = /^\w/
+	function detachEvents(arr) {
+	    for (var i in arr) {
+	        var el = arr[i]
+	        if (rtag.test(el.nodeName)) {
+	            for (var i in el) {
+	                if (i.indexOf('ms-on') === 0) {
+	                    delete el[i]
+	                }
+	            }
+	            if (el.children) {
+	                detachEvents(el.children)
+	            }
+	        }
+	    }
+	}
+	function fireDisposeHookDelay(a) {
+	    setTimeout(function () {
+	        fireDisposeHook(a)
+	    }, 4)
+	}
+	function fireDisposeHooks(nodes) {
+	    for (var i = 0, el; el = nodes[i++]; ) {
+	        fireDisposeHook(el)
+	    }
+	}
+
+
+
+	//http://stackoverflow.com/questions/11425209/are-dom-mutation-observers-slower-than-dom-mutation-events
+	//http://stackoverflow.com/questions/31798816/simple-mutationobserver-version-of-domnoderemovedfromdocument
+	function byMutationEvent(dom) {
+	    dom.addEventListener("DOMNodeRemovedFromDocument", function () {
+	        fireDisposeHookDelay(dom)
+	    })
+	}
+	//用于IE8+, firefox
+	function byRewritePrototype() {
+	    if (byRewritePrototype.execute) {
+	        return
+	    }
+	//https://www.web-tinker.com/article/20618.html?utm_source=tuicool&utm_medium=referral
+	//IE6-8虽然暴露了Element.prototype,但无法重写已有的DOM API
+	    byRewritePrototype.execute = true
+	    var p = Node.prototype
+	    function rewite(name, fn) {
+	        var cb = p[name]
+	        p[name] = function (a, b) {
+	            return  fn.call(this, cb, a, b)
+	        }
+	    }
+	    rewite('removeChild', function (fn, a, b) {
+	        fn.call(this, a, b)
+	        if (a.nodeType === 1) {
+	            fireDisposeHookDelay(a)
+	        }
+	        return a
+	    })
+
+	    rewite('replaceChild', function (fn, a, b) {
+	        fn.call(this, a, b)
+	        if (a.nodeType === 1) {
+	            fireDisposeHookDelay(a)
+	        }
+	        return a
+	    })
+	    //访问器属性需要用getOwnPropertyDescriptor处理
+	    var ep = Element.prototype, oldSetter
+	    function newSetter(html) {
+	        var all = avalon.slice(this.getElementsByTagName('*'))
+	        oldSetter.call(this, html)
+	        fireDisposeHooks(all)
+	    }
+	    try {
+	        var obj = Object.getOwnPropertyDescriptor(ep, 'innerHTML')
+	        var oldSetter = obj.set
+	        obj.set = newSetter
+	        Object.defineProperty(ep, 'innerHTML', obj)
+	    } catch (e) {
+	        //safari 9.1.2使用Object.defineProperty重写innerHTML会抛
+	        // Attempting to change the setter of an unconfigurable property.
+	        if (ep && ep.__lookupSetter__) {
+	            oldSetter = ep.__lookupSetter__('innerHTML')
+	            ep.__defineSetter__('innerHTML', newSetter)
+	        } else {
+	            throw e
+	        }
+	    }
+
+	    rewite('appendChild', function (fn, a) {
+	        fn.call(this, a)
+	        if (a.nodeType === 1 && this.nodeType === 11) {
+	            fireDisposeHookDelay(a)
+	        }
+	        return a
+	    })
+
+	    rewite('insertBefore', function (fn, a, b) {
+	        fn.call(this, a, b)
+	        if (a.nodeType === 1 && this.nodeType === 11) {
+	            fireDisposeHookDelay(a)
+	        }
+	        return a
+	    })
+	}
+
+	//用于IE6~8
+	var checkDisposeNodes = []
+	var checkID = 0
+	function byPolling(dom) {
+	    avalon.Array.ensure(checkDisposeNodes, dom)
+	    if (!checkID) {
+	        checkID = setInterval(function () {
+	            for (var i = 0, el; el = checkDisposeNodes[i]; ) {
+	                if (false === fireDisposeHook(el)) {
+	                    avalon.Array.removeAt(checkDisposeNodes, i)
+	                } else {
+	                    i++
+	                }
+	            }
+	            if (checkDisposeNodes.length == 0) {
+	                clearInterval(checkID)
+	                checkID = 0
+	            }
+	        }, 700)
+	    }
+	}
+
+
+	function fn(dom) {
+	    if (window.chrome && window.MutationEvent) {
+	        byMutationEvent(dom)
+	    } else {
+	        try {
+	            byRewritePrototype(dom)
+	        } catch (e) {
+	            byPolling(dom)
+	        }
+	    }
+	}
+	fn.byMutationEvent = byMutationEvent
+	fn.byRewritePrototype = byRewritePrototype
+	fn.byPolling = byPolling
+
+	module.exports = fn
+
+
+/***/ },
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var support = __webpack_require__(71)
+	var support = __webpack_require__(72)
 	var Cache = __webpack_require__(31)
 	var update = __webpack_require__(46)
 
@@ -6787,7 +6972,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 71 */
+/* 72 */
 /***/ function(module, exports) {
 
 	/**
@@ -6867,13 +7052,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 72 */
+/* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	avalon.lexer = __webpack_require__(73)
-	avalon.diff = __webpack_require__(77)
-	avalon.batch = __webpack_require__(78)
+	avalon.lexer = __webpack_require__(74)
+	avalon.diff = __webpack_require__(78)
+	avalon.batch = __webpack_require__(79)
 	// dispatch与patch 为内置模块
 	var vdom2body = __webpack_require__(39)
 	var rquoteEscapes = /\\\\(['"])/g
@@ -6905,7 +7090,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 73 */
+/* 74 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -6917,10 +7102,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	var avalon = __webpack_require__(4)
 
-	__webpack_require__(74)
+	__webpack_require__(75)
 	var voidTag = __webpack_require__(38)
-	var addTbody = __webpack_require__(75)
-	var fixPlainTag = __webpack_require__(76)
+	var addTbody = __webpack_require__(76)
+	var fixPlainTag = __webpack_require__(77)
 	var plainTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
 
 	var ropenTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
@@ -7156,7 +7341,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 74 */
+/* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -7347,7 +7532,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 75 */
+/* 76 */
 /***/ function(module, exports) {
 
 	
@@ -7400,7 +7585,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 76 */
+/* 77 */
 /***/ function(module, exports) {
 
 	/* 
@@ -7450,7 +7635,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = fixPlainTag
 
 /***/ },
-/* 77 */
+/* 78 */
 /***/ function(module, exports) {
 
 	/**
@@ -7559,7 +7744,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 78 */
+/* 79 */
 /***/ function(module, exports) {
 
 	
@@ -7632,207 +7817,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 79 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var ret = __webpack_require__(80)
-	var fireDisposeHook = ret.fireDisposeHook
-	var fireDisposeHooks = ret.fireDisposeHooks
-	var fireDisposeHookDelay = ret.fireDisposeHookDelay
-
-
-	//http://stackoverflow.com/questions/11425209/are-dom-mutation-observers-slower-than-dom-mutation-events
-	//http://stackoverflow.com/questions/31798816/simple-mutationobserver-version-of-domnoderemovedfromdocument
-	function byMutationEvent(dom) {
-	    dom.addEventListener("DOMNodeRemovedFromDocument", function () {
-	        fireDisposeHookDelay(dom)
-	    })
-	}
-	//用于IE8+, firefox
-	function byRewritePrototype() {
-	    if (byRewritePrototype.execute) {
-	        return
-	    }
-	//https://www.web-tinker.com/article/20618.html?utm_source=tuicool&utm_medium=referral
-	//IE6-8虽然暴露了Element.prototype,但无法重写已有的DOM API
-	    byRewritePrototype.execute = true
-	    var p = Node.prototype
-	    function rewite(name, fn) {
-	        var cb = p[name]
-	        p[name] = function (a, b) {
-	            return  fn.call(this, cb, a, b)
-	        }
-	    }
-	    rewite('removeChild', function (fn, a, b) {
-	        fn.call(this, a, b)
-	        if (a.nodeType === 1) {
-	            fireDisposeHookDelay(a)
-	        }
-	        return a
-	    })
-
-	    rewite('replaceChild', function (fn, a, b) {
-	        fn.call(this, a, b)
-	        if (a.nodeType === 1) {
-	            fireDisposeHookDelay(a)
-	        }
-	        return a
-	    })
-	    //访问器属性需要用getOwnPropertyDescriptor处理
-	    var ep = Element.prototype, oldSetter
-	    function newSetter(html) {
-	        var all = avalon.slice(this.getElementsByTagName('*'))
-	        oldSetter.call(this, html)
-	        fireDisposeHooks(all)
-	    }
-	    try {
-	        var obj = Object.getOwnPropertyDescriptor(ep, 'innerHTML')
-	        var oldSetter = obj.set
-	        obj.set = newSetter
-	        Object.defineProperty(ep, 'innerHTML', obj)
-	    } catch (e) {
-	        //safari 9.1.2使用Object.defineProperty重写innerHTML会抛
-	        // Attempting to change the setter of an unconfigurable property.
-	        if (ep && ep.__lookupSetter__) {
-	            oldSetter = ep.__lookupSetter__('innerHTML')
-	            ep.__defineSetter__('innerHTML', newSetter)
-	        } else {
-	            throw e
-	        }
-	    }
-
-	    rewite('appendChild', function (fn, a) {
-	        fn.call(this, a)
-	        if (a.nodeType === 1 && this.nodeType === 11) {
-	            fireDisposeHookDelay(a)
-	        }
-	        return a
-	    })
-
-	    rewite('insertBefore', function (fn, a, b) {
-	        fn.call(this, a, b)
-	        if (a.nodeType === 1 && this.nodeType === 11) {
-	            fireDisposeHookDelay(a)
-	        }
-	        return a
-	    })
-	}
-
-	//用于IE6~8
-	var checkDisposeNodes = []
-	var checkID = 0
-	function byPolling(dom) {
-	    avalon.Array.ensure(checkDisposeNodes, dom)
-	    if (!checkID) {
-	        checkID = setInterval(function () {
-	            for (var i = 0, el; el = checkDisposeNodes[i]; ) {
-	                if (false === fireDisposeHook(el)) {
-	                    avalon.Array.removeAt(checkDisposeNodes, i)
-	                } else {
-	                    i++
-	                }
-	            }
-	            if (checkDisposeNodes.length == 0) {
-	                clearInterval(checkID)
-	                checkID = 0
-	            }
-	        }, 700)
-	    }
-	}
-
-
-	function fn(dom) {
-	    if (window.chrome && window.MutationEvent) {
-	        byMutationEvent(dom)
-	    } else {
-	        try {
-	            byRewritePrototype(dom)
-	        } catch (e) {
-	            byPolling(dom)
-	        }
-	    }
-	}
-	fn.byMutationEvent = byMutationEvent
-	fn.byRewritePrototype = byRewritePrototype
-	fn.byPolling = byPolling
-
-	module.exports = fn
-
-
-/***/ },
 /* 80 */
-/***/ function(module, exports) {
-
-	function inDomTree(el) {
-	    while (el) {
-	        if (el.nodeType === 9) {
-	            return true
-	        }
-	        el = el.parentNode
-	    }
-	    return false
-	}
-
-	function fireDisposeHook(el) {
-	    if (el.nodeType === 1 && el.getAttribute('wid') && !inDomTree(el)) {
-	        var wid = el.getAttribute('wid')
-	        var docker = avalon.scopes[ wid ]
-	        if (!docker)
-	            return
-	        var vm = docker.vmodel
-	        docker.vmodel.$fire("onDispose", {
-	            type: 'dispose',
-	            target: el,
-	            vmodel: vm
-	        })
-	        if (docker && !el.getAttribute('cached')) {
-	            delete docker.vmodel
-	            delete avalon.scopes[ wid ]
-	            var is = el.getAttribute('is')
-	            var v = el.vtree
-	            detachEvents(v)
-	            if (v) {
-	                v[0][is + '-mount'] = false
-	                v[0]['component-ready:' + is] = false
-	            }
-	        }
-	        return false
-	    }
-	}
-	var rtag = /^\w/
-	function detachEvents(arr) {
-	    for (var i in arr) {
-	        var el = arr[i]
-	        if (rtag.test(el.nodeName)) {
-	            for (var i in el) {
-	                if (i.indexOf('ms-on') === 0) {
-	                    delete el[i]
-	                }
-	            }
-	            if (el.children) {
-	                detachEvents(el.children)
-	            }
-	        }
-	    }
-	}
-	function fireDisposeHookDelay(a) {
-	    setTimeout(function () {
-	        fireDisposeHook(a)
-	    }, 4)
-	}
-	function fireDisposeHooks(nodes) {
-	    for (var i = 0, el; el = nodes[i++]; ) {
-	        fireDisposeHook(el)
-	    }
-	}
-	module.exports = {
-	    fireDisposeHookDelay: fireDisposeHookDelay,
-	    fireDisposeHooks: fireDisposeHooks,
-	    fireDisposeHook: fireDisposeHook
-	}
-
-/***/ },
-/* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -7842,8 +7827,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * ------------------------------------------------------------
 	 */
 
-	var share = __webpack_require__(82)
-	var createViewModel = __webpack_require__(86)
+	var share = __webpack_require__(81)
+	var createViewModel = __webpack_require__(85)
 
 	var isSkip = share.isSkip
 	var toJson = share.toJson
@@ -8147,11 +8132,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	//使用这个AJAX库 https://github.com/matthew-andrews/isomorphic-fetch
 
 /***/ },
-/* 82 */
+/* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var share = __webpack_require__(83)
-	var canHideProperty = __webpack_require__(85)
+	var share = __webpack_require__(82)
+	var canHideProperty = __webpack_require__(84)
 	var initEvents = share.initEvents
 
 	/*
@@ -8273,13 +8258,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 83 */
+/* 82 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
 	var $$midway = {}
 	var $$skipArray = __webpack_require__(69)
-	var dispatch = __webpack_require__(84)
+	var dispatch = __webpack_require__(83)
 	var $emit = dispatch.$emit
 	var $watch = dispatch.$watch
 	/*
@@ -8560,7 +8545,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 84 */
+/* 83 */
 /***/ function(module, exports) {
 
 	
@@ -8661,7 +8646,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 85 */
+/* 84 */
 /***/ function(module, exports) {
 
 	//如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
@@ -8678,11 +8663,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = flag
 
 /***/ },
-/* 86 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
-	var canHideProperty = __webpack_require__(85)
+	var canHideProperty = __webpack_require__(84)
 	var $$skipArray = __webpack_require__(69)
 
 

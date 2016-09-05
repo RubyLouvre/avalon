@@ -3,7 +3,7 @@ describe('测试component模块', function () {
 
     describe('onComponentDispose', function () {
         it('contains', function () {
-            var fn = avalon.onComponentDispose
+            var fn = avalon._disposeComponent
             expect(fn).to.be.a('function')
             var div = document.createElement('div')
             fn.byMutationEvent(div)

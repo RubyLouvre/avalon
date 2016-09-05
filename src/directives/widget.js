@@ -1,5 +1,7 @@
 var update = require('./_update')
-var tryInitComponent = require('../component/init')
+var initComponent = require('../component/init')
+var disposeComponent = require('../component/dispose')
+avalon._disposeComponent = disposeComponent
 
 avalon.component = function (name, definition) {
     //这是定义组件的分支,并将列队中的同类型对象移除
@@ -45,7 +47,7 @@ avalon.directive('widget', {
             //如果组件没有初始化,那么先初始化(生成对应的vm,$render)
             if (!src[vmName]) {
                 /* istanbul ignore if */
-                if (!tryInitComponent(src, copy[name], copy.local, copy.template)) {
+                if (!initComponent(src, copy[name], copy.local, copy.template)) {
                     //替换成注释节点
                     src.nodeValue = 'unresolved component placeholder'
                     copyList[index] = src
@@ -153,7 +155,7 @@ avalon.directive('widget', {
    
         vdom.dom = vm.$element = com
         com.vtree = [vdom]
-        avalon.onComponentDispose(com)
+        disposeComponent(com)
         vdom['component-ready:' + is] = true
         //--------------
         avalon.scopes[vm.$id] = {
