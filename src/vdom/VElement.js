@@ -13,7 +13,7 @@ var specal = {
         dom.className = val
     },
     type: function(dom, val){
-        try{
+        try{ //textarea,button 元素在IE6,7设置 type 属性会抛错
             dom.type = val
         }catch(e){}
     },
@@ -86,7 +86,6 @@ VElement.prototype = {
         }
         for (var i in props) {
             var val = props[i]
-            //textarea 元素在IE7-不能设置 type 属性
             if (skipFalseAndFunction(val)) {
                 if (specal[i] && avalon.msie < 8) {
                     specal[i](dom, val)
