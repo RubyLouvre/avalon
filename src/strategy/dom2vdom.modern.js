@@ -9,13 +9,11 @@ function getAttributes(node) {
     var attrs = node.attributes, ret = {}
     for (var i = 0, n = attrs.length; i < n; i++) {
         var attr = attrs[i]
-        if (attr.specified) {
-            var name = attr.name
-            if (name.charAt(0) === ':') {
-                name = name.replace(rcolon, 'ms-')
-            }
-            ret[name] = attr.value
+        var name = attr.name
+        if (name.charAt(0) === ':') {
+            name = name.replace(rcolon, 'ms-')
         }
+        ret[name] = attr.value
     }
     if (rformElement.test(node.nodeName)) {
         ret.type = node.type
@@ -46,7 +44,7 @@ function createVDOM(node) {
     var type = node.nodeName.toLowerCase()
     ret.nodeName = type
     ret.dom = node
-    if (type.charAt(0) === '#') {//2, 8
+    if (node.nodeType > 1) {//2, 8
         var nodeValue = node.nodeValue
         if (/\S/.test(nodeValue)) {
             ret.nodeValue = nodeValue
@@ -56,7 +54,6 @@ function createVDOM(node) {
         if (voidTag[type]) {
             ret.isVoidTag = true
         }
-
         ret.children = createVDOMBatch(node)
         if ('selectedIndex' in ret) {
             node.selectedIndex = ret.selectedIndex
@@ -79,30 +76,27 @@ function createVDOMBatch(parent) {
         var next = node.nextSibling
         switch (node.nodeType) {
             case 1:
-                if (avalon.modern) {
-                    var name = ':for'
-                    var value = node.getAttribute(name)
-                    if (!value) {
-                        name = 'ms-for'
-                        value = node.getAttribute(name)
-                    }
-                } else {
-                    value = node.getAttributeNode(':for') || node.getAttributeNode('ms-for')
+
+                var name = ':for'
+                var a = node.getAttribute(name)
+                if (!a) {
+                    name = 'ms-for'
+                    a = node.getAttribute(name)
                 }
 
-                if (value) {
-                    if (!name) {
-                        value = value.value
-                        name = value.name
-                    }
-                    var start = document.createComment('ms-for:' + value)
+
+                if (a) {
+                    var start = document.createComment('ms-for:' + a.value)
                     var end = document.createComment('ms-for-end:')
+
                     node.removeAttribute(name)
+
                     if (parent) {
                         parent.insertBefore(end, node.nextSibling)
                         parent.insertBefore(start, node)
                     }
                     arr.push(createVDOM(start), createVDOM(node), createVDOM(end))
+
                 } else {
                     arr.push(createVDOM(node))
                 }

@@ -192,8 +192,6 @@ function arrayFactory(array, old, heirloom, options) {
     if (old && old.splice) {
         var args = [0, old.length].concat(array)
         ++avalon.suspendUpdate
-          avalon.callArray =   options.pathname
-       
         old.splice.apply(old, args)
         --avalon.suspendUpdate
         return old
@@ -210,9 +208,7 @@ function arrayFactory(array, old, heirloom, options) {
                         options.pathname + '.' + a
                 vm.$fire(path, b, c)
                 if (!d && !heirloom.$$wait$$ && !avalon.suspendUpdate ) {
-                    avalon.callArray = path
-                    batchUpdateView(vm.$id)
-                    delete avalon.callArray 
+                    batchUpdateView(vm.$id, path)
                 }
             }
         }
