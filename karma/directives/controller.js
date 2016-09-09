@@ -82,10 +82,10 @@ describe('controller', function () {
             h2 = div.getElementsByTagName('h2')[0]
             h3 = div.getElementsByTagName('h3')[0]
             cdiv = document.getElementById('cdiv')
-            
-            expect(h1.innerHTML).to.equal(root.page)
-            expect(h2.innerHTML).to.equal(first.page)
-            expect(h3.innerHTML).to.equal(second.page)
+            console.log(h3.innerHTML, '!!!',cdiv)
+            expect(h1.innerHTML+"!").to.equal(root.page+"!")
+            expect(h2.innerHTML+"!!").to.equal(first.page+"!!")
+            expect(h3.innerHTML+"!!!").to.equal(second.page+"!!!")
             expect(!!cdiv).to.equal(false)
             setTimeout(function(){
                 div.innerHTML = ""

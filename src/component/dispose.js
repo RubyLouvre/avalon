@@ -14,15 +14,20 @@ function fireDisposeHook(el) {
         var docker = avalon.scopes[ wid ]
         if (!docker)
             return
-        var vm = docker.vmodel
-        docker.vmodel.$fire("onDispose", {
+        var elemID = el.getAttribute('ms-controller') || el.getAttribute('ms-important')       
+        var vm = elemID && avalon.vmodels[elemID] || docker.vmodel
+        vm.$fire("onDispose", {
             type: 'dispose',
             target: el,
             vmodel: vm
         })
-        if (docker && !el.getAttribute('cached')) {
+        if (elemID) {
+            return
+        }
+        if (!el.getAttribute('cached')) {
             delete docker.vmodel
             delete avalon.scopes[ wid ]
+            // delete avalon.vmodels[ wid ]
             var is = el.getAttribute('is')
             var v = el.vtree
             detachEvents(v)

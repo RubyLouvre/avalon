@@ -166,15 +166,35 @@ function wrapDelimiter(expr) {
 }
 
 function add(a) {
-    return 'vnodes.push(' + a + ');'
+    return 'vnodes.push( ' + a + ');'
 }
 function addTag(obj) {
     return add(stringify(obj))
 }
-
+avalon.collectDep = function(str) {
+    var arr = []
+    str.replace(/__vmodel__\.([\$\w]+)/g, function (a, b) {
+        arr.push(b)
+        return ''
+    })
+    if (arr.length) {
+        return  ' avalon.matchDep(' + avalon.quote(arr.join(' ')) + ',avalon.spath) ?'
+    } else {
+        return 'true ? '
+    }
+}
+avalon.matchDep = function (a, s) {
+    if (!s)
+        return true
+    return a.split(' ').some(function (aa) {
+        if (s.indexOf(aa) === 0)
+            return true
+    })
+}
 function parseText(el) {
     var array = extractExpr(el.nodeValue)//返回一个数组
     var nodeValue = ''
+
     if (array.length === 1) {
         nodeValue = wrapDelimiter(array[0].expr)
     } else {
@@ -183,7 +203,8 @@ function parseText(el) {
         }).join(' + ')
         nodeValue = 'String(' + token + ')'
     }
-    return '{\nnodeName: "#text",\ndynamic:true,\nnodeValue: ' + nodeValue + '\n}'
+    var ternary = avalon.collectDep(nodeValue)
+    return ternary + '{\nnodeName: "#text",\ndynamic:true,\nnodeValue: ' + nodeValue + '\n}' + ': {nodeName: "#text"}'
 }
 
 var rlineSp = /\n\s*/g

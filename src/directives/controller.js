@@ -74,6 +74,8 @@ avalon.directive('controller', {
         }
         update(vdom, function () {
             avalon(dom).removeClass('ms-controller')
+            avalon._disposeComponent(dom)
+            dom.setAttribute('wid', id)
             var events = needFire.$events["onReady"]
             if (events) {
                 needFire.$fire('onReady')
