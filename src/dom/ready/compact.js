@@ -1,5 +1,7 @@
 var avalon = require('../../seed/core')
 var scan = require('./scan')
+scan.dom2vdom = require('../../strategy/dom2vdom.compact')
+
 var document = avalon.document
 
 var readyList = [], isReady

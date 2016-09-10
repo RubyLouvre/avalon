@@ -14,13 +14,12 @@ var ruselessSp = /\s*(\.|\|)\s*/g
 var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
 var rhandleName = /^__vmodel__\.[$\w\.]+$/i
 
-var rfilters = /\.[\w\.\$]+/g
+var robjectProperty = /\.[\w\.\$]+/g
 var rvar = /\b[$a-zA-Z_][$a-zA-Z0-9_]*\b/g
 
 function collectLocal(str, ret) {
-
     str.replace(/__vmodel__/, ' ').
-            replace(rfilters, ' ').
+            replace(robjectProperty, ' ').
             replace(rvar, function (el) {
                 if (el !== '$event' && !avalon.keyMap[el]) {
                     ret[el] = 1
@@ -47,13 +46,12 @@ function parseExpr(str, category) {
 
     var cacheID = str
     var cacheStr = evaluatorPool.get(category + ':' + cacheID)
-
     if (cacheStr) {
         return cacheStr
     }
 
     var number = 1
-//相同的表达式生成相同的函数
+    //相同的表达式生成相同的函数
     var maps = {}
     function dig(a) {
         var key = '??' + number++
@@ -82,21 +80,17 @@ function parseExpr(str, category) {
     var filters = input.map(function (str) {
         str = str.replace(rAt, '$1__vmodel__.')
         if (category === 'on') {
-            collectLocal(str.replace(/^\w+/g, ""), local)
+            collectLocal(str.replace(/^\w+/, ''), local)
         }
-        str = str.replace(rfill, fill) //还原
-        var hasBracket = false
+        var bracketArgs = '(__value__'
         str = str.replace(brackets, function (a, b) {
-            hasBracket = true
-            return /\S/.test(b) ?
-                    '(__value__,' + b + ');' :
-                    '(__value__);'
+            if (/\S/.test(b)) {
+                bracketArgs += ',' + b.replace(rfill, fill) //还原字符串,正则,短路运算符
+            }
+            return ''
         })
-        if (!hasBracket) {
-            str += '(__value__);'
-        }
-        str = str.replace(/(\w+)/, 'avalon.__format__("$1")')
-        return '__value__ = ' + str
+        return str.replace(/^(\w+)/, '__value__ =  avalon.__format__("$1")') +
+                bracketArgs + ')'
     })
     var ret = []
     if (category === 'on') {
@@ -155,8 +149,9 @@ function parseExpr(str, category) {
 
         return  getterBody
     } else {
+        binding.body = body
         ret = [
-            '(function(){',
+            'function (){',
             'try{',
             'var __value__ = ' + body,
             (category === 'text' ?
@@ -166,7 +161,7 @@ function parseExpr(str, category) {
             quoteError(str, category),
             '\treturn ""',
             '}',
-            '})()'
+            '}'
         ]
         filters.unshift(3, 0)
     }
@@ -183,3 +178,4 @@ function quoteError(str, type) {
             + ')'
 }
 module.exports = avalon.parseExpr = parseExpr
+

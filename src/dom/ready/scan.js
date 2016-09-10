@@ -1,5 +1,4 @@
 var onceWarn = true //只警告一次
-var dom2vdom = require('../../strategy/dom2vdom')
 function scan(nodes) {
     for (var i = 0, elem; elem = nodes[i++]; ) {
         if (elem.nodeType === 1) {
@@ -25,7 +24,7 @@ function scan(nodes) {
 
                 //IE6-8下元素的outerHTML前面会有空白
                 //第一次扫描就清空所有空白节点,并生成最初的vtree
-                var vtree = [dom2vdom(elem)]
+                var vtree = [avalon.scan.dom2vdom(elem)]
                 var now = new Date()
                 elem.vtree = avalon.speedUp(vtree)
 
@@ -62,7 +61,7 @@ module.exports = avalon.scan = function (a) {
     }
     scan([a])
 }
-avalon.scan.dom2vdom = dom2vdom
+
 
 function getController(a) {
     return a.getAttribute('ms-controller') ||

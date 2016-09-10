@@ -57,3 +57,15 @@ function byPriority(a, b) {
 }
 
 module.exports = extractBindings
+
+/*
+ * avalon有两种实现虚拟DOM的机制
+ * 一是从文本转换为虚拟DOM
+ * 二是从DOM转换为虚拟DOM
+ * 
+ * 文本转换为虚拟DOM,主要是用于后端渲染或组件渲染,好处是性能好,坏处是要自己处理option,tbody等特殊情况 
+ * DOM转换为虚拟DOM,主要是用于前端的首次渲染,可以有效避开浏览器兼容性
+ * 
+ * 
+ * 
+ */

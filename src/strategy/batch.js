@@ -18,6 +18,7 @@ function batchUpdate(id, spath) {
     } else {
         renderingID = id
     }
+    
     var scope = avalon.scopes[id]
     if (!scope || !document.nodeName || avalon.suspendUpdate) {
         return renderingID = null
@@ -26,28 +27,17 @@ function batchUpdate(id, spath) {
     var dom = vm.$element
     var source = dom.vtree || []
     var renderFn = vm.$render
-  /*  if (spath) {
-        var newBody = renderFn.body.replace(/dynamic\:{[^}]+}/g, function (str) {
-            if (str.indexOf(spath) === -1) {
-                return "dynamic:0"
-            } else {
-                return str
-            }
-        })
-        var copy = Function('__vmodel__', '__local__', newBody)(scope.vmodel, scope.local)
-    } else {
-        var copy = renderFn(scope.vmodel, scope.local)
-    }*/
+    avalon.spath = spath
+   
     var copy = renderFn(scope.vmodel, scope.local)
 
     if (scope.isTemp) {
         //在最开始时,替换作用域的所有节点,确保虚拟DOM与真实DOM是对齐的
         delete avalon.scopes[id]
     }
-
-
+    console.log(spath,"spath !!!")
     avalon.diff(copy, source)
-
+    delete avalon.spath
 
     var index = needRenderIds.indexOf(renderingID)
     renderingID = 0
