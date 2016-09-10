@@ -57,7 +57,7 @@ function parseNode(vdom) {
             /* istanbul ignore else  */
             if (vdom.forExpr) {// 处理ms-for指令
                 var copy = {
-                    dynamic: true,
+                    //  dynamic: true,
                     vmodel: '__vmodel__'
                 }
                 for (var i in vdom) {
@@ -98,7 +98,7 @@ function parseNode(vdom) {
             }
         default:
             if (!vdom.dynamic && vdom.skipContent) {
-                return addTag(vdom)
+                return add(stringify(vdom, true))
             }
 
             var copy = {
@@ -106,8 +106,7 @@ function parseNode(vdom) {
             }
             var props = vdom.props
             if (vdom.dynamic) {
-                copy.dynamic = '{}'
-
+                //copy.dynamic = '{}'//动态生成dynamic
                 var bindings = extractBindings(copy, props)
                 bindings.map(function (b) {
                     //将ms-*的值变成函数,并赋给copy.props[ms-*]
@@ -131,14 +130,14 @@ function parseNode(vdom) {
                     if (c) {
                         if (vdom.skipContent) {
                             copy.children = '[' + c.map(function (a) {
-                                return stringify(a)
+                                return stringify(a, true)
                             }) + ']'
                         } else if (c.length === 1 && c[0].nodeName === '#text') {
 
                             if (c[0].dynamic) {
                                 copy.children = '[' + parseText(c[0]) + ']'
                             } else {
-                                copy.children = '[' + stringify(c[0]) + ']'
+                                copy.children = '[' + stringify(c[0], true) + ']'
                             }
 
                         } else {
@@ -152,7 +151,6 @@ function parseNode(vdom) {
                 copy.template = vdom.template
             if (vdom.skipContent)
                 copy.skipContent = true
-
             return addTag(copy)
 
     }
@@ -171,41 +169,85 @@ function add(a) {
 function addTag(obj) {
     return add(stringify(obj))
 }
-avalon.collectDep = function(str) {
+
+avalon.matchDep = function (a, s) {
+    if (!s)
+        return true
+    return a.split(',').some(function (aa) {
+        if (s.indexOf(aa) === 0)
+            return true
+    })
+}
+
+avalon.addDirs = function (obj, alwayHasDynamic) {
+    var args = avalon.slice(arguments, 2)
+    for (var i = 0; i < args.length; i += 3) {
+        var path = args[i]
+        var dir = args[i + 1]
+        var fn = args[i + 2]
+        if (avalon.matchDep(path, avalon.spath)) {
+            if (typeof fn === 'function' && dir.indexOf('ms-on') === -1) {
+                obj[dir] = fn()
+            } else {
+                obj[dir] = fn
+            }
+
+            alwayHasDynamic = true
+        }
+    }
+    if (alwayHasDynamic) {
+        obj.dynamic = {}
+    }
+    return obj
+}
+
+avalon.collectDep = function (str) {
     var arr = []
     str.replace(/__vmodel__\.([\$\w]+)/g, function (a, b) {
         arr.push(b)
         return ''
     })
-    if (arr.length) {
-        return  ' avalon.matchDep(' + avalon.quote(arr.join(' ')) + ',avalon.spath) ?'
-    } else {
-        return 'true ? '
-    }
+    return arr.length ? quote(arr.join(',')) : '""'
 }
-avalon.matchDep = function (a, s) {
-    if (!s)
-        return true
-    return a.split(' ').some(function (aa) {
-        if (s.indexOf(aa) === 0)
-            return true
-    })
-}
+
 function parseText(el) {
     var array = extractExpr(el.nodeValue)//返回一个数组
     var nodeValue = ''
 
     if (array.length === 1) {
-        nodeValue = wrapDelimiter(array[0].expr)
+        var expr = array[0].expr
+        nodeValue = wrapDelimiter(expr)
+        if (nodeValue === expr) {
+            return '{\nnodeName: "#text",\ndynamic:true,\nnodeValue: ' + nodeValue + '\n}'
+        } else {
+            var path = avalon.collectDep(nodeValue)
+            return 'avalon.addDirs({nodeName: "#text"}, false,' + path + ',"nodeValue",' + nodeValue + ')'
+        }
+
     } else {
+        var always = false
         var token = array.map(function (el) {
-            return el.type ? wrapDelimiter(el.expr) : quote(el.expr)
+            if (el.type) {
+                nodeValue = wrapDelimiter(el.expr)
+                if (nodeValue === el.expr) {
+                    always = true
+                } else {
+                    nodeValue += "()"
+                }
+                return nodeValue
+            } else {
+                return quote(el.expr)
+            }
         }).join(' + ')
-        nodeValue = 'String(' + token + ')'
+        nodeValue = 'function(){return ' + token + "}"
+        var ternary = avalon.collectDep(nodeValue)
+        var aaa = [always, ternary, '"nodeValue"', nodeValue]
+        return  'avalon.addDirs({nodeName: "#text"}, ' + aaa + ' )'
     }
-    var ternary = avalon.collectDep(nodeValue)
-    return ternary + '{\nnodeName: "#text",\ndynamic:true,\nnodeValue: ' + nodeValue + '\n}' + ': {nodeName: "#text"}'
+
+
 }
+avalon.parseText = parseText
 
 var rlineSp = /\n\s*/g
 

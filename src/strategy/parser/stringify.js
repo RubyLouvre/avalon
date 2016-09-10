@@ -22,13 +22,15 @@ function fixKey(k) {
     return (rneedQuote.test(k) || keyMap[k]) ? quote(k) : k
 }
 
-function stringify(obj) {
+function stringify(obj, skip) {
     var arr1 = []
 //字符不用东西包起来就变成变量
+    var dirs = []
+    var addDynamic = false
     for (var i in obj) {
         var type = typeof obj[i]
         if (type === 'object') {
-            if (i === 'props' ) {
+            if (i === 'props') {
                 var arr2 = []
                 for (var k in obj.props) {
                     var kv = obj.props[k]
@@ -37,22 +39,44 @@ function stringify(obj) {
                     }
                     arr2.push(fixKey(k) + ': ' + kv)
                 }
-                arr1.push(i+': {' + arr2.join(',\n') + '}')
+                arr1.push(i + ': {' + arr2.join(',\n') + '}')
 
             } else if (i === 'children') {
                 arr1.push('children: [' + obj[i].map(function (a) {
-                    return stringify(a)
+                    return stringify(a, skip)
                 }) + ']')
             }
         } else if (obj.hasOwnProperty(i)) {
             var v = obj[i]
+            if (i.indexOf('ms-') === 0) {
+                if (type === 'string') {
+                    //抽取vm属性名, 指令名, 求值函数
+                    dirs.push(avalon.collectDep(v), quote(i), v)
+                } else {//如果是ms-text, ms-controller,ms-important
+                    addDynamic = true
+                    arr1.push(fixKey(i) + ':' + v)
+                }
+                continue
+            }
             if (type === 'string') {
                 v = quoted[i] ? quote(v) : v
             }
             arr1.push(fixKey(i) + ':' + v)
         }
     }
-    return '{\n' + arr1.join(',\n') + '}'
+    var ret = '{\n' + arr1.join(',\n') + '}'
+    if (skip) {
+        return ret
+    }
+    if (addDynamic || dirs.length) {
+        dirs.unshift(ret, addDynamic)
+        ret = 'avalon.addDirs(' + dirs + ")"
+    }
+    return ret
 }
 
 module.exports = stringify
+
+
+
+

@@ -2,7 +2,8 @@
 var rmsForStart = /^\s*ms\-for\:/
 var rmsForEnd = /^\s*ms\-for\-end/
 var vdom2body = require('./vdom2body')
-avalon.speedUp = function (array) {
+
+module.exports = avalon.speedUp = function (array) {
     hasDirectives(array)
     return array
 }
