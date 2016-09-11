@@ -17,7 +17,7 @@ var robjectProperty = /\.[\w\.\$]+/g
 var rvar = /\b[$a-zA-Z_][$a-zA-Z0-9_]*\b/g
 var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
 
-module.exports =  parseExpr
+module.exports = parseExpr
 
 //传入一个包含name, type, expr的对象, 将会返回一个字符串,
 //并为原对象添加paths, locals属性
@@ -106,14 +106,14 @@ function parseExpr(binding) {
             quoteError(str, category).replace('parse', 'set'),
             '}',
             '}']
-        pool.put('duplex:set:' + cacheID, setterBody.join('\n'))
+        pool.put('duplex:set:' + binding.expr, setterBody.join('\n'))
         //对某个值进行格式化
         var getterBody = [
             'function (__vmodel__){',
             'try{',
-            'var __value__ = ' + body + '\n',
+            'var __value__ = ' + body,
             filters.join('\n'),
-            'return __value__\n',
+            'return __value__',
             '}catch(e){',
             quoteError(str, category).replace('parse', 'get'),
             '}',
@@ -146,7 +146,7 @@ function cacheData(binding, text, locals, paths) {
         locals: Object.keys(locals).join(','),
         paths: Object.keys(paths).join(',')
     }
-    var key = binding.type+":"+binding.expr
+    var key = binding.type + ":" + binding.expr
     binding.locals = obj.locals
     binding.paths = obj.paths
     pool.put(key, obj)

@@ -12,15 +12,17 @@ var updateView = require('./updateView.compact')
 var addValidateField = require('./addValidateField')
 var duplexDir = 'ms-duplex'
 
-
 avalon.directive('duplex', {
     priority: 2000,
     parse: function (copy, src, binding) {
         var expr = binding.expr
+        var debug = binding.name + '=' + expr
         var etype = src.props.type
         //处理数据转换器
         var parsers = binding.param, dtype
         var isChecked = false
+        binding.name = duplexDir
+
         parsers = parsers ? parsers.split('-').map(function (a) {
             if (a === 'checked') {
                 isChecked = true
@@ -65,20 +67,21 @@ avalon.directive('duplex', {
         var quoted = parsers.map(function (a) {
             return avalon.quote(a)
         })
-        copy[duplexDir] = jsonfy({
-            type: dtype, //这个决定绑定什么事件
-            vmodel: '__vmodel__',
-            local: '__local__',
-            debug: avalon.quote(binding.name + '=' + binding.expr),
-            isChecked: isChecked,
-            parsers: '[' + quoted + ']',
-            isString: !!isString,
-            isChanged: isChanged, //这个决定同步的频数
-            debounceTime: debounceTime, //这个决定同步的频数
-            get: get, //经过所有
-            set: avalon.evaluatorPool.get('duplex:set:' + expr),
-            callback: changed ? avalon.parseExpr({expr:changed,type: 'on'}) : 'avalon.noop'
-        })
+        copy[duplexDir] = 'function (){ return ' +
+                jsonfy({
+                    type: dtype, //这个决定绑定什么事件
+                    vmodel: '__vmodel__',
+                    local: '__local__',
+                    debug: '/' + debug + '/',
+                    isChecked: isChecked,
+                    parsers: '[' + quoted + ']',
+                    isString: !!isString,
+                    isChanged: isChanged, //这个决定同步的频数
+                    debounceTime: debounceTime, //这个决定同步的频数
+                    get: get, //经过所有
+                    set: avalon.evaluatorPool.get('duplex:set:' + expr),
+                    callback: changed ? avalon.parseExpr({expr: changed, type: 'on'}) : 'avalon.noop'
+                }) + '}'
 
     },
     diff: function (copy, src) {
@@ -120,7 +123,7 @@ avalon.directive('duplex', {
             //vdom.dynamic变成字符串{}
             vdom.dynamic[duplexDir] = 1
             if (!dom.__ms_duplex__) {
-                dom.__ms_duplex__ = avalon.mix(vdom[duplexDir],{dom: dom})
+                dom.__ms_duplex__ = avalon.mix(vdom[duplexDir], {dom: dom})
                 //绑定事件
                 updateModelByEvent(dom, vdom)
                 //添加验证

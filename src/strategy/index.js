@@ -8,7 +8,7 @@ avalon.parseExpr = require('./parseExpr')
 
 var serializeChildren = require('./serializeChildren')
 var rquoteEscapes = /\\\\(['"])/g
-function render(vtree, local) {
+function makeRender(vtree, local) {
     var _body = Array.isArray(vtree) ? 'return ' + serializeChildren(vtree) : vtree
     var _local = []
     if (local) {
@@ -29,8 +29,7 @@ function render(vtree, local) {
     return fn
 }
 
-avalon.render = render
-
+avalon.render = makeRender
 
 avalon.matchDep = function (a, s) {
     if (!s)
