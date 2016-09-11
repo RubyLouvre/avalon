@@ -96,6 +96,7 @@ function variantProps(node) {
             if (!props['ms-widget']) {
                 props.is = nodeName
                 props['ms-widget'] = '{is:"' + nodeName + '"}'
+                emptyProps = false
             }
         }
         if (!emptyProps) {

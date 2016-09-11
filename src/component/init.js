@@ -95,7 +95,6 @@ function initComponent(src, rawOption, local, template) {
     // 它们内部是一个纯文本节点, 需要继续转换为虚拟DOM
     var shell = avalon.lexer(template)
 
-
     var shellRoot = shell[0]
     shellRoot.children = shellRoot.children || []
     shellRoot.props.is = is
