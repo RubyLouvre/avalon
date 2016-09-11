@@ -100,7 +100,7 @@ function initComponent(src, rawOption, local, template) {
     shellRoot.children = shellRoot.children || []
     shellRoot.props.is = is
     shellRoot.props.wid = $id
-    avalon.speedUp(shell)
+    avalon.variant(shell)
 
     var render = avalon.render(shell, local)
 
@@ -116,7 +116,7 @@ function initComponent(src, rawOption, local, template) {
     }
     var soleSlot = definition.soleSlot
     replaceSlot(vtree, soleSlot)
-    avalon.speedUp(vtree)
+    avalon.variant(vtree)
 
     var render2 = avalon.render(vtree)
 

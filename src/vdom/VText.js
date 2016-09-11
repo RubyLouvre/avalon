@@ -1,5 +1,4 @@
 var rexpr = avalon.config.rexpr
-var decode = require('../strategy/parser/decode')
 function VText(text) {
     this.nodeName = '#text'
     this.nodeValue = text
@@ -12,7 +11,7 @@ VText.prototype = {
         /* istanbul ignore if*/
         if(this.dom)
             return this.dom
-        var v = decode(this.nodeValue)
+        var v = avalon._decode(this.nodeValue)
         return this.dom = document.createTextNode(v)
     },
     toHTML: function () {
