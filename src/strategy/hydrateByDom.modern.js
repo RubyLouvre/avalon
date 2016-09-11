@@ -19,11 +19,11 @@ function markNode(node) {
             ret.isVoidTag = true
         }
         ret.children = markChildren(node)
-        if ('selectedIndex' in ret) {
-            node.selectedIndex = ret.selectedIndex
-            delete ret.selectedIndex
-        }
         if (props) {
+            if ('selectedIndex' in props) {
+                node.selectedIndex = props.selectedIndex
+                delete props.selectedIndex
+            }
             ret.props = props
         }
     }

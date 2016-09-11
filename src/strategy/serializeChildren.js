@@ -2,7 +2,7 @@ var jsonfy = require('./jsonfy')
 var serializeText = require('./serializeText')
 module.exports = serializeChildren
 var directives = avalon.directives
-function serializeChildren(children, skip) {
+function serializeChildren(children, skip, isRepeat) {
     var lexeme = children.map(function (a) {
         var stem = serializeNode(a, skip)
         var suffix = a.$append
@@ -15,9 +15,14 @@ function serializeChildren(children, skip) {
             suffix: suffix
         }
     })
+
     var needWrapper = lexeme.some(hasFix)
-    if (needWrapper) {
+
+    if (needWrapper || isRepeat) {
         var buffer = bufferChildren(lexeme)
+        if (isRepeat) {
+            return buffer.join('\n')
+        }
         buffer.unshift('(function(){', 'var vnodes = []')
         buffer.push('return vnodes', '})()')
         return buffer.join('\n')
@@ -134,8 +139,8 @@ function serializeForStart(vdom) {
     }
     avalon.directives['for'].parse(copy, vdom, {})
     //为copy添加dynamic
-    vdom.$append += avalon.caches[vdom.signature] //vdom.template
-    return jsonify(copy)
+    vdom.$append  += avalon.caches[vdom.signature] //vdom.template
+    return jsonfy(copy)
 }
 
 function serializeForEnd(vdom) {
@@ -144,7 +149,7 @@ function serializeForEnd(vdom) {
         nodeValue: vdom.signature
 
     })) +
-            ' return vnodes}\n })\n},__local__, vnodes)\n' +
+            '\nreturn vnodes}\n })\n},__local__, vnodes)\n' +
             addTag(jsonfy({
                 nodeName: "#comment",
                 signature: vdom.signature,

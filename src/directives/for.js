@@ -65,7 +65,7 @@ avalon.directive('for', {
         }
         var parsed = avalon.parseExpr(binding)
         var assign = 'var loop = ' + parsed + '()\n'
-        copy.dynamic = 'avalon.matchDep(' + binding.paths + ',avalon.spath)'
+        copy.dynamic = 'avalon.matchDep(' + avalon.quote(binding.paths) + ',avalon.spath)'
         var alias = aliasAs ? 'var ' + aliasAs + ' = loop\n' : ''
         var kv = arr[0].match(rargs)
 

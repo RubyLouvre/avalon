@@ -3,7 +3,7 @@
  */
 var rmsForStart = /^\s*ms\-for\:\s*/
 var rmsForEnd = /^\s*ms\-for\-end/
-//var vdom2body = require('./vdom2body')
+var serializeChildren = require('./serializeChildren')
 
 module.exports = variantCommon
 function variantCommon(array) {
@@ -65,7 +65,7 @@ function variantChildren(children) {
             start.hasEffect = hasEffect(old)
             variantChildren(old)
             if (!avalon.caches[uuid]) {
-                //avalon.caches[uuid] = vdom2body(old, true)
+                avalon.caches[uuid] = serializeChildren(old, 0, 1)
             }
             old.length = 0
         } else {

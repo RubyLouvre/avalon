@@ -10,7 +10,9 @@ avalon.parseExpr = require('./parseExpr')
 var serializeChildren = require('./serializeChildren')
 var rquoteEscapes = /\\\\(['"])/g
 function render(vtree, local) {
-    var _body = Array.isArray(vtree) ? 'return ' + serializeChildren(vtree) : vtree
+    
+    
+    var _body = Array.isArray(vtree) ? 'return ' + serializeChildren(vtree): vtree
     var _local = []
     if (local) {
         for (var i in local) {
@@ -25,6 +27,7 @@ function render(vtree, local) {
     try {
         var fn = Function('__vmodel__', '__local__', body)
     } catch (e) {
+        avalon.warn(e)
         avalon.warn(_body, 'render parse error')
     }
     return fn

@@ -32,8 +32,8 @@ avalon.directive('controller', {
             '})();'
         ].join('\n') 
 
-        src.$prepend = ';(function(__vmodel__){' + vmodel
-        src.$append = '\n})(__vmodel__);'
+        src.$prepend = '!function(__vmodel__){' + vmodel
+        src.$append = '\n}(__vmodel__);'
     },
     diff: function (copy, src, name) {
         if (!src.dynamic[name]) {
