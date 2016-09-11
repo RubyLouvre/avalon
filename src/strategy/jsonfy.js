@@ -5,7 +5,6 @@ module.exports = jsonfy
 function jsonfy(obj, dirs) {
     var arr1 = []
 //字符不用东西包起来就变成变量
-    var dirs = []
     for (var i in obj) {
         var type = typeof obj[i]
         if (type === 'object') {
@@ -29,7 +28,7 @@ function jsonfy(obj, dirs) {
             arr1.push(fixKey(i) + ':' + v)
         }
     }
-    var ret = '{\n' + arr1.join(',\n') + '}'
+    var ret = '{' + arr1.join(',\n') + '}'
     if (dirs && dirs.length) {
         dirs.unshift(ret)
         ret = 'avalon.addDirs(' + dirs + ")"

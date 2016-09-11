@@ -1,10 +1,12 @@
+var jsonfy = require('./jsonfy')
+var serializeText = require('./serializeText')
 module.exports = serializeChildren
-
-function serializeChildren(children, skip, aa) {
+var directives = avalon.directives
+function serializeChildren(children, skip) {
     var lexeme = children.map(function (a) {
         var stem = serializeNode(a, skip)
-        var prefix = a.$append
-        var suffix = a.$prepend
+        var suffix = a.$append
+        var prefix = a.$prepend
         delete a.$append
         delete a.prepend
         return {
@@ -20,9 +22,13 @@ function serializeChildren(children, skip, aa) {
         buffer.push('return vnodes', '})()')
         return buffer.join('\n')
     } else {
-        return  '[' + lexeme.filter(function (node) {
-            return node.stem
-        }).join('\n') + ']'
+        var nodes = []
+        for (var i = 0, el; el = lexeme[i++]; ) {
+            if (el.stem) {
+                nodes.push(el.stem)
+            }
+        }
+        return  '[' + nodes + ']'
     }
 }
 
@@ -76,18 +82,22 @@ function serializeElement(vdom, skip) {
     if (props && !skip) {
         skip = 'ms-skip' in props
         var bindings = skip ? [] : extractBindings(copy, props)
-        bindings.forEach(function (binding) {
-            //将ms-*的值变成函数,并赋给copy.props[ms-*]
-            //如果涉及到修改结构,则在vdom添加$append,$prepend
-            avalon.directives[binding.type].parse(copy, vdom, binding)
-            var name = binding.name
-            if (typeof copy[name] === 'string') {
-                dirs.push(binding.paths, name, copy[name])
-                delete copy[name]
-            } else {
-                copy.dynamic = '{}'
-            }
-        })
+        if (bindings.length) {
+            bindings.forEach(function (binding) {
+                //将ms-*的值变成函数,并赋给copy.props[ms-*]
+                //如果涉及到修改结构,则在vdom添加$append,$prepend
+                directives[binding.type].parse(copy, vdom, binding)
+                var name = binding.name
+
+                if (typeof copy[name] === 'string') {
+                    dirs.push(binding.paths, name, copy[name])
+                    delete copy[name]
+                } else {
+                    copy.dynamic = '{}'
+                }
+            })
+            vdom.dynamic = {}
+        }
     }
     if (vdom.isVoidTag) {
         copy.isVoidTag = true
@@ -198,7 +208,7 @@ avalon.addDirs = function (obj) {
     return obj
 }
 
-var directives = avalon.directives
+
 var rbinding = /^(\:|ms\-)\w+/
 var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
 

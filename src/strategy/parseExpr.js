@@ -23,9 +23,8 @@ module.exports =  parseExpr
 //并为原对象添加paths, locals属性
 function parseExpr(binding) {
     var str = binding.expr
-    var cacheID = str
     var category = binding.type
-    var cache = pool.get(category + ':' + cacheID)
+    var cache = pool.get(category + ':' + str)
     if (cache) {
         avalon.shadowCopy(binding, cache)
         return cache.text
@@ -54,7 +53,7 @@ function parseExpr(binding) {
     var body = _body.replace(rfill, fill).trim()
     if (category === 'js') {
         //<!--ms-js:xxx-->指令不存在过滤器,并且只需要替换@与##
-        return cacheData(category + ':' + cacheID, body, paths, locals)
+        return cacheData(binding, body, paths, locals)
     }
     if (filters.length) {
         filters = filters.map(function (filter) {
@@ -119,7 +118,7 @@ function parseExpr(binding) {
             quoteError(str, category).replace('parse', 'get'),
             '}',
             '}'].join('\n')
-        return cacheData('duplex:get:' + cacheID, getterBody, locals, paths)
+        return cacheData(binding, getterBody, locals, paths)
 
     } else {
         ret = [
@@ -138,15 +137,18 @@ function parseExpr(binding) {
         filters.unshift(3, 0)
     }
     ret.splice.apply(ret, filters)
-    return  cacheData(category + ':' + cacheID, ret.join('\n'), locals, paths)
+    return  cacheData(binding, ret.join('\n'), locals, paths)
 }
 
-function cacheData(key, text, locals, paths) {
+function cacheData(binding, text, locals, paths) {
     var obj = {
         text: text,
         locals: Object.keys(locals).join(','),
         paths: Object.keys(paths).join(',')
     }
+    var key = binding.type+":"+binding.expr
+    binding.locals = obj.locals
+    binding.paths = obj.paths
     pool.put(key, obj)
     return text
 }
@@ -184,5 +186,4 @@ function quoteError(str, type) {
             + ')'
 }
 
-avalon.parseExpr = parseExpr
 

@@ -2,6 +2,9 @@
 avalon.lexer = require('./hydrateByText')
 avalon.diff = require('./diff')
 avalon.batch = require('./batch')
+avalon.scan = require('./scan')
+avalon.speedUp = avalon.variant = require('./variantCommon')
+avalon.parseExpr = require('./parseExpr')
 
 // dispatch与patch 为内置模块
 var serializeChildren = require('./serializeChildren')

@@ -3,15 +3,13 @@
  */
 var rmsForStart = /^\s*ms\-for\:\s*/
 var rmsForEnd = /^\s*ms\-for\-end/
-var vdom2body = require('./vdom2body')
+//var vdom2body = require('./vdom2body')
 
 module.exports = variantCommon
 function variantCommon(array) {
     variantChildren(array)
     return array
 }
-
-avalon.variant = variantCommon
 
 function variantChildren(children) {
     var nodes = [] //临时使用的数组
@@ -67,7 +65,7 @@ function variantChildren(children) {
             start.hasEffect = hasEffect(old)
             variantChildren(old)
             if (!avalon.caches[uuid]) {
-                avalon.caches[uuid] = vdom2body(old, true)
+                //avalon.caches[uuid] = vdom2body(old, true)
             }
             old.length = 0
         } else {

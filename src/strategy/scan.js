@@ -10,7 +10,7 @@ function scan(nodes) {
                 /* istanbul ignore if */
                 if (avalon.serverTemplates && avalon.serverTemplates[$id]) {
                     var tmpl = avalon.serverTemplates[$id]
-                    var oldTree = avalon.speedUp(avalon.lexer(tmpl))
+                    var oldTree = avalon.variant(avalon.lexer(tmpl))
                     var render = avalon.render(oldTree)
                     var vtree = render(vm)
                     var dom = avalon.vdom(vtree[0], 'toDOM')
@@ -26,7 +26,7 @@ function scan(nodes) {
                 //第一次扫描就清空所有空白节点,并生成最初的vtree
                 var vtree = [avalon._hydrate(elem)]
                 var now = new Date()
-                elem.vtree = avalon.speedUp(vtree)
+                elem.vtree = avalon.variant(vtree)
 
                 var now2 = new Date()
                 onceWarn && avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')
@@ -53,7 +53,7 @@ function scan(nodes) {
 }
 
 
-module.exports = avalon.scan = function (a) {
+module.exports = function (a) {
      /* istanbul ignore if */
     if (!a || !a.nodeType) {
         avalon.warn('[avalon.scan] first argument must be element , documentFragment, or document')

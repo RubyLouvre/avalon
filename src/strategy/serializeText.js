@@ -4,6 +4,7 @@ var rlineSp = /\n\r?\s*/g
 module.exports = serializeText
 function serializeText(vdom, skip) {
     if (!skip && config.rexpr.test(vdom.nodeValue)) {
+        vdom.dynamic = {}
         return avalon.parseText(vdom.nodeValue)
     } else {
         return jsonify(vdom)
@@ -41,6 +42,7 @@ function parseText(nodeValue) {
     var paths = {}
     var locals = {}
     var bracket = array.length > 1 ? '()' : ''
+
     var token = array.map(function (binding) {
         if (binding.type) {
             var expr = binding.expr
@@ -48,7 +50,7 @@ function parseText(nodeValue) {
                 alwaysHasDynamic = true
                 return expr
             } else {
-                var text = parseExpr(binding)
+                var text = avalon.parseExpr(binding)
                 binding.paths.replace(avalon.rword, function (a) {
                     paths[a] = 1
                 })
@@ -61,6 +63,7 @@ function parseText(nodeValue) {
             return avalon.quote(binding.expr)
         }
     })
+
     if (token.length > 1) {
         nodeValue = 'function(){return ' + token.join('+') + "}"
     } else {
@@ -73,7 +76,7 @@ function parseText(nodeValue) {
     if (alwaysHasDynamic) {
         copy.dynamic = true
     }
-    var dirs = [Object.keys(paths).join(','), '"nodeValue"', nodeValue]
+    var dirs = [avalon.quote(Object.keys(paths).join(',')), '"nodeValue"', nodeValue]
     return  jsonfy(copy, dirs)
 }
 
