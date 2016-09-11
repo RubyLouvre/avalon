@@ -1,4 +1,5 @@
 var avalon = require('../../seed/core')
+avalon._hydrate = require('../../strategy/hydrateByDom.compact')
 
 var document = avalon.document
 
