@@ -112,19 +112,7 @@ function hasFix(a) {
     return a.prefix || a.suffix
 }
 
-function serializeText(vdom, skip) {
-    if (!skip && avalon.config.rexpr.test(vdom.nodeValue)) {
-        var binding = {
-            expr: vdom.nodeValue,
-            type: 'text'
-        }
-        var a = avalon.parseText(binding)
-        var dirs = [binding.paths, 'nodeValue', a]
-        return jsonify(vdom, dirs)
-    } else {
-        return jsonify(vdom)
-    }
-}
+
 
 function serializeForStart(vdom) {
     var copy = {

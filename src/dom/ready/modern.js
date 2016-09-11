@@ -1,6 +1,4 @@
 var avalon = require('../../seed/core')
-var scan = require('./scan')
-scan.dom2vdom = require('../../strategy/dom2vdom.modern')
 
 var document = avalon.document
 
@@ -22,7 +20,7 @@ avalon.ready = function (fn) {
 }
 
 avalon.ready(function () {
-    scan(document.body)
+    avalon.scan(document.body)
 })
 
 new function () {

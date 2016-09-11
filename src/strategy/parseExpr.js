@@ -1,7 +1,8 @@
 
 //缓存求值函数，以便多次利用
-var pool = require('./evaluatorPool')
+var pool = avalon.evaluatorPool
 var clearString = require('./clearString')
+var stringPool = {}
 
 var rfill = /\?\?\d+/g
 var brackets = /\(([^)]*)\)/
@@ -16,43 +17,17 @@ var robjectProperty = /\.[\w\.\$]+/g
 var rvar = /\b[$a-zA-Z_][$a-zA-Z0-9_]*\b/g
 var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
 
-function collectLocal(str, local) {
-    str.replace(/__vmodel__/, ' ').
-            replace(robjectProperty, ' ').
-            replace(rvar, function (el) {
-                if (el !== '$event' && !avalon.keyMap[el]) {
-                    local[el] = 1
-                }
-            })
-}
+module.exports =  parseExpr
 
-function extLocal(ret) {
-    var arr = []
-    for (var i in ret) {
-        arr.push('var ' + i + ' = __local__[' + avalon.quote(i) + ']')
-    }
-    return arr
-}
-
-var number = 1
-var stringPool = {}
 //相同的表达式生成相同的函数
-function dig(a) {
-    var key = '??' + number++
-    stringPool[key] = a
-    return key
-}
 
-function fill(a) {
-    return stringPool[a]
-}
-
-function parseExpr(str, category) {
-    category = category || 'other'
+function parseExpr(binding) {
+    var str = binding.expr
     var cacheID = str
+    var category = binding.type
     var cache = pool.get(category + ':' + cacheID)
     if (cache) {
-        return cache
+        return avalon.shadowCopy(binding, cache)
     }
     /* istanbul ignore else  */
 
@@ -79,7 +54,7 @@ function parseExpr(str, category) {
     var body = _body.replace(rfill, fill).trim()
     if (category === 'js') {
         //<!--ms-js:xxx-->指令不存在过滤器,并且只需要替换@与##
-        return pool.put(category + ':' + cacheID, body)
+        return cacheData(category + ':' + cacheID, body, paths, locals)
     }
     if (filters.length) {
         filters = filters.map(function (filter) {
@@ -144,11 +119,8 @@ function parseExpr(str, category) {
             quoteError(str, category).replace('parse', 'get'),
             '}',
             '}'].join('\n')
-        return pool.put('duplex:get:' + cacheID, {
-            text: getterBody,
-            locals: Object.keys(locals).join(','),
-            paths: Object.keys(paths).join(','),
-        })
+        return cacheData('duplex:get:' + cacheID, getterBody, locals, paths)
+
     } else {
         ret = [
             'function (){',
@@ -166,11 +138,43 @@ function parseExpr(str, category) {
         filters.unshift(3, 0)
     }
     ret.splice.apply(ret, filters)
-    return  pool.put(category + ':' + cacheID, {
+    return  cacheData(category + ':' + cacheID, ret.join('\n'), locals, paths)
+}
+
+function cacheData(key, text, locals, paths) {
+    var obj = {
+        text: text,
         locals: Object.keys(locals).join(','),
-        paths: Object.keys(paths).join(','),
-        parsed: ret.join('\n')
-    })
+        paths: Object.keys(paths).join(',')
+    }
+    return pool.put(key, obj)
+}
+var number = 1
+function dig(a) {
+    var key = '??' + number++
+    stringPool[key] = a
+    return key
+}
+
+function fill(a) {
+    return stringPool[a]
+}
+function collectLocal(str, local) {
+    str.replace(/__vmodel__/, ' ').
+            replace(robjectProperty, ' ').
+            replace(rvar, function (el) {
+                if (el !== '$event' && !avalon.keyMap[el]) {
+                    local[el] = 1
+                }
+            })
+}
+
+function extLocal(ret) {
+    var arr = []
+    for (var i in ret) {
+        arr.push('var ' + i + ' = __local__[' + avalon.quote(i) + ']')
+    }
+    return arr
 }
 
 function quoteError(str, type) {
@@ -178,5 +182,6 @@ function quoteError(str, type) {
             avalon.quote('parse ' + type + ' binding【 ' + str + ' 】fail')
             + ')'
 }
-module.exports = avalon.parseExpr = parseExpr
+
+avalon.parseExpr = parseExpr
 
