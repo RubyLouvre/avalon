@@ -90,7 +90,7 @@ function serializeElement(vdom, skip) {
                 var name = binding.name
 
                 if (typeof copy[name] === 'string') {
-                    dirs.push(binding.paths, name, copy[name])
+                    dirs.push(avalon.quote(binding.paths), avalon.quote(name), copy[name])
                     delete copy[name]
                 } else {
                     copy.dynamic = '{}'

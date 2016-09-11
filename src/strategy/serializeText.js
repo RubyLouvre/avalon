@@ -7,7 +7,7 @@ function serializeText(vdom, skip) {
         vdom.dynamic = {}
         return avalon.parseText(vdom.nodeValue)
     } else {
-        return jsonify(vdom)
+        return jsonfy(vdom)
     }
 }
 
@@ -37,12 +37,12 @@ function extractExpr(str) {
 var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
 
 function parseText(nodeValue) {
-    var array = extractExpr(nodeValue)//返回一个数组
+    var array = typeof nodeValue === 'string' ? 
+    extractExpr(nodeValue): [nodeValue]
     var alwaysHasDynamic = false
     var paths = {}
     var locals = {}
     var bracket = array.length > 1 ? '()' : ''
-
     var token = array.map(function (binding) {
         if (binding.type) {
             var expr = binding.expr
@@ -55,7 +55,7 @@ function parseText(nodeValue) {
                     paths[a] = 1
                 })
                 binding.locals.replace(avalon.rword, function (a) {
-                    paths[a] = 1
+                    locals[a] = 1
                 })
                 return text + bracket
             }

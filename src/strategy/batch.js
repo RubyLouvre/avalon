@@ -35,7 +35,7 @@ function batchUpdate(id, spath) {
         //在最开始时,替换作用域的所有节点,确保虚拟DOM与真实DOM是对齐的
         delete avalon.scopes[id]
     }
-    console.log(spath,"spath !!!")
+    console.log(copy,"spath !!!")
     avalon.diff(copy, source)
     delete avalon.spath
 

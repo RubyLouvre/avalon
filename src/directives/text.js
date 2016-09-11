@@ -5,7 +5,7 @@ avalon.directive('text', {
     parse: function (copy, src, binding) {
         copy[binding.name] = 1
         src.children = []
-        copy.children = '['+avalon.parseText(binding.expr)+']'
+        copy.children = '['+avalon.parseText(binding)+']'
     },
     diff: function (copy, src) {
         if (!src.children.length) {

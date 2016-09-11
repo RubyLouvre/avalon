@@ -41,7 +41,7 @@ function parseExpr(binding) {
             replace(/\|(\w+)/g, function (a, b) {//移除所有过滤器的名字
                 return '|' + dig(b)
             }).
-            replace(/__vmodel__\.([^\s]+)/g, function (_, b) {
+            replace(/__vmodel__\.([\$\w\.]+)/g, function (_, b) {
                 paths[b] = 1      //收集路径
                 return _
             })
