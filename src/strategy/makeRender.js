@@ -1,27 +1,27 @@
 
-avalon.lexer = require('./text2vdom')
+avalon.lexer = require('./hydrateByText')
 avalon.diff = require('./diff')
 avalon.batch = require('./batch')
+
 // dispatch与patch 为内置模块
-var vdom2body = require('./vdom2body')
+var serializeChildren = require('./serializeChildren')
 var rquoteEscapes = /\\\\(['"])/g
 function render(vtree, local) {
-    var _body = Array.isArray(vtree) ? vdom2body(vtree) : vtree
+    var _body = Array.isArray(vtree) ? 'return ' + serializeChildren(vtree) : vtree
     var _local = []
     if (local) {
         for (var i in local) {
-            _local.push('var ' + i + ' = __local__['+avalon.quote(i)+']')
+            _local.push('var ' + i + ' = __local__[' + avalon.quote(i) + ']')
         }
     }
     //处理 props: {"ms-effect": "{is:\\'star\\',action:@action}" 的情况 
-    _body = _body.replace(rquoteEscapes,"$1")
+    _body = _body.replace(rquoteEscapes, "$1")
     var body = '__local__ = __local__ || {};\n' +
-            _local.join(';\n')+'\n' + _body
-    
-    try{
-    var fn = Function('__vmodel__', '__local__', body)
-    fn.body = body
-    }catch(e){
+            _local.join(';\n') + '\n' + _body
+
+    try {
+        var fn = Function('__vmodel__', '__local__', body)
+    } catch (e) {
         avalon.warn(_body, 'render parse error')
     }
     return fn

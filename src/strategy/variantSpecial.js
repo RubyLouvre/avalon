@@ -1,10 +1,10 @@
 /* 
- *  修正容器元素
+ *  处理一些特殊情况, 只用于文本转虚拟DOM
  */
 
-module.exports = fixPlainTag
+module.exports = variantSpecial
 
-function fixPlainTag(node, nodeName, innerHTML) {
+function variantSpecial(node, nodeName, innerHTML) {
     switch (nodeName) {
         case 'style':
         case 'script':

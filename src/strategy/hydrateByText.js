@@ -6,34 +6,27 @@
  * ------------------------------------------------------------
  */
 var avalon = require('../seed/core')
-require('./optimize')
 var voidTag = require('./voidTag')
-var addTbody = require('./parser/addTbody')
-var fixPlainTag = require('./parser/fixPlainTag')
-var plainTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
+var variantSpecial = require('./variantSpecial')
 var clearString = require('./clearString')
 
-var ropenTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
-var rendTag = /^<\/([^>]+)>/
-//https://github.com/rviscomi/trunk8/blob/master/trunk8.js
-//判定里面有没有内容
 var rcontent = /\S/
-var rfill = /\?\?\d+/g
-var rlineSp = /\n\s*/g
-var rnowhite = /\S+/g
 var stringPool = {}
-module.exports = lexer
+var rendTag = /^<\/([^>]+)>/
+var ropenTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
+var specialTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
 
-function lexer(str) {
+module.exports = makeNode
+
+function makeNode(str) {
     stringPool = {}
     str = clearString(str, dig)
     var stack = []
     stack.last = function () {
-        return  stack[stack.length - 1]
+        return stack[stack.length - 1]
     }
     var ret = []
-
-    var breakIndex = 100000
+    var breakIndex = 900000
     do {
         var node = false
         if (str.charAt(0) !== '<') {//处理文本节点
@@ -88,11 +81,11 @@ function lexer(str) {
                     node.end = true
                 } else {
                     stack.push(node)
-                    if (plainTag[nodeName]) {//如果是容器元素
+                    if (specialTag[nodeName]) {//如果是容器元素
                         var index = str.indexOf('</' + nodeName + '>')
                         var innerHTML = str.slice(0, index).trim()
                         str = str.slice(index)
-                        fixPlainTag(node, nodeName, nomalString(innerHTML))
+                        variantSpecial(node, nodeName, nomalString(innerHTML))
                     }
                 }
             }
@@ -117,7 +110,7 @@ function lexer(str) {
             break
         }
         if (node.end) {
-            fixTbodyAndRepeat(node, stack, ret)
+            makeRepeat(node, stack, ret)
             delete node.end
         }
 
@@ -137,48 +130,8 @@ function makeChildren(node, stack, ret) {
 }
 
 
-
-function fixTbodyAndRepeat(node, stack, ret) {
-    var nodeName = node.nodeName
-    var props = node.props
-    if (nodeName === 'table') {
-        addTbody(node.children)
-    }
-    var forExpr = props['ms-for']
-    //tr两旁的注释节点还会在addTbody中挪一下位置
-    if (forExpr) {
-        delete props['ms-for']
-        var p = stack.last()
-        var arr = p ? p.children : ret
-        arr.splice(arr.length - 1, 1, {
-            nodeName: '#comment',
-            nodeValue: 'ms-for:' + forExpr,
-            type: nodeName
-        }, node, {
-            nodeName: '#comment',
-            nodeValue: 'ms-for-end:',
-            type: nodeName
-        })
-
-    }
-}
-
-var number = 1
-function dig(a) {
-    var key = '??' + number++
-    stringPool[key] = a
-    return key
-}
-function fill(a) {
-    var val = stringPool[a]
-    return val
-}
-
-
-
-
-
 var rattrs = /([^=\s]+)(?:\s*=\s*(\S+))?/
+var rlineSp = /\n\r?\s*/g
 function makeProps(attrs, props) {
     while (attrs) {
         var arr = rattrs.exec(attrs)
@@ -205,6 +158,90 @@ function makeProps(attrs, props) {
     }
 }
 
+
+function makeRepeat(node, stack, ret) {
+    var nodeName = node.nodeName
+    var props = node.props
+    if (nodeName === 'table') {
+        makeTbody(node.children)
+    }
+    var forExpr = props['ms-for']
+    //tr两旁的注释节点还会在addTbody中挪一下位置
+    if (forExpr) {
+        delete props['ms-for']
+        var p = stack.last()
+        var arr = p ? p.children : ret
+        arr.splice(arr.length - 1, 1, {
+            nodeName: '#comment',
+            nodeValue: 'ms-for:' + forExpr,
+            type: nodeName
+        }, node, {
+            nodeName: '#comment',
+            nodeValue: 'ms-for-end:',
+            type: nodeName
+        })
+    }
+}
+
+
+//如果直接将tr元素写table下面,那么浏览器将将它们(相邻的那几个),放到一个动态创建的tbody底下
+function makeTbody(nodes) {
+    var tbody, needAddTbody = false, count = 0, start = 0, n = nodes.length
+    for (var i = 0; i < n; i++) {
+        var node = nodes[i]
+        if (!tbody) {
+            if ((node.type || node.nodeName) === 'tr') {
+                //收集tr及tr两旁的注释节点
+                tbody = {
+                    nodeName: 'tbody',
+                    children: []
+                }
+                tbody.children.push(node)
+                if (node.type) {
+                    delete node.type
+                }
+                needAddTbody = true
+                if (start === 0)
+                    start = i
+                nodes[i] = tbody
+            }
+        } else {
+            if (node.nodeName !== 'tr' && node.children) {
+                tbody = false
+            } else {
+                tbody.children.push(node)
+                count++
+                nodes[i] = 0
+            }
+        }
+    }
+
+    if (needAddTbody) {
+        for (i = start; i < n; i++) {
+            if (nodes[i] === 0) {
+                nodes.splice(i, 1)
+                i--
+                count--
+                if (count === 0) {
+                    break
+                }
+            }
+        }
+    }
+}
+
+var number = 1
+function dig(a) {
+    var key = '??' + number++
+    stringPool[key] = a
+    return key
+}
+function fill(a) {
+    var val = stringPool[a]
+    return val
+}
+
+var rfill = /\?\?\d+/g
 function nomalString(str) {
     return avalon.unescapeHTML(str.replace(rfill, fill))
 }

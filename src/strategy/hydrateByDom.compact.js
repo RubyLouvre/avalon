@@ -55,7 +55,7 @@ function markProps(node) {
     if (ret.type === 'select-one') {
         ret.selectedIndex = node.selectedIndex
     }
-    if (isEmpty(ret)) {
+    if (avalon.isEmptyObject(ret)) {
         return null
     }
     return ret
@@ -119,9 +119,3 @@ function markChildren(parent) {
     return arr
 }
 
-function isEmpty(a) {
-    for (var i in a) {
-        return false
-    }
-    return true
-}

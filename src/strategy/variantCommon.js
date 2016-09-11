@@ -5,13 +5,13 @@ var rmsForStart = /^\s*ms\-for\:\s*/
 var rmsForEnd = /^\s*ms\-for\-end/
 var vdom2body = require('./vdom2body')
 
-module.exports = variant
-function variant(array) {
+module.exports = variantCommon
+function variantCommon(array) {
     variantChildren(array)
     return array
 }
 
-avalon.variant = variant
+avalon.variant = variantCommon
 
 function variantChildren(children) {
     var nodes = [] //临时使用的数组
