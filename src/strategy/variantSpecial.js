@@ -2,6 +2,8 @@
  *  修正容器元素
  */
 
+module.exports = fixPlainTag
+
 function fixPlainTag(node, nodeName, innerHTML) {
     switch (nodeName) {
         case 'style':
@@ -9,22 +11,20 @@ function fixPlainTag(node, nodeName, innerHTML) {
         case 'noscript':
         case 'template':
         case 'xmp':
-            node.children = [
-                {
+            node.children = [{
                     nodeName: '#text',
                     skipContent: true,
                     nodeValue: innerHTML
-                }
-            ]
+                }]
             break
         case 'textarea':
             var props = node.props
             props.type = nodeName
             props.value = innerHTML
             node.children = [{
-                  nodeName: '#text',
-                  nodeValue: innerHTML
-            }]
+                    nodeName: '#text',
+                    nodeValue: innerHTML
+                }]
             break
         case 'option':
             node.children = [{
@@ -41,5 +41,3 @@ var rtrimHTML = /<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi
 function trimHTML(v) {
     return String(v).replace(rtrimHTML, '').trim()
 }
-
-module.exports = fixPlainTag

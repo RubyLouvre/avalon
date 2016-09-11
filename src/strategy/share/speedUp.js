@@ -1,4 +1,3 @@
-
 var rmsForStart = /^\s*ms\-for\:/
 var rmsForEnd = /^\s*ms\-for\-end/
 var vdom2body = require('./vdom2body')
