@@ -95,6 +95,7 @@ function serializeElement(vdom, skip) {
                 var name = binding.name
 
                 if (typeof copy[name] === 'string') {
+                    console.log(copy[name], '!!')
                     dirs.push(avalon.quote(binding.paths), avalon.quote(name), copy[name])
                     delete copy[name]
                 } else {
@@ -139,7 +140,7 @@ function serializeForStart(vdom) {
     }
     avalon.directives['for'].parse(copy, vdom, {})
     //为copy添加dynamic
-    vdom.$append  += avalon.caches[vdom.signature] //vdom.template
+    vdom.$append += avalon.caches[vdom.signature] //vdom.template
     return jsonfy(copy)
 }
 
@@ -178,41 +179,6 @@ function serializeLogic(vdom) {
     }
     return jsonfy(vdom)
 }
-
-
-
-
-avalon.matchDep = function (a, s) {
-    if (!s)
-        return true
-    return a.split(',').some(function (aa) {
-        if (s.indexOf(aa) === 0)
-            return true
-    })
-}
-
-avalon.addDirs = function (obj) {
-    var args = avalon.slice(arguments, 1)
-    var hasDynamic = false
-    for (var i = 0; i < args.length; i += 3) {
-        var path = args[i]
-        var dir = args[i + 1]
-        var fn = args[i + 2]
-        if (avalon.matchDep(path, avalon.spath)) {
-            if (typeof fn === 'function' && dir.indexOf('ms-on') === -1) {
-                obj[dir] = fn()
-            } else {
-                obj[dir] = fn
-            }
-            hasDynamic = true
-        }
-    }
-    if (hasDynamic) {
-        obj.dynamic = {}
-    }
-    return obj
-}
-
 
 var rbinding = /^(\:|ms\-)\w+/
 var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')

@@ -121,7 +121,11 @@ function variantProps(node) {
                 delDir(props, 'html', 'text')
                 emptyChildren = true
             } else if (props['ms-html']) {
-                emptyChildren = true
+                if (node.isVoidTag) {
+                    delete props['ms-html']
+                } else {
+                    emptyChildren = true
+                }
             }
             if (emptyChildren && !node.isVoidTag) {
                 node.children = []

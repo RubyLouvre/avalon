@@ -10,9 +10,7 @@ avalon.parseExpr = require('./parseExpr')
 var serializeChildren = require('./serializeChildren')
 var rquoteEscapes = /\\\\(['"])/g
 function render(vtree, local) {
-    
-    
-    var _body = Array.isArray(vtree) ? 'return ' + serializeChildren(vtree): vtree
+    var _body = Array.isArray(vtree) ? 'return ' + serializeChildren(vtree) : vtree
     var _local = []
     if (local) {
         for (var i in local) {
@@ -35,4 +33,35 @@ function render(vtree, local) {
 
 avalon.render = render
 
-module.exports = avalon
+
+avalon.matchDep = function (a, s) {
+    if (!s)
+        return true
+    return a.split(',').some(match, s)
+}
+function match(path) {
+    if (this.indexOf(path) === 0)
+        return true
+}
+
+avalon.addDirs = function (obj) {
+    var args = avalon.slice(arguments, 1)
+    var hasDynamic = false
+    for (var i = 0; i < args.length; i += 3) {
+        var path = args[i]
+        var dir = args[i + 1]
+        var fn = args[i + 2]
+        if (avalon.matchDep(path, avalon.spath)) {
+            if (dir.indexOf('ms-on') === -1) {
+                obj[dir] = fn()
+            } else {
+                obj[dir] = fn
+            }
+            hasDynamic = true
+        }
+    }
+    if (hasDynamic) {
+        obj.dynamic = {}
+    }
+    return obj
+}

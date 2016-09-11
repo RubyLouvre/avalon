@@ -37,8 +37,8 @@ function extractExpr(str) {
 var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
 
 function parseText(nodeValue) {
-    var array = typeof nodeValue === 'string' ? 
-    extractExpr(nodeValue): [nodeValue]
+    var array = typeof nodeValue === 'string' ?
+            extractExpr(nodeValue) : [nodeValue]
     var alwaysHasDynamic = false
     var paths = {}
     var locals = {}
@@ -75,6 +75,9 @@ function parseText(nodeValue) {
     }
     if (alwaysHasDynamic) {
         copy.dynamic = true
+        if (token.length === 1) {
+            return '{nodeName:"#text",dynamic:{},nodeValue:' + nodeValue + '}'
+        }
     }
     var dirs = [avalon.quote(Object.keys(paths).join(',')), '"nodeValue"', nodeValue]
     return  jsonfy(copy, dirs)
