@@ -17,7 +17,7 @@ require('./validate')
 require('./rules')
 //
 ////处理逻辑
-require('./if')
+require('./if.compact')
 require('./for')
 //
 require('./widget')

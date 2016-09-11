@@ -24,6 +24,7 @@ avalon.directive('widget', {
         return avalon.mediatorFactory.apply(this, arguments)
     },
     diff: function (copy, src, name, copyList, srcList, index) {
+        console.log('diff aaa')
         var a = copy[name]
         /* istanbul ignore else */
         if (Object(a) === a) {

@@ -5,6 +5,7 @@
 
 var voidTag = require('./voidTag')
 module.exports = markNode
+avalon._hydrate = markNode
 
 function markNode(node) {
     var ret = {}

@@ -46,7 +46,7 @@ function iterator(index, item, vars, fn, k1, k2, repeat, isArray) {
 
 avalon.directive('for', {
     priority: 3,
-    parse: function (copy, src, binding) {
+    parse: function (copy, src) {
         var str = src.forExpr, aliasAs
         str = str.replace(rforAs, function (a, b) {
             /* istanbul ignore if */
@@ -59,7 +59,13 @@ avalon.directive('for', {
         })
 
         var arr = str.split(' in ')
-        var assign = 'var loop = ' + avalon.parseExpr(arr[1]) + ' \n'
+        var binding = {
+            expr: arr[1],
+            type: 'for'
+        }
+        var parsed = avalon.parseExpr(binding)
+        var assign = 'var loop = ' + parsed + '()\n'
+        copy.dynamic = 'avalon.matchDep(' + binding.paths + ',avalon.spath)'
         var alias = aliasAs ? 'var ' + aliasAs + ' = loop\n' : ''
         var kv = arr[0].match(rargs)
 
@@ -77,13 +83,6 @@ avalon.directive('for', {
     diff: function (copy, src, cpList, spList, index) {
         //将curRepeat转换成一个个可以比较的component,并求得compareText
         //如果这个元素没有插入
-        if (avalon.callArray) {
-            if (src.list && src.forExpr.indexOf(avalon.callArray) === -1) {
-                return 
-            }
-        } 
-
-
         var srcRepeat = spList[index + 1]
         var curRepeat = cpList[index + 1]
         var end = spList[index + 2]
@@ -159,7 +158,7 @@ avalon.directive('for', {
 
         }
         /* istanbul ignore if */
-        if (removes.length > 1) {   
+        if (removes.length > 1) {
             removes.sort(function (a, b) {
                 return a.index - b.index
             })
@@ -245,7 +244,7 @@ avalon.directive('for', {
                     staggerKey: signature + 'move'
                 })
             }
-            
+
             before = el.split
         })
         if (vdom.action === 'init') {

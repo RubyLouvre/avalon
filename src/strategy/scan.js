@@ -24,7 +24,7 @@ function scan(nodes) {
 
                 //IE6-8下元素的outerHTML前面会有空白
                 //第一次扫描就清空所有空白节点,并生成最初的vtree
-                var vtree = [avalon.scan.dom2vdom(elem)]
+                var vtree = [avalon._hydrate(elem)]
                 var now = new Date()
                 elem.vtree = avalon.speedUp(vtree)
 

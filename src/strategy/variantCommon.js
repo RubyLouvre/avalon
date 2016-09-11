@@ -38,16 +38,20 @@ function variantChildren(children) {
             start.forExpr = start.nodeValue.replace(rmsForStart, '')
             if (old.length === 1) {
                 var element = old[0]
-                if (element.props) {
-                    if (element.props.slot) {
-                        start.props = '{slot: "' + element.props.slot + '"}'
+                var props = element.props
+                if (props) {
+                    if (props.slot) {
+                        start.props = '{slot: "' + props.slot + '"}'
                     }
-                    var cb = element.props['data-for-rendered']
+                    var cb = props['data-for-rendered']
                     if (cb) {
-                        delete element.props['data-for-rendered']
+                        delete props['data-for-rendered']
                         var wid = cb + ':cb'
                         if (!avalon.caches[wid]) {
-                            avalon.caches[wid] = Function('return ' + avalon.parseExpr(cb, 'on'))()
+                            avalon.caches[wid] = Function('return ' + avalon.parseExpr({
+                                expr: cb,
+                                type: 'on'
+                            }))()
                         }
                         start.wid = wid
                     }
@@ -114,11 +118,11 @@ function variantProps(node) {
                 cloneNode.props = cloneProps
                 node.template = avalon.vdom(cloneNode, 'toHTML')
                 emptyChildren = true
-            }else if (props['ms-text']) {
+            } else if (props['ms-text']) {
                 //有text无html
                 delDir(props, 'html', 'text')
                 emptyChildren = true
-            }else if (props['ms-html']) {
+            } else if (props['ms-html']) {
                 emptyChildren = true
             }
             if (emptyChildren && !node.isVoidTag) {

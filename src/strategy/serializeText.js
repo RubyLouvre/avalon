@@ -41,24 +41,24 @@ function parseText(nodeValue) {
     var paths = {}
     var locals = {}
     var bracket = array.length > 1 ? '()' : ''
-    var token = array.map(function (el) {
-        if (el.type) {
-            var expr = el.expr
+    var token = array.map(function (binding) {
+        if (binding.type) {
+            var expr = binding.expr
             if (rident.test(expr)) {
                 alwaysHasDynamic = true
                 return expr
             } else {
-                var binding = parseExpr(expr, 'text')
+                var text = parseExpr(binding)
                 binding.paths.replace(avalon.rword, function (a) {
                     paths[a] = 1
                 })
                 binding.locals.replace(avalon.rword, function (a) {
                     paths[a] = 1
                 })
-                return binding.text + bracket
+                return text + bracket
             }
         } else {
-            return avalon.quote(el.expr)
+            return avalon.quote(binding.expr)
         }
     })
     if (token.length > 1) {

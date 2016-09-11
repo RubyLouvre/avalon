@@ -16,8 +16,8 @@ function serializeChildren(children, skip, aa) {
     var needWrapper = lexeme.some(hasFix)
     if (needWrapper) {
         var buffer = bufferChildren(lexeme)
-        buffer.unshift('(function(){', 'var nodes = []')
-        buffer.push('return nodes', '})()')
+        buffer.unshift('(function(){', 'var vnodes = []')
+        buffer.push('return vnodes', '})()')
         return buffer.join('\n')
     } else {
         return  '[' + lexeme.filter(function (node) {
@@ -35,7 +35,7 @@ function bufferChildren(nodes) {
             buffer.push(node.prefix)
         }
         if (node.stem) {
-            buffer.push('vnodes.push(' + node.stem + ')')
+            buffer.push(addTag(node.stem))
         }
         if (node.suffix) {
             buffer.push(node.suffix)
@@ -66,7 +66,6 @@ function serializeNode(node, skip) {
 }
 
 
-var skips = {__local__: 1, vmode: 1, dom: 1}
 
 function serializeElement(vdom, skip) {
     var props = vdom.props
@@ -77,13 +76,13 @@ function serializeElement(vdom, skip) {
     if (props && !skip) {
         skip = 'ms-skip' in props
         var bindings = skip ? [] : extractBindings(copy, props)
-        bindings.forEach(function (b) {
+        bindings.forEach(function (binding) {
             //将ms-*的值变成函数,并赋给copy.props[ms-*]
             //如果涉及到修改结构,则在vdom添加$append,$prepend
-            avalon.directives[b.type].parse(copy, vdom, b)
-            var name = b.name
+            avalon.directives[binding.type].parse(copy, vdom, binding)
+            var name = binding.name
             if (typeof copy[name] === 'string') {
-                dirs.push(b.paths, name, copy[name])
+                dirs.push(binding.paths, name, copy[name])
                 delete copy[name]
             } else {
                 copy.dynamic = '{}'
@@ -112,7 +111,7 @@ function hasFix(a) {
     return a.prefix || a.suffix
 }
 
-
+var skips = {__local__: 1, vmode: 1, dom: 1}
 
 function serializeForStart(vdom) {
     var copy = {
@@ -130,28 +129,34 @@ function serializeForStart(vdom) {
 }
 
 function serializeForEnd(vdom) {
-    vdom.$append = addTag({
+    vdom.$append = addTag(jsonfy({
         nodeName: '#comment',
         nodeValue: vdom.signature
 
-    }) +
+    })) +
             ' return vnodes}\n })\n},__local__, vnodes)\n' +
-            addTag({
+            addTag(jsonfy({
                 nodeName: "#comment",
                 signature: vdom.signature,
                 nodeValue: "ms-for-end:"
-            }) + '\n'
+            })) + '\n'
     return ''
+}
+function addTag(a) {
+    return 'vnodes.push(' + a + ')'
 }
 
 var rstatement = /^\s*var\s+([$\w]+)\s*\=\s*\S+/
 
 function serializeLogic(vdom) {
     var nodeValue = vdom.nodeValue
-    var statement = parseExpr(nodeValue.replace('ms-js:', ''), 'js')
-    var match = statement.text.match(rstatement)
+    var statement = parseExpr({
+        expr: nodeValue.replace('ms-js:', ''),
+        type: 'js'
+    })
+    var match = statement.match(rstatement)
     if (match && match[1]) {
-        vdom.$append = (vdom.$append || '') + statement.text +
+        vdom.$append = (vdom.$append || '') + statement +
                 "\n__local__." + match[1] + ' = ' + match[1] + '\n'
     } else {
         avalon.warn(nodeValue + ' parse fail!')

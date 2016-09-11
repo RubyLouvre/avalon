@@ -19,18 +19,18 @@ var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\
 
 module.exports =  parseExpr
 
-//相同的表达式生成相同的函数
-
+//传入一个包含name, type, expr的对象, 将会返回一个字符串,
+//并为原对象添加paths, locals属性
 function parseExpr(binding) {
     var str = binding.expr
     var cacheID = str
     var category = binding.type
     var cache = pool.get(category + ':' + cacheID)
     if (cache) {
-        return avalon.shadowCopy(binding, cache)
+        avalon.shadowCopy(binding, cache)
+        return cache.text
     }
     /* istanbul ignore else  */
-
     stringPool = {}
     var paths = {}
     var locals = {}
@@ -147,7 +147,8 @@ function cacheData(key, text, locals, paths) {
         locals: Object.keys(locals).join(','),
         paths: Object.keys(paths).join(',')
     }
-    return pool.put(key, obj)
+    pool.put(key, obj)
+    return text
 }
 var number = 1
 function dig(a) {
