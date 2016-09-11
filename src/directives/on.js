@@ -21,12 +21,11 @@ avalon.directive('on', {
                 replace(/[^$a-z]/ig, function (e) {
                     return e.charCodeAt(0)
                 })
-
         var quoted = avalon.quote(uuid)
-        var fn = '(function(){\n' +
+        var fn = 'function(){\n' +
                 'var fn610 = ' +
-                avalon.parseExpr(binding, 'on') +
-                '\nfn610.uuid =' + quoted + ';\nreturn fn610})()'
+                avalon.parseExpr(binding) +
+                '\nfn610.uuid =' + quoted + ';\nreturn fn610}'
         copy.vmodel = '__vmodel__'
         copy.local = '__local__'
         copy[binding.name] = fn
@@ -37,7 +36,6 @@ avalon.directive('on', {
         var uuid = fn.uuid
         var srcFn = src[name] || {}
         var hasChange = false
-
 
         if (!src.dynamic[name] || srcFn.uuid !== uuid) {
             src[name] = fn

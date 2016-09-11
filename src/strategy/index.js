@@ -6,7 +6,6 @@ avalon.scan = require('./scan')
 avalon.speedUp = avalon.variant = require('./variantCommon')
 avalon.parseExpr = require('./parseExpr')
 
-// dispatch与patch 为内置模块
 var serializeChildren = require('./serializeChildren')
 var rquoteEscapes = /\\\\(['"])/g
 function render(vtree, local) {
@@ -25,8 +24,7 @@ function render(vtree, local) {
     try {
         var fn = Function('__vmodel__', '__local__', body)
     } catch (e) {
-        avalon.warn(e)
-        avalon.warn(_body, 'render parse error')
+        avalon.warn(_body, e, 'render parse error')
     }
     return fn
 }
@@ -52,11 +50,8 @@ avalon.addDirs = function (obj) {
         var dir = args[i + 1]
         var fn = args[i + 2]
         if (avalon.matchDep(path, avalon.spath)) {
-            if (dir.indexOf('ms-on') === -1) {
-                obj[dir] = fn()
-            } else {
-                obj[dir] = fn
-            }
+            obj[dir] = fn()
+           
             hasDynamic = true
         }
     }
