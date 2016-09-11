@@ -93,9 +93,7 @@ function serializeElement(vdom, skip) {
                 //如果涉及到修改结构,则在vdom添加$append,$prepend
                 directives[binding.type].parse(copy, vdom, binding)
                 var name = binding.name
-
                 if (typeof copy[name] === 'string') {
-                    console.log(copy[name], '!!')
                     dirs.push(avalon.quote(binding.paths), avalon.quote(name), copy[name])
                     delete copy[name]
                 } else {
