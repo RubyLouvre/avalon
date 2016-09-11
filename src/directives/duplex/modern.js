@@ -1,7 +1,6 @@
 
 var update = require('../_update')
-var evaluatorPool = require('../../strategy/parser/evaluatorPool')
-var stringify = require('../../strategy/parser/stringify')
+var jsonfy = require('../../strategy/jsonfy')
 
 var rchangeFilter = /\|\s*change\b/
 var rcheckedType = /^(?:checkbox|radio)$/
@@ -60,7 +59,7 @@ avalon.directive('duplex', {
         }
 
         var changed = copy.props['data-duplex-changed']
-        var get = avalon.parseExpr(binding, 'duplex')// 输出原始数据
+        var get = avalon.parseExpr(binding)// 输出原始数据
         var quoted = parsers.map(function (a) {
             return avalon.quote(a)
         })
@@ -75,8 +74,8 @@ avalon.directive('duplex', {
             isChanged: isChanged, //这个决定同步的频数
             debounceTime: debounceTime, //这个决定同步的频数
             get: get, //
-            set: evaluatorPool.get('duplex:set:' + expr),
-            callback: changed ? avalon.parseExpr(changed, 'on') : 'avalon.noop'
+            set: avalon.evaluatorPool.get('duplex:set:' + expr),
+            callback: changed ? avalon.parseExpr({expr:changed, type:'on'}) : 'avalon.noop'
         })
     },
     diff: function (copy, src) {

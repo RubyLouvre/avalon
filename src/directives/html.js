@@ -18,7 +18,7 @@ avalon.directive('html', {
         if (!src.dynamic['ms-html'] || !src.render || copyValue !== src[name]) {
             src[name] = copyValue
            
-            var oldTree = avalon.speedUp(avalon.lexer(copyValue))
+            var oldTree = avalon.variant(avalon.lexer(copyValue))
 
             var render = avalon.render(oldTree, copy.local)
             src.render = render
