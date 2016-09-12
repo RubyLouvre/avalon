@@ -44,7 +44,7 @@ function variantChildren(children) {
                     var cb = props['data-for-rendered']
                     if (cb) {
                         delete props['data-for-rendered']
-                        var wid = cb + ':cb'
+                        var wid = 'hook:'+ cb
                         if (!avalon.caches[wid]) {
                             avalon.caches[wid] = Function('return ' + avalon.parseExpr({
                                 expr: cb,
