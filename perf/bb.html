@@ -3,35 +3,19 @@
     <head>
         <meta charset="UTF-8">
         <title>Document</title>
-        <script type="text/javascript" src="../dist/avalon.js"></script>
+        <script type="text/javascript" src="../dist/1.4.js"></script>
     </head>
     <body>
         <div ms-controller="test">
-            <div class="form-group form-required">
-                <label>短信验证码</label>
-                <div class="input-group">
-                    <span class="input-group-btn">
-                        <button class="btn btn-info" type="button" ms-if="@_sendMsgWaitingTime <= 0" ms-click="@sendVerificationCode">获取短信验证码</button>
-                        <button class="btn btn-info" type="button" ms-if="@_sendMsgWaitingTime > 0" disabled>请等候<span ms-text="@_sendMsgWaitingTime"></span>秒</button>
-                    </span>
-                </div>
-            </div>
+         
+            <p><input ms-duplex="aaa" />{{aaa}}</p>
         </div>
         <script type="text/javascript">
             var vm = avalon.define({
                 $id: 'test',
-                aaa: 0, // 本来应该是无关的属性却成为了导火线
-                _sendMsgWaitingTime: 0,
-                sendVerificationCode: function () {
-                    vm._sendMsgWaitingTime = 120;
-                }
-            });
-            // vm.aaa = 2; // 在avalon.scan()之前修改aaa，一切正常
-            avalon.scan(document.body);
-
-            vm.aaa = 2; // 在avalon.scan()后修改aaa，将导致异常
-
-
+                arr: [1,2,3],
+                aaa: 222
+            })
         </script>
     </body>
 </html>
