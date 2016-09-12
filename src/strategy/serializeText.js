@@ -2,6 +2,7 @@ var jsonfy = require('./jsonfy')
 var config = avalon.config
 var rlineSp = /\n\r?\s*/g
 module.exports = serializeText
+
 function serializeText(vdom, skip) {
     if (!skip && config.rexpr.test(vdom.nodeValue)) {
         vdom.dynamic = {}
@@ -10,7 +11,6 @@ function serializeText(vdom, skip) {
         return jsonfy(vdom)
     }
 }
-
 
 function extractExpr(str) {
     var ret = []
@@ -63,11 +63,11 @@ function parseText(nodeValue) {
         }
     })
     if (isOne) {
-        if (alwaysHasDynamic) { //比如 {{el}}
+        if (alwaysHasDynamic) { //such as {{el}}
             return '{nodeName:"#text",dynamic:{},nodeValue:' + token + '}'
         }
-        nodeValue = token[0] //比如 {{@aaa}}
-    } else {//比如 {{@aaa}}111
+        nodeValue = token[0] //such as {{@aaa}}
+    } else {//such as {{@aaa}}111
         nodeValue = 'function(){return ' + token.join('+') + '}'
     }
     var copy = {

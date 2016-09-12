@@ -57,28 +57,25 @@ avalon.directive('for', {
             }
             return ''
         })
-
         var arr = str.split(' in ')
         var binding = {
             expr: arr[1],
             type: 'for'
         }
-        var parsed = avalon.parseExpr(binding)
-        var assign = 'var loop = ' + parsed + '()\n'
+        var getLoop = avalon.parseExpr(binding)
         copy.dynamic = 'avalon.matchDep(' + avalon.quote(binding.paths) + ',avalon.spath)'
-        var alias = aliasAs ? 'var ' + aliasAs + ' = loop\n' : ''
-        var kv = arr[0].match(rargs)
-
-        if (kv.length === 1) {//确保avalon._each的回调有三个参数
+        var kv = (arr[0]+' traceKey __local__ vnodes').match(rargs)
+        if (kv.length === 4) {//确保avalon._each的回调有三个参数
             kv.unshift('$key')
         }
-        kv.push('traceKey', '__local__', 'vnodes')
-        src.suffix = assign + alias + 'avalon._each(loop,function('
-                + kv.join(', ') + '){\n'
-                + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
-                + 'vnodes.push({\nnodeName: "#document-fragment",\nindex: arguments[0],\nkey: traceKey,\n' +
-                'children: new function(){\n var vnodes = []\n'
-
+        src.suffix = Array('var loop = (' + getLoop + ')();',
+                'avalon._each(loop, function(' + kv + '){',
+                '__local__[' + avalon.quote(aliasAs || 'valueOf') + '] = loop',
+                'vnodes.push({',
+                '\tnodeName: "#document-fragment",',
+                '\tindex   : arguments[0],',
+                '\tkey     : traceKey,',
+                '\tchildren: new function(){\nvar vnodes = []\n').join('\n')
     },
     diff: function (copy, src, cpList, spList, index) {
         //将curRepeat转换成一个个可以比较的component,并求得compareText
