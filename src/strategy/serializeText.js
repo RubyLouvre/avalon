@@ -35,13 +35,12 @@ function extractExpr(str) {
     return ret
 }
 var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
-var rreplace = /%%%%/g
 function parseText(nodeValue) {
     var array = typeof nodeValue === 'string' ?
             extractExpr(nodeValue) : [nodeValue]
 
     var paths = {}
-    var locals = {}
+    var untraceable = ''
     var isOne = array.length === 1
     var alwaysHasDynamic = false
     var bracket = isOne ? '' : '()'
@@ -56,9 +55,7 @@ function parseText(nodeValue) {
                 binding.paths.replace(avalon.rword, function (a) {
                     paths[a] = 1
                 })
-                binding.locals.replace(avalon.rword, function (a) {
-                    locals[a] = 1
-                })
+                untraceable += (binding.locals || '')
                 return text + bracket
             }
         } else {
@@ -66,17 +63,17 @@ function parseText(nodeValue) {
         }
     })
     if (isOne) {
-        if (alwaysHasDynamic) {
+        if (alwaysHasDynamic) { //比如 {{el}}
             return '{nodeName:"#text",dynamic:{},nodeValue:' + token + '}'
         }
-        nodeValue = token[0]
-    } else {
-        nodeValue = 'function(){return ' + token.join('+') + "}"
+        nodeValue = token[0] //比如 {{@aaa}}
+    } else {//比如 {{@aaa}}111
+        nodeValue = 'function(){return ' + token.join('+') + '}'
     }
     var copy = {
         nodeName: "#text"
     }
-    var paths = Object.keys(locals).length ? '' : Object.keys(paths).join(',')
+    var paths = untraceable ? '' : Object.keys(paths).join(',')
     var dirs = [avalon.quote(paths), '"nodeValue"', nodeValue]
     return  jsonfy(copy, dirs)
 }

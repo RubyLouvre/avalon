@@ -77,7 +77,7 @@ function serializeNode(node, skip) {
 }
 
 
-var alwaysDynamic = {'ms-html':1, 'ms-widget': 1}
+var alwaysDynamic = {'ms-html': 1, 'ms-widget': 1}
 function serializeElement(vdom, skip) {
     var props = vdom.props
     var copy = {
@@ -93,9 +93,10 @@ function serializeElement(vdom, skip) {
                 //如果涉及到修改结构,则在vdom添加prefix, suffix
                 directives[binding.type].parse(copy, vdom, binding)
                 var name = binding.name
-                var locals = binding.locals || ''
-                var paths = alwaysDynamic[name] || locals.length ? '': binding.paths
                 if (typeof copy[name] === 'string') {
+                    //如果存在局部变量,我们无法对它进行依赖检测,只能统统执行
+                    var untraceable = !!binding.locals
+                    var paths = alwaysDynamic[name] || untraceable ? '' : binding.paths
                     dirs.push(avalon.quote(paths), avalon.quote(name), copy[name])
                     delete copy[name]
                 } else {
