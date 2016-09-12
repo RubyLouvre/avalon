@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.4.7.2 built in 2016.1.26
+ avalon.js 1.4.7.2 built in 2016.9.12
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -3833,10 +3833,11 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
 
     function compositionEnd() {
         composing = false
+        setTimeout(updateVModel)
     }
     var IE9Value
     //当value变化时改变model的值
-    var updateVModel = function () {
+    var updateVModel = function() {
         var val = elem.value //防止递归调用形成死循环
         if (composing || val === IE9Value) //处理中文输入法在minlengh下引发的BUG
             return
@@ -4865,7 +4866,7 @@ var filters = avalon.filters = {
                 replace(/>/g, '&gt;')
     },
     currency: function(amount, symbol, fractionSize) {
-        return (symbol || "\uFFE5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize : 2)
+        return (symbol || "\u00a5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize : 2)
     },
     number: numberFormat
 }

@@ -16,10 +16,11 @@ duplexBinding.INPUT = function (elem, evaluator, data) {
 
     function compositionEnd() {
         composing = false
+        setTimeout(updateVModel)
     }
     //当value变化时改变model的值
     var IE9Value
-    var updateVModel = function () {
+    var updateVModel = function() {
         var val = elem.value //防止递归调用形成死循环
         if (composing || val === IE9Value) //处理中文输入法在minlengh下引发的BUG
             return
