@@ -7,22 +7,24 @@
 
     </head>
     <body >
-       <script src='../dist/avalon.js'></script>
+        <script src='../dist/avalon.js'></script>
 
         <script>
             avalon.component('ms-button', {
-                template: '<button type="button"><span><slot name="buttonText"/></span></button>',
+                template: '<button type="button"><span><slot /></span>{{@icon}}</button>',
                 defaults: {
+                    icon:'111',
                     buttonText: "button"
-                }
-            });
-            avalon.define({
-                $id: 'test'
+                },
+                soleSlot: 'buttonText'
+            })
+            var vm = avalon.define({
+                $id: 'test',
+                aa: 'dddd'
             })
         </script>
         <div ms-controller="test">
-            <xmp ms-widget="{is:'ms-button'}"><i slot="buttonText">ddd</i></xmp>
-            <ms-button><span slot="buttonText">ddd</span></ms-button>  
+            <xmp ms-widget="{is:'ms-button',icon:@aa}"><i>ddd</i></xmp>
         </div>
     </body>
 </html>
