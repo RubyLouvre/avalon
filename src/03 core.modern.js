@@ -90,7 +90,7 @@ avalon.mix = avalon.fn.mix = function () {
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.4,
+    version: 1.57,
     ui: {},
     log: log,
     slice: function (nodes, start, end) {

@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.5.6 built in 2016.8.15
+ avalon.modern.js 1.5.7 built in 2016.9.12
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -240,7 +240,7 @@ avalon.mix = avalon.fn.mix = function () {
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.56,
+    version: 1.57,
     ui: {},
     log: log,
     slice: function (nodes, start, end) {
@@ -3269,6 +3269,7 @@ var duplexBinding = avalon.directive("duplex", {
         }
         function compositionEnd() {
             composing = false
+            setTimeout(updateVModel)
         }
         var updateVModel = function (e) {
             var val = elem.value //防止递归调用形成死循环
@@ -4863,7 +4864,7 @@ var filters = avalon.filters = {
                 replace(/>/g, '&gt;')
     },
     currency: function(amount, symbol, fractionSize) {
-        return (symbol || "\uFFE5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize : 2)
+        return (symbol || "\u00a5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize : 2)
     },
     number: numberFormat
 }

@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.5.6 built in 2016.8.15
+ avalon.js 1.5.7 built in 2016.9.12
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -468,7 +468,7 @@ function _number(a, len) { //用于模拟slice, splice的效果
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.56,
+    version: 1.57,
     ui: {},
     log: log,
     slice:  function (nodes, start, end) {
@@ -3992,6 +3992,7 @@ var duplexBinding = avalon.directive("duplex", {
         }
         function compositionEnd() {
             composing = false
+            setTimeout(updateVModel)
         }
 
         var updateVModel = function (e) {
@@ -5683,7 +5684,7 @@ var filters = avalon.filters = {
                 replace(/>/g, '&gt;')
     },
     currency: function(amount, symbol, fractionSize) {
-        return (symbol || "\uFFE5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize : 2)
+        return (symbol || "\u00a5") + numberFormat(amount, isFinite(fractionSize) ? fractionSize : 2)
     },
     number: numberFormat
 }

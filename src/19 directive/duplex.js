@@ -69,6 +69,7 @@ var duplexBinding = avalon.directive("duplex", {
         }
         function compositionEnd() {
             composing = false
+            setTimeout(updateVModel)
         }
 
         var updateVModel = function (e) {
