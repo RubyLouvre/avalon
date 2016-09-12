@@ -5,9 +5,9 @@ var directives = avalon.directives
 function serializeChildren(children, skip, isRepeat) {
     var lexeme = children.map(function (a) {
         var stem = serializeNode(a, skip)
-        var suffix = a.$append
-        var prefix = a.$prepend
-        delete a.$append
+        var suffix = a.suffix
+        var prefix = a.prefix
+        delete a.suffix
         delete a.prepend
         return {
             stem: stem,
@@ -77,7 +77,7 @@ function serializeNode(node, skip) {
 }
 
 
-
+var alwaysDynamic = {'ms-html':1, 'ms-widget': 1}
 function serializeElement(vdom, skip) {
     var props = vdom.props
     var copy = {
@@ -90,12 +90,11 @@ function serializeElement(vdom, skip) {
         if (bindings.length) {
             bindings.forEach(function (binding) {
                 //将ms-*的值变成函数,并赋给copy.props[ms-*]
-                //如果涉及到修改结构,则在vdom添加$append,$prepend
+                //如果涉及到修改结构,则在vdom添加prefix, suffix
                 directives[binding.type].parse(copy, vdom, binding)
                 var name = binding.name
                 var locals = binding.locals || ''
-                var paths = name === 'ms-html' || locals.length ? '': binding.paths
-     
+                var paths = alwaysDynamic[name] || locals.length ? '': binding.paths
                 if (typeof copy[name] === 'string') {
                     dirs.push(avalon.quote(paths), avalon.quote(name), copy[name])
                     delete copy[name]
@@ -141,12 +140,12 @@ function serializeForStart(vdom) {
     }
     avalon.directives['for'].parse(copy, vdom, {})
     //为copy添加dynamic
-    vdom.$append += avalon.caches[vdom.signature] //vdom.template
+    vdom.suffix += avalon.caches[vdom.signature] //vdom.template
     return jsonfy(copy)
 }
 
 function serializeForEnd(vdom) {
-    vdom.$append = addTag(jsonfy({
+    vdom.suffix = addTag(jsonfy({
         nodeName: '#comment',
         nodeValue: vdom.signature
 
@@ -173,7 +172,7 @@ function serializeLogic(vdom) {
     })
     var match = statement.match(rstatement)
     if (match && match[1]) {
-        vdom.$append = (vdom.$append || '') + statement +
+        vdom.suffix = (vdom.suffix || '') + statement +
                 "\n__local__." + match[1] + ' = ' + match[1] + '\n'
     } else {
         avalon.warn(nodeValue + ' parse fail!')

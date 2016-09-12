@@ -17,10 +17,11 @@ avalon.directive('html', {
             var oldTree = avalon.variant(avalon.lexer(copyValue))
 
             var render = avalon.render(oldTree, copy.local)
-            src.render = render
-
+            src.render = render 
+            var s = avalon.spath//9.12 弹制渲染所有东西
+            delete avalon.spath
             var newTree = render(copy.vmodel, copy.local)
-
+            avalon.spath = s
             src.children = copy.children = newTree
             update(src, this.update)
         } else if (src.render) {

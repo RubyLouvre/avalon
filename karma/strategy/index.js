@@ -46,7 +46,7 @@ describe('测试strategy模块', function () {
             f.appendChild(p)
             f.appendChild(document.createTextNode(''))
             f.appendChild(document.createTextNode('&nbsp;'))
-            var a = avalon.scan.dom2vdom(f)
+            var a = avalon._hydrate(f)
             expect(f.childNodes.length).to.equal(5)
             expect(a.children.length).to.equal(5)
 
@@ -63,10 +63,10 @@ describe('测试strategy模块', function () {
                  </select>
                  */
             })
-            avalon.scan.dom2vdom(div)
+            avalon._hydrate(div)
             var select = div.children[0]
 
-            expect(select.selectedIndex).to.equal(1)
+            expect(select.props).to.equal(void 0)
             done()
         })
     })

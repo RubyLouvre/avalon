@@ -11,12 +11,12 @@ avalon.directive('important', {
         //如果important没有定义可以进入
         //如果important定义了,并且__vmodel__== important也可以进入
         var vmodel = '(function(){ return __vmodel__ = avalon.vmodels[' + quoted + ']})()'
-        src.$prepend = ['!function(__vmodel__){',
+        src.prefix = ['!function(__vmodel__){',
             'var __i = avalon.scopes[' + quoted + ']',
             'var ok = !__i || __i.vmodel === __vmodel__',
             'if( !ok ){avalon.log("不进入"+' + quoted + ');return }',
         ].join('\n') + '\n' + vmodel
-        src.$append = '\n}(__vmodel__);'
+        src.suffix = '\n}(__vmodel__);'
     },
     diff: function (copy, src, name) {
         if (!src.dynamic[name]) {

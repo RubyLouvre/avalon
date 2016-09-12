@@ -73,7 +73,7 @@ avalon.directive('for', {
             kv.unshift('$key')
         }
         kv.push('traceKey', '__local__', 'vnodes')
-        src.$append = assign + alias + 'avalon._each(loop,function('
+        src.suffix = assign + alias + 'avalon._each(loop,function('
                 + kv.join(', ') + '){\n'
                 + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
                 + 'vnodes.push({\nnodeName: "#document-fragment",\nindex: arguments[0],\nkey: traceKey,\n' +
