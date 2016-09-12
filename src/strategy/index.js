@@ -40,7 +40,8 @@ function match(path) {
     if (this.indexOf(path) === 0)
         return true
 }
-
+//https://www.cnblogs.com/pigtail/p/3342977.html
+//http://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript-jquery
 avalon.addDirs = function (obj) {
     var args = avalon.slice(arguments, 1)
     var hasDynamic = false
@@ -50,7 +51,6 @@ avalon.addDirs = function (obj) {
         var fn = args[i + 2]
         if (avalon.matchDep(path, avalon.spath)) {
             obj[dir] = fn()
-           
             hasDynamic = true
         }
     }

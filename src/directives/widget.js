@@ -16,6 +16,7 @@ avalon.directive('widget', {
         src.props.wid = src.props.wid || avalon.makeHashCode('w')
         //将渲染函数的某一部分存起来,渲在c方法中转换为函数
         copy[binding.name] = avalon.parseExpr(binding)
+
         copy.template = src.template
         copy.vmodel = '__vmodel__'
         copy.local = '__local__'
@@ -31,13 +32,13 @@ avalon.directive('widget', {
 
             var is = src.props.is || (/^ms\-/.test(src.nodeName) ? src.nodeName : 0)
 
+            a = a.$model || a//安全的遍历VBscript
+            if (Array.isArray(a)) {//转换成对象
+                a.unshift({})// 防止污染旧数据
+                avalon.mix.apply(0, a)
+                a = a.shift()
+            }
             if (!is) {//开始大费周章地获取组件的类型
-                a = a.$model || a//安全的遍历VBscript
-                if (Array.isArray(a)) {//转换成对象
-                    a.unshift({})// 防止污染旧数据
-                    avalon.mix.apply(0, a)
-                    a = a.shift()
-                }
                 is = a.is
             }
             var vmName = 'component-vm:' + is
@@ -68,9 +69,9 @@ avalon.directive('widget', {
                     if (!component.skipContent) {
                         component.skipContent = 'optimize'
                     }
-                   
+
                     update(src, this.replaceCachedComponent)
-                    
+
                     update(component, function () {
                         if (component.skipContent === 'optimize') {
                             component.skipContent = true
@@ -80,7 +81,13 @@ avalon.directive('widget', {
                 }
             }
             var render = comVm.$render
+            for (var i in a) {
+                if (i !== 'id' || i !== 'is') {
+                    comVm[i] = a[i]
+                }
+            }
             var tree = render(comVm, copy.local)
+
             var component = tree[0]
             /* istanbul ignore if */
             /* istanbul ignore else */
@@ -107,11 +114,11 @@ avalon.directive('widget', {
                     update(src, this.updateComponent)
                 }
             } else {
-             
+
                 src.nodeValue = 'unresolved component placeholder'
                 copyList[index] = {
-                   nodeValue: 'unresolved component placeholder',
-                   nodeName: '#comment'
+                    nodeValue: 'unresolved component placeholder',
+                    nodeName: '#comment'
                 }
                 update(src, this.mountComment)
             }
@@ -142,7 +149,7 @@ avalon.directive('widget', {
     mountComponent: function (dom, vdom, parent) {
         delete vdom.dom
         var com = avalon.vdom(vdom, 'toDOM')
-       
+
         var is = vdom.props.is
         var vm = vdom['component-vm:' + is]
         vm.$fire('onInit', {
@@ -150,9 +157,9 @@ avalon.directive('widget', {
             vmodel: vm,
             is: is
         })
-      
+
         parent.replaceChild(com, dom)
-   
+
         vdom.dom = vm.$element = com
         com.vtree = [vdom]
         disposeComponent(com)

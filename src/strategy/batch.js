@@ -18,7 +18,6 @@ function batchUpdate(id, spath) {
     } else {
         renderingID = id
     }
-
     var scope = avalon.scopes[id]
     if (!scope || !document.nodeName || avalon.suspendUpdate) {
         return renderingID = null
@@ -28,8 +27,7 @@ function batchUpdate(id, spath) {
     var source = dom.vtree || []
     var renderFn = vm.$render
     avalon.spath = spath
-    
-    //var evalStart = new Date
+    // var evalStart = new Date
     var copy = renderFn(scope.vmodel, scope.local)
     // avalon.log('eval', new Date - evalStart)
     if (scope.isTemp) {

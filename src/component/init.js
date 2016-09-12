@@ -14,6 +14,13 @@ function initComponent(src, rawOption, local, template) {
         avalon.warn(tag + '不合适做组件的标签')
         return
     }
+
+    var definition = avalon.components[is]
+    //如果连组件的定义都没有加载回来,应该立即返回 
+    /* istanbul ignore if */
+    if (!definition) {
+        return
+    }
     //开始初始化组件
     var hooks = {}
     //用户只能操作顶层VM
@@ -29,13 +36,6 @@ function initComponent(src, rawOption, local, template) {
             }
         })
     }
-    var definition = avalon.components[is]
-    //如果连组件的定义都没有加载回来,应该立即返回 
-    /* istanbul ignore if */
-    if (!definition) {
-        return
-    }
-
     //得到组件在顶层vm的配置对象名
     var id = hooks.id || hooks.$id
     if (!id && onceWarn) {
@@ -50,9 +50,7 @@ function initComponent(src, rawOption, local, template) {
     //生成组件VM
     var $id = id || src.props.id || 'w' + (new Date - 0)
     var defaults = avalon.mix(true, {}, definition.defaults)
-
-    mixinHooks(hooks, defaults, false)//src.vmodel,
-
+    mixinHooks(hooks, defaults, false)
     var skipProps = immunity.concat()
     function sweeper(a, b, c) {
         skipProps.forEach(function (k) {
@@ -186,7 +184,6 @@ function replaceSlot(vtree, slotName) {
     for (var i = 0, el; el = vtree[i]; i++) {
         if (el.nodeName === 'slot') {
             var name = el.props.name || slotName
-
             vtree.splice(i, 1, {
                 nodeName: '#comment',
                 nodeValue: 'slot:' + name,
