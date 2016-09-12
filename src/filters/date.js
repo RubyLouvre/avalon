@@ -1,3 +1,4 @@
+module.exports = dateFilter
 /*
  'yyyy': 4 digit representation of year (e.g. AD 1 => 0001, AD 2010 => 2010)
  'yy': 2 digit representation of year, padded (00-99). (e.g. AD 2001 => 01, AD 2010 => 10)
@@ -233,4 +234,3 @@ var locate = {
 locate.SHORTMONTH = locate.MONTH
 dateFilter.locate = locate
 
-module.exports = dateFilter

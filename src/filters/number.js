@@ -1,3 +1,5 @@
+module.exports = number
+
 function number(number, decimals, point, thousands) {
     //form http://phpjs.org/functions/number_format/
     //number 必需，要格式化的数字
@@ -30,7 +32,5 @@ function number(number, decimals, point, thousands) {
     }
     return s.join(dec)
 }
-
-module.exports = number
 
 //处理 货币 http://openexchangerates.github.io/accounting.js/

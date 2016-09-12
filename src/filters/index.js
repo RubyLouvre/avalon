@@ -55,5 +55,3 @@ avalon.mix(filters, {
     }
 }, arrayFilters, eventFilters)
 
-
-module.exports = avalon
