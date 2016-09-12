@@ -39,10 +39,12 @@ var rreplace = /%%%%/g
 function parseText(nodeValue) {
     var array = typeof nodeValue === 'string' ?
             extractExpr(nodeValue) : [nodeValue]
-    var alwaysHasDynamic = false
+
     var paths = {}
     var locals = {}
-    var bracket = array.length > 1 ? '()' : ''
+    var isOne = array.length === 1
+    var alwaysHasDynamic = false
+    var bracket = isOne ? '' : '()'
     var token = array.map(function (binding) {
         if (binding.type) {
             var expr = binding.expr
@@ -63,13 +65,13 @@ function parseText(nodeValue) {
             return avalon.quote(binding.expr)
         }
     })
-    if (alwaysHasDynamic && token.length === 1) {
-        return '{nodeName:"#text",dynamic:{},nodeValue:' + token + '}'
-    }
-    if (token.length > 1) {
-        nodeValue = 'function(){return ' + token.join('+') + "}"
-    } else {
+    if (isOne) {
+        if (alwaysHasDynamic) {
+            return '{nodeName:"#text",dynamic:{},nodeValue:' + token + '}'
+        }
         nodeValue = token[0]
+    } else {
+        nodeValue = 'function(){return ' + token.join('+') + "}"
     }
     var copy = {
         nodeName: "#text"
