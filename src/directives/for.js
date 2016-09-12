@@ -14,9 +14,7 @@ avalon._each = function (obj, fn, local, vnodes) {
     var repeat = []
     vnodes.push(repeat)
     var arr = (fn + '').slice(0, 40).match(rargs)
-
     arr.shift()
-
     if (Array.isArray(obj)) {
         for (var i = 0; i < obj.length; i++) {
             iterator(i, obj[i], local, fn, arr[0], arr[1], repeat, true)
