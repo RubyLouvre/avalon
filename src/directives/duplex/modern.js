@@ -65,12 +65,12 @@ avalon.directive('duplex', {
         var quoted = parsers.map(function (a) {
             return avalon.quote(a)
         })
-        copy[duplexDir] = 'function(){' +
+        copy[duplexDir] = 'function(){ return ' +
                 jsonfy({
                     type: dtype, //这个决定绑定什么事件
                     vmodel: '__vmodel__',
                     local: '__local__',
-                    debug: '/' + debug + '/',
+                    debug: '/' + avalon.escapeRegExp(debug) + '/',
                     isChecked: isChecked, //用于radio与checked
                     parsers: '[' + quoted + ']', //各种转换器的名字
                     isString: !!isString, //这个决定是否需要转换为字符串

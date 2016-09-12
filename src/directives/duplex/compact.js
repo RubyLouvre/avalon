@@ -72,7 +72,7 @@ avalon.directive('duplex', {
                     type: dtype, //这个决定绑定什么事件
                     vmodel: '__vmodel__',
                     local: '__local__',
-                    debug: '/' + debug + '/',
+                    debug: '/' + avalon.escapeRegExp(debug) + '/',
                     isChecked: isChecked,
                     parsers: '[' + quoted + ']',
                     isString: !!isString,

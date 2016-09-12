@@ -32,9 +32,9 @@ function makeRender(vtree, local) {
 avalon.render = makeRender
 
 avalon.matchDep = function (a, s) {
-    if (!s)
+    if (!s || !a)
         return true
-    return a.split(',').some(match, s)
+    return  s.test(a)///a.split(',').some(match, s)
 }
 function match(path) {
     if (this.indexOf(path) === 0)
@@ -49,7 +49,7 @@ avalon.addDirs = function (obj) {
         var path = args[i]
         var dir = args[i + 1]
         var fn = args[i + 2]
-        if (avalon.matchDep(path, avalon.spath)) {
+        if ( avalon.matchDep(path, avalon.spath)) {
             obj[dir] = fn()
             hasDynamic = true
         }

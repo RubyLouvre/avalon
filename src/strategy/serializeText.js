@@ -35,7 +35,7 @@ function extractExpr(str) {
     return ret
 }
 var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
-
+var rreplace = /%%%%/g
 function parseText(nodeValue) {
     var array = typeof nodeValue === 'string' ?
             extractExpr(nodeValue) : [nodeValue]
@@ -63,23 +63,19 @@ function parseText(nodeValue) {
             return avalon.quote(binding.expr)
         }
     })
-
+    if (alwaysHasDynamic && token.length === 1) {
+        return '{nodeName:"#text",dynamic:{},nodeValue:' + token + '}'
+    }
     if (token.length > 1) {
         nodeValue = 'function(){return ' + token.join('+') + "}"
     } else {
-        nodeValue = token.join('')
+        nodeValue = token[0]
     }
-    alwaysHasDynamic = alwaysHasDynamic || Object.keys(locals).length
     var copy = {
         nodeName: "#text"
     }
-    if (alwaysHasDynamic) {
-        copy.dynamic = true
-        if (token.length === 1) {
-            return '{nodeName:"#text",dynamic:{},nodeValue:' + nodeValue + '}'
-        }
-    }
-    var dirs = [avalon.quote(Object.keys(paths).join(',')), '"nodeValue"', nodeValue]
+    var paths = Object.keys(locals).length ? '' : Object.keys(paths).join(',')
+    var dirs = [avalon.quote(paths), '"nodeValue"', nodeValue]
     return  jsonfy(copy, dirs)
 }
 
