@@ -1,6 +1,7 @@
 var jsonfy = require('./jsonfy')
 var serializeText = require('./serializeText')
 module.exports = serializeChildren
+
 var directives = avalon.directives
 function serializeChildren(children, skip, isRepeat) {
     var lexeme = children.map(function (a) {
@@ -38,8 +39,6 @@ function serializeChildren(children, skip, isRepeat) {
 }
 
 function bufferChildren(nodes) {
-//ms-important， ms-controller ， ms-for 不可复制，省得死循环
-//ms-important --> ms-controller --> ms-for --> ms-widget --> ms-effect --> ms-if
     var buffer = []
     for (var i = 0, node; node = nodes[i++]; ) {
         if (node.prefix) {
@@ -146,22 +145,20 @@ function serializeForStart(vdom) {
 }
 
 function serializeForEnd(vdom) {
-    vdom.suffix = addTag(jsonfy({
+    vdom.suffix = addTagJSON({
         nodeName: '#comment',
         nodeValue: vdom.signature
 
-    })) +
+    }) +
             '\nreturn vnodes}\n })\n},__local__, vnodes)\n' +
-            addTag(jsonfy({
+            addTagJSON({
                 nodeName: "#comment",
                 signature: vdom.signature,
                 nodeValue: "ms-for-end:"
-            })) + '\n'
+            }) + '\n'
     return ''
 }
-function addTag(a) {
-    return 'vnodes.push(' + a + ')'
-}
+
 
 var rstatement = /^\s*var\s+([$\w]+)\s*\=\s*\S+/
 
@@ -228,12 +225,23 @@ function extractBindings(cur, props) {
     }
 
     cur.props = attrs
-
     bindings.sort(byPriority)
-
     return bindings
 }
 
+//ms-important --> ms-controller --> ms-for --> ms-widget --> 
+//ms-effect --> ms-if ... --> ms-duplex
 function byPriority(a, b) {
     return a.priority - b.priority
+}
+
+//判定目标对象是否拥有prefix, suffix
+function hasFix(a) {
+    return a.prefix || a.suffix
+}
+function addTag(a) {
+    return 'vnodes.push(' + a + ')'
+}
+function addTagJSON(a) {
+    return addTag(jsonfy(a))
 }

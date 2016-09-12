@@ -4,6 +4,9 @@
  * 添加change, afterChange更新钩子
  * ------------------------------------------------------------
  */
+
+module.exports = diff
+
 var emptyArr = []
 // 防止被引用
 var emptyObj = function () {
@@ -11,7 +14,6 @@ var emptyObj = function () {
         children: [], props: {}
     }
 }
-var directives = avalon.directives
 var rbinding = /^ms-(\w+)-?(.*)/
 
 function diff(copys, sources) {
@@ -32,7 +34,7 @@ function diff(copys, sources) {
                 break
             case '#comment':
                 if (copy.forExpr && copy.dynamic) {//比较循环区域的元素位置
-                    directives['for'].diff(copy, src, copys, sources, i)
+                    avalon.directives['for'].diff(copy, src, copys, sources, i)
                 } else if (src.afterChange) {
                     execHooks(src, src.afterChange)
                 }
@@ -98,6 +100,4 @@ function diffProps(copy, source) {
         avalon.warn(type, e, e.stack || e.message, 'diffProps error')
     }
 }
-avalon.diff = diff
-avalon.diffProps = diffProps
-module.exports = diff
+
