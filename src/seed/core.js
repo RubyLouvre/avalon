@@ -23,6 +23,7 @@ var hasConsole = typeof console === 'object'
 avalon.shadowCopy(avalon, {
     noop: function () {
     },
+    version: "2.114",
     //切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach
     rword: rword,
     inspect: ({}).toString,
@@ -48,7 +49,7 @@ avalon.shadowCopy(avalon, {
     oneObject: function (array, val) {
         /* istanbul ignore if*/
         if (typeof array === 'string') {
-            array = array.match(rword) ||[]
+            array = array.match(rword) || []
         }
         var result = {},
                 value = val !== void 0 ? val : 1
@@ -61,3 +62,21 @@ avalon.shadowCopy(avalon, {
 })
 
 module.exports = avalon
+
+function welcome() {
+    var welcomeIntro = ["%cavalon.js %c" + avalon.version + " %cin debug mode, %cmore...", "color: rgb(114, 157, 52); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(82, 140, 224); font-weight: normal; text-decoration: underline;"];
+    var welcomeMessage = "You're running avalon in debug mode - messages will be printed to the console to help you fix problems and optimise your application.\n\n" +
+            'To disable debug mode, add this line at the start of your app:\n\n  avalon.config({debug: false});\n\n' +
+            'Debug mode also automatically shut down amicably when your app is minified.\n\n' +
+            "Get help and support:\n  https://segmentfault.com/t/avalon\n  http://avalonjs.coding.me/\n  http://www.avalon.org.cn/\n\nFound a bug? Raise an issue:\n  https://github.com/RubyLouvre/avalon/issues\n\n";
+
+    var con = hasConsole ? console : avalon
+    var hasGroup = !!con.groupCollapsed
+    con[hasGroup ? "groupCollapsed" : "log"].apply(con, welcomeIntro);
+    con.log(welcomeMessage)
+    if (hasGroup) {
+        con.groupEnd(welcomeIntro);
+    }
+}
+
+welcome()
