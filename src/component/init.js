@@ -1,17 +1,19 @@
-var skipArray = require('../vmodel/parts/skipArray')
+module.exports = initComponent
 
+var skipArray = require('../vmodel/parts/skipArray')
 var legalTags = {wbr: 1, xmp: 1, template: 1}
 var events = 'onInit,onReady,onViewChange,onDispose'
 var componentEvents = avalon.oneObject(events)
 var immunity = events.split(',').concat('is', 'define')
 var onceWarn = true
+
 function initComponent(src, rawOption, local, template) {
     var tag = src.nodeName
     var is = src.props.is
     //判定用户传入的标签名是否符合规格
     /* istanbul ignore if */
     if (!legalTags[tag] && !isCustomTag(tag)) {
-        avalon.warn(tag + '不合适做组件的标签')
+        avalon.warn(tag + '标签不能做组件容器')
         return
     }
 
@@ -19,6 +21,7 @@ function initComponent(src, rawOption, local, template) {
     //如果连组件的定义都没有加载回来,应该立即返回 
     /* istanbul ignore if */
     if (!definition) {
+        avalon.warn(is + '组件还没有加载')
         return
     }
     //开始初始化组件
@@ -45,12 +48,14 @@ function initComponent(src, rawOption, local, template) {
                 )
         onceWarn = false
     }
+
     var define = hooks.define
     define = define || avalon.directives.widget.define
     //生成组件VM
-    var $id = id || src.props.id || 'w' + (new Date - 0)
+    var $id = id || src.props.wid || 'w' + (new Date - 0)
     var defaults = avalon.mix(true, {}, definition.defaults)
     mixinHooks(hooks, defaults, false)
+
     var skipProps = immunity.concat()
     function sweeper(a, b, c) {
         skipProps.forEach(function (k) {
@@ -91,94 +96,71 @@ function initComponent(src, rawOption, local, template) {
     // template保存着最原始的组件容器信息
     // 我们先将它转换成虚拟DOM,如果是xmp, template,
     // 它们内部是一个纯文本节点, 需要继续转换为虚拟DOM
-    var shell = avalon.lexer(template)
-
-    var shellRoot = shell[0]
-    shellRoot.children = shellRoot.children || []
-    shellRoot.props.is = is
-    shellRoot.props.wid = $id
-    avalon.variant(shell)
-
-    var render = avalon.render(shell, local)
-
+    var templateID = 'temp:' + template
+    if (!avalon.caches[templateID]) {
+        var shell = avalon.lexer(template)
+        avalon.variant(shell)
+        shell[0].props.is = is
+        avalon.caches[templateID] = avalon.render(shell, local)
+    }
+    var render1 = avalon.caches[templateID]
     //生成内部的渲染函数
-    var finalTemplate = definition.template.trim()
-    if (typeof definition.getTemplate === 'function') {
-        finalTemplate = definition.getTemplate(vmodel, finalTemplate)
+
+    if (!definition.render) {
+        var finalTemplate = definition.template.trim()
+        var vtree = avalon.lexer(finalTemplate)
+
+        if (vtree.length > 1) {
+            avalon.error('组件必须用一个元素包起来')
+        }
+        var soleSlot = definition.soleSlot
+        replaceSlot(vtree, soleSlot)
+        avalon.variant(vtree)
+
+        definition.render = avalon.render(vtree)
     }
-    var vtree = avalon.lexer(finalTemplate)
 
-    if (vtree.length > 1) {
-        avalon.error('组件必须用一个元素包起来')
-    }
-    var soleSlot = definition.soleSlot
-    replaceSlot(vtree, soleSlot)
-    avalon.variant(vtree)
-
-    var render2 = avalon.render(vtree)
-
-    //生成最终的组件渲染函数
-    var str = fnTemplate + ''
-    var zzzzz = soleSlot ? avalon.quote(soleSlot) : "null"
-    str = str.
-            replace('XXXXX', stringifyAnonymous(render)).
-            replace('YYYYY', stringifyAnonymous(render2)).
-            replace('ZZZZZ', zzzzz)
-    var begin = str.indexOf('{') + 1
-    var end = str.lastIndexOf("}")
-
-    var lastFn = Function('vm', 'local', str.slice(begin, end))
-
-    vmodel.$render = lastFn
-
-    src['component-vm:' + is] = vmodel
-
-    return  vmodel.$render = lastFn
-
-}
-module.exports = initComponent
-
-function stringifyAnonymous(fn) {
-    return fn.toString().replace('anonymous', '')
-            .replace(/\s*\/\*\*\//g, '')
-}
-
-
-function fnTemplate() {
-    var shell = (XXXXX)(vm, local);
-    var shellRoot = shell[0]
-    var vtree = (YYYYY)(vm, local);
-    var component = vtree[0]
-
-    //处理diff
-
-    for (var i in shellRoot) {
-        if (i !== 'children' && i !== 'nodeName') {
-            if (i === 'props') {
-                avalon.mix(component.props, shellRoot.props)
-            } else {
-                component[i] = shellRoot[i]
+    var render2 = definition.render
+    function lastFn(vmodel, local) {
+        var shell = render1(vmodel, local)
+        var shellRoot = shell[0]
+        var vtree = render2(vmodel, local);
+        var component = vtree[0]
+        //处理diff
+        for (var i in shellRoot) {
+            if (i !== 'children' && i !== 'nodeName') {
+                if (i === 'props') {
+                    avalon.mix(component.props, shellRoot.props)
+                } else {
+                    component[i] = shellRoot[i]
+                }
             }
         }
+
+        var soleSlot = definition.soleSlot
+        var slots = collectSlots(shellRoot, soleSlot)
+        if (soleSlot && (!slots[soleSlot] || !slots[soleSlot].length)) {
+            slots[soleSlot] = [{
+                    nodeName: '#text',
+                    nodeValue: vmodel[soleSlot],
+                    dynamic: true
+                }]
+        }
+        insertSlots(vtree, slots)
+        component.props.wid = vmodel.$id
+       
+        delete component.skipContent
+        return vtree
     }
 
-
-    var soleSlot = ZZZZZ
-    var slots = avalon.collectSlots(shellRoot, soleSlot)
-    if (soleSlot && (!slots[soleSlot] || !slots[soleSlot].length)) {
-        slots[soleSlot] = [{
-                nodeName: '#text',
-                nodeValue: vm[soleSlot],
-                dynamic: true
-            }]
-    }
-    avalon.insertSlots(vtree, slots)
-
-    delete component.skipAttrs
-    delete component.skipContent
-    return vtree
-
+    //生成最终的组件渲染函数
+    vmodel.$render = lastFn
+    src['component-vm:' + is] = vmodel
+    return  vmodel.$render = lastFn
 }
+
+
+
 
 function replaceSlot(vtree, slotName) {
     for (var i = 0, el; el = vtree[i]; i++) {
@@ -200,19 +182,19 @@ function replaceSlot(vtree, slotName) {
     }
 }
 
-avalon.insertSlots = function (vtree, slots) {
+function insertSlots(vtree, slots) {
     for (var i = 0, el; el = vtree[i]; i++) {
         if (el.nodeName === '#comment' && slots[el.type]) {
             var args = [i + 1, 0].concat(slots[el.type])
             vtree.splice.apply(vtree, args)
             i += slots[el.type].length
         } else if (el.children) {
-            avalon.insertSlots(el.children, slots)
+            insertSlots(el.children, slots)
         }
     }
 }
 
-avalon.collectSlots = function (node, soleSlot) {
+function collectSlots(node, soleSlot) {
     var slots = {}
     if (soleSlot) {
         slots[soleSlot] = node.children

@@ -87,11 +87,12 @@ function serializeElement(vdom, skip) {
         skip = 'ms-skip' in props
         var bindings = skip ? [] : extractBindings(copy, props)
         if (bindings.length) {
-            bindings.forEach(function (binding) {
+            vdom.dynamic = {}
+            for (var i = 0, binding; binding = bindings[i++]; ) {
                 //将ms-*的值变成函数,并赋给copy.props[ms-*]
                 //如果涉及到修改结构,则在vdom添加prefix, suffix
-                directives[binding.type].parse(copy, vdom, binding)
                 var name = binding.name
+                directives[binding.type].parse(copy, vdom, binding)
                 if (typeof copy[name] === 'string') {
                     //如果存在局部变量,我们无法对它进行依赖检测,只能统统执行
                     var untraceable = !!binding.locals
@@ -101,8 +102,7 @@ function serializeElement(vdom, skip) {
                 } else {
                     copy.dynamic = '{}'
                 }
-            })
-            vdom.dynamic = {}
+            }
         }
     }
     if (vdom.isVoidTag) {

@@ -1,6 +1,7 @@
 var update = require('./_update')
 var initComponent = require('../component/init')
 var disposeComponent = require('../component/dispose')
+
 avalon._disposeComponent = disposeComponent
 
 avalon.component = function (name, definition) {
@@ -29,15 +30,16 @@ avalon.directive('widget', {
         /* istanbul ignore else */
         if (Object(a) === a) {
             //有三个地方可以设置is, 属性,标签名,配置对象
-
+           
             var is = src.props.is || (/^ms\-/.test(src.nodeName) ? src.nodeName : 0)
-
             a = a.$model || a//安全的遍历VBscript
             if (Array.isArray(a)) {//转换成对象
                 a.unshift({})// 防止污染旧数据
                 avalon.mix.apply(0, a)
                 a = a.shift()
             }
+
+
             if (!is) {//开始大费周章地获取组件的类型
                 is = a.is
             }
@@ -80,13 +82,16 @@ avalon.directive('widget', {
                     return
                 }
             }
-            var render = comVm.$render
+
+            var hash = comVm.$hashcode
+            comVm.$hashcode = false
             for (var i in a) {
                 if (i !== 'id' || i !== 'is') {
                     comVm[i] = a[i]
                 }
             }
-            var tree = render(comVm, copy.local)
+            comVm.$hashcode = hash
+            var tree = comVm.$render(comVm, copy.local)
 
             var component = tree[0]
             /* istanbul ignore if */
@@ -157,7 +162,7 @@ avalon.directive('widget', {
             vmodel: vm,
             is: is
         })
-
+        
         parent.replaceChild(com, dom)
 
         vdom.dom = vm.$element = com

@@ -63,7 +63,7 @@ avalon.shadowCopy(avalon, {
 
 module.exports = avalon
 
-function welcome() {
+new function welcome() {
     var welcomeIntro = ["%cavalon.js %c" + avalon.version + " %cin debug mode, %cmore...", "color: rgb(114, 157, 52); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(82, 140, 224); font-weight: normal; text-decoration: underline;"];
     var welcomeMessage = "You're running avalon in debug mode - messages will be printed to the console to help you fix problems and optimise your application.\n\n" +
             'To disable debug mode, add this line at the start of your app:\n\n  avalon.config({debug: false});\n\n' +
@@ -78,5 +78,3 @@ function welcome() {
         con.groupEnd(welcomeIntro);
     }
 }
-
-welcome()

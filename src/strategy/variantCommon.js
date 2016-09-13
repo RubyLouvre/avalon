@@ -44,7 +44,7 @@ function variantChildren(children) {
                     var cb = props['data-for-rendered']
                     if (cb) {
                         delete props['data-for-rendered']
-                        var wid = 'hook:'+ cb
+                        var wid = 'hook:' + cb
                         if (!avalon.caches[wid]) {
                             avalon.caches[wid] = Function('return ' + avalon.parseExpr({
                                 expr: cb,
@@ -88,6 +88,11 @@ function variantProps(node) {
         if (nodeName === 'input') {
             if (!props.type) {
                 props.type = 'text'
+            }
+        } else if (/xmp|wbr|template/.test(nodeName)) {
+            if (!props['ms-widget'] && props.is) {
+                props['ms-widget'] = '{is:"' + props.is + '"}'
+                emptyProps = false
             }
         } else if (nodeName === 'select') {
             var postfix = props.hasOwnProperty('multiple') ? 'multiple' : 'one'
