@@ -12,7 +12,7 @@ function initComponent(copy, data) {
     var template = copy.template
     //判定用户传入的标签名是否符合规格
     /* istanbul ignore if */
-    data = avalon.shadowCopy({}, data)
+    //data = avalon.shadowCopy({}, data)
     if (!legalTags[tag] && !isCustomTag(tag)) {
         avalon.warn(tag + '标签不能做组件容器')
         return

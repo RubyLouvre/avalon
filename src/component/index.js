@@ -70,7 +70,6 @@ avalon.directive('widget', {
                             avalon.log('slot数据不一致,更新', is, '组件')
                         }
                     } else {
-                        
                         avalon.log('ms-widget数据不一致,更新', is, '组件')
                     }
                 }
