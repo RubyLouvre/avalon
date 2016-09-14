@@ -87,8 +87,8 @@ function initComponent(copy, data) {
     
     if (!id) {
         if (onceWarn) {
-            avalon.warn('warning!', is, '组件最好在ms-widget配置对象中指定全局不重复的$id以提高性能!\n',
-                    '若在ms-for循环中可以利用 ($index,el) in @array 中的$index拼写你的$id\n',
+            avalon.warn('warning!', is, '组件最好在ms-widget配置对象中指定全局不重复的id以提高性能!\n',
+                    '若在ms-for循环中可以利用 ($index,el) in @array 中的$index拼写你的id\n',
                     '如 ms-widget="{is:\'ms-button\',id:\'btn\'+$index}"'
                     )
             onceWarn = false

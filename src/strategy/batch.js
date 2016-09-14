@@ -32,9 +32,7 @@ function batchUpdate(id, spath) {
         spath = new RegExp( avalon.escapeRegExp(spath) )
     }
     avalon.spath = spath
-    // var evalStart = new Date
     var copy = renderFn(scope.vmodel, scope.local)
-    // avalon.log('eval', new Date - evalStart)
     if (scope.isTemp) {
         //在最开始时,替换作用域的所有节点,确保虚拟DOM与真实DOM是对齐的
         delete avalon.scopes[id]

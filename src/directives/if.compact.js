@@ -29,7 +29,6 @@ avalon.directive('if', {
                 })
             }
         } else {
-
             //要移除元素节点,在对应位置上插入注释节点
             if (!vdom.comment) {
                 vdom.comment = document.createComment('if')
@@ -45,7 +44,7 @@ avalon.directive('if', {
                     if (!parent || parent.nodeType === 11) {
                         parent = dom.parentNode
                         if (!parent || parent.nodeType === 11) {
-                             return
+                            return
                         }
                     }
                     parent.replaceChild(vdom.comment, dom)
