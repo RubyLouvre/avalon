@@ -49,24 +49,24 @@ avalon.directive('widget', {
         //有三个地方可以设置is, 标签名, 属性, 配置对象
         var maybeIs = /^ms\-/.test(src.nodeName) ? src.nodeName : src.props.is
         var is = maybeIs || data.is
-        data.is = is
-        src.props.is = is
+
+        copy.props.is = data.is = is
         src.vmodel = copy.vmodel
-        var oldLocal = src.local
-        src.local = copy.local
+
         var vmName = 'component-vm:' + is
-        var comVm = src[vmName], render
+        var comVm = src[vmName]
         if (comVm) { //是否初始化
-            render = comVm.render
             var isNeedUpdateData = !!avalon.scopes[comVm.$id]
             if (isNeedUpdateData) {
                 var isSameData = avalon._deepEqual(data, src['component-data:' + is]) &&
-                        avalon._deepEqual(copy.local, oldLocal)
+                        avalon._deepEqual(copy.local, src.local)
+                var topData = copy.vmodel.$model
                 if (isSameData) {
                     var props = src['component-props:' + is]
                     var vmProps = {}
+
                     for (var i in props) {
-                        vmProps[i] = src.vmodel[i]
+                        vmProps[i] = topData[i]
                     }
                     isSameData = avalon._deepEqual(props, vmProps)
                 }
@@ -76,8 +76,8 @@ avalon.directive('widget', {
                     for (var i in data) {
                         comVm[i] = data[i]
                     }
-                    for (var i in src.vmodel) {
-                        comVm[i] = src.vmodel[i]
+                    for (var i in topData) {
+                        comVm[i] = topData[i]
                     }
                     comVm = hash
                 } else {
@@ -85,19 +85,18 @@ avalon.directive('widget', {
                 }
             }
         } else {
-            render = initComponent(src, data, copy.template)
-            if (render) {
-                comVm = src[vmName]
+            comVm = initComponent(copy, data)
+            if (comVm) {
+                src[vmName] = comVm
+
             } else {
                 return replaceComment.apply(this, arguments)
             }
         }
-        var vtree = render(comVm, src.local)
+        var vtree = comVm.$render(comVm, copy.local)
         var component = vtree[0]
         if (component && isComponentReady(component)) {
             Array(
-                    vmName,
-                    'component-html:' + is,
                     'component-ready:' + is,
                     'dom', 'dynamic', 'local'
                     ).forEach(function (name) {

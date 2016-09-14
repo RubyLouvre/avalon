@@ -6,9 +6,10 @@ var rprops = /__vmodel__\.([\$\w\_]+)/g
 var componentEvents = {onInit: 1, onReady: 1, onViewChange: 1, onDispose: 1}
 var onceWarn = true
 
-function initComponent(copy, data, template) {
+function initComponent(copy, data) {
     var tag = copy.nodeName
     var is = copy.props.is
+    var template = copy.template
     //判定用户传入的标签名是否符合规格
     /* istanbul ignore if */
     if (!legalTags[tag] && !isCustomTag(tag)) {
