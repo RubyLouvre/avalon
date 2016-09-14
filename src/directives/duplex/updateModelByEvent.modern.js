@@ -6,7 +6,7 @@
  * 3. 定时器轮询
  */
 var updateModel = require('./updateModelHandle')
-var markID = require('../../seed/lang.share').getShortID
+var markID = avalon._markBindID
 var msie = avalon.msie
 var window = avalon.window
 var document = avalon.document
