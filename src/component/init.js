@@ -66,8 +66,7 @@ function initComponent(copy, data) {
         delete defaults[i]
     }
     var topVm = copy.vmodel.$model
-    delete data.is
-    delete data.id
+    var id = data.id || data.$id
     for (var i in defaults) {
         if (!(i in data)) {
             if (!skipArray[i]) {
@@ -75,6 +74,8 @@ function initComponent(copy, data) {
             }
         }
     }
+    delete data.is
+    delete data.id
     copy.slotData = {}
     String(slotRender).replace(rprops, function (_, prop) {
         if (!(prop in data)) {
@@ -83,7 +84,7 @@ function initComponent(copy, data) {
         }
     })
     //得到组件在顶层vm的配置对象名
-    var id = hooks.id || hooks.$id
+    
     if (!id) {
         if (onceWarn) {
             avalon.warn('warning!', is, '组件最好在ms-widget配置对象中指定全局不重复的$id以提高性能!\n',

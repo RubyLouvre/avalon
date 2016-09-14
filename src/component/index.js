@@ -41,7 +41,7 @@ avalon.directive('widget', {
         var maybeIs = /^ms\-/.test(src.nodeName) ? src.nodeName : src.props.is
         var is = maybeIs || data.is
 
-        copy.props.is = data.is = is
+        copy.props.is = is
         //src.vmodel = copy.vmodel
 
         var vmName = 'component-vm:' + is
@@ -57,6 +57,8 @@ avalon.directive('widget', {
                 }
                 var isSameData = avalon._deepEqual(src.local, copy.local)
                 if (isSameData) {
+                    delete data.is
+                    delete data.id
                     var oldData = {}
                     for (var i in data) {
                         oldData[i] = comVm.$model[i]
@@ -64,6 +66,12 @@ avalon.directive('widget', {
                     isSameData = avalon._deepEqual(oldData, data)
                     if (isSameData) {
                         isSameData = avalon._deepEqual(oldSlot, newSlot)
+                        if (!isSameData) {
+                            avalon.log('slot数据不一致,更新', is, '组件')
+                        }
+                    } else {
+                        
+                        avalon.log('ms-widget数据不一致,更新', is, '组件')
                     }
                 }
                 if (!isSameData) {
@@ -289,13 +297,9 @@ function iterableEqual(a, b) {
     return match
 }
 
-
-
 function isValue(a) {
     return a !== null && a !== undefined
 }
-
-
 
 function objectEqual(a, b, m) {
     if (!isValue(a) || !isValue(b)) {
