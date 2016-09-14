@@ -9,7 +9,7 @@
  */
 
 
-var update = require('./_update')
+var update = require('../_update')
 var initComponent = require('./init')
 var disposeComponent = require('./dispose')
 

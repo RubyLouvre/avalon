@@ -32,7 +32,7 @@ describe('widget', function () {
         div.innerHTML = heredoc(function () {
             /*
              <div ms-controller='widget0' >
-             <xmp ms-widget="{is:'ms-button'}">{{@btn}}</xmp>
+             <xmp is='ms-button'>{{@btn}}</xmp>
              <ms-button>这是标签里面的TEXT</ms-button>
              <ms-button ms-widget='{buttonText:"这是属性中的TEXT"}'></ms-button>
              <ms-button></ms-button>

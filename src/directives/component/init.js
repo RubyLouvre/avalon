@@ -1,6 +1,6 @@
 module.exports = initComponent
 
-var skipArray = require('../..vmodel/parts/skipArray')
+var skipArray = require('../../vmodel/parts/skipArray')
 var legalTags = {wbr: 1, xmp: 1, template: 1}
 var rprops = /__vmodel__\.([\$\w\_]+)/g
 var componentEvents = {onInit: 1, onReady: 1, onViewChange: 1, onDispose: 1}
