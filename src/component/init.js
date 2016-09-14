@@ -146,9 +146,6 @@ function initComponent(copy, data) {
     return  vm
 }
 
-
-
-
 function replaceSlot(vtree, slotName) {
     for (var i = 0, el; el = vtree[i]; i++) {
         if (el.nodeName === 'slot') {

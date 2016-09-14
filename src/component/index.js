@@ -98,9 +98,9 @@ avalon.directive('widget', {
                     ).forEach(function (name) {
                 component[name] = src[name]
             })
-           
+
             component['component-slot:' + is] = copy.slotData || newSlot
-            
+
             component[vmName] = comVm
             component.local = copy.local
             component.vmodel = copy.vmodel
@@ -228,9 +228,14 @@ function hasUnresolvedComponent(vnode) {
 
 avalon._deepEqual = deepEqual
 
-var typeMap = {
+var deepDetectType = {
     object: 1,
-    array: 1
+    array: 1,
+}
+var toStringType = {
+    date: 1,
+    regexp: 1,
+    'function': 1
 }
 var type = avalon.type
 function deepEqual(a, b, m) {
@@ -239,40 +244,23 @@ function deepEqual(a, b, m) {
     }
     var atype = type(a)
     var btype = type(b)
-    if ('date' === atype) {
-        return dateEqual(a, b, btype)
-    } else if ('regexp' === atype) {
-        return regexpEqual(a, b, btype)
-    } else if (atype !== b.type) {//如果类型不相同
+
+    if (atype !== btype) {//如果类型不相同
         return false
-    } else if (!typeMap[atype]) {
-        return false
-    } else {
+    } else if (toStringType[atype]) {
+        return a + '' === b + ''
+    } else if (deepDetectType[atype]) {
         return objectEqual(a, b, m)
+    } else {
+        return false
     }
 }
-
 
 var sameValue = Object.is || function (a, b) {
     if (a === b)
         return a !== 0 || 1 / a === 1 / b
     return a !== a && b !== b
 }
-
-
-function dateEqual(a, b, btype) {
-    if ('date' !== btype)
-        return false
-    return a.getTime() === b.getTime()
-}
-
-
-function regexpEqual(a, b, btype) {
-    if ('regexp' !== btype)
-        return false
-    return a.toString() === b.toString()
-}
-
 
 
 function enumerable(a) {
