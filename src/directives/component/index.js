@@ -10,8 +10,8 @@
 
 
 var update = require('./_update')
-var initComponent = require('../component/init')
-var disposeComponent = require('../component/dispose')
+var initComponent = require('./init')
+var disposeComponent = require('./dispose')
 
 avalon._disposeComponent = disposeComponent
 
@@ -28,7 +28,6 @@ avalon.directive('widget', {
         src.props.wid = src.props.wid || avalon.makeHashCode('w')
         //将渲染函数的某一部分存起来,渲在c方法中转换为函数
         copy[binding.name] = avalon.parseExpr(binding)
-
         copy.template = src.template
         copy.vmodel = '__vmodel__'
         copy.local = '__local__'

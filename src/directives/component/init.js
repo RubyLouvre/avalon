@@ -3,7 +3,7 @@ module.exports = initComponent
 var skipArray = require('../..vmodel/parts/skipArray')
 var legalTags = {wbr: 1, xmp: 1, template: 1}
 var rprops = /__vmodel__\.([\$\w\_]+)/g
-var componentEvents = avalon.oneObject('onInit,onReady,onViewChange,onDispose')
+var componentEvents = {onInit: 1, onReady: 1, onViewChange: 1, onDispose: 1}
 var onceWarn = true
 
 function initComponent(copy, data, template) {
@@ -23,8 +23,6 @@ function initComponent(copy, data, template) {
         avalon.warn(is + '组件还没有加载')
         return
     }
-
-
     var templateID = 'temp:' + template
     if (!avalon.caches[templateID]) {
         var shell = avalon.lexer(template)
@@ -44,11 +42,11 @@ function initComponent(copy, data, template) {
         avalon.variant(vtree)
         definition.render = avalon.render(vtree)
     }
+
     var slotRender = avalon.caches[templateID]
     var defineRender = definition.render
 
-
-    var hooks = {}
+    var hooks = {}//收集生命周期钩子
     for (var i in componentEvents) {
         hooks[i] = []
         var fn = data[i]
@@ -65,11 +63,7 @@ function initComponent(copy, data, template) {
         }
         delete defaults[i]
     }
-    slotRender.replace(rprops, function (_, prop) {
-        if (!(prop in data)) {
-            data[prop] = copy.vmodel.$model[prop]
-        }
-    })
+    var topVm = copy.vmodel.$model
     delete data.is
     delete data.id
     for (var i in defaults) {
@@ -79,7 +73,11 @@ function initComponent(copy, data, template) {
             }
         }
     }
-
+    slotRender.replace(rprops, function (_, prop) {
+        if (!(prop in data)) {
+            data[prop] = topVm[prop]
+        }
+    })
     //得到组件在顶层vm的配置对象名
     var id = hooks.id || hooks.$id
     if (!id) {
@@ -97,15 +95,11 @@ function initComponent(copy, data, template) {
 
     var vm = avalon.define(data)
 
-
-
     //绑定组件的生命周期钩子
     for (var e in componentEvents) {
-
         hooks[e].forEach(function (fn) {
             vm.$watch(e, fn)
         })
-
     }
     // 生成外部的渲染函数
     // template保存着最原始的组件容器信息
@@ -139,7 +133,6 @@ function initComponent(copy, data, template) {
         }
         insertSlots(vtree, slots)
         component.props.wid = vmodel.$id
-
         delete component.skipContent
         return vtree
     }
