@@ -12,6 +12,7 @@ function initComponent(copy, data) {
     var template = copy.template
     //判定用户传入的标签名是否符合规格
     /* istanbul ignore if */
+    data = avalon.shadowCopy({}, data)
     if (!legalTags[tag] && !isCustomTag(tag)) {
         avalon.warn(tag + '标签不能做组件容器')
         return
@@ -74,9 +75,11 @@ function initComponent(copy, data) {
             }
         }
     }
-    slotRender.replace(rprops, function (_, prop) {
+    copy.diffData = {}
+    String(slotRender).replace(rprops, function (_, prop) {
         if (!(prop in data)) {
             data[prop] = topVm[prop]
+            copy.diffData[prop] = topVm[prop]
         }
     })
     //得到组件在顶层vm的配置对象名
@@ -139,7 +142,7 @@ function initComponent(copy, data) {
     }
 
     //生成最终的组件渲染函数
-    vmodel.$render = comRender
+    vm.$render = comRender
     return  vm
 }
 

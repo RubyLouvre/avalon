@@ -33,7 +33,7 @@ avalon.shadowCopy(avalon, {
     caches: {}, //avalon2.0 新增
     vmodels: {},
     filters: {},
-    components: {},//放置组件的类
+    components: {}, //放置组件的类
     directives: {},
     eventHooks: {},
     eventListeners: {},
@@ -48,14 +48,14 @@ avalon.shadowCopy(avalon, {
             return a === null || a === void 0 ? '' : a + ''
         },
         boolean: function (a) {
-            if(a === '')
+            if (a === '')
                 return a
-            return a === 'true'|| a == '1' 
+            return a === 'true' || a == '1'
         }
     },
     version: "2.114",
-    isEmptyObject: function(obj){
-        for(var i in obj){
+    isEmptyObject: function (obj) {
+        for (var i in obj) {
             return false
         }
         return true
@@ -68,11 +68,11 @@ avalon.shadowCopy(avalon, {
         if (node instanceof avalon) {
             node = node[0]
         }
-        if(node.nodeType !==1){
+        if (node.nodeType !== 1) {
             return
         }
         var prop = avalon.camelize(name)
-        name = avalon.cssName(prop) ||  /* istanbul ignore next*/ prop
+        name = avalon.cssName(prop) || /* istanbul ignore next*/ prop
         if (value === void 0 || typeof value === 'boolean') { //获取样式
             fn = cssHooks[prop + ':get'] || cssHooks['@:get']
             if (name === 'background') {
@@ -94,7 +94,7 @@ avalon.shadowCopy(avalon, {
         }
     },
     directive: function (name, definition) {
-        definition.parse = definition.parse ||/* istanbul ignore next*/ defaultParse
+        definition.parse = definition.parse || /* istanbul ignore next*/ defaultParse
         return this.directives[name] = definition
     },
     isObject: function (a) {//1.6新增
@@ -141,7 +141,7 @@ avalon.shadowCopy(avalon, {
     },
     //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
     makeHashCode: function (prefix) {
-       /* istanbul ignore next*/
+        /* istanbul ignore next*/
         prefix = prefix || 'avalon'
         /* istanbul ignore next*/
         return String(Math.random() + Math.random()).replace(rhashcode, prefix)
@@ -176,7 +176,7 @@ avalon.shadowCopy(avalon, {
     }
 })
 /* istanbul ignore if*/
-if(typeof performance !== 'undefined' && performance.now){
+if (typeof performance !== 'undefined' && performance.now) {
     avalon.makeHashCode = function (prefix) {
         prefix = prefix || 'avalon'
         return (prefix + performance.now()).replace('.', '')
@@ -184,12 +184,12 @@ if(typeof performance !== 'undefined' && performance.now){
 }
 
 var UUID = 1
- //如果是使用ms-on-*绑定的回调,其uuid格式为e12122324
- // fn.uuid = fn.uuid || avalon.makeHashCode(e)
- //如果是使用bind方法绑定的回调,其uuid格式为_12
-avalon._markBindID = function(){
+//如果是使用ms-on-*绑定的回调,其uuid格式为e12122324
+// fn.uuid = fn.uuid || avalon.makeHashCode(e)
+//如果是使用bind方法绑定的回调,其uuid格式为_12
+avalon._markBindID = function (fn) {
     /* istanbul ignore next */
-        return fn.uuid || (fn.uuid = '_' + (++UUID))
+    return fn.uuid || (fn.uuid = '_' + (++UUID))
 }
 
 //=====================
@@ -199,6 +199,7 @@ var typeMap = {
     object: 1,
     array: 1
 }
+var type = avalon.type
 function deepEqual(a, b, m) {
     if (sameValue(a, b)) {//防止出现NaN的情况
         return true

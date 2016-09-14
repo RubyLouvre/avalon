@@ -1,7 +1,5 @@
 // 抽离出来公用
 var update = require('./_update')
-//var reconcile = require('../strategy/reconcile')
-
 var cache = {}
 avalon.mediatorFactoryCache = function (__vmodel__, __present__) {
     var a = __vmodel__.$hashcode

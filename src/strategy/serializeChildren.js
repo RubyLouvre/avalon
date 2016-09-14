@@ -9,7 +9,7 @@ function serializeChildren(children, skip, isRepeat) {
         var suffix = a.suffix
         var prefix = a.prefix
         delete a.suffix
-        delete a.prepend
+        delete a.prefix
         return {
             stem: stem,
             prefix: prefix,
@@ -34,7 +34,7 @@ function serializeChildren(children, skip, isRepeat) {
                 nodes.push(el.stem)
             }
         }
-        return  '[' + nodes + ']'
+        return '[' + nodes + ']'
     }
 }
 

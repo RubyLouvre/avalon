@@ -51,35 +51,41 @@ avalon.directive('widget', {
         var is = maybeIs || data.is
 
         copy.props.is = data.is = is
-        src.vmodel = copy.vmodel
+        //src.vmodel = copy.vmodel
 
         var vmName = 'component-vm:' + is
         var comVm = src[vmName]
         if (comVm) { //是否初始化
             var isNeedUpdateData = !!avalon.scopes[comVm.$id]
             if (isNeedUpdateData) {
-                var isSameData = avalon._deepEqual(data, src['component-data:' + is]) &&
-                        avalon._deepEqual(copy.local, src.local)
                 var topData = copy.vmodel.$model
+                var oldSlot = src['component-diff:' + is]
+                var newSlot = {}
+                for (var i in oldSlot) {
+                    newSlot[i] = topData[i]
+                }
+                var isSameData = avalon._deepEqual(src.local, copy.local)
                 if (isSameData) {
-                    var props = src['component-props:' + is]
-                    var vmProps = {}
-
-                    for (var i in props) {
-                        vmProps[i] = topData[i]
+                    var oldData = {}
+                    for (var i in data) {
+                        oldData[i] = comVm.$model[i]
                     }
-                    isSameData = avalon._deepEqual(props, vmProps)
+                    isSameData = avalon._deepEqual(oldData, data)
+                    if (isSameData) {
+                        isSameData = avalon._deepEqual(oldSlot, newSlot)
+                    }
                 }
                 if (!isSameData) {
                     var hash = comVm.$hashcode
-                    comVm.$hashcode = false
+                    comVm.$hashcode = false //防止视图刷新
+                    //更新数据
                     for (var i in data) {
                         comVm[i] = data[i]
                     }
-                    for (var i in topData) {
-                        comVm[i] = topData[i]
+                    for (var i in newSlot) {
+                        comVm[i] = newSlot[i]
                     }
-                    comVm = hash
+                    comVm.$hashcode = hash
                 } else {
                     return (copyList[index] = {})
                 }
@@ -98,11 +104,16 @@ avalon.directive('widget', {
         if (component && isComponentReady(component)) {
             Array(
                     'component-ready:' + is,
-                    'dom', 'dynamic', 'local'
+                    'dom', 'dynamic'
                     ).forEach(function (name) {
                 component[name] = src[name]
             })
-            component.vmodel = comVm
+           
+            component['component-diff:' + is] = copy.diffData || newSlot
+            
+            component[vmName] = comVm
+            component.local = copy.local
+            component.vmodel = copy.vmodel
             copyList[index] = component
             // 如果与ms-if配合使用, 会跑这分支
             if (src.comment && src.nodeValue) {
@@ -112,7 +123,7 @@ avalon.directive('widget', {
                 srcList[index] = component
                 update(component, this.mountComponent)
             } else {
-                updateComponent.apply(this, arguments)
+                update(component, this.updateComponent)
             }
         } else {
             replaceComment.apply(this, arguments)
@@ -176,9 +187,10 @@ avalon.directive('widget', {
     }
 })
 
-function replaceComment(src, copyList, index) {
+function replaceComment(copy, src, name, copyList, srcList, index) {
     if (src.nodeName === '#comment')
         return
+    src.nodeName = '#comment'
     src.nodeValue = 'unresolved component placeholder'
     copyList[index] = src
     update(src, this.mountComment)
