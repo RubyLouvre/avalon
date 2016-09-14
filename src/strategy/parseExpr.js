@@ -38,6 +38,7 @@ function parseExpr(binding) {
     input = input.replace(rshortCircuit, dig).//移除所有短路运算符
             replace(ruselessSp, '$1').//移除.|两端空白
             replace(rguide, '$1__vmodel__.').//转换@与##
+            replace(/[\$\w]+\s*:/, dig).
             replace(/\|(\w+)/g, function (a, b) {//移除所有过滤器的名字
                 return '|' + dig(b)
             }).
