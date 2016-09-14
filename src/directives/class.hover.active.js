@@ -1,8 +1,11 @@
 //根据VM的属性值或表达式的值切换类名，ms-class='xxx yyy zzz:flag'
 //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
-var markID = require('../seed/lang.share').getLongID
 var update = require('./_update')
+function markID(fn) {
+    /* istanbul ignore next */
+    return fn.uuid || (fn.uuid = avalon.makeHashCode('e'))
 
+}
 function classNames() {
     var classes = []
     for (var i = 0; i < arguments.length; i++) {

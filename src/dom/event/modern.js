@@ -3,7 +3,7 @@ var document = avalon.document
 var window = avalon.window
 var root = avalon.root
 
-var getShortID = require('../../seed/lang.share').getShortID
+var markID = avalon._markBindID
 var share = require('./share')
 var dispatch = share.dispatch
 var canBubbleUp = share.canBubbleUp
@@ -15,7 +15,7 @@ avalon.bind = function (elem, type, fn) {
         var value = elem.getAttribute('avalon-events') || ''
         //如果是使用ms-on-*绑定的回调,其uuid格式为e12122324,
         //如果是使用bind方法绑定的回调,其uuid格式为_12
-        var uuid = getShortID(fn)
+        var uuid = markID(fn)
         var hook = eventHooks[type]
         if (hook) {
             type = hook.type || type

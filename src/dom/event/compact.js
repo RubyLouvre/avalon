@@ -5,7 +5,7 @@ var window = avalon.window
 
 var W3C = avalon.modern
 
-var getShortID = require('../../seed/lang.share').getShortID
+var markID = avalon._markBindID
 //http://www.feiesoft.com/html/events.html
 //http://segmentfault.com/q/1010000000687977/a-1020000000688757
 var share = require('./share')
@@ -25,9 +25,7 @@ var eventHooks = avalon.eventHooks
 avalon.bind = function (elem, type, fn) {
     if (elem.nodeType === 1) {
         var value = elem.getAttribute('avalon-events') || ''
-        //如果是使用ms-on-*绑定的回调,其uuid格式为e12122324,
-        //如果是使用bind方法绑定的回调,其uuid格式为_12
-        var uuid = getShortID(fn)
+        var uuid = markID(fn)
         var hook = eventHooks[type]
         if (hook) {
             type = hook.type || type

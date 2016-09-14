@@ -102,6 +102,9 @@ function serializeElement(vdom, skip) {
                 } else {
                     copy.dynamic = '{}'
                 }
+                if(name === 'ms-widget'){
+                    break
+                }
             }
         }
     }

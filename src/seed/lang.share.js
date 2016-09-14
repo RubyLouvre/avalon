@@ -184,16 +184,141 @@ if(typeof performance !== 'undefined' && performance.now){
 }
 
 var UUID = 1
-module.exports = {
-    //生成事件回调的UUID(用户通过ms-on指令)
-    avalon: avalon,
-    getLongID: function (fn) {
-        /* istanbul ignore next */
-        return fn.uuid || (fn.uuid = avalon.makeHashCode('e'))
-    },
-    //生成事件回调的UUID(用户通过avalon.bind)
-    getShortID: function (fn) {
-        /* istanbul ignore next */
+ //如果是使用ms-on-*绑定的回调,其uuid格式为e12122324
+ // fn.uuid = fn.uuid || avalon.makeHashCode(e)
+ //如果是使用bind方法绑定的回调,其uuid格式为_12
+avalon._markBindID = function(){
+    /* istanbul ignore next */
         return fn.uuid || (fn.uuid = '_' + (++UUID))
+}
+
+//=====================
+avalon._deepEqual = deepEqual
+
+var typeMap = {
+    object: 1,
+    array: 1
+}
+function deepEqual(a, b, m) {
+    if (sameValue(a, b)) {//防止出现NaN的情况
+        return true
     }
+    var atype = type(a)
+    var btype = type(b)
+    if ('date' === atype) {
+        return dateEqual(a, b, btype)
+    } else if ('regexp' === atype) {
+        return regexpEqual(a, b, btype)
+    } else if (atype !== b.type) {//如果类型不相同
+        return false
+    } else if (!typeMap[atype]) {
+        return false
+    } else {
+        return objectEqual(a, b, m)
+    }
+}
+
+
+var sameValue = Object.is || function (a, b) {
+    if (a === b)
+        return a !== 0 || 1 / a === 1 / b
+    return a !== a && b !== b
+}
+
+
+function dateEqual(a, b, btype) {
+    if ('date' !== btype)
+        return false
+    return a.getTime() === b.getTime()
+}
+
+
+function regexpEqual(a, b, btype) {
+    if ('regexp' !== btype)
+        return false
+    return a.toString() === b.toString()
+}
+
+
+
+function enumerable(a) {
+    var res = []
+    for (var key in a)
+        res.push(key)
+    return res
+}
+
+
+
+function iterableEqual(a, b) {
+    if (a.length !== b.length)
+        return false
+
+    var i = 0
+    var match = true
+
+    for (; i < a.length; i++) {
+        if (a[i] !== b[i]) {
+            match = false
+            break
+        }
+    }
+
+    return match
+}
+
+
+
+function isValue(a) {
+    return a !== null && a !== undefined
+}
+
+
+
+function objectEqual(a, b, m) {
+    if (!isValue(a) || !isValue(b)) {
+        return false
+    }
+
+    if (a.prototype !== b.prototype) {
+        return false
+    }
+
+    var i
+    if (m) {
+        for (i = 0; i < m.length; i++) {
+            if ((m[i][0] === a && m[i][1] === b)
+                    || (m[i][0] === b && m[i][1] === a)) {
+                return true
+            }
+        }
+    } else {
+        m = []
+    }
+
+    try {
+        var ka = enumerable(a)
+        var kb = enumerable(b)
+    } catch (ex) {
+        return false
+    }
+
+    ka.sort()
+    kb.sort()
+
+    if (!iterableEqual(ka, kb)) {
+        return false
+    }
+
+    m.push([a, b])
+
+    var key
+    for (i = ka.length - 1; i >= 0; i--) {
+        key = ka[i]
+        if (!deepEqual(a[key], b[key], m)) {
+            return false
+        }
+    }
+
+    return true
 }
