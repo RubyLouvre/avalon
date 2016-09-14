@@ -20,7 +20,7 @@ require('./rules')
 require('./if.compact')
 require('./for')
 //
-require('./component/index')
+require('../component/index')
 require('./effect')
 //优先级 ms-important, ms-controller, ms-for, ms-widget, ms-effect, ms-if
 //.......

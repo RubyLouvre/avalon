@@ -19,5 +19,5 @@ require('./rules')
 require('./if.modern')
 require('./for')
 
-require('./component/index')
+require('../component/index')
 require('./effect')
