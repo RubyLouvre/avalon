@@ -75,11 +75,11 @@ function initComponent(copy, data) {
             }
         }
     }
-    copy.diffData = {}
+    copy.slotData = {}
     String(slotRender).replace(rprops, function (_, prop) {
         if (!(prop in data)) {
             data[prop] = topVm[prop]
-            copy.diffData[prop] = topVm[prop]
+            copy.slotData[prop] = topVm[prop]
         }
     })
     //得到组件在顶层vm的配置对象名

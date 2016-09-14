@@ -50,7 +50,7 @@ avalon.directive('widget', {
             var isNeedUpdateData = !!avalon.scopes[comVm.$id]
             if (isNeedUpdateData) {
                 var topData = copy.vmodel.$model
-                var oldSlot = src['component-diff:' + is]
+                var oldSlot = src['component-slot:' + is]
                 var newSlot = {}
                 for (var i in oldSlot) {
                     newSlot[i] = topData[i]
@@ -85,7 +85,6 @@ avalon.directive('widget', {
             comVm = initComponent(copy, data)
             if (comVm) {
                 src[vmName] = comVm
-
             } else {
                 return replaceComment.apply(this, arguments)
             }
@@ -100,7 +99,7 @@ avalon.directive('widget', {
                 component[name] = src[name]
             })
            
-            component['component-diff:' + is] = copy.diffData || newSlot
+            component['component-slot:' + is] = copy.slotData || newSlot
             
             component[vmName] = comVm
             component.local = copy.local
