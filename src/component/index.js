@@ -96,7 +96,6 @@ avalon.directive('widget', {
         } else {
             comVm = initComponent(copy, data)
             if (!comVm) {
-
                 return replaceComment(copy, src)
             }
         }
@@ -137,7 +136,6 @@ avalon.directive('widget', {
                     }
                 }, 'afterChange')
             }
-
             update(component, this.mountComponent)
 
         } else {
@@ -154,19 +152,15 @@ avalon.directive('widget', {
         vdom.dom = com
         delete vdom.com
     },
-    mountComment: function (dom, vdom, parent) {
-        var comment = document.createComment(vdom.nodeValue)
-        vdom.dom = comment
-        parent.replaceChild(comment, dom)
-    },
     mountComponent: function (dom, vdom, parent) {
         delete vdom.dom
-        var com = avalon.vdom(vdom, 'toDOM')
-        parent.replaceChild(com, dom)
         var is = vdom.props.is
         var vm = vdom['component-vm:' + is]
+        var com = avalon.vdom(vdom, 'toDOM')
+        parent.replaceChild(com, dom)
+
         vdom.dom = vm.$element = com
-        dom.vtree = [vdom]
+        com.vtree = [vdom]
         avalon.scopes[vm.$id] = {
             vmodel: vm,
             local: vdom.local
@@ -175,7 +169,6 @@ avalon.directive('widget', {
 
     }
 })
-
 
 function viewChangeHandle(dom, vdom) {
     var is = vdom.props.is
@@ -199,7 +192,12 @@ function replaceComment(copy, src) {
     }
     src.nodeName = copy.nodeName = '#comment'
     src.nodeValue = copy.nodeValue = unresolvedText
-    return update(src, this.mountComment)
+    return update(src, mountComment)
+}
+function mountComment(dom, vdom, parent) {
+    var comment = document.createComment(vdom.nodeValue)
+    vdom.dom = comment
+    parent.replaceChild(comment, dom)
 }
 function isComponentReady(vnode) {
     var isReady = true
