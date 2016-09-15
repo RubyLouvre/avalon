@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>新组件系统测试</title>
+        <script type="text/javascript" src="../../dist/avalon.js"></script>
+    </head>
+    <body>
+        <div ms-controller='widget1' >
+            <ms-panel ms-widget="{id:'eee'}">{{@aaa}}</ms-panel>
+        </div>
+        <h1>ms-panel+ms-button组件</h1>
+        <script type="text/javascript">
+function heredoc(fn) {
+    return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+            replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+}
+avalon.component('ms-panel', {
+    template: heredoc(function () {
+        /*
+         <div>
+         <div class="body" ms-attr="{title:@k}">
+         <slot name="body"></slot>
+         </div>
+         <p><ms-button :widget="@button" /></p>
+         </div>    
+         */
+    }),
+    defaults: {
+        k: 33,
+        body: "&nbsp;&nbsp;",
+        onViewChange: function (e) {
+            avalon.log(e.type, 'ms-panel')
+        },
+        button: {
+            buttonText: 'click me!'
+        }
+    },
+    soleSlot: 'body'
+})
+
+var vm = avalon.define({
+    $id: 'widget1',
+    aaa: 111,
+    bbb: 111
+})
+
+
+        </script>
+    </body>
+</html>

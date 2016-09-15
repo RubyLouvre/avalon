@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>新组件系统测试</title>
+        <script type="text/javascript" src="../../dist/avalon.js"></script>
+    </head>
+    <body>
+        <div ms-controller='widget1' >
+            <ms-button ms-if="@bbb">{{@aaa}}</ms-button>
+            <p ms-attr='{title:@ddd}'>这个元素不受影响</p>
+        </div>
+        <h1>使用ms-if, 开始看不见, 后来又出现 </h1>
+        <script type="text/javascript">
+avalon.component('ms-button', {
+    template: '<button type="button" ><span><slot /></span></button>',
+    defaults: {
+        buttonText: "button",
+        onInit: function (e) {
+            avalon.log(e.type)
+        },
+        onReady: function (e) {
+            avalon.log(e.type)
+        },
+        onViewChange: function (e) {
+            avalon.log(e.type)
+        },
+        onDispose: function (e) {
+            avalon.log(e.type)
+        }
+    },
+    soleSlot: 'buttonText'
+})
+var vm = avalon.define({
+    $id: 'widget1',
+    aaa: 111,
+    bbb: false,
+    ddd: '333'
+})
+setTimeout(function () {
+    vm.bbb = true
+    setTimeout(function () {
+        vm.bbb = false
+    }, 2300)
+}, 2300)
+
+        </script>
+    </body>
+</html>

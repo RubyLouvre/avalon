@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>新组件系统测试</title>
+        <script type="text/javascript" src="../../dist/avalon.js"></script>
+    </head>
+    <body>
+        <div ms-controller='widget1' >
+            <ms-button ms-attr="{title:@bbb}">{{@aaa}}</ms-button>
+        </div>
+        <h1>使用ms-attr, 为元素修改title </h1>
+        <script type="text/javascript">
+avalon.component('ms-button', {
+    template: '<button type="button" ><span><slot /></span></button>',
+    defaults: {
+        buttonText: "button",
+        onInit: function (e) {
+            avalon.log(e.type)
+        },
+        onReady: function (e) {
+            avalon.log(e.type)
+        },
+        onViewChange: function (e) {
+            avalon.log(e.type)
+        },
+        onDispose: function (e) {
+            avalon.log(e.type)
+        }
+    },
+    soleSlot: 'buttonText'
+})
+var vm = avalon.define({
+    $id: 'widget1',
+    aaa: 111,
+    bbb: 111
+})
+setTimeout(function () {
+    vm.bbb = 222
+    setTimeout(function () {
+        vm.bbb = 333
+    }, 2300)
+}, 2300)
+
+        </script>
+    </body>
+</html>

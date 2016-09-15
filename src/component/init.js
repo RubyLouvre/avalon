@@ -125,7 +125,7 @@ function initComponent(copy, data) {
                 }
             }
         }
-
+       
         var soleSlot = definition.soleSlot
         var slots = collectSlots(shellRoot, soleSlot)
         if (soleSlot && (!slots[soleSlot] || !slots[soleSlot].length)) {
@@ -186,6 +186,8 @@ function collectSlots(node, soleSlot) {
     } else {
         node.children.forEach(function (el, i) {
             var name = el.props && el.props.slot
+            if(!name)
+                return
             if (el.forExpr) {
                 slots[name] = node.children.slice(i, i + 2)
             } else {
