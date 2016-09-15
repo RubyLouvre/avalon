@@ -79,7 +79,7 @@ function diff(copys, sources) {
 function execHooks(el, hooks) {
     if (hooks.length) {
         for (var hook, i = 0; hook = hooks[i++]; ) {
-            hook(el.dom, el)
+            hook(el.dom, el, el.dom && el.dom.parentNode)
         }
     }
     delete el.afterChange
