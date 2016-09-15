@@ -13,9 +13,7 @@ var renderingID = false
 avalon.suspendUpdate = 0
 
 function batchUpdate(id, spath) {
-          // console.log(spath,'!!!')
     if (renderingID) {
-      
         return avalon.Array.ensure(needRenderIds, id)
     } else {
         renderingID = id
@@ -28,8 +26,8 @@ function batchUpdate(id, spath) {
     var dom = vm.$element
     var source = dom.vtree || []
     var renderFn = vm.$render
-    if(spath){
-        spath = new RegExp( avalon.escapeRegExp(spath) )
+    if (spath) {
+        spath = new RegExp(avalon.escapeRegExp(spath))
     }
     avalon.spath = spath
     var copy = renderFn(scope.vmodel, scope.local)
