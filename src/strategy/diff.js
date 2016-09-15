@@ -64,7 +64,7 @@ function diff(copys, sources) {
                     diffProps(copy, src)
                 }
 
-                if (/^\w/.test(copy.nodeName) && !copy.skipContent && !copy.isVoidTag) {
+                if (!/^(#|undefined)/.test(copy.nodeName) && !copy.skipContent && !copy.isVoidTag) {
                     diff(copy.children, src.children || [])
                 }
 

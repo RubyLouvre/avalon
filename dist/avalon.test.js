@@ -1,5 +1,5 @@
 /*!
- * built in 2016-9-5:15 version 2.114 by 司徒正美
+ * built in 2016-9-15:14 version 2.114 by 司徒正美
  * npm 2.1.14
  *     修正 ms-important的BUG
  *     重构 escapeHTML与unescapeHTML方法
@@ -67,7 +67,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	
 	var avalon = __webpack_require__(106)
-	avalon.cache = __webpack_require__(31)
+	avalon.cache = __webpack_require__(7)
 	__webpack_require__(107)
 	__webpack_require__(108)
 
@@ -78,7 +78,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 
-/***/ 31:
+/***/ 7:
 /***/ function(module, exports) {
 
 	
@@ -200,7 +200,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-9-5:15 version 2.114 by 司徒正美
+	 * built in 2016-9-15:14 version 2.114 by 司徒正美
 	 * npm 2.1.14
 	 *     修正 ms-important的BUG
 	 *     重构 escapeHTML与unescapeHTML方法
@@ -265,13 +265,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* 0 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var avalon = __webpack_require__(86) 
+		var avalon = __webpack_require__(84) 
 
-		__webpack_require__(8)
+		__webpack_require__(9)
+		__webpack_require__(86)
 		__webpack_require__(88)
-		__webpack_require__(90)
-		__webpack_require__(98)
-		__webpack_require__(73)
+		__webpack_require__(97)
+		__webpack_require__(67)
 		__webpack_require__(103)
 
 		module.exports = avalon
@@ -352,6 +352,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		avalon.shadowCopy(avalon, {
 		    noop: function () {
 		    },
+		    version: "2.114",
 		    //切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach
 		    rword: rword,
 		    inspect: ({}).toString,
@@ -377,7 +378,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    oneObject: function (array, val) {
 		        /* istanbul ignore if*/
 		        if (typeof array === 'string') {
-		            array = array.match(rword) ||[]
+		            array = array.match(rword) || []
 		        }
 		        var result = {},
 		                value = val !== void 0 ? val : 1
@@ -391,6 +392,23 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		module.exports = avalon
 
+		new function welcome() {
+		    var welcomeIntro = ["%cavalon.js %c" + avalon.version + " %cin debug mode, %cmore...", "color: rgb(114, 157, 52); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(82, 140, 224); font-weight: normal; text-decoration: underline;"];
+		    var welcomeMessage = "You're running avalon in debug mode - messages will be printed to the console to help you fix problems and optimise your application.\n\n" +
+		            'To disable debug mode, add this line at the start of your app:\n\n  avalon.config({debug: false});\n\n' +
+		            'Debug mode also automatically shut down amicably when your app is minified.\n\n' +
+		            "Get help and support:\n  https://segmentfault.com/t/avalon\n  http://avalonjs.coding.me/\n  http://www.avalon.org.cn/\n\nFound a bug? Raise an issue:\n  https://github.com/RubyLouvre/avalon/issues\n\n";
+
+		    var con = hasConsole ? console : avalon
+		    var hasGroup = !!con.groupCollapsed
+		    con[hasGroup ? "groupCollapsed" : "log"].apply(con, welcomeIntro);
+		    con.log(welcomeMessage)
+		    if (hasGroup) {
+		        con.groupEnd(welcomeIntro);
+		    }
+		}
+
+
 	/***/ },
 	/* 5 */,
 	/* 6 */
@@ -402,16 +420,36 @@ return /******/ (function(modules) { // webpackBootstrap
 		var rcamelize = /[-_][^-_]/g
 		var rhashcode = /\d\.\d{4}/
 		var rescape = /[-.*+?^${}()|[\]\/\\]/g
+		var Cache = __webpack_require__(7)
+		//缓存求值函数，以便多次利用
+		avalon.evaluatorPool = new Cache(888)
 
 		var _slice = [].slice
 		function defaultParse(cur, pre, binding) {
-		       cur[binding.name] = avalon.parseExpr(binding)
+		    cur[binding.name] = avalon.parseExpr(binding)
+		}
+
+		/* 
+		 * 对html实体进行转义
+		 * https://github.com/substack/node-ent
+		 * http://www.cnblogs.com/xdp-gacl/p/3722642.html
+		 * http://www.stefankrause.net/js-frameworks-benchmark2/webdriver-java/table.html
+		 */
+
+		var rentities = /&[a-z0-9#]{2,10};/
+		var temp = avalon.avalonDiv
+		avalon._decode = function (str) {
+		    if (rentities.test(str)) {
+		        temp.innerHTML = str
+		        return temp.innerText || temp.textContent
+		    }
+		    return str
 		}
 		avalon.shadowCopy(avalon, {
 		    caches: {}, //avalon2.0 新增
 		    vmodels: {},
 		    filters: {},
-		    components: {},//放置组件的类
+		    components: {}, //放置组件的类
 		    directives: {},
 		    eventHooks: {},
 		    eventListeners: {},
@@ -426,12 +464,18 @@ return /******/ (function(modules) { // webpackBootstrap
 		            return a === null || a === void 0 ? '' : a + ''
 		        },
 		        boolean: function (a) {
-		            if(a === '')
+		            if (a === '')
 		                return a
-		            return a === 'true'|| a == '1' 
+		            return a === 'true' || a == '1'
 		        }
 		    },
 		    version: "2.114",
+		    isEmptyObject: function (obj) {
+		        for (var i in obj) {
+		            return false
+		        }
+		        return true
+		    },
 		    slice: function (nodes, start, end) {
 		        return _slice.call(nodes, start, end)
 		    },
@@ -440,11 +484,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		        if (node instanceof avalon) {
 		            node = node[0]
 		        }
-		        if(node.nodeType !==1){
+		        if (node.nodeType !== 1) {
 		            return
 		        }
 		        var prop = avalon.camelize(name)
-		        name = avalon.cssName(prop) ||  /* istanbul ignore next*/ prop
+		        name = avalon.cssName(prop) || /* istanbul ignore next*/ prop
 		        if (value === void 0 || typeof value === 'boolean') { //获取样式
 		            fn = cssHooks[prop + ':get'] || cssHooks['@:get']
 		            if (name === 'background') {
@@ -466,7 +510,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		    },
 		    directive: function (name, definition) {
-		        definition.parse = definition.parse ||/* istanbul ignore next*/ defaultParse
+		        definition.parse = definition.parse || /* istanbul ignore next*/ defaultParse
 		        return this.directives[name] = definition
 		    },
 		    isObject: function (a) {//1.6新增
@@ -513,7 +557,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    },
 		    //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
 		    makeHashCode: function (prefix) {
-		       /* istanbul ignore next*/
+		        /* istanbul ignore next*/
 		        prefix = prefix || 'avalon'
 		        /* istanbul ignore next*/
 		        return String(Math.random() + Math.random()).replace(rhashcode, prefix)
@@ -548,7 +592,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    }
 		})
 		/* istanbul ignore if*/
-		if(typeof performance !== 'undefined' && performance.now){
+		if (typeof performance !== 'undefined' && performance.now) {
 		    avalon.makeHashCode = function (prefix) {
 		        prefix = prefix || 'avalon'
 		        return (prefix + performance.now()).replace('.', '')
@@ -556,23 +600,136 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 		var UUID = 1
-		module.exports = {
-		    //生成事件回调的UUID(用户通过ms-on指令)
-		    avalon: avalon,
-		    getLongID: function (fn) {
-		        /* istanbul ignore next */
-		        return fn.uuid || (fn.uuid = avalon.makeHashCode('e'))
-		    },
-		    //生成事件回调的UUID(用户通过avalon.bind)
-		    getShortID: function (fn) {
-		        /* istanbul ignore next */
-		        return fn.uuid || (fn.uuid = '_' + (++UUID))
-		    }
+		//如果是使用ms-on-*绑定的回调,其uuid格式为e12122324
+		// fn.uuid = fn.uuid || avalon.makeHashCode(e)
+		//如果是使用bind方法绑定的回调,其uuid格式为_12
+		avalon._markBindID = function (fn) {
+		    /* istanbul ignore next */
+		    return fn.uuid || (fn.uuid = '_' + (++UUID))
 		}
+
+		//=====================
 
 
 	/***/ },
 	/* 7 */
+	/***/ function(module, exports) {
+
+		
+		/*
+		 https://github.com/rsms/js-lru
+		 entry             entry             entry             entry        
+		 ______            ______            ______            ______       
+		 | head |.newer => |      |.newer => |      |.newer => | tail |      
+		 |  A   |          |  B   |          |  C   |          |  D   |      
+		 |______| <= older.|______| <= older.|______| <= older.|______|      
+		 
+		 removed  <--  <--  <--  <--  <--  <--  <--  <--  <--  <--  <--  added 
+		 */
+		function LRU(maxLength) {
+		    // 标识当前缓存数组的大小
+		    this.size = 0
+		    // 标识缓存数组能达到的最大长度
+		    this.limit = maxLength
+		    //  head（最不常用的项），tail（最常用的项）全部初始化为undefined
+		    this.head = this.tail = void 0
+		    this._keymap = {}
+		}
+
+		var p = LRU.prototype
+
+		p.put = function (key, value) {
+		    var entry = {
+		        key: key,
+		        value: value
+		    }
+		    this._keymap[key] = entry
+		    if (this.tail) {
+		        // 如果存在tail（缓存数组的长度不为0），将tail指向新的 entry
+		        this.tail.newer = entry
+		        entry.older = this.tail
+		    } else {
+		        // 如果缓存数组的长度为0，将head指向新的entry
+		        this.head = entry
+		    }
+		    this.tail = entry
+		    // 如果缓存数组达到上限，则先删除 head 指向的缓存对象
+		    /* istanbul ignore if */
+		    if (this.size === this.limit) {
+		        this.shift()
+		    } else {
+		        this.size++
+		    }
+		    return value
+		}
+
+		p.shift = function () {
+		    /* istanbul ignore next */
+		    var entry = this.head
+		    /* istanbul ignore if */
+		    if (entry) {
+		        // 删除 head ，并改变指向
+		        this.head = this.head.newer
+		        // 同步更新 _keymap 里面的属性值
+		        this.head.older =
+		                entry.newer =
+		                entry.older =
+		                this._keymap[entry.key] =
+		                void 0
+		        delete this._keymap[entry.key] //#1029
+		        // 同步更新 缓存数组的长度
+		        this.size--
+		    }
+		}
+		p.get = function (key) {
+		    var entry = this._keymap[key]
+		    // 如果查找不到含有`key`这个属性的缓存对象
+		    if (entry === void 0)
+		        return
+		    // 如果查找到的缓存对象已经是 tail (最近使用过的)
+		    /* istanbul ignore if */
+		    if (entry === this.tail) {
+		        return entry.value
+		    }
+		    // HEAD--------------TAIL
+		    //   <.older   .newer>
+		    //  <--- add direction --
+		    //   A  B  C  <D>  E
+		    if (entry.newer) {
+		        // 处理 newer 指向
+		        if (entry === this.head) {
+		            // 如果查找到的缓存对象是 head (最近最少使用过的)
+		            // 则将 head 指向原 head 的 newer 所指向的缓存对象
+		            this.head = entry.newer
+		        }
+		        // 将所查找的缓存对象的下一级的 older 指向所查找的缓存对象的older所指向的值
+		        // 例如：A B C D E
+		        // 如果查找到的是D，那么将E指向C，不再指向D
+		        entry.newer.older = entry.older // C <-- E.
+		    }
+		    if (entry.older) {
+		        // 处理 older 指向
+		        // 如果查找到的是D，那么C指向E，不再指向D
+		        entry.older.newer = entry.newer // C. --> E
+		    }
+		    // 处理所查找到的对象的 newer 以及 older 指向
+		    entry.newer = void 0 // D --x
+		    // older指向之前使用过的变量，即D指向E
+		    entry.older = this.tail // D. --> E
+		    if (this.tail) {
+		        // 将E的newer指向D
+		        this.tail.newer = entry // E. <-- D
+		    }
+		    // 改变 tail 为D 
+		    this.tail = entry
+		    return entry.value
+		}
+
+		module.exports = LRU
+
+
+	/***/ },
+	/* 8 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		var avalon = __webpack_require__(4)
@@ -621,24 +778,24 @@ return /******/ (function(modules) { // webpackBootstrap
 		kernel.plugins = plugins
 		avalon.config({
 		    interpolate: ['{{', '}}'],
-		    debug: true
+		    debug: /unminified/.test(function(){/*unminified*/})
 		})
 
 		module.exports = avalon
 
 	/***/ },
-	/* 8 */
+	/* 9 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		
 		var avalon = __webpack_require__(4)
-		var number = __webpack_require__(9)
-		var sanitize = __webpack_require__(10)
-		var date = __webpack_require__(11)
-		var arrayFilters = __webpack_require__(12)
-		var eventFilters = __webpack_require__(13)
+		var number = __webpack_require__(10)
+		var sanitize = __webpack_require__(11)
+		var date = __webpack_require__(12)
+		var arrayFilters = __webpack_require__(13)
+		var eventFilters = __webpack_require__(14)
 		var filters = avalon.filters
-		var escape = avalon.escapeHtml = __webpack_require__(14)
+		var escape = avalon.escapeHtml = __webpack_require__(15)
 
 		function K(a) {
 		    /* istanbul ignore next*/
@@ -688,11 +845,12 @@ return /******/ (function(modules) { // webpackBootstrap
 		}, arrayFilters, eventFilters)
 
 
-		module.exports = avalon
 
 	/***/ },
-	/* 9 */
+	/* 10 */
 	/***/ function(module, exports) {
+
+		module.exports = number
 
 		function number(number, decimals, point, thousands) {
 		    //form http://phpjs.org/functions/number_format/
@@ -727,14 +885,13 @@ return /******/ (function(modules) { // webpackBootstrap
 		    return s.join(dec)
 		}
 
-		module.exports = number
-
 		//处理 货币 http://openexchangerates.github.io/accounting.js/
 
 	/***/ },
-	/* 10 */
+	/* 11 */
 	/***/ function(module, exports) {
 
+		module.exports = sanitize
 		var rscripts = /<script[^>]*>([\S\s]*?)<\/script\s*>/gim
 		var ron = /\s+(on[^=\s]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
 		var ropen = /<\w+\b(?:(["'])[^"]*?(\1)|[^>])*>/ig
@@ -743,16 +900,14 @@ return /******/ (function(modules) { // webpackBootstrap
 		    img: /\b(src)\=("javascript[^"]*"|'javascript[^']*')/ig,
 		    form: /\b(action)\=("javascript[^"]*"|'javascript[^']*')/ig
 		}
-
-
 		//https://www.owasp.org/index.php/XSS_Filter_Evasion_Cheat_Sheet
 		//    <a href="javasc&NewLine;ript&colon;alert('XSS')">chrome</a> 
 		//    <a href="data:text/html;base64, PGltZyBzcmM9eCBvbmVycm9yPWFsZXJ0KDEpPg==">chrome</a>
 		//    <a href="jav	ascript:alert('XSS');">IE67chrome</a>
 		//    <a href="jav&#x09;ascript:alert('XSS');">IE67chrome</a>
 		//    <a href="jav&#x0A;ascript:alert('XSS');">IE67chrome</a>
-		module.exports = function sanitize(str) {
-		    return str.replace(rscripts, "").replace(ropen, function (a, b) {
+		function sanitize(str) {
+		    return str.replace(rscripts, '').replace(ropen, function (a, b) {
 		        var match = a.toLowerCase().match(/<(\w+)\s/)
 		        if (match) { //处理a标签的href属性，img标签的src属性，form标签的action属性
 		            var reg = rsanitize[match[1]]
@@ -763,15 +918,16 @@ return /******/ (function(modules) { // webpackBootstrap
 		                })
 		            }
 		        }
-		        return a.replace(ron, " ").replace(/\s+/g, " ") //移除onXXX事件
+		        return a.replace(ron, ' ').replace(/\s+/g, ' ')//移除onXXX事件
 		    })
 		}
 
 
 	/***/ },
-	/* 11 */
+	/* 12 */
 	/***/ function(module, exports) {
 
+		module.exports = dateFilter
 		/*
 		 'yyyy': 4 digit representation of year (e.g. AD 1 => 0001, AD 2010 => 2010)
 		 'yy': 2 digit representation of year, padded (00-99). (e.g. AD 2001 => 01, AD 2010 => 10)
@@ -1007,10 +1163,10 @@ return /******/ (function(modules) { // webpackBootstrap
 		locate.SHORTMONTH = locate.MONTH
 		dateFilter.locate = locate
 
-		module.exports = dateFilter
+
 
 	/***/ },
-	/* 12 */
+	/* 13 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		var avalon = __webpack_require__(4)
@@ -1168,7 +1324,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 	/***/ },
-	/* 13 */
+	/* 14 */
 	/***/ function(module, exports) {
 
 		
@@ -1204,14 +1360,15 @@ return /******/ (function(modules) { // webpackBootstrap
 		    })(name, keys[name])
 		}
 
-
 		module.exports = eventFilters
 
+
 	/***/ },
-	/* 14 */
+	/* 15 */
 	/***/ function(module, exports) {
 
-		
+		module.exports = escape
+
 		//https://github.com/teppeis/htmlspecialchars
 		function escape(str) {
 		    if (str == null)
@@ -1225,23 +1382,13 @@ return /******/ (function(modules) { // webpackBootstrap
 		            replace(/'/g, '&#39;')
 		}
 
-		module.exports = escape
-
-
-
-		      
-
-
-
-
 
 	/***/ },
-	/* 15 */,
-	/* 16 */
-	/***/ function(module, exports, __webpack_require__) {
+	/* 16 */,
+	/* 17 */
+	/***/ function(module, exports) {
 
 		var rexpr = avalon.config.rexpr
-		var decode = __webpack_require__(17)
 		function VText(text) {
 		    this.nodeName = '#text'
 		    this.nodeValue = text
@@ -1254,7 +1401,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        /* istanbul ignore if*/
 		        if(this.dom)
 		            return this.dom
-		        var v = decode(this.nodeValue)
+		        var v = avalon._decode(this.nodeValue)
 		        return this.dom = document.createTextNode(v)
 		    },
 		    toHTML: function () {
@@ -1263,27 +1410,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 		module.exports = VText
-
-	/***/ },
-	/* 17 */
-	/***/ function(module, exports) {
-
-		/* 
-		 * 对html实体进行转义
-		 * https://github.com/substack/node-ent
-		 * http://www.cnblogs.com/xdp-gacl/p/3722642.html
-		 * http://www.stefankrause.net/js-frameworks-benchmark2/webdriver-java/table.html
-		 */
-
-		var rentities = /&[a-z0-9#]{2,10};/
-		var temp = avalon.avalonDiv
-		module.exports = function (str) {
-		    if (rentities.test(str)) {
-		        temp.innerHTML = str
-		        return temp.innerText || temp.textContent
-		    }
-		    return str
-		}
 
 	/***/ },
 	/* 18 */
@@ -1395,7 +1521,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* 30 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var Cache = __webpack_require__(31)
+		var Cache = __webpack_require__(7)
 		var avalon = __webpack_require__(4)
 
 
@@ -1459,128 +1585,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		       
 
 	/***/ },
-	/* 31 */
-	/***/ function(module, exports) {
-
-		
-		/*
-		 https://github.com/rsms/js-lru
-		 entry             entry             entry             entry        
-		 ______            ______            ______            ______       
-		 | head |.newer => |      |.newer => |      |.newer => | tail |      
-		 |  A   |          |  B   |          |  C   |          |  D   |      
-		 |______| <= older.|______| <= older.|______| <= older.|______|      
-		 
-		 removed  <--  <--  <--  <--  <--  <--  <--  <--  <--  <--  <--  added 
-		 */
-		function LRU(maxLength) {
-		    // 标识当前缓存数组的大小
-		    this.size = 0
-		    // 标识缓存数组能达到的最大长度
-		    this.limit = maxLength
-		    //  head（最不常用的项），tail（最常用的项）全部初始化为undefined
-		    this.head = this.tail = void 0
-		    this._keymap = {}
-		}
-
-		var p = LRU.prototype
-
-		p.put = function (key, value) {
-		    var entry = {
-		        key: key,
-		        value: value
-		    }
-		    this._keymap[key] = entry
-		    if (this.tail) {
-		        // 如果存在tail（缓存数组的长度不为0），将tail指向新的 entry
-		        this.tail.newer = entry
-		        entry.older = this.tail
-		    } else {
-		        // 如果缓存数组的长度为0，将head指向新的entry
-		        this.head = entry
-		    }
-		    this.tail = entry
-		    // 如果缓存数组达到上限，则先删除 head 指向的缓存对象
-		    /* istanbul ignore if */
-		    if (this.size === this.limit) {
-		        this.shift()
-		    } else {
-		        this.size++
-		    }
-		    return value
-		}
-
-		p.shift = function () {
-		    /* istanbul ignore next */
-		    var entry = this.head
-		    /* istanbul ignore if */
-		    if (entry) {
-		        // 删除 head ，并改变指向
-		        this.head = this.head.newer
-		        // 同步更新 _keymap 里面的属性值
-		        this.head.older =
-		                entry.newer =
-		                entry.older =
-		                this._keymap[entry.key] =
-		                void 0
-		        delete this._keymap[entry.key] //#1029
-		        // 同步更新 缓存数组的长度
-		        this.size--
-		    }
-		}
-		p.get = function (key) {
-		    var entry = this._keymap[key]
-		    // 如果查找不到含有`key`这个属性的缓存对象
-		    if (entry === void 0)
-		        return
-		    // 如果查找到的缓存对象已经是 tail (最近使用过的)
-		    /* istanbul ignore if */
-		    if (entry === this.tail) {
-		        return entry.value
-		    }
-		    // HEAD--------------TAIL
-		    //   <.older   .newer>
-		    //  <--- add direction --
-		    //   A  B  C  <D>  E
-		    if (entry.newer) {
-		        // 处理 newer 指向
-		        if (entry === this.head) {
-		            // 如果查找到的缓存对象是 head (最近最少使用过的)
-		            // 则将 head 指向原 head 的 newer 所指向的缓存对象
-		            this.head = entry.newer
-		        }
-		        // 将所查找的缓存对象的下一级的 older 指向所查找的缓存对象的older所指向的值
-		        // 例如：A B C D E
-		        // 如果查找到的是D，那么将E指向C，不再指向D
-		        entry.newer.older = entry.older // C <-- E.
-		    }
-		    if (entry.older) {
-		        // 处理 older 指向
-		        // 如果查找到的是D，那么C指向E，不再指向D
-		        entry.older.newer = entry.newer // C. --> E
-		    }
-		    // 处理所查找到的对象的 newer 以及 older 指向
-		    entry.newer = void 0 // D --x
-		    // older指向之前使用过的变量，即D指向E
-		    entry.older = this.tail // D. --> E
-		    if (this.tail) {
-		        // 将E的newer指向D
-		        this.tail.newer = entry // E. <-- D
-		    }
-		    // 改变 tail 为D 
-		    this.tail = entry
-		    return entry.value
-		}
-
-		module.exports = LRU
-
-
-	/***/ },
-	/* 32 */,
-	/* 33 */
+	/* 31 */,
+	/* 32 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var canBubbleUp = __webpack_require__(34)
+		var canBubbleUp = __webpack_require__(33)
 
 		var rconstant = /^[A-Z_]+$/
 		var rhandleHasVm = /^e/
@@ -1693,7 +1702,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 	/***/ },
-	/* 34 */
+	/* 33 */
 	/***/ function(module, exports) {
 
 		//http://www.feiesoft.com/html/events.html
@@ -1735,772 +1744,21 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 	/***/ },
+	/* 34 */,
 	/* 35 */,
 	/* 36 */
-	/***/ function(module, exports, __webpack_require__) {
-
-		var onceWarn = true //只警告一次
-		var dom2vdom = __webpack_require__(37)
-		function scan(nodes) {
-		    for (var i = 0, elem; elem = nodes[i++]; ) {
-		        if (elem.nodeType === 1) {
-		            var $id = getController(elem)
-
-		            var vm = avalon.vmodels[$id]
-		            if (vm && !vm.$element) {
-		                vm.$element = elem
-		                /* istanbul ignore if */
-		                if (avalon.serverTemplates && avalon.serverTemplates[$id]) {
-		                    var tmpl = avalon.serverTemplates[$id]
-		                    var oldTree = avalon.speedUp(avalon.lexer(tmpl))
-		                    var render = avalon.render(oldTree)
-		                    var vtree = render(vm)
-		                    var dom = avalon.vdom(vtree[0], 'toDOM')
-		                    vm.$element = dom
-		                    dom.vtree = vtree
-		                    vm.$render = render
-		                    elem.parentNode.replaceChild(dom, elem)
-		                    avalon.diff(vtree, vtree)
-		                    continue
-		                }
-
-		                //IE6-8下元素的outerHTML前面会有空白
-		                //第一次扫描就清空所有空白节点,并生成最初的vtree
-		                var vtree = [dom2vdom(elem)]
-		                var now = new Date()
-		                elem.vtree = avalon.speedUp(vtree)
-
-		                var now2 = new Date()
-		                onceWarn && avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')
-
-		                vm.$render = avalon.render(elem.vtree)
-		                avalon.scopes[vm.$id] = {
-		                    vmodel: vm,
-		                    local: {},
-		                    isTemp: true
-		                }
-		                var now3 = new Date()
-		                onceWarn && avalon.log('构建当前vm的$render方法耗时 ', now3 - now2, 'ms\n',
-		                        '如果此时间太长,达100ms以上\n',
-		                        '建议将当前ms-controller拆分成多个ms-controller,减少每个vm管辖的区域')
-		                avalon.rerenderStart = now3
-		                onceWarn = false
-		                avalon.batch($id)
-
-		            } else if (!$id) {
-		                scan(elem.childNodes)
-		            }
-		        }
-		    }
-		}
-
-
-		module.exports = avalon.scan = function (a) {
-		     /* istanbul ignore if */
-		    if (!a || !a.nodeType) {
-		        avalon.warn('[avalon.scan] first argument must be element , documentFragment, or document')
-		        return
-		    }
-		    scan([a])
-		}
-		avalon.scan.dom2vdom = dom2vdom
-
-		function getController(a) {
-		    return a.getAttribute('ms-controller') ||
-		            a.getAttribute(':controller')
-		}
-
-	/***/ },
-	/* 37 */
-	/***/ function(module, exports, __webpack_require__) {
-
-		
-
-		var voidTag = __webpack_require__(38)
-		var vdom2body = __webpack_require__(39)
-		var rformElement = /input|textarea|select/i
-		var rcolon = /^\:/
-		function getAttributes(node) {
-		    var attrs = node.attributes, ret = {}
-		    for (var i = 0, n = attrs.length; i < n; i++) {
-		        var attr = attrs[i]
-		        if (attr.specified) {
-		            var name = attr.name
-		            if (name.charAt(0) === ':') {
-		                name = name.replace(rcolon, 'ms-')
-		            }
-		            ret[name] = attr.value
-		        }
-		    }
-		    if (rformElement.test(node.nodeName)) {
-		        ret.type = node.type
-		    }
-		    var style = node.style.cssText
-		    if (style) {
-		        ret.style = style
-		    }
-		    //类名 = 去重(静态类名+动态类名+ hover类名? + active类名)
-		    if (ret.type === 'select-one') {
-		        ret.selectedIndex = node.selectedIndex
-		    }
-		    if (isEmpty(ret)) {
-		        return null
-		    }
-		    return ret
-		}
-
-		function isEmpty(a) {
-		    for (var i in a) {
-		        return false
-		    }
-		    return true
-		}
-
-		function createVDOM(node) {
-		    var ret = {}
-		    var type = node.nodeName.toLowerCase()
-		    ret.nodeName = type
-		    ret.dom = node
-		    if (type.charAt(0) === '#') {//2, 8
-		        var nodeValue = node.nodeValue
-		        if (/\S/.test(nodeValue)) {
-		            ret.nodeValue = nodeValue
-		        }
-		    } else {
-		        var props = getAttributes(node)
-		        if (voidTag[type]) {
-		            ret.isVoidTag = true
-		        }
-		        
-		        ret.children = createVDOMBatch(node)
-		        if ('selectedIndex' in ret) {
-		            node.selectedIndex = ret.selectedIndex
-		            delete ret.selectedIndex
-		        }
-		        if (props) {
-		            ret.props = props
-		        }
-		    }
-		    return ret
-		}
-		//将当前元素的孩子转换成VDOM
-		function createVDOMBatch(parent) {
-		    var arr = []
-		    var node = parent.firstChild
-		    if (!node) {
-		        return arr
-		    }
-		    do {
-		        var next = node.nextSibling
-		        switch (node.nodeType) {
-		            case 1:
-		                var a = node.getAttributeNode(':for') || node.getAttributeNode('ms-for')
-
-		                if (a) {
-		                    var start = document.createComment('ms-for:' + a.value)
-		                    var end = document.createComment('ms-for-end:')
-		                    node.removeAttributeNode(a)
-
-		                    if (parent) {
-		                        parent.insertBefore(end, node.nextSibling)
-		                        parent.insertBefore(start, node)
-		                    }
-		                    arr.push(createVDOM(start), createVDOM(node), createVDOM(end))
-
-		                } else {
-		                    arr.push(createVDOM(node))
-		                }
-		                break
-		            case 3:
-		                if (/\S/.test(node.nodeValue)) {
-		                    arr.push(createVDOM(node))
-		                } else {
-		                    removeNode(node)
-		                }
-		                break
-		            case 8:
-		                arr.push(createVDOM(node))
-
-		        }
-		        node = next
-
-		    } while (node)
-		    return arr
-		}
-
-		var f = avalon.avalonFragment
-		function removeNode(node) {
-		    f.appendChild(node)
-		    f.removeChild(node)
-		    return node
-		}
-
-
-		module.exports = createVDOM
-
-
-
-	/***/ },
-	/* 38 */
 	/***/ function(module, exports) {
 
 		module.exports = avalon.oneObject('area,base,basefont,bgsound,br,col,command,embed,' +
 		        'frame,hr,img,input,keygen,link,meta,param,source,track,wbr')
 
 	/***/ },
-	/* 39 */
-	/***/ function(module, exports, __webpack_require__) {
-
-		/*
-		 * 本模块是用于将虚拟DOM变成一个函数
-		 */
-
-		var extractBindings = __webpack_require__(40)
-		var stringify = __webpack_require__(41)
-		var parseExpr = __webpack_require__(42)
-		var decode = __webpack_require__(17)
-		var config = avalon.config
-		var quote = avalon.quote
-		var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
-		var rstatement = /^\s*var\s+([$\w]+)\s*\=\s*\S+/
-		var skips = {__local__: 1, vmode: 1, dom: 1}
-
-
-		function parseNodes(source, inner) {
-		    //ms-important， ms-controller ， ms-for 不可复制，省得死循环
-		    //ms-important --> ms-controller --> ms-for --> ms-widget --> ms-effect --> ms-if
-		    var buffer = inner ? [] : ['\nvar vnodes = [];']
-
-		    for (var i = 0, el; el = source[i++]; ) {
-		        var vnode = parseNode(el)
-		        if (el.$prepend) {
-		            buffer.push(el.$prepend)
-		        }
-		        var append = el.$append
-		        delete el.$append
-		        delete el.$prepend
-		        if (vnode) {
-		            buffer.push(vnode + '\n')
-		        }
-		        if (append) {
-		            buffer.push(append)
-		        }
-		    }
-		    if (!inner) {
-		        buffer.push('return vnodes\n')
-		    }
-		    return buffer.join('\n')
-		}
-
-
-
-		function parseNode(vdom) {
-		    if (!vdom.nodeName)
-		        return false
-		    switch (vdom.nodeName) {
-		        case '#text':
-		            if (vdom.dynamic) {
-		                return add(parseText(vdom))
-		            } else {
-		                return addTag(vdom)
-		            }
-
-		        case '#comment':
-		            var nodeValue = vdom.nodeValue
-		            /* istanbul ignore else  */
-		            if (vdom.forExpr) {// 处理ms-for指令
-		                var copy = {
-		                    dynamic: true,
-		                    vmodel: '__vmodel__'
-		                }
-		                for (var i in vdom) {
-		                    if (vdom.hasOwnProperty(i) && !skips[i]) {
-		                        copy[i] = vdom[i]
-		                    }
-		                }
-		                avalon.directives['for'].parse(copy, vdom, vdom)
-
-		                vdom.$append += avalon.caches[vdom.signature] //vdom.template
-		                return addTag(copy)
-		            } else if (nodeValue === 'ms-for-end:') {
-		                vdom.$append = addTag({
-		                    nodeName: '#comment',
-		                    nodeValue: vdom.signature
-
-		                }) +
-		                        ' return vnodes}\n })\n},__local__,vnodes)\n' +
-		                        addTag({
-		                            nodeName: "#comment",
-		                            signature: vdom.signature,
-		                            nodeValue: "ms-for-end:"
-		                        }) + '\n'
-		                return ''
-		            } else if (nodeValue.indexOf('ms-js:') === 0) {//插入JS声明语句
-		                var statement = parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
-		                var ret = addTag(vdom)
-		                var match = statement.match(rstatement)
-		                if (match && match[1]) {
-		                    vdom.$append = (vdom.$append || '') + statement +
-		                            "\n__local__." + match[1] + ' = ' + match[1] + '\n'
-		                } else {
-		                    avalon.warn(nodeValue + ' parse fail!')
-		                }
-		                return ret
-		            } else {
-		                return addTag(vdom)
-		            }
-		        default:
-		            if (!vdom.dynamic && vdom.skipContent) {
-		                return addTag(vdom)
-		            }
-
-		            var copy = {
-		                nodeName: vdom.nodeName
-		            }
-		            var props = vdom.props
-		            if (vdom.dynamic) {
-		                copy.dynamic = '{}'
-
-		                var bindings = extractBindings(copy, props)
-		                bindings.map(function (b) {
-		                    //将ms-*的值变成函数,并赋给copy.props[ms-*]
-		                    //如果涉及到修改结构,则在source添加$append,$prepend
-		                    avalon.directives[b.type].parse(copy, vdom, b)
-		                    return b.name
-		                })
-
-		            } else if (props) {
-		                copy.props = {}
-		                for (var i in props) {
-		                    copy.props[i] = props[i]
-		                }
-		            }
-
-		            if (vdom.isVoidTag) {
-		                copy.isVoidTag = true
-		            } else {
-		                if (!('children' in copy)) {
-		                    var c = vdom.children
-		                    if (c) {
-		                        if (vdom.skipContent) {
-		                            copy.children = '[' + c.map(function (a) {
-		                                return stringify(a)
-		                            }) + ']'
-		                        } else if (c.length === 1 && c[0].nodeName === '#text') {
-
-		                            if (c[0].dynamic) {
-		                                copy.children = '[' + parseText(c[0]) + ']'
-		                            } else {
-		                                copy.children = '[' + stringify(c[0]) + ']'
-		                            }
-
-		                        } else {
-
-		                            copy.children = '(function(){' + parseNodes(c) + '})()'
-		                        }
-		                    }
-		                }
-		            }
-		            if (vdom.template)
-		                copy.template = vdom.template
-		            if (vdom.skipContent)
-		                copy.skipContent = true
-
-		            return addTag(copy)
-
-		    }
-
-		}
-
-		module.exports = parseNodes
-
-		function wrapDelimiter(expr) {
-		    return rident.test(expr) ? expr : parseExpr(expr, 'text')
-		}
-
-		function add(a) {
-		    return 'vnodes.push(' + a + ');'
-		}
-		function addTag(obj) {
-		    return add(stringify(obj))
-		}
-
-		function parseText(el) {
-		    var array = extractExpr(el.nodeValue)//返回一个数组
-		    var nodeValue = ''
-		    if (array.length === 1) {
-		        nodeValue = wrapDelimiter(array[0].expr)
-		    } else {
-		        var token = array.map(function (el) {
-		            return el.type ? wrapDelimiter(el.expr) : quote(el.expr)
-		        }).join(' + ')
-		        nodeValue = 'String(' + token + ')'
-		    }
-		    return '{\nnodeName: "#text",\ndynamic:true,\nnodeValue: ' + nodeValue + '\n}'
-		}
-
-		var rlineSp = /\n\s*/g
-
-		function extractExpr(str) {
-		    var ret = []
-		    do {//aaa{{@bbb}}ccc
-		        var index = str.indexOf(config.openTag)
-		        index = index === -1 ? str.length : index
-		        var value = str.slice(0, index)
-		        if (/\S/.test(value)) {
-		            ret.push({expr: decode(value)})
-		        }
-		        str = str.slice(index + config.openTag.length)
-		        if (str) {
-		            index = str.indexOf(config.closeTag)
-		            var value = str.slice(0, index)
-		            ret.push({
-		                expr: avalon.unescapeHTML(value.replace(rlineSp, '')),
-		                type: '{{}}'
-		            })
-		            str = str.slice(index + config.closeTag.length)
-		        }
-		    } while (str.length)
-		    return ret
-		}
-
-
-	/***/ },
-	/* 40 */
-	/***/ function(module, exports) {
-
-		var directives = avalon.directives
-		var rbinding = /^(\:|ms\-)\w+/
-		var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
-
-		function extractBindings(cur, props) {
-		    var bindings = []
-		    var attrs = {}
-		    var skip = 'ms-skip' in props//old
-		    var uniq = {}
-		    for (var i in props) {
-		        var value = props[i], match
-		        attrs[i] = props[i]
-		        if ((match = i.match(rbinding))) {
-		            /* istanbul ignore if  */
-		            if (skip)
-		                continue
-
-		            var arr = i.replace(match[1], '').split('-')
-
-		            if (eventMap[arr[0]]) {
-		                arr.unshift('on')
-		            }
-		            if (arr[0] === 'on') {
-		                arr[2] = parseFloat(arr[2]) || 0
-		            }
-		            arr.unshift('ms')
-		            var type = arr[1]
-		            if (directives[type]) {
-		                var binding = {
-		                    type: type,
-		                    param: arr[2],
-		                    name: arr.join('-'),
-		                    expr: value,
-		                    priority: directives[type].priority || type.charCodeAt(0) * 100
-		                }
-
-		                if (type === 'on') {
-		                    binding.priority += arr[3]
-		                }
-		                if (!uniq[binding.name]) {
-		                    uniq[binding.name] = value
-		                    bindings.push(binding)
-		                }
-		            }
-		        } 
-		    }
-
-		    cur.props = attrs
-
-		    bindings.sort(byPriority)
-
-		    return bindings
-		}
-
-		function byPriority(a, b) {
-		    return a.priority - b.priority
-		}
-
-		module.exports = extractBindings
-
-
-	/***/ },
-	/* 41 */
-	/***/ function(module, exports) {
-
-		var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false," +
-		        "finally,for,function,if,in,instanceof,new,null,return,switch,this," +
-		        "throw,true,try,typeof,var,void,while,with," + /* 关键字*/
-		        "abstract,boolean,byte,char,class,const,double,enum,export,extends," +
-		        "final,float,goto,implements,import,int,interface,long,native," +
-		        "package,private,protected,public,short,static,super,synchronized," +
-		        "throws,transient,volatile")
-		avalon.keyMap = keyMap
-		var quoted = {
-		    nodeName: 1,
-		    template: 1,
-		    forExpr: 1,
-		    type: 1,
-		    nodeValue: 1,
-		    signature: 1,
-		    wid: 1
-		}
-
-		var rneedQuote = /[W\:-]/
-		var quote = avalon.quote
-		function fixKey(k) {
-		    return (rneedQuote.test(k) || keyMap[k]) ? quote(k) : k
-		}
-
-		function stringify(obj) {
-		    var arr1 = []
-		//字符不用东西包起来就变成变量
-		    for (var i in obj) {
-		        var type = typeof obj[i]
-		        if (type === 'object') {
-		            if (i === 'props' ) {
-		                var arr2 = []
-		                for (var k in obj.props) {
-		                    var kv = obj.props[k]
-		                    if (typeof kv === 'string') {
-		                        kv = quote(kv)
-		                    }
-		                    arr2.push(fixKey(k) + ': ' + kv)
-		                }
-		                arr1.push(i+': {' + arr2.join(',\n') + '}')
-
-		            } else if (i === 'children') {
-		                arr1.push('children: [' + obj[i].map(function (a) {
-		                    return stringify(a)
-		                }) + ']')
-		            }
-		        } else if (obj.hasOwnProperty(i)) {
-		            var v = obj[i]
-		            if (type === 'string') {
-		                v = quoted[i] ? quote(v) : v
-		            }
-		            arr1.push(fixKey(i) + ':' + v)
-		        }
-		    }
-		    return '{\n' + arr1.join(',\n') + '}'
-		}
-
-		module.exports = stringify
-
-
-	/***/ },
-	/* 42 */
-	/***/ function(module, exports, __webpack_require__) {
-
-		
-		//缓存求值函数，以便多次利用
-		var evaluatorPool = __webpack_require__(43)
-
-		var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
-		var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
-		var rfill = /\?\?\d+/g
-		var brackets = /\(([^)]*)\)/
-
-		var rshortCircuit = /\|\|/g
-		var rpipeline = /\|(?=\w)/
-		var ruselessSp = /\s*(\.|\|)\s*/g
-
-		var rAt = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
-		var rhandleName = /^__vmodel__\.[$\w\.]+$/i
-
-		var rfilters = /\.[\w\.\$]+/g
-		var rvar = /\b[$a-zA-Z_][$a-zA-Z0-9_]*\b/g
-
-		function collectLocal(str, ret) {
-
-		    str.replace(/__vmodel__/, ' ').
-		            replace(rfilters, ' ').
-		            replace(rvar, function (el) {
-		                if (el !== '$event' && !avalon.keyMap[el]) {
-		                    ret[el] = 1
-		                }
-		            })
-		}
-
-		function extLocal(ret) {
-		    var arr = []
-		    for (var i in ret) {
-		        arr.push('var ' + i + ' = __local__[' + avalon.quote(i) + ']')
-		    }
-		    return arr
-		}
-
-		function parseExpr(str, category) {
-		    var binding = {}
-		    category = category || 'other'
-		    if (typeof str === 'object') {
-		        category = str.type
-		        binding = str
-		        str = binding.expr
-		    }
-
-		    var cacheID = str
-		    var cacheStr = evaluatorPool.get(category + ':' + cacheID)
-
-		    if (cacheStr) {
-		        return cacheStr
-		    }
-
-		    var number = 1
-		//相同的表达式生成相同的函数
-		    var maps = {}
-		    function dig(a) {
-		        var key = '??' + number++
-		        maps[key] = a
-		        return key
-		    }
-		    function fill(a) {
-		        return maps[a]
-		    }
-		    var input = str.replace(rregexp, dig).//移除所有正则
-		            replace(rstring, dig).//移除所有字符串
-		            replace(rshortCircuit, dig).//移除所有短路或
-		            replace(ruselessSp, '$1').//移除. |两端空白
-		            split(rpipeline) //使用管道符分离所有过滤器及表达式的正体
-		    //还原body
-		    var _body = input.shift().replace(rAt, '$1__vmodel__.')
-		    var local = {}
-		    var body = _body.replace(rfill, fill).trim()
-
-		    /* istanbul ignore else  */
-
-		    if (category === 'js') {
-		        return evaluatorPool.put(category + ':' + cacheID, body)
-		    }
-		    //处理表达式的过滤器部分
-		    var filters = input.map(function (str) {
-		        str = str.replace(rAt, '$1__vmodel__.')
-		        if (category === 'on') {
-		            collectLocal(str.replace(/^\w+/g, ""), local)
-		        }
-		        str = str.replace(rfill, fill) //还原
-		        var hasBracket = false
-		        str = str.replace(brackets, function (a, b) {
-		            hasBracket = true
-		            return /\S/.test(b) ?
-		                    '(__value__,' + b + ');' :
-		                    '(__value__);'
-		        })
-		        if (!hasBracket) {
-		            str += '(__value__);'
-		        }
-		        str = str.replace(/(\w+)/, 'avalon.__format__("$1")')
-		        return '__value__ = ' + str
-		    })
-		    var ret = []
-		    if (category === 'on') {
-		        if (rhandleName.test(body)) {
-		            body = body + '($event)'
-		        }
-		        collectLocal(_body, local)
-		        filters = filters.map(function (el) {
-		            return el.replace(/__value__/g, '$event')
-		        })
-		        if (filters.length) {
-		            filters.push('if($event.$return){\n\treturn;\n}')
-		        }
-		        /* istanbul ignore if  */
-		        if (!avalon.modern) {
-		            body = body.replace(/__vmodel__\.([^(]+)\(([^)]*)\)/, function (a, b, c) {
-		                return '__vmodel__.' + b + ".call(__vmodel__" + (/\S/.test(c) ? ',' + c : "") + ")"
-		            })
-		        }
-
-		        ret = ['function ($event, __local__){',
-		            'try{',
-		            extLocal(local).join('\n'),
-		            '\tvar __vmodel__ = this;',
-		            '\t' + body,
-		            '}catch(e){',
-		            quoteError(str, category),
-		            '}',
-		            '}']
-		        filters.unshift(2, 0)
-		    } else if (category === 'duplex') {
-
-		        //给vm同步某个属性
-		        var setterBody = [
-		            'function (__vmodel__,__value__){',
-		            'try{',
-		            '\t' + body + ' = __value__',
-		            '}catch(e){',
-		            quoteError(str, category).replace('parse', 'set'),
-		            '}',
-		            '}']
-		        evaluatorPool.put('duplex:set:' + cacheID, setterBody.join('\n'))
-		        //对某个值进行格式化
-
-		        var getterBody = [
-		            'function (__vmodel__){',
-		            'try{',
-		            'var __value__ = ' + body + '\n',
-		            filters.join('\n'),
-		            'return __value__\n',
-		            '}catch(e){',
-		            quoteError(str, category).replace('parse', 'get'),
-		            '}',
-		            '}'].join('\n')
-		        evaluatorPool.put('duplex:get:' + cacheID, getterBody)
-
-		        return  getterBody
-		    } else {
-		        ret = [
-		            '(function(){',
-		            'try{',
-		            'var __value__ = ' + body,
-		            (category === 'text' ?
-		                    'return avalon.parsers.string(__value__)' :
-		                    'return __value__'),
-		            '}catch(e){',
-		            quoteError(str, category),
-		            '\treturn ""',
-		            '}',
-		            '})()'
-		        ]
-		        filters.unshift(3, 0)
-		    }
-		    ret.splice.apply(ret, filters)
-		    cacheStr = ret.join('\n')
-		    evaluatorPool.put(category + ':' + cacheID, cacheStr)
-		    return cacheStr
-
-		}
-
-		function quoteError(str, type) {
-		    return '\tavalon.warn(e, ' +
-		            avalon.quote('parse ' + type + ' binding【 ' + str + ' 】fail')
-		            + ')'
-		}
-		module.exports = avalon.parseExpr = parseExpr
-
-	/***/ },
-	/* 43 */
-	/***/ function(module, exports, __webpack_require__) {
-
-		
-		var Cache = __webpack_require__(31)
-		//缓存求值函数，以便多次利用
-		module.exports = new Cache(888)
-
-
-	/***/ },
-	/* 44 */,
-	/* 45 */
+	/* 37 */,
+	/* 38 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		// 抽离出来公用
-		var update = __webpack_require__(46)
+		var update = __webpack_require__(39)
 
 		avalon.directive('important', {
 		    priority: 1,
@@ -2512,12 +1770,12 @@ return /******/ (function(modules) { // webpackBootstrap
 		        //如果important没有定义可以进入
 		        //如果important定义了,并且__vmodel__== important也可以进入
 		        var vmodel = '(function(){ return __vmodel__ = avalon.vmodels[' + quoted + ']})()'
-		        src.$prepend = ['(function(__vmodel__){',
+		        src.prefix = ['!function(__vmodel__){',
 		            'var __i = avalon.scopes[' + quoted + ']',
 		            'var ok = !__i || __i.vmodel === __vmodel__',
 		            'if( !ok ){avalon.log("不进入"+' + quoted + ');return }',
 		        ].join('\n') + '\n' + vmodel
-		        src.$append = '\n})(__vmodel__);'
+		        src.suffix = '\n}(__vmodel__);'
 		    },
 		    diff: function (copy, src, name) {
 		        if (!src.dynamic[name]) {
@@ -2533,7 +1791,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 46 */
+	/* 39 */
 	/***/ function(module, exports) {
 
 		module.exports = function (vdom, update, hookName) {
@@ -2548,13 +1806,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 47 */
+	/* 40 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		// 抽离出来公用
-		var update = __webpack_require__(46)
-		//var reconcile = require('../strategy/reconcile')
-
+		var update = __webpack_require__(39)
 		var cache = {}
 		avalon.mediatorFactoryCache = function (__vmodel__, __present__) {
 		    var a = __vmodel__.$hashcode
@@ -2585,8 +1841,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		            '})();'
 		        ].join('\n') 
 
-		        src.$prepend = '(function(__vmodel__){' + vmodel
-		        src.$append = '\n})(__vmodel__);'
+		        src.prefix = '!function(__vmodel__){' + vmodel
+		        src.suffix = '\n}(__vmodel__);'
 		    },
 		    diff: function (copy, src, name) {
 		        if (!src.dynamic[name]) {
@@ -2627,6 +1883,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		        update(vdom, function () {
 		            avalon(dom).removeClass('ms-controller')
+		            avalon._disposeComponent(dom)
+		            dom.setAttribute('wid', id)
 		            var events = needFire.$events["onReady"]
 		            if (events) {
 		                needFire.$fire('onReady')
@@ -2640,12 +1898,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 48 */,
-	/* 49 */
+	/* 41 */,
+	/* 42 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		
-		var update = __webpack_require__(46)
+		var update = __webpack_require__(39)
 
 		avalon.directive('css', {
 		    diff: function (copy, src, name) {
@@ -2705,10 +1963,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 50 */
+	/* 43 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var update = __webpack_require__(46)
+		var update = __webpack_require__(39)
 
 		var none = 'none'
 		function parseDisplay(elem, val) {
@@ -2780,10 +2038,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 51 */
+	/* 44 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var update = __webpack_require__(46)
+		var update = __webpack_require__(39)
 
 		avalon.directive('expr', {
 		    parse: avalon.noop
@@ -2793,70 +2051,65 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 52 */
+	/* 45 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		//此指令实际上不会操作DOM,交由expr指令处理
-		var update = __webpack_require__(46)
+		var update = __webpack_require__(39)
 
 		avalon.directive('text', {
 		    parse: function (copy, src, binding) {
 		        copy[binding.name] = 1
 		        src.children = []
-		        copy.children = '[{\nnodeName:"#text",\ndynamic:{/*'+binding.expr+'*/},' +
-		                '\nnodeValue:avalon.parsers.string(' +
-		                avalon.parseExpr(binding) + ')}]'
+		        copy.children = '['+avalon.parseText(binding)+']'
 		    },
 		    diff: function (copy, src) {
-		        if(!src.children.length){
-		           update(src, this.update)
+		        if (!src.children.length) {
+		            update(src, this.update)
 		        }
 		    },
-		    update: function(dom, vdom){
-		        if (dom && !vdom.isVoidTag ) {
+		    update: function (dom, vdom) {
+		        if (dom && !vdom.isVoidTag) {
 		            var parent = dom
 		            while (parent.firstChild) {
 		                parent.removeChild(parent.firstChild)
 		            }
 		            var dom = document.createTextNode('x')
 		            parent.appendChild(dom)
-		            var a = {nodeType: 3, nodeName:'#text', dom: dom}
+		            var a = {nodeType: 3, nodeName: '#text', dom: dom}
 		            vdom.children.push(a)
 		        }
 		    }
 		})
 
 	/***/ },
-	/* 53 */
+	/* 46 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var update = __webpack_require__(46)
+		var update = __webpack_require__(39)
 		//var reconcile = require('../strategy/reconcile')
 
 		avalon.directive('html', {
 		    parse: function (copy, src, binding) {
-		        if (!src.isVoidTag) {
-		            //将渲染函数的某一部分存起来,渲在c方法中转换为函数
-		            copy[binding.name] = avalon.parseExpr(binding)
-		            copy.vmodel = '__vmodel__'
-		            copy.local = '__local__'
-		        } else {
-		            copy.children = '[]'
-		        }
+		        //将渲染函数的某一部分存起来,渲在c方法中转换为函数
+		        copy[binding.name] = avalon.parseExpr(binding)
+		        copy.vmodel = '__vmodel__'
+		        copy.local = '__local__'
 		    },
 		    diff: function (copy, src, name) {
 		        var copyValue = copy[name] + ''
 
 		        if (!src.dynamic['ms-html'] || !src.render || copyValue !== src[name]) {
 		            src[name] = copyValue
-		           
-		            var oldTree = avalon.speedUp(avalon.lexer(copyValue))
+
+		            var oldTree = avalon.variant(avalon.lexer(copyValue))
 
 		            var render = avalon.render(oldTree, copy.local)
-		            src.render = render
-
+		            src.render = render 
+		            var s = avalon.spath//9.12 弹制渲染所有东西
+		            delete avalon.spath
 		            var newTree = render(copy.vmodel, copy.local)
-		            
+		            avalon.spath = s
 		            src.children = copy.children = newTree
 		            update(src, this.update)
 		        } else if (src.render) {
@@ -2873,14 +2126,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 54 */
+	/* 47 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		//根据VM的属性值或表达式的值切换类名，ms-class='xxx yyy zzz:flag'
 		//http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
-		var markID = __webpack_require__(6).getLongID
-		var update = __webpack_require__(46)
+		var update = __webpack_require__(39)
+		function markID(fn) {
+		    /* istanbul ignore next */
+		    return fn.uuid || (fn.uuid = avalon.makeHashCode('e'))
 
+		}
 		function classNames() {
 		    var classes = []
 		    for (var i = 0; i < arguments.length; i++) {
@@ -3007,12 +2263,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 55 */
+	/* 48 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var Cache = __webpack_require__(31)
+		var Cache = __webpack_require__(7)
 		var eventCache = new Cache(128)
-		var update = __webpack_require__(46)
+		var update = __webpack_require__(39)
 		var markID = __webpack_require__(6).getLongID
 
 		var rfilters = /\|.+/g
@@ -3033,12 +2289,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		                replace(/[^$a-z]/ig, function (e) {
 		                    return e.charCodeAt(0)
 		                })
-
 		        var quoted = avalon.quote(uuid)
-		        var fn = '(function(){\n' +
+		        var fn = 'function(){\n' +
 		                'var fn610 = ' +
-		                avalon.parseExpr(binding, 'on') +
-		                '\nfn610.uuid =' + quoted + ';\nreturn fn610})()'
+		                avalon.parseExpr(binding) +
+		                '\nfn610.uuid =' + quoted + ';\nreturn fn610}'
 		        copy.vmodel = '__vmodel__'
 		        copy.local = '__local__'
 		        copy[binding.name] = fn
@@ -3049,7 +2304,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		        var uuid = fn.uuid
 		        var srcFn = src[name] || {}
 		        var hasChange = false
-
 
 		        if (!src.dynamic[name] || srcFn.uuid !== uuid) {
 		            src[name] = fn
@@ -3095,12 +2349,87 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 56 */,
-	/* 57 */,
-	/* 58 */
+	/* 49 */,
+	/* 50 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var updateModelMethods = __webpack_require__(59)
+		var avalon = __webpack_require__(4)
+
+		module.exports = jsonfy
+
+		function jsonfy(obj, dirs) {
+		    var arr1 = []
+		//字符不用东西包起来就变成变量
+		    for (var i in obj) {
+		        var type = typeof obj[i]
+		        if (type === 'object') {
+		            if (i === 'props') {
+		                var arr2 = []
+		                for (var k in obj.props) {
+		                    var kv = obj.props[k]
+		                    if (typeof kv === 'string') {
+		                        kv = quote(kv)
+		                    }
+		                    arr2.push(fixKey(k) + ': ' + kv)
+		                }
+		                arr1.push(i + ': {' + arr2.join(',\n') + '}')
+
+		            }
+		        } else if (obj.hasOwnProperty(i)) {
+		            var v = obj[i]
+		            if (type === 'string') {
+		                v = quoted[i] ? quote(v) : v
+		            }
+		            arr1.push(fixKey(i) + ':' + v)
+		        }
+		    }
+		    var ret = '{' + arr1.join(',\n') + '}'
+		    if (dirs && dirs.length) {
+		        dirs.unshift(ret)
+		        ret = 'avalon.addDirs(' + dirs + ")"
+		    }
+		    return ret
+		}
+
+
+		var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false," +
+		        "finally,for,function,if,in,instanceof,new,null,return,switch,this," +
+		        "throw,true,try,typeof,var,void,while,with," + /* 关键字*/
+		        "abstract,boolean,byte,char,class,const,double,enum,export,extends," +
+		        "final,float,goto,implements,import,int,interface,long,native," +
+		        "package,private,protected,public,short,static,super,synchronized," +
+		        "throws,transient,volatile")
+
+		var quote = avalon.quote
+
+		var quoted = {
+		    nodeName: 1,
+		    template: 1,
+		    forExpr: 1,
+		    type: 1,
+		    nodeValue: 1,
+		    signature: 1,
+		    wid: 1
+		}
+
+		var rneedQuote = /[W\:-]/
+
+		function fixKey(k) {
+		    return (rneedQuote.test(k) || keyMap[k]) ? quote(k) : k
+		}
+
+		avalon.keyMap = keyMap
+
+
+
+
+
+	/***/ },
+	/* 51 */,
+	/* 52 */
+	/***/ function(module, exports, __webpack_require__) {
+
+		var updateModelMethods = __webpack_require__(53)
 
 		function updateModelHandle(event) {
 		    var elem = this
@@ -3141,7 +2470,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		module.exports = updateModelHandle
 
 	/***/ },
-	/* 59 */
+	/* 53 */
 	/***/ function(module, exports) {
 
 		var updateModelMethods = {
@@ -3227,7 +2556,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 60 */
+	/* 54 */
 	/***/ function(module, exports) {
 
 		var valueHijack = false
@@ -3263,8 +2592,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		module.exports = valueHijack
 
 	/***/ },
-	/* 61 */,
-	/* 62 */
+	/* 55 */,
+	/* 56 */
 	/***/ function(module, exports) {
 
 		
@@ -3289,10 +2618,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 63 */
+	/* 57 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var update = __webpack_require__(46)
+		var update = __webpack_require__(39)
 
 		var dir = avalon.directive('validate', {
 		//验证单个表单元素
@@ -3487,7 +2816,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 64 */
+	/* 58 */
 	/***/ function(module, exports) {
 
 		avalon.directive('rules', {
@@ -3640,72 +2969,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		})
 
 	/***/ },
-	/* 65 */
+	/* 59 */,
+	/* 60 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var update = __webpack_require__(46)
-		//ms-imporant ms-controller ms-for ms-widget ms-effect ms-if   ...
-		avalon.directive('if', {
-		    priority: 6,
-		    diff: function (copy, src, name, copys, sources, index) {
-		        var cur = !!copy[name]
-		        src[name] = cur
-		        update(src, this.update)
-
-		    },
-		    update: function (dom, vdom, parent) {
-		        var show = vdom['ms-if']
-		        if (vdom.dynamic['ms-if']) {
-		            vdom.dynamic['ms-if'] = vdom.nodeName
-		        }
-		        if (show) {
-		            if (vdom.nodeName === '#comment') {
-		                vdom.nodeName = vdom.dynamic['ms-if']
-		                delete vdom.nodeValue
-		                var comment = vdom.comment
-		                if (!comment) {
-		                    return
-		                }
-		                parent = comment.parentNode
-		                if (parent)
-		                    parent.replaceChild(dom, comment)
-		                delete vdom.comment
-		                avalon.applyEffect(dom, vdom, {
-		                    hook: 'onEnterDone'
-		                })
-		            }
-		        } else {
-		           
-		            //要移除元素节点,在对应位置上插入注释节点
-		            if (!vdom.comment) {
-		                vdom.comment = document.createComment('if')
-		            }
-		            vdom.nodeName = '#comment'
-		            vdom.nodeValue = 'if'
-		            avalon.applyEffect(dom, vdom, {
-		                hook: 'onLeaveDone',
-		                cb: function () {
-		                    //去掉注释节点临时添加的ms-effect
-		                    //https://github.com/RubyLouvre/avalon/issues/1577
-		                    //这里必须设置nodeValue为ms-if,否则会在节点对齐算法中出现乱删节点的BUG
-		                    parent = parent || dom.parentNode
-		                    if (!parent) {
-		                        return
-		                    }
-		                    parent.replaceChild(vdom.comment, dom)
-		                }
-		            })
-		        }
-		    }
-		})
-
-
-
-	/***/ },
-	/* 66 */
-	/***/ function(module, exports, __webpack_require__) {
-
-		var update = __webpack_require__(46)
+		var update = __webpack_require__(39)
 
 		var rforAs = /\s+as\s+([$\w]+)/
 		var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
@@ -3721,9 +2989,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    var repeat = []
 		    vnodes.push(repeat)
 		    var arr = (fn + '').slice(0, 40).match(rargs)
-
 		    arr.shift()
-
 		    if (Array.isArray(obj)) {
 		        for (var i = 0; i < obj.length; i++) {
 		            iterator(i, obj[i], local, fn, arr[0], arr[1], repeat, true)
@@ -3753,7 +3019,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		avalon.directive('for', {
 		    priority: 3,
-		    parse: function (copy, src, binding) {
+		    parse: function (copy, src) {
 		        var str = src.forExpr, aliasAs
 		        str = str.replace(rforAs, function (a, b) {
 		            /* istanbul ignore if */
@@ -3764,33 +3030,29 @@ return /******/ (function(modules) { // webpackBootstrap
 		            }
 		            return ''
 		        })
-
 		        var arr = str.split(' in ')
-		        var assign = 'var loop = ' + avalon.parseExpr(arr[1]) + ' \n'
-		        var alias = aliasAs ? 'var ' + aliasAs + ' = loop\n' : ''
-		        var kv = arr[0].match(rargs)
-
-		        if (kv.length === 1) {//确保avalon._each的回调有三个参数
+		        var binding = {
+		            expr: arr[1],
+		            type: 'for'
+		        }
+		        var getLoop = avalon.parseExpr(binding)
+		        copy.dynamic = 'avalon.matchDep(' + avalon.quote(binding.paths) + ',avalon.spath)'
+		        var kv = (arr[0]+' traceKey __local__ vnodes').match(rargs)
+		        if (kv.length === 4) {//确保avalon._each的回调有三个参数
 		            kv.unshift('$key')
 		        }
-		        kv.push('traceKey', '__local__', 'vnodes')
-		        src.$append = assign + alias + 'avalon._each(loop,function('
-		                + kv.join(', ') + '){\n'
-		                + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
-		                + 'vnodes.push({\nnodeName: "#document-fragment",\nindex: arguments[0],\nkey: traceKey,\n' +
-		                'children: new function(){\n var vnodes = []\n'
-
+		        src.suffix = Array('var loop = (' + getLoop + ')();',
+		                'avalon._each(loop, function(' + kv + '){',
+		                '__local__[' + avalon.quote(aliasAs || 'valueOf') + '] = loop',
+		                'vnodes.push({',
+		                '\tnodeName: "#document-fragment",',
+		                '\tindex   : arguments[0],',
+		                '\tkey     : traceKey,',
+		                '\tchildren: new function(){\nvar vnodes = []\n').join('\n')
 		    },
 		    diff: function (copy, src, cpList, spList, index) {
 		        //将curRepeat转换成一个个可以比较的component,并求得compareText
 		        //如果这个元素没有插入
-		        if (avalon.callArray) {
-		            if (src.list && src.forExpr.indexOf(avalon.callArray) === -1) {
-		                return 
-		            }
-		        } 
-
-
 		        var srcRepeat = spList[index + 1]
 		        var curRepeat = cpList[index + 1]
 		        var end = spList[index + 2]
@@ -3866,7 +3128,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		        }
 		        /* istanbul ignore if */
-		        if (removes.length > 1) {   
+		        if (removes.length > 1) {
 		            removes.sort(function (a, b) {
 		                return a.index - b.index
 		            })
@@ -3952,7 +3214,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                    staggerKey: signature + 'move'
 		                })
 		            }
-		            
+
 		            before = el.split
 		        })
 		        if (vdom.action === 'init') {
@@ -4031,12 +3293,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 67 */
+	/* 61 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var update = __webpack_require__(46)
-		var initComponent = __webpack_require__(68)
-		var disposeComponent = __webpack_require__(70)
+		
+
+		var update = __webpack_require__(39)
+		var initComponent = __webpack_require__(62)
+		var disposeComponent = __webpack_require__(64)
+
 		avalon._disposeComponent = disposeComponent
 
 		avalon.component = function (name, definition) {
@@ -4056,105 +3321,134 @@ return /******/ (function(modules) { // webpackBootstrap
 		        copy.vmodel = '__vmodel__'
 		        copy.local = '__local__'
 		    },
-		    define: function () {
-		        return avalon.mediatorFactory.apply(this, arguments)
-		    },
 		    diff: function (copy, src, name, copyList, srcList, index) {
-		        var a = copy[name]
-		        /* istanbul ignore else */
-		        if (Object(a) === a) {
-		            //有三个地方可以设置is, 属性,标签名,配置对象
+		        var data = copy[name]
 
-		            var is = src.props.is || (/^ms\-/.test(src.nodeName) ? src.nodeName : 0)
+		        //是否为对象
+		        if (Object(data) !== data) {
+		            return replaceComment.apply(this, arguments)
+		        }
 
-		            if (!is) {//开始大费周章地获取组件的类型
-		                a = a.$model || a//安全的遍历VBscript
-		                if (Array.isArray(a)) {//转换成对象
-		                    a.unshift({})// 防止污染旧数据
-		                    avalon.mix.apply(0, a)
-		                    a = a.shift()
-		                }
-		                is = a.is
+		        data = data.$model || data//安全的遍历VBscript
+		        if (Array.isArray(data)) {//转换成对象
+		            var temp = {}
+		            data.forEach(function (el) {
+		                el && avalon.shadowCopy(temp, el)
+		            })
+		            data = temp
+		        }
+		        //有三个地方可以设置is, 标签名, 属性, 配置对象
+		        var maybeIs = /^ms\-/.test(src.nodeName) ? src.nodeName : src.props.is
+		        var is = maybeIs || data.is
+		        copy.props.is = is
+		        var vmodel = copy.vmodel
+		        var local = copy.local
+		        var vmName = 'component-vm:' + is
+		        var comVm = src[vmName]
+		        var spath = avalon.spath
+
+		        if (comVm) { //如果虚拟DOM上存在对应的component-vm属性,说明已经初始化
+		            var isNeedUpdateData = !!avalon.scopes[comVm.$id]
+		            console.log('已经初始化', is, isNeedUpdateData, comVm.$id)
+		            // if (isNeedUpdateData) {
+		            var topData = vmodel.$model
+		            var oldSlot = src['component-slot:' + is]
+		            var newSlot = {}
+		            for (var i in oldSlot) {
+		                newSlot[i] = topData[i]
 		            }
-		            var vmName = 'component-vm:' + is
-
-		            src.props.is = is
-		            src.vmodel = copy.vmodel
-		            //如果组件没有初始化,那么先初始化(生成对应的vm,$render)
-		            if (!src[vmName]) {
-		                /* istanbul ignore if */
-		                if (!initComponent(src, copy[name], copy.local, copy.template)) {
-		                    //替换成注释节点
-		                    src.nodeValue = 'unresolved component placeholder'
-		                    copyList[index] = src
-		                    update(src, this.mountComment)
-		                    return
+		            var isSameData = avalon._deepEqual(src.local, local)
+		            if (isSameData) {
+		                delete data.is
+		                delete data.id
+		                var oldData = {}
+		                for (var i in data) {
+		                    oldData[i] = comVm.$model[i]
 		                }
-		            }
-
-		            //如果已经存在于avalon.scopes
-		            var comVm = src[vmName]
-		            var scope = avalon.scopes[comVm.$id]
-		            if (scope && scope.vmodel) {
-		                var com = scope.vmodel.$element
-		                if (src.dom !== com) {
-		                    var component = com.vtree[0]
-		                    srcList[index] = copyList[index] = component
-		                    src.com = com
-		                    if (!component.skipContent) {
-		                        component.skipContent = 'optimize'
+		                isSameData = avalon._deepEqual(oldData, data)
+		                if (isSameData) {
+		                    isSameData = avalon._deepEqual(oldSlot, newSlot)
+		                    if (!isSameData) {
+		                        avalon.log('slot数据不一致,更新', is, '组件')
 		                    }
-		                   
-		                    update(src, this.replaceCachedComponent)
-		                    
-		                    update(component, function () {
-		                        if (component.skipContent === 'optimize') {
-		                            component.skipContent = true
-		                        }
-		                    }, 'afterChange')
-		                    return
+		                } else {
+		                    avalon.log('ms-widget数据不一致,更新', is, '组件')
 		                }
 		            }
-		            var render = comVm.$render
-		            var tree = render(comVm, copy.local)
-		            var component = tree[0]
-		            /* istanbul ignore if */
-		            /* istanbul ignore else */
-		            if (component && isComponentReady(component)) {
-		                component.local = copy.local
-		                Array(
-		                        vmName,
-		                        'component-html:' + is,
-		                        'component-ready:' + is,
-		                        'dom', 'dynamic'
-		                        ).forEach(function (name) {
-		                    component[name] = src[name]
-		                })
-		                component.vmodel = comVm
-		                copyList[index] = component
-		                // 如果与ms-if配合使用, 会跑这分支
-		                if (src.comment && src.nodeValue) {
-		                    component.dom = src.comment
+		            if (!isSameData) {
+		                var hash = comVm.$hashcode
+		                comVm.$hashcode = false //防止视图刷新
+		                //更新数据
+		                for (var i in data) {
+		                    comVm[i] = data[i]
 		                }
-		                if (src.nodeName !== component.nodeName) {
-		                    srcList[index] = component
-		                    update(component, this.mountComponent)
-		                } else {
-		                    update(src, this.updateComponent)
+		                for (var i in newSlot) {
+		                    comVm[i] = newSlot[i]
 		                }
+		                avalon.spath = void 0
+		                comVm.$hashcode = hash
 		            } else {
-		             
-		                src.nodeValue = 'unresolved component placeholder'
-		                copyList[index] = {
-		                   nodeValue: 'unresolved component placeholder',
-		                   nodeName: '#comment'
+		                if (isNeedUpdateData) {
+		                    return (copyList[index] = {})
 		                }
-		                update(src, this.mountComment)
+		            }
+
+		        } else {
+		            comVm = initComponent(copy, data)
+		            if (comVm) {
+		                src[vmName] = comVm
+		            } else {
+		                return replaceComment.apply(this, arguments)
+		            }
+		        }
+		        var vtree = comVm.$render(comVm, local)
+		        avalon.spath = spath
+		        var component = vtree[0]
+		        if (component && isComponentReady(component)) {
+		            Array(
+		                    'component-ready:' + is,
+		                    'dom', 'dynamic'
+		                    ).forEach(function (name) {
+		                component[name] = src[name]
+		            })
+
+		            component['component-slot:' + is] = copy.slotData || newSlot
+		            component.local = local
+		            component.vmodel = vmodel
+		            copyList[index] = component
+		            avalon.log('更新组件', comVm.bbb, comVm.$id)
+		            avalon.scopes[comVm.$id] = {
+		                vmodel: comVm,
+		                local: local
+		            }
+		            // 如果与ms-if配合使用, 会跑这分支
+		            if (src.comment && src.nodeValue) {
+		                component.dom = src.comment
+		            }
+		            component[vmName] = comVm
+		            if (src.nodeName !== component.nodeName) {
+		                srcList[index] = component
+
+		                if (!component['component-ready:' + is]) {
+		                    comVm.$fire('onInit', {
+		                        type: 'init',
+		                        vmodel: comVm,
+		                        is: is
+		                    })
+		                }
+		                update(component, this.mountComponent)
+		            } else {
+		                //为原元素绑定afterChange钩子
+		                var viewChangeObservers = comVm.$events.onViewChange
+		                if (viewChangeObservers && viewChangeObservers.length) {
+		                    update(src, viewChangeHandle, 'afterChange')
+		                }
 		            }
 		        } else {
-		            if (src.props.is === copy.props.is) {
-		                update(src, this.updateComponent)
+		            if (component.nodeName === '#comment') {
+		                console.log(component.nodeValue)
 		            }
+		            replaceComment.apply(this, arguments)
 		        }
 		    },
 		    replaceCachedComponent: function (dom, vdom, parent) {
@@ -4168,38 +3462,16 @@ return /******/ (function(modules) { // webpackBootstrap
 		        vdom.dom = comment
 		        parent.replaceChild(comment, dom)
 		    },
-		    updateComponent: function (dom, vdom) {
-		        var vm = vdom["component-vm:" + vdom.props.is]
-		        var viewChangeObservers = vm.$events.onViewChange
-		        if (viewChangeObservers && viewChangeObservers.length) {
-		            update(vdom, viewChangeHandle, 'afterChange')
-		        }
-		    },
 		    mountComponent: function (dom, vdom, parent) {
 		        delete vdom.dom
-		        var com = avalon.vdom(vdom, 'toDOM')
-		       
 		        var is = vdom.props.is
+		        var com = avalon.vdom(vdom, 'toDOM')
 		        var vm = vdom['component-vm:' + is]
-		        vm.$fire('onInit', {
-		            type: 'init',
-		            vmodel: vm,
-		            is: is
-		        })
-		      
 		        parent.replaceChild(com, dom)
-		   
+		        vdom['component-ready:' + is] = true
 		        vdom.dom = vm.$element = com
 		        com.vtree = [vdom]
 		        disposeComponent(com)
-		        vdom['component-ready:' + is] = true
-		        //--------------
-		        avalon.scopes[vm.$id] = {
-		            vmodel: vm,
-		            top: vdom.vmodel,
-		            local: vdom.local
-		        }
-		        //--------------
 		        update(vdom, function () {
 		            vm.$fire('onReady', {
 		                type: 'ready',
@@ -4208,33 +3480,34 @@ return /******/ (function(modules) { // webpackBootstrap
 		                is: is
 		            })
 		        }, 'afterChange')
-
-		        update(vdom, function () {
-		            vdom[ 'component-html:' + is] = avalon.vdom(vdom, 'toHTML')
-		        }, 'afterChange')
 		    }
 		})
 
-
+		function replaceComment(copy, src, name, copyList, srcList, index) {
+		    if (src.nodeName === '#comment')
+		        return
+		    src.nodeName = '#comment'
+		    src.nodeValue = 'unresolved component placeholder'
+		    copyList[index] = src
+		    update(src, this.mountComment)
+		}
 
 		function viewChangeHandle(dom, vdom) {
 		    var is = vdom.props.is
 		    var vm = vdom['component-vm:' + is]
-		    var html = 'component-html:' + is
-		    var preHTML = vdom[html]
-		    var curHTML = avalon.vdom(vdom, 'toHTML')
-		    if (preHTML !== curHTML) {
-		        vdom[html] = curHTML
-		        vm.$fire('onViewChange', {
-		            type: 'viewchange',
-		            target: dom,
-		            vmodel: vm,
-		            is: is
-		        })
+		    //数据变动,界面肯定变动,因此不再需要比较innerHTML
+		    var event = {
+		        type: 'viewchange',
+		        target: dom,
+		        vmodel: vm,
+		        is: is
+		    }
+		    vm.$fire('onViewChange', event)
+		    var parent = vdom.vmodel
+		    if (parent && parent !== vm) {
+		        parent.$fire('onViewChange', event)
 		    }
 		}
-
-
 
 		function isComponentReady(vnode) {
 		    var isReady = true
@@ -4257,201 +3530,279 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		    })
 		}
+		//================
+
+		avalon._deepEqual = deepEqual
+
+		var deepDetectType = {
+		    object: 1,
+		    array: 1,
+		}
+		var toStringType = {
+		    date: 1,
+		    regexp: 1,
+		    'function': 1
+		}
+		var type = avalon.type
+		function deepEqual(a, b, m) {
+		    if (sameValue(a, b)) {//防止出现NaN的情况
+		        return true
+		    }
+		    var atype = type(a)
+		    var btype = type(b)
+
+		    if (atype !== btype) {//如果类型不相同
+		        return false
+		    } else if (toStringType[atype]) {
+		        return a + '' === b + ''
+		    } else if (deepDetectType[atype]) {
+		        return objectEqual(a, b, m)
+		    } else {
+		        return false
+		    }
+		}
+
+		var sameValue = Object.is || function (a, b) {
+		    if (a === b)
+		        return a !== 0 || 1 / a === 1 / b
+		    return a !== a && b !== b
+		}
+
+
+		function enumerable(a) {
+		    var res = []
+		    for (var key in a)
+		        res.push(key)
+		    return res
+		}
+
+		function iterableEqual(a, b) {
+		    if (a.length !== b.length)
+		        return false
+
+		    var i = 0
+		    var match = true
+
+		    for (; i < a.length; i++) {
+		        if (a[i] !== b[i]) {
+		            match = false
+		            break
+		        }
+		    }
+
+		    return match
+		}
+
+		function isValue(a) {
+		    return a !== null && a !== undefined
+		}
+
+		function objectEqual(a, b, m) {
+		    if (!isValue(a) || !isValue(b)) {
+		        return false
+		    }
+
+		    if (a.prototype !== b.prototype) {
+		        return false
+		    }
+
+		    var i
+		    if (m) {
+		        for (i = 0; i < m.length; i++) {
+		            if ((m[i][0] === a && m[i][1] === b)
+		                    || (m[i][0] === b && m[i][1] === a)) {
+		                return true
+		            }
+		        }
+		    } else {
+		        m = []
+		    }
+
+		    try {
+		        var ka = enumerable(a)
+		        var kb = enumerable(b)
+		    } catch (ex) {
+		        return false
+		    }
+
+		    ka.sort()
+		    kb.sort()
+
+		    if (!iterableEqual(ka, kb)) {
+		        return false
+		    }
+
+		    m.push([a, b])
+
+		    var key
+		    for (i = ka.length - 1; i >= 0; i--) {
+		        key = ka[i]
+		        if (!deepEqual(a[key], b[key], m)) {
+		            return false
+		        }
+		    }
+
+		    return true
+		}
+
 
 	/***/ },
-	/* 68 */
+	/* 62 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var skipArray = __webpack_require__(69)
+		module.exports = initComponent
 
+		var skipArray = __webpack_require__(63)
 		var legalTags = {wbr: 1, xmp: 1, template: 1}
-		var events = 'onInit,onReady,onViewChange,onDispose'
-		var componentEvents = avalon.oneObject(events)
-		var immunity = events.split(',').concat('is', 'define')
+		var rprops = /__vmodel__\.([\$\w\_]+)/g
+		var componentEvents = {onInit: 1, onReady: 1, onViewChange: 1, onDispose: 1}
 		var onceWarn = true
-		function initComponent(src, rawOption, local, template) {
-		    var tag = src.nodeName
-		    var is = src.props.is
+
+		function initComponent(copy, data) {
+		    var tag = copy.nodeName
+		    var is = copy.props.is
+		    var template = copy.template
 		    //判定用户传入的标签名是否符合规格
 		    /* istanbul ignore if */
+		    //data = avalon.shadowCopy({}, data)
 		    if (!legalTags[tag] && !isCustomTag(tag)) {
-		        avalon.warn(tag + '不合适做组件的标签')
+		        avalon.warn(tag + '标签不能做组件容器')
 		        return
 		    }
-		    //开始初始化组件
-		    var hooks = {}
-		    //用户只能操作顶层VM
-		    //只有$id,is的对象就是emptyOption
-		    /* istanbul ignore if */
-		    if (!rawOption) {
-		        options = []
-		    } else {
-		        var options = [].concat(rawOption)
-		        options.forEach(function (a) {
-		            if (a && typeof a === 'object') {
-		                mixinHooks(hooks, (a.$model || a), true)
-		            }
-		        })
-		    }
+
 		    var definition = avalon.components[is]
 		    //如果连组件的定义都没有加载回来,应该立即返回 
 		    /* istanbul ignore if */
 		    if (!definition) {
+		        avalon.warn(is + '组件还没有加载')
 		        return
 		    }
-
-		    //得到组件在顶层vm的配置对象名
-		    var id = hooks.id || hooks.$id
-		    if (!id && onceWarn) {
-		        avalon.warn('warning!', is, '组件最好在ms-widget配置对象中指定全局不重复的$id以提高性能!\n',
-		                '若在ms-for循环中可以利用 ($index,el) in @array 中的$index拼写你的$id\n',
-		                '如 ms-widget="{is:\'ms-button\',id:\'btn\'+$index}"'
-		                )
-		        onceWarn = false
+		    var templateID = 'temp:' + template
+		    if (!avalon.caches[templateID]) {
+		        var shell = avalon.lexer(template)
+		        avalon.variant(shell)
+		        shell[0].props.is = is
+		        avalon.caches[templateID] = avalon.render(shell, copy.local)
 		    }
-		    var define = hooks.define
-		    define = define || avalon.directives.widget.define
-		    //生成组件VM
-		    var $id = id || src.props.id || 'w' + (new Date - 0)
+
+		    //生成内部的渲染函数
+		    if (!definition.render) {
+		        var vtree = avalon.lexer(definition.template.trim())
+		        if (vtree.length > 1) {
+		            avalon.error('组件必须用一个元素包起来')
+		        }
+		        var soleSlot = definition.soleSlot
+		        replaceSlot(vtree, soleSlot)
+		        avalon.variant(vtree)
+		        definition.render = avalon.render(vtree)
+		    }
+
+		    var slotRender = avalon.caches[templateID]
+		    var defineRender = definition.render
+
+		    var hooks = {}//收集生命周期钩子
+		    for (var i in componentEvents) {
+		        hooks[i] = []
+		        var fn = data[i]
+		        if (typeof fn === 'function') {
+		            hooks[i].push(fn)
+		        }
+		        delete data[i]
+		    }
 		    var defaults = avalon.mix(true, {}, definition.defaults)
-
-		    mixinHooks(hooks, defaults, false)//src.vmodel,
-
-		    var skipProps = immunity.concat()
-		    function sweeper(a, b, c) {
-		        skipProps.forEach(function (k) {
-		            delete a[k]
-		            delete b[k]
-		        })
-		        for (var k in c) {
-		            if (hooks[k]) {
-		                delete a[k]
+		    for (var i in componentEvents) {
+		        var fn = defaults[i]
+		        if (typeof fn === 'function') {
+		            hooks[i].push(fn)
+		        }
+		        delete defaults[i]
+		    }
+		    var topVm = copy.vmodel.$model
+		    var id = data.id || data.$id
+		    for (var i in defaults) {
+		        if (!(i in data)) {
+		            if (!skipArray[i]) {
+		                data[i] = defaults[i]
 		            }
 		        }
 		    }
-
-		    sweeper.isWidget = true
-		    var vmodel = define.apply(sweeper, [src.vmodel, defaults].concat(options))
-		    //增强对IE的兼容
-		    /* istanbul ignore if */
-		    if (!avalon.modern) {
-		        for (var i in vmodel) {
-		            if (!skipArray[i] && typeof vmodel[i] === 'function') {
-		                vmodel[i] = vmodel[i].bind(vmodel)
-		            }
+		    delete data.is
+		    delete data.id
+		    copy.slotData = {}
+		    String(slotRender).replace(rprops, function (_, prop) {
+		        if (!(prop in data)) {
+		            data[prop] = topVm[prop]
+		            copy.slotData[prop] = topVm[prop]
 		        }
+		    })
+		    //得到组件在顶层vm的配置对象名
+		    
+		    if (!id) {
+		        if (onceWarn) {
+		            avalon.warn('warning!', is, '组件最好在ms-widget配置对象中指定全局不重复的id以提高性能!\n',
+		                    '若在ms-for循环中可以利用 ($index,el) in @array 中的$index拼写你的id\n',
+		                    '如 ms-widget="{is:\'ms-button\',id:\'btn\'+$index}"'
+		                    )
+		            onceWarn = false
+		        }
+		        id = copy.props.wid || 'w' + (new Date - 0)
 		    }
 
-		    vmodel.$id = $id
-		    avalon.vmodels[$id] = vmodel
+		    data.$id = id
+
+		    var vm = avalon.define(data)
 
 		    //绑定组件的生命周期钩子
 		    for (var e in componentEvents) {
-		        if (hooks[e]) {
-		            hooks[e].forEach(function (fn) {
-		                vmodel.$watch(e, fn)
-		            })
-		        }
+		        hooks[e].forEach(function (fn) {
+		            vm.$watch(e, fn)
+		        })
 		    }
 		    // 生成外部的渲染函数
 		    // template保存着最原始的组件容器信息
 		    // 我们先将它转换成虚拟DOM,如果是xmp, template,
 		    // 它们内部是一个纯文本节点, 需要继续转换为虚拟DOM
-		    var shell = avalon.lexer(template)
 
-
-		    var shellRoot = shell[0]
-		    shellRoot.children = shellRoot.children || []
-		    shellRoot.props.is = is
-		    shellRoot.props.wid = $id
-		    avalon.speedUp(shell)
-
-		    var render = avalon.render(shell, local)
-
-		    //生成内部的渲染函数
-		    var finalTemplate = definition.template.trim()
-		    if (typeof definition.getTemplate === 'function') {
-		        finalTemplate = definition.getTemplate(vmodel, finalTemplate)
-		    }
-		    var vtree = avalon.lexer(finalTemplate)
-
-		    if (vtree.length > 1) {
-		        avalon.error('组件必须用一个元素包起来')
-		    }
-		    var soleSlot = definition.soleSlot
-		    replaceSlot(vtree, soleSlot)
-		    avalon.speedUp(vtree)
-
-		    var render2 = avalon.render(vtree)
-
-		    //生成最终的组件渲染函数
-		    var str = fnTemplate + ''
-		    var zzzzz = soleSlot ? avalon.quote(soleSlot) : "null"
-		    str = str.
-		            replace('XXXXX', stringifyAnonymous(render)).
-		            replace('YYYYY', stringifyAnonymous(render2)).
-		            replace('ZZZZZ', zzzzz)
-		    var begin = str.indexOf('{') + 1
-		    var end = str.lastIndexOf("}")
-
-		    var lastFn = Function('vm', 'local', str.slice(begin, end))
-
-		    vmodel.$render = lastFn
-
-		    src['component-vm:' + is] = vmodel
-
-		    return  vmodel.$render = lastFn
-
-		}
-		module.exports = initComponent
-
-		function stringifyAnonymous(fn) {
-		    return fn.toString().replace('anonymous', '')
-		            .replace(/\s*\/\*\*\//g, '')
-		}
-
-
-		function fnTemplate() {
-		    var shell = (XXXXX)(vm, local);
-		    var shellRoot = shell[0]
-		    var vtree = (YYYYY)(vm, local);
-		    var component = vtree[0]
-
-		    //处理diff
-
-		    for (var i in shellRoot) {
-		        if (i !== 'children' && i !== 'nodeName') {
-		            if (i === 'props') {
-		                avalon.mix(component.props, shellRoot.props)
-		            } else {
-		                component[i] = shellRoot[i]
+		    function comRender(vmodel, local) {
+		        var shell = slotRender(vmodel, local)
+		        var shellRoot = shell[0]
+		        var vtree = defineRender(vmodel, local);
+		        var component = vtree[0]
+		        //处理diff
+		        for (var i in shellRoot) {
+		            if (i !== 'children' && i !== 'nodeName') {
+		                if (i === 'props') {
+		                    avalon.mix(component.props, shellRoot.props)
+		                } else {
+		                    component[i] = shellRoot[i]
+		                }
 		            }
 		        }
+
+		        var soleSlot = definition.soleSlot
+		        var slots = collectSlots(shellRoot, soleSlot)
+		        if (soleSlot && (!slots[soleSlot] || !slots[soleSlot].length)) {
+		            slots[soleSlot] = [{
+		                    nodeName: '#text',
+		                    nodeValue: vmodel[soleSlot],
+		                    dynamic: true
+		                }]
+		        }
+		        insertSlots(vtree, slots)
+		        component.props.wid = vmodel.$id
+		        delete component.skipContent
+		        return vtree
 		    }
 
-
-		    var soleSlot = ZZZZZ
-		    var slots = avalon.collectSlots(shellRoot, soleSlot)
-		    if (soleSlot && (!slots[soleSlot] || !slots[soleSlot].length)) {
-		        slots[soleSlot] = [{
-		                nodeName: '#text',
-		                nodeValue: vm[soleSlot],
-		                dynamic: true
-		            }]
-		    }
-		    avalon.insertSlots(vtree, slots)
-
-		    delete component.skipAttrs
-		    delete component.skipContent
-		    return vtree
-
+		    //生成最终的组件渲染函数
+		    vm.$render = comRender
+		    return  vm
 		}
 
 		function replaceSlot(vtree, slotName) {
 		    for (var i = 0, el; el = vtree[i]; i++) {
 		        if (el.nodeName === 'slot') {
 		            var name = el.props.name || slotName
-
 		            vtree.splice(i, 1, {
 		                nodeName: '#comment',
 		                nodeValue: 'slot:' + name,
@@ -4468,19 +3819,19 @@ return /******/ (function(modules) { // webpackBootstrap
 		    }
 		}
 
-		avalon.insertSlots = function (vtree, slots) {
+		function insertSlots(vtree, slots) {
 		    for (var i = 0, el; el = vtree[i]; i++) {
 		        if (el.nodeName === '#comment' && slots[el.type]) {
 		            var args = [i + 1, 0].concat(slots[el.type])
 		            vtree.splice.apply(vtree, args)
 		            i += slots[el.type].length
 		        } else if (el.children) {
-		            avalon.insertSlots(el.children, slots)
+		            insertSlots(el.children, slots)
 		        }
 		    }
 		}
 
-		avalon.collectSlots = function (node, soleSlot) {
+		function collectSlots(node, soleSlot) {
 		    var slots = {}
 		    if (soleSlot) {
 		        slots[soleSlot] = node.children
@@ -4511,26 +3862,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		    return rcustomTag.test(type) || avalon.components[type]
 		}
 
-		function mixinHooks(target, option, overwrite) {
-		    for (var k in option) {
-		        var v = option[k]
-		        //如果是生命周期钩子,总是不断收集
-		        if (componentEvents[k]) {
-		            if (k in target) {
-		                target[k].push(v)
-		            } else {
-		                target[k] = [option[k]]
-		            }
-		        } else {
-		            if (overwrite) {
-		                target[k] = v
-		            }
-		        }
-		    }
-		}
 
 	/***/ },
-	/* 69 */
+	/* 63 */
 	/***/ function(module, exports) {
 
 		/**
@@ -4546,7 +3880,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		module.exports = avalon.oneObject('$id,$render,$track,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,$run,$wait,__proxy__,__data__,__const__')
 
 	/***/ },
-	/* 70 */
+	/* 64 */
 	/***/ function(module, exports) {
 
 		function inDomTree(el) {
@@ -4565,15 +3899,20 @@ return /******/ (function(modules) { // webpackBootstrap
 		        var docker = avalon.scopes[ wid ]
 		        if (!docker)
 		            return
-		        var vm = docker.vmodel
-		        docker.vmodel.$fire("onDispose", {
+		        var elemID = el.getAttribute('ms-controller') || el.getAttribute('ms-important')       
+		        var vm = elemID && avalon.vmodels[elemID] || docker.vmodel
+		        vm.$fire("onDispose", {
 		            type: 'dispose',
 		            target: el,
 		            vmodel: vm
 		        })
-		        if (docker && !el.getAttribute('cached')) {
+		        if (elemID) {
+		            return
+		        }
+		        if (!el.getAttribute('cached')) {
 		            delete docker.vmodel
 		            delete avalon.scopes[ wid ]
+		            // delete avalon.vmodels[ wid ]
 		            var is = el.getAttribute('is')
 		            var v = el.vtree
 		            detachEvents(v)
@@ -4733,12 +4072,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 71 */
+	/* 65 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var support = __webpack_require__(72)
-		var Cache = __webpack_require__(31)
-		var update = __webpack_require__(46)
+		var support = __webpack_require__(66)
+		var Cache = __webpack_require__(7)
+		var update = __webpack_require__(39)
 
 		avalon.directive('effect', {
 		    priority: 5,
@@ -4999,7 +4338,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 72 */
+	/* 66 */
 	/***/ function(module, exports) {
 
 		/**
@@ -5079,45 +4418,74 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 	/***/ },
-	/* 73 */
+	/* 67 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		
-		avalon.lexer = __webpack_require__(74)
-		avalon.diff = __webpack_require__(78)
-		avalon.batch = __webpack_require__(79)
-		// dispatch与patch 为内置模块
-		var vdom2body = __webpack_require__(39)
+		avalon.lexer = __webpack_require__(68)
+		avalon.diff = __webpack_require__(71)
+		avalon.batch = __webpack_require__(72)
+		avalon.scan = __webpack_require__(73)
+		avalon.speedUp = avalon.variant = __webpack_require__(74)
+		avalon.parseExpr = __webpack_require__(77)
+
+		var serializeChildren = __webpack_require__(75)
 		var rquoteEscapes = /\\\\(['"])/g
-		function render(vtree, local) {
-		    var _body = Array.isArray(vtree) ? vdom2body(vtree) : vtree
+		function makeRender(vtree, local) {
+		    var _body = Array.isArray(vtree) ? 'return ' + serializeChildren(vtree) : vtree
 		    var _local = []
 		    if (local) {
 		        for (var i in local) {
-		            _local.push('var ' + i + ' = __local__['+avalon.quote(i)+']')
+		            _local.push('var ' + i + ' = __local__[' + avalon.quote(i) + ']')
 		        }
 		    }
 		    //处理 props: {"ms-effect": "{is:\\'star\\',action:@action}" 的情况 
-		    _body = _body.replace(rquoteEscapes,"$1")
+		    _body = _body.replace(rquoteEscapes, "$1")
 		    var body = '__local__ = __local__ || {};\n' +
-		            _local.join(';\n')+'\n' + _body
-		    
-		    try{
-		    var fn = Function('__vmodel__', '__local__', body)
-		    fn.body = body
-		    }catch(e){
-		        avalon.warn(_body, 'render parse error')
+		            _local.join(';\n') + '\n' + _body
+
+		    try {
+		        var fn = Function('__vmodel__', '__local__', body)
+		    } catch (e) {
+		        avalon.warn(_body, e, 'render parse error')
 		    }
 		    return fn
 		}
 
-		avalon.render = render
+		avalon.render = makeRender
 
-		module.exports = avalon
+		avalon.matchDep = function (a, s) {
+		    if (!s || !a)
+		        return true
+		    return  s.test(a)///a.split(',').some(match, s)
+		}
+		function match(path) {
+		    if (this.indexOf(path) === 0)
+		        return true
+		}
+		//https://www.cnblogs.com/pigtail/p/3342977.html
+		//http://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript-jquery
+		avalon.addDirs = function (obj) {
+		    var args = avalon.slice(arguments, 1)
+		    var hasDynamic = false
+		    for (var i = 0; i < args.length; i += 3) {
+		        var path = args[i]
+		        var dir = args[i + 1]
+		        var fn = args[i + 2]
+		        if ( avalon.matchDep(path, avalon.spath)) {
+		            obj[dir] = fn()
+		            hasDynamic = true
+		        }
+		    }
+		    if (hasDynamic) {
+		        obj.dynamic = {}
+		    }
+		    return obj
+		}
 
 
 	/***/ },
-	/* 74 */
+	/* 68 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		/**
@@ -5128,45 +4496,27 @@ return /******/ (function(modules) { // webpackBootstrap
 		 * ------------------------------------------------------------
 		 */
 		var avalon = __webpack_require__(4)
+		var voidTag = __webpack_require__(36)
+		var variantSpecial = __webpack_require__(69)
+		var clearString = __webpack_require__(70)
 
-		__webpack_require__(75)
-		var voidTag = __webpack_require__(38)
-		var addTbody = __webpack_require__(76)
-		var fixPlainTag = __webpack_require__(77)
-		var plainTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
-
-		var ropenTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
-		var rendTag = /^<\/([^>]+)>/
-		//https://github.com/rviscomi/trunk8/blob/master/trunk8.js
-		//判定里面有没有内容
 		var rcontent = /\S/
-		var rfill = /\?\?\d+/g
-		var rlineSp = /\n\s*/g
-		var rnowhite = /\S+/g
-		var number = 1
 		var stringPool = {}
+		var rendTag = /^<\/([^>]+)>/
+		var ropenTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
+		var specialTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
 
-		function dig(a) {
-		    var key = '??' + number++
-		    stringPool[key] = a
-		    return key
-		}
-		function fill(a) {
-		    var val = stringPool[a]
-		    return val
-		}
+		module.exports = makeNode
 
-
-		function lexer(str) {
+		function makeNode(str) {
 		    stringPool = {}
-		    str = clearString(str)
+		    str = clearString(str, dig)
 		    var stack = []
 		    stack.last = function () {
-		        return  stack[stack.length - 1]
+		        return stack[stack.length - 1]
 		    }
 		    var ret = []
-
-		    var breakIndex = 100000
+		    var breakIndex = 900000
 		    do {
 		        var node = false
 		        if (str.charAt(0) !== '<') {//处理文本节点
@@ -5179,7 +4529,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                nodeValue: nodeValue
 		            }
 		            if (rcontent.test(nodeValue)) {
-		                collectNodes(node, stack, ret)//不收集空白节点
+		                makeChildren(node, stack, ret)//不收集空白节点
 		            }
 		        }
 		        if (!node) {
@@ -5195,7 +4545,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                    nodeName: '#comment',
 		                    nodeValue: nodeValue
 		                }
-		                collectNodes(node, stack, ret)
+		                makeChildren(node, stack, ret)
 		            }
 
 		        }
@@ -5213,21 +4563,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		                var attrs = match[2]
 		                if (attrs) {
-		                    collectProps(attrs, node.props)
+		                    makeProps(attrs, node.props)
 		                }
-		                collectNodes(node, stack, ret)
+		                makeChildren(node, stack, ret)
 		                str = str.slice(match[0].length)
 		                if (isVoidTag) {
 		                    node.end = true
 		                } else {
 		                    stack.push(node)
-		                    if (plainTag[nodeName]) {
+		                    if (specialTag[nodeName]) {//如果是容器元素
 		                        var index = str.indexOf('</' + nodeName + '>')
 		                        var innerHTML = str.slice(0, index).trim()
 		                        str = str.slice(index)
-
-		                        fixPlainTag(node, nodeName, nomalString(innerHTML))
-
+		                        variantSpecial(node, nodeName, nomalString(innerHTML))
 		                    }
 		                }
 		            }
@@ -5252,7 +4600,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            break
 		        }
 		        if (node.end) {
-		            fixTbodyAndRepeat(node, stack, ret)
+		            makeRepeat(node, stack, ret)
 		            delete node.end
 		        }
 
@@ -5262,38 +4610,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		}
 
-		module.exports = lexer
-
-
-		function fixTbodyAndRepeat(node, stack, ret) {
-		    var nodeName = node.nodeName
-		    var props = node.props
-		    if (nodeName === 'table') {
-		        addTbody(node.children)
-		    }
-		    var forExpr = props['ms-for']
-		    //tr两旁的注释节点还会在addTbody中挪一下位置
-		    if (forExpr) {
-		        delete props['ms-for']
-		        var p = stack.last()
-		        var arr = p ? p.children : ret
-		        arr.splice(arr.length - 1, 1, {
-		            nodeName: '#comment',
-		            nodeValue: 'ms-for:' + forExpr,
-		            type: nodeName
-		        }, node, {
-		            nodeName: '#comment',
-		            nodeValue: 'ms-for-end:',
-		            type: nodeName
-		        })
-
-		    }
-		}
-
-
-
-
-		function collectNodes(node, stack, ret) {
+		function makeChildren(node, stack, ret) {
 		    var p = stack.last()
 		    if (p) {
 		        p.children.push(node)
@@ -5301,8 +4618,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		        ret.push(node)
 		    }
 		}
+
+
 		var rattrs = /([^=\s]+)(?:\s*=\s*(\S+))?/
-		function collectProps(attrs, props) {
+		var rlineSp = /\n\r?\s*/g
+		function makeProps(attrs, props) {
 		    while (attrs) {
 		        var arr = rattrs.exec(attrs)
 		        if (arr) {
@@ -5327,244 +4647,35 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		    }
 		}
-		function nomalString(str) {
-		    return avalon.unescapeHTML(str.replace(rfill, fill))
-		}
-
-		function clearString(str) {
-		    var array = readString(str)
-		    for (var i = 0, n = array.length; i < n; i++) {
-		        str = str.replace(array[i], dig)
-		    }
-		    return str
-		}
-
-		function readString(str) {
-		    var end, s = 0
-		    var ret = []
-		    for (var i = 0, n = str.length; i < n; i++) {
-		        var c = str.charAt(i)
-		        if (!end) {
-		            if (c === "'") {
-		                end = "'"
-		                s = i
-		            } else if (c === '"') {
-		                end = '"'
-		                s = i
-		            }
-		        } else {
-		            if (c === '\\') {
-		                i += 1
-		                continue
-		            }
-		            if (c === end) {
-		                ret.push(str.slice(s, i + 1))
-		                end = false
-		            }
-		        }
-		    }
-		    return ret
-		}
 
 
-	/***/ },
-	/* 75 */
-	/***/ function(module, exports, __webpack_require__) {
-
-		
-		var rmsForStart = /^\s*ms\-for\:/
-		var rmsForEnd = /^\s*ms\-for\-end/
-		var vdom2body = __webpack_require__(39)
-		avalon.speedUp = function (array) {
-		    hasDirectives(array)
-		    return array
-		}
-
-		var hasDirectives = function (arr) {
-		    var nodes = [], hasDir = false
-		    for (var i = 0; i < arr.length; i++) {
-		        var el = arr[i]
-		        var isComment = el.nodeName === '#comment'
-		        if (isComment && rmsForStart.test(el.nodeValue)) {
-		            hasDir = true//在startRepeat节点前添加一个数组,收集后面的节点
-		            nodes.push(el)
-		            var old = nodes
-		            nodes = []
-		            nodes.list = old
-		            nodes.start = el
-		        } else if (isComment && rmsForEnd.test(el.nodeValue)) {
-		            var old = nodes
-		            nodes = old.list
-		            var start = old.start
-		            delete old.list
-		            delete old.start
-		            nodes.push(old, el)
-		            el.dynamic = true
-		            var uuid = start.signature || (start.signature = avalon.makeHashCode('for'))
-		            el.signature = uuid
-		            
-		            start.forExpr = start.nodeValue.replace(/ms\-for:\s*/, '')
-		            if (old.length === 1) {
-		                var element = old[0]
-		                if (element.props) {
-		                    if(element.props.slot){
-		                        start.props = '{slot: "'+element.props.slot+'"}'
-		                    }
-		                    var cb = element.props['data-for-rendered']
-		                    if (cb) {
-		                        delete element.props['data-for-rendered']
-		                        var wid = cb + ':cb'
-		                        if (!avalon.caches[wid]) {
-		                            avalon.caches[wid] = Function('return ' + avalon.parseExpr(cb, 'on'))()
-		                        }
-		                        start.wid = wid
-		                    }
-		                }
-		            }
-		            for (var j = 0; j < old.length; j++) {
-		                var el = old[j]
-		                var elem = el.dom
-		                if (elem && elem.parentNode) {//移除真实节点
-		                    elem.parentNode.removeChild(elem)
-		                }
-		            }
-		            start.hasEffect = hasEffect(old)
-		            hasDirectives(old)
-		            if (!avalon.caches[uuid]) {
-		                avalon.caches[uuid] = vdom2body(old, true)
-		            }
-		            old.length = 0
-		        } else {
-		            if (hasDirective(el)) {
-		                hasDir = true
-		            }
-		            nodes.push(el)
-		        }
-		    }
-		    arr.length = 0
-		    arr.push.apply(arr, nodes)
-		    return hasDir
-		}
-
-
-
-		function hasDirective(node) {
-
+		function makeRepeat(node, stack, ret) {
 		    var nodeName = node.nodeName
-		    switch (nodeName) {
-		        case '#text':
-		            if (avalon.config.rexpr.test(node.nodeValue)) {
-		                return node.dynamic = true
-		            } else {
-		                return false
-		            }
-		        case '#comment':
-		            if (node.dynamic) {
-		                return true
-		            }
-		            return false
-		        case void 0:
-		            return true
-		        default:
-		            var props = node.props || {}
-		            if ('ms-skip' in props) {
-		                node.skipContent = true
-		                return false
-		            }
-		            var flag = false
-		            if (nodeName === 'input') {
-		                if (!props.type) {
-		                    props.type = 'text'
-		                }
-		            } else if (nodeName === 'select') {
-		                var postfix = props.hasOwnProperty('multiple') ? 'multiple' : 'one'
-		                props.type = nodeName + '-' + postfix
-		            } else if (nodeName.indexOf('ms-') === 0) {
-		                if (!props['ms-widget']) {
-		                    props.is = nodeName
-		                    props['ms-widget'] = '{is:"' + nodeName + '"}'
-		                }
-		            }
-		            var childDir = false
-		            if (props['ms-widget']) {
-		                childDir = true
-		                delDir(props, 'html', 'widget')
-		                delDir(props, 'text', 'widget')
-		                var clone = avalon.mix({}, node)
-		                var cprops = avalon.mix({}, node.props)
-		                delete cprops['ms-widget']
-		                delete clone.isVoidTag
-		                clone.nodeName = "cheng"
-		                clone.props = cprops
-		                node.template = avalon.vdom(clone, 'toHTML')
-		                if (!node.isVoidTag)
-		                    node.children = []
-		            }
-		            if (props['ms-text']) {
-		                childDir = true
-		                delDir(props, 'html', 'text')
-		                if (!node.isVoidTag) {
-		                    node.children = []
-		                }
-		            }
-		            if (props['ms-html']) {
-		                childDir = true
-		                if (!node.isVoidTag) {
-		                    node.children = []
-		                }
-		            }
-		            var hasProps = false
-		            for (var i in props) {
-		                hasProps = true
-		                if (i.indexOf('ms-') === 0) {
-		                    flag = true
-		                    node.dynamic = {}
-		                    break
-		                }
-		            }
-		            if (hasProps) {
-		                node.props = props
-		            }
-		            if (node.children) {
-		                var r = hasDirectives(node.children)
-		                if (r) {
-		                    delete node.skipContent
-		                    return true
-		                }
-		                if (!childDir) {
-		                    node.skipContent = true
-		                } else {
-		                    delete node.skipContent
-		                }
-		            }
-		            return flag
+		    var props = node.props
+		    if (nodeName === 'table') {
+		        makeTbody(node.children)
+		    }
+		    var forExpr = props['ms-for']
+		    //tr两旁的注释节点还会在addTbody中挪一下位置
+		    if (forExpr) {
+		        delete props['ms-for']
+		        var p = stack.last()
+		        var arr = p ? p.children : ret
+		        arr.splice(arr.length - 1, 1, {
+		            nodeName: '#comment',
+		            nodeValue: 'ms-for:' + forExpr,
+		            type: nodeName
+		        }, node, {
+		            nodeName: '#comment',
+		            nodeValue: 'ms-for-end:',
+		            type: nodeName
+		        })
 		    }
 		}
 
-		function delDir(props, a, b) {
-		    if (props['ms-' + a]) {
-		        avalon.warn(a, '指令不能与', b, '指令共存于同一个元素')
-		        delete props['ms-' + a]
-		    }
-		}
 
-		function hasEffect(arr) {
-		    for (var i = 0, el; el = arr[i++]; ) {
-		        if (el.props && el.props['ms-effect']) {
-		            return true
-		        }
-		    }
-		    return false
-		}
-
-
-	/***/ },
-	/* 76 */
-	/***/ function(module, exports) {
-
-		
 		//如果直接将tr元素写table下面,那么浏览器将将它们(相邻的那几个),放到一个动态创建的tbody底下
-		module.exports = function addTbody(nodes) {
+		function makeTbody(nodes) {
 		    var tbody, needAddTbody = false, count = 0, start = 0, n = nodes.length
 		    for (var i = 0; i < n; i++) {
 		        var node = nodes[i]
@@ -5609,39 +4720,54 @@ return /******/ (function(modules) { // webpackBootstrap
 		    }
 		}
 
+		var number = 1
+		function dig(a) {
+		    var key = '??' + number++
+		    stringPool[key] = a
+		    return key
+		}
+		function fill(a) {
+		    var val = stringPool[a]
+		    return val
+		}
+
+		var rfill = /\?\?\d+/g
+		function nomalString(str) {
+		    return avalon.unescapeHTML(str.replace(rfill, fill))
+		}
 
 
 	/***/ },
-	/* 77 */
+	/* 69 */
 	/***/ function(module, exports) {
 
 		/* 
-		 *  修正容器元素
+		 *  处理一些特殊情况, 只用于文本转虚拟DOM
 		 */
 
-		function fixPlainTag(node, nodeName, innerHTML) {
+		module.exports = variantSpecial
+
+		function variantSpecial(node, nodeName, innerHTML) {
 		    switch (nodeName) {
 		        case 'style':
 		        case 'script':
 		        case 'noscript':
 		        case 'template':
 		        case 'xmp':
-		            node.children = [
-		                {
+		            node.children = [{
 		                    nodeName: '#text',
 		                    skipContent: true,
 		                    nodeValue: innerHTML
-		                }
-		            ]
+		                }]
 		            break
 		        case 'textarea':
 		            var props = node.props
 		            props.type = nodeName
 		            props.value = innerHTML
 		            node.children = [{
-		                  nodeName: '#text',
-		                  nodeValue: innerHTML
-		            }]
+		                    nodeName: '#text',
+		                    nodeValue: innerHTML
+		                }]
 		            break
 		        case 'option':
 		            node.children = [{
@@ -5659,10 +4785,55 @@ return /******/ (function(modules) { // webpackBootstrap
 		    return String(v).replace(rtrimHTML, '').trim()
 		}
 
-		module.exports = fixPlainTag
 
 	/***/ },
-	/* 78 */
+	/* 70 */
+	/***/ function(module, exports) {
+
+		/* 
+		 * 将要检测的字符串的字符串替换成??123这样的格式
+		 */
+
+
+		module.exports = clearString
+		function clearString(str, dig) {
+		    var array = readString(str)
+		    for (var i = 0, n = array.length; i < n; i++) {
+		        str = str.replace(array[i], dig)
+		    }
+		    return str
+		}
+
+		function readString(str) {
+		    var end, s = 0
+		    var ret = []
+		    for (var i = 0, n = str.length; i < n; i++) {
+		        var c = str.charAt(i)
+		        if (!end) {
+		            if (c === "'") {
+		                end = "'"
+		                s = i
+		            } else if (c === '"') {
+		                end = '"'
+		                s = i
+		            }
+		        } else {
+		            if (c === '\\') {
+		                i += 1
+		                continue
+		            }
+		            if (c === end) {
+		                ret.push(str.slice(s, i + 1))
+		                end = false
+		            }
+		        }
+		    }
+		    return ret
+		}
+
+
+	/***/ },
+	/* 71 */
 	/***/ function(module, exports) {
 
 		/**
@@ -5671,6 +4842,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		 * 添加change, afterChange更新钩子
 		 * ------------------------------------------------------------
 		 */
+
+		module.exports = diff
+
 		var emptyArr = []
 		// 防止被引用
 		var emptyObj = function () {
@@ -5678,7 +4852,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		        children: [], props: {}
 		    }
 		}
-		var directives = avalon.directives
 		var rbinding = /^ms-(\w+)-?(.*)/
 
 		function diff(copys, sources) {
@@ -5698,8 +4871,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		                }
 		                break
 		            case '#comment':
-		                if (copy.forExpr) {//比较循环区域的元素位置
-		                    directives['for'].diff(copy, src, copys, sources, i)
+		                if (copy.forExpr && copy.dynamic) {//比较循环区域的元素位置
+		                    avalon.directives['for'].diff(copy, src, copys, sources, i)
 		                } else if (src.afterChange) {
 		                    execHooks(src, src.afterChange)
 		                }
@@ -5729,7 +4902,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                    diffProps(copy, src)
 		                }
 
-		                if (/^\w/.test(copy.nodeName) && !copy.skipContent && !copy.isVoidTag) {
+		                if (!/^(#|undefined)/.test(copy.nodeName) && !copy.skipContent && !copy.isVoidTag) {
 		                    diff(copy.children, src.children || [])
 		                }
 
@@ -5765,13 +4938,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		        avalon.warn(type, e, e.stack || e.message, 'diffProps error')
 		    }
 		}
-		avalon.diff = diff
-		avalon.diffProps = diffProps
-		module.exports = diff
+
 
 
 	/***/ },
-	/* 79 */
+	/* 72 */
 	/***/ function(module, exports) {
 
 		
@@ -5789,7 +4960,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		avalon.suspendUpdate = 0
 
 		function batchUpdate(id, spath) {
+		          // console.log(spath,'!!!')
 		    if (renderingID) {
+		      
 		        return avalon.Array.ensure(needRenderIds, id)
 		    } else {
 		        renderingID = id
@@ -5802,28 +4975,17 @@ return /******/ (function(modules) { // webpackBootstrap
 		    var dom = vm.$element
 		    var source = dom.vtree || []
 		    var renderFn = vm.$render
-		  /*  if (spath) {
-		        var newBody = renderFn.body.replace(/dynamic\:{[^}]+}/g, function (str) {
-		            if (str.indexOf(spath) === -1) {
-		                return "dynamic:0"
-		            } else {
-		                return str
-		            }
-		        })
-		        var copy = Function('__vmodel__', '__local__', newBody)(scope.vmodel, scope.local)
-		    } else {
-		        var copy = renderFn(scope.vmodel, scope.local)
-		    }*/
+		    if(spath){
+		        spath = new RegExp( avalon.escapeRegExp(spath) )
+		    }
+		    avalon.spath = spath
 		    var copy = renderFn(scope.vmodel, scope.local)
-
 		    if (scope.isTemp) {
 		        //在最开始时,替换作用域的所有节点,确保虚拟DOM与真实DOM是对齐的
 		        delete avalon.scopes[id]
 		    }
-
-
 		    avalon.diff(copy, source)
-
+		    delete avalon.spath
 
 		    var index = needRenderIds.indexOf(renderingID)
 		    renderingID = 0
@@ -5844,15 +5006,800 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 80 */,
-	/* 81 */,
-	/* 82 */
+	/* 73 */
+	/***/ function(module, exports) {
+
+		var onceWarn = true //只警告一次
+		function scan(nodes) {
+		    for (var i = 0, elem; elem = nodes[i++]; ) {
+		        if (elem.nodeType === 1) {
+		            var $id = getController(elem)
+
+		            var vm = avalon.vmodels[$id]
+		            if (vm && !vm.$element) {
+		                vm.$element = elem
+		                /* istanbul ignore if */
+		                if (avalon.serverTemplates && avalon.serverTemplates[$id]) {
+		                    var tmpl = avalon.serverTemplates[$id]
+		                    var oldTree = avalon.variant(avalon.lexer(tmpl))
+		                    var render = avalon.render(oldTree)
+		                    var vtree = render(vm)
+		                    var dom = avalon.vdom(vtree[0], 'toDOM')
+		                    vm.$element = dom
+		                    dom.vtree = vtree
+		                    vm.$render = render
+		                    elem.parentNode.replaceChild(dom, elem)
+		                    avalon.diff(vtree, vtree)
+		                    continue
+		                }
+
+		                //IE6-8下元素的outerHTML前面会有空白
+		                //第一次扫描就清空所有空白节点,并生成最初的vtree
+		                var vtree = [avalon._hydrate(elem)]
+		                var now = new Date()
+		                elem.vtree = avalon.variant(vtree)
+
+		                var now2 = new Date()
+		                onceWarn && avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')
+
+		                vm.$render = avalon.render(elem.vtree)
+		                avalon.scopes[vm.$id] = {
+		                    vmodel: vm,
+		                    local: {},
+		                    isTemp: true
+		                }
+		                var now3 = new Date()
+		                onceWarn && avalon.log('构建当前vm的$render方法耗时 ', now3 - now2, 'ms\n',
+		                        '如果此时间太长,达100ms以上\n',
+		                        '建议将当前ms-controller拆分成多个ms-controller,减少每个vm管辖的区域')
+		                avalon.rerenderStart = now3
+		                onceWarn = false
+		                avalon.batch($id)
+
+		            } else if (!$id) {
+		                scan(elem.childNodes)
+		            }
+		        }
+		    }
+		}
+
+
+		module.exports = function (a) {
+		     /* istanbul ignore if */
+		    if (!a || !a.nodeType) {
+		        avalon.warn('[avalon.scan] first argument must be element , documentFragment, or document')
+		        return
+		    }
+		    scan([a])
+		}
+
+
+		function getController(a) {
+		    return a.getAttribute('ms-controller') ||
+		            a.getAttribute(':controller')
+		}
+
+	/***/ },
+	/* 74 */
+	/***/ function(module, exports, __webpack_require__) {
+
+		/*
+		 * 调整VDOM的结构与属性
+		 */
+		var rmsForStart = /^\s*ms\-for\:\s*/
+		var rmsForEnd = /^\s*ms\-for\-end/
+		var serializeChildren = __webpack_require__(75)
+
+		module.exports = variantCommon
+		function variantCommon(array) {
+		    variantChildren(array)
+		    return array
+		}
+
+		function variantChildren(children) {
+		    var nodes = [] //临时使用的数组
+		    for (var i = 0; i < children.length; i++) {
+		        var el = children[i]
+		        var isComment = el.nodeName === '#comment'
+		        if (isComment && rmsForStart.test(el.nodeValue)) {
+		            //在startRepeat节点前添加一个数组,收集后面的节点
+		            nodes.push(el)
+		            var old = nodes
+		            nodes = []
+		            nodes.list = old
+		            nodes.start = el
+		        } else if (isComment && rmsForEnd.test(el.nodeValue)) {
+		            old = nodes
+		            nodes = old.list
+		            var start = old.start
+		            delete old.list
+		            delete old.start
+		            nodes.push(old, el)
+		            el.dynamic = true
+		            var uuid = start.signature || (start.signature = avalon.makeHashCode('for'))
+		            el.signature = uuid
+		            start.forExpr = start.nodeValue.replace(rmsForStart, '')
+		            if (old.length === 1) {
+		                var element = old[0]
+		                var props = element.props
+		                if (props) {
+		                    if (props.slot) {
+		                        start.props = '{slot: "' + props.slot + '"}'
+		                    }
+		                    var cb = props['data-for-rendered']
+		                    if (cb) {
+		                        delete props['data-for-rendered']
+		                        var wid = 'hook:' + cb
+		                        if (!avalon.caches[wid]) {
+		                            avalon.caches[wid] = Function('return ' + avalon.parseExpr({
+		                                expr: cb,
+		                                type: 'on'
+		                            }))()
+		                        }
+		                        start.wid = wid
+		                    }
+		                }
+		            }
+		            for (var j = 0; j < old.length; j++) {
+		                var el = old[j]
+		                var elem = el.dom
+		                if (elem && elem.parentNode) {//移除真实节点
+		                    elem.parentNode.removeChild(elem)
+		                }
+		            }
+		            start.hasEffect = hasEffect(old)
+		            variantChildren(old)
+		            if (!avalon.caches[uuid]) {
+		                avalon.caches[uuid] = serializeChildren(old, 0, 1)
+		            }
+		            old.length = 0
+		        } else {
+		            variantProps(el)
+		            nodes.push(el)
+		        }
+		    }
+		    children.length = 0
+		    children.push.apply(children, nodes)
+		}
+
+		function variantProps(node) {
+		    var nodeName = node.nodeName
+		    if (nodeName && nodeName.charAt(0) !== '#') {
+		        var props = node.props, emptyProps, emptyChildren
+		        if (!props) {
+		            emptyProps = true
+		            props = {}
+		        }
+		        if (nodeName === 'input') {
+		            if (!props.type) {
+		                props.type = 'text'
+		            }
+		        } else if (/xmp|wbr|template/.test(nodeName)) {
+		            if (!props['ms-widget'] && props.is) {
+		                props['ms-widget'] = '{is:"' + props.is + '"}'
+		                emptyProps = false
+		            }
+		        } else if (nodeName === 'select') {
+		            var postfix = props.hasOwnProperty('multiple') ? 'multiple' : 'one'
+		            props.type = nodeName + '-' + postfix
+		        } else if (nodeName.indexOf('ms-') === 0) {
+		            if (!props['ms-widget']) {
+		                props.is = nodeName
+		                props['ms-widget'] = '{is:"' + nodeName + '"}'
+		                emptyProps = false
+		            }
+		        }
+		        if (!emptyProps) {
+		            if ('ms-skip' in props) {
+		                node.skipContent = true
+		                return false
+		            }
+		            var emptyChildren
+		            if (props['ms-widget']) {
+		                //有widget无html, text
+		                delDir(props, 'html', 'widget')
+		                delDir(props, 'text', 'widget')
+		                delDir(props, 'duplex', 'widget')
+		                var cloneNode = avalon.mix({}, node)
+		                var cloneProps = avalon.mix({}, props)
+		                delete cloneProps['ms-widget']
+		                delete cloneNode.isVoidTag
+		                cloneNode.nodeName = "cheng"
+		                cloneNode.props = cloneProps
+		                node.template = avalon.vdom(cloneNode, 'toHTML')
+		                emptyChildren = true
+		            } else if (props['ms-text']) {
+		                //有text无html
+		                delDir(props, 'html', 'text')
+		                emptyChildren = true
+		            } else if (props['ms-html']) {
+		                if (node.isVoidTag) {
+		                    delete props['ms-html']
+		                } else {
+		                    emptyChildren = true
+		                }
+		            }
+		            if (emptyChildren && !node.isVoidTag) {
+		                node.children = []
+		            }
+		        }
+		        if (!avalon.isEmptyObject(props)) {
+		            node.props = props
+		        }
+		        if (node.children) {
+		            variantChildren(node.children)
+		        }
+		    }
+		}
+
+
+		function delDir(props, a, b) {
+		    if (props['ms-' + a]) {
+		        avalon.warn(a, '指令不能与', b, '指令共存于同一个元素')
+		        delete props['ms-' + a]
+		    }
+		}
+
+		function hasEffect(arr) {
+		    for (var i = 0, el; el = arr[i++]; ) {
+		        if (el.props && el.props['ms-effect']) {
+		            return true
+		        }
+		    }
+		    return false
+		}
+
+
+	/***/ },
+	/* 75 */
+	/***/ function(module, exports, __webpack_require__) {
+
+		var jsonfy = __webpack_require__(50)
+		var serializeText = __webpack_require__(76)
+		module.exports = serializeChildren
+
+		var directives = avalon.directives
+		function serializeChildren(children, skip, isRepeat) {
+		    var lexeme = children.map(function (a) {
+		        var stem = serializeNode(a, skip)
+		        var suffix = a.suffix
+		        var prefix = a.prefix
+		        delete a.suffix
+		        delete a.prefix
+		        return {
+		            stem: stem,
+		            prefix: prefix,
+		            suffix: suffix
+		        }
+		    })
+
+		    var needWrapper = lexeme.some(hasFix)
+
+		    if (needWrapper || isRepeat) {
+		        var buffer = bufferChildren(lexeme)
+		        if (isRepeat) {
+		            return buffer.join('\n')
+		        }
+		        buffer.unshift('(function(){', 'var vnodes = []')
+		        buffer.push('return vnodes', '})()')
+		        return buffer.join('\n')
+		    } else {
+		        var nodes = []
+		        for (var i = 0, el; el = lexeme[i++]; ) {
+		            if (el.stem) {
+		                nodes.push(el.stem)
+		            }
+		        }
+		        return '[' + nodes + ']'
+		    }
+		}
+
+		function bufferChildren(nodes) {
+		    var buffer = []
+		    for (var i = 0, node; node = nodes[i++]; ) {
+		        if (node.prefix) {
+		            buffer.push(node.prefix)
+		        }
+		        if (node.stem) {
+		            buffer.push(addTag(node.stem))
+		        }
+		        if (node.suffix) {
+		            buffer.push(node.suffix)
+		        }
+		    }
+		    return buffer
+		}
+
+		function serializeNode(node, skip) {
+		    switch (node.nodeName) {
+		        case void(0):
+		            return ''
+		        case '#text':
+		            return serializeText(node, skip)
+		        case '#comment':
+		            if (node.forExpr) {// 处理ms-for指令
+		                return serializeForStart(node, skip)
+		            } else if (!skip && node.nodeValue === 'ms-for-end:') {
+		                return serializeForEnd(node, skip)
+		            } else if (!skip && node.nodeValue.indexOf('ms-if:') === 0) {
+		                return serializeLogic(node, skip)
+		            } else {
+		                return jsonfy(node)
+		            }
+		        default:
+		            return serializeElement(node, skip)
+		    }
+		}
+
+
+		var alwaysDynamic = {'ms-html': 1, 'ms-widget': 1}
+		function serializeElement(vdom, skip) {
+		    var props = vdom.props
+		    var copy = {
+		        nodeName: vdom.nodeName
+		    }
+		    var dirs = []
+		    if (props && !skip) {
+		        skip = 'ms-skip' in props
+		        var bindings = skip ? [] : extractBindings(copy, props)
+		        if (bindings.length) {
+		            vdom.dynamic = {}
+		            for (var i = 0, binding; binding = bindings[i++]; ) {
+		                //将ms-*的值变成函数,并赋给copy.props[ms-*]
+		                //如果涉及到修改结构,则在vdom添加prefix, suffix
+		                var name = binding.name
+		                directives[binding.type].parse(copy, vdom, binding)
+		                if (typeof copy[name] === 'string') {
+		                    //如果存在局部变量,我们无法对它进行依赖检测,只能统统执行
+		                    var untraceable = !!binding.locals
+		                    var paths = alwaysDynamic[name] || untraceable ? '' : binding.paths
+		                    dirs.push(avalon.quote(paths), avalon.quote(name), copy[name])
+		                    delete copy[name]
+		                } else {
+		                    copy.dynamic = '{}'
+		                }
+		                if(name === 'ms-widget'){
+		                    break
+		                }
+		            }
+		        }
+		    }
+		    if (vdom.isVoidTag) {
+		        copy.isVoidTag = true
+		    } else {
+		        if (!('children' in copy)) {
+		            var children = vdom.children
+		            if (Array.isArray(children)) {
+		                copy.children = serializeChildren(children, skip || !!vdom.skipContent)
+		            }
+		        }
+		    }
+		    if (vdom.template)
+		        copy.template = vdom.template
+		    if (vdom.skipContent)
+		        copy.skipContent = true
+		    return jsonfy(copy, dirs)
+		}
+
+		//判定目标对象是否拥有prefix, suffix
+		function hasFix(a) {
+		    return a.prefix || a.suffix
+		}
+
+		var skips = {__local__: 1, vmode: 1, dom: 1}
+
+		function serializeForStart(vdom) {
+		    var copy = {
+		        vmodel: '__vmodel__'
+		    }
+		    for (var i in vdom) {
+		        if (vdom.hasOwnProperty(i) && !skips[i]) {
+		            copy[i] = vdom[i]
+		        }
+		    }
+		    avalon.directives['for'].parse(copy, vdom, {})
+		    //为copy添加dynamic
+		    vdom.suffix += avalon.caches[vdom.signature] //vdom.template
+		    return jsonfy(copy)
+		}
+
+		function serializeForEnd(vdom) {
+		    vdom.suffix = addTagJSON({
+		        nodeName: '#comment',
+		        nodeValue: vdom.signature
+
+		    }) +
+		            '\nreturn vnodes}\n })\n},__local__, vnodes)\n' +
+		            addTagJSON({
+		                nodeName: "#comment",
+		                signature: vdom.signature,
+		                nodeValue: "ms-for-end:"
+		            }) + '\n'
+		    return ''
+		}
+
+
+		var rstatement = /^\s*var\s+([$\w]+)\s*\=\s*\S+/
+
+		function serializeLogic(vdom) {
+		    var nodeValue = vdom.nodeValue
+		    var statement = parseExpr({
+		        expr: nodeValue.replace('ms-js:', ''),
+		        type: 'js'
+		    })
+		    var match = statement.match(rstatement)
+		    if (match && match[1]) {
+		        vdom.suffix = (vdom.suffix || '') + statement +
+		                "\n__local__." + match[1] + ' = ' + match[1] + '\n'
+		    } else {
+		        avalon.warn(nodeValue + ' parse fail!')
+		    }
+		    return jsonfy(vdom)
+		}
+
+		var rbinding = /^(\:|ms\-)\w+/
+		var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
+
+		function extractBindings(cur, props) {
+		    var bindings = []
+		    var attrs = {}
+		    var skip = 'ms-skip' in props//old
+		    var uniq = {}
+		    for (var i in props) {
+		        var value = props[i], match
+		        attrs[i] = props[i]
+		        if ((match = i.match(rbinding))) {
+		            /* istanbul ignore if  */
+		            if (skip)
+		                continue
+
+		            var arr = i.replace(match[1], '').split('-')
+
+		            if (eventMap[arr[0]]) {
+		                arr.unshift('on')
+		            }
+		            if (arr[0] === 'on') {
+		                arr[2] = parseFloat(arr[2]) || 0
+		            }
+		            arr.unshift('ms')
+		            var type = arr[1]
+		            if (directives[type]) {
+		                var binding = {
+		                    type: type,
+		                    param: arr[2],
+		                    name: arr.join('-'),
+		                    expr: value,
+		                    priority: directives[type].priority || type.charCodeAt(0) * 100
+		                }
+
+		                if (type === 'on') {
+		                    binding.priority += arr[3]
+		                }
+		                if (!uniq[binding.name]) {
+		                    uniq[binding.name] = value
+		                    bindings.push(binding)
+		                }
+		            }
+		        }
+		    }
+
+		    cur.props = attrs
+		    bindings.sort(byPriority)
+		    return bindings
+		}
+
+		//ms-important --> ms-controller --> ms-for --> ms-widget --> 
+		//ms-effect --> ms-if ... --> ms-duplex
+		function byPriority(a, b) {
+		    return a.priority - b.priority
+		}
+
+		//判定目标对象是否拥有prefix, suffix
+		function hasFix(a) {
+		    return a.prefix || a.suffix
+		}
+		function addTag(a) {
+		    return 'vnodes.push(' + a + ')'
+		}
+		function addTagJSON(a) {
+		    return addTag(jsonfy(a))
+		}
+
+
+	/***/ },
+	/* 76 */
+	/***/ function(module, exports, __webpack_require__) {
+
+		var jsonfy = __webpack_require__(50)
+		var config = avalon.config
+		var rlineSp = /\n\r?\s*/g
+		module.exports = serializeText
+
+		function serializeText(vdom, skip) {
+		    if (!skip && config.rexpr.test(vdom.nodeValue)) {
+		        vdom.dynamic = {}
+		        return avalon.parseText(vdom.nodeValue)
+		    } else {
+		        return jsonfy(vdom)
+		    }
+		}
+
+		function extractExpr(str) {
+		    var ret = []
+		    do {//aaa{{@bbb}}ccc
+		        var index = str.indexOf(config.openTag)
+		        index = index === -1 ? str.length : index
+		        var value = str.slice(0, index)
+		        if (/\S/.test(value)) {
+		            ret.push({expr: avalon._decode(value)})
+		        }
+		        str = str.slice(index + config.openTag.length)
+		        if (str) {
+		            index = str.indexOf(config.closeTag)
+		            var value = str.slice(0, index)
+		            ret.push({
+		                expr: avalon.unescapeHTML(value.replace(rlineSp, '')),
+		                type: 'text'
+		            })
+		            str = str.slice(index + config.closeTag.length)
+		        }
+		    } while (str.length)
+		    return ret
+		}
+		var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
+		function parseText(nodeValue) {
+		    var array = typeof nodeValue === 'string' ?
+		            extractExpr(nodeValue) : [nodeValue]
+
+		    var paths = {}
+		    var untraceable = ''
+		    var isOne = array.length === 1
+		    var alwaysHasDynamic = false
+		    var bracket = isOne ? '' : '()'
+		    var token = array.map(function (binding) {
+		        if (binding.type) {
+		            var expr = binding.expr
+		            if (rident.test(expr)) {
+		                alwaysHasDynamic = true
+		                return expr
+		            } else {
+		                var text = avalon.parseExpr(binding)
+		                binding.paths.replace(avalon.rword, function (a) {
+		                    paths[a] = 1
+		                })
+		                untraceable += (binding.locals || '')
+		                return text + bracket
+		            }
+		        } else {
+		            return avalon.quote(binding.expr)
+		        }
+		    })
+		    if (isOne) {
+		        if (alwaysHasDynamic) { //such as {{el}}
+		            return '{nodeName:"#text",dynamic:{},nodeValue:' + token + '}'
+		        }
+		        nodeValue = token[0] //such as {{@aaa}}
+		    } else {//such as {{@aaa}}111
+		        nodeValue = 'function(){return ' + token.join('+') + '}'
+		    }
+		    var copy = {
+		        nodeName: "#text"
+		    }
+		    var paths = untraceable ? '' : Object.keys(paths).join(',')
+		    var dirs = [avalon.quote(paths), '"nodeValue"', nodeValue]
+		    return  jsonfy(copy, dirs)
+		}
+
+		avalon.parseText = parseText
+
+
+
+	/***/ },
+	/* 77 */
+	/***/ function(module, exports, __webpack_require__) {
+
+		
+		//缓存求值函数，以便多次利用
+		var pool = avalon.evaluatorPool
+		var clearString = __webpack_require__(70)
+		var stringPool = {}
+
+		var rfill = /\?\?\d+/g
+		var brackets = /\(([^)]*)\)/
+
+		var rshortCircuit = /\|\|/g
+		var rpipeline = /\|(?=\?\?)/
+		var ruselessSp = /\s*(\.|\|)\s*/g
+		var rhandleName = /^__vmodel__\.[$\w\.]+$/i
+
+		var rguide = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
+		var robjectProperty = /\.[\w\.\$]+/g
+		var rvar = /\b[$a-zA-Z_][$a-zA-Z0-9_]*\b/g
+		var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
+
+		module.exports = parseExpr
+
+		//传入一个包含name, type, expr的对象, 将会返回一个字符串,
+		//并为原对象添加paths, locals属性
+		function parseExpr(binding) {
+		    var str = binding.expr
+		    var category = binding.type
+		    var cache = pool.get(category + ':' + str)
+		    if (cache) {
+		        avalon.shadowCopy(binding, cache)
+		        return cache.text
+		    }
+		    /* istanbul ignore else  */
+		    stringPool = {}
+		    var paths = {}
+		    var locals = {}
+		    var input = str.replace(rregexp, dig)//移除所有正则
+		    input = clearString(input, dig)      //移除所有字符串
+		    input = input.replace(rshortCircuit, dig).//移除所有短路运算符
+		            replace(ruselessSp, '$1').//移除.|两端空白
+		            replace(rguide, '$1__vmodel__.').//转换@与##
+		            replace(/[\$\w]+\s*:/, dig).
+		            replace(/\|(\w+)/g, function (a, b) {//移除所有过滤器的名字
+		                return '|' + dig(b)
+		            }).
+		            replace(/__vmodel__\.([\$\w\.]+)/g, function (_, b) {
+		                paths[b] = 1      //收集路径
+		                return _
+		            })
+		    //收集本地变量
+		    collectLocal(input, locals)
+		    //处理过滤器
+		    var filters = input.split(rpipeline)
+		    var _body = filters.shift()
+		    var body = _body.replace(rfill, fill).trim()
+		    if (category === 'js') {
+		        //<!--ms-js:xxx-->指令不存在过滤器,并且只需要替换@与##
+		        return cacheData(binding, body, paths, locals)
+		    }
+		    if (filters.length) {
+		        filters = filters.map(function (filter) {
+		            var bracketArgs = '(__value__'
+		            filter = filter.replace(brackets, function (a, b) {
+		                if (/\S/.test(b)) {
+		                    bracketArgs += ',' + b//还原字符串,正则,短路运算符
+		                }
+		                return ''
+		            }).replace(rfill, fill)
+		            return filter.replace(/^(\w+)/, '__value__ =  avalon.__format__("$1")') +
+		                    bracketArgs + ')'
+		        })
+		    }
+
+		    var ret = []
+		    if (category === 'on') {
+		        if (rhandleName.test(body)) {
+		            body = body + '($event)'
+		        }
+		        filters = filters.map(function (el) {
+		            return el.replace(/__value__/g, '$event')
+		        })
+		        if (filters.length) {
+		            filters.push('if($event.$return){\n\treturn;\n}')
+		        }
+		        /* istanbul ignore if  */
+		        if (!avalon.modern) {
+		            body = body.replace(/__vmodel__\.([^(]+)\(([^)]*)\)/, function (a, b, c) {
+		                return '__vmodel__.' + b + ".call(__vmodel__" + (/\S/.test(c) ? ',' + c : "") + ")"
+		            })
+		        }
+		        ret = ['function ($event, __local__){',
+		            'try{',
+		            extLocal(locals).join('\n'),
+		            '\tvar __vmodel__ = this;',
+		            '\t' + body,
+		            '}catch(e){',
+		            quoteError(str, category),
+		            '}',
+		            '}']
+		        filters.unshift(2, 0)
+		    } else if (category === 'duplex') {
+		        //给vm同步某个属性
+		        var setterBody = [
+		            'function (__vmodel__,__value__){',
+		            'try{',
+		            '\t' + body + ' = __value__',
+		            '}catch(e){',
+		            quoteError(str, category).replace('parse', 'set'),
+		            '}',
+		            '}']
+		        pool.put('duplex:set:' + binding.expr, setterBody.join('\n'))
+		        //对某个值进行格式化
+		        var getterBody = [
+		            'function (__vmodel__){',
+		            'try{',
+		            'var __value__ = ' + body,
+		            filters.join('\n'),
+		            'return __value__',
+		            '}catch(e){',
+		            quoteError(str, category).replace('parse', 'get'),
+		            '}',
+		            '}'].join('\n')
+		        return cacheData(binding, getterBody, locals, paths)
+
+		    } else {
+		        ret = [
+		            'function (){',
+		            'try{',
+		            'var __value__ = ' + body,
+		            (category === 'text' ?
+		                    'return avalon.parsers.string(__value__)' :
+		                    'return __value__'),
+		            '}catch(e){',
+		            quoteError(str, category),
+		            '\treturn ""',
+		            '}',
+		            '}'
+		        ]
+		        filters.unshift(3, 0)
+		    }
+		    ret.splice.apply(ret, filters)
+		    return  cacheData(binding, ret.join('\n'), locals, paths)
+		}
+
+		function cacheData(binding, text, locals, paths) {
+		    var obj = {
+		        text: text,
+		        locals: Object.keys(locals).join(','),
+		        paths: Object.keys(paths).join(',')
+		    }
+		    var key = binding.type + ":" + binding.expr
+		    binding.locals = obj.locals
+		    binding.paths = obj.paths
+		    pool.put(key, obj)
+		    return text
+		}
+		var number = 1
+		function dig(a) {
+		    var key = '??' + number++
+		    stringPool[key] = a
+		    return key
+		}
+
+		function fill(a) {
+		    return stringPool[a]
+		}
+		function collectLocal(str, local) {
+		    str.replace(/__vmodel__/, ' ').
+		            replace(robjectProperty, ' ').
+		            replace(rvar, function (el) {
+		                if (el !== '$event' && !avalon.keyMap[el]) {
+		                    local[el] = 1
+		                }
+		            })
+		}
+
+		function extLocal(ret) {
+		    var arr = []
+		    for (var i in ret) {
+		        arr.push('var ' + i + ' = __local__[' + avalon.quote(i) + ']')
+		    }
+		    return arr
+		}
+
+		function quoteError(str, type) {
+		    return '\tavalon.warn(e, ' +
+		            avalon.quote('parse ' + type + ' binding【 ' + str + ' 】fail')
+		            + ')'
+		}
+
+
+
+
+	/***/ },
+	/* 78 */,
+	/* 79 */,
+	/* 80 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		
 		var $$midway = {}
-		var $$skipArray = __webpack_require__(69)
-		var dispatch = __webpack_require__(83)
+		var $$skipArray = __webpack_require__(63)
+		var dispatch = __webpack_require__(81)
 		var $emit = dispatch.$emit
 		var $watch = dispatch.$watch
 		/*
@@ -6043,8 +5990,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		    if (old && old.splice) {
 		        var args = [0, old.length].concat(array)
 		        ++avalon.suspendUpdate
-		          avalon.callArray =   options.pathname
-		       
 		        old.splice.apply(old, args)
 		        --avalon.suspendUpdate
 		        return old
@@ -6061,9 +6006,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                        options.pathname + '.' + a
 		                vm.$fire(path, b, c)
 		                if (!d && !heirloom.$$wait$$ && !avalon.suspendUpdate ) {
-		                    avalon.callArray = path
-		                    batchUpdateView(vm.$id)
-		                    delete avalon.callArray 
+		                    batchUpdateView(vm.$id, path)
 		                }
 		            }
 		        }
@@ -6133,7 +6076,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 	/***/ },
-	/* 83 */
+	/* 81 */
 	/***/ function(module, exports) {
 
 		
@@ -6234,19 +6177,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 84 */,
-	/* 85 */,
-	/* 86 */
+	/* 82 */,
+	/* 83 */,
+	/* 84 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		__webpack_require__(3)
-		__webpack_require__(87)
+		__webpack_require__(85)
 		__webpack_require__(6)
-		module.exports = __webpack_require__(7)
+		module.exports = __webpack_require__(8)
 
 
 	/***/ },
-	/* 87 */
+	/* 85 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		//这里放置存在异议的方法
@@ -6395,15 +6338,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 88 */
+	/* 86 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		/**
 		 * 虚拟DOM的4大构造器
 		 */
-		var VText = __webpack_require__(16)
+		var VText = __webpack_require__(17)
 		var VComment = __webpack_require__(18)
-		var VElement = __webpack_require__(89)
+		var VElement = __webpack_require__(87)
 		var VFragment = __webpack_require__(20)
 
 		avalon.vdom = avalon.vdomAdaptor = function (obj, method) {
@@ -6436,7 +6379,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 89 */
+	/* 87 */
 	/***/ function(module, exports) {
 
 		
@@ -6544,7 +6487,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		module.exports = VElement
 
 	/***/ },
-	/* 90 */
+	/* 88 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		
@@ -6553,20 +6496,20 @@ return /******/ (function(modules) { // webpackBootstrap
 		 *           shim,class,data,css,val,html,event,ready               *
 		 **********************************************************************/
 
+		__webpack_require__(89)
+		__webpack_require__(90)
 		__webpack_require__(91)
 		__webpack_require__(92)
 		__webpack_require__(93)
+		__webpack_require__(30)
 		__webpack_require__(94)
 		__webpack_require__(95)
-		__webpack_require__(30)
-		__webpack_require__(96)
-		__webpack_require__(97)
 
 		module.exports = avalon
 
 
 	/***/ },
-	/* 91 */
+	/* 89 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		//safari5+是把contains方法放在Element.prototype上而不是Node.prototype
@@ -6593,7 +6536,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 	/***/ },
-	/* 92 */
+	/* 90 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		var avalon = __webpack_require__(4)
@@ -6632,7 +6575,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 93 */
+	/* 91 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		var avalon = __webpack_require__(4)
@@ -6697,7 +6640,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		module.exports = attrUpdate
 
 	/***/ },
-	/* 94 */
+	/* 92 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		var avalon = __webpack_require__(4)
@@ -6952,7 +6895,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 	/***/ },
-	/* 95 */
+	/* 93 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		var avalon = __webpack_require__(4)
@@ -7023,7 +6966,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 	/***/ },
-	/* 96 */
+	/* 94 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		var avalon = __webpack_require__(4)
@@ -7031,8 +6974,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		var window = avalon.window
 		var root = avalon.root
 
-		var getShortID = __webpack_require__(6).getShortID
-		var share = __webpack_require__(33)
+		var markID = avalon._markBindID
+		var share = __webpack_require__(32)
 		var dispatch = share.dispatch
 		var canBubbleUp = share.canBubbleUp
 
@@ -7043,7 +6986,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        var value = elem.getAttribute('avalon-events') || ''
 		        //如果是使用ms-on-*绑定的回调,其uuid格式为e12122324,
 		        //如果是使用bind方法绑定的回调,其uuid格式为_12
-		        var uuid = getShortID(fn)
+		        var uuid = markID(fn)
 		        var hook = eventHooks[type]
 		        if (hook) {
 		            type = hook.type || type
@@ -7211,11 +7154,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 97 */
+	/* 95 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		var avalon = __webpack_require__(4)
-		var scan = __webpack_require__(36)
+		avalon._hydrate = __webpack_require__(96)
+
 		var document = avalon.document
 
 		var readyList = [], isReady
@@ -7236,7 +7180,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 		avalon.ready(function () {
-		    scan(document.body)
+		    avalon.scan(document.body)
 		})
 
 		new function () {
@@ -7256,40 +7200,158 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 98 */
-	/***/ function(module, exports, __webpack_require__) {
-
-		__webpack_require__(45)
-		__webpack_require__(47)
-		//处理属性样式
-		__webpack_require__(99)
-		__webpack_require__(49)
-		__webpack_require__(50)
-		//处理内容
-		__webpack_require__(51)
-		__webpack_require__(52)
-		__webpack_require__(53)
-		//需要用到事件的
-		__webpack_require__(54)
-		__webpack_require__(55)
-		__webpack_require__(100)
-		__webpack_require__(63)
-		__webpack_require__(64)
-
-		//处理逻辑
-		__webpack_require__(65)
-		__webpack_require__(66)
-
-		__webpack_require__(67)
-		__webpack_require__(71)
-
-	/***/ },
-	/* 99 */
+	/* 96 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		
-		var cssDir = __webpack_require__(49)
-		var update = __webpack_require__(93)
+		/**
+		 * 将真实节点转换为虚拟DOM
+		 */
+
+		var voidTag = __webpack_require__(36)
+		module.exports = markNode
+
+		function markNode(node) {
+		    var ret = {}
+		    var type = node.nodeName.toLowerCase()
+		    ret.nodeName = type
+		    ret.dom = node
+		    if (type.charAt(0) === '#') {//3, 8
+		        ret.nodeValue = node.nodeValue
+		    } else {
+		        var props = markProps(node)
+		        if (voidTag[type]) {
+		            ret.isVoidTag = true
+		        }
+		        ret.children = markChildren(node)
+		        if (props) {
+		            if ('selectedIndex' in props) {
+		                node.selectedIndex = props.selectedIndex
+		                delete props.selectedIndex
+		            }
+		            ret.props = props
+		        }
+		    }
+		    return ret
+		}
+
+		var rformElement = /input|textarea|select/i
+		var rcolon = /^\:/
+		function markProps(node) {
+		    var attrs = node.attributes, ret = {}
+		    for (var i = 0, n = attrs.length; i < n; i++) {
+		        var attr = attrs[i]
+		        var name = attr.name
+		        if (name.charAt(0) === ':') {
+		            name = name.replace(rcolon, 'ms-')
+		        }
+		        ret[name] = attr.value
+		    }
+		    if (rformElement.test(node.nodeName)) {
+		        ret.type = node.type
+		    }
+		    var style = node.style.cssText
+		    if (style) {
+		        ret.style = style
+		    }
+		    //类名 = 去重(静态类名+动态类名+ hover类名? + active类名)
+		    if (ret.type === 'select-one') {
+		        ret.selectedIndex = node.selectedIndex
+		    }
+		    if (avalon.isEmptyObject(ret)) {
+		        return null
+		    }
+		    return ret
+		}
+
+		//将当前元素的孩子转换成VDOM
+		function markChildren(parent) {
+		    var arr = []
+		    var node = parent.firstChild
+		    if (!node) {
+		        return arr
+		    }
+		    do {
+		        var next = node.nextSibling
+		        switch (node.nodeType) {
+		            case 1:
+
+		                var name = ':for'
+		                var value = node.getAttribute(name)
+		                if (!value) {
+		                    name = 'ms-for'
+		                    value = node.getAttribute(name)
+		                }
+
+		                if (value) {
+		                    var start = document.createComment('ms-for:' + value)
+		                    var end = document.createComment('ms-for-end:')
+		                    node.removeAttribute(name)
+		                    if (parent) {
+		                        parent.insertBefore(end, node.nextSibling)
+		                        parent.insertBefore(start, node)
+		                    }
+		                    arr.push(markNode(start), markNode(node), markNode(end))
+		                } else {
+		                    arr.push(markNode(node))
+		                }
+		                break
+		            case 3:
+		                if (/\S/.test(node.nodeValue)) {
+		                    arr.push(markNode(node))
+		                } else {
+		                    var p = node.parentNode
+		                    if (p) {
+		                        p.removeChild(node)
+		                    }
+		                }
+		                break
+		            case 8:
+		                arr.push(markNode(node))
+		                break
+		        }
+		        node = next
+
+		    } while (node)
+		    return arr
+		}
+
+
+	/***/ },
+	/* 97 */
+	/***/ function(module, exports, __webpack_require__) {
+
+		__webpack_require__(38)
+		__webpack_require__(40)
+		//处理属性样式
+		__webpack_require__(98)
+		__webpack_require__(42)
+		__webpack_require__(43)
+		//处理内容
+		__webpack_require__(44)
+		__webpack_require__(45)
+		__webpack_require__(46)
+		//需要用到事件的
+		__webpack_require__(47)
+		__webpack_require__(48)
+		__webpack_require__(99)
+		__webpack_require__(57)
+		__webpack_require__(58)
+
+		//处理逻辑
+		__webpack_require__(102)
+		__webpack_require__(60)
+
+		__webpack_require__(61)
+		__webpack_require__(65)
+
+	/***/ },
+	/* 98 */
+	/***/ function(module, exports, __webpack_require__) {
+
+		
+		var cssDir = __webpack_require__(42)
+		var update = __webpack_require__(91)
 
 		avalon.directive('attr', {
 		    diff: cssDir.diff,
@@ -7298,32 +7360,33 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 100 */
+	/* 99 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		
-		var update = __webpack_require__(46)
-		var evaluatorPool = __webpack_require__(43)
-		var stringify = __webpack_require__(41)
+		var update = __webpack_require__(39)
+		var jsonfy = __webpack_require__(50)
 
 		var rchangeFilter = /\|\s*change\b/
 		var rcheckedType = /^(?:checkbox|radio)$/
 		var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/
-		var updateModelByEvent = __webpack_require__(101)
-		var updateModelByValue = __webpack_require__(60)
-		var updateModel = __webpack_require__(58)
-		var updateView = __webpack_require__(102)
-		var addValidateField = __webpack_require__(62)
+		var updateModelByEvent = __webpack_require__(100)
+		var updateModelByValue = __webpack_require__(54)
+		var updateModel = __webpack_require__(52)
+		var updateView = __webpack_require__(101)
+		var addValidateField = __webpack_require__(56)
 		var duplexDir = 'ms-duplex'
 
 		avalon.directive('duplex', {
 		    priority: 2000,
 		    parse: function (copy, src, binding) {
 		        var expr = binding.expr
+		        var debug = binding.name +'='+ expr
 		        var etype = src.props.type
 		        //处理数据转换器
 		        var parsers = binding.param, dtype
 		        var isChecked = false
+		        binding.name = duplexDir
 		        parsers = parsers ? parsers.split('-').map(function (a) {
 		            if (a === 'checked') {
 		                isChecked = true
@@ -7363,24 +7426,25 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 
 		        var changed = copy.props['data-duplex-changed']
-		        var get = avalon.parseExpr(binding, 'duplex')// 输出原始数据
+		        var get = avalon.parseExpr(binding)// 输出原始数据
 		        var quoted = parsers.map(function (a) {
 		            return avalon.quote(a)
 		        })
-		        copy[duplexDir] = stringify({
-		            type: dtype, //这个决定绑定什么事件
-		            vmodel: '__vmodel__',
-		            local: '__local__',
-		            debug: avalon.quote(binding.name + '=' + binding.expr),
-		            isChecked: isChecked, //用于radio与checked
-		            parsers: '[' + quoted + ']', //各种转换器的名字
-		            isString: !!isString, //这个决定是否需要转换为字符串
-		            isChanged: isChanged, //这个决定同步的频数
-		            debounceTime: debounceTime, //这个决定同步的频数
-		            get: get, //
-		            set: evaluatorPool.get('duplex:set:' + expr),
-		            callback: changed ? avalon.parseExpr(changed, 'on') : 'avalon.noop'
-		        })
+		        copy[duplexDir] = 'function(){ return ' +
+		                jsonfy({
+		                    type: dtype, //这个决定绑定什么事件
+		                    vmodel: '__vmodel__',
+		                    local: '__local__',
+		                    debug: '/' + avalon.escapeRegExp(debug) + '/',
+		                    isChecked: isChecked, //用于radio与checked
+		                    parsers: '[' + quoted + ']', //各种转换器的名字
+		                    isString: !!isString, //这个决定是否需要转换为字符串
+		                    isChanged: isChanged, //这个决定同步的频数
+		                    debounceTime: debounceTime, //这个决定同步的频数
+		                    get: get, //
+		                    set: avalon.evaluatorPool.get('duplex:set:' + expr),
+		                    callback: changed ? avalon.parseExpr({expr: changed, type: 'on'}) : 'avalon.noop'
+		                }) + '}'
 		    },
 		    diff: function (copy, src) {
 		        if (!src.dynamic[duplexDir]) {
@@ -7420,7 +7484,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        if (dom && dom.nodeType === 1) {
 		            vdom.dynamic[duplexDir] = 1
 		            if (!dom.__ms_duplex__) {
-		                dom.__ms_duplex__ = avalon.mix(vdom[duplexDir],{dom:dom})
+		                dom.__ms_duplex__ = avalon.mix(vdom[duplexDir], {dom: dom})
 		                //绑定事件
 		                updateModelByEvent(dom, vdom)
 		                //添加验证
@@ -7463,7 +7527,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	/***/ },
-	/* 101 */
+	/* 100 */
 	/***/ function(module, exports, __webpack_require__) {
 
 		/* 
@@ -7473,8 +7537,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		 * 2. value属性重写
 		 * 3. 定时器轮询
 		 */
-		var updateModel = __webpack_require__(58)
-		var markID = __webpack_require__(6).getShortID
+		var updateModel = __webpack_require__(52)
+		var markID = avalon._markBindID
 		var msie = avalon.msie
 		var window = avalon.window
 		var document = avalon.document
@@ -7593,7 +7657,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		module.exports = updateModelByEvent
 
 	/***/ },
-	/* 102 */
+	/* 101 */
 	/***/ function(module, exports) {
 
 		
@@ -7637,6 +7701,68 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 		module.exports = updateView
+
+
+	/***/ },
+	/* 102 */
+	/***/ function(module, exports, __webpack_require__) {
+
+		var update = __webpack_require__(39)
+		//ms-imporant ms-controller ms-for ms-widget ms-effect ms-if   ...
+		avalon.directive('if', {
+		    priority: 6,
+		    diff: function (copy, src, name, copys, sources, index) {
+		        var cur = !!copy[name]
+		        src[name] = cur
+		        update(src, this.update)
+
+		    },
+		    update: function (dom, vdom, parent) {
+		        var show = vdom['ms-if']
+		        if (vdom.dynamic['ms-if']) {
+		            vdom.dynamic['ms-if'] = vdom.nodeName
+		        }
+		        if (show) {
+		            if (vdom.nodeName === '#comment') {
+		                vdom.nodeName = vdom.dynamic['ms-if']
+		                delete vdom.nodeValue
+		                var comment = vdom.comment
+		                if (!comment) {
+		                    return
+		                }
+		                parent = comment.parentNode
+		                if (parent)
+		                    parent.replaceChild(dom, comment)
+		                delete vdom.comment
+		                avalon.applyEffect(dom, vdom, {
+		                    hook: 'onEnterDone'
+		                })
+		            }
+		        } else {
+		           
+		            //要移除元素节点,在对应位置上插入注释节点
+		            if (!vdom.comment) {
+		                vdom.comment = document.createComment('if')
+		            }
+		            vdom.nodeName = '#comment'
+		            vdom.nodeValue = 'if'
+		            avalon.applyEffect(dom, vdom, {
+		                hook: 'onLeaveDone',
+		                cb: function () {
+		                    //去掉注释节点临时添加的ms-effect
+		                    //https://github.com/RubyLouvre/avalon/issues/1577
+		                    //这里必须设置nodeValue为ms-if,否则会在节点对齐算法中出现乱删节点的BUG
+		                    parent = parent || dom.parentNode
+		                    if (!parent) {
+		                        return
+		                    }
+		                    parent.replaceChild(vdom.comment, dom)
+		                }
+		            })
+		        }
+		    }
+		})
+
 
 
 	/***/ },
@@ -7927,7 +8053,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/* 104 */
 	/***/ function(module, exports, __webpack_require__) {
 
-		var share = __webpack_require__(82)
+		var share = __webpack_require__(80)
 		var initEvents = share.initEvents
 
 		function toJson(val) {

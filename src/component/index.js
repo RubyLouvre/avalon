@@ -25,10 +25,12 @@ avalon.directive('widget', {
     },
     diff: function (copy, src, name, copyList, srcList, index) {
         var data = copy[name]
+
         //是否为对象
         if (Object(data) !== data) {
             return replaceComment.apply(this, arguments)
         }
+
         data = data.$model || data//安全的遍历VBscript
         if (Array.isArray(data)) {//转换成对象
             var temp = {}
@@ -40,54 +42,59 @@ avalon.directive('widget', {
         //有三个地方可以设置is, 标签名, 属性, 配置对象
         var maybeIs = /^ms\-/.test(src.nodeName) ? src.nodeName : src.props.is
         var is = maybeIs || data.is
-
         copy.props.is = is
-        //src.vmodel = copy.vmodel
-
+        var vmodel = copy.vmodel
+        var local = copy.local
         var vmName = 'component-vm:' + is
         var comVm = src[vmName]
-        if (comVm) { //是否初始化
+        var spath = avalon.spath
+
+        if (comVm) { //如果虚拟DOM上存在对应的component-vm属性,说明已经初始化
             var isNeedUpdateData = !!avalon.scopes[comVm.$id]
-            if (isNeedUpdateData) {
-                var topData = copy.vmodel.$model
-                var oldSlot = src['component-slot:' + is]
-                var newSlot = {}
-                for (var i in oldSlot) {
-                    newSlot[i] = topData[i]
+            console.log('已经初始化', is, isNeedUpdateData, comVm.$id)
+            // if (isNeedUpdateData) {
+            var topData = vmodel.$model
+            var oldSlot = src['component-slot:' + is]
+            var newSlot = {}
+            for (var i in oldSlot) {
+                newSlot[i] = topData[i]
+            }
+            var isSameData = avalon._deepEqual(src.local, local)
+            if (isSameData) {
+                delete data.is
+                delete data.id
+                var oldData = {}
+                for (var i in data) {
+                    oldData[i] = comVm.$model[i]
                 }
-                var isSameData = avalon._deepEqual(src.local, copy.local)
+                isSameData = avalon._deepEqual(oldData, data)
                 if (isSameData) {
-                    delete data.is
-                    delete data.id
-                    var oldData = {}
-                    for (var i in data) {
-                        oldData[i] = comVm.$model[i]
+                    isSameData = avalon._deepEqual(oldSlot, newSlot)
+                    if (!isSameData) {
+                        avalon.log('slot数据不一致,更新', is, '组件')
                     }
-                    isSameData = avalon._deepEqual(oldData, data)
-                    if (isSameData) {
-                        isSameData = avalon._deepEqual(oldSlot, newSlot)
-                        if (!isSameData) {
-                            avalon.log('slot数据不一致,更新', is, '组件')
-                        }
-                    } else {
-                        avalon.log('ms-widget数据不一致,更新', is, '组件')
-                    }
-                }
-                if (!isSameData) {
-                    var hash = comVm.$hashcode
-                    comVm.$hashcode = false //防止视图刷新
-                    //更新数据
-                    for (var i in data) {
-                        comVm[i] = data[i]
-                    }
-                    for (var i in newSlot) {
-                        comVm[i] = newSlot[i]
-                    }
-                    comVm.$hashcode = hash
                 } else {
+                    avalon.log('ms-widget数据不一致,更新', is, '组件')
+                }
+            }
+            if (!isSameData) {
+                var hash = comVm.$hashcode
+                comVm.$hashcode = false //防止视图刷新
+                //更新数据
+                for (var i in data) {
+                    comVm[i] = data[i]
+                }
+                for (var i in newSlot) {
+                    comVm[i] = newSlot[i]
+                }
+                avalon.spath = void 0
+                comVm.$hashcode = hash
+            } else {
+                if (isNeedUpdateData) {
                     return (copyList[index] = {})
                 }
             }
+
         } else {
             comVm = initComponent(copy, data)
             if (comVm) {
@@ -96,7 +103,8 @@ avalon.directive('widget', {
                 return replaceComment.apply(this, arguments)
             }
         }
-        var vtree = comVm.$render(comVm, copy.local)
+        var vtree = comVm.$render(comVm, local)
+        avalon.spath = spath
         var component = vtree[0]
         if (component && isComponentReady(component)) {
             Array(
@@ -107,22 +115,41 @@ avalon.directive('widget', {
             })
 
             component['component-slot:' + is] = copy.slotData || newSlot
-
-            component[vmName] = comVm
-            component.local = copy.local
-            component.vmodel = copy.vmodel
+            component.local = local
+            component.vmodel = vmodel
             copyList[index] = component
+            avalon.log('更新组件', comVm.bbb, comVm.$id)
+            avalon.scopes[comVm.$id] = {
+                vmodel: comVm,
+                local: local
+            }
             // 如果与ms-if配合使用, 会跑这分支
             if (src.comment && src.nodeValue) {
                 component.dom = src.comment
             }
+            component[vmName] = comVm
             if (src.nodeName !== component.nodeName) {
                 srcList[index] = component
+
+                if (!component['component-ready:' + is]) {
+                    comVm.$fire('onInit', {
+                        type: 'init',
+                        vmodel: comVm,
+                        is: is
+                    })
+                }
                 update(component, this.mountComponent)
             } else {
-                update(component, this.updateComponent)
+                //为原元素绑定afterChange钩子
+                var viewChangeObservers = comVm.$events.onViewChange
+                if (viewChangeObservers && viewChangeObservers.length) {
+                    update(src, viewChangeHandle, 'afterChange')
+                }
             }
         } else {
+            if (component.nodeName === '#comment') {
+                console.log(component.nodeValue)
+            }
             replaceComment.apply(this, arguments)
         }
     },
@@ -137,38 +164,16 @@ avalon.directive('widget', {
         vdom.dom = comment
         parent.replaceChild(comment, dom)
     },
-    updateComponent: function (dom, vdom) {
-        var vm = vdom["component-vm:" + vdom.props.is]
-        var viewChangeObservers = vm.$events.onViewChange
-        if (viewChangeObservers && viewChangeObservers.length) {
-            update(vdom, viewChangeHandle, 'afterChange')
-        }
-    },
     mountComponent: function (dom, vdom, parent) {
         delete vdom.dom
-        var com = avalon.vdom(vdom, 'toDOM')
-
         var is = vdom.props.is
+        var com = avalon.vdom(vdom, 'toDOM')
         var vm = vdom['component-vm:' + is]
-        vm.$fire('onInit', {
-            type: 'init',
-            vmodel: vm,
-            is: is
-        })
-
         parent.replaceChild(com, dom)
-
+        vdom['component-ready:' + is] = true
         vdom.dom = vm.$element = com
         com.vtree = [vdom]
         disposeComponent(com)
-        vdom['component-ready:' + is] = true
-        //--------------
-        avalon.scopes[vm.$id] = {
-            vmodel: vm,
-            top: vdom.vmodel,
-            local: vdom.local
-        }
-        //--------------
         update(vdom, function () {
             vm.$fire('onReady', {
                 type: 'ready',
@@ -176,10 +181,6 @@ avalon.directive('widget', {
                 vmodel: vm,
                 is: is
             })
-        }, 'afterChange')
-
-        update(vdom, function () {
-            vdom[ 'component-html:' + is] = avalon.vdom(vdom, 'toHTML')
         }, 'afterChange')
     }
 })
@@ -196,17 +197,17 @@ function replaceComment(copy, src, name, copyList, srcList, index) {
 function viewChangeHandle(dom, vdom) {
     var is = vdom.props.is
     var vm = vdom['component-vm:' + is]
-    var html = 'component-html:' + is
-    var preHTML = vdom[html]
-    var curHTML = avalon.vdom(vdom, 'toHTML')
-    if (preHTML !== curHTML) {
-        vdom[html] = curHTML
-        vm.$fire('onViewChange', {
-            type: 'viewchange',
-            target: dom,
-            vmodel: vm,
-            is: is
-        })
+    //数据变动,界面肯定变动,因此不再需要比较innerHTML
+    var event = {
+        type: 'viewchange',
+        target: dom,
+        vmodel: vm,
+        is: is
+    }
+    vm.$fire('onViewChange', event)
+    var parent = vdom.vmodel
+    if (parent && parent !== vm) {
+        parent.$fire('onViewChange', event)
     }
 }
 
@@ -276,8 +277,6 @@ function enumerable(a) {
         res.push(key)
     return res
 }
-
-
 
 function iterableEqual(a, b) {
     if (a.length !== b.length)

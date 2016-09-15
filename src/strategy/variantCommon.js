@@ -114,6 +114,7 @@ function variantProps(node) {
                 //有widget无html, text
                 delDir(props, 'html', 'widget')
                 delDir(props, 'text', 'widget')
+                delDir(props, 'duplex', 'widget')
                 var cloneNode = avalon.mix({}, node)
                 var cloneProps = avalon.mix({}, props)
                 delete cloneProps['ms-widget']
