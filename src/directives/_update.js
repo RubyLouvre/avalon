@@ -4,6 +4,6 @@ module.exports = function (vdom, update, hookName) {
         avalon.Array.ensure(vdom.afterChange, update)
     } else {
         var dom = vdom.dom
-        update(vdom.dom, vdom, dom && dom.parentNode)
+        update(dom, vdom, dom && dom.parentNode)
     }
 }
