@@ -12,6 +12,7 @@ function fireDisposeHook(el) {
     if (el.nodeType === 1 && el.getAttribute('wid') && !inDomTree(el)) {
         var wid = el.getAttribute('wid')
         var docker = avalon.scopes[ wid ]
+       
         if (!docker)
             return
         var elemID = el.getAttribute('ms-controller') || el.getAttribute('ms-important')       
@@ -100,8 +101,8 @@ function byRewritePrototype() {
 
     rewite('replaceChild', function (fn, a, b) {
         fn.call(this, a, b)
-        if (a.nodeType === 1) {
-            fireDisposeHookDelay(a)
+        if (b.nodeType === 1) {    
+            fireDisposeHookDelay(b)
         }
         return a
     })

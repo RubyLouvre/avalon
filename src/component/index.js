@@ -95,9 +95,8 @@ avalon.directive('widget', {
 
         } else {
             comVm = initComponent(copy, data)
-            if (comVm) {
-                src[vmName] = comVm
-            } else {
+            if (!comVm) {
+
                 return replaceComment(copy, src)
             }
         }
@@ -118,45 +117,33 @@ avalon.directive('widget', {
             component.local = local
             component.vmodel = vmodel
             srcList[index] = component
-            var scope = avalon.scopes[comVm.$id]
-            update(component, this.mountComponent)
-            if (!scope) {
+
+            if (!avalon.scopes[comVm.$id]) {
                 comVm.$fire('onInit', {
                     type: 'init',
                     vmodel: comVm,
                     is: is
                 })
-
                 update(component, function (dom, vdom, parent) {
-                    var isReady = isComponentReady(vdom)
-                    if (!isReady) {
-                        vdom.nodeName = '#comment'
-                        vdom.nodeValue = unresolvedText
-                        var comment = document.createComment(vdom.nodeValue)
-                        vdom.dom = comment
-                        parent.replaceChild(comment, dom)
-                    } else {
-                        avalon.scopes[comVm.$id] = {
-                            vmodel: comVm,
-                            local: local
-                        }
-                        vdom.dom = comVm.$element = dom
-                        dom.vtree = [vdom]
-                        disposeComponent(dom)
+                    if (isComponentReady(vdom)) {
                         comVm.$fire('onReady', {
                             type: 'ready',
                             target: dom,
                             vmodel: comVm,
                             is: is
                         })
+                    } else {
+                        replaceComment({}, vdom)
                     }
                 }, 'afterChange')
             }
 
+            update(component, this.mountComponent)
+
         } else {
             //为原元素绑定afterChange钩子
-            var viewChangeObservers = comVm.$events.onViewChange
-            if (viewChangeObservers && viewChangeObservers.length) {
+            var list = comVm.$events.onViewChange
+            if (list && list.length) {
                 update(src, viewChangeHandle, 'afterChange')
             }
         }
@@ -176,7 +163,16 @@ avalon.directive('widget', {
         delete vdom.dom
         var com = avalon.vdom(vdom, 'toDOM')
         parent.replaceChild(com, dom)
-        vdom.dom = com
+        var is = vdom.props.is
+        var vm = vdom['component-vm:' + is]
+        vdom.dom = vm.$element = com
+        dom.vtree = [vdom]
+        avalon.scopes[vm.$id] = {
+            vmodel: vm,
+            local: vdom.local
+        }
+        disposeComponent(com)
+
     }
 })
 
