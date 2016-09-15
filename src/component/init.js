@@ -47,7 +47,6 @@ function initComponent(copy, data) {
 
     var slotRender = avalon.caches[templateID]
     var defineRender = definition.render
-
     var hooks = {}//收集生命周期钩子
     for (var i in componentEvents) {
         hooks[i] = []

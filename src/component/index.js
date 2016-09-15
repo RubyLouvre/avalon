@@ -28,7 +28,7 @@ avalon.directive('widget', {
 
         //是否为对象
         if (Object(data) !== data) {
-            return replaceComment.apply(this, arguments)
+            return replaceComment(copy, src)
         }
 
         data = data.$model || data//安全的遍历VBscript
@@ -46,15 +46,12 @@ avalon.directive('widget', {
         var vmodel = copy.vmodel
         var local = copy.local
         var vmName = 'component-vm:' + is
+        var slotName = 'component-slot:' + is
         var comVm = src[vmName]
         var spath = avalon.spath
-
         if (comVm) { //如果虚拟DOM上存在对应的component-vm属性,说明已经初始化
-            var isNeedUpdateData = !!avalon.scopes[comVm.$id]
-            console.log('已经初始化', is, isNeedUpdateData, comVm.$id)
-            // if (isNeedUpdateData) {
             var topData = vmodel.$model
-            var oldSlot = src['component-slot:' + is]
+            var oldSlot = src[slotName]
             var newSlot = {}
             for (var i in oldSlot) {
                 newSlot[i] = topData[i]
@@ -87,10 +84,11 @@ avalon.directive('widget', {
                 for (var i in newSlot) {
                     comVm[i] = newSlot[i]
                 }
+                //强制更新组件的所有指令
                 avalon.spath = void 0
                 comVm.$hashcode = hash
             } else {
-                if (isNeedUpdateData) {
+                if (!!avalon.scopes[comVm.$id]) {
                     return (copyList[index] = {})
                 }
             }
@@ -100,57 +98,67 @@ avalon.directive('widget', {
             if (comVm) {
                 src[vmName] = comVm
             } else {
-                return replaceComment.apply(this, arguments)
+                return replaceComment(copy, src)
             }
         }
+        //生成组件的虚拟DOM
         var vtree = comVm.$render(comVm, local)
-        avalon.spath = spath
         var component = vtree[0]
-        if (component && isComponentReady(component)) {
-            Array(
-                    'component-ready:' + is,
-                    'dom', 'dynamic'
-                    ).forEach(function (name) {
-                component[name] = src[name]
-            })
-
-            component['component-slot:' + is] = copy.slotData || newSlot
+        copyList[index] = component
+        avalon.spath = spath
+        // 如果与ms-if配合使用, 会跑这分支
+        if (src.comment && src.nodeValue) {
+            component.dom = src.comment
+        } else {
+            component.dom = src.dom
+        }
+        component[slotName] = src[slotName] = copy.slotData || newSlot
+        if (src.nodeName !== component.nodeName) {
+            component[vmName] = comVm
             component.local = local
             component.vmodel = vmodel
-            copyList[index] = component
-            avalon.log('更新组件', comVm.bbb, comVm.$id)
-            avalon.scopes[comVm.$id] = {
-                vmodel: comVm,
-                local: local
-            }
-            // 如果与ms-if配合使用, 会跑这分支
-            if (src.comment && src.nodeValue) {
-                component.dom = src.comment
-            }
-            component[vmName] = comVm
-            if (src.nodeName !== component.nodeName) {
-                srcList[index] = component
+            srcList[index] = component
+            var scope = avalon.scopes[comVm.$id]
+            update(component, this.mountComponent)
+            if (!scope) {
+                comVm.$fire('onInit', {
+                    type: 'init',
+                    vmodel: comVm,
+                    is: is
+                })
 
-                if (!component['component-ready:' + is]) {
-                    comVm.$fire('onInit', {
-                        type: 'init',
-                        vmodel: comVm,
-                        is: is
-                    })
-                }
-                update(component, this.mountComponent)
-            } else {
-                //为原元素绑定afterChange钩子
-                var viewChangeObservers = comVm.$events.onViewChange
-                if (viewChangeObservers && viewChangeObservers.length) {
-                    update(src, viewChangeHandle, 'afterChange')
-                }
+                update(component, function (dom, vdom, parent) {
+                    var isReady = isComponentReady(vdom)
+                    if (!isReady) {
+                        vdom.nodeName = '#comment'
+                        vdom.nodeValue = unresolvedText
+                        var comment = document.createComment(vdom.nodeValue)
+                        vdom.dom = comment
+                        parent.replaceChild(comment, dom)
+                    } else {
+                        avalon.scopes[comVm.$id] = {
+                            vmodel: comVm,
+                            local: local
+                        }
+                        vdom.dom = comVm.$element = dom
+                        dom.vtree = [vdom]
+                        disposeComponent(dom)
+                        comVm.$fire('onReady', {
+                            type: 'ready',
+                            target: dom,
+                            vmodel: comVm,
+                            is: is
+                        })
+                    }
+                }, 'afterChange')
             }
+
         } else {
-            if (component.nodeName === '#comment') {
-                console.log(component.nodeValue)
+            //为原元素绑定afterChange钩子
+            var viewChangeObservers = comVm.$events.onViewChange
+            if (viewChangeObservers && viewChangeObservers.length) {
+                update(src, viewChangeHandle, 'afterChange')
             }
-            replaceComment.apply(this, arguments)
         }
     },
     replaceCachedComponent: function (dom, vdom, parent) {
@@ -166,33 +174,12 @@ avalon.directive('widget', {
     },
     mountComponent: function (dom, vdom, parent) {
         delete vdom.dom
-        var is = vdom.props.is
         var com = avalon.vdom(vdom, 'toDOM')
-        var vm = vdom['component-vm:' + is]
         parent.replaceChild(com, dom)
-        vdom['component-ready:' + is] = true
-        vdom.dom = vm.$element = com
-        com.vtree = [vdom]
-        disposeComponent(com)
-        update(vdom, function () {
-            vm.$fire('onReady', {
-                type: 'ready',
-                target: com,
-                vmodel: vm,
-                is: is
-            })
-        }, 'afterChange')
+        vdom.dom = com
     }
 })
 
-function replaceComment(copy, src, name, copyList, srcList, index) {
-    if (src.nodeName === '#comment')
-        return
-    src.nodeName = '#comment'
-    src.nodeValue = 'unresolved component placeholder'
-    copyList[index] = src
-    update(src, this.mountComment)
-}
 
 function viewChangeHandle(dom, vdom) {
     var is = vdom.props.is
@@ -210,7 +197,14 @@ function viewChangeHandle(dom, vdom) {
         parent.$fire('onViewChange', event)
     }
 }
-
+function replaceComment(copy, src) {
+    for (var i in copy) {
+        delete copy[i]
+    }
+    src.nodeName = copy.nodeName = '#comment'
+    src.nodeValue = copy.nodeValue = unresolvedText
+    return update(src, this.mountComment)
+}
 function isComponentReady(vnode) {
     var isReady = true
     try {
@@ -220,11 +214,11 @@ function isComponentReady(vnode) {
     }
     return isReady
 }
-
+var unresolvedText = 'unresolved component placeholder'
 function hasUnresolvedComponent(vnode) {
     vnode.children.forEach(function (el) {
         if (el.nodeName === '#comment') {
-            if (el.nodeValue === 'unresolved component placeholder') {
+            if (el.nodeValue === unresolvedText) {
                 throw 'unresolved'
             }
         } else if (el.children) {
