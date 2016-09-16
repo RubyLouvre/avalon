@@ -1,10 +1,9 @@
 
 
 var update = require('../directives/_update')
-var initComponent = require('./init2')
-var disposeComponent = require('./dispose')
-
-avalon._disposeComponent = disposeComponent
+require('./create')
+avalon._deepEqual = require('./deepEqual')
+avalon._disposeComponent = require('./dispose')
 
 avalon.component = function (name, definition) {
     //这是定义组件的分支,并将列队中的同类型对象移除
@@ -17,7 +16,6 @@ avalon.directive('widget', {
     priority: 4,
     parse: function (copy, src, binding) {
         src.props.wid = src.props.wid || avalon.makeHashCode('w')
-        console.log(src.nodeName, '!!!!!!')
         //将渲染函数的某一部分存起来,渲在c方法中转换为函数
         copy[binding.name] = avalon.parseExpr(binding)
         copy.template = src.template
@@ -32,15 +30,8 @@ avalon.directive('widget', {
             component.dom = src.dom
         }
         var vmodel = component[name]
-        if (component[name] === 1) {
-            return replaceComment(copy, src)
-        }
-
+        
         if (src.nodeName !== component.nodeName) {
-            if (src.nodeName === '#comment') {
-
-            }
-
             var is = component.props.is
             srcList[index] = component
             var scope = avalon.scopes[vmodel.$id]
@@ -50,6 +41,7 @@ avalon.directive('widget', {
                     vmodel: vmodel,
                     is: is
                 })
+                scope.init = 1
                 update(component, function (dom, vdom, parent) {
                     if (isComponentReady(vdom)) {
                         vmodel.$fire('onReady', {
@@ -86,7 +78,14 @@ avalon.directive('widget', {
         parent.replaceChild(com, dom)
         vdom.dom = vm.$element = com
         com.vtree = [vdom]
-        disposeComponent(com)
+        avalon._disposeComponent(com)
+    },
+    mountComment: function (dom, vdom, parent) {
+        vdom.nodeName = '#comment'
+        vdom.nodeValue = 'unresolved component placeholder'
+        var comment = document.createComment(vdom.nodeValue)
+        vdom.dom = comment
+        parent.replaceChild(comment, dom)
     }
 })
 
@@ -101,158 +100,6 @@ function onViewChange(dom, vdom) {
         is: is
     }
     vm.$fire('onViewChange', event)
-//    var parent = vdom.vmodel
-//    if (parent && parent !== vm) {
-//        parent.$fire('onViewChange', event)
-//    }
-}
-function replaceComment(copy, src) {
-    src.nodeName = '#comment'
-    src.nodeValue = unresolvedText
-    if (src !== copy) {
-        for (var i in copy) {
-            delete copy[i]
-        }
-    }
-    var dom = src.dom
-    var parent = dom.parentNode
-    var comment = document.createComment(src.nodeValue)
-    src.dom = comment
-    parent.replaceChild(comment, dom)
-}
-
-function isComponentReady(vnode) {
-    var isReady = true
-    try {
-        hasUnresolvedComponent(vnode)
-    } catch (e) {
-        isReady = false
-    }
-    return isReady
-}
-var unresolvedText = 'unresolved component placeholder'
-function hasUnresolvedComponent(vnode) {
-    vnode.children.forEach(function (el) {
-        if (el.nodeName === '#comment') {
-            if (el.nodeValue === unresolvedText) {
-                throw 'unresolved'
-            }
-        } else if (el.children) {
-            hasUnresolvedComponent(el)
-        }
-    })
-}
-//================
-
-avalon._deepEqual = deepEqual
-
-var deepDetectType = {
-    object: 1,
-    array: 1,
-}
-var toStringType = {
-    date: 1,
-    regexp: 1,
-    'function': 1
-}
-var type = avalon.type
-function deepEqual(a, b, m) {
-    if (sameValue(a, b)) {//防止出现NaN的情况
-        return true
-    }
-    var atype = type(a)
-    var btype = type(b)
-
-    if (atype !== btype) {//如果类型不相同
-        return false
-    } else if (toStringType[atype]) {
-        return a + '' === b + ''
-    } else if (deepDetectType[atype]) {
-        return objectEqual(a, b, m)
-    } else {
-        return false
-    }
-}
-
-var sameValue = Object.is || function (a, b) {
-    if (a === b)
-        return a !== 0 || 1 / a === 1 / b
-    return a !== a && b !== b
 }
 
 
-function enumerable(a) {
-    var res = []
-    for (var key in a)
-        res.push(key)
-    return res
-}
-
-function iterableEqual(a, b) {
-    if (a.length !== b.length)
-        return false
-
-    var i = 0
-    var match = true
-
-    for (; i < a.length; i++) {
-        if (a[i] !== b[i]) {
-            match = false
-            break
-        }
-    }
-
-    return match
-}
-
-function isValue(a) {
-    return a !== null && a !== undefined
-}
-
-function objectEqual(a, b, m) {
-    if (!isValue(a) || !isValue(b)) {
-        return false
-    }
-
-    if (a.prototype !== b.prototype) {
-        return false
-    }
-
-    var i
-    if (m) {
-        for (i = 0; i < m.length; i++) {
-            if ((m[i][0] === a && m[i][1] === b)
-                    || (m[i][0] === b && m[i][1] === a)) {
-                return true
-            }
-        }
-    } else {
-        m = []
-    }
-
-    try {
-        var ka = enumerable(a)
-        var kb = enumerable(b)
-    } catch (ex) {
-        return false
-    }
-
-    ka.sort()
-    kb.sort()
-
-    if (!iterableEqual(ka, kb)) {
-        return false
-    }
-
-    m.push([a, b])
-
-    var key
-    for (i = ka.length - 1; i >= 0; i--) {
-        key = ka[i]
-        if (!deepEqual(a[key], b[key], m)) {
-            return false
-        }
-    }
-
-    return true
-}

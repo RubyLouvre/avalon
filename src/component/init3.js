@@ -5,7 +5,7 @@ var legalTags = {wbr: 1, xmp: 1, template: 1}
 var rprops = /__vmodel__\.([\$\w\_]+)/g
 var componentEvents = {onInit: 1, onReady: 1, onViewChange: 1, onDispose: 1}
 var onceWarn = true
-
+var rguide = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
 function initComponent(copy, data) {
     var tag = copy.nodeName
     var is = copy.props.is
@@ -32,6 +32,7 @@ function initComponent(copy, data) {
         shell[0].props.is = is
         avalon.caches[templateID] = avalon.render(shell, copy.local)
     }
+
 
     //生成内部的渲染函数
     if (!definition.render) {
@@ -66,6 +67,7 @@ function initComponent(copy, data) {
     }
     var topVm = copy.vmodel.$model
     var id = data.id || data.$id
+
     for (var i in defaults) {
         if (!(i in data)) {
             if (!skipArray[i]) {
@@ -76,14 +78,18 @@ function initComponent(copy, data) {
     delete data.is
     delete data.id
     copy.slotData = {}
-    String(slotRender).replace(rprops, function (_, prop) {
-        if (!(prop in data)) {
-            data[prop] = topVm[prop]
-            copy.slotData[prop] = topVm[prop]
-        }
-    })
+    template.replace(rguide, '$1__vmodel__.')
+            .replace(rprops, function (_, prop) {
+                if (!(prop in data)) {
+                    data[prop] = topVm[prop]
+                    copy.slotData[prop] = topVm[prop]
+                }
+                return _
+            })
+
+    console.log(data)
     //得到组件在顶层vm的配置对象名
-    
+
     if (!id) {
         if (onceWarn) {
             avalon.warn('warning!', is, '组件最好在ms-widget配置对象中指定全局不重复的id以提高性能!\n',
@@ -125,7 +131,7 @@ function initComponent(copy, data) {
                 }
             }
         }
-       
+
         var soleSlot = definition.soleSlot
         var slots = collectSlots(shellRoot, soleSlot)
         if (soleSlot && (!slots[soleSlot] || !slots[soleSlot].length)) {
@@ -186,7 +192,7 @@ function collectSlots(node, soleSlot) {
     } else {
         node.children.forEach(function (el, i) {
             var name = el.props && el.props.slot
-            if(!name)
+            if (!name)
                 return
             if (el.forExpr) {
                 slots[name] = node.children.slice(i, i + 2)

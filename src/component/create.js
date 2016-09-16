@@ -1,15 +1,16 @@
 
 var skipArray = require('../vmodel/parts/skipArray')
 var rprops = /__vmodel__\.([\$\w\_]+)/g
-var componentEvents = {onInit: 1, onReady: 1, onViewChange: 1, onDispose: 1}
 var rguide = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
+var unresolvedText = 'unresolved component placeholder'
+var componentEvents = {onInit: 1, onReady: 1, onViewChange: 1, onDispose: 1}
 
 avalon.createComponent = function (fn, copy, vmodel, local) {
     var data = fn()
     var comment = [{
-            nodeName: new Date - 0,
-            'ms-widget': 1,
-            dynamic: 1
+            nodeName: '#comment',
+            nodeValue: unresolvedText,
+            afterChange: [avalon.directives.widget.mountComment]
         }]
     if (Object(data) !== data) {
         return comment
@@ -28,20 +29,27 @@ avalon.createComponent = function (fn, copy, vmodel, local) {
     copy.props.is = is
     var id = data.id || data.$id
     if (local.$key) {
-        avalon.error('组件在ms-for循环内部必须在ms-widget配置对象中指定不重复的id\n' +
+        avalon.warn('组件在ms-for循环内部必须在ms-widget配置对象中指定不重复的id\n' +
                 '如 ms-widget="{id:\'btn\'+$index}')
         return comment
     }
+    
     if (!id) {//逼不得已就使用内置的随机UUID
         id = copy.props.wid
     }
-    var template = copy.template
     var scope = avalon.scopes[id]
     if (scope) {
         if (!scope.isComponent) {
             avalon.error('已经有vm.$id为' + id + '了')
         }
+        var vm = scope.vmodel
+        if (!updateData(data, scope, vmodel, local)) {
+            return [{nodeName: 'x'}]
+        } else {
+            return vm.$render(vm, scope.local)
+        }
     } else {
+        var template = copy.template
         var definition = avalon.components[is]
         //如果连组件的定义都没有加载回来,应该立即返回 
         /* istanbul ignore if */
@@ -49,7 +57,6 @@ avalon.createComponent = function (fn, copy, vmodel, local) {
             avalon.warn(is + '组件还没有加载')
             return comment
         }
-
         var templateID = 'temp:' + template
         if (!avalon.caches[templateID]) {
             var shell = avalon.lexer(template)
@@ -128,6 +135,54 @@ avalon.createComponent = function (fn, copy, vmodel, local) {
     }
 }
 
+
+function updateData(data, scope, vmodel, local) {
+    var vm = scope.vmodel
+    var topData = vmodel.$model
+    var oldSlot = scope.slotData
+    var newSlot = {}
+    for (var i in oldSlot) {
+        newSlot[i] = topData[i]
+    }
+    var isSameData = avalon._deepEqual(scope.local, local)
+    var is = data.is
+    if (isSameData) {
+        delete data.is
+        delete data.id
+        var oldData = {}
+        for (var i in data) {
+            oldData[i] = vm.$model[i]
+        }
+        isSameData = avalon._deepEqual(oldData, data)
+        if (isSameData) {
+            isSameData = avalon._deepEqual(oldSlot, newSlot)
+            if (!isSameData) {
+                avalon.log('slot数据不一致,更新', is, '组件')
+            }
+        } else {
+            avalon.log('ms-widget数据不一致,更新', is, '组件')
+        }
+    }
+    if (!isSameData) {
+        var hash = vm.$hashcode
+        vm.$hashcode = false //防止视图刷新
+        //更新数据
+        for (var i in data) {
+            vm[i] = data[i]
+        }
+        for (var i in newSlot) {
+            vm[i] = newSlot[i]
+        }
+        scope.local = local
+        scope.slotData = newSlot
+        //强制更新组件的所有指令
+        avalon.spath = void 0
+        vm.$hashcode = hash
+    } else {
+        return false
+    }
+}
+
 function getRender(slotRender, defineRender, soleSlot) {
     return  function (vmodel, local) {
         var shell = slotRender(vmodel, local)
@@ -154,15 +209,24 @@ function getRender(slotRender, defineRender, soleSlot) {
                 }]
         }
         insertSlots(vtree, slots)
-        component.props.wid = vmodel.$id
-        component.vmodel = vmodel
-        component.copy = local
-        component.dynamic = {}
-        component['ms-widget'] = vmodel
-        delete component.skipContent
-        return vtree
+        if (isComponentReady(component)) {
+            component.props.wid = vmodel.$id
+            component.vmodel = vmodel
+            component.copy = local
+            component.dynamic = {}
+            component['ms-widget'] = vmodel
+            delete component.skipContent
+            return vtree
+        } else {
+            return  [{
+                    nodeName: '#comment',
+                    nodeValue: unresolvedText,
+                    afterChange: [avalon.directives.widget.mountComment]
+                }]
+        }
     }
 }
+
 function replaceSlot(vtree, slotName) {
     for (var i = 0, el; el = vtree[i]; i++) {
         if (el.nodeName === 'slot') {
@@ -219,3 +283,23 @@ function collectSlots(node, soleSlot) {
     return slots
 }
 
+function isComponentReady(vnode) {
+    var isReady = true
+    try {
+        hasUnresolvedComponent(vnode)
+    } catch (e) {
+        isReady = false
+    }
+    return isReady
+}
+function hasUnresolvedComponent(vnode) {
+    vnode.children.forEach(function (el) {
+        if (el.nodeName === '#comment') {
+            if (el.nodeValue === unresolvedText) {
+                throw 'unresolved'
+            }
+        } else if (el.children) {
+            hasUnresolvedComponent(el)
+        }
+    })
+}
