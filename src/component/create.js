@@ -39,12 +39,9 @@ avalon.createComponent = function (fn, copy, vmodel, local) {
     }
     var scope = avalon.scopes[id]
     if (scope) {
-        if (!scope.isComponent) {
-            avalon.error('已经有vm.$id为' + id + '了')
-        }
         var vm = scope.vmodel
         if (!updateData(data, scope, vmodel, local)) {
-            return [{nodeName: 'x'}]
+            return [{nodeName: 'x', skipContent: 1}]
         } else {
             return vm.$render(vm, scope.local)
         }
@@ -114,7 +111,7 @@ avalon.createComponent = function (fn, copy, vmodel, local) {
         data.$id = id
         var vm = avalon.define(data)
         avalon.scopes[id] = {
-            vm: vm,
+            vmodel: vm,
             copy: copy,
             slotData: slotData
         }
@@ -178,6 +175,7 @@ function updateData(data, scope, vmodel, local) {
         //强制更新组件的所有指令
         avalon.spath = void 0
         vm.$hashcode = hash
+        return true
     } else {
         return false
     }

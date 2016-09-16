@@ -7,7 +7,7 @@
     </head>
     <body>
         <div ms-controller='widget1' >
-            <ms-button>{{@aaa}}</ms-button>
+            <ms-button ms-attr="{title:@t}">{{@aaa}}</ms-button>
         </div>
         <h1>你会看到111</h1>
         <script type="text/javascript">      
@@ -15,12 +15,14 @@ avalon.component('ms-button', {
     template: '<button type="button" ><span><slot /></span></button>',
     defaults: {
         buttonText: "button"
+        
     },
     soleSlot: 'buttonText'
 })
 var vm = avalon.define({
     $id: 'widget1',
-    aaa: 111
+    aaa: 111,
+    t: 1
 })
 
         </script>

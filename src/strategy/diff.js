@@ -37,6 +37,8 @@ function diff(copys, sources) {
                     avalon.directives['for'].diff(copy, src, copys, sources, i)
                 } else if (src.afterChange) {
                     execHooks(src, src.afterChange)
+                } else if (copy.afterChange) {
+                    execHooks(src, copy.afterChange)
                 }
                 break
             case void(0):
@@ -63,7 +65,7 @@ function diff(copys, sources) {
                     }
                     diffProps(copy, src)
                 }
-                
+
 
                 if (!/^(#|undefined)/.test(copy.nodeName) && !copy.skipContent && !copy.isVoidTag) {
                     diff(copy.children, src.children || [])

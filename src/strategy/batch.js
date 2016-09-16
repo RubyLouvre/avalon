@@ -18,7 +18,7 @@ function batchUpdate(id, spath) {
     } else {
         renderingID = id
     }
-    console.log(id)
+   
     var scope = avalon.scopes[id]
     if (!scope || !document.nodeName || avalon.suspendUpdate) {
         return renderingID = null
@@ -38,6 +38,7 @@ function batchUpdate(id, spath) {
         delete avalon.scopes[id]
     }
     avalon.diff(copy, source)
+   
     delete avalon.spath
     if (scope.onViewChange) {
         var vdom = source[0]

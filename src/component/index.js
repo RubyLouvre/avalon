@@ -43,16 +43,16 @@ avalon.directive('widget', {
                 })
                 scope.init = 1
                 update(component, function (dom, vdom, parent) {
-                    if (isComponentReady(vdom)) {
+                  //  if (isComponentReady(vdom)) {
                         vmodel.$fire('onReady', {
                             type: 'ready',
                             target: dom,
                             vmodel: vmodel,
                             is: is
                         })
-                    } else {
-                        replaceComment({}, vdom)
-                    }
+//                    } else {
+//                        replaceComment({}, vdom)
+//                    }
                 }, 'afterChange')
             }
             update(component, this.mountComponent)

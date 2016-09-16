@@ -109,7 +109,7 @@ function serializeElement(vdom, skip) {
                                 [copy[name],
                                     jsonfy(copy),
                                     '__vmodel__', '__local__'
-                                ].join(',\n') + ')'
+                                ].join(',\n') + ')[0]'
                     }
                     delete copy[name]
                 } else {
