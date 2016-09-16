@@ -49,6 +49,7 @@ avalon.directive('widget', {
         var slotName = 'component-slot:' + is
         var comVm = src[vmName]
         var spath = avalon.spath
+        console.log(is)
         if (comVm) { //如果虚拟DOM上存在对应的component-vm属性,说明已经初始化
             var topData = vmodel.$model
             var oldSlot = src[slotName]
@@ -142,7 +143,7 @@ avalon.directive('widget', {
             //为原元素绑定afterChange钩子
             var list = comVm.$events.onViewChange
             if (list && list.length) {
-                update(src, viewChangeHandle, 'afterChange')
+                update(src, onViewChange, 'afterChange')
             }
         }
     },
@@ -162,13 +163,14 @@ avalon.directive('widget', {
         com.vtree = [vdom]
         avalon.scopes[vm.$id] = {
             vmodel: vm,
-            local: vdom.local
+            local: vdom.local,
+            onViewChange: onViewChange
         }
         disposeComponent(com)
     }
 })
 
-function viewChangeHandle(dom, vdom) {
+function onViewChange(dom, vdom) {
     var is = vdom.props.is
     var vm = vdom['component-vm:' + is]
     //数据变动,界面肯定变动,因此不再需要比较innerHTML
@@ -179,10 +181,10 @@ function viewChangeHandle(dom, vdom) {
         is: is
     }
     vm.$fire('onViewChange', event)
-    var parent = vdom.vmodel
-    if (parent && parent !== vm) {
-        parent.$fire('onViewChange', event)
-    }
+//    var parent = vdom.vmodel
+//    if (parent && parent !== vm) {
+//        parent.$fire('onViewChange', event)
+//    }
 }
 function replaceComment(copy, src) {
     src.nodeName = '#comment'

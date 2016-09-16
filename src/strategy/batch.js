@@ -18,11 +18,13 @@ function batchUpdate(id, spath) {
     } else {
         renderingID = id
     }
+    console.log(id)
     var scope = avalon.scopes[id]
     if (!scope || !document.nodeName || avalon.suspendUpdate) {
         return renderingID = null
     }
     var vm = scope.vmodel
+
     var dom = vm.$element
     var source = dom.vtree || []
     var renderFn = vm.$render
@@ -37,6 +39,11 @@ function batchUpdate(id, spath) {
     }
     avalon.diff(copy, source)
     delete avalon.spath
+    if (scope.onViewChange) {
+        var vdom = source[0]
+        scope.onViewChange(vdom.dom, vdom)
+    }
+
 
     var index = needRenderIds.indexOf(renderingID)
     renderingID = 0

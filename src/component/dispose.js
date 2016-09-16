@@ -28,7 +28,7 @@ function fireDisposeHook(el) {
         if (!el.getAttribute('cached')) {
             delete docker.vmodel
             delete avalon.scopes[ wid ]
-            detachEvents(v)
+            detachEvents(el.vtree)
         }
         return false
     }
