@@ -115,6 +115,7 @@ function variantProps(node) {
                 delDir(props, 'html', 'widget')
                 delDir(props, 'text', 'widget')
                 delDir(props, 'duplex', 'widget')
+                props.wid = avalon.makeHashCode('w')
                 var cloneNode = avalon.mix({}, node)
                 var cloneProps = avalon.mix({}, props)
                 delete cloneProps['ms-widget']

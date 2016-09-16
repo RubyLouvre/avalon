@@ -10,18 +10,22 @@ avalon.component = function (name, definition) {
     /* istanbul ignore if */
     if (!avalon.components[name]) {
         avalon.components[name] = definition
-    }//这里没有返回值
+        if (definition.getTemplate) {
+            avalon.warn('getTemplate 配置项已经被废弃')
+            definition.getTemplate = function (a) {
+                return a
+            }
+        }
+    }
 }
 avalon.directive('widget', {
     priority: 4,
     parse: function (copy, src, binding) {
-        src.props.wid = src.props.wid || avalon.makeHashCode('w')
         //将渲染函数的某一部分存起来,渲在c方法中转换为函数
         copy[binding.name] = avalon.parseExpr(binding)
         copy.template = src.template
-
     },
-    diff: function (copy, src, name, copyList, srcList, index) {
+    diff: function (copy, src, srcList, index) {
         var component = copy
         // 如果与ms-if配合使用, 会跑这分支
         if (src.comment && src.nodeValue) {
@@ -29,34 +33,37 @@ avalon.directive('widget', {
         } else {
             component.dom = src.dom
         }
-        var vmodel = component[name]
-        
-        if (src.nodeName !== component.nodeName) {
-            var is = component.props.is
+        var vmodel = component['ms-widget']
+        var is = component.props.is
+        //如果
+        var changeNodeName = src.nodeName !== component.nodeName
+        if (changeNodeName) {
+            component.cached = src.dom
             srcList[index] = component
-            var scope = avalon.scopes[vmodel.$id]
-            if (scope && !scope.init) {
-                vmodel.$fire('onInit', {
-                    type: 'init',
+            for(var i in src){
+                delete src[i]
+            }
+        }
+        var scope = avalon.scopes[vmodel.$id]
+        if (!scope.init) {
+            vmodel.$fire('onInit', {
+                type: 'init',
+                vmodel: vmodel,
+                is: is
+            })
+            scope.init = 1
+            update(component, function (dom, vdom, parent) {
+                vmodel.$fire('onReady', {
+                    type: 'ready',
+                    target: dom,
                     vmodel: vmodel,
                     is: is
                 })
-                scope.init = 1
-                update(component, function (dom, vdom, parent) {
-                  //  if (isComponentReady(vdom)) {
-                        vmodel.$fire('onReady', {
-                            type: 'ready',
-                            target: dom,
-                            vmodel: vmodel,
-                            is: is
-                        })
-//                    } else {
-//                        replaceComment({}, vdom)
-//                    }
-                }, 'afterChange')
-            }
-            update(component, this.mountComponent)
 
+            }, 'afterChange')
+            update(component, this.mountComponent)
+        } else if (changeNodeName) {
+            update(component, this.mountCachedComponent)
         } else {
             //为原元素绑定afterChange钩子
             var list = vmodel.$events.onViewChange
@@ -65,11 +72,11 @@ avalon.directive('widget', {
             }
         }
     },
-    replaceCachedComponent: function (dom, vdom, parent) {
-        var com = vdom.com
+    mountCachedComponent: function (dom, vdom, parent) {
+        var com = vdom.cached
         parent.replaceChild(com, dom)
         vdom.dom = com
-        delete vdom.com
+        delete vdom.cached
     },
     mountComponent: function (dom, vdom, parent) {
         delete vdom.dom

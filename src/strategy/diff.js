@@ -51,7 +51,7 @@ function diff(copys, sources) {
                 if (copy.dynamic) {
                     var index = i
                     if (copy['ms-widget']) {
-                        avalon.directives['widget'].diff(copy, src, 'ms-widget', copys, sources, index)
+                        avalon.directives['widget'].diff(copy, src, sources, index)
                         copy = copys[i]
                         src = sources[i] || emptyObj()
                         delete copy['ms-widget']

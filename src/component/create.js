@@ -6,6 +6,7 @@ var unresolvedText = 'unresolved component placeholder'
 var componentEvents = {onInit: 1, onReady: 1, onViewChange: 1, onDispose: 1}
 
 avalon.createComponent = function (fn, copy, vmodel, local) {
+    var spath = avalon.spath
     var data = fn()
     var comment = [{
             nodeName: '#comment',
@@ -33,7 +34,7 @@ avalon.createComponent = function (fn, copy, vmodel, local) {
                 '如 ms-widget="{id:\'btn\'+$index}')
         return comment
     }
-    
+
     if (!id) {//逼不得已就使用内置的随机UUID
         id = copy.props.wid
     }
@@ -108,27 +109,34 @@ avalon.createComponent = function (fn, copy, vmodel, local) {
                     }
                     return _
                 })
-        data.$id = id
-        var vm = avalon.define(data)
-        avalon.scopes[id] = {
-            vmodel: vm,
-            copy: copy,
-            slotData: slotData
+
+        if (avalon.vmodels[id]) {
+            avalon.vmodels[id]
+            delete avalon.vmodels[id]
         }
+        data.$id = id
+        vm = avalon.define(data)
         //绑定组件的生命周期钩子
         for (var e in componentEvents) {
             hooks[e].forEach(function (fn) {
                 vm.$watch(e, fn)
             })
         }
-
         //生成最终的组件渲染函数
         vm.$render = getRender(
                 avalon.caches[templateID],
                 definition.render,
                 definition.soleSlot
                 )
-        return vm.$render(vm, copy)
+        avalon.scopes[id] = {
+            vmodel: vm,
+            copy: copy,
+            slotData: slotData
+        }
+        delete avalon.spath
+        var a = vm.$render(vm, copy)
+        avalon.spath = spath
+        return a
     }
 }
 
@@ -154,7 +162,8 @@ function updateData(data, scope, vmodel, local) {
         if (isSameData) {
             isSameData = avalon._deepEqual(oldSlot, newSlot)
             if (!isSameData) {
-                avalon.log('slot数据不一致,更新', is, '组件')
+                console.log(oldSlot, newSlot)
+                avalon.log('slot数据不一致,更新', is, '组件',vm.$id)
             }
         } else {
             avalon.log('ms-widget数据不一致,更新', is, '组件')
@@ -207,6 +216,7 @@ function getRender(slotRender, defineRender, soleSlot) {
                 }]
         }
         insertSlots(vtree, slots)
+        //console.log(component.nodeName )
         if (isComponentReady(component)) {
             component.props.wid = vmodel.$id
             component.vmodel = vmodel
