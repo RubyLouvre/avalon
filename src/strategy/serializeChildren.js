@@ -54,6 +54,7 @@ function bufferChildren(nodes) {
     return buffer
 }
 
+
 function serializeNode(node, skip) {
     switch (node.nodeName) {
         case void(0):
@@ -98,13 +99,23 @@ function serializeElement(vdom, skip) {
                     var untraceable = !!binding.locals
                     var paths = alwaysDynamic[name] || untraceable ? '' : binding.paths
                     dirs.push(avalon.quote(paths), avalon.quote(name), copy[name])
+                    if (name === 'ms-widget') {
+                        var tag = vdom.nodeName
+                        if (!legalTags[tag] && !isCustomTag(tag)) {
+                            avalon.error(tag + '标签不能做组件容器')
+                        }
+                        copy.props.wid = vdom.props.wid
+                        return 'avalon.createComponent(' +
+                                [copy[name],
+                                    jsonfy(copy),
+                                    '__vmodel__', '__local__'
+                                ].join(',\n') + ')'
+                    }
                     delete copy[name]
                 } else {
                     copy.dynamic = '{}'
                 }
-                if(name === 'ms-widget'){
-                    break
-                }
+
             }
         }
     }
@@ -162,7 +173,14 @@ function serializeForEnd(vdom) {
     return ''
 }
 
+var legalTags = {wbr: 1, xmp: 1, template: 1}
+//必须以字母开头,结尾以字母或数字结束,中间至少出现一次"-",
+//并且不能大写字母,特殊符号,"_","$",汉字
+var rcustomTag = /^[a-z]([a-z\d]+\-)+[a-z\d]+$/
 
+function isCustomTag(type) {
+    return rcustomTag.test(type) || avalon.components[type]
+}
 var rstatement = /^\s*var\s+([$\w]+)\s*\=\s*\S+/
 
 function serializeLogic(vdom) {
