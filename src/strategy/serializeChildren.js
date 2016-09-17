@@ -105,7 +105,7 @@ function serializeElement(vdom, skip) {
                             avalon.error(tag + '标签不能做组件容器')
                         }
                         copy.props.wid = vdom.props.wid
-                        return 'avalon.createComponent(' +
+                        return 'avalon._createComponent(' +
                                 [copy[name],
                                     jsonfy(copy),
                                     '__vmodel__', '__local__'

@@ -33,9 +33,9 @@
         <h1>soleSlot的使用</h1>
         <p>它会组件容器中innerHTML替换生成组件的slot元素</p>
         <div ms-controller='widget1' >
-            <xmp :widget="{is:'ms-button'}" :click="@ddd" :attr="{title:@bb}">{{@bb}}</xmp>
-            <xmp :widget="{is:'ms-button'}" :attr="{title:@bb}">静态内容</xmp>
-            <xmp :widget="{is:'ms-button'}" :attr="{title:@bb}"></xmp><!--这里会使用默认内容 -->
+            <xmp is='ms-button' :click="@ddd" :attr="{title:@bb}">{{@bb}}</xmp>
+            <xmp is='ms-button' :attr="{title:@bb}">静态内容</xmp>
+            <xmp is='ms-button' :attr="{title:@bb}"></xmp><!--这里会使用默认内容 -->
             <xmp :widget="[{is:'ms-button'}, @aaa]" :attr="{title:@bb}"></xmp><!--使用@aaa-->
             <p><button :click="@click">click</button></p>
         </div>

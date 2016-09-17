@@ -3,19 +3,37 @@
     <head>
         <meta charset="UTF-8">
         <title>Document</title>
-        <script type="text/javascript" src="../dist/1.4.js"></script>
+        <script type="text/javascript" src="../dist/avalon.js"></script>
     </head>
     <body>
-        <div ms-controller="test">
-         
-            <p><input ms-duplex="aaa" />{{aaa}}</p>
+        <div ms-controller='widget1' >
+            <xmp ms-widget="{is:'ms-button',aa:@kk}" ms-attr="{title: @aa}">{{@bb}}</xmp>
+
+            <p><button :click="@click">click</button></p>
         </div>
         <script type="text/javascript">
-            var vm = avalon.define({
-                $id: 'test',
-                arr: [1,2,3],
-                aaa: 222
-            })
+           
+//           
+avalon.component('ms-button', {
+    template: '<button type="button" ><span><slot /></span></button>',
+    defaults: {
+        buttonText: "button",
+        onReady: function(){
+            console.log('333')
+        }
+    },
+    soleSlot: 'buttonText'
+})
+vm = avalon.define({
+    $id: 'widget1',
+    aa: 111,
+    kk: 77,
+    aaa: {
+        buttonText: "vm中的值"
+    },
+    bb: '动态内容'
+})
+
         </script>
     </body>
 </html>

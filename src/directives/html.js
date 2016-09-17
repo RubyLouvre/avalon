@@ -1,7 +1,6 @@
 var update = require('./_update')
-//var reconcile = require('../strategy/reconcile')
 
-avalon.renderChildren = function (fn, vmodel, local) {
+avalon._createChildren = function (fn, vmodel, local) {
     var text = fn() + ''
     if (!avalon.caches[text]) {
         var oldTree = avalon.variant(avalon.lexer(text))
@@ -13,7 +12,6 @@ avalon.renderChildren = function (fn, vmodel, local) {
     delete avalon.spath
     var vtree = render(vmodel, local)
     avalon.spath = s
-
     vtree.text = text
     return vtree
 }
@@ -21,7 +19,7 @@ avalon.directive('html', {
     parse: function (copy, src, binding) {
         //将渲染函数的某一部分存起来,渲在c方法中转换为函数
         copy[binding.name] = 1
-        copy.children = 'avalon.renderChildren(' + [avalon.parseExpr(binding), '__vmodel__', '__local__'] + ')'
+        copy.children = 'avalon._createChildren(' + [avalon.parseExpr(binding), '__vmodel__', '__local__'] + ')'
     },
     diff: function (copy, src, name) {
         if (copy.children.text !== src.text) {

@@ -1,8 +1,8 @@
 
 
 var update = require('../directives/_update')
-require('./create')
 avalon._deepEqual = require('./deepEqual')
+avalon._createComponent = require('./create')
 avalon._disposeComponent = require('./dispose')
 
 avalon.component = function (name, definition) {

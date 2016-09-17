@@ -5,7 +5,7 @@ var rguide = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
 var unresolvedText = 'unresolved component placeholder'
 var componentEvents = {onInit: 1, onReady: 1, onViewChange: 1, onDispose: 1}
 
-avalon.createComponent = function (fn, copy, vmodel, local) {
+module.exports = function createComponent(fn, copy, vmodel, local) {
     var spath = avalon.spath
     var data = fn()
     var comment = [{
