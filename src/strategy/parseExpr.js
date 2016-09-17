@@ -38,7 +38,9 @@ function parseExpr(binding) {
     input = input.replace(rshortCircuit, dig).//移除所有短路运算符
             replace(ruselessSp, '$1').//移除.|两端空白
             replace(rguide, '$1__vmodel__.').//转换@与##
-            replace(/[\$\w]+\s*:/, dig).
+            replace(/\b[\$\w]+\s*:/g, function(a){
+                return dig(a)+' '
+            }).
             replace(/\|(\w+)/g, function (a, b) {//移除所有过滤器的名字
                 return '|' + dig(b)
             }).
@@ -51,7 +53,8 @@ function parseExpr(binding) {
     //处理过滤器
     var filters = input.split(rpipeline)
     var _body = filters.shift()
-    var body = _body.replace(rfill, fill).trim()
+    var body = _body.replace(rfill, fill)
+          //  .replace(rfill, fill)//这里必须fix 两次
     if (category === 'js') {
         //<!--ms-js:xxx-->指令不存在过滤器,并且只需要替换@与##
         return cacheData(binding, body, paths, locals)
@@ -65,8 +68,8 @@ function parseExpr(binding) {
                 }
                 return ''
             }).replace(rfill, fill)
-            return filter.replace(/^(\w+)/, '__value__ =  avalon.__format__("$1")') +
-                    bracketArgs + ')'
+            return (filter.replace(/^(\w+)/, '__value__ =  avalon.__format__("$1")') +
+                    bracketArgs + ')')
         })
     }
 
@@ -125,7 +128,7 @@ function parseExpr(binding) {
         ret = [
             'function (){',
             'try{',
-            'var __value__ = ' + body,
+            'var __value__ = ' + body.replace(rfill, fill),
             (category === 'text' ?
                     'return avalon.parsers.string(__value__)' :
                     'return __value__'),
