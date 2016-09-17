@@ -40,13 +40,12 @@ module.exports = function createComponent(fn, copy, vmodel, local) {
     }
     var scope = avalon.scopes[id]
     if (scope) {
-
         if (!updateData(data, scope, vmodel, local)) {
             return [{nodeName: 'x', skipContent: 1}]
         }
         var vm = scope.vmodel
     } else {
-        var template = copy.template
+        var template = copy.template || ''
         var definition = avalon.components[is]
         //如果连组件的定义都没有加载回来,应该立即返回 
         /* istanbul ignore if */
@@ -112,6 +111,7 @@ module.exports = function createComponent(fn, copy, vmodel, local) {
         if (avalon.vmodels[id]) {
             delete avalon.vmodels[id]
         }
+
         data.$id = id
         var vm = avalon.define(data)
         //绑定组件的生命周期钩子
@@ -129,7 +129,7 @@ module.exports = function createComponent(fn, copy, vmodel, local) {
         avalon.scopes[id] = {
             vmodel: vm,
             copy: copy,
-            top:  vmodel,
+            top: vmodel,
             slotData: slotData
         }
 
@@ -292,7 +292,8 @@ function collectSlots(node, soleSlot) {
 function isComponentReady(vnode) {
     var isReady = true
     try {
-        hasUnresolvedComponent(vnode)
+        if (vnode.children)
+            hasUnresolvedComponent(vnode)
     } catch (e) {
         isReady = false
     }

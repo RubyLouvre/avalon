@@ -16,7 +16,7 @@ avalon.directive('duplex', {
     priority: 2000,
     parse: function (copy, src, binding) {
         var expr = binding.expr
-        var debug = binding.name +'='+ expr
+        var debug = binding.name + '=' + expr
         var etype = src.props.type
         //处理数据转换器
         var parsers = binding.param, dtype
@@ -82,13 +82,10 @@ avalon.directive('duplex', {
                 }) + '}'
     },
     diff: function (copy, src) {
-        if (!src.dynamic[duplexDir]) {
-            //第一次为原始虚拟DOM添加duplexData
-            var data = src[duplexDir] = copy[duplexDir]
-            data.parse = parseValue
-        } else {
-            data = src[duplexDir]
-        }
+        var raw = copy[duplexDir]
+        var data = typeof raw === 'function' ? raw() : raw
+        data.parse = parseValue
+        src[duplexDir] = data
         if (copy !== src) {//释放内存
             copy[duplexDir] = null
         }
@@ -117,15 +114,20 @@ avalon.directive('duplex', {
     },
     update: function (dom, vdom) {
         if (dom && dom.nodeType === 1) {
+                //vdom.dynamic变成字符串{}
             vdom.dynamic[duplexDir] = 1
+            var newData = vdom[duplexDir]
             if (!dom.__ms_duplex__) {
-                dom.__ms_duplex__ = avalon.mix(vdom[duplexDir], {dom: dom})
+                dom.__ms_duplex__ = newData
+                newData.dom = dom
                 //绑定事件
                 updateModelByEvent(dom, vdom)
                 //添加验证
                 addValidateField(dom, vdom)
             }
             var data = dom.__ms_duplex__
+            data.value = newData.value
+            data.arayHack = newData.arayHack
             data.dom = dom
             //如果不支持input.value的Object.defineProperty的属性支持,
             //需要通过轮询同步, chrome 42及以下版本需要这个hack

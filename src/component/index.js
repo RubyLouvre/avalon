@@ -4,7 +4,7 @@ var update = require('../directives/_update')
 avalon._deepEqual = require('./deepEqual')
 avalon._createComponent = require('./create')
 avalon._disposeComponent = require('./dispose')
-
+//树与弹出层
 avalon.component = function (name, definition) {
     //这是定义组件的分支,并将列队中的同类型对象移除
     /* istanbul ignore if */
@@ -34,18 +34,30 @@ avalon.directive('widget', {
         } else {
             component.dom = src.dom
         }
+       
         var vmodel = component[identify]
         var is = component.props.is
         //如果
-        var changeNodeName = src.nodeName !== component.nodeName
+        var scope = avalon.scopes[vmodel.$id]
+        var props = src.props || {}
+        var changeNodeName = component.nodeName !== src.nodeName
         if (changeNodeName) {
+            // 标签类型不一样, 比如
+            // 由组件容器的ms-button, xmp 变成 button
+            // 或由ms-if注释或unresolved注释 变成 button
             component.cached = src.dom
             srcList[index] = component
             for (var i in src) {
                 delete src[i]
             }
         }
-        var scope = avalon.scopes[vmodel.$id]
+    
+        var cached = vmodel.$element
+        if(props.cached && cached && cached !== src.dom){
+            //真实节点不一样(使用了路由的情况)
+            component.cached = cached
+            changeNodeName = true   
+        }
         src[identify]= vmodel
         scope.onViewChange = onViewChange
         if (!scope.init) {
@@ -54,7 +66,7 @@ avalon.directive('widget', {
                 vmodel: vmodel,
                 is: is
             })
-            scope.init = 1
+            scope.init = true
             update(component, function (dom, vdom, parent) {
                 vmodel.$fire('onReady', {
                     type: 'ready',
