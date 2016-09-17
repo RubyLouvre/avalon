@@ -3298,8 +3298,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		
 
 		var update = __webpack_require__(39)
-		__webpack_require__(111)
 		avalon._deepEqual = __webpack_require__(110)
+		avalon._createComponent = __webpack_require__(111)
 		avalon._disposeComponent = __webpack_require__(64)
 
 		avalon.component = function (name, definition) {
@@ -3315,11 +3315,12 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		    }
 		}
+		var identify = 'ms-widget'
 		avalon.directive('widget', {
 		    priority: 4,
 		    parse: function (copy, src, binding) {
 		        //将渲染函数的某一部分存起来,渲在c方法中转换为函数
-		        copy[binding.name] = avalon.parseExpr(binding)
+		        copy[identify] = avalon.parseExpr(binding)
 		        copy.template = src.template
 		    },
 		    diff: function (copy, src, srcList, index) {
@@ -3330,18 +3331,20 @@ return /******/ (function(modules) { // webpackBootstrap
 		        } else {
 		            component.dom = src.dom
 		        }
-		        var vmodel = component['ms-widget']
+		        var vmodel = component[identify]
 		        var is = component.props.is
 		        //如果
 		        var changeNodeName = src.nodeName !== component.nodeName
 		        if (changeNodeName) {
 		            component.cached = src.dom
 		            srcList[index] = component
-		            for(var i in src){
+		            for (var i in src) {
 		                delete src[i]
 		            }
 		        }
 		        var scope = avalon.scopes[vmodel.$id]
+		        src[identify]= vmodel
+		        scope.onViewChange = onViewChange
 		        if (!scope.init) {
 		            vmodel.$fire('onInit', {
 		                type: 'init',
@@ -3377,7 +3380,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    },
 		    mountComponent: function (dom, vdom, parent) {
 		        delete vdom.dom
-		        var vm = vdom.vmodel
+		        var vm = vdom[identify]
 		        var com = avalon.vdom(vdom, 'toDOM')
 		        parent.replaceChild(com, dom)
 		        vdom.dom = vm.$element = com
@@ -3395,7 +3398,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		function onViewChange(dom, vdom) {
 		    var is = vdom.props.is
-		    var vm = vdom.vmodel
+		    var vm = vdom[identify]
 		    //数据变动,界面肯定变动,因此不再需要比较innerHTML
 		    var event = {
 		        type: 'viewchange',
@@ -3404,6 +3407,10 @@ return /******/ (function(modules) { // webpackBootstrap
 		        is: is
 		    }
 		    vm.$fire('onViewChange', event)
+		    var topvm = avalon.scopes[vm.$id].top
+		    if (topvm && topvm !== vm) {
+		        topvm.$fire('onViewChange', event)
+		    }
 		}
 
 
@@ -4531,11 +4538,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		    avalon.diff(copy, source)
 		   
 		    delete avalon.spath
-		    if (scope.onViewChange) {
-		        var vdom = source[0]
-		        scope.onViewChange(vdom.dom, vdom)
-		    }
-
 
 		    var index = needRenderIds.indexOf(renderingID)
 		    renderingID = 0
@@ -4912,7 +4914,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                            avalon.error(tag + '标签不能做组件容器')
 		                        }
 		                        copy.props.wid = vdom.props.wid
-		                        return 'avalon.createComponent(' +
+		                        return 'avalon._createComponent(' +
 		                                [copy[name],
 		                                    jsonfy(copy),
 		                                    '__vmodel__', '__local__'
@@ -7854,7 +7856,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		var unresolvedText = 'unresolved component placeholder'
 		var componentEvents = {onInit: 1, onReady: 1, onViewChange: 1, onDispose: 1}
 
-		avalon.createComponent = function (fn, copy, vmodel, local) {
+		module.exports = function createComponent(fn, copy, vmodel, local) {
 		    var spath = avalon.spath
 		    var data = fn()
 		    var comment = [{
@@ -7889,12 +7891,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		    }
 		    var scope = avalon.scopes[id]
 		    if (scope) {
-		        var vm = scope.vmodel
+
 		        if (!updateData(data, scope, vmodel, local)) {
 		            return [{nodeName: 'x', skipContent: 1}]
-		        } else {
-		            return vm.$render(vm, scope.local)
 		        }
+		        var vm = scope.vmodel
 		    } else {
 		        var template = copy.template
 		        var definition = avalon.components[is]
@@ -7963,7 +7964,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            delete avalon.vmodels[id]
 		        }
 		        data.$id = id
-		        vm = avalon.define(data)
+		        var vm = avalon.define(data)
 		        //绑定组件的生命周期钩子
 		        for (var e in componentEvents) {
 		            hooks[e].forEach(function (fn) {
@@ -7979,13 +7980,16 @@ return /******/ (function(modules) { // webpackBootstrap
 		        avalon.scopes[id] = {
 		            vmodel: vm,
 		            copy: copy,
+		            top:  vmodel,
 		            slotData: slotData
 		        }
-		        delete avalon.spath
-		        var ret = vm.$render(vm, local)
-		        avalon.spath = spath
-		        return ret
+
 		    }
+
+		    delete avalon.spath
+		    var ret = vm.$render(vm, local)
+		    avalon.spath = spath
+		    return ret
 		}
 
 
@@ -8010,7 +8014,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        if (isSameData) {
 		            isSameData = avalon._deepEqual(oldSlot, newSlot)
 		            if (!isSameData) {
-		                avalon.log('slot数据不一致,更新', is, '组件',vm.$id)
+		                avalon.log('slot数据不一致,更新', is, '组件', vm.$id)
 		            }
 		        } else {
 		            avalon.log('ms-widget数据不一致,更新', is, '组件')
@@ -8065,7 +8069,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		        insertSlots(vtree, slots)
 		        if (isComponentReady(component)) {
 		            component.props.wid = vmodel.$id
-		            component.vmodel = vmodel
 		            component.copy = local
 		            component.dynamic = {}
 		            component['ms-widget'] = vmodel

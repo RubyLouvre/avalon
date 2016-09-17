@@ -18,11 +18,12 @@ avalon.component = function (name, definition) {
         }
     }
 }
+var identify = 'ms-widget'
 avalon.directive('widget', {
     priority: 4,
     parse: function (copy, src, binding) {
         //将渲染函数的某一部分存起来,渲在c方法中转换为函数
-        copy[binding.name] = avalon.parseExpr(binding)
+        copy[identify] = avalon.parseExpr(binding)
         copy.template = src.template
     },
     diff: function (copy, src, srcList, index) {
@@ -33,18 +34,20 @@ avalon.directive('widget', {
         } else {
             component.dom = src.dom
         }
-        var vmodel = component['ms-widget']
+        var vmodel = component[identify]
         var is = component.props.is
         //如果
         var changeNodeName = src.nodeName !== component.nodeName
         if (changeNodeName) {
             component.cached = src.dom
             srcList[index] = component
-            for(var i in src){
+            for (var i in src) {
                 delete src[i]
             }
         }
         var scope = avalon.scopes[vmodel.$id]
+        src[identify]= vmodel
+        scope.onViewChange = onViewChange
         if (!scope.init) {
             vmodel.$fire('onInit', {
                 type: 'init',
@@ -80,7 +83,7 @@ avalon.directive('widget', {
     },
     mountComponent: function (dom, vdom, parent) {
         delete vdom.dom
-        var vm = vdom.vmodel
+        var vm = vdom[identify]
         var com = avalon.vdom(vdom, 'toDOM')
         parent.replaceChild(com, dom)
         vdom.dom = vm.$element = com
@@ -98,7 +101,7 @@ avalon.directive('widget', {
 
 function onViewChange(dom, vdom) {
     var is = vdom.props.is
-    var vm = vdom.vmodel
+    var vm = vdom[identify]
     //数据变动,界面肯定变动,因此不再需要比较innerHTML
     var event = {
         type: 'viewchange',
@@ -107,6 +110,10 @@ function onViewChange(dom, vdom) {
         is: is
     }
     vm.$fire('onViewChange', event)
+    var topvm = avalon.scopes[vm.$id].top
+    if (topvm && topvm !== vm) {
+        topvm.$fire('onViewChange', event)
+    }
 }
 
 

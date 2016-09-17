@@ -40,12 +40,11 @@ module.exports = function createComponent(fn, copy, vmodel, local) {
     }
     var scope = avalon.scopes[id]
     if (scope) {
-        var vm = scope.vmodel
+
         if (!updateData(data, scope, vmodel, local)) {
             return [{nodeName: 'x', skipContent: 1}]
-        } else {
-            return vm.$render(vm, scope.local)
         }
+        var vm = scope.vmodel
     } else {
         var template = copy.template
         var definition = avalon.components[is]
@@ -114,7 +113,7 @@ module.exports = function createComponent(fn, copy, vmodel, local) {
             delete avalon.vmodels[id]
         }
         data.$id = id
-        vm = avalon.define(data)
+        var vm = avalon.define(data)
         //绑定组件的生命周期钩子
         for (var e in componentEvents) {
             hooks[e].forEach(function (fn) {
@@ -130,13 +129,16 @@ module.exports = function createComponent(fn, copy, vmodel, local) {
         avalon.scopes[id] = {
             vmodel: vm,
             copy: copy,
+            top:  vmodel,
             slotData: slotData
         }
-        delete avalon.spath
-        var ret = vm.$render(vm, local)
-        avalon.spath = spath
-        return ret
+
     }
+
+    delete avalon.spath
+    var ret = vm.$render(vm, local)
+    avalon.spath = spath
+    return ret
 }
 
 
@@ -161,7 +163,7 @@ function updateData(data, scope, vmodel, local) {
         if (isSameData) {
             isSameData = avalon._deepEqual(oldSlot, newSlot)
             if (!isSameData) {
-                avalon.log('slot数据不一致,更新', is, '组件',vm.$id)
+                avalon.log('slot数据不一致,更新', is, '组件', vm.$id)
             }
         } else {
             avalon.log('ms-widget数据不一致,更新', is, '组件')
@@ -216,7 +218,6 @@ function getRender(slotRender, defineRender, soleSlot) {
         insertSlots(vtree, slots)
         if (isComponentReady(component)) {
             component.props.wid = vmodel.$id
-            component.vmodel = vmodel
             component.copy = local
             component.dynamic = {}
             component['ms-widget'] = vmodel

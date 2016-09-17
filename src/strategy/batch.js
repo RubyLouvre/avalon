@@ -40,11 +40,6 @@ function batchUpdate(id, spath) {
     avalon.diff(copy, source)
    
     delete avalon.spath
-    if (scope.onViewChange) {
-        var vdom = source[0]
-        scope.onViewChange(vdom.dom, vdom)
-    }
-
 
     var index = needRenderIds.indexOf(renderingID)
     renderingID = 0

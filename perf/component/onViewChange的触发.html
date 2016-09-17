@@ -9,7 +9,7 @@
                 return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
                         replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
             }
-           
+
             avalon.component('ms-select', {
                 template: heredoc(function () {
                     /*
@@ -30,8 +30,8 @@
                     onReady: function () {
                         console.log('onReady')
                     },
-                    onViewChange: function () {
-                        console.log('onViewChange')
+                    onViewChange: function (e) {
+                        console.log('onViewChange', e.is)
                     },
                     onDispose: function () {
                         console.log('onDispose')
@@ -49,7 +49,6 @@
                 dd: '22',
                 cc: "555",
                 click: function () {
-                    console.log('---')
                     avalon.clearHTML(document.body)
                 }
             })
