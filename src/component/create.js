@@ -29,7 +29,7 @@ avalon.createComponent = function (fn, copy, vmodel, local) {
     var is = maybeIs || data.is
     copy.props.is = is
     var id = data.id || data.$id
-    if (local.$key) {
+    if (local.$key && !id) {
         avalon.warn('组件在ms-for循环内部必须在ms-widget配置对象中指定不重复的id\n' +
                 '如 ms-widget="{id:\'btn\'+$index}')
         return comment
@@ -60,7 +60,7 @@ avalon.createComponent = function (fn, copy, vmodel, local) {
             var shell = avalon.lexer(template)
             avalon.variant(shell)
             shell[0].props.is = is
-            avalon.caches[templateID] = avalon.render(shell, copy.local)
+            avalon.caches[templateID] = avalon.render(shell, local)
         }
         //生成内部的渲染函数
         if (!definition.render) {
@@ -111,7 +111,6 @@ avalon.createComponent = function (fn, copy, vmodel, local) {
                 })
 
         if (avalon.vmodels[id]) {
-            avalon.vmodels[id]
             delete avalon.vmodels[id]
         }
         data.$id = id
@@ -134,9 +133,9 @@ avalon.createComponent = function (fn, copy, vmodel, local) {
             slotData: slotData
         }
         delete avalon.spath
-        var a = vm.$render(vm, copy)
+        var ret = vm.$render(vm, local)
         avalon.spath = spath
-        return a
+        return ret
     }
 }
 
@@ -162,7 +161,6 @@ function updateData(data, scope, vmodel, local) {
         if (isSameData) {
             isSameData = avalon._deepEqual(oldSlot, newSlot)
             if (!isSameData) {
-                console.log(oldSlot, newSlot)
                 avalon.log('slot数据不一致,更新', is, '组件',vm.$id)
             }
         } else {
@@ -216,7 +214,6 @@ function getRender(slotRender, defineRender, soleSlot) {
                 }]
         }
         insertSlots(vtree, slots)
-        //console.log(component.nodeName )
         if (isComponentReady(component)) {
             component.props.wid = vmodel.$id
             component.vmodel = vmodel
