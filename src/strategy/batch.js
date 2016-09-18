@@ -32,7 +32,6 @@ function batchUpdate(id) {
         delete avalon.scopes[id]
     }
     
-  
     avalon.diff(copy, source)
     
  
@@ -48,7 +47,5 @@ function batchUpdate(id) {
         batchUpdate(more)
     }
 }
-
-
 
 module.exports = avalon.batch = batchUpdate

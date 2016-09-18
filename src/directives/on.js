@@ -25,7 +25,7 @@ avalon.directive('on', {
         var quoted = avalon.quote(uuid)
         var fn = '(function(){\n' +
                 'var fn610 = ' +
-                avalon.parseExpr(binding, 'on') +
+                avalon.parseExpr(binding) +
                 '\nfn610.uuid =' + quoted + ';\nreturn fn610})()'
         copy.vmodel = '__vmodel__'
         copy.local = '__local__'

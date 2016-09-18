@@ -6,9 +6,9 @@
  * ------------------------------------------------------------
  */
 var avalon = require('../seed/core')
-
+var clearString = require('./clearString')
 var voidTag = require('./voidTag')
-var addTbody = require('./parser/addTbody')
+var addTbody = require('./addTbody')
 var variantSpecial = require('./variantSpecial')
 var specialTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
 
@@ -27,7 +27,7 @@ module.exports = makeNode
 
 function makeNode(str) {
     stringPool = {}
-    str = clearString(str)
+    str = clearString(str, dig)
     var stack = []
     stack.last = function () {
         return  stack[stack.length - 1]
@@ -82,7 +82,7 @@ function makeNode(str) {
 
                 var attrs = match[2]
                 if (attrs) {
-                    collectProps(attrs, node.props)
+                    makeProps(attrs, node.props)
                 }
                 makeChildren(node, stack, ret)
                 str = str.slice(match[0].length)
@@ -170,9 +170,9 @@ function makeChildren(node, stack, ret) {
     }
 }
 
-var rlineSp = /\n\s*/g
+var rlineSp = /[\n\r]s*/g
 var rattrs = /([^=\s]+)(?:\s*=\s*(\S+))?/
-function collectProps(attrs, props) {
+function makeProps(attrs, props) {
     while (attrs) {
         var arr = rattrs.exec(attrs)
         if (arr) {
@@ -201,42 +201,6 @@ function collectProps(attrs, props) {
 function nomalString(str) {
     return avalon.unescapeHTML(str.replace(rfill, fill))
 }
-
-function clearString(str) {
-    var array = readString(str)
-    for (var i = 0, n = array.length; i < n; i++) {
-        str = str.replace(array[i], dig)
-    }
-    return str
-}
-
-function readString(str) {
-    var end, s = 0
-    var ret = []
-    for (var i = 0, n = str.length; i < n; i++) {
-        var c = str.charAt(i)
-        if (!end) {
-            if (c === "'") {
-                end = "'"
-                s = i
-            } else if (c === '"') {
-                end = '"'
-                s = i
-            }
-        } else {
-            if (c === '\\') {
-                i += 1
-                continue
-            }
-            if (c === end) {
-                ret.push(str.slice(s, i + 1))
-                end = false
-            }
-        }
-    }
-    return ret
-}
-
 
 function dig(a) {
     var key = '??' + number++

@@ -33,8 +33,8 @@ function diff(copys, sources) {
             case '#comment':
                 if (copy.forExpr) {//比较循环区域的元素位置
                     directives['for'].diff(copy, src, copys, sources, i)
-                } else if (src.afterChange) {
-                    execHooks(src, src.afterChange)
+                } else if (copy.afterChange) {
+                    execHooks(src, copy.afterChange)
                 }
                 break
             case void(0):

@@ -59,7 +59,7 @@ avalon.directive('duplex', {
         }
 
         var changed = copy.props['data-duplex-changed']
-        var get = avalon.parseExpr(binding, 'duplex')// 输出原始数据
+        var get = avalon.parseExpr(binding)// 输出原始数据
         var quoted = parsers.map(function (a) {
             return avalon.quote(a)
         })
@@ -75,7 +75,7 @@ avalon.directive('duplex', {
             debounceTime: debounceTime, //这个决定同步的频数
             get: get, 
             set: avalon.evaluatorPool.get('duplex:set:' + expr),
-            callback: changed ? avalon.parseExpr(changed, 'on') : 'avalon.noop'
+            callback: changed ? avalon.parseExpr({expr: changed, type: 'on'}) : 'avalon.noop'
         })
     },
     diff: function (copy, src) {

@@ -25,6 +25,8 @@ var feather = heredoc(function () {
        即<xmp :widget="{is:'ms-button'}"></xmp> -->
         <xmp is="ms-button"></xmp>
     简化attr指令的实现,其diff逻辑与css指令的diff一样,直接用css指令的
+    一劳永逸解决IE6-8下VBS属性重复定义抛错的BUG
+    新的 jsparser
      */
 })
 fs.writeFileSync('./src/seed/core.js', text, 'utf8')

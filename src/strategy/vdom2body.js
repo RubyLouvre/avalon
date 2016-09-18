@@ -2,9 +2,8 @@
  * 本模块是用于将虚拟DOM变成一个函数
  */
 
-var extractBindings = require('./parser/extractBindings')
+var extractBindings = require('./extractBindings')
 var stringify = require('./parser/stringify')
-var parseExpr = require('./parser/parseExpr')
 var config = avalon.config
 var quote = avalon.quote
 var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
@@ -82,7 +81,10 @@ function parseNode(vdom) {
                         }) + '\n'
                 return ''
             } else if (nodeValue.indexOf('ms-js:') === 0) {//插入JS声明语句
-                var statement = parseExpr(nodeValue.replace('ms-js:', ''), 'js') + '\n'
+                var statement = avalon.parseExpr({
+                    type: 'js',
+                    expr:nodeValue.replace('ms-js:', '')
+                }) + '\n'
                 var ret = addTag(vdom)
                 var match = statement.match(rstatement)
                 if (match && match[1]) {
@@ -161,7 +163,10 @@ function parseNode(vdom) {
 module.exports = parseNodes
 
 function wrapDelimiter(expr) {
-    return rident.test(expr) ? expr : parseExpr(expr, 'text')
+    return rident.test(expr) ? expr : avalon.parseExpr({
+        expr: expr,
+        type: 'text'
+    })
 }
 
 function add(a) {
@@ -202,7 +207,7 @@ function extractExpr(str) {
             var value = str.slice(0, index)
             ret.push({
                 expr: avalon.unescapeHTML(value.replace(rlineSp, '')),
-                type: '{{}}'
+                type: 'text'
             })
             str = str.slice(index + config.closeTag.length)
         }

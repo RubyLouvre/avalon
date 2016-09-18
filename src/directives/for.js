@@ -46,7 +46,7 @@ function iterator(index, item, vars, fn, k1, k2, repeat, isArray) {
 
 avalon.directive('for', {
     priority: 3,
-    parse: function (copy, src, binding) {
+    parse: function (copy, src) {
         var str = src.forExpr, aliasAs
         str = str.replace(rforAs, function (a, b) {
             /* istanbul ignore if */
@@ -59,12 +59,16 @@ avalon.directive('for', {
         })
 
         var arr = str.split(' in ')
-        var getLoop = avalon.parseExpr(arr[1])
+        var binding = {
+            expr: arr[1].trim(),
+            type: 'for'
+        }
+        var getLoop = avalon.parseExpr(binding)
         var kv = (arr[0]+' traceKey __local__ vnodes').match(rargs)
         if (kv.length === 4) {//确保avalon._each的回调有三个参数
             kv.unshift('$key')
         }
-        src.$append = Array('var loop = (' + getLoop + ');',
+        src.$append = Array('var loop = ' + getLoop + ';',
                 'avalon._each(loop, function(' + kv + '){',
                 '__local__[' + avalon.quote(aliasAs || 'valueOf') + '] = loop',
                 'vnodes.push({',
@@ -83,10 +87,9 @@ avalon.directive('for', {
             }
         } 
 
-
         var srcRepeat = spList[index + 1]
         var curRepeat = cpList[index + 1]
-        var end = spList[index + 2]
+        var end = cpList[index + 2]
         //preRepeat不为空时
         var cache = src.cache || {}
         //for指令只做添加删除操作
