@@ -1,12 +1,13 @@
 
-var rmsForStart = /^\s*ms\-for\:/
+var rmsForStart = /^\s*ms\-for\:\s*/
 var rmsForEnd = /^\s*ms\-for\-end/
 var vdom2body = require('./vdom2body')
-avalon.speedUp = function (array) {
+
+module.exports = function (array) {
     hasDirectives(array)
     return array
 }
-
+//variantCommon
 var hasDirectives = function (arr) {
     var nodes = [], hasDir = false
     for (var i = 0; i < arr.length; i++) {
@@ -30,7 +31,7 @@ var hasDirectives = function (arr) {
             var uuid = start.signature || (start.signature = avalon.makeHashCode('for'))
             el.signature = uuid
 
-            start.forExpr = start.nodeValue.replace(/ms\-for:\s*/, '')
+            start.forExpr = start.nodeValue.replace(rmsForStart, '')
             if (old.length === 1) {
                 var element = old[0]
                 if (element.props) {

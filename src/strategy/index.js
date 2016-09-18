@@ -2,6 +2,8 @@
 avalon.lexer = require('./text2vdom')
 avalon.diff = require('./diff')
 avalon.batch = require('./batch')
+avalon.speedUp = require('./variantCommon')
+
 // dispatch与patch 为内置模块
 var vdom2body = require('./vdom2body')
 var rquoteEscapes = /\\\\(['"])/g

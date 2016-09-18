@@ -30,7 +30,7 @@ avalon.directive('controller', {
             'return __vmodel__ = vm',
             '}',
             '})();'
-        ].join('\n') 
+        ].join('\n')
 
         src.$prepend = '(function(__vmodel__){' + vmodel
         src.$append = '\n})(__vmodel__);'
@@ -74,6 +74,8 @@ avalon.directive('controller', {
         }
         update(vdom, function () {
             avalon(dom).removeClass('ms-controller')
+            dom.setAttribute('wid', id)
+            avalon._disposeComponent(dom)
             var events = needFire.$events["onReady"]
             if (events) {
                 needFire.$fire('onReady')

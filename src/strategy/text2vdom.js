@@ -7,11 +7,11 @@
  */
 var avalon = require('../seed/core')
 
-require('./optimize')
+//require('./optimize')
 var voidTag = require('./voidTag')
 var addTbody = require('./parser/addTbody')
-var fixPlainTag = require('./parser/fixPlainTag')
-var plainTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
+var variantSpecial = require('./variantSpecial')
+var specialTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
 
 var ropenTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
 var rendTag = /^<\/([^>]+)>/
@@ -19,7 +19,6 @@ var rendTag = /^<\/([^>]+)>/
 //判定里面有没有内容
 var rcontent = /\S/
 var rfill = /\?\?\d+/g
-var rlineSp = /\n\s*/g
 var rnowhite = /\S+/g
 var number = 1
 var stringPool = {}
@@ -57,7 +56,7 @@ function lexer(str) {
                 nodeValue: nodeValue
             }
             if (rcontent.test(nodeValue)) {
-                collectNodes(node, stack, ret)//不收集空白节点
+                makeChildren(node, stack, ret)//不收集空白节点
             }
         }
         if (!node) {
@@ -74,7 +73,7 @@ function lexer(str) {
                     nodeName: '#comment',
                     nodeValue: nodeValue
                 }
-                collectNodes(node, stack, ret)
+                makeChildren(node, stack, ret)
             }
 
         }
@@ -94,18 +93,18 @@ function lexer(str) {
                 if (attrs) {
                     collectProps(attrs, node.props)
                 }
-                collectNodes(node, stack, ret)
+                makeChildren(node, stack, ret)
                 str = str.slice(match[0].length)
                 if (isVoidTag) {
                     node.end = true
                 } else {
                     stack.push(node)
-                    if (plainTag[nodeName]) {
+                    if (specialTag[nodeName]) {
                         var index = str.indexOf('</' + nodeName + '>')
                         var innerHTML = str.slice(0, index).trim()
                         str = str.slice(index)
 
-                        fixPlainTag(node, nodeName, nomalString(innerHTML))
+                        variantSpecial(node, nodeName, nomalString(innerHTML))
 
                     }
                 }
@@ -174,7 +173,7 @@ function fixTbodyAndRepeat(node, stack, ret) {
 
 
 
-function collectNodes(node, stack, ret) {
+function makeChildren(node, stack, ret) {
     var p = stack.last()
     if (p) {
         p.children.push(node)
@@ -182,6 +181,8 @@ function collectNodes(node, stack, ret) {
         ret.push(node)
     }
 }
+
+var rlineSp = /\n\s*/g
 var rattrs = /([^=\s]+)(?:\s*=\s*(\S+))?/
 function collectProps(attrs, props) {
     while (attrs) {

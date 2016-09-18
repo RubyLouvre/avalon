@@ -1,5 +1,5 @@
 /*!
- * built in 2016-9-18:14 version 2.114 by 司徒正美
+ * built in 2016-9-18:16 version 2.114 by 司徒正美
  * npm 2.1.14
  *     修正 ms-important的BUG
  *     重构 escapeHTML与unescapeHTML方法
@@ -812,13 +812,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	})
-	/* istanbul ignore if*/
-	if(typeof performance !== 'undefined' && performance.now){
-	    avalon.makeHashCode = function (prefix) {
-	        prefix = prefix || 'avalon'
-	        return (prefix + performance.now()).replace('.', '')
-	    }
-	}
 
 	var UUID = 1
 	module.exports = {
@@ -1077,6 +1070,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function padNumber(num, digits, trim) {
 	    var neg = ''
+	    /* istanbul ignore if*/
 	    if (num < 0) {
 	        neg = '-'
 	        num = -num
@@ -1095,6 +1089,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (offset > 0 || value > -offset)
 	            value += offset
 	        if (value === 0 && offset === -12) {
+	            /* istanbul ignore next*/
 	            value = 12
 	        }
 	        return padNumber(value, size, trim)
@@ -2026,11 +2021,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    for (var attrName in attrs) {
 	        var val = attrs[attrName]
 	        // 处理路径属性
+	        /* istanbul ignore if*/
 	        if (attrName === 'href' || attrName === 'src') {
 	            if (!node.hasAttribute) {
 	                val = String(val).replace(ramp, '&') //处理IE67自动转义的问题
 	            }
 	            node[attrName] = val
+	            /* istanbul ignore if*/
 	            if (window.chrome && node.tagName === 'EMBED') {
 	                var parent = node.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
 	                var comment = document.createComment('ms-src')
@@ -2346,6 +2343,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function showHidden(node, array) {
 	    //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
+	    /* istanbul ignore if*/
 	    if (node.offsetWidth <= 0) { //opera.offsetWidth可能小于0
 	        if (rdisplayswap.test(cssHooks['@:get'](node, 'display'))) {
 	            var obj = {
@@ -2783,6 +2781,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //如果是使用bind方法绑定的回调,其uuid格式为_12
 	        var uuid = getShortID(fn)
 	        var hook = eventHooks[type]
+	        if(type === 'click' && avalon.modern && document.ontouchstart){
+	            elem.addEventListener('click',avalon.noop)
+	        }
 	        if (hook) {
 	            type = hook.type || type
 	            if (hook.fix) {
@@ -5713,19 +5714,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	        })
 
 	        var arr = str.split(' in ')
-	        var assign = 'var loop = ' + avalon.parseExpr(arr[1]) + ' \n'
-	        var alias = aliasAs ? 'var ' + aliasAs + ' = loop\n' : ''
-	        var kv = arr[0].match(rargs)
-
-	        if (kv.length === 1) {//确保avalon._each的回调有三个参数
+	        var getLoop = avalon.parseExpr(arr[1])
+	        var kv = (arr[0]+' traceKey __local__ vnodes').match(rargs)
+	        if (kv.length === 4) {//确保avalon._each的回调有三个参数
 	            kv.unshift('$key')
 	        }
-	        kv.push('traceKey', '__local__', 'vnodes')
-	        src.$append = assign + alias + 'avalon._each(loop,function('
-	                + kv.join(', ') + '){\n'
-	                + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
-	                + 'vnodes.push({\nnodeName: "#document-fragment",\nindex: arguments[0],\nkey: traceKey,\n' +
-	                'children: new function(){\n var vnodes = []\n'
+	        src.$append = Array('var loop = (' + getLoop + ');',
+	                'avalon._each(loop, function(' + kv + '){',
+	                '__local__[' + avalon.quote(aliasAs || 'valueOf') + '] = loop',
+	                'vnodes.push({',
+	                '\tnodeName: "#document-fragment",',
+	                '\tindex   : arguments[0],',
+	                '\tkey     : traceKey,',
+	                '\tchildren: new function(){\nvar vnodes = []\n').join('\n')
 
 	    },
 	    diff: function (copy, src, cpList, spList, index) {
@@ -5849,6 +5850,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (item.dom) {
 
 	                delete item.split
+	                /* istanbul ignore if*/
+	                /* istanbul ignore else*/
 	                if (vdom.hasEffect) {
 	                    !function (obj) {
 	                        var nodes = moveItem(obj)
@@ -5947,6 +5950,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var c = cache[id]
 	    if (c) {
 	        var arr = c.arr
+	        /* istanbul ignore if*/
 	        if (arr) {
 	            var r = arr.pop()
 	            if (!arr.length) {
@@ -6935,6 +6939,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        if (!node) {
 	            var i = str.indexOf('<!--')//处理注释节点
+	            /* istanbul ignore if*/
 	            if (i === 0) {
 	                var l = str.indexOf('-->')
 	                if (l === -1) {
@@ -6988,6 +6993,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (match) {
 	                var nodeName = match[1].toLowerCase()
 	                var last = stack.last()
+	                /* istanbul ignore if*/
+	                /* istanbul ignore else*/
 	                if (!last) {
 	                    avalon.error(match[0] + '前面缺少<' + nodeName + '>')
 	                } else if (last.nodeName !== nodeName) {
@@ -8625,6 +8632,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        value: 'x'
 	    })
 	} catch (e) {
+	    /* istanbul ignore next*/
 	    flag = false
 	}
 
@@ -8643,7 +8651,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var defineProperty
 
 	var expose = new Date() - 0
-
+	/* istanbul ignore if*/
 	if (!canHideProperty) {
 	    if ('__defineGetter__' in avalon) {
 	        defineProperty = function (obj, prop, desc) {
@@ -8667,6 +8675,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return obj
 	        }
 	    }
+	    /* istanbul ignore if*/
 	    if (avalon.msie) {
 	        var VBClassPool = {}
 	        window.execScript([// jshint ignore:line

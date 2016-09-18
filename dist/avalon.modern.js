@@ -1,5 +1,5 @@
 /*!
- * built in 2016-9-18:14 version 2.114 by 司徒正美
+ * built in 2016-9-18:16 version 2.114 by 司徒正美
  * npm 2.1.14
  *     修正 ms-important的BUG
  *     重构 escapeHTML与unescapeHTML方法
@@ -72,7 +72,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(98)
 	__webpack_require__(71)
 	__webpack_require__(103)
-	avalon.onComponentDispose = __webpack_require__(78)
+	avalon._disposeComponent = __webpack_require__(78)
 
 	module.exports = avalon
 
@@ -348,13 +348,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	})
-	/* istanbul ignore if*/
-	if(typeof performance !== 'undefined' && performance.now){
-	    avalon.makeHashCode = function (prefix) {
-	        prefix = prefix || 'avalon'
-	        return (prefix + performance.now()).replace('.', '')
-	    }
-	}
 
 	var UUID = 1
 	module.exports = {
@@ -613,6 +606,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function padNumber(num, digits, trim) {
 	    var neg = ''
+	    /* istanbul ignore if*/
 	    if (num < 0) {
 	        neg = '-'
 	        num = -num
@@ -631,6 +625,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (offset > 0 || value > -offset)
 	            value += offset
 	        if (value === 0 && offset === -12) {
+	            /* istanbul ignore next*/
 	            value = 12
 	        }
 	        return padNumber(value, size, trim)
@@ -3454,19 +3449,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	        })
 
 	        var arr = str.split(' in ')
-	        var assign = 'var loop = ' + avalon.parseExpr(arr[1]) + ' \n'
-	        var alias = aliasAs ? 'var ' + aliasAs + ' = loop\n' : ''
-	        var kv = arr[0].match(rargs)
-
-	        if (kv.length === 1) {//确保avalon._each的回调有三个参数
+	        var getLoop = avalon.parseExpr(arr[1])
+	        var kv = (arr[0]+' traceKey __local__ vnodes').match(rargs)
+	        if (kv.length === 4) {//确保avalon._each的回调有三个参数
 	            kv.unshift('$key')
 	        }
-	        kv.push('traceKey', '__local__', 'vnodes')
-	        src.$append = assign + alias + 'avalon._each(loop,function('
-	                + kv.join(', ') + '){\n'
-	                + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
-	                + 'vnodes.push({\nnodeName: "#document-fragment",\nindex: arguments[0],\nkey: traceKey,\n' +
-	                'children: new function(){\n var vnodes = []\n'
+	        src.$append = Array('var loop = (' + getLoop + ');',
+	                'avalon._each(loop, function(' + kv + '){',
+	                '__local__[' + avalon.quote(aliasAs || 'valueOf') + '] = loop',
+	                'vnodes.push({',
+	                '\tnodeName: "#document-fragment",',
+	                '\tindex   : arguments[0],',
+	                '\tkey     : traceKey,',
+	                '\tchildren: new function(){\nvar vnodes = []\n').join('\n')
 
 	    },
 	    diff: function (copy, src, cpList, spList, index) {
@@ -3590,6 +3585,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (item.dom) {
 
 	                delete item.split
+	                /* istanbul ignore if*/
+	                /* istanbul ignore else*/
 	                if (vdom.hasEffect) {
 	                    !function (obj) {
 	                        var nodes = moveItem(obj)
@@ -3688,6 +3685,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var c = cache[id]
 	    if (c) {
 	        var arr = c.arr
+	        /* istanbul ignore if*/
 	        if (arr) {
 	            var r = arr.pop()
 	            if (!arr.length) {
@@ -4676,6 +4674,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	        if (!node) {
 	            var i = str.indexOf('<!--')//处理注释节点
+	            /* istanbul ignore if*/
 	            if (i === 0) {
 	                var l = str.indexOf('-->')
 	                if (l === -1) {
@@ -4729,6 +4728,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            if (match) {
 	                var nodeName = match[1].toLowerCase()
 	                var last = stack.last()
+	                /* istanbul ignore if*/
+	                /* istanbul ignore else*/
 	                if (!last) {
 	                    avalon.error(match[0] + '前面缺少<' + nodeName + '>')
 	                } else if (last.nodeName !== nodeName) {
@@ -6332,7 +6333,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var attrs = vnode['ms-attr']
 	    for (var attrName in attrs) {
 	        var val = attrs[attrName]
-	        // switch
+	        /* istanbul ignore if*/
 	        if (attrName === 'src' && window.chrome && node.tagName === 'EMBED') {
 	            node[attrName] = val
 	            var parent = node.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
@@ -6504,6 +6505,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	function showHidden(node, array) {
 	    //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
+	    /* istanbul ignore if*/
 	    if (node.offsetWidth <= 0) { //opera.offsetWidth可能小于0
 	        var styles = getComputedStyle(node, null)
 	        if (rdisplayswap.test(styles["display"])) {
@@ -6564,6 +6566,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    avalon.fn[method] = function (value) { //会忽视其display
 	        var node = this[0]
+	        /* istanbul ignore if*/
+	        /* istanbul ignore else*/
 	        if (arguments.length === 0) {
 	            if (node.setTimeout) { //取得窗口尺寸,IE9后可以用node.innerWidth /innerHeight代替
 	                return node["inner" + name]
@@ -6735,8 +6739,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 	        //fix 移动端浏览器:click不触发的BUG
-	        if(type === 'click' && !elem.onclick){
-	            elem.onclick = ''
+	        if(type === 'click' && avalon.modern && document.ontouchstart){
+	            elem.addEventListener('click',avalon.noop)
 	        }
 	        var key = type + ':' + uuid
 	        avalon.eventListeners[fn.uuid] = fn

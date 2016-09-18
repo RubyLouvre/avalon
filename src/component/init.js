@@ -1,4 +1,5 @@
 var skipArray = require('../vmodel/parts/skipArray')
+avalon._disposeComponent = require('./dispose')
 
 var legalTags = {wbr: 1, xmp: 1, template: 1}
 var events = 'onInit,onReady,onViewChange,onDispose'

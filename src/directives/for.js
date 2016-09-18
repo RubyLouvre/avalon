@@ -59,19 +59,19 @@ avalon.directive('for', {
         })
 
         var arr = str.split(' in ')
-        var assign = 'var loop = ' + avalon.parseExpr(arr[1]) + ' \n'
-        var alias = aliasAs ? 'var ' + aliasAs + ' = loop\n' : ''
-        var kv = arr[0].match(rargs)
-
-        if (kv.length === 1) {//确保avalon._each的回调有三个参数
+        var getLoop = avalon.parseExpr(arr[1])
+        var kv = (arr[0]+' traceKey __local__ vnodes').match(rargs)
+        if (kv.length === 4) {//确保avalon._each的回调有三个参数
             kv.unshift('$key')
         }
-        kv.push('traceKey', '__local__', 'vnodes')
-        src.$append = assign + alias + 'avalon._each(loop,function('
-                + kv.join(', ') + '){\n'
-                + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
-                + 'vnodes.push({\nnodeName: "#document-fragment",\nindex: arguments[0],\nkey: traceKey,\n' +
-                'children: new function(){\n var vnodes = []\n'
+        src.$append = Array('var loop = (' + getLoop + ');',
+                'avalon._each(loop, function(' + kv + '){',
+                '__local__[' + avalon.quote(aliasAs || 'valueOf') + '] = loop',
+                'vnodes.push({',
+                '\tnodeName: "#document-fragment",',
+                '\tindex   : arguments[0],',
+                '\tkey     : traceKey,',
+                '\tchildren: new function(){\nvar vnodes = []\n').join('\n')
 
     },
     diff: function (copy, src, cpList, spList, index) {
