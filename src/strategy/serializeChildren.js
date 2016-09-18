@@ -96,9 +96,12 @@ function serializeElement(vdom, skip) {
                 directives[binding.type].parse(copy, vdom, binding)
                 if (typeof copy[name] === 'string') {
                     //如果存在局部变量,我们无法对它进行依赖检测,只能统统执行
-                    var untraceable = !!binding.locals
-                    var paths = alwaysDynamic[name] || untraceable ? '' : binding.paths
-                    dirs.push(avalon.quote(paths), avalon.quote(name), copy[name])
+                    if (!alwaysDynamic[name]) {
+                        var untraceable = !!binding.locals
+                        var paths = untraceable ? '' : binding.paths
+                        dirs.push(avalon.quote(paths), avalon.quote(name), copy[name])
+                    }
+
                     if (name === 'ms-widget') {
                         var tag = vdom.nodeName
                         if (!legalTags[tag] && !isCustomTag(tag)) {
@@ -106,7 +109,7 @@ function serializeElement(vdom, skip) {
                         }
                         copy.props.wid = vdom.props.wid
                         return 'avalon._createComponent(' +
-                                [copy[name],
+                                [avalon.parseExpr(binding),
                                     jsonfy(copy),
                                     '__vmodel__', '__local__'
                                 ].join(',\n') + ')[0]'

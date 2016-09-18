@@ -137,6 +137,7 @@ module.exports = function createComponent(fn, copy, vmodel, local) {
 
     delete avalon.spath
     var ret = vm.$render(vm, local)
+    //console.log(vm.$render+"")
     avalon.spath = spath
     return ret
 }
@@ -173,10 +174,18 @@ function updateData(data, scope, vmodel, local) {
         var hash = vm.$hashcode
         vm.$hashcode = false //防止视图刷新
         //更新数据
+        delete data.id
+        delete data.is
         for (var i in data) {
+            if(vm[i] !== data[i]){
+                console.log(i, data[i])
+            }
             vm[i] = data[i]
         }
         for (var i in newSlot) {
+            if(vm[i] !== newSlot[i]){
+                console.log(i, newSlot[i])
+            }
             vm[i] = newSlot[i]
         }
         scope.local = local
@@ -219,9 +228,12 @@ function getRender(slotRender, defineRender, soleSlot) {
         if (isComponentReady(component)) {
             component.props.wid = vmodel.$id
             component.copy = local
+            var scope = avalon.scopes[vmodel.$id]
+            component.vmodel = scope.top
             component.dynamic = {}
             component['ms-widget'] = vmodel
             delete component.skipContent
+            console.log(component)
             return vtree
         } else {
             return  [{

@@ -102,7 +102,6 @@ avalon.directive('widget', {
         }
         //生成组件的虚拟DOM
         var vtree = comVm.$render(comVm, local)
-                    console.log(avalon.vdom(vtree, 'toHTML'))
 
         var component = vtree[0]
         copyList[index] = component

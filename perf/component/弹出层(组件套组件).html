@@ -27,13 +27,12 @@
             avalon.component('ms-button', {
                 template: '<button type="button"><span><slot /></span></button>',
                 defaults: {
-                    buttonText: "button",
-                    isShow: false
+                    buttonText: "button"
                 },
                 soleSlot: 'buttonText'
             })
             avalon.component('ms-title', {
-                template: '<p class="title"><slot /><span style="float:right">X</span></p>',
+                template: '<strong class="title"><slot /><span style="float:right">X</span></strong>',
                 defaults: {
                     title: "标题"
                 },
@@ -67,7 +66,6 @@
                     },
                     cbProxy: function (ok) {
                         var cbName = ok ? 'onConfirm' : 'onClose'
-
                         if (this.hasOwnProperty(cbName)) {
                             var ret = this[cbName]()
                             if (ret !== false || (ret && typeof ret.next === 'function')) {

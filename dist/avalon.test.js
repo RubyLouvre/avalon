@@ -3320,7 +3320,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		    priority: 4,
 		    parse: function (copy, src, binding) {
 		        //将渲染函数的某一部分存起来,渲在c方法中转换为函数
-		        copy[identify] = avalon.parseExpr(binding)
+		        copy[identify] = '1'
 		        copy.template = src.template
 		    },
 		    diff: function (copy, src, srcList, index) {
@@ -3688,6 +3688,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		    delete avalon.spath
 		    var ret = vm.$render(vm, local)
+		    //console.log(vm.$render+"")
 		    avalon.spath = spath
 		    return ret
 		}
@@ -3724,10 +3725,18 @@ return /******/ (function(modules) { // webpackBootstrap
 		        var hash = vm.$hashcode
 		        vm.$hashcode = false //防止视图刷新
 		        //更新数据
+		        delete data.id
+		        delete data.is
 		        for (var i in data) {
+		            if(vm[i] !== data[i]){
+		                console.log(i, data[i])
+		            }
 		            vm[i] = data[i]
 		        }
 		        for (var i in newSlot) {
+		            if(vm[i] !== newSlot[i]){
+		                console.log(i, newSlot[i])
+		            }
 		            vm[i] = newSlot[i]
 		        }
 		        scope.local = local
@@ -3770,9 +3779,12 @@ return /******/ (function(modules) { // webpackBootstrap
 		        if (isComponentReady(component)) {
 		            component.props.wid = vmodel.$id
 		            component.copy = local
+		            var scope = avalon.scopes[vmodel.$id]
+		            component.vmodel = scope.top
 		            component.dynamic = {}
 		            component['ms-widget'] = vmodel
 		            delete component.skipContent
+		            console.log(component)
 		            return vtree
 		        } else {
 		            return  [{
@@ -5350,9 +5362,12 @@ return /******/ (function(modules) { // webpackBootstrap
 		                directives[binding.type].parse(copy, vdom, binding)
 		                if (typeof copy[name] === 'string') {
 		                    //如果存在局部变量,我们无法对它进行依赖检测,只能统统执行
-		                    var untraceable = !!binding.locals
-		                    var paths = alwaysDynamic[name] || untraceable ? '' : binding.paths
-		                    dirs.push(avalon.quote(paths), avalon.quote(name), copy[name])
+		                    if (!alwaysDynamic[name]) {
+		                        var untraceable = !!binding.locals
+		                        var paths = untraceable ? '' : binding.paths
+		                        dirs.push(avalon.quote(paths), avalon.quote(name), copy[name])
+		                    }
+
 		                    if (name === 'ms-widget') {
 		                        var tag = vdom.nodeName
 		                        if (!legalTags[tag] && !isCustomTag(tag)) {
@@ -5360,7 +5375,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		                        }
 		                        copy.props.wid = vdom.props.wid
 		                        return 'avalon._createComponent(' +
-		                                [copy[name],
+		                                [avalon.parseExpr(binding),
 		                                    jsonfy(copy),
 		                                    '__vmodel__', '__local__'
 		                                ].join(',\n') + ')[0]'

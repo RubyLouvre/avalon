@@ -23,7 +23,7 @@
                      <div>
                      <button type="button"  :on-click="@reduce">--</button>
                      <input readonly :attr="{value:@num}">
-                     <button type="button"  :on-click="@add" :on-click-2="@show">++</button>
+                     <button type="button"  :on-click="@add" >++</button>
                      </div>
                      */
                 }),
@@ -47,8 +47,9 @@
         <h1>组件的VM</h1>
         <p>组件的VM理论上是继承了它上方的所有组件的属性与方法, 
             但本例直接在组件模板上使用defaults中没有声明的方法是一个不好的写法</p>
+        <div>template中只允许使用defaults中的变量, slot中可以用上层VM中的变量,但最好都能过ms-widget对象传入</div>
         <div ms-controller="test">
-            <xmp is='ms-number' ></xmp>
+            <xmp is='ms-number' :widget='{show: @show}' ></xmp>
             {{@bbb}}
         </div>
     </body>

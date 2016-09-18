@@ -23,7 +23,7 @@ avalon.directive('widget', {
     priority: 4,
     parse: function (copy, src, binding) {
         //将渲染函数的某一部分存起来,渲在c方法中转换为函数
-        copy[identify] = avalon.parseExpr(binding)
+        copy[identify] = '1'
         copy.template = src.template
     },
     diff: function (copy, src, srcList, index) {
