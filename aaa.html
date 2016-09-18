@@ -1,48 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
-        <title>TODO supply a title</title>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="./dist/avalon.js"></script>
-        <script>
+        <title>Document</title>
+        <script type="text/javascript" src="./dist/avalon.js"></script>
+        <script type="text/javascript">
             var vm = avalon.define({
-                $id: "test",
-                a: 1
-            })
-            console.log(vm)
+                $id: 'test',
+                list: [],
+                init: function(){
+                    vm.list = [{
+                        name: 'andy',
+                        detail: ''
+                    },{
+                        name: 'alex',
+                        detail:''
+                    }];
+                },
+                update: function(){
+                    var data = [{
+                        name: 'jack',
+                        detail: {
+                            remark: '爱好运动'
+                        }
+                    },{
+                        name: 'joe',
+                        detail: {
+                            remark: '喜欢音乐'
+                        }
+                    }];
+                    vm.list = data;
+                },
+                update2: function(){
+                    var data = [{
+                        name: 'aaron',
+                        detail: {
+                            remark: '宅男'
+                        }
+                    },{
+                        name: 'xin',
+                        detail: {
+                            remark: '中国人'
+                        }
+                    }];
+                    vm.list = data;
+                }
+            });
 
-            var str = "<table>\
-            <thead>\
-            <tr><td>{{a}}</td></tr>\
-            </thead>\
-            <tfoot><tr><td>{{a}}</td></tr></tfoot>\
-            <tr><td>{{a}}</td></tr>\
-            <tr><td>{{b}}</td></tr>\
-            <tr><td>{{c}}</td></tr>\
-            <tfoot><tr><td>{{a}}</td></tr></tfoot>\
-            <tr><td>{{a}}</td></tr>\
-            <tr><td>{{b}}</td></tr>\
-            <tr><td>{{c}}</td></tr>\
-        </table>"
-            var nodes = avalon.lexer(str)
-            console.log(nodes)
+            vm.init();
         </script>
     </head>
-    <body id="test">
-         <div>{{@a}}</div>
-         <table>
-            <thead>
-            <tr><td>{{a}}</td></tr>
-            </thead>
-            <tfoot><tr><td>{{a}}</td></tr></tfoot>
-            <tr><td>{{a}}</td></tr>
-            <tr><td>{{b}}</td></tr>
-            <tr><td>{{c}}</td></tr>
-            <tfoot><tr><td>{{a}}</td></tr></tfoot>
-            <tr><td>{{a}}</td></tr>
-            <tr><td>{{b}}</td></tr>
-            <tr><td>{{c}}</td></tr>
-        </table>
+    <body>
+        <div ms-controller="test">
+            <div>
+                <input type="button" value="更新数据1" ms-click="update" />
+                <input type="button" value="更新数据2" ms-click="update2" />
+            </div>
+            <div ms-each="list">
+                <div>
+                    姓名：<span ms-text="el.name"></span>
+                 </div>
+                <div ms-if="el.detail">
+                    备注：<span ms-text="el.detail.remark"></span>
+                 </div>
+            </div>
+        </div>
     </body>
 </html>
