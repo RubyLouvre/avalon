@@ -1,13 +1,38 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-        <div ms-controller='aaa'>
-            {{a}} <p>{{b}}</p>
-        </div>
-    </body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="./dist/avalon.js"></script>
+    <title>Avalon 1.57 demo</title>
+
+    <script>
+
+        
+
+            avalon.define({
+                $id: "test",
+                categories: {
+                    1: {id: 1, name: "ready"},
+                    2: {id: 2, name: "pending"},
+                    3: {id: 3, name: "complete"},
+                    4: {id: 4, name: "canceled"}
+                },
+                jobs: [
+                    {id: 11, name: 'Todo 11', status: 1},
+                    {id: 12, name: 'Todo 12', status: 2},
+                    {id: 13, name: 'Todo 13', status: 4},
+                    {id: 14, name: 'Todo 14', status: 3}
+                ]
+            });
+          
+    </script>
+</head>
+<body ms-controller="test">
+<h1>TODO List:</h1>
+    <ul>
+        <li ms-repeat="jobs">
+            {{el.id}}_{{el.name}}_{{categories[el.status].name}}
+        </li>
+    </ul>
+</body>
 </html>
