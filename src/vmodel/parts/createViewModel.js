@@ -7,7 +7,7 @@ var defineProperties = Object.defineProperties
 var defineProperty
 
 var expose = new Date() - 0
-
+/* istanbul ignore if*/
 if (!canHideProperty) {
     if ('__defineGetter__' in avalon) {
         defineProperty = function (obj, prop, desc) {
@@ -31,6 +31,7 @@ if (!canHideProperty) {
             return obj
         }
     }
+    /* istanbul ignore if*/
     if (avalon.msie) {
         var VBClassPool = {}
         window.execScript([// jshint ignore:line

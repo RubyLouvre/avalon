@@ -24,6 +24,9 @@ avalon.bind = function (elem, type, fn) {
         //如果是使用bind方法绑定的回调,其uuid格式为_12
         var uuid = getShortID(fn)
         var hook = eventHooks[type]
+        if(type === 'click' && avalon.modern && document.ontouchstart){
+            elem.addEventListener('click',avalon.noop)
+        }
         if (hook) {
             type = hook.type || type
             if (hook.fix) {

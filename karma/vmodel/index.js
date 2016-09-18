@@ -14,7 +14,26 @@ describe('数据模型', function () {
             body.removeChild(div)
             delete avalon.vmodels[vm.$id]
         })
-
+        it('没有id的vm会自动加上ID', function () {
+            vm = avalon.define({
+            })
+            var id = vm.$id
+            expect(typeof id).to.equal('string')
+            delete avalon.vmodels[id]
+        })
+        it('ID重复会报错', function () {
+            vm = avalon.define({
+                $id: 'repeat111'
+            })
+            try {
+                avalon.define({
+                    $id: 'repeat111'
+                })
+            } catch (e) {
+                expect(/had\sdefined!/.test(e.message)).to.equal(true)
+            }
+            delete avalon.vmodels[vm.id]
+        })
         it('监听数组元素的属性变动', function (done) {
 
             vm = avalon.define({

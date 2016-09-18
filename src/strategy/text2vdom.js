@@ -62,6 +62,7 @@ function lexer(str) {
         }
         if (!node) {
             var i = str.indexOf('<!--')//处理注释节点
+            /* istanbul ignore if*/
             if (i === 0) {
                 var l = str.indexOf('-->')
                 if (l === -1) {
@@ -115,6 +116,8 @@ function lexer(str) {
             if (match) {
                 var nodeName = match[1].toLowerCase()
                 var last = stack.last()
+                /* istanbul ignore if*/
+                /* istanbul ignore else*/
                 if (!last) {
                     avalon.error(match[0] + '前面缺少<' + nodeName + '>')
                 } else if (last.nodeName !== nodeName) {

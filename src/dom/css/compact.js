@@ -184,6 +184,7 @@ var rdisplayswap = /^(none|table(?!-c[ea]).+)/
 
 function showHidden(node, array) {
     //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
+    /* istanbul ignore if*/
     if (node.offsetWidth <= 0) { //opera.offsetWidth可能小于0
         if (rdisplayswap.test(cssHooks['@:get'](node, 'display'))) {
             var obj = {

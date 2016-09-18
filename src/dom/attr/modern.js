@@ -10,7 +10,7 @@ function attrUpdate(node, vnode) {
     var attrs = vnode['ms-attr']
     for (var attrName in attrs) {
         var val = attrs[attrName]
-        // switch
+        /* istanbul ignore if*/
         if (attrName === 'src' && window.chrome && node.tagName === 'EMBED') {
             node[attrName] = val
             var parent = node.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求

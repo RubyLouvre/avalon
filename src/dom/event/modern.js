@@ -23,8 +23,8 @@ avalon.bind = function (elem, type, fn) {
             }
         }
         //fix 移动端浏览器:click不触发的BUG
-        if(type === 'click' && !elem.onclick){
-            elem.onclick = ''
+        if(type === 'click' && avalon.modern && document.ontouchstart){
+            elem.addEventListener('click',avalon.noop)
         }
         var key = type + ':' + uuid
         avalon.eventListeners[fn.uuid] = fn

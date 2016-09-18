@@ -38,6 +38,7 @@ function toInt(str) {
 
 function padNumber(num, digits, trim) {
     var neg = ''
+    /* istanbul ignore if*/
     if (num < 0) {
         neg = '-'
         num = -num
@@ -56,6 +57,7 @@ function dateGetter(name, size, offset, trim) {
         if (offset > 0 || value > -offset)
             value += offset
         if (value === 0 && offset === -12) {
+            /* istanbul ignore next*/
             value = 12
         }
         return padNumber(value, size, trim)

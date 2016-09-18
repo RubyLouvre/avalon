@@ -195,6 +195,8 @@ avalon.directive('for', {
             if (item.dom) {
 
                 delete item.split
+                /* istanbul ignore if*/
+                /* istanbul ignore else*/
                 if (vdom.hasEffect) {
                     !function (obj) {
                         var nodes = moveItem(obj)
@@ -293,6 +295,7 @@ function isInCache(cache, id) {
     var c = cache[id]
     if (c) {
         var arr = c.arr
+        /* istanbul ignore if*/
         if (arr) {
             var r = arr.pop()
             if (!arr.length) {

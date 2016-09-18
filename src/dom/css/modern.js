@@ -118,6 +118,7 @@ var rdisplayswap = /^(none|table(?!-c[ea]).+)/
 
 function showHidden(node, array) {
     //http://www.cnblogs.com/rubylouvre/archive/2012/10/27/2742529.html
+    /* istanbul ignore if*/
     if (node.offsetWidth <= 0) { //opera.offsetWidth可能小于0
         var styles = getComputedStyle(node, null)
         if (rdisplayswap.test(styles["display"])) {
@@ -178,6 +179,8 @@ avalon.each({
     }
     avalon.fn[method] = function (value) { //会忽视其display
         var node = this[0]
+        /* istanbul ignore if*/
+        /* istanbul ignore else*/
         if (arguments.length === 0) {
             if (node.setTimeout) { //取得窗口尺寸,IE9后可以用node.innerWidth /innerHeight代替
                 return node["inner" + name]

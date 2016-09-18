@@ -6,6 +6,7 @@ try {
         value: 'x'
     })
 } catch (e) {
+    /* istanbul ignore next*/
     flag = false
 }
 

@@ -14,11 +14,13 @@ function attrUpdate(node, vnode) {
     for (var attrName in attrs) {
         var val = attrs[attrName]
         // 处理路径属性
+        /* istanbul ignore if*/
         if (attrName === 'href' || attrName === 'src') {
             if (!node.hasAttribute) {
                 val = String(val).replace(ramp, '&') //处理IE67自动转义的问题
             }
             node[attrName] = val
+            /* istanbul ignore if*/
             if (window.chrome && node.tagName === 'EMBED') {
                 var parent = node.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
                 var comment = document.createComment('ms-src')
