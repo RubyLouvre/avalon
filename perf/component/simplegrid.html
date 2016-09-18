@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>simplegrid</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+        <style>
+            body {
+                font-family: Helvetica Neue, Arial, sans-serif;
+                font-size: 14px;
+                color: #444;
+            }
+
+            table {
+                border: 2px solid #42b983;
+                border-radius: 3px;
+                background-color: #fff;
+            }
+
+            th {
+                background-color: #42b983;
+                color: rgba(255,255,255,0.66);
+                cursor: pointer;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -user-select: none;
+            }
+
+            td {
+                background-color: #f9f9f9;
+            }
+
+            th, td {
+                min-width: 120px;
+                padding: 10px 20px;
+            }
+
+            th.active {
+                color: #fff;
+            }
+
+            th.active .arrow {
+                opacity: 1;
+            }
+
+            .arrow {
+                display: inline-block;
+                vertical-align: middle;
+                width: 0;
+                height: 0;
+                margin-left: 5px;
+                opacity: 0.66;
+            }
+
+            .arrow.asc {
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+                border-bottom: 4px solid #fff;
+            }
+
+            .arrow.dsc {
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+                border-top: 4px solid #fff;
+            }
+
+            #search {
+                margin-bottom: 10px;
+            }
+        </style>
+        <script src='../../dist/avalon.js'></script>
+
+        <script>
+            avalon.ready(function () {
+
+                avalon.component('ms-simplegrid', {
+                    template: document.getElementById('grid-template').innerHTML,
+                    defaults: {
+                        columns: null,
+                        data: null,
+                        /*	
+                         duplex 无法双向同步到组件内，
+                         且filterBy的this指向data item，而不是组件的vm，
+                         改成传入过滤函数
+                         */
+                        filter: avalon.noop,
+                        sortKey: '',
+                        sortOrders: {},
+                        sortBy: function (key) {
+                            this.sortKey = key
+                            this.sortOrders[key] = this.sortOrders[key] * -1
+                        },
+                        onInit: function () {
+                            var sortOrders = {}
+                            this.columns.forEach(function (key) {
+                                sortOrders[key] = 1
+                            })
+                            this.sortOrders = sortOrders
+                        }
+                    }
+                })
+
+                var simplegrid = avalon.define({
+                    $id: 'simplegrid',
+                    searchQuery: '',
+                    gridColumns: ['name', 'power'],
+                    gridData: [
+                        {name: 'Chuck Norris', power: Infinity},
+                        {name: 'Bruce Lee', power: 9000},
+                        {name: 'Jackie Chan', power: 7000},
+                        {name: 'Jet Li', power: 8000}
+                    ],
+                    // 过滤函数
+                    searchQueryFn: function (el) {
+                        var kw = avalon.vmodels.simplegrid.searchQuery
+                        return !kw || (kw && (el.name.toLowerCase().indexOf(kw) > -1))
+                    }
+                })
+
+                avalon.scan(document.body)
+
+            })
+
+        </script>
+    </head>
+
+    <body>
+        <!-- component template -->
+        <script type="text/x-template" id="grid-template">
+            <div>
+            <table>
+            <thead>
+            <tr>
+            <th :for="key in @columns" :click="@sortBy(key)" :class="{active: @sortKey == key}">
+            {{key}}
+            <span class="arrow" :class="@sortOrders[key] > 0 ? 'asc' : 'dsc'"></span>
+            </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr :for="entry in @data | filterBy(@filter) | orderBy(@sortKey,@sortOrders[@sortKey])">
+            <td :for="key in @columns">
+            {{entry[key]}}
+            </td>
+            </tr>
+            </tbody>
+            </table>
+            </div>
+        </script>
+
+        <!-- demo root element -->
+        <div id="demo" ms-controller="simplegrid">
+            <form id="search">
+                Search <input name="query" :duplex="@searchQuery">
+            </form>
+            <ms-simplegrid :widget="{id:'grid',data:@gridData,columns:@gridColumns,filter:@searchQueryFn}">
+        </ms-simplegrid>
+    </div>
+
+</body>
+</html>

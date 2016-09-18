@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../../dist/avalon.js"></script>
+        <script>
+            var vm = avalon.define({
+                $id: 'test',
+                bbb: '其他内容'
+
+            });
+            function heredoc(fn) {
+                return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+                        replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+            }
+            avalon.component('ms-input', {
+                template: heredoc(function () {
+                    /*
+                     <strong>
+                     <input  :duplex="@value">{{@value}}
+                     </strong>
+                     */
+                }),
+                defaults: {
+                    value: 1
+                
+                }
+            })
+
+        </script>
+    </head>
+    <body>
+       
+        <div ms-controller="test">
+            <ms-input></ms-input>
+        </div>
+    </body>
+</html>
+

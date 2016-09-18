@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src='../../dist/avalon.js'></script>
+        <script>
+            avalon.component('ms-button', {
+                template: '<button type="button"><span><slot /></span></button>',
+                defaults: {
+                    buttonText: "button"
+                },
+                soleSlot: 'buttonText'
+            })
+            var vm = avalon.define({
+                $id: 'widget1',
+                aaa: {
+                    buttonText: "vm中的值"
+                },
+                bb: '动态内容',
+                cc: function(){
+                  console.log(this)
+                },
+                click: function () {
+                    vm.bb = '更新内容'+(new Date-0)
+                }
+            })
+        </script>
+    </head>
+    <body>
+        <h1>soleSlot的使用</h1>
+        <p>它会组件容器中innerHTML替换生成组件的slot元素</p>
+        <div ms-controller='widget1' >
+            <xmp is='ms-button' ms-click='@cc' >{{@bb}}</xmp>
+            <p><button :click="@click">click</button></p>
+        </div>
+    </body>
+</html>
