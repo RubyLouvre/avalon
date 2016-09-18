@@ -1,5 +1,5 @@
 /*!
- * built in 2016-9-18:17 version 2.114 by 司徒正美
+ * built in 2016-9-18:22 version 2.114 by 司徒正美
  * npm 2.1.15
  *     普通vm也支持onReady, onDispose方法(生命周期)
  *     添加norequire验证规则
@@ -202,7 +202,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-9-18:17 version 2.114 by 司徒正美
+	 * built in 2016-9-18:22 version 2.114 by 司徒正美
 	 * npm 2.1.15
 	 *     普通vm也支持onReady, onDispose方法(生命周期)
 	 *     添加norequire验证规则
@@ -395,21 +395,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		module.exports = avalon
 
-		new function welcome() {
-		    var welcomeIntro = ["%cavalon.js %c" + avalon.version + " %cin debug mode, %cmore...", "color: rgb(114, 157, 52); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(82, 140, 224); font-weight: normal; text-decoration: underline;"];
-		    var welcomeMessage = "You're running avalon in debug mode - messages will be printed to the console to help you fix problems and optimise your application.\n\n" +
-		            'To disable debug mode, add this line at the start of your app:\n\n  avalon.config({debug: false});\n\n' +
-		            'Debug mode also automatically shut down amicably when your app is minified.\n\n' +
-		            "Get help and support:\n  https://segmentfault.com/t/avalon\n  http://avalonjs.coding.me/\n  http://www.avalon.org.cn/\n\nFound a bug? Raise an issue:\n  https://github.com/RubyLouvre/avalon/issues\n\n";
 
-		    var con = hasConsole ? console : avalon
-		    var hasGroup = !!con.groupCollapsed
-		    con[hasGroup ? "groupCollapsed" : "log"].apply(con, welcomeIntro);
-		    con.log(welcomeMessage)
-		    if (hasGroup) {
-		        con.groupEnd(welcomeIntro);
-		    }
-		}
 
 	/***/ },
 	/* 5 */,
@@ -6272,6 +6258,21 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		    }
 		}
+		new function welcome() {
+		    var welcomeIntro = ["%cavalon.js %c" + avalon.version + " %cin debug mode, %cmore...", "color: rgb(114, 157, 52); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(82, 140, 224); font-weight: normal; text-decoration: underline;"];
+		    var welcomeMessage = "You're running avalon in debug mode - messages will be printed to the console to help you fix problems and optimise your application.\n\n" +
+		            'To disable debug mode, add this line at the start of your app:\n\n  avalon.config({debug: false});\n\n' +
+		            'Debug mode also automatically shut down amicably when your app is minified.\n\n' +
+		            "Get help and support:\n  https://segmentfault.com/t/avalon\n  http://avalonjs.coding.me/\n  http://www.avalon.org.cn/\n\nFound a bug? Raise an issue:\n  https://github.com/RubyLouvre/avalon/issues\n\n";
+
+		  
+		    var hasGroup = !!console.groupCollapsed 
+		    console[hasGroup ? 'groupCollapsed': 'log'].apply(console, welcomeIntro)
+		    console.log(welcomeMessage)
+		    if (hasGroup) {
+		        console.groupEnd(welcomeIntro);
+		    }
+		}
 
 		module.exports = {
 		    avalon: avalon,
@@ -8053,7 +8054,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 106:
 /***/ function(module, exports) {
 
-	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button :widget=\"@button\" /></p>\n</div>"
+	module.exports = "<div>\r\n    <div class=\"body\">\r\n        <slot name=\"body\"></slot>\r\n    </div>\r\n    <p><ms-button :widget=\"@button\" /></p>\r\n</div>"
 
 /***/ }
 

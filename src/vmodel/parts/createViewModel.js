@@ -39,7 +39,7 @@ if (!canHideProperty) {
             '\tExecuteGlobal(code)',
             'End Function' //转换一段文本为VB代码
         ].join('\n'), 'VBScript');
-        
+
         function VBMediator(instance, accessors, name, value) {// jshint ignore:line
             var accessor = accessors[name]
             if (arguments.length === 4) {
@@ -59,13 +59,16 @@ if (!canHideProperty) {
                     '\tEnd Function')
             //添加普通属性,因为VBScript对象不能像JS那样随意增删属性，必须在这里预先定义好
             var uniq = {
-               __proxy__: true,
-               __data__: true,
-               __const__: true
+                __proxy__: true,
+                __data__: true,
+                __const__: true
             }
 
             //添加访问器属性 
             for (name in accessors) {
+                if (uniq[name] || ($$skipArray[name] && name !== '$model')) {
+                    continue
+                }
                 uniq[name] = true
                 buffer.push(
                         //由于不知对方会传入什么,因此set, let都用上
@@ -86,14 +89,14 @@ if (!canHideProperty) {
 
             }
             for (name in properties) {
-                if (uniq[name] !== true) {
-                    uniq[name] = true
-                    buffer.push('\tPublic [' + name + ']')
+                if (uniq[name] || $$skipArray[name]) {
+                    continue
                 }
+                uniq[name] = true
+                buffer.push('\tPublic [' + name + ']')
             }
             for (name in $$skipArray) {
-                if (uniq[name] !== true) {
-                    uniq[name] = true
+                if (!uniq[name]) {
                     buffer.push('\tPublic [' + name + ']')
                 }
             }
@@ -103,7 +106,6 @@ if (!canHideProperty) {
             var className = VBClassPool[body]
             if (!className) {
                 className = avalon.makeHashCode('VBClass')
-                
                 window.parseVB('Class ' + className + body)
                 window.parseVB([
                     'Function ' + className + 'Factory(a, b)', //创建实例并传入两个关键的参数
