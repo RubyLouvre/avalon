@@ -1,6 +1,5 @@
 
 var update = require('../_update')
-var evaluatorPool = require('../../strategy/parser/evaluatorPool')
 var stringify = require('../../strategy/parser/stringify')
 
 var rchangeFilter = /\|\s*change\b/
@@ -74,8 +73,8 @@ avalon.directive('duplex', {
             isString: !!isString, //这个决定是否需要转换为字符串
             isChanged: isChanged, //这个决定同步的频数
             debounceTime: debounceTime, //这个决定同步的频数
-            get: get, //
-            set: evaluatorPool.get('duplex:set:' + expr),
+            get: get, 
+            set: avalon.evaluatorPool.get('duplex:set:' + expr),
             callback: changed ? avalon.parseExpr(changed, 'on') : 'avalon.noop'
         })
     },

@@ -1,7 +1,6 @@
 
 
 //缓存求值函数，以便多次利用
-var evaluatorPool = require('./evaluatorPool')
 
 var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
 var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
@@ -49,7 +48,7 @@ function parseExpr(str, category) {
     }
    
     var cacheID = str
-    var cacheStr = evaluatorPool.get(category + ':' + cacheID)
+    var cacheStr = avalon.evaluatorPool.get(category + ':' + cacheID)
 
     if (cacheStr) {
         return cacheStr
@@ -87,7 +86,7 @@ function parseExpr(str, category) {
     if (category === 'on') {
         collectLocal(_body, local)
     } else  if (category === 'js') {
-        return evaluatorPool.put(category + ':' + cacheID, body)
+        return avalon.evaluatorPool.put(category + ':' + cacheID, body)
     }
     //处理表达式的过滤器部分
     var filters = input.map(function (str) {
@@ -142,7 +141,7 @@ function parseExpr(str, category) {
             quoteError(str, category).replace('parse', 'set'),
             '}',
             '}']
-        evaluatorPool.put('duplex:set:' + cacheID, setterBody.join('\n'))
+        avalon.evaluatorPool.put('duplex:set:' + cacheID, setterBody.join('\n'))
         //对某个值进行格式化
 
         var getterBody = [
@@ -155,7 +154,7 @@ function parseExpr(str, category) {
             quoteError(str, category).replace('parse', 'get'),
             '}',
             '}'].join('\n')
-        evaluatorPool.put('duplex:get:' + cacheID, getterBody)
+        avalon.evaluatorPool.put('duplex:get:' + cacheID, getterBody)
 
         return  getterBody
     } else {
@@ -176,7 +175,7 @@ function parseExpr(str, category) {
     }
     ret.splice.apply(ret, filters)
     cacheStr = ret.join('\n')
-    evaluatorPool.put(category + ':' + cacheID, cacheStr)
+    avalon.evaluatorPool.put(category + ':' + cacheID, cacheStr)
     return cacheStr
 
 }

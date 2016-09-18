@@ -4,6 +4,7 @@ var rhyphen = /([a-z\d])([A-Z]+)/g
 var rcamelize = /[-_][^-_]/g
 var rhashcode = /\d\.\d{4}/
 var rescape = /[-.*+?^${}()|[\]\/\\]/g
+var Cache = require('./cache')
 
 var _slice = [].slice
 function defaultParse(cur, pre, binding) {
@@ -28,6 +29,7 @@ avalon.shadowCopy(avalon, {
     eventListeners: {},
     validators: {},
     scopes: {},
+    evaluatorPool: new Cache(888),
     _decode: function (str) {
         if (rentities.test(str)) {
             temp.innerHTML = str

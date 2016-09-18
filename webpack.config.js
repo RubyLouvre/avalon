@@ -16,13 +16,15 @@ function heredoc(fn) {
 }
 var feather = heredoc(function () {
     /*
-    npm 2.1.14
-    修正 ms-important的BUG
-    重构 escapeHTML与unescapeHTML方法
-    改用id来定义组件VM的$id
-    修正pattern验证规则
-    添加大量测试,覆盖率达到90%
-    增强对SVG的支持
+    npm 2.1.15
+    普通vm也支持onReady, onDispose方法(生命周期)
+    添加norequire验证规则
+    强化UUID的生成策略
+    fix replaceChild的重写BUG(用于onDispose方法)
+    xmp, wbr, template可以直接使用is属性代替ms-widget属性,
+       即<xmp :widget="{is:'ms-button'}"></xmp> -->
+        <xmp is="ms-button"></xmp>
+    简化attr指令的实现,其diff逻辑与css指令的diff一样,直接用css指令的
      */
 })
 fs.writeFileSync('./src/seed/core.js', text, 'utf8')
@@ -47,18 +49,7 @@ module.exports = {
     plugins: [//
         new webpack.BannerPlugin('built in ' + snow + ' version ' + v + ' by 司徒正美\n' + feather)
     ],
-//    loaders: [
-//        {
-//            test: /\.js$/,
-//            exclude: /node_modules/,
-//            loader: 'babel',
-//            query: {
-//                presets: ['es2015','stage-0','stage-1','stage-2','stage-3']
-//            }
-//        }
-//    ],
-    module: {
-    },
+
     eslint: {
         configFile: './eslintrc.json'
     },

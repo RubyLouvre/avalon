@@ -7,7 +7,6 @@
  */
 var avalon = require('../seed/core')
 
-//require('./optimize')
 var voidTag = require('./voidTag')
 var addTbody = require('./parser/addTbody')
 var variantSpecial = require('./variantSpecial')
@@ -23,18 +22,10 @@ var rnowhite = /\S+/g
 var number = 1
 var stringPool = {}
 
-function dig(a) {
-    var key = '??' + number++
-    stringPool[key] = a
-    return key
-}
-function fill(a) {
-    var val = stringPool[a]
-    return val
-}
 
+module.exports = makeNode
 
-function lexer(str) {
+function makeNode(str) {
     stringPool = {}
     str = clearString(str)
     var stack = []
@@ -132,7 +123,7 @@ function lexer(str) {
             break
         }
         if (node.end) {
-            fixTbodyAndRepeat(node, stack, ret)
+            makeTbody(node, stack, ret)
             delete node.end
         }
 
@@ -142,10 +133,9 @@ function lexer(str) {
 
 }
 
-module.exports = lexer
 
 
-function fixTbodyAndRepeat(node, stack, ret) {
+function makeTbody(node, stack, ret) {
     var nodeName = node.nodeName
     var props = node.props
     if (nodeName === 'table') {
@@ -169,8 +159,6 @@ function fixTbodyAndRepeat(node, stack, ret) {
 
     }
 }
-
-
 
 
 function makeChildren(node, stack, ret) {
@@ -209,6 +197,7 @@ function collectProps(attrs, props) {
         }
     }
 }
+
 function nomalString(str) {
     return avalon.unescapeHTML(str.replace(rfill, fill))
 }
@@ -246,4 +235,15 @@ function readString(str) {
         }
     }
     return ret
+}
+
+
+function dig(a) {
+    var key = '??' + number++
+    stringPool[key] = a
+    return key
+}
+function fill(a) {
+    var val = stringPool[a]
+    return val
 }
