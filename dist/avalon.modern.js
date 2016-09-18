@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.5.7 built in 2016.9.18
+ avalon.modern.js 1.5.8 built in 2016.9.18
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -240,7 +240,7 @@ avalon.mix = avalon.fn.mix = function () {
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.57,
+    version: 1.58,
     ui: {},
     log: log,
     slice: function (nodes, start, end) {
