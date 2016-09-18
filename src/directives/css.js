@@ -47,12 +47,8 @@ avalon.directive('css', {
             var change = vdom['ms-css']
             for (var name in change) {
                 wrap.css(name, change[name])
-                if(change[name] === ''){
-                    delete change[name]
-                }
             }
         }
     }
 })
-
 module.exports = avalon.directives.css

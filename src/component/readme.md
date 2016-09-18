@@ -6,60 +6,43 @@ avalon1.5是使用自定义标签来实现组件的
 
 avalon1.6没有完成相关的探索
 
-avalon2的组件是基于avalon1.4与1.5的基础上构建的
-
-avalon2提出了一个叫**组件容器**的概念, 只有组件容器才能变成组件.
-
-组件容器是用来占位与传参.
-
-占位的功能比较好理解,就是新生成的组件会替换原元素.
-
-传参的功能,是指avalon会将原元素的nodeName,所有属性值,及元素的innerHTML作为传参, 传入组件的渲染函数
-生成组件的虚拟DOM,从而进一步转换真实DOM(组件),替换原元素
-
-
-只有wbr, xmp, template及以ms-开头的标签才能成为组件容器, 否则收到一个警告
-
-但组件容器不是一定能转换成一个组件.
-
-ms-开头的标签可以用nodeName来声明组件的身份,是要变成一个panel呢,还是一个treeview.
-
-对于wbr, xmp, template则需要is属性或ms-widget属性声明组件的身份
-
-但avalon只建议用wbr, xmp, template及以ms-开头的标签做组件，否则会收到一个警告
-
-```html
-<xmp is="ms-button"></xmp>
-<xmp ms-widget='{is:"ms-button"}'></xmp>
-```
-
-但我们知道组件的身份, 那么我们就要用is到avalon.components中取对应的组件
-
-```javascript
-    var definition = avalon.components[is]
-    if (!definition) {
-        avalon.warn(is + '组件还没有加载')
-        return
-    }
-```
-
-
-如果你想在页面上使用ms-button组件，只能用于以下四种方式
+avalon2的组件是基于avalon1.4与1.5, ms-widget绑定属性用来做配置,自定义标签的tagName必须存在"-",
+用于表示这个组件的类型,如果ms-widget是绑定在一个普通标签上,那么需要在配置对象上指定is属性
 
 ```html
 <ms-button></ms-button>
-<xmp is="ms-button"></xmp>
-<wbr is="ms-button"/>
-<template is="ms-button"></template>
-
+<button ms-widget='{is:"ms-button"}'></button>
 ```
 
-当然使用ms-widget可以传入更多配置项
+比如上面这两个是等价的
+
+但avalon只建议用wbr, xmp, template及以ms-开头的标签做组件，否则会收到一个警告
+
+```javascript
+var ralphabet = /^[a-z]+$/
+
+function isCustomTag(type) {
+    return type.length > 3 && type.indexOf('-') > 0 &&
+            ralphabet.test(type.charAt(0) + type.slice(-1))
+}
+var outerTags = avalon.oneObject('wbr,xmp,template')
+
+var type = node.type
+if (!outerTags[type] && !isCustomTag(type)) {
+    avalon.warn(type + '不合适做组件的标签')
+}
+```
+
+个中理由，是虚拟DOM树的生成规模有关，这里就不展开。
+因此上面如果你想在页面上使用ms-button组件，只能用于以下四种方式
+
 ```html
-<xmp is="ms-button" ms-widget="{aaa: 1, bbb:@ddd}"></xmp>
-<xmp ms-widget="{is:"ms-button", aaa: 1, bbb:@ddd}"></xmp>
-```
+<ms-button></ms-button>
+<xmp ms-widget='{is:"ms-button"}'></xmp>
+<wbr ms-widget='{is:"ms-button"}'/>
+<template ms-widget='{is:"ms-button"}'></template>
 
+```
 
 但在IE6－8下，ms-button与template会解析出错，只能用xmp,wbr这两个元素。因此我强烈建议，除非组件的内部还包含 组件的情况，我们只用以下两种写法：
 
@@ -129,12 +112,15 @@ wbr的行为有点像br元素，用于软换行的
 好了，我们看一下ms-widget能传入什么东西。
 
 1. is, 指定组件的类型
-2. id, 新生成的组件vm的$id
-3. onInit， 当组件的vm生成后触发的回调（只会执行一次）
-4. onReady，当组件插入DOM树且其内部子组件也可使时，就会触发的回调（只会执行一次）
-5. onViewChange，当组件的outerHTML 发生变化，就会触发的回调
-6. onDispose，当组件除出DOM树时，就会触发的回调（只会执行一次）
-7. 其他你想传入的配置项。。。。
+2. define，用于生成组件vm，详见widget指令的define方法
+3. diff，类似于react的shouldUpdateComponent方法，会传两个虚拟DOM给你，
+   你自己进行比较，返回true or false， true就会更新组件
+4. $id, 新生成的组件vm的$id
+5. onInit， 当组件的vm生成后触发的回调（只会执行一次）
+6. onReady，当组件插入DOM树且其内部子组件也可使时，就会触发的回调（只会执行一次）
+7. onViewChange，当组件的outerHTML 发生变化，就会触发的回调
+8. onDispose，当组件除出DOM树时，就会触发的回调（只会执行一次）
+9. 其他你想传入的配置项。。。。
 
 此外，avalon2还支持Web Components规范中所说的slot插入点机制，它是用来配置
 一些字符串长度很长的属性。比如说ms-tabs组件，通常有一个数组属性，
@@ -276,5 +262,5 @@ avalon是使用多种策略来监听元素是否移除
 
 
 
-![](./component.png)
+
  

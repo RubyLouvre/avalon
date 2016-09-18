@@ -6,6 +6,7 @@ require('./vdom/compact')
 require('./dom/compact')
 require('./directives/compact')
 require('./strategy/index')
+avalon._disposeComponent = require('./component/dispose.compact')
 require('./vmodel/compact')
 
 module.exports = avalon

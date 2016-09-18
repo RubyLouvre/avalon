@@ -112,7 +112,7 @@ function makeAccessor(sid, spath, heirloom) {
                 //如果这个属性存在通配符
                 emitWildcard(get.heirloom, vm, spath, val, older)
                 vm.$events.$$dirty$$ = false
-                batchUpdateView(vm.$id, spath)
+                batchUpdateView(vm.$id)
             }
         },
         enumerable: true,
@@ -120,13 +120,13 @@ function makeAccessor(sid, spath, heirloom) {
     }
 }
 
-function batchUpdateView(id, spath) {
+function batchUpdateView(id) {
     avalon.rerenderStart = new Date
     var dotIndex = id.indexOf('.')
     if (dotIndex > 0) {
-        avalon.batch(id.slice(0, dotIndex), spath)
+        avalon.batch(id.slice(0, dotIndex))
     } else {
-        avalon.batch(id, spath)
+        avalon.batch(id)
     }
 }
 
@@ -192,6 +192,8 @@ function arrayFactory(array, old, heirloom, options) {
     if (old && old.splice) {
         var args = [0, old.length].concat(array)
         ++avalon.suspendUpdate
+          avalon.callArray =   options.pathname
+       
         old.splice.apply(old, args)
         --avalon.suspendUpdate
         return old
@@ -208,7 +210,9 @@ function arrayFactory(array, old, heirloom, options) {
                         options.pathname + '.' + a
                 vm.$fire(path, b, c)
                 if (!d && !heirloom.$$wait$$ && !avalon.suspendUpdate ) {
-                    batchUpdateView(vm.$id, path)
+                    avalon.callArray = path
+                    batchUpdateView(vm.$id)
+                    delete avalon.callArray 
                 }
             }
         }

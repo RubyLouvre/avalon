@@ -1,4 +1,3 @@
-module.exports = escape
 
 //https://github.com/teppeis/htmlspecialchars
 function escape(str) {
@@ -12,3 +11,12 @@ function escape(str) {
             replace(/"/g, '&quot;').
             replace(/'/g, '&#39;')
 }
+
+module.exports = escape
+
+
+
+      
+
+
+

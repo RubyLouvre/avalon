@@ -189,4 +189,3 @@ dir.defaults = {
     resetInFocus: true, //@config {Boolean} true，在focus事件中执行onReset回调,
     deduplicateInValidateAll: false //@config {Boolean} false，在validateAll回调中对reason数组根据元素节点进行去重
 }
-

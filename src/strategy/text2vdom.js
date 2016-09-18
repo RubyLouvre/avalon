@@ -6,27 +6,45 @@
  * ------------------------------------------------------------
  */
 var avalon = require('../seed/core')
+
+require('./optimize')
 var voidTag = require('./voidTag')
-var variantSpecial = require('./variantSpecial')
-var clearString = require('./clearString')
+var addTbody = require('./parser/addTbody')
+var fixPlainTag = require('./parser/fixPlainTag')
+var plainTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
 
-var rcontent = /\S/
-var stringPool = {}
-var rendTag = /^<\/([^>]+)>/
 var ropenTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
-var specialTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
+var rendTag = /^<\/([^>]+)>/
+//https://github.com/rviscomi/trunk8/blob/master/trunk8.js
+//判定里面有没有内容
+var rcontent = /\S/
+var rfill = /\?\?\d+/g
+var rlineSp = /\n\s*/g
+var rnowhite = /\S+/g
+var number = 1
+var stringPool = {}
 
-module.exports = makeNode
+function dig(a) {
+    var key = '??' + number++
+    stringPool[key] = a
+    return key
+}
+function fill(a) {
+    var val = stringPool[a]
+    return val
+}
 
-function makeNode(str) {
+
+function lexer(str) {
     stringPool = {}
-    str = clearString(str, dig)
+    str = clearString(str)
     var stack = []
     stack.last = function () {
-        return stack[stack.length - 1]
+        return  stack[stack.length - 1]
     }
     var ret = []
-    var breakIndex = 900000
+
+    var breakIndex = 100000
     do {
         var node = false
         if (str.charAt(0) !== '<') {//处理文本节点
@@ -39,7 +57,7 @@ function makeNode(str) {
                 nodeValue: nodeValue
             }
             if (rcontent.test(nodeValue)) {
-                makeChildren(node, stack, ret)//不收集空白节点
+                collectNodes(node, stack, ret)//不收集空白节点
             }
         }
         if (!node) {
@@ -55,7 +73,7 @@ function makeNode(str) {
                     nodeName: '#comment',
                     nodeValue: nodeValue
                 }
-                makeChildren(node, stack, ret)
+                collectNodes(node, stack, ret)
             }
 
         }
@@ -73,19 +91,21 @@ function makeNode(str) {
 
                 var attrs = match[2]
                 if (attrs) {
-                    makeProps(attrs, node.props)
+                    collectProps(attrs, node.props)
                 }
-                makeChildren(node, stack, ret)
+                collectNodes(node, stack, ret)
                 str = str.slice(match[0].length)
                 if (isVoidTag) {
                     node.end = true
                 } else {
                     stack.push(node)
-                    if (specialTag[nodeName]) {//如果是容器元素
+                    if (plainTag[nodeName]) {
                         var index = str.indexOf('</' + nodeName + '>')
                         var innerHTML = str.slice(0, index).trim()
                         str = str.slice(index)
-                        variantSpecial(node, nodeName, nomalString(innerHTML))
+
+                        fixPlainTag(node, nodeName, nomalString(innerHTML))
+
                     }
                 }
             }
@@ -110,7 +130,7 @@ function makeNode(str) {
             break
         }
         if (node.end) {
-            makeRepeat(node, stack, ret)
+            fixTbodyAndRepeat(node, stack, ret)
             delete node.end
         }
 
@@ -120,7 +140,38 @@ function makeNode(str) {
 
 }
 
-function makeChildren(node, stack, ret) {
+module.exports = lexer
+
+
+function fixTbodyAndRepeat(node, stack, ret) {
+    var nodeName = node.nodeName
+    var props = node.props
+    if (nodeName === 'table') {
+        addTbody(node.children)
+    }
+    var forExpr = props['ms-for']
+    //tr两旁的注释节点还会在addTbody中挪一下位置
+    if (forExpr) {
+        delete props['ms-for']
+        var p = stack.last()
+        var arr = p ? p.children : ret
+        arr.splice(arr.length - 1, 1, {
+            nodeName: '#comment',
+            nodeValue: 'ms-for:' + forExpr,
+            type: nodeName
+        }, node, {
+            nodeName: '#comment',
+            nodeValue: 'ms-for-end:',
+            type: nodeName
+        })
+
+    }
+}
+
+
+
+
+function collectNodes(node, stack, ret) {
     var p = stack.last()
     if (p) {
         p.children.push(node)
@@ -128,11 +179,8 @@ function makeChildren(node, stack, ret) {
         ret.push(node)
     }
 }
-
-
 var rattrs = /([^=\s]+)(?:\s*=\s*(\S+))?/
-var rlineSp = /\n\r?\s*/g
-function makeProps(attrs, props) {
+function collectProps(attrs, props) {
     while (attrs) {
         var arr = rattrs.exec(attrs)
         if (arr) {
@@ -157,91 +205,41 @@ function makeProps(attrs, props) {
         }
     }
 }
-
-
-function makeRepeat(node, stack, ret) {
-    var nodeName = node.nodeName
-    var props = node.props
-    if (nodeName === 'table') {
-        makeTbody(node.children)
-    }
-    var forExpr = props['ms-for']
-    //tr两旁的注释节点还会在addTbody中挪一下位置
-    if (forExpr) {
-        delete props['ms-for']
-        var p = stack.last()
-        var arr = p ? p.children : ret
-        arr.splice(arr.length - 1, 1, {
-            nodeName: '#comment',
-            nodeValue: 'ms-for:' + forExpr,
-            type: nodeName
-        }, node, {
-            nodeName: '#comment',
-            nodeValue: 'ms-for-end:',
-            type: nodeName
-        })
-    }
-}
-
-
-//如果直接将tr元素写table下面,那么浏览器将将它们(相邻的那几个),放到一个动态创建的tbody底下
-function makeTbody(nodes) {
-    var tbody, needAddTbody = false, count = 0, start = 0, n = nodes.length
-    for (var i = 0; i < n; i++) {
-        var node = nodes[i]
-        if (!tbody) {
-            if ((node.type || node.nodeName) === 'tr') {
-                //收集tr及tr两旁的注释节点
-                tbody = {
-                    nodeName: 'tbody',
-                    children: []
-                }
-                tbody.children.push(node)
-                if (node.type) {
-                    delete node.type
-                }
-                needAddTbody = true
-                if (start === 0)
-                    start = i
-                nodes[i] = tbody
-            }
-        } else {
-            if (node.nodeName !== 'tr' && node.children) {
-                tbody = false
-            } else {
-                tbody.children.push(node)
-                count++
-                nodes[i] = 0
-            }
-        }
-    }
-
-    if (needAddTbody) {
-        for (i = start; i < n; i++) {
-            if (nodes[i] === 0) {
-                nodes.splice(i, 1)
-                i--
-                count--
-                if (count === 0) {
-                    break
-                }
-            }
-        }
-    }
-}
-
-var number = 1
-function dig(a) {
-    var key = '??' + number++
-    stringPool[key] = a
-    return key
-}
-function fill(a) {
-    var val = stringPool[a]
-    return val
-}
-
-var rfill = /\?\?\d+/g
 function nomalString(str) {
     return avalon.unescapeHTML(str.replace(rfill, fill))
+}
+
+function clearString(str) {
+    var array = readString(str)
+    for (var i = 0, n = array.length; i < n; i++) {
+        str = str.replace(array[i], dig)
+    }
+    return str
+}
+
+function readString(str) {
+    var end, s = 0
+    var ret = []
+    for (var i = 0, n = str.length; i < n; i++) {
+        var c = str.charAt(i)
+        if (!end) {
+            if (c === "'") {
+                end = "'"
+                s = i
+            } else if (c === '"') {
+                end = '"'
+                s = i
+            }
+        } else {
+            if (c === '\\') {
+                i += 1
+                continue
+            }
+            if (c === end) {
+                ret.push(str.slice(s, i + 1))
+                end = false
+            }
+        }
+    }
+    return ret
 }

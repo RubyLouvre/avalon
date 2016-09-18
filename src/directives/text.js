@@ -5,22 +5,24 @@ avalon.directive('text', {
     parse: function (copy, src, binding) {
         copy[binding.name] = 1
         src.children = []
-        copy.children = '['+avalon.parseText(binding)+']'
+        copy.children = '[{\nnodeName:"#text",\ndynamic:true,' +
+                '\nnodeValue:avalon.parsers.string(' +
+                avalon.parseExpr(binding) + ')}]'
     },
     diff: function (copy, src) {
-        if (!src.children.length) {
-            update(src, this.update)
+        if(!src.children.length){
+           update(src, this.update)
         }
     },
-    update: function (dom, vdom) {
-        if (dom && !vdom.isVoidTag) {
+    update: function(dom, vdom){
+        if (dom && !vdom.isVoidTag ) {
             var parent = dom
             while (parent.firstChild) {
                 parent.removeChild(parent.firstChild)
             }
             var dom = document.createTextNode('x')
             parent.appendChild(dom)
-            var a = {nodeType: 3, nodeName: '#text', dom: dom}
+            var a = {nodeType: 3, nodeName:'#text', dom: dom}
             vdom.children.push(a)
         }
     }

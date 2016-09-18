@@ -12,13 +12,13 @@ var specal = {
     "class": function (dom, val) {
         dom.className = val
     },
+    style: function (dom, val) {
+        dom.style.cssText = val
+    },
     type: function(dom, val){
         try{ //textarea,button 元素在IE6,7设置 type 属性会抛错
             dom.type = val
         }catch(e){}
-    },
-    style: function (dom, val) {
-        dom.style.cssText = val
     },
     'for': function (dom, val) {
         dom.htmlFor = val

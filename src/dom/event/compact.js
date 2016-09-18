@@ -5,27 +5,24 @@ var window = avalon.window
 
 var W3C = avalon.modern
 
-var markID = avalon._markBindID
+var getShortID = require('../../seed/lang.share').getShortID
 //http://www.feiesoft.com/html/events.html
 //http://segmentfault.com/q/1010000000687977/a-1020000000688757
-var share = require('./share')
-var avEvent = share.avEvent
-var dispatch = share.dispatch
-var canBubbleUp = share.canBubbleUp
+var canBubbleUp = require('./canBubbleUp')
 
 if (!W3C) {
     delete canBubbleUp.change
     delete canBubbleUp.select
 }
 
-
-
 var eventHooks = avalon.eventHooks
 /*绑定事件*/
 avalon.bind = function (elem, type, fn) {
     if (elem.nodeType === 1) {
         var value = elem.getAttribute('avalon-events') || ''
-        var uuid = markID(fn)
+        //如果是使用ms-on-*绑定的回调,其uuid格式为e12122324,
+        //如果是使用bind方法绑定的回调,其uuid格式为_12
+        var uuid = getShortID(fn)
         var hook = eventHooks[type]
         if (hook) {
             type = hook.type || type
@@ -87,13 +84,69 @@ avalon.unbind = function (elem, type, fn) {
     }
 }
 
+var typeRegExp = {}
+function collectHandlers(elem, type, handlers) {
+    var value = elem.getAttribute('avalon-events')
+    if (value && (elem.disabled !== true || type !== 'click')) {
+        var uuids = []
+        var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp("\\b" + type + '\\:([^,\\s]+)', 'g'))
+        value.replace(reg, function (a, b) {
+            uuids.push(b)
+            return a
+        })
+        if (uuids.length) {
+            handlers.push({
+                elem: elem,
+                uuids: uuids
+            })
+        }
+    }
+    elem = elem.parentNode
+    var g = avalon.gestureEvents || {}
+    if (elem && elem.getAttribute && (canBubbleUp[type] || g[type])) {
+        collectHandlers(elem, type, handlers)
+    }
 
+}
+var rhandleHasVm = /^e/
+var stopImmediate = false
+function dispatch(event) {
+    event = new avEvent(event)
+    var type = event.type
+    var elem = event.target
+    var handlers = []
+    collectHandlers(elem, type, handlers)
+    var i = 0, j, uuid, handler
+    while ((handler = handlers[i++]) && !event.cancelBubble) {
+        var host = event.currentTarget = handler.elem
+        j = 0
+        while ((uuid = handler.uuids[ j++ ])) {
+            if (stopImmediate) {
+                stopImmediate = false
+                break
+            }
+            var fn = avalon.eventListeners[uuid]
+            if (fn) {
+                var vm = rhandleHasVm.test(uuid) ? handler.elem._ms_context_ : 0
+                if (vm && vm.$hashcode === false) {
+                    return avalon.unbind(elem, type, fn)
+                }
+
+                var ret = fn.call(vm || elem, event, host._ms_local)
+
+                if (ret === false) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+            }
+        }
+    }
+}
 
 var focusBlur = {
     focus: true,
     blur: true
 }
-
 var nativeBind = W3C ? function (el, type, fn, capture) {
     el.addEventListener(type, fn, capture)
 } : function (el, type, fn) {
@@ -116,12 +169,12 @@ function delegateEvent(type) {
 }
 
 avalon.fireDom = function (elem, type, opts) {
-    /* istanbul ignore else */
+     /* istanbul ignore else */
     if (document.createEvent) {
         var hackEvent = document.createEvent('Events')
         hackEvent.initEvent(type, true, true, opts)
         avalon.shadowCopy(hackEvent, opts)
-        elem.dispatchEvent(hackEvent)
+        elem.dispatchEvent(hackEvent)  
     } else if (root.contains(elem)) {//IE6-8触发事件必须保证在DOM树中,否则报'SCRIPT16389: 未指明的错误'
         hackEvent = document.createEventObject()
         avalon.shadowCopy(hackEvent, opts)
@@ -130,23 +183,56 @@ avalon.fireDom = function (elem, type, opts) {
 }
 
 var rmouseEvent = /^(?:mouse|contextmenu|drag)|click/
-
-avEvent.prototype.fixIE = function () {
+var rconstant = /^[A-Z_]+$/
+function avEvent(event) {
+    if (event.originalEvent) {
+        return this
+    }
+    for (var i in event) {
+        if (!rconstant.test(i) && typeof event[i] !== 'function') {
+            this[i] = event[i]
+        }
+    }
     if (!this.target) {
-        this.target = this.srcElement
+        this.target = event.srcElement
     }
     var target = this.target
     /* istanbul ignore if */
     /* istanbul ignore else */
-    if (this.which == null && this.type.indexOf('key') === 0) {
-        this.which = this.charCode != null ? this.charCode : this.keyCode
-    } else if (rmouseEvent.test(this.type) && !('pageX' in this)) {
+    if (this.which == null && event.type.indexOf('key') === 0) {
+        this.which = event.charCode != null ? event.charCode : event.keyCode
+    } else if (rmouseEvent.test(event.type) && !('pageX' in this)) {
         var doc = target.ownerDocument || document
         var box = doc.compatMode === 'BackCompat' ? doc.body : doc.documentElement
-        this.pageX = this.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
-        this.pageY = this.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
+        this.pageX = event.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
+        this.pageY = event.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
         this.wheelDeltaY = this.wheelDelta
         this.wheelDeltaX = 0
+    }
+    this.timeStamp = new Date() - 0
+    this.originalEvent = event
+}
+avEvent.prototype = {
+    preventDefault: function () {
+        var e = this.originalEvent || {}
+        e.returnValue = this.returnValue = false
+        if (e.preventDefault) {
+            e.preventDefault()
+        }
+    },
+    stopPropagation: function () {
+        var e = this.originalEvent || {}
+        e.cancelBubble = this.cancelBubble = true
+        if (e.stopPropagation) {
+            e.stopPropagation()
+        }
+    },
+    stopImmediatePropagation: function () {
+        stopImmediate = true;
+        this.stopPropagation()
+    },
+    toString: function () {
+        return '[object Event]'//#1619
     }
 }
 

@@ -2,7 +2,7 @@ function serverRender(vm, str) {
     var vdom = avalon.lexer(str)
     var templates = {}
     collectTemplate(vdom, templates)
-    var oldTree = avalon.variant(vdom)
+    var oldTree = avalon.speedUp(vdom)
     var render = avalon.render(oldTree)
     var vtree = render(vm)
     var html = avalon.vdom(vtree, 'toHTML', false)

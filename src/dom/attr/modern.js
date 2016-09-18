@@ -1,7 +1,6 @@
 var avalon = require('../../seed/core')
 var propMap = require('./propMap')
 var rsvg = /^\[object SVG\w*Element\]$/
-
 function attrUpdate(node, vnode) {
     /* istanbul ignore if*/
     if (!node || node.nodeType !== 1) {

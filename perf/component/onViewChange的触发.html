@@ -9,7 +9,15 @@
                 return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
                         replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
             }
-
+            var expect = function (a) {
+                return {
+                    to: {
+                        equal: function (b) {
+                            console.log(a, b, a === b)
+                        }
+                    }
+                }
+            }
             avalon.component('ms-select', {
                 template: heredoc(function () {
                     /*

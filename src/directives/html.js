@@ -1,31 +1,35 @@
 var update = require('./_update')
+//var reconcile = require('../strategy/reconcile')
 
-avalon._createChildren = function (fn, vmodel, local) {
-    var text = fn() + ''
-    if (!avalon.caches[text]) {
-        var oldTree = avalon.variant(avalon.lexer(text))
-        var render = avalon.render(oldTree, local)
-        avalon.caches[text] = render
-    }
-    var render = avalon.caches[text]
-    var s = avalon.spath//9.12 弹制渲染所有东西
-    delete avalon.spath
-    var vtree = render(vmodel, local)
-    avalon.spath = s
-    vtree.text = text
-    return vtree
-}
 avalon.directive('html', {
     parse: function (copy, src, binding) {
-        //将渲染函数的某一部分存起来,渲在c方法中转换为函数
-        copy[binding.name] = 1
-        copy.children = 'avalon._createChildren(' + [avalon.parseExpr(binding), '__vmodel__', '__local__'] + ')'
+        if (!src.isVoidTag) {
+            //将渲染函数的某一部分存起来,渲在c方法中转换为函数
+            copy[binding.name] = avalon.parseExpr(binding)
+            copy.vmodel = '__vmodel__'
+            copy.local = '__local__'
+        } else {
+            copy.children = '[]'
+        }
     },
     diff: function (copy, src, name) {
-        if (copy.children.text !== src.text) {
-            src.text = copy.children.text
-            src.children = copy.children
+        var copyValue = copy[name] + ''
+
+        if (!src.dynamic['ms-html'] || !src.render || copyValue !== src[name]) {
+            src[name] = copyValue
+           
+            var oldTree = avalon.speedUp(avalon.lexer(copyValue))
+
+            var render = avalon.render(oldTree, copy.local)
+            src.render = render
+
+            var newTree = render(copy.vmodel, copy.local)
+            
+            src.children = copy.children = newTree
             update(src, this.update)
+        } else if (src.render) {
+            var newTree = src.render(copy.vmodel, copy.local)
+            copy.children = newTree
         }
     },
     update: function (dom, vdom) {

@@ -44,7 +44,7 @@ var plugins = {
 kernel.plugins = plugins
 avalon.config({
     interpolate: ['{{', '}}'],
-    debug: /unminified/.test(function(){/*unminified*/})
+    debug: true
 })
 
 module.exports = avalon

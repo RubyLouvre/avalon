@@ -4,9 +4,6 @@
  * 添加change, afterChange更新钩子
  * ------------------------------------------------------------
  */
-
-module.exports = diff
-
 var emptyArr = []
 // 防止被引用
 var emptyObj = function () {
@@ -14,6 +11,7 @@ var emptyObj = function () {
         children: [], props: {}
     }
 }
+var directives = avalon.directives
 var rbinding = /^ms-(\w+)-?(.*)/
 
 function diff(copys, sources) {
@@ -33,12 +31,10 @@ function diff(copys, sources) {
                 }
                 break
             case '#comment':
-                if (copy.forExpr && copy.dynamic) {//比较循环区域的元素位置
-                    avalon.directives['for'].diff(copy, src, copys, sources, i)
+                if (copy.forExpr) {//比较循环区域的元素位置
+                    directives['for'].diff(copy, src, copys, sources, i)
                 } else if (src.afterChange) {
                     execHooks(src, src.afterChange)
-                } else if (copy.afterChange) {
-                    execHooks(src, copy.afterChange)
                 }
                 break
             case void(0):
@@ -51,7 +47,7 @@ function diff(copys, sources) {
                 if (copy.dynamic) {
                     var index = i
                     if (copy['ms-widget']) {
-                        avalon.directives['widget'].diff(copy, src, sources, index)
+                        avalon.directives['widget'].diff(copy, src, 'ms-widget', copys, sources, index)
                         copy = copys[i]
                         src = sources[i] || emptyObj()
                         delete copy['ms-widget']
@@ -66,8 +62,7 @@ function diff(copys, sources) {
                     diffProps(copy, src)
                 }
 
-
-                if (!/^(#|undefined)/.test(copy.nodeName) && !copy.skipContent && !copy.isVoidTag) {
+                if (/^\w/.test(copy.nodeName) && !copy.skipContent && !copy.isVoidTag) {
                     diff(copy.children, src.children || [])
                 }
 
@@ -82,7 +77,7 @@ function diff(copys, sources) {
 function execHooks(el, hooks) {
     if (hooks.length) {
         for (var hook, i = 0; hook = hooks[i++]; ) {
-            hook(el.dom, el, el.dom && el.dom.parentNode)
+            hook(el.dom, el)
         }
     }
     delete el.afterChange
@@ -103,4 +98,5 @@ function diffProps(copy, source) {
         avalon.warn(type, e, e.stack || e.message, 'diffProps error')
     }
 }
-
+avalon.diff = diff
+module.exports = diff

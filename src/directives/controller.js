@@ -1,5 +1,7 @@
 // 抽离出来公用
 var update = require('./_update')
+//var reconcile = require('../strategy/reconcile')
+
 var cache = {}
 avalon.mediatorFactoryCache = function (__vmodel__, __present__) {
     var a = __vmodel__.$hashcode
@@ -30,8 +32,8 @@ avalon.directive('controller', {
             '})();'
         ].join('\n') 
 
-        src.prefix = '!function(__vmodel__){' + vmodel
-        src.suffix = '\n}(__vmodel__);'
+        src.$prepend = '(function(__vmodel__){' + vmodel
+        src.$append = '\n})(__vmodel__);'
     },
     diff: function (copy, src, name) {
         if (!src.dynamic[name]) {
@@ -72,8 +74,6 @@ avalon.directive('controller', {
         }
         update(vdom, function () {
             avalon(dom).removeClass('ms-controller')
-            avalon._disposeComponent(dom)
-            dom.setAttribute('wid', id)
             var events = needFire.$events["onReady"]
             if (events) {
                 needFire.$fire('onReady')

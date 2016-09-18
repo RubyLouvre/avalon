@@ -16,6 +16,8 @@ function createSVG(type) {
 var svgTags = avalon.oneObject('circle,defs,ellipse,image,line,' +
         'path,polygon,polyline,rect,symbol,text,use,g,svg')
 
+
+var rvml = /^\w+\:\w+/
 if (avalon.browser) {
     var supportTemplate = 'content' in document.createElement('template')
 }

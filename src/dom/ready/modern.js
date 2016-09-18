@@ -1,6 +1,5 @@
 var avalon = require('../../seed/core')
-avalon._hydrate = require('../../strategy/hydrateByDom.modern')
-
+var scan = require('./scan')
 var document = avalon.document
 
 var readyList = [], isReady
@@ -21,7 +20,7 @@ avalon.ready = function (fn) {
 }
 
 avalon.ready(function () {
-    avalon.scan(document.body)
+    scan(document.body)
 })
 
 new function () {

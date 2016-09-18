@@ -16,8 +16,8 @@ require('./validate')
 require('./rules')
 
 //处理逻辑
-require('./if.modern')
+require('./if')
 require('./for')
 
-require('../component/index')
+require('./widget')
 require('./effect')

@@ -17,10 +17,10 @@ require('./validate')
 require('./rules')
 //
 ////处理逻辑
-require('./if.compact')
+require('./if')
 require('./for')
 //
-require('../component/index')
+require('./widget')
 require('./effect')
 //优先级 ms-important, ms-controller, ms-for, ms-widget, ms-effect, ms-if
 //.......

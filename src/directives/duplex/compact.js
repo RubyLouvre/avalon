@@ -1,6 +1,7 @@
 
 var update = require('../_update')
-var jsonfy = require('../../strategy/jsonfy')
+var evaluatorPool = require('../../strategy/parser/evaluatorPool')
+var stringify = require('../../strategy/parser/stringify')
 
 var rchangeFilter = /\|\s*change\b/
 var rcheckedType = /^(?:checkbox|radio)$/
@@ -12,17 +13,15 @@ var updateView = require('./updateView.compact')
 var addValidateField = require('./addValidateField')
 var duplexDir = 'ms-duplex'
 
+
 avalon.directive('duplex', {
     priority: 2000,
     parse: function (copy, src, binding) {
         var expr = binding.expr
-        var debug = binding.name + '=' + expr
         var etype = src.props.type
         //处理数据转换器
         var parsers = binding.param, dtype
         var isChecked = false
-        binding.name = duplexDir
-
         parsers = parsers ? parsers.split('-').map(function (a) {
             if (a === 'checked') {
                 isChecked = true
@@ -63,35 +62,38 @@ avalon.directive('duplex', {
 
 
         var changed = copy.props['data-duplex-changed']
-        var get = avalon.parseExpr(binding)// 输出原始数据
+        var get = avalon.parseExpr(binding, 'duplex')// 输出原始数据
         var quoted = parsers.map(function (a) {
             return avalon.quote(a)
         })
-        copy[duplexDir] = 'function (){ return ' +
-                jsonfy({
-                    type: dtype, //这个决定绑定什么事件
-                    vmodel: '__vmodel__',
-                    local: '__local__',
-                    debug: '/' + avalon.escapeRegExp(debug) + '/',
-                    isChecked: isChecked,
-                    parsers: '[' + quoted + ']',
-                    isString: !!isString,
-                    isChanged: isChanged, //这个决定同步的频数
-                    debounceTime: debounceTime, //这个决定同步的频数
-                    get: get , //经过所有
-                    set: avalon.evaluatorPool.get('duplex:set:' + expr),
-                    callback: changed ? avalon.parseExpr({expr: changed, type: 'on'}) : 'avalon.noop'
-                }) + '}'
+        copy[duplexDir] = stringify({
+            type: dtype, //这个决定绑定什么事件
+            vmodel: '__vmodel__',
+            local: '__local__',
+            debug: avalon.quote(binding.name + '=' + binding.expr),
+            isChecked: isChecked,
+            parsers: '[' + quoted + ']',
+            isString: !!isString,
+            isChanged: isChanged, //这个决定同步的频数
+            debounceTime: debounceTime, //这个决定同步的频数
+            get: get, //经过所有
+            set: evaluatorPool.get('duplex:set:' + expr),
+            callback: changed ? avalon.parseExpr(changed, 'on') : 'avalon.noop'
+        })
 
     },
     diff: function (copy, src) {
-        var raw = copy[duplexDir]
-        var data = typeof raw === 'function' ? raw() : raw
-        data.parse = parseValue
-        src[duplexDir] = data
+        if (!src.dynamic[duplexDir]) {
+            //第一次为原始虚拟DOM添加duplexData
+            var data = src[duplexDir] = copy[duplexDir]
+            data.parse = parseValue
+        } else {
+            data = src[duplexDir]
+        }
         if (copy !== src) {//释放内存
             copy[duplexDir] = null
         }
+
         var curValue = data.get(data.vmodel)
         var preValue = data.value
         if (data.isString) {//减少不必要的视图渲染
@@ -112,25 +114,21 @@ avalon.directive('duplex', {
         if (hack) {
             data.arayHack = curValue + ''
         }
-        src.dynamic = {}
         update(src, this.update, 'afterChange')
     },
     update: function (dom, vdom) {
         if (dom && dom.nodeType === 1) {
             //vdom.dynamic变成字符串{}
             vdom.dynamic[duplexDir] = 1
-            var newData = vdom[duplexDir]
             if (!dom.__ms_duplex__) {
-                dom.__ms_duplex__ = newData
-                newData.dom = dom
+                dom.__ms_duplex__ = avalon.mix(vdom[duplexDir],{dom: dom})
                 //绑定事件
                 updateModelByEvent(dom, vdom)
                 //添加验证
                 addValidateField(dom, vdom)
             }
+
             var data = dom.__ms_duplex__
-            data.value = newData.value
-            data.arayHack = newData.arayHack
             data.dom = dom
             //如果不支持input.value的Object.defineProperty的属性支持,
             //需要通过轮询同步, chrome 42及以下版本需要这个hack

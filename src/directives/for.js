@@ -14,7 +14,9 @@ avalon._each = function (obj, fn, local, vnodes) {
     var repeat = []
     vnodes.push(repeat)
     var arr = (fn + '').slice(0, 40).match(rargs)
+
     arr.shift()
+
     if (Array.isArray(obj)) {
         for (var i = 0; i < obj.length; i++) {
             iterator(i, obj[i], local, fn, arr[0], arr[1], repeat, true)
@@ -44,7 +46,7 @@ function iterator(index, item, vars, fn, k1, k2, repeat, isArray) {
 
 avalon.directive('for', {
     priority: 3,
-    parse: function (copy, src) {
+    parse: function (copy, src, binding) {
         var str = src.forExpr, aliasAs
         str = str.replace(rforAs, function (a, b) {
             /* istanbul ignore if */
@@ -55,29 +57,33 @@ avalon.directive('for', {
             }
             return ''
         })
+
         var arr = str.split(' in ')
-        var binding = {
-            expr: arr[1],
-            type: 'for'
-        }
-        var getLoop = avalon.parseExpr(binding)
-        copy.dynamic = 'avalon.matchDep(' + avalon.quote(binding.paths) + ',avalon.spath)'
-        var kv = (arr[0]+' traceKey __local__ vnodes').match(rargs)
-        if (kv.length === 4) {//确保avalon._each的回调有三个参数
+        var assign = 'var loop = ' + avalon.parseExpr(arr[1]) + ' \n'
+        var alias = aliasAs ? 'var ' + aliasAs + ' = loop\n' : ''
+        var kv = arr[0].match(rargs)
+
+        if (kv.length === 1) {//确保avalon._each的回调有三个参数
             kv.unshift('$key')
         }
-        src.suffix = Array('var loop = (' + getLoop + ')();',
-                'avalon._each(loop, function(' + kv + '){',
-                '__local__[' + avalon.quote(aliasAs || 'valueOf') + '] = loop',
-                'vnodes.push({',
-                '\tnodeName: "#document-fragment",',
-                '\tindex   : arguments[0],',
-                '\tkey     : traceKey,',
-                '\tchildren: new function(){\nvar vnodes = []\n').join('\n')
+        kv.push('traceKey', '__local__', 'vnodes')
+        src.$append = assign + alias + 'avalon._each(loop,function('
+                + kv.join(', ') + '){\n'
+                + (aliasAs ? '__local__[' + avalon.quote(aliasAs) + ']=loop\n' : '')
+                + 'vnodes.push({\nnodeName: "#document-fragment",\nindex: arguments[0],\nkey: traceKey,\n' +
+                'children: new function(){\n var vnodes = []\n'
+
     },
     diff: function (copy, src, cpList, spList, index) {
         //将curRepeat转换成一个个可以比较的component,并求得compareText
         //如果这个元素没有插入
+        if (avalon.callArray) {
+            if (src.list && src.forExpr.indexOf(avalon.callArray) === -1) {
+                return 
+            }
+        } 
+
+
         var srcRepeat = spList[index + 1]
         var curRepeat = cpList[index + 1]
         var end = spList[index + 2]
@@ -153,7 +159,7 @@ avalon.directive('for', {
 
         }
         /* istanbul ignore if */
-        if (removes.length > 1) {
+        if (removes.length > 1) {   
             removes.sort(function (a, b) {
                 return a.index - b.index
             })
@@ -239,7 +245,7 @@ avalon.directive('for', {
                     staggerKey: signature + 'move'
                 })
             }
-
+            
             before = el.split
         })
         if (vdom.action === 'init') {

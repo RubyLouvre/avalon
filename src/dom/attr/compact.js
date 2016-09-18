@@ -1,7 +1,7 @@
 var avalon = require('../../seed/core')
 var propMap = require('./propMap')
 var isVML = require('./isVML')
-var rsvg = /^\[object SVG\w*Element\]$/
+var rsvg =/^\[object SVG\w*Element\]$/
 var ramp = /&amp;/g
 
 function attrUpdate(node, vnode) {
@@ -57,11 +57,10 @@ function attrUpdate(node, vnode) {
         }
     }
 }
-
 var rvalidchars = /^[\],:{}\s]*$/,
-        rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g,
-        rvalidescape = /\\(?:["\\\/bfnrt]|u[\da-fA-F]{4})/g,
-        rvalidtokens = /"[^"\\\r\n]*"|true|false|null|-?(?:\d+\.|)\d+(?:[eE][+-]?\d+|)/g
+    rvalidbraces = /(?:^|:|,)(?:\s*\[)+/g,
+    rvalidescape = /\\(?:["\\\/bfnrt]|u[\da-fA-F]{4})/g,
+    rvalidtokens = /"[^"\\\r\n]*"|true|false|null|-?(?:\d+\.|)\d+(?:[eE][+-]?\d+|)/g
 
 avalon.parseJSON = typeof JSON === 'object' ? JSON.parse : function (data) {
     if (typeof data === 'string') {
