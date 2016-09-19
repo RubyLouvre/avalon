@@ -1,5 +1,5 @@
 //这里放置存在异议的方法
-import {avalon} from './core'
+import avalon from './core'
 var tos = avalon.inspect
 var rwindow = /^\[object (?:Window|DOMWindow|global)\]$/
 var rarraylike = /(Array|List|Collection|Map|Arguments)\]$/

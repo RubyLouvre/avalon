@@ -1,4 +1,4 @@
-import {avalon} from './core'
+import avalon from './core'
 function kernel(settings) {
     for (var p in settings) {
          /* istanbul ignore if */

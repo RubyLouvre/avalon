@@ -1,4 +1,4 @@
-import {avalon} from './core'
+import avalon from './core'
 
 import './browser'
 import './lang.modern'

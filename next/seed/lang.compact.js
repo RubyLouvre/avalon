@@ -1,6 +1,5 @@
 //这里放置存在异议的方法
-import {avalon} from './core'
-
+import avalon from './core'
 
 avalon.quote = typeof JSON !== 'undefined' ? JSON.stringify : new function () {
 //https://github.com/bestiejs/json3/blob/master/lib/json3.js

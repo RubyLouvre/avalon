@@ -1,4 +1,4 @@
-import {avalon} from './core'
+import avalon from './core'
 import {Cache} from './cache'
 
 var cssHooks = {}

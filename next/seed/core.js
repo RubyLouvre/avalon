@@ -1,5 +1,5 @@
 //avalon的核心,这里都是一些不存在异议的*核心*方法与属性
-export function avalon(el) {
+export default function avalon(el) {
     return new avalon.init(el)
 }
 

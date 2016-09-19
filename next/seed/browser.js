@@ -1,4 +1,4 @@
-import {avalon} from './core'
+import avalon from './core'
 var window = Function(' return this')() || this
 var browser = {
     window: window,
