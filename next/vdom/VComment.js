@@ -1,5 +1,5 @@
 
-export function VComment(text) {
+export default function VComment(text) {
     this.nodeName = '#comment'
     this.nodeValue = text
 }

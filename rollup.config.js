@@ -1,6 +1,6 @@
 import commonjs from 'rollup-plugin-commonjs';
 export default {
-    entry: 'next/avalon.modern.js',
+    entry: 'next/avalon.js',
     format: 'umd',
     moduleName: 'avalon',
     plugins: [

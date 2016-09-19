@@ -2,10 +2,10 @@
  * 虚拟DOM的3大构造器
  */
 import avalon from '../filters/compact'
-import {VText} from './VText'
-import {VComment} from './VComment'
-import {VElement} from './VElement'
-import {VFragment} from './VFragment'
+import VText from './VText'
+import VComment from './VComment'
+import VElement from './VElement'
+import VFragment from './VFragment'
 
 avalon.vdom = avalon.vdomAdaptor = function (obj, method) {
     if (!obj) {//obj在ms-for循环里面可能是null
@@ -30,5 +30,6 @@ var mix = {
     VElement: VElement,
     VFragment: VFragment
 }
+
 avalon.shadowCopy(avalon.vdom, mix)
 

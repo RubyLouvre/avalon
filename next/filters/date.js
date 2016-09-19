@@ -108,11 +108,11 @@ var DATE_FORMATS = {
 }
 var rdateFormat = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/
 var raspnetjson = /^\/Date\((\d+)\)\/$/
-export function dateFilter(date, format) {
+export default function dateFilter(date, format) {
     var locate = dateFilter.locate,
-            text = "",
-            parts = [],
-            fn, match
+        text = "",
+        parts = [],
+        fn, match
     format = format || "mediumDate"
     format = locate[format] || format
     if (typeof date === "string") {

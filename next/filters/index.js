@@ -1,11 +1,11 @@
 import avalon from "../seed/compact"
 
-import {number} from "./number"
-import {sanitize} from "./sanitize"
-import {dateFilter} from "./date"
+import numberFilter from "./number"
+import sanitizeFilter from "./sanitize"
+import dateFilter from "./date"
 import * as arrayFilters from "./array"
 import eventFilters from "./event"
-import {escapeHtml} from "./escape"
+import escapeFilter from "./escape"
 
 var filters = avalon.filters
 
@@ -13,7 +13,7 @@ function K(a) {
     /* istanbul ignore next*/
     return a
 }
-avalon.escapeHtml = escapeHtml
+avalon.escapeHtml = escapeFilter
 
 avalon.__format__ = function (name) {
     var fn = filters[name]
@@ -41,18 +41,18 @@ avalon.mix(filters, {
         }
         end = typeof end === "string" ? end : "..."
         return str.length > length ?
-                str.slice(0, length - end.length) + end :/* istanbul ignore else*/
-                str
+            str.slice(0, length - end.length) + end :/* istanbul ignore else*/
+            str
     },
     camelize: avalon.camelize,
-    date: date,
-    escape: escape,
-    sanitize: sanitize,
-    number: number,
+    date: dateFilter,
+    escape: escapeFilter,
+    sanitize: sanitizeFilter,
+    number: numberFilter,
     currency: function (amount, symbol, fractionSize) {
         return (symbol || '\u00a5') +
-                number(amount,
-                        isFinite(fractionSize) ?/* istanbul ignore else*/ fractionSize : 2)
+            numberFilter(amount,
+                isFinite(fractionSize) ?/* istanbul ignore else*/ fractionSize : 2)
     }
 }, arrayFilters, eventFilters)
 

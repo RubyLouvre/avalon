@@ -1,6 +1,6 @@
 import avalon from '../filters/modern'
 
-export function VElement(type, props, children) {
+export default function VElement(type, props, children) {
     this.nodeName = type
     this.props = props
     this.children = children

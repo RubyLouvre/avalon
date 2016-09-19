@@ -1,6 +1,6 @@
 import avalon from '../filters/compact'
 
-export function VFragment(a) {
+export default function VFragment(a) {
     this.nodeName = '#document-fragment'
     this.children = a
 }
@@ -11,11 +11,11 @@ VFragment.prototype = {
         if (this.dom)
             return this.dom
         var f = document.createDocumentFragment()
-        for (var i = 0, el; el = this.children[i++]; ) {
+        for (var i = 0, el; el = this.children[i++];) {
             f.appendChild(avalon.vdom(el, 'toDOM'))
         }
         this.split = f.lastChild
-        return  this.dom = f
+        return this.dom = f
     },
     toHTML: function () {
         return this.children.map(function (a) {
