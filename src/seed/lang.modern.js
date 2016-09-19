@@ -134,6 +134,7 @@ avalon.each = function (obj, fn) {
         }
     }
 }
+
 new function welcome() {
     var welcomeIntro = ["%cavalon.js %c" + avalon.version + " %cin debug mode, %cmore...", "color: rgb(114, 157, 52); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(82, 140, 224); font-weight: normal; text-decoration: underline;"];
     var welcomeMessage = "You're running avalon in debug mode - messages will be printed to the console to help you fix problems and optimise your application.\n\n" +
@@ -141,7 +142,6 @@ new function welcome() {
             'Debug mode also automatically shut down amicably when your app is minified.\n\n' +
             "Get help and support:\n  https://segmentfault.com/t/avalon\n  http://avalonjs.coding.me/\n  http://www.avalon.org.cn/\n\nFound a bug? Raise an issue:\n  https://github.com/RubyLouvre/avalon/issues\n\n";
 
-  
     var hasGroup = !!console.groupCollapsed 
     console[hasGroup ? 'groupCollapsed': 'log'].apply(console, welcomeIntro)
     console.log(welcomeMessage)

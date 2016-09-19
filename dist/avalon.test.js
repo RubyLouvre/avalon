@@ -1,5 +1,5 @@
 /*!
- * built in 2016-9-19:2 version 2.114 by 司徒正美
+ * built in 2016-9-19:11 version 2.114 by 司徒正美
  * npm 2.1.15
  *     普通vm也支持onReady, onDispose方法(生命周期)
  *     添加norequire验证规则
@@ -204,7 +204,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-9-19:2 version 2.114 by 司徒正美
+	 * built in 2016-9-19:11 version 2.114 by 司徒正美
 	 * npm 2.1.15
 	 *     普通vm也支持onReady, onDispose方法(生命周期)
 	 *     添加norequire验证规则
@@ -1894,18 +1894,22 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		// 抽离出来公用
 		var update = __webpack_require__(39)
-		//var reconcile = require('../strategy/reconcile')
 
 		var cache = {}
-		avalon.mediatorFactoryCache = function (__vmodel__, __present__) {
-		    var a = __vmodel__.$hashcode
-		    var b = __present__.$hashcode
-		    var id = a + b
-		    if (cache[id]) {
-		        return cache[id]
+		avalon.mediatorFactoryCache = function (top, $id) {
+		    var vm = avalon.vmodels[$id]
+		    if (vm && top && vm !== top) {
+		        var a = top.$hashcode
+		        var b = vm.$hashcode
+		        var id = a + b
+		        if (cache[id]) {
+		            return cache[id]
+		        }
+		        var c = avalon.mediatorFactory(top, vm)
+		        return  cache[id] = c
+		    } else {
+		        return top
 		    }
-		    var c = avalon.mediatorFactory(__vmodel__, __present__)
-		    return  cache[id] = c
 		}
 		avalon.directive('controller', {
 		    priority: 2,
@@ -1915,18 +1919,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		        copy.vmodel = '__vmodel__'
 		        copy[binding.name] = 1
 
-		        var vmodel = [
-		            '(function(){',
-		            'var vm = avalon.vmodels[' + quoted + ']',
-		            'if(vm && __vmodel__&& vm !== __vmodel__){',
-		            'return __vmodel__ = avalon.mediatorFactoryCache(__vmodel__, vm)',
-		            '}else if(vm){',
-		            'return __vmodel__ = vm',
-		            '}',
-		            '})();'
-		        ].join('\n')
-
-		        src.$prepend = '(function(__vmodel__){' + vmodel
+		        src.$prepend = '(function(__top__){\n' +
+		                'var __vmodel__ = avalon.mediatorFactoryCache(__top__,' + quoted + ')\n'
 		        src.$append = '\n})(__vmodel__);'
 		    },
 		    diff: function (copy, src, name) {
@@ -3716,8 +3710,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		                )
 		        onceWarn = false
 		    }
-		    var define = hooks.define
-		    define = define || avalon.directives.widget.define
+		    if(hooks.define){
+		        delete hooks.define
+		        avalon.warn('warning! 组件的define配置项已经被废掉')
+		    }
+		    var define = avalon.directives.widget.define
 		    //生成组件VM
 		    var $id = id || src.props.id || 'w' + (new Date - 0)
 		    var defaults = avalon.mix(true, {}, definition.defaults)
@@ -3888,6 +3885,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		    } else {
 		        node.children.forEach(function (el, i) {
 		            var name = el.props && el.props.slot
+		            if(!name)
+		                return
 		            if (el.forExpr) {
 		                slots[name] = node.children.slice(i, i + 2)
 		            } else {
@@ -6279,6 +6278,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }
 		    }
 		}
+
 		new function welcome() {
 		    var welcomeIntro = ["%cavalon.js %c" + avalon.version + " %cin debug mode, %cmore...", "color: rgb(114, 157, 52); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(82, 140, 224); font-weight: normal; text-decoration: underline;"];
 		    var welcomeMessage = "You're running avalon in debug mode - messages will be printed to the console to help you fix problems and optimise your application.\n\n" +
@@ -6286,7 +6286,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		            'Debug mode also automatically shut down amicably when your app is minified.\n\n' +
 		            "Get help and support:\n  https://segmentfault.com/t/avalon\n  http://avalonjs.coding.me/\n  http://www.avalon.org.cn/\n\nFound a bug? Raise an issue:\n  https://github.com/RubyLouvre/avalon/issues\n\n";
 
-		  
 		    var hasGroup = !!console.groupCollapsed 
 		    console[hasGroup ? 'groupCollapsed': 'log'].apply(console, welcomeIntro)
 		    console.log(welcomeMessage)

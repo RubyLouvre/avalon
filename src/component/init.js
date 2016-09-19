@@ -47,8 +47,11 @@ function initComponent(src, rawOption, local, template) {
                 )
         onceWarn = false
     }
-    var define = hooks.define
-    define = define || avalon.directives.widget.define
+    if(hooks.define){
+        delete hooks.define
+        avalon.warn('warning! 组件的define配置项已经被废掉')
+    }
+    var define = avalon.directives.widget.define
     //生成组件VM
     var $id = id || src.props.id || 'w' + (new Date - 0)
     var defaults = avalon.mix(true, {}, definition.defaults)
@@ -219,6 +222,8 @@ avalon.collectSlots = function (node, soleSlot) {
     } else {
         node.children.forEach(function (el, i) {
             var name = el.props && el.props.slot
+            if(!name)
+                return
             if (el.forExpr) {
                 slots[name] = node.children.slice(i, i + 2)
             } else {
