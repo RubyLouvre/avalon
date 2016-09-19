@@ -23,7 +23,7 @@ var hasConsole = typeof console === 'object'
 avalon.shadowCopy(avalon, {
     noop: function () {
     },
-    version: "2.114",
+    version: "2.115",
     //切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach
     rword: rword,
     inspect: ({}).toString,

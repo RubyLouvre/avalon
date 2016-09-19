@@ -1,5 +1,5 @@
 /*!
- * built in 2016-9-19:11 version 2.114 by 司徒正美
+ * built in 2016-9-19:11 version 2.115 by 司徒正美
  * npm 2.1.15
  *     普通vm也支持onReady, onDispose方法(生命周期)
  *     添加norequire验证规则
@@ -372,7 +372,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	avalon.shadowCopy(avalon, {
 	    noop: function () {
 	    },
-	    version: "2.114",
+	    version: "2.115",
 	    //切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach
 	    rword: rword,
 	    inspect: ({}).toString,
