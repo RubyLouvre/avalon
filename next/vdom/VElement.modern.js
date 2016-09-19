@@ -1,0 +1,104 @@
+import avalon from '../filters/modern'
+
+export function VElement(type, props, children) {
+    this.nodeName = type
+    this.props = props
+    this.children = children
+
+}
+
+VElement.prototype = {
+    constructor: VElement,
+    toDOM: function () {
+        if (this.dom)
+            return this.dom
+        var dom, tagName = this.nodeName
+        if (avalon.modern && svgTags[tagName]) {
+            dom = createSVG(tagName)
+        } else {
+            dom = document.createElement(tagName)
+        }
+        var props = this.props || {}
+        var wid = props['ms-important'] ||
+                props['ms-controller'] || this.wid
+        if (wid) {
+            var scope = avalon.scopes[wid]
+            var element = scope && scope.vmodel && scope.vmodel.$element
+            if (element) {
+                var oldVdom = element.vtree[0]
+                if (oldVdom.children) {
+                    this.children = oldVdom.children
+                }
+                return element
+            }
+        }
+        for (var i in props) {
+            var val = props[i]
+            if (skipFalseAndFunction(val)) {
+                dom.setAttribute(i, val + '')
+            }
+        }
+        var c = this.children || []
+        var template = c[0] ? c[0].nodeValue : ''
+        switch (this.nodeName) {
+            case 'xmp':
+            case 'script':
+            case 'style':
+            case 'noscript':
+                dom.innerHTML = template
+                break
+            case 'template':
+                if (supportTemplate) {
+                    dom.innerHTML = template
+                } else {
+                    dom.textContent = template
+                }
+                break
+            default:
+                if (!this.isVoidTag) {
+                    this.children.forEach(function (c) {
+                        c && dom.appendChild(avalon.vdom(c, 'toDOM'))
+                    })
+                }
+                break
+        }
+        return this.dom = dom
+    },
+    toHTML: function () {
+        var arr = []
+        var props = this.props || {}
+        for (var i in props) {
+            var val = props[i]
+            if (skipFalseAndFunction(val)) {
+                arr.push(i + '=' + avalon.quote(props[i] + ''))
+            }
+        }
+        arr = arr.length ? ' ' + arr.join(' ') : ''
+        var str = '<' + this.nodeName + arr
+        if (this.isVoidTag) {
+            return str + '/>'
+        }
+        str += '>'
+        if (this.children) {
+            str += this.children.map(function (c) {
+                return c ? avalon.vdom(c, 'toHTML') : ''
+            }).join('')
+        }
+        return str + '</' + this.nodeName + '>'
+    }
+}
+
+function skipFalseAndFunction(a) {
+    return a !== false && (Object(a) !== a)
+}
+
+function createSVG(type) {
+    return document.createElementNS('http://www.w3.org/2000/svg', type)
+}
+
+var svgTags = avalon.oneObject('circle,defs,ellipse,image,line,' +
+        'path,polygon,polyline,rect,symbol,text,use,g,svg')
+
+if (avalon.browser) {
+    var supportTemplate = 'content' in document.createElement('template')
+}
