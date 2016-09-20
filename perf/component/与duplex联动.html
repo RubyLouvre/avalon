@@ -19,12 +19,19 @@
                 template: heredoc(function () {
                     /*
                      <strong>
-                     <input  :duplex="@value">{{@value}}
+                     <input  :duplex="@value">{{@value}}|{{@aaa.a}}
                      </strong>
                      */
                 }),
                 defaults: {
-                    value: 1
+                    value: 1,
+                    aaa:{
+                        a: 2
+                    },
+                    onReady: function(){
+                        console.log('---')
+                        this.aaa = {a: 4}
+                    }
                 
                 }
             })

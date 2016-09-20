@@ -4,19 +4,13 @@
  * masterFactory,slaveFactory,mediatorFactory, ArrayFactory
  * ------------------------------------------------------------
  */
+import {warloads} from  './parts/warloads
+import {$$skipArray} from './parts/skipArray'
+import {isSkip, makeAccessor, modelAdaptor,initViewModel} from './parts/share'
+import {modelAccessor,toJson} from './parts/compact'
+import {createViewModel} from './parts/createViewModel'
 
-var share = require('./parts/compact')
-var createViewModel = require('./parts/createViewModel')
 
-var isSkip = share.isSkip
-var toJson = share.toJson
-var $$midway = share.$$midway
-var $$skipArray = share.$$skipArray
-
-var makeAccessor = share.makeAccessor
-var initViewModel = share.initViewModel
-var modelAccessor = share.modelAccessor
-var modelAdaptor = share.modelAdaptor
 var makeHashCode = avalon.makeHashCode
 
 

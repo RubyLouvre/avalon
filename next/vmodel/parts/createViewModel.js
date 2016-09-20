@@ -1,12 +1,9 @@
-
-var canHideProperty = require('./canHideProperty')
-var $$skipArray = require('./skipArray')
-
-
-var defineProperties = Object.defineProperties
+import {canHideProperty} from './canHideProperty'
+import {$$skipArray} from './skipArray'
+export var defineProperties = Object.defineProperties
 var defineProperty
 
-var expose = new Date() - 0
+var timeBucket = new Date() - 0
 /* istanbul ignore if*/
 if (!canHideProperty) {
     if ('__defineGetter__' in avalon) {
@@ -52,11 +49,11 @@ if (!canHideProperty) {
             // jshint ignore:line
             var buffer = []
             buffer.push(
-                    '\r\n\tPrivate [__data__], [__proxy__]',
-                    '\tPublic Default Function [__const__](d' + expose + ', p' + expose + ')',
-                    '\t\tSet [__data__] = d' + expose + ': set [__proxy__] = p' + expose,
-                    '\t\tSet [__const__] = Me', //链式调用
-                    '\tEnd Function')
+                '\r\n\tPrivate [__data__], [__proxy__]',
+                '\tPublic Default Function [__const__](d' + timeBucket + ', p' + timeBucket + ')',
+                '\t\tSet [__data__] = d' + timeBucket + ': set [__proxy__] = p' + timeBucket,
+                '\t\tSet [__const__] = Me', //链式调用
+                '\tEnd Function')
             //添加普通属性,因为VBScript对象不能像JS那样随意增删属性，必须在这里预先定义好
             var uniq = {
                 __proxy__: true,
@@ -66,26 +63,26 @@ if (!canHideProperty) {
 
             //添加访问器属性 
             for (name in accessors) {
-                if (uniq[name] || ($$skipArray[name] && name !== '$model')) {
+                if (uniq[name] || $$skipArray[name]) {
                     continue
                 }
                 uniq[name] = true
                 buffer.push(
-                        //由于不知对方会传入什么,因此set, let都用上
-                        '\tPublic Property Let [' + name + '](val' + expose + ')', //setter
-                        '\t\tCall [__proxy__](Me,[__data__], "' + name + '", val' + expose + ')',
-                        '\tEnd Property',
-                        '\tPublic Property Set [' + name + '](val' + expose + ')', //setter
-                        '\t\tCall [__proxy__](Me,[__data__], "' + name + '", val' + expose + ')',
-                        '\tEnd Property',
-                        '\tPublic Property Get [' + name + ']', //getter
-                        '\tOn Error Resume Next', //必须优先使用set语句,否则它会误将数组当字符串返回
-                        '\t\tSet[' + name + '] = [__proxy__](Me,[__data__],"' + name + '")',
-                        '\tIf Err.Number <> 0 Then',
-                        '\t\t[' + name + '] = [__proxy__](Me,[__data__],"' + name + '")',
-                        '\tEnd If',
-                        '\tOn Error Goto 0',
-                        '\tEnd Property')
+                    //由于不知对方会传入什么,因此set, let都用上
+                    '\tPublic Property Let [' + name + '](val' + timeBucket + ')', //setter
+                    '\t\tCall [__proxy__](Me,[__data__], "' + name + '", val' + timeBucket + ')',
+                    '\tEnd Property',
+                    '\tPublic Property Set [' + name + '](val' + timeBucket + ')', //setter
+                    '\t\tCall [__proxy__](Me,[__data__], "' + name + '", val' + timeBucket + ')',
+                    '\tEnd Property',
+                    '\tPublic Property Get [' + name + ']', //getter
+                    '\tOn Error Resume Next', //必须优先使用set语句,否则它会误将数组当字符串返回
+                    '\t\tSet[' + name + '] = [__proxy__](Me,[__data__],"' + name + '")',
+                    '\tIf Err.Number <> 0 Then',
+                    '\t\t[' + name + '] = [__proxy__](Me,[__data__],"' + name + '")',
+                    '\tEnd If',
+                    '\tOn Error Goto 0',
+                    '\tEnd Property')
 
             }
             for (name in properties) {
@@ -122,4 +119,3 @@ if (!canHideProperty) {
     }
 }
 
-module.exports = defineProperties

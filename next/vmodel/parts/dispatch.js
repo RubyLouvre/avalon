@@ -4,8 +4,10 @@
  * 属性监听系统 
  * ------------------------------------------------------------
  */
-
-function adjustVm(vm, expr) {
+/**
+ * 调整到正确的VM
+ */
+export function adjustVm(vm, expr) {
     var toppath = expr.split(".")[0], other
     try {
         if (vm.hasOwnProperty(toppath)) {
@@ -21,25 +23,11 @@ function adjustVm(vm, expr) {
     return other || vm
 }
 
-function toRegExp(expr) {
-    var arr = expr.split('.')
-    return new RegExp("^" + arr.map(function (el) {
-        return el === '*' ? '(?:[^.]+)' : el
-    }).join('\\.') + '$', 'i')
-}
-function addFuzzy(add, obj, expr) {
-    if (add) {
-        if (obj.__fuzzy__) {
-            if (obj.__fuzzy__.indexOf(',' + expr) === -1) {
-                obj.__fuzzy__ += ',' + expr
-            }
-        } else {
-            obj.__fuzzy__ = expr
-        }
-    }
-}
 
-function $watch(expr, callback) {
+/**
+ * 添加$watch回调
+ */
+export function $watch(expr, callback) {
     var fuzzy = expr.indexOf('.*') > 0 || expr === '*'
     var vm = fuzzy ? this : $watch.adjust(this, expr)
     var hive = this.$events
@@ -71,7 +59,7 @@ $watch.adjust = adjustVm
  * @param {Number} i 如果抛错,让下一个继续执行
  * @returns {undefined}
  */
-function $emit(list, vm, path, a, b, i) {
+export function $emit(list, vm, path, a, b, i) {
     if (list && list.length) {
         try {
             for (i = i || list.length - 1; i >= 0; i--) {
@@ -87,9 +75,22 @@ function $emit(list, vm, path, a, b, i) {
     }
 }
 
-
-module.exports = {
-    $emit: $emit,
-    $watch: $watch,
-    adjustVm: adjustVm
+function toRegExp(expr) {
+    var arr = expr.split('.')
+    return new RegExp("^" + arr.map(function (el) {
+        return el === '*' ? '(?:[^.]+)' : el
+    }).join('\\.') + '$', 'i')
 }
+
+function addFuzzy(add, obj, expr) {
+    if (add) {
+        if (obj.__fuzzy__) {
+            if (obj.__fuzzy__.indexOf(',' + expr) === -1) {
+                obj.__fuzzy__ += ',' + expr
+            }
+        } else {
+            obj.__fuzzy__ = expr
+        }
+    }
+}
+

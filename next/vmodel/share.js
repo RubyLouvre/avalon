@@ -1,19 +1,14 @@
+import {warlords} from './warlords'
+import {$$skipArray} from './skipArray'
+import {$emit, $watch} from './dispatch'
 
-var $$midway = {}
-var $$skipArray = require('./skipArray')
-var dispatch = require('./dispatch')
-var $emit = dispatch.$emit
-var $watch = dispatch.$watch
-/*
- * initEvents
- * isSkip
- * modelAdaptor
- * makeAccessor
+
+/**
+ * 此方法用于添加$events,$watch, $fire方法
  */
-
-function initEvents($vmodel, heirloom) {
+export function initEvents($vmodel, heirloom) {
     heirloom.__vmodel__ = $vmodel
-    var hide = $$midway.hideProperty
+    var hide = warlords.hideProperty
 
     hide($vmodel, '$events', heirloom)
     hide($vmodel, '$watch', function () {
@@ -30,8 +25,15 @@ function initEvents($vmodel, heirloom) {
 }
 
 var rskip = /function|window|date|regexp|element/i
-
-function isSkip(key, value, skipArray) {
+/**
+ * 判定此属性是否能转换为访问器属性
+ * 不能以$开头， 不位于skipArray数组内，
+ * 类型不能为函数，window, date, regexp, 元素
+ * ？？？
+ * 
+ * 以后将反向操作 ，要求类型只能是array, object, undefined, null, boolean, number, string
+ */
+export function isSkip(key, value, skipArray) {
     // 判定此属性能否转换访问器
     return key.charAt(0) === '$' ||
             skipArray[key] ||
@@ -39,39 +41,53 @@ function isSkip(key, value, skipArray) {
             (value && value.nodeName && value.nodeType > 0)
 }
 
-function modelAdaptor(definition, old, heirloom, options) {
-    //如果数组转换为监控数组
-    if (Array.isArray(definition)) {
-        return $$midway.arrayFactory(definition, old, heirloom, options)
-    } else if (Object(definition) === definition && typeof definition !== 'function') {
-        //如果此属性原来就是一个VM,拆分里面的访问器属性
-        if (old && old.$id) {
-            ++avalon.suspendUpdate
-            //1.5带来的优化方案
-            if (old.$track !== Object.keys(definition).sort().join(';;')) {
-                var vm = $$midway.slaveFactory(old, definition, heirloom, options)
+/**
+ * 将属性值再进行转换
+ */
+export function modelAdaptor(definition, old, heirloom, options) {
+    var type = avalon.type(definition)
+    switch(type){
+        case 'array':
+           return warlords.arrayFactory(definition, old, heirloom, options)
+        case 'object':
+           if (old && old.$id) {
+                ++avalon.suspendUpdate
+                //1.5带来的优化方案
+                if (old.$track !== Object.keys(definition).sort().join(';;')) {
+                    var vm = warlords.slaveFactory(old, definition, heirloom, options)
+                } else {
+                    vm = old
+                }
+                for (var i in definition) {
+                    if ($$skipArray[i])
+                        continue
+                    vm[i] = definition[i]
+                }
+                --avalon.suspendUpdate
+                return vm
             } else {
-                vm = old
+                vm = warlords.masterFactory(definition, heirloom, options)
+                return vm
             }
-            for (var i in definition) {
-                if ($$skipArray[i])
-                    continue
-                vm[i] = definition[i]
-            }
-            --avalon.suspendUpdate
-            return vm
-        } else {
-            vm = $$midway.masterFactory(definition, heirloom, options)
-            return vm
-        }
-    } else {
-        return definition
+         default:
+          return definition
     }
 }
-$$midway.modelAdaptor = modelAdaptor
 
+warlords.modelAdaptor = modelAdaptor
 
-function makeAccessor(sid, spath, heirloom) {
+/**
+ * 生成访问器属性的定义对象
+ * 依赖于
+ * $emit
+ * modelAdaptor
+ * emitWidget
+ * emitArray
+ * emitWildcard
+ * batchUpdateView
+ * 
+ */
+export function makeAccessor(sid, spath, heirloom) {
     var old = NaN
     function get() {
         return old
@@ -85,7 +101,7 @@ function makeAccessor(sid, spath, heirloom) {
             }
             var vm = heirloom.__vmodel__
             if (val && typeof val === 'object') {
-                val = $$midway.modelAdaptor(val, old, heirloom, {
+                val = modelAdaptor(val, old, heirloom, {
                     pathname: spath,
                     id: sid
                 })
@@ -120,7 +136,7 @@ function makeAccessor(sid, spath, heirloom) {
     }
 }
 
-function batchUpdateView(id) {
+export function batchUpdateView(id) {
     avalon.rerenderStart = new Date
     var dotIndex = id.indexOf('.')
     if (dotIndex > 0) {
@@ -130,6 +146,107 @@ function batchUpdateView(id) {
     }
 }
 
+
+avalon.define = function (definition) {
+    var $id = definition.$id
+    if (!$id) {
+        avalon.warn('vm.$id must be specified')
+    }
+    if (avalon.vmodels[$id]) {
+        throw Error('error:[' + $id + '] had defined!')
+    }
+    var vm = warlords.masterFactory(definition, {}, {
+        pathname: '',
+        id: $id,
+        master: true
+    })
+    return avalon.vmodels[$id] = vm
+}
+
+
+export function arrayFactory(array, old, heirloom, options) {
+    if (old && old.splice) {
+        var args = [0, old.length].concat(array)
+        ++avalon.suspendUpdate
+          avalon.callArray =   options.pathname
+       
+        old.splice.apply(old, args)
+        --avalon.suspendUpdate
+        return old
+    } else {
+        for (var i in __array__) {
+            array[i] = __array__[i]
+        }
+
+        array.notify = function (a, b, c, d) {
+            var vm = heirloom.__vmodel__
+            if (vm) {
+                var path = a === null || a === void 0 ?
+                        options.pathname :
+                        options.pathname + '.' + a
+                vm.$fire(path, b, c)
+                if (!d && !heirloom.$$wait$$ && !avalon.suspendUpdate ) {
+                    avalon.callArray = path
+                    batchUpdateView(vm.$id)
+                    delete avalon.callArray 
+                }
+            }
+        }
+
+        var hashcode = avalon.makeHashCode('$')
+        options.array = true
+        options.hashcode = hashcode
+        options.id = options.id || hashcode
+        warlords.initViewModel(array, heirloom, {}, {}, options)
+
+        for (var j = 0, n = array.length; j < n; j++) {
+            array[j] = modelAdaptor(array[j], 0, {}, {
+                id: array.$id + '.*',
+                master: true
+            })
+        }
+        return array
+    }
+}
+warlords.arrayFactory = arrayFactory
+
+export var __array__ = {
+    set: function (index, val) {
+        if (((index >>> 0) === index) && this[index] !== val) {
+            if (index > this.length) {
+                throw Error(index + 'set方法的第一个参数不能大于原数组长度')
+            }
+            this.splice(index, 1, val)
+        }
+    },
+    contains: function (el) { //判定是否包含
+        return this.indexOf(el) !== -1
+    },
+    ensure: function (el) {
+        if (!this.contains(el)) { //只有不存在才push
+            this.push(el)
+        }
+        return this
+    },
+    pushArray: function (arr) {
+        return this.push.apply(this, arr)
+    },
+    remove: function (el) { //移除第一个等于给定值的元素
+        return this.removeAt(this.indexOf(el))
+    },
+    removeAt: function (index) { //移除指定索引上的元素
+        if ((index >>> 0) === index) {
+            return this.splice(index, 1)
+        }
+        return []
+    },
+    clear: function () {
+        this.removeAll()
+        return this
+    }
+}
+
+//======inner start
 var rtopsub = /([^.]+)\.(.+)/
 function emitArray(sid, vm, spath, val, older) {
     if (sid.indexOf('.*.') > 0) {
@@ -169,114 +286,4 @@ function emitWildcard(obj, vm, spath, val, older) {
     }
 }
 
-
-function define(definition) {
-    var $id = definition.$id
-    if (!$id) {
-        avalon.warn('vm.$id must be specified')
-    }
-    if (avalon.vmodels[$id]) {
-        throw Error('error:[' + $id + '] had defined!')
-    }
-    var vm = $$midway.masterFactory(definition, {}, {
-        pathname: '',
-        id: $id,
-        master: true
-    })
-
-    return avalon.vmodels[$id] = vm
-
-}
-
-function arrayFactory(array, old, heirloom, options) {
-    if (old && old.splice) {
-        var args = [0, old.length].concat(array)
-        ++avalon.suspendUpdate
-          avalon.callArray =   options.pathname
-       
-        old.splice.apply(old, args)
-        --avalon.suspendUpdate
-        return old
-    } else {
-        for (var i in __array__) {
-            array[i] = __array__[i]
-        }
-
-        array.notify = function (a, b, c, d) {
-            var vm = heirloom.__vmodel__
-            if (vm) {
-                var path = a === null || a === void 0 ?
-                        options.pathname :
-                        options.pathname + '.' + a
-                vm.$fire(path, b, c)
-                if (!d && !heirloom.$$wait$$ && !avalon.suspendUpdate ) {
-                    avalon.callArray = path
-                    batchUpdateView(vm.$id)
-                    delete avalon.callArray 
-                }
-            }
-        }
-
-        var hashcode = avalon.makeHashCode('$')
-        options.array = true
-        options.hashcode = hashcode
-        options.id = options.id || hashcode
-        $$midway.initViewModel(array, heirloom, {}, {}, options)
-
-        for (var j = 0, n = array.length; j < n; j++) {
-            array[j] = modelAdaptor(array[j], 0, {}, {
-                id: array.$id + '.*',
-                master: true
-            })
-        }
-        return array
-    }
-}
-$$midway.arrayFactory = arrayFactory
-
-var __array__ = {
-    set: function (index, val) {
-        if (((index >>> 0) === index) && this[index] !== val) {
-            if (index > this.length) {
-                throw Error(index + 'set方法的第一个参数不能大于原数组长度')
-            }
-            this.splice(index, 1, val)
-        }
-    },
-    contains: function (el) { //判定是否包含
-        return this.indexOf(el) !== -1
-    },
-    ensure: function (el) {
-        if (!this.contains(el)) { //只有不存在才push
-            this.push(el)
-        }
-        return this
-    },
-    pushArray: function (arr) {
-        return this.push.apply(this, arr)
-    },
-    remove: function (el) { //移除第一个等于给定值的元素
-        return this.removeAt(this.indexOf(el))
-    },
-    removeAt: function (index) { //移除指定索引上的元素
-        if ((index >>> 0) === index) {
-            return this.splice(index, 1)
-        }
-        return []
-    },
-    clear: function () {
-        this.removeAll()
-        return this
-    }
-}
-avalon.define = define
-
-module.exports = {
-    $$midway: $$midway,
-    $$skipArray: $$skipArray,
-    isSkip: isSkip,
-    __array__: __array__,
-    initEvents: initEvents,
-    makeAccessor: makeAccessor,
-    modelAdaptor: modelAdaptor
-}
+//======inner end
