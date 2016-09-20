@@ -3,7 +3,8 @@ var webpack = require('webpack');
 var path = require('path');
 var fs = require('fs')
 var json = require('./package.json')
-
+var ExtractTextPlugin = require('extract-text-webpack-plugin');
+var cssExtractor = new ExtractTextPlugin('/[name].css');
 var version = json.version.split('.')
 var v = (version.shift() + '.' + version.join('')).replace(/0+$/, "0")
 var text = fs.readFileSync('./src/seed/core.js', 'utf8')
@@ -40,6 +41,7 @@ module.exports = {
         'avalon.modern': './src/avalon.modern',
         'avalon.test': './src/avalon.test',
         'avalon.next': './src/avalon.next',
+        pager: "./src/pager"
         // 'avalon.mobile': './src/avalon.mobile'
     },
     output: {
@@ -48,17 +50,40 @@ module.exports = {
         libraryTarget: 'umd',
         library: 'avalon'
     }, //页面引用的文件
-    plugins: [//
+    plugins: [
+         cssExtractor,
         new webpack.BannerPlugin('built in ' + snow + ' version ' + v + ' by 司徒正美\n' + feather)
     ],
+   module: {
+        loaders: [
+            //http://react-china.org/t/webpack-extracttextplugin-autoprefixer/1922/4
+            // https://github.com/b82/webpack-basic-starter/blob/master/webpack.config.js 
+            {test: /\.html$/, loader: 'raw!html-minify'},
+            {test: /\.scss$/, loader: cssExtractor.extract( 'css!sass')}
 
+
+        ]
+    },
+    'html-minify-loader': {
+        empty: true, // KEEP empty attributes
+        cdata: true, // KEEP CDATA from scripts
+        comments: true, // KEEP comments
+        dom: {// options of !(htmlparser2)[https://github.com/fb55/htmlparser2]
+            lowerCaseAttributeNames: false, // do not call .toLowerCase for each attribute name (Angular2 use camelCase attributes)
+        }
+    },
+    
     eslint: {
         configFile: './eslintrc.json'
     },
     resolve: {
         extensions: ['.js', '', '.css'],
         alias: {
-            avalon: './src/avalon'
+            //处理  Module not found: Error: a dependency to an entry point is not allowed
+            //当用户使用require('avalon2'), require('avalon')时,让它指向./dist目录,
+            //不要指向node_modules/avalon2/dist目录
+            avalon:  path.join(__dirname, './dist/avalon') ,
+            avalon2: path.join(__dirname, './dist/avalon')
         }
     }
 }

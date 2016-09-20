@@ -1,5 +1,5 @@
 /*!
- * built in 2016-9-19:11 version 2.115 by 司徒正美
+ * built in 2016-9-20:15 version 2.115 by 司徒正美
  * npm 2.1.15
  *     普通vm也支持onReady, onDispose方法(生命周期)
  *     添加norequire验证规则
@@ -204,7 +204,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-9-19:11 version 2.114 by 司徒正美
+	 * built in 2016-9-20:14 version 2.115 by 司徒正美
 	 * npm 2.1.15
 	 *     普通vm也支持onReady, onDispose方法(生命周期)
 	 *     添加norequire验证规则
@@ -359,7 +359,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		avalon.shadowCopy(avalon, {
 		    noop: function () {
 		    },
-		    version: "2.114",
+		    version: "2.115",
 		    //切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach
 		    rword: rword,
 		    inspect: ({}).toString,
@@ -2404,6 +2404,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		            var key, listener
 		            dom._ms_context_ = vdom.vmodel
 		            dom._ms_local = vdom.local
+		            console.log(dom._ms_local)
 		            for (key in vdom) {
 		                var match = key.match(rmson)
 		                if (match) {
@@ -5560,7 +5561,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		var rguide = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
 		var robjectProperty = /\.[\w\.\$]+/g
-		var rvar = /\b[$a-zA-Z_][$a-zA-Z0-9_]*\b/g
+		var rvar = /\b[\$a-zA-Z_][$a-zA-Z0-9_]*\b/g
 		var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
 
 		module.exports = parseExpr
@@ -5596,6 +5597,10 @@ return /******/ (function(modules) { // webpackBootstrap
 		            })
 		    //收集本地变量
 		    collectLocal(input, locals)
+		    if(category === 'on' ){
+		    console.log(input)
+		    console.log(locals)
+		}
 		    //处理过滤器
 		    var filters = input.split(rpipeline)
 		    var _body = filters.shift()
@@ -8057,7 +8062,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var button = __webpack_require__(105)
 	var tmpl = __webpack_require__(107)
-
 	avalon.component('ms-panel', {
 	    template: tmpl,
 	    defaults: {
@@ -8074,7 +8078,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ 107:
 /***/ function(module, exports) {
 
-	module.exports = "<div>\n    <div class=\"body\">\n        <slot name=\"body\"></slot>\n    </div>\n    <p><ms-button :widget=\"@button\" /></p>\n</div>"
+	module.exports = "<div><div class=body><slot name=body></slot></div><p><ms-button :widget=@button></ms-button></p></div>"
 
 /***/ }
 

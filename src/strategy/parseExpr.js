@@ -13,7 +13,7 @@ var rhandleName = /^__vmodel__\.[$\w\.]+$/i
 
 var rguide = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
 var robjectProperty = /\.[\w\.\$]+/g
-var rvar = /\b[$a-zA-Z_][$a-zA-Z0-9_]*\b/g
+var rvar = /[$a-zA-Z_][$a-zA-Z0-9_]*/g
 var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
 
 module.exports = parseExpr

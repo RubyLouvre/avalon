@@ -1,5 +1,6 @@
-import avalon from '../../filters/modern'
 import './scan'
+import avalon from '../../seed/core'
+
 var document = avalon.document
 
 var readyList = [], isReady

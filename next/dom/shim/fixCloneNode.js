@@ -33,7 +33,7 @@ function getAll(context) {
             context.querySelectorAll('*') : []
 }
 
-function fixCloneNode(src) {
+export default function fixCloneNode(src) {
     var target = src.cloneNode(true)
     var t = getAll(target)
     var s = getAll(src)
@@ -43,4 +43,3 @@ function fixCloneNode(src) {
     return target
 }
 
-module.exports = fixCloneNode

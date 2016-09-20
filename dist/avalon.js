@@ -1,5 +1,5 @@
 /*!
- * built in 2016-9-19:11 version 2.115 by 司徒正美
+ * built in 2016-9-20:15 version 2.115 by 司徒正美
  * npm 2.1.15
  *     普通vm也支持onReady, onDispose方法(生命周期)
  *     添加norequire验证规则
@@ -4022,7 +4022,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var srcFn = src[name] || {}
 	        var hasChange = false
 
-
 	        if (!src.dynamic[name] || srcFn.uuid !== uuid) {
 	            src[name] = fn
 	            avalon.eventListeners[uuid] = fn
@@ -7636,7 +7635,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var rguide = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
 	var robjectProperty = /\.[\w\.\$]+/g
-	var rvar = /\b[$a-zA-Z_][$a-zA-Z0-9_]*\b/g
+	var rvar = /[$a-zA-Z_][$a-zA-Z0-9_]*/g
 	var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
 
 	module.exports = parseExpr
