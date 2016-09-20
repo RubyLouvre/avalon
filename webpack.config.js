@@ -48,7 +48,7 @@ module.exports = {
         path: path.join(__dirname, 'dist'),
         filename: '[name].js',
         libraryTarget: 'umd',
-        library: 'avalon'
+        library: '[name]'
     }, //页面引用的文件
     plugins: [
          cssExtractor,
@@ -72,7 +72,9 @@ module.exports = {
             lowerCaseAttributeNames: false, // do not call .toLowerCase for each attribute name (Angular2 use camelCase attributes)
         }
     },
-    
+    externals: {
+        "avalon2": 'avalon',
+    },
     eslint: {
         configFile: './eslintrc.json'
     },
@@ -82,8 +84,8 @@ module.exports = {
             //处理  Module not found: Error: a dependency to an entry point is not allowed
             //当用户使用require('avalon2'), require('avalon')时,让它指向./dist目录,
             //不要指向node_modules/avalon2/dist目录
-            avalon:  path.join(__dirname, './dist/avalon') ,
-            avalon2: path.join(__dirname, './dist/avalon')
+           // avalon:  path.join(__dirname, './dist/avalon') ,
+           // avalon2: path.join(__dirname, './dist/avalon')
         }
     }
 }
