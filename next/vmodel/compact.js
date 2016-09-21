@@ -17,10 +17,10 @@ if (warloads.canHideProperty) {
     delete $$skipArray.__const__
 }
 
-var makeAccessor = warloads.makeAccessor
-var modelAccessor = warloads.modelAccessor
-var createViewModel = warloads.createViewModel
-var initViewModel = warloads.initViewModel
+var makeAccessor = warlords.makeAccessor
+var modelAccessor = warlords.modelAccessor
+var createViewModel = warlords.createViewModel
+var initViewModel = warlords.initViewModel
 
 var makeHashCode = avalon.makeHashCode
 

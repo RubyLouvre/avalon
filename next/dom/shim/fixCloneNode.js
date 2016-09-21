@@ -37,9 +37,9 @@ export default function fixCloneNode(src) {
     var target = src.cloneNode(true)
     var t = getAll(target)
     var s = getAll(src)
-    avalon.each(s, function (i) {
+    for(var i = 0; i < s.length; i++){
         fix(t[i], s[i])
-    })
+    }
     return target
 }
 

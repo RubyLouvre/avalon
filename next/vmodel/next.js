@@ -5,18 +5,29 @@
  * http://caniuse.com/#search=Proxy
  * ------------------------------------------------------------
  */
-var share = require('./parts/share')
-var $$midway = share.$$midway
-var $$skipArray = share.$$skipArray
-$$skipArray.$compose = true
-$$skipArray.$decompose = true
-delete $$skipArray
-var modelAdaptor = share.modelAdaptor
-var makeHashCode = avalon.makeHashCode
-var dispatch = require('./parts/dispatch')
+import avalon from '../seed/core'
+import {warlords} from  './warlords'
+import './methods.compact'
+import {$emit, $watch} from './dispatch'
 
-var $emit = dispatch.$emit
-var $watch = dispatch.$watch
+var isSkip = warloads.isSkip
+var $$skipArray = warloads.$$skipArray
+if (warlords.canHideProperty) {
+    delete $$skipArray.$accessors
+    delete $$skipArray.__data__
+    delete $$skipArray.__proxy__
+    delete $$skipArray.__const__
+}
+
+var makeAccessor = warlords.makeAccessor
+var modelAccessor = warlords.modelAccessor
+var createViewModel = warlords.createViewModel
+var initViewModel = warlords.initViewModel
+
+var makeHashCode = avalon.makeHashCode
+
+
+
 function canObserve(key, value, skipArray) {
     // 判定此属性的类型是否为纯对象或数组,方便转换为子VM或监听数组
     return  !skipArray[key] &&
@@ -45,7 +56,7 @@ function toJson(val) {
     }
     return val
 }
-share.toJson = toJson
+warlords.toJson = toJson
 
 if (avalon.window.Proxy) {
     function adjustVm(vm, expr) {
@@ -81,7 +92,7 @@ if (avalon.window.Proxy) {
             keys.push(key)
             var val = definition[key]
             if (canObserve(key, val, $skipArray)) {
-                definition[key] = $$midway.modelAdaptor(val, 0, heirloom, {
+                definition[key] = warlords.modelAdaptor(val, 0, heirloom, {
                     id: definition.$id + '.' + key
                 })
             }
@@ -95,7 +106,7 @@ if (avalon.window.Proxy) {
         return Proxy.create ? Proxy.create(definition, handlers) :
                 new Proxy(definition, handlers)
     }
-    $$midway.masterFactory = masterFactory
+    warlords.masterFactory = masterFactory
     //old = before, definition = after
     function slaveFactory(before, after, heirloom) {
         for (var key in after) {
@@ -104,7 +115,7 @@ if (avalon.window.Proxy) {
             if (!before.hasOwnProperty(key)) {//如果before没有此属性,就添加
                 var val = after[key]
                 if (canObserve(key, val, {})) {//如果是对象或数组
-                    before[key] = $$midway.modelAdaptor(val, 0, heirloom, {
+                    before[key] = warlords.modelAdaptor(val, 0, heirloom, {
                         id: before.$id + '.' + key
                     })
                 }
@@ -120,7 +131,7 @@ if (avalon.window.Proxy) {
         return before
     }
 
-    $$midway.slaveFactory = slaveFactory
+    warlords.slaveFactory = slaveFactory
 
     function mediatorFactory(before) {
         var $skipArray = {}
@@ -138,7 +149,7 @@ if (avalon.window.Proxy) {
 
                 var val = definition[key] = obj[key]
                 if (canObserve(key, val, $skipArray)) {
-                    definition[key] = $$midway.modelAdaptor(val, 0, heirloom, {
+                    definition[key] = warlords.modelAdaptor(val, 0, heirloom, {
                         id: definition.$id + '.' + key
                     })
                 }
@@ -170,115 +181,10 @@ if (avalon.window.Proxy) {
         })
     }
 
-    avalon.mediatorFactory = $$midway.mediatorFactory = mediatorFactory
+    avalon.mediatorFactory = mediatorFactory
 
-
-    function initViewModel($vmodel, heirloom, discard , abandon, options) {
-        if (options.array) {
-            Object.defineProperty($vmodel, '$model', {
-                get: function () {
-                    return toJson(this)
-                },
-                set: avalon.noop,
-                enumerable: false,
-                configurable: true
-            })
-        } else {
-            $vmodel.hasOwnProperty = hasOwn
-        }
-
-        $vmodel.$id = options.id
-        $vmodel.$hashcode = options.hashcode
-        $vmodel.$events = heirloom
-        if (options.master === true) {
-            $vmodel.$element = null
-            $vmodel.$render = 0
-            $vmodel.$fire = $fire
-            $vmodel.$watch = $watch
-            heirloom.__vmodel__ = $vmodel
-        }
-        return $vmodel
-    }
-
-    $$midway.initViewModel = initViewModel
-
-    var __array__ = share.__array__
-    var ap = Array.prototype
-    var _splice = ap.splice
-    function notifySize(array, size) {
-        if (array.length !== size) {
-            array.notify('length', array.length, size, true)
-        }
-    }
-
-    __array__.removeAll = function (all) { //移除N个元素
-        var size = this.length
-        if (Array.isArray(all)) {
-            for (var i = this.length - 1; i >= 0; i--) {
-                if (all.indexOf(this[i]) !== -1) {
-                    _splice.call(this, i, 1)
-                }
-            }
-        } else if (typeof all === 'function') {
-            for (i = this.length - 1; i >= 0; i--) {
-                var el = this[i]
-                if (all(el, i)) {
-                    _splice.call(this, i, 1)
-                }
-            }
-        } else {
-            _splice.call(this, 0, this.length)
-        }
-
-        notifySize(this, size)
-        this.notify()
-    }
-
-
-    var __method__ = ['push', 'pop', 'shift', 'unshift', 'splice']
-
-    __method__.forEach(function (method) {
-        var original = ap[method]
-        __array__[method] = function (a, b) {
-            // 继续尝试劫持数组元素的属性
-            var args = [], size = this.length
-            if (method === 'splice' && Object(this[0]) === this[0]) {
-                var old = this.slice(a, b)
-                var neo = ap.slice.call(arguments, 2)
-                var args = [a, b]
-                for (var j = 0, jn = neo.length; j < jn; j++) {
-                    var item = old[j]
-
-                    args[j + 2] = modelAdaptor(neo[j], item, item && item.$events, {
-                        id: this.$id + '.*',
-                        master: true
-                    })
-                }
-
-            } else {
-                for (var i = 0, n = arguments.length; i < n; i++) {
-                    args[i] = modelAdaptor(arguments[i], 0, {}, {
-                        id: this.$id + '.*',
-                        master: true
-                    })
-                }
-            }
-            var result = original.apply(this, args)
-
-            notifySize(this, size)
-            this.notify()
-            return result
-        }
-    })
-
-    'sort,reverse'.replace(avalon.rword, function (method) {
-        __array__[method] = function () {
-            ap[method].apply(this, arguments)
-            this.notify()
-            return this
-        }
-    })
 }
+   
 
 var handlers = {
     deleteProperty: function (target, name) {
@@ -329,7 +235,7 @@ var handlers = {
                 var path = arr.concat(name).join('.')
                 var vm = adjustVm(curVm, path)
                 if (value && typeof value === 'object' && !value.$id) {
-                    value = $$midway.modelAdaptor(value, oldValue, vm.$events, {
+                    value = warlords.modelAdaptor(value, oldValue, vm.$events, {
                         pathname: path,
                         id: target.$id
                     })
@@ -352,4 +258,3 @@ var handlers = {
     }
 }
 
-module.exports = avalon

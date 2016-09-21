@@ -1,6 +1,7 @@
-import avalon from '../../seed/core'
 import {propMap} from './propMap'
 import isVML from './isVML'
+import avalon from '../../seed/core'
+
 var rsvg =/^\[object SVG\w*Element\]$/
 var ramp = /&amp;/g
 

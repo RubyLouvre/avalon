@@ -8,16 +8,16 @@ import avalon from '../seed/core'
 import {warlords} from  './warlords'
 import './methods.modern'
 
-var isSkip = warloads.isSkip
-var $$skipArray = warloads.$$skipArray
+var isSkip = warlords.isSkip
+var $$skipArray = warlords.$$skipArray
 delete $$skipArray.$accessors
 delete $$skipArray.__data__
 delete $$skipArray.__proxy__
 delete $$skipArray.__const__
 
-var makeAccessor = warloads.makeAccessor
-var modelAccessor = warloads.modelAccessor
-var initViewModel = warloads.initViewModel
+var makeAccessor = warlords.makeAccessor
+var modelAccessor = warlords.modelAccessor
+var initViewModel = warlords.initViewModel
 
 var makeHashCode = avalon.makeHashCode
 
