@@ -4,7 +4,7 @@
  * masterFactory,slaveFactory,mediatorFactory, ArrayFactory
  * ------------------------------------------------------------
  */
-import {warloads} from  './parts/warloads
+import {warloads} from  './parts/warloads'
 import {$$skipArray} from './parts/skipArray'
 import {isSkip, makeAccessor, modelAdaptor,initViewModel} from './parts/share'
 import {modelAccessor,toJson} from './parts/compact'
@@ -211,93 +211,5 @@ $$midway.mediatorFactory = avalon.mediatorFactory = mediatorFactory
 var __array__ = share.__array__
 
 
-var ap = Array.prototype
-var _splice = ap.splice
-function notifySize(array, size) {
-    if (array.length !== size) {
-        array.notify('length', array.length, size, true)
-    }
-}
-
-__array__.removeAll = function (all) { //移除N个元素
-    var size = this.length
-    if (Array.isArray(all)) {
-        for (var i = this.length - 1; i >= 0; i--) {
-            if (all.indexOf(this[i]) !== -1) {
-                _splice.call(this, i, 1)
-            }
-        }
-    } else if (typeof all === 'function') {
-        for (i = this.length - 1; i >= 0; i--) {
-            var el = this[i]
-            if (all(el, i)) {
-                _splice.call(this, i, 1)
-            }
-        }
-    } else {
-        _splice.call(this, 0, this.length)
-
-    }
-    if (!avalon.modern) {
-        this.$model = toJson(this)
-    }
-    notifySize(this, size)
-    this.notify()
-}
-
-
-var __method__ = ['push', 'pop', 'shift', 'unshift', 'splice']
-
-__method__.forEach(function (method) {
-    var original = ap[method]
-    __array__[method] = function (a, b) {
-        // 继续尝试劫持数组元素的属性
-        var args = [], size = this.length
-
-        if (method === 'splice' && Object(this[0]) === this[0]) {
-            var old = this.slice(a, b)
-            var neo = ap.slice.call(arguments, 2)
-            var args = [a, b]
-            for (var j = 0, jn = neo.length; j < jn; j++) {
-                var item = old[j]
-
-                args[j + 2] = modelAdaptor(neo[j], item, (item && item.$events || {}), {
-                    id: this.$id + '.*',
-                    master: true
-                })
-            }
-
-        } else {
-            for (var i = 0, n = arguments.length; i < n; i++) {
-                args[i] = modelAdaptor(arguments[i], 0, {}, {
-                    id: this.$id + '.*',
-                    master: true
-                })
-            }
-        }
-        var result = original.apply(this, args)
-        if (!avalon.modern) {
-            this.$model = toJson(this)
-        }
-        notifySize(this, size)
-        this.notify()
-        return result
-    }
-})
-
-'sort,reverse'.replace(avalon.rword, function (method) {
-    __array__[method] = function () {
-        ap[method].apply(this, arguments)
-        if (!avalon.modern) {
-            this.$model = toJson(this)
-        }
-        this.notify()
-        return this
-    }
-})
-
 
 module.exports = avalon
-//使用这个来扁平化数据  https://github.com/gaearon/normalizr
-//使用Promise  https://github.com/stefanpenner/es6-promise
-//使用这个AJAX库 https://github.com/matthew-andrews/isomorphic-fetch

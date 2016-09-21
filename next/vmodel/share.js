@@ -1,6 +1,7 @@
 import {warlords} from './warlords'
 import {$$skipArray} from './skipArray'
 import {$emit, $watch} from './dispatch'
+import __array__ from './__array__'
 
 
 /**
@@ -39,6 +40,27 @@ export function isSkip(key, value, skipArray) {
             skipArray[key] ||
             (rskip.test(avalon.type(value))) ||
             (value && value.nodeName && value.nodeType > 0)
+}
+var types = {
+    array:1,
+    object:1, 
+    undefined:1, 
+    'null':1, 
+    boolean:1,
+    number:1, 
+    string:1
+}
+export function isObserver(key, value, skipArray) {
+    // 判定此属性能否转换访问器
+    var type = avalon.type(value)
+    if(types[type]){
+        if( key.charAt(0) === '$')
+            return false
+        if( type === 'object' && value.nodeName && value.nodeType > 0){
+            return false
+        }
+        return !skipArray[key]
+    }
 }
 
 /**
@@ -168,8 +190,7 @@ export function arrayFactory(array, old, heirloom, options) {
     if (old && old.splice) {
         var args = [0, old.length].concat(array)
         ++avalon.suspendUpdate
-          avalon.callArray =   options.pathname
-       
+        avalon.callArray =  options.pathname
         old.splice.apply(old, args)
         --avalon.suspendUpdate
         return old
@@ -210,41 +231,7 @@ export function arrayFactory(array, old, heirloom, options) {
 }
 warlords.arrayFactory = arrayFactory
 
-export var __array__ = {
-    set: function (index, val) {
-        if (((index >>> 0) === index) && this[index] !== val) {
-            if (index > this.length) {
-                throw Error(index + 'set方法的第一个参数不能大于原数组长度')
-            }
-            this.splice(index, 1, val)
-        }
-    },
-    contains: function (el) { //判定是否包含
-        return this.indexOf(el) !== -1
-    },
-    ensure: function (el) {
-        if (!this.contains(el)) { //只有不存在才push
-            this.push(el)
-        }
-        return this
-    },
-    pushArray: function (arr) {
-        return this.push.apply(this, arr)
-    },
-    remove: function (el) { //移除第一个等于给定值的元素
-        return this.removeAt(this.indexOf(el))
-    },
-    removeAt: function (index) { //移除指定索引上的元素
-        if ((index >>> 0) === index) {
-            return this.splice(index, 1)
-        }
-        return []
-    },
-    clear: function () {
-        this.removeAll()
-        return this
-    }
-}
+
 
 //======inner start
 var rtopsub = /([^.]+)\.(.+)/

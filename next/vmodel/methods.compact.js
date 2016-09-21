@@ -1,6 +1,131 @@
+import {warlords} from './warlords'
+import avalon from '../../seed/core'
 import {canHideProperty} from './canHideProperty'
+import {$emit, $watch} from './dispatch'
 import {$$skipArray} from './skipArray'
-export var defineProperties = Object.defineProperties
+
+
+function toJson(val) {
+        switch (avalon.type(val)) {
+                case 'array':
+                        var array = []
+                        for (var i = 0; i < val.length; i++) {
+                                array[i] = toJson(val[i])
+                        }
+                        return array
+                case 'object':
+                        var obj = {}
+                        for (i in val) {
+                                if (i === '__proxy__' || i === '__data__' || i === '__const__')
+                                        continue
+                                if (val.hasOwnProperty(i)) {
+                                        var value = val[i]
+                                        obj[i] = value && value.nodeType ? value : toJson(value)
+                                }
+                        }
+                        return obj
+                default:
+                        return val
+        }
+}
+
+warlords.toJson = toJson
+warlords.toModel = function(obj){
+  if (!avalon.modern) {
+        obj.$model = toJson(obj)
+    }
+}
+
+function hideProperty(host, name, value) {
+        if (canHideProperty) {
+                Object.defineProperty(host, name, {
+                        value: value,
+                        writable: true,
+                        enumerable: false,
+                        configurable: true
+                })
+        } else {
+                host[name] = value
+        }
+}
+
+warlords.hideProperty = hideProperty
+
+var modelAccessor = {
+        get: function () {
+                return toJson(this)
+        },
+        set: avalon.noop,
+        enumerable: false,
+        configurable: true
+}
+
+warlords.modelAccessor = modelAccessor
+
+function initEvents($vmodel, heirloom) {
+        heirloom.__vmodel__ = $vmodel
+        hideProperty($vmodel, '$events', heirloom)
+        hideProperty($vmodel, '$watch', function () {
+                return $watch.apply($vmodel, arguments)
+        })
+        hideProperty($vmodel, '$fire', function (expr, a, b) {
+                var list = $vmodel.$events[expr]
+                $emit(list, $vmodel, expr, a, b)
+        })
+}
+
+function initViewModel($vmodel, heirloom, keys, accessors, options) {
+        if (options.array) {
+                if (avalon.modern) {
+                        Object.defineProperty($vmodel, '$model', modelAccessor)
+                } else {
+                        $vmodel.$model = toJson($vmodel)
+                }
+        } else {
+                hideProperty($vmodel, '$accessors', accessors)
+                hideProperty($vmodel, 'hasOwnProperty', function (key) {
+                        return keys[key] === true
+                })
+                hideProperty($vmodel, '$track', Object.keys(keys).sort().join(';;'))
+        }
+        hideProperty($vmodel, '$id', options.id)
+        hideProperty($vmodel, '$hashcode', options.hashcode)
+        if (options.master === true) {
+                hideProperty($vmodel, '$run', function () {
+                        run.call($vmodel)
+                })
+                hideProperty($vmodel, '$wait', function () {
+                        wait.call($vmodel)
+                })
+                hideProperty($vmodel, '$element', null)
+                hideProperty($vmodel, '$render', 0)
+                initEvents($vmodel, heirloom)
+        }
+}
+
+warlords.initViewModel = initViewModel
+
+function wait() {
+        this.$events.$$wait$$ = true
+}
+
+function run() {
+        var host = this.$events
+        delete host.$$wait$$
+        if (host.$$dirty$$) {
+                delete host.$$dirty$$
+                avalon.rerenderStart = new Date
+                var id = this.$id
+                var dotIndex = id.indexOf('.')
+                if (dotIndex > 0) {
+                        avalon.batch(id.slice(0, dotIndex))
+                } else {
+                        avalon.batch(id)
+                }
+        }
+}
+
+var defineProperties = Object.defineProperties
 var defineProperty
 
 var timeBucket = new Date() - 0
@@ -29,7 +154,7 @@ if (!canHideProperty) {
         }
     }
     /* istanbul ignore if*/
-    if (avalon.msie) {
+    if (avalon.msie < 9) {
         var VBClassPool = {}
         window.execScript([// jshint ignore:line
             'Function parseVB(code)',
@@ -119,3 +244,4 @@ if (!canHideProperty) {
     }
 }
 
+warlords.createViewModel = defineProperties
