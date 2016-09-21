@@ -22,6 +22,7 @@ avalon.shadowCopy(avalon, {
     }
 })
 
+export var directives = avalon.directives
 
 //export default avalon
 //生成事件回调的UUID(用户通过ms-on指令)

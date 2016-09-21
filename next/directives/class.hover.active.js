@@ -2,7 +2,7 @@
 //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
 
 import avalon from '../seed/core'
-import {getLongID as markID} from '../seed/lang.share'
+import {directives, getLongID as markID} from '../seed/lang.share'
 import update from './_update'
 
 function classNames() {
@@ -27,8 +27,6 @@ function classNames() {
 }
 
 
-
-var directives = avalon.directives
 avalon.directive('class', {
     diff: function (copy, src, name) {
         var type = name.slice(3)

@@ -1,20 +1,20 @@
 import avalon from './core'
-function kernel(settings) {
+export default function config(settings) {
     for (var p in settings) {
          /* istanbul ignore if */
         if (!avalon.ohasOwn.call(settings, p))
             continue
         var val = settings[p]
-        if (typeof kernel.plugins[p] === 'function') {
-            kernel.plugins[p](val)
+        if (typeof config.plugins[p] === 'function') {
+            config.plugins[p](val)
         } else {
-            kernel[p] = val
+            config[p] = val
         }
     }
     return this
 }
 
-avalon.config = kernel
+avalon.config = config
 
 var plugins = {
     interpolate: function (array) {
@@ -34,14 +34,14 @@ var plugins = {
         }
         div.innerHTML = ''
         /*eslint-enable */
-        kernel.openTag = openTag
-        kernel.closeTag = closeTag
+        config.openTag = openTag
+        config.closeTag = closeTag
         var o = avalon.escapeRegExp(openTag)
         var c = avalon.escapeRegExp(closeTag)
-        kernel.rexpr = new RegExp(o + '([\\s\\S]*)' + c)
+        config.rexpr = new RegExp(o + '([\\s\\S]*)' + c)
     }
 }
-kernel.plugins = plugins
+config.plugins = plugins
 avalon.config({
     interpolate: ['{{', '}}'],
     debug: true
