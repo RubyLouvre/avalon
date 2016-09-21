@@ -4,8 +4,8 @@
  * masterFactory,slaveFactory,mediatorFactory, ArrayFactory
  * ------------------------------------------------------------
  */
-import avalon from '../../seed/core'
-import {warloads} from  './warloads'
+import avalon from '../seed/core'
+import {warlords} from  './warlords'
 import './methods.compact'
 
 var isSkip = warloads.isSkip
@@ -77,7 +77,7 @@ function masterFactory(definition, heirloom, options) {
     return $vmodel
 }
 
-warloads.masterFactory = masterFactory
+warlords.masterFactory = masterFactory
 var empty = {}
 function slaveFactory(before, after, heirloom, options) {
     var keys = {}
@@ -119,7 +119,7 @@ function slaveFactory(before, after, heirloom, options) {
     return $vmodel
 }
 
-warloads.slaveFactory = slaveFactory
+warlords.slaveFactory = slaveFactory
 
 function mediatorFactory(before, after) {
     var keys = {}, key

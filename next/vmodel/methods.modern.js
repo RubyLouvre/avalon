@@ -1,9 +1,8 @@
+import avalon from '../seed/core'
 import {warlords} from './warlords'
-import avalon from '../../seed/core'
 import {$emit, $watch} from './dispatch'
 import {$$skipArray} from './skipArray'
-import  './__array__'
-import  './share'
+import  './methods.common'
 
 warlords.$$skipArray = $$skipArray
 

@@ -1,9 +1,8 @@
+import avalon from '../seed/core'
 import {warlords} from './warlords'
-import avalon from '../../seed/core'
 import {$emit, $watch} from './dispatch'
 import {$$skipArray} from './skipArray'
-import  './__array__'
-import  './share'
+import  './methods.common'
 
 warlords.$$skipArray = $$skipArray
 //如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
