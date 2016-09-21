@@ -29,7 +29,7 @@
     "sass-loader": "^3.2.2",
     "sinon": "^1.17.5",
     "text-loader": "0.0.1",
-    
+    "css-loader": "0.21.0",
     "html-minify-loader": "~1.1.0",
     "extract-text-webpack-plugin": "^1.0.1",
     "raw-loader": "~0.5.1",

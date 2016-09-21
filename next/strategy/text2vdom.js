@@ -5,11 +5,12 @@
  * 此阶段只会生成VElement,VText,VComment
  * ------------------------------------------------------------
  */
-var avalon = require('../seed/core')
-var clearString = require('./clearString')
-var voidTag = require('./voidTag')
-var addTbody = require('./addTbody')
-var variantSpecial = require('./variantSpecial')
+import avalon from "../seed/core"
+import clearString from "./clearString"
+import voidTag from "./voidTag"
+import addTbody from "./addTbody"
+import variantSpecial from "./variantSpecial"
+
 var specialTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
 
 var ropenTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
@@ -22,15 +23,16 @@ var rnowhite = /\S+/g
 var number = 1
 var stringPool = {}
 
-
-module.exports = makeNode
+export {
+makeNode as variantByText
+}
 
 function makeNode(str) {
     stringPool = {}
     str = clearString(str, dig)
     var stack = []
     stack.last = function () {
-        return  stack[stack.length - 1]
+        return stack[stack.length - 1]
     }
     var ret = []
 
@@ -152,10 +154,10 @@ function makeTbody(node, stack, ret) {
             nodeValue: 'ms-for:' + forExpr,
             type: nodeName
         }, node, {
-            nodeName: '#comment',
-            nodeValue: 'ms-for-end:',
-            type: nodeName
-        })
+                nodeName: '#comment',
+                nodeValue: 'ms-for-end:',
+                type: nodeName
+            })
 
     }
 }
@@ -185,8 +187,8 @@ function makeProps(attrs, props) {
             if (value) {
                 if (value.indexOf('??') === 0) {
                     value = nomalString(value).
-                            replace(rlineSp, '').
-                            slice(1, -1)
+                        replace(rlineSp, '').
+                        slice(1, -1)
                 }
             }
             if (!(name in props)) {

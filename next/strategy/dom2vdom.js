@@ -2,7 +2,11 @@
 
 import {voidTag} from './voidTag'
 
- function markNode(node) {
+export {
+markNode as variantByDom
+}
+
+function markNode(node) {
     var ret = {}
     var type = node.nodeName.toLowerCase()
     ret.nodeName = type
@@ -116,10 +120,6 @@ function markChildren(parent) {
 
     } while (node)
     return arr
-}
-
-export {
-    markNode as variantByDom
 }
 
 

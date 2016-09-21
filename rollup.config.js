@@ -1,4 +1,5 @@
 import commonjs from 'rollup-plugin-commonjs';
+
 export default {
     entry: 'next/avalon.modern.js',
     format: 'umd',

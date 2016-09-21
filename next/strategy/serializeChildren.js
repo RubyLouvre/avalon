@@ -1,22 +1,25 @@
 /*
  * 本模块是用于将虚拟DOM变成一个函数
  */
+import avalon from "../seed/core"
+import extractBindings from "./extractBindings"
+import stringify from "./stringify"
 
-var extractBindings = require('./extractBindings')
-var stringify = require('./parser/stringify')
 var config = avalon.config
 var quote = avalon.quote
 var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
 var rstatement = /^\s*var\s+([$\w]+)\s*\=\s*\S+/
-var skips = {__local__: 1, vmode: 1, dom: 1}
-
+var skips = { __local__: 1, vmode: 1, dom: 1 }
+export {
+parseNodes as serializeChildren
+}
 
 function parseNodes(source, inner) {
     //ms-important， ms-controller ， ms-for 不可复制，省得死循环
     //ms-important --> ms-controller --> ms-for --> ms-widget --> ms-effect --> ms-if
     var buffer = inner ? [] : ['\nvar vnodes = [];']
 
-    for (var i = 0, el; el = source[i++]; ) {
+    for (var i = 0, el; el = source[i++];) {
         var vnode = parseNode(el)
         if (el.$prepend) {
             buffer.push(el.$prepend)
@@ -73,23 +76,23 @@ function parseNode(vdom) {
                     nodeValue: vdom.signature
 
                 }) +
-                        ' return vnodes}\n })\n},__local__,vnodes)\n' +
-                        addTag({
-                            nodeName: "#comment",
-                            signature: vdom.signature,
-                            nodeValue: "ms-for-end:"
-                        }) + '\n'
+                    ' return vnodes}\n })\n},__local__,vnodes)\n' +
+                    addTag({
+                        nodeName: "#comment",
+                        signature: vdom.signature,
+                        nodeValue: "ms-for-end:"
+                    }) + '\n'
                 return ''
             } else if (nodeValue.indexOf('ms-js:') === 0) {//插入JS声明语句
                 var statement = avalon.parseExpr({
                     type: 'js',
-                    expr:nodeValue.replace('ms-js:', '')
+                    expr: nodeValue.replace('ms-js:', '')
                 }) + '\n'
                 var ret = addTag(vdom)
                 var match = statement.match(rstatement)
                 if (match && match[1]) {
                     vdom.$append = (vdom.$append || '') + statement +
-                            "\n__local__." + match[1] + ' = ' + match[1] + '\n'
+                        "\n__local__." + match[1] + ' = ' + match[1] + '\n'
                 } else {
                     avalon.warn(nodeValue + ' parse fail!')
                 }
@@ -160,9 +163,7 @@ function parseNode(vdom) {
 
 }
 
-export {
-   parseNodes as serializeChildren
-} 
+
 
 function wrapDelimiter(expr) {
     return rident.test(expr) ? expr : avalon.parseExpr({
@@ -201,7 +202,7 @@ function extractExpr(str) {
         index = index === -1 ? str.length : index
         var value = str.slice(0, index)
         if (/\S/.test(value)) {
-            ret.push({expr: avalon._decode(value)})
+            ret.push({ expr: avalon._decode(value) })
         }
         str = str.slice(index + config.openTag.length)
         if (str) {
