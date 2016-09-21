@@ -6,7 +6,7 @@
  */
 import avalon from '../seed/core'
 import {warlords} from  './warlords'
-import './methods.compact'
+import './methods.modern'
 
 var isSkip = warloads.isSkip
 var $$skipArray = warloads.$$skipArray
