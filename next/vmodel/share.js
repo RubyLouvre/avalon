@@ -4,26 +4,6 @@ import {$emit, $watch} from './dispatch'
 import __array__ from './__array__'
 
 
-/**
- * 此方法用于添加$events,$watch, $fire方法
- */
-export function initEvents($vmodel, heirloom) {
-    heirloom.__vmodel__ = $vmodel
-    var hide = warlords.hideProperty
-
-    hide($vmodel, '$events', heirloom)
-    hide($vmodel, '$watch', function () {
-        if (arguments.length === 2) {
-            return $watch.apply($vmodel, arguments)
-        } else {
-            throw '$watch方法参数不对'
-        }
-    })
-    hide($vmodel, '$fire', function (expr, a, b) {
-        var list = $vmodel.$events[expr]
-        $emit(list, $vmodel, expr, a, b)
-    })
-}
 
 var rskip = /function|window|date|regexp|element/i
 /**
@@ -41,27 +21,7 @@ export function isSkip(key, value, skipArray) {
             (rskip.test(avalon.type(value))) ||
             (value && value.nodeName && value.nodeType > 0)
 }
-var types = {
-    array:1,
-    object:1, 
-    undefined:1, 
-    'null':1, 
-    boolean:1,
-    number:1, 
-    string:1
-}
-export function isObserver(key, value, skipArray) {
-    // 判定此属性能否转换访问器
-    var type = avalon.type(value)
-    if(types[type]){
-        if( key.charAt(0) === '$')
-            return false
-        if( type === 'object' && value.nodeName && value.nodeType > 0){
-            return false
-        }
-        return !skipArray[key]
-    }
-}
+
 
 /**
  * 将属性值再进行转换
@@ -229,9 +189,8 @@ export function arrayFactory(array, old, heirloom, options) {
         return array
     }
 }
+
 warlords.arrayFactory = arrayFactory
-
-
 
 //======inner start
 var rtopsub = /([^.]+)\.(.+)/

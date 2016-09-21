@@ -10,7 +10,7 @@ function notifySize(array, size) {
     }
 }
 
-export var __array__ = {
+var __array__ = {
     set: function (index, val) {
         if (((index >>> 0) === index) && this[index] !== val) {
             if (index > this.length) {
@@ -119,3 +119,5 @@ __method__.forEach(function (method) {
         return this
     }
 })
+
+warlords.__array__ = __array__

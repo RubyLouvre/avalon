@@ -1,6 +1,10 @@
 import {warlords} from './warlords'
 import avalon from '../../seed/core'
 import {$emit, $watch} from './dispatch'
+import  './__array__'
+import  './share'
+
+warlords.canHideProperty = true
 
 function toJson(val) {
     switch (avalon.type(val)) {
