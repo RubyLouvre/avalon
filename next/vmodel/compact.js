@@ -4,12 +4,23 @@
  * masterFactory,slaveFactory,mediatorFactory, ArrayFactory
  * ------------------------------------------------------------
  */
-import {warloads} from  './parts/warloads'
-import {$$skipArray} from './parts/skipArray'
-import {isSkip, makeAccessor, modelAdaptor,initViewModel} from './parts/share'
-import {modelAccessor,toJson} from './parts/compact'
-import {createViewModel} from './parts/createViewModel'
+import avalon from '../../seed/core'
+import {warloads} from  './warloads'
+import './methods.compact'
 
+var isSkip = warloads.isSkip
+var $$skipArray = warloads.$$skipArray
+if (warloads.canHideProperty) {
+    delete $$skipArray.$accessors
+    delete $$skipArray.__data__
+    delete $$skipArray.__proxy__
+    delete $$skipArray.__const__
+}
+
+var makeAccessor = warloads.makeAccessor
+var modelAccessor = warloads.modelAccessor
+var createViewModel = warloads.createViewModel
+var initViewModel = warloads.initViewModel
 
 var makeHashCode = avalon.makeHashCode
 
@@ -66,7 +77,7 @@ function masterFactory(definition, heirloom, options) {
     return $vmodel
 }
 
-$$midway.masterFactory = masterFactory
+warloads.masterFactory = masterFactory
 var empty = {}
 function slaveFactory(before, after, heirloom, options) {
     var keys = {}
@@ -108,7 +119,7 @@ function slaveFactory(before, after, heirloom, options) {
     return $vmodel
 }
 
-$$midway.slaveFactory = slaveFactory
+warloads.slaveFactory = slaveFactory
 
 function mediatorFactory(before, after) {
     var keys = {}, key
@@ -165,7 +176,7 @@ function mediatorFactory(before, after) {
         if ($$skipArray[key] || accessors[key])
             continue
         if (!isSkip(key, keys[key], $skipArray)) {
-         
+
             accessors[key] = makeAccessor(before.$id, key, heirloom)
             accessors[key].set(keys[key])
         }
@@ -175,13 +186,13 @@ function mediatorFactory(before, after) {
     $vmodel = createViewModel($vmodel, accessors, keys)
     for (key in keys) {
         if (!accessors[key]) {//添加不可监控的属性
-           
+
             $vmodel[key] = keys[key]
         }
         //用于通过配置对象触发组件的$watch回调
         if (isWidget && config && accessors[key] && config.hasOwnProperty(key)) {
             var GET = accessors[key].get
-          //  GET.heirloom = heirloom
+            //  GET.heirloom = heirloom
             if (!GET.$decompose) {
                 GET.$decompose = {}
             }
@@ -206,10 +217,7 @@ function mediatorFactory(before, after) {
 }
 
 
-$$midway.mediatorFactory = avalon.mediatorFactory = mediatorFactory
-
-var __array__ = share.__array__
+avalon.mediatorFactory = mediatorFactory
 
 
 
-module.exports = avalon

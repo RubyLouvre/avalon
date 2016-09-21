@@ -4,19 +4,21 @@
  * masterFactory,slaveFactory,mediatorFactory, ArrayFactory
  * ------------------------------------------------------------
  */
-var share = require('./parts/modern')
-var isSkip = share.isSkip
-var $$midway = share.$$midway
-var $$skipArray = share.$$skipArray
+import avalon from '../../seed/core'
+import {warloads} from  './warloads'
+import './methods.compact'
+
+var isSkip = warloads.isSkip
+var $$skipArray = warloads.$$skipArray
 delete $$skipArray.$accessors
 delete $$skipArray.__data__
 delete $$skipArray.__proxy__
 delete $$skipArray.__const__
 
-var makeAccessor = share.makeAccessor
-var initViewModel = share.initViewModel
-var modelAccessor = share.modelAccessor
-var modelAdaptor = share.modelAdaptor
+var makeAccessor = warloads.makeAccessor
+var modelAccessor = warloads.modelAccessor
+var initViewModel = warloads.initViewModel
+
 var makeHashCode = avalon.makeHashCode
 
 
@@ -69,7 +71,7 @@ function masterFactory(definition, heirloom, options) {
 
     return $vmodel
 }
-$$midway.masterFactory = masterFactory
+warloads.masterFactory = masterFactory
 
 var empty = {}
 function slaveFactory(before, after, heirloom, options) {
@@ -113,7 +115,7 @@ function slaveFactory(before, after, heirloom, options) {
     return $vmodel
 }
 
-$$midway.slaveFactory = slaveFactory
+warloads.slaveFactory = slaveFactory
 
 function mediatorFactory(before, after) {
     var keys = {}
@@ -195,84 +197,4 @@ function mediatorFactory(before, after) {
     return $vmodel
 }
 
-$$midway.mediatorFactory = avalon.mediatorFactory = mediatorFactory
-
-var __array__ = share.__array__
-var ap = Array.prototype
-var _splice = ap.splice
-function notifySize(array, size) {
-    if (array.length !== size) {
-        array.notify('length', array.length, size, true)
-    }
-}
-
-__array__.removeAll = function (all) { //移除N个元素
-    var size = this.length
-    if (Array.isArray(all)) {
-        for (var i = this.length - 1; i >= 0; i--) {
-            if (all.indexOf(this[i]) !== -1) {
-                _splice.call(this, i, 1)
-            }
-        }
-    } else if (typeof all === 'function') {
-        for (i = this.length - 1; i >= 0; i--) {
-            var el = this[i]
-            if (all(el, i)) {
-                _splice.call(this, i, 1)
-            }
-        }
-    } else {
-        _splice.call(this, 0, this.length)
-
-    }
-
-    notifySize(this, size)
-    this.notify()
-}
-
-
-var __method__ = ['push', 'pop', 'shift', 'unshift', 'splice']
-__method__.forEach(function (method) {
-    var original = ap[method]
-    __array__[method] = function (a, b) {
-        // 继续尝试劫持数组元素的属性
-        var args = [], size = this.length
-        if (method === 'splice' && Object(this[0]) === this[0]) {
-            var old = this.slice(a, b)
-            var neo = ap.slice.call(arguments, 2)
-            var args = [a, b]
-            for (var j = 0, jn = neo.length; j < jn; j++) {
-                var item = old[j]
-                args[j + 2] = modelAdaptor(neo[j], item, (item && item.$events || {}), {
-                    id: this.$id + '.*',
-                    master: true
-                })
-            }
-        } else {
-            for (var i = 0, n = arguments.length; i < n; i++) {
-                args[i] = modelAdaptor(arguments[i], 0, {}, {
-                    id: this.$id + '.*',
-                    master: true
-                })
-            }
-        }
-
-        var result = original.apply(this, args)
-
-        notifySize(this, size)
-        this.notify()
-
-        return result
-    }
-})
-
-'sort,reverse'.replace(avalon.rword, function (method) {
-    __array__[method] = function () {
-        ap[method].apply(this, arguments)
-        this.notify()
-        return this
-    }
-})
-
-
-module.exports = avalon
+avalon.mediatorFactory = mediatorFactory
