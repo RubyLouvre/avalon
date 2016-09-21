@@ -4,6 +4,7 @@ import './vdom/compact'
 import './dom/compact'
 import './effect/compact'
 import './vmodel/compact'
+import './directives/compact'
 
 
 export default avalon

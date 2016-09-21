@@ -33,3 +33,7 @@ var mix = {
 
 avalon.shadowCopy(avalon.vdom, mix)
 
+
+avalon.domize = function (a) {
+    return avalon.vdom(a, 'toDOM')
+}

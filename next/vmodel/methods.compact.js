@@ -176,7 +176,7 @@ if (!canHideProperty) {
             'End Function' //转换一段文本为VB代码
         ].join('\n'), 'VBScript');
 
-        function VBMediator(instance, accessors, name, value) {// jshint ignore:line
+        var VBMediator = function(instance, accessors, name, value) {// jshint ignore:line
             var accessor = accessors[name]
             if (arguments.length === 4) {
                 accessor.set.call(instance, value)

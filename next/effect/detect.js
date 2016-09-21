@@ -1,3 +1,8 @@
+/**
+ * ------------------------------------------------------------
+ * 检测浏览器对CSS动画的支持与API名
+ * ------------------------------------------------------------
+ */
 export default function effectDetect(transitionDuration, animationDuration, window) {
 
     var checker = {
@@ -22,9 +27,9 @@ export default function effectDetect(transitionDuration, animationDuration, wind
         }
     }
     if (typeof tran === 'string') {
-        transition = true
-        css = true
-        transitionEndEvent = tran
+        var transition = true
+        var css = true
+        var transitionEndEvent = tran
     }
 
     //animationend有两个可用形态
@@ -47,9 +52,9 @@ export default function effectDetect(transitionDuration, animationDuration, wind
         }
     }
     if (typeof ani === 'string') {
-        animation = true
+        var animation = true
         css = true
-        animationEndEvent = ani
+        var animationEndEvent = ani
     }
     return {
         css: css,
@@ -61,3 +66,4 @@ export default function effectDetect(transitionDuration, animationDuration, wind
         animationDuration: animationDuration
     }
 }
+

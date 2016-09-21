@@ -10,8 +10,8 @@ import {warlords} from  './warlords'
 import './methods.compact'
 import {$emit, $watch} from './dispatch'
 
-var isSkip = warloads.isSkip
-var $$skipArray = warloads.$$skipArray
+var isSkip = warlords.isSkip
+var $$skipArray = warlords.$$skipArray
 if (warlords.canHideProperty) {
     delete $$skipArray.$accessors
     delete $$skipArray.__data__

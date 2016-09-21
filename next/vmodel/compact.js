@@ -8,9 +8,9 @@ import avalon from '../seed/core'
 import {warlords} from  './warlords'
 import './methods.compact'
 
-var isSkip = warloads.isSkip
-var $$skipArray = warloads.$$skipArray
-if (warloads.canHideProperty) {
+var isSkip = warlords.isSkip
+var $$skipArray = warlords.$$skipArray
+if (warlords.canHideProperty) {
     delete $$skipArray.$accessors
     delete $$skipArray.__data__
     delete $$skipArray.__proxy__
