@@ -41,8 +41,8 @@ module.exports = {
         'avalon.modern': './src/avalon.modern',
         'avalon.test': './src/avalon.test',
         'avalon.next': './src/avalon.next',
-        pager: "./src/pager"
-        // 'avalon.mobile': './src/avalon.mobile'
+        pager: "./src/pager",
+        'routergrid': './src/routergrid'
     },
     output: {
         path: path.join(__dirname, 'dist'),
@@ -59,8 +59,8 @@ module.exports = {
             //http://react-china.org/t/webpack-extracttextplugin-autoprefixer/1922/4
             // https://github.com/b82/webpack-basic-starter/blob/master/webpack.config.js 
             {test: /\.html$/, loader: 'raw!html-minify'},
-            {test: /\.scss$/, loader: cssExtractor.extract( 'css!sass')}
-
+            {test: /\.scss$/, loader: cssExtractor.extract( 'css!sass')},
+            {test: /\.css$/, loader: cssExtractor.extract( 'css')}
 
         ]
     },

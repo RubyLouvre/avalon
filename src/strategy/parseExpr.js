@@ -37,9 +37,7 @@ function parseExpr(binding) {
     input = input.replace(rshortCircuit, dig).//移除所有短路运算符
             replace(ruselessSp, '$1').//移除.|两端空白
             replace(rguide, '$1__vmodel__.').//转换@与##
-            replace(/\b[\$\w]+\s*:/g, function(a){
-                return dig(a)+' '
-            }).
+            replace(/\b[\$\w]+\s*:/g, dig).
             replace(/\|(\w+)/g, function (a, b) {//移除所有过滤器的名字
                 return '|' + dig(b)
             }).
@@ -53,7 +51,7 @@ function parseExpr(binding) {
     var filters = input.split(rpipeline)
     var _body = filters.shift()
     var body = _body.replace(rfill, fill)
-          //  .replace(rfill, fill)//这里必须fix 两次
+           //这里必须fix 两次
     if (category === 'js') {
         //<!--ms-js:xxx-->指令不存在过滤器,并且只需要替换@与##
         return cacheData(binding, body, paths, locals)
@@ -109,7 +107,7 @@ function parseExpr(binding) {
             quoteError(str, category).replace('parse', 'set'),
             '}',
             '}']
-        pool.put('duplex:set:' + binding.expr, setterBody.join('\n'))
+        pool.put('duplex:set:' + binding.expr, setterBody.join('\n').replace(rfill, fill))
         //对某个值进行格式化
         var getterBody = [
             'function (__vmodel__){',
@@ -121,13 +119,13 @@ function parseExpr(binding) {
             quoteError(str, category).replace('parse', 'get'),
             '}',
             '}'].join('\n')
-        return cacheData(binding, getterBody, locals, paths)
+        return cacheData(binding, getterBody.replace(rfill, fill), locals, paths)
 
     } else {
         ret = [
             '(function (){',
             'try{',
-            'var __value__ = ' + body.replace(rfill, fill),
+            'var __value__ = ' + body,
             (category === 'text' ?
                     'return avalon.parsers.string(__value__)' :
                     'return __value__'),
@@ -140,7 +138,7 @@ function parseExpr(binding) {
         filters.unshift(3, 0)
     }
     ret.splice.apply(ret, filters)
-    return  cacheData(binding, ret.join('\n'), locals, paths)
+    return  cacheData(binding, ret.join('\n') .replace(rfill, fill), locals, paths)
 }
 
 function cacheData(binding, text, locals, paths) {

@@ -44,6 +44,8 @@ avalon.directive('on', {
             src.local = copy.local
             src.vmodel = copy.vmodel
             update(src, this.update)
+        }else if(src.dom){
+            src.dom._ms_local = copy.local
         }
     },
     update: function (dom, vdom) {

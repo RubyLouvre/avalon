@@ -1,0 +1,23 @@
+<div>
+    <p>切换卡1</p>
+   
+    <div ms-controller='widget1' >
+
+        <xmp :widget="{is:'ms-grid', id: 'grid1'}" cached="true">
+            <table slot='header' class="header">
+                <tr>
+                    <td :for="el in @header" style="width:200px" >
+                        {{el}}
+                </td>
+            </tr>
+        </table>
+        <table slot="tbody" class="tbody">
+            <tr :for="obj in @data | limitBy(@count, @start)">
+                <td :for="el in obj | selectBy(@header)" style="width:200px">{{el}}</td>
+            </tr>
+        </table> 
+        <ms-pager slot="pager" :widget="{onReady:@ready, id:'pager1'}"  />
+</xmp>
+
+</div>
+</div>
