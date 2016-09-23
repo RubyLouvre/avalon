@@ -71,7 +71,7 @@ function getIdent(input, lastIndex) {
                     var content = input.slice(i + 1, innerResult.i)
                     try {
                         var text = (scpCompile(["return " + content]))()
-                        result[lastLength - 1] = last + "." + text
+                        result[lastLength - 1] = last + "[" + text + "]"
                     } catch (e) {
                     }
                 }
@@ -112,14 +112,30 @@ function addAssign(vars, vmodel, name, binding) {
     var ret = [],
             prefix = " = " + name + "."
     for (var i = vars.length, prop; prop = vars[--i]; ) {
-
+        
         //修改prop格式： arr[0].pro1 ==> arr.0.pro1,
-        var arr = prop.split("."), a
+        var arr, a ,oldprop = prop
+        if( prop.indexOf('[') >= 0 ){
+            prop = prop.replace('[','.').replace(']','')
+        }
+        arr = prop.split(".")
         var first = arr[0]
         while (a = arr.shift()) {
             if (vmodel.hasOwnProperty(a)) {
                 ret.push(first + prefix + first)
-
+                
+                //bugfix:https://github.com/RubyLouvre/avalon/issues/1682
+                //对于由于expr中可能存在不可达的语句如：j5son[0].cn1 ==='' || j5son[0].cn2 ===''造成当cn2改变时dom未修改
+                //解决办法：对于vars数组里的所有变量，都取一次值，保证可以触发依赖收集。但不影响表达式的结果
+                
+                //bugfix:https://github.com/RubyLouvre/avalon/issues/1742
+                //考虑如果绑定表达式中包含变量，会生成'obj.*.property'这样的表达式
+                //会造成var x = obj.*.property;语句编译失败。
+                
+                //表达式中包含变量的不生成附值语句
+                if(oldprop.indexOf('.*')<0)
+                    ret.push(generateID('_nousevar_' + i) + ' = '+ oldprop)
+                
                 binding.observers.push({
                     v: vmodel,
                     p: prop
@@ -226,13 +242,27 @@ function parseExpr(expr, vmodels, binding) {
     } else {
         expr = "\nreturn " + expr + ";" //IE全家 Function("return ")出错，需要Function("return ;")
     }
-
-
-
-
+    
+    
+    var assignstr = []
+    avalon.each(assigns,function(idx,el){
+        // 这里跟上面 //bugfix:https://github.com/RubyLouvre/avalon/issues/1682 是相对应的。
+        if(el.indexOf('_nousevar_')>-1){
+            
+            //子属性还没有创建，这里避免报错
+            assignstr.push("try{var " + el + "}catch(e){}")
+        }
+        else{
+            
+            assignstr.push("var " + el )
+            
+        }
+        
+    });
+    
     /* jshint ignore:start */
-    getter = scpCompile(names.concat("'use strict';\nvar " +
-            assigns.join(",\n") + expr))    /* jshint ignore:end */
+    getter = scpCompile(names.concat("'use strict';\n" + assignstr.join(";\n") + expr))
+    /* jshint ignore:end */
 
     return evaluatorPool.put(exprId, getter)
 }
