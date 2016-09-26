@@ -40,9 +40,9 @@ module.exports = {
         avalon: './src/avalon', //我们开发时的入口文件
         'avalon.modern': './src/avalon.modern',
         'avalon.test': './src/avalon.test',
-        'avalon.next': './src/avalon.next',
-        pager: "./src/pager",
-        'routergrid': './src/routergrid'
+        'avalon.next': './src/avalon.next'
+      //  pager: "./src/pager",
+       // 'routergrid': './src/routergrid'
     },
     output: {
         path: path.join(__dirname, 'dist'),

@@ -1,5 +1,5 @@
 /*!
- * built in 2016-9-20:15 version 2.115 by 司徒正美
+ * built in 2016-9-26:16 version 2.115 by 司徒正美
  * npm 2.1.15
  *     普通vm也支持onReady, onDispose方法(生命周期)
  *     添加norequire验证规则
@@ -17,9 +17,9 @@
 	else if(typeof define === 'function' && define.amd)
 		define([], factory);
 	else if(typeof exports === 'object')
-		exports["avalon"] = factory();
+		exports["avalon.modern"] = factory();
 	else
-		root["avalon"] = factory();
+		root["avalon.modern"] = factory();
 })(this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -74,7 +74,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(88)
 	__webpack_require__(96)
 	__webpack_require__(67)
-	__webpack_require__(101)
+	__webpack_require__(102)
 
 	module.exports = avalon
 
@@ -1647,12 +1647,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        copy[binding.name] = 1
 	        //如果important没有定义可以进入
 	        //如果important定义了,并且__vmodel__== important也可以进入
-	        var vmodel = '(function(){ return __vmodel__ = avalon.vmodels[' + quoted + ']})()'
-	        src.$prepend = ['(function(__vmodel__){',
+	        src.$prepend = ['(function(__top__){',
 	            'var __i = avalon.scopes[' + quoted + ']',
-	            'var ok = !__i || __i.vmodel === __vmodel__',
-	            'if( !ok ){avalon.log("不进入"+' + quoted + ');return }',
-	        ].join('\n') + '\n' + vmodel
+	            'var ok = !__i || __i.vmodel === __top__',
+	            'if( !ok ){',
+	            'vnodes.push({skipContent:true,nodeName:"'+copy.nodeName+'"})' ,
+	            'avalon.log("不进入"+' + quoted + ');return }',
+	            'var __vmodel__ = avalon.vmodels[' + quoted + '];'
+	            
+	        ].join('\n') +'\n'
 	        src.$append = '\n})(__vmodel__);'
 	    },
 	    diff: function (copy, src, name) {
@@ -2143,13 +2146,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var update = __webpack_require__(39)
 	var markID = __webpack_require__(6).getLongID
 
-	var rfilters = /\|.+/g
-	//Ref: http://developers.whatwg.org/webappapis.html#event-handler-idl-attributes
-	// The assumption is that future DOM event attribute names will begin with
-	// 'on' and be composed of only English letters.
-	var rfilters = /\|.+/g
-	var rvar = /((?:\@|\$|\#\#)?\w+)/g
-	var rstring = /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g
 	var rmson = /^ms\-on\-(\w+)/
 	//基于事件代理的高性能事件绑定
 	avalon.directive('on', {
@@ -2191,6 +2187,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	            src.local = copy.local
 	            src.vmodel = copy.vmodel
 	            update(src, this.update)
+	        }else if(src.dom){
+	            src.dom._ms_local = copy.local
 	        }
 	    },
 	    update: function (dom, vdom) {
@@ -2829,68 +2827,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	})
 
 /***/ },
-/* 59 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var update = __webpack_require__(39)
-	//ms-imporant ms-controller ms-for ms-widget ms-effect ms-if   ...
-	avalon.directive('if', {
-	    priority: 6,
-	    diff: function (copy, src, name, copys, sources, index) {
-	        var cur = !!copy[name]
-	        src[name] = cur
-	        update(src, this.update)
-
-	    },
-	    update: function (dom, vdom, parent) {
-	        var show = vdom['ms-if']
-	        if (vdom.dynamic['ms-if']) {
-	            vdom.dynamic['ms-if'] = vdom.nodeName
-	        }
-	        if (show) {
-	            if (vdom.nodeName === '#comment') {
-	                vdom.nodeName = vdom.dynamic['ms-if']
-	                delete vdom.nodeValue
-	                var comment = vdom.comment
-	                if (!comment) {
-	                    return
-	                }
-	                parent = comment.parentNode
-	                if (parent)
-	                    parent.replaceChild(dom, comment)
-	                delete vdom.comment
-	                avalon.applyEffect(dom, vdom, {
-	                    hook: 'onEnterDone'
-	                })
-	            }
-	        } else {
-	           
-	            //要移除元素节点,在对应位置上插入注释节点
-	            if (!vdom.comment) {
-	                vdom.comment = document.createComment('if')
-	            }
-	            vdom.nodeName = '#comment'
-	            vdom.nodeValue = 'if'
-	            avalon.applyEffect(dom, vdom, {
-	                hook: 'onLeaveDone',
-	                cb: function () {
-	                    //去掉注释节点临时添加的ms-effect
-	                    //https://github.com/RubyLouvre/avalon/issues/1577
-	                    //这里必须设置nodeValue为ms-if,否则会在节点对齐算法中出现乱删节点的BUG
-	                    parent = parent || dom.parentNode
-	                    if (!parent) {
-	                        return
-	                    }
-	                    parent.replaceChild(vdom.comment, dom)
-	                }
-	            })
-	        }
-	    }
-	})
-
-
-
-/***/ },
+/* 59 */,
 /* 60 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -3735,6 +3672,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 $$skipArray被hasOwnProperty后返回false
 	 $skipArray被hasOwnProperty后返回true
 	 */
+
+
 
 	module.exports = avalon.oneObject('$id,$render,$track,$element,$watch,$fire,$events,$model,$skipArray,$accessors,$hashcode,$run,$wait,__proxy__,__data__,__const__')
 
@@ -5378,9 +5317,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    input = input.replace(rshortCircuit, dig).//移除所有短路运算符
 	            replace(ruselessSp, '$1').//移除.|两端空白
 	            replace(rguide, '$1__vmodel__.').//转换@与##
-	            replace(/\b[\$\w]+\s*:/g, function(a){
-	                return dig(a)+' '
-	            }).
+	            replace(/\b[\$\w]+\s*:/g, dig).
 	            replace(/\|(\w+)/g, function (a, b) {//移除所有过滤器的名字
 	                return '|' + dig(b)
 	            }).
@@ -5394,7 +5331,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var filters = input.split(rpipeline)
 	    var _body = filters.shift()
 	    var body = _body.replace(rfill, fill)
-	          //  .replace(rfill, fill)//这里必须fix 两次
+	           //这里必须fix 两次
 	    if (category === 'js') {
 	        //<!--ms-js:xxx-->指令不存在过滤器,并且只需要替换@与##
 	        return cacheData(binding, body, paths, locals)
@@ -5450,7 +5387,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            quoteError(str, category).replace('parse', 'set'),
 	            '}',
 	            '}']
-	        pool.put('duplex:set:' + binding.expr, setterBody.join('\n'))
+	        pool.put('duplex:set:' + binding.expr, setterBody.join('\n').replace(rfill, fill))
 	        //对某个值进行格式化
 	        var getterBody = [
 	            'function (__vmodel__){',
@@ -5462,13 +5399,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	            quoteError(str, category).replace('parse', 'get'),
 	            '}',
 	            '}'].join('\n')
-	        return cacheData(binding, getterBody, locals, paths)
+	        return cacheData(binding, getterBody.replace(rfill, fill), locals, paths)
 
 	    } else {
 	        ret = [
 	            '(function (){',
 	            'try{',
-	            'var __value__ = ' + body.replace(rfill, fill),
+	            'var __value__ = ' + body,
 	            (category === 'text' ?
 	                    'return avalon.parsers.string(__value__)' :
 	                    'return __value__'),
@@ -5481,7 +5418,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        filters.unshift(3, 0)
 	    }
 	    ret.splice.apply(ret, filters)
-	    return  cacheData(binding, ret.join('\n'), locals, paths)
+	    return  cacheData(binding, ret.join('\n') .replace(rfill, fill), locals, paths)
 	}
 
 	function cacheData(binding, text, locals, paths) {
@@ -7075,7 +7012,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	__webpack_require__(58)
 
 	//处理逻辑
-	__webpack_require__(59)
+	__webpack_require__(101)
 	__webpack_require__(60)
 
 	__webpack_require__(61)
@@ -7441,13 +7378,75 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 101 */
 /***/ function(module, exports, __webpack_require__) {
 
+	var update = __webpack_require__(39)
+	//ms-imporant ms-controller ms-for ms-widget ms-effect ms-if   ...
+	avalon.directive('if', {
+	    priority: 6,
+	    diff: function (copy, src, name, copys, sources, index) {
+	        var cur = !!copy[name]
+	        src[name] = cur
+	        update(src, this.update)
+
+	    },
+	    update: function (dom, vdom, parent) {
+	        var show = vdom['ms-if']
+	        if (vdom.dynamic['ms-if']) {
+	            vdom.dynamic['ms-if'] = vdom.nodeName
+	        }
+	        if (show) {
+	            if (vdom.nodeName === '#comment') {
+	                vdom.nodeName = vdom.dynamic['ms-if']
+	                delete vdom.nodeValue
+	                var comment = vdom.comment
+	                if (!comment) {
+	                    return
+	                }
+	                parent = comment.parentNode
+	                if (parent)
+	                    parent.replaceChild(dom, comment)
+	                delete vdom.comment
+	                avalon.applyEffect(dom, vdom, {
+	                    hook: 'onEnterDone'
+	                })
+	            }
+	        } else {
+	           
+	            //要移除元素节点,在对应位置上插入注释节点
+	            if (!vdom.comment) {
+	                vdom.comment = document.createComment('if')
+	            }
+	            vdom.nodeName = '#comment'
+	            vdom.nodeValue = 'if'
+	            avalon.applyEffect(dom, vdom, {
+	                hook: 'onLeaveDone',
+	                cb: function () {
+	                    //去掉注释节点临时添加的ms-effect
+	                    //https://github.com/RubyLouvre/avalon/issues/1577
+	                    //这里必须设置nodeValue为ms-if,否则会在节点对齐算法中出现乱删节点的BUG
+	                    parent = parent || dom.parentNode
+	                    if (!parent) {
+	                        return
+	                    }
+	                    parent.replaceChild(vdom.comment, dom)
+	                }
+	            })
+	        }
+	    }
+	})
+
+
+
+/***/ },
+/* 102 */
+/***/ function(module, exports, __webpack_require__) {
+
 	/**
 	 * ------------------------------------------------------------
 	 * avalon基于纯净的Object.defineProperties的vm工厂 
 	 * masterFactory,slaveFactory,mediatorFactory, ArrayFactory
 	 * ------------------------------------------------------------
 	 */
-	var share = __webpack_require__(102)
+	var share = __webpack_require__(103)
 	var isSkip = share.isSkip
 	var $$midway = share.$$midway
 	var $$skipArray = share.$$skipArray
@@ -7722,7 +7721,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 102 */
+/* 103 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var share = __webpack_require__(80)

@@ -639,4 +639,46 @@ describe('for', function () {
             done()
         }, 300)
     })
+
+    it('local.$index不更新的BUG', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller="for16">
+             <div :for="($index,item) in @arr" >
+             <b :click="@fn($index)"></b>
+             {{item}}
+             </div>
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'for16',
+            arr: [2, 3, 4],
+            fn: function(){}
+        })
+        avalon.scan(div)
+        setTimeout(function () {
+            var bs = div.getElementsByTagName('b')
+            expect(bs[0]._ms_local.$index).to.equal(0)
+            expect(bs[0]._ms_local.item).to.equal(2)
+            expect(bs[1]._ms_local.$index).to.equal(1)
+            expect(bs[1]._ms_local.item).to.equal(3)
+            expect(bs[2]._ms_local.$index).to.equal(2)
+            expect(bs[2]._ms_local.item).to.equal(4)
+            vm.arr.unshift(7)
+            setTimeout(function () {
+                var bs = div.getElementsByTagName('b')
+                expect(bs[0]._ms_local.$index).to.equal(0)
+                expect(bs[0]._ms_local.item).to.equal(7)
+                expect(bs[1]._ms_local.$index).to.equal(1)
+                expect(bs[1]._ms_local.item).to.equal(2)
+                expect(bs[2]._ms_local.$index).to.equal(2)
+                expect(bs[2]._ms_local.item).to.equal(3)
+                expect(bs[3]._ms_local.$index).to.equal(3)
+                expect(bs[3]._ms_local.item).to.equal(4)
+                done()
+            }, 300)
+
+        }, 300)
+    })
 })

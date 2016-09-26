@@ -1,9 +1,8 @@
 import './important'
 import './controller'
 //处理属性样式
-import './attr'
-
 import './css'
+import './attr'
 import './visible'
 ////处理内容
 import './expr'

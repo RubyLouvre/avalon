@@ -4,7 +4,7 @@ import update from './_update'
 var rforAs = /\s+as\s+([$\w]+)/
 var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
 var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
-var rargs = /[$\w]+/g
+var rargs = /[$\w_]+/g
 
 function getTraceKey(item) {
     var type = typeof item
