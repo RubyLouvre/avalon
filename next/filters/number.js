@@ -1,4 +1,4 @@
-import avalon from "../seed/compact"
+import avalon from "../seed/core"
 
 export default function numberFilter(number, decimals, point, thousands) {
         //form http://phpjs.org/functions/number_format/

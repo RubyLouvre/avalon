@@ -3,6 +3,6 @@ import attrUpdate from '../dom/attr/modern'
 import {cssDiff} from './css'
 
 avalon.directive('attr', {
-    diff: cssDir.diff,
+    diff: cssDiff,
     update: attrUpdate
 })

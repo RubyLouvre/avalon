@@ -150,6 +150,5 @@ new function welcome() {
     }
 }
 
-export default avalon
 
 

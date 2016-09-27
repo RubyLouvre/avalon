@@ -1,4 +1,4 @@
-import avalon from "../seed/compact"
+import avalon from "../seed/core"
 
 export function orderBy(array, criteria, reverse) {
     var type = avalon.type(array)

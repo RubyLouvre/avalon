@@ -1,4 +1,4 @@
-import avalon from "../seed/compact"
+import avalon from "../seed/core"
 
 import "./index"
 

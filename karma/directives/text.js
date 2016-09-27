@@ -34,4 +34,26 @@ describe('text', function () {
         })
 
     })
+     it('测试date过滤器', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div :controller='text2' :text="@aa | date('yyyy-MM-dd')">{{@bb}}</div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'text2',
+            aa: new Date(2007,8,9)-0, 
+            bb: '司徒正美'
+        })
+        avalon.scan(div)
+        expect(div.children[0].innerHTML).to.equal('2007-09-09')
+        vm.aa = new Date(2007,5,1)-0
+        setTimeout(function () {
+            expect(div.children[0].innerHTML).to.equal('2007-06-01')
+            done()
+        })
+
+    })
 })
+
+//

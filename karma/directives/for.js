@@ -667,7 +667,7 @@ describe('for', function () {
             expect(bs[2]._ms_local.item).to.equal(4)
             vm.arr.unshift(7)
             setTimeout(function () {
-                var bs = div.getElementsByTagName('b')
+                bs = div.getElementsByTagName('b')
                 expect(bs[0]._ms_local.$index).to.equal(0)
                 expect(bs[0]._ms_local.item).to.equal(7)
                 expect(bs[1]._ms_local.$index).to.equal(1)
