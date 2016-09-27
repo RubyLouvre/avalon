@@ -53,7 +53,7 @@ avalon.directive('visible', {
                     vdom.displayValue = display
                 }
             }
-            function cb() {
+            var cb = function() {
                 if (value !== void 0) {
                     dom.style.display = value
                 }
