@@ -1,11 +1,12 @@
 // 抽离出来公用
 import avalon from '../seed/core'
 import update from './_update'
+import {quote} from '../seed/lang.share'
 
 avalon.directive('important', {
     priority: 1,
     parse: function (copy, src, binding) {
-        var quoted = avalon.quote(binding.expr)
+        var quoted = quote(binding.expr)
         copy.local = '{}'
         copy.vmodel = '__vmodel__'
         copy[binding.name] = 1

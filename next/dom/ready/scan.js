@@ -1,7 +1,5 @@
-var onceWarn = true //只警告一次
 import avalon from '../../seed/core'
-
-//var dom2vdom = require('../../strategy/dom2vdom')
+import {variantByDom} from '../../strategy/dom2vdom'
 
 
 avalon.scan = function (a) {
@@ -12,7 +10,9 @@ avalon.scan = function (a) {
     }
     scanNodes([a])
 }
-//avalon.scan.dom2vdom = avalon._hydrate = dom2vdom
+avalon._hydrate = variantByDom
+var onceWarn = true //只警告一次
+
 function scanNodes(nodes) {
     for (var i = 0, elem; elem = nodes[i++]; ) {
         if (elem.nodeType === 1) {
@@ -38,7 +38,7 @@ function scanNodes(nodes) {
 
                 //IE6-8下元素的outerHTML前面会有空白
                 //第一次扫描就清空所有空白节点,并生成最初的vtree
-                var vtree = [dom2vdom(elem)]
+                var vtree = [variantByDom(elem)]
                 var now = new Date()
                 elem.vtree = avalon.speedUp(vtree)
 

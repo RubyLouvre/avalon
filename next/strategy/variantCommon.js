@@ -64,7 +64,7 @@ var hasDirectives = function (arr) {
             start.hasEffect = hasEffect(old)
             hasDirectives(old)
             if (!avalon.caches[uuid]) {
-                avalon.caches[uuid] = vdom2body(old, true)
+                avalon.caches[uuid] = serializeChildren(old, true)
             }
             old.length = 0
         } else {
@@ -187,7 +187,7 @@ function delDir(props, a, b) {
 }
 
 function hasEffect(arr) {
-    for (var i = 0, el; el = arr[i++]; ) {
+    for (var i = 0, el; el = arr[i++];) {
         if (el.props && el.props['ms-effect']) {
             return true
         }

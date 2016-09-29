@@ -36,3 +36,9 @@ export function getShortID(fn) {
     /* istanbul ignore next */
     return fn.uuid || (fn.uuid = '_' + (++UUID))
 }
+export var quote = avalon.quote
+export var win = avalon.window
+export var doc = avalon.document
+export var root = avalon.root
+export var modern = avalon.modern
+

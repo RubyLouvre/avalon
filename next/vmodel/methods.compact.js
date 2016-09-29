@@ -2,7 +2,7 @@ import avalon from '../seed/core'
 import {warlords} from './warlords'
 import {$emit, $watch} from './dispatch'
 import {$$skipArray} from './skipArray'
-import  './methods.common'
+import './methods.common'
 
 warlords.$$skipArray = $$skipArray
 //如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
@@ -20,123 +20,119 @@ try {
 warlords.canHideProperty = canHideProperty
 
 function toJson(val) {
-        switch (avalon.type(val)) {
-                case 'array':
-                        var array = []
-                        for (var i = 0; i < val.length; i++) {
-                                array[i] = toJson(val[i])
-                        }
-                        return array
-                case 'object':
-                        var obj = {}
-                        for (i in val) {
-                                if (i === '__proxy__' || i === '__data__' || i === '__const__')
-                                        continue
-                                if (val.hasOwnProperty(i)) {
-                                        var value = val[i]
-                                        obj[i] = value && value.nodeType ? value : toJson(value)
-                                }
-                        }
-                        return obj
-                default:
-                        return val
-        }
+    switch (avalon.type(val)) {
+        case 'array':
+            var array = []
+            for (var i = 0; i < val.length; i++) {
+                array[i] = toJson(val[i])
+            }
+            return array
+        case 'object':
+            var obj = {}
+            for (i in val) {
+                if (i === '__proxy__' || i === '__data__' || i === '__const__')
+                    continue
+                if (val.hasOwnProperty(i)) {
+                    var value = val[i]
+                    obj[i] = value && value.nodeType ? value : toJson(value)
+                }
+            }
+            return obj
+        default:
+            return val
+    }
 }
 
 warlords.toJson = toJson
-warlords.toModel = function(obj){
-  if (!avalon.modern) {
+warlords.toModel = function (obj) {
+    if (!avalon.modern) {
         obj.$model = toJson(obj)
     }
 }
 
 function hideProperty(host, name, value) {
-        if (canHideProperty) {
-                Object.defineProperty(host, name, {
-                        value: value,
-                        writable: true,
-                        enumerable: false,
-                        configurable: true
-                })
-        } else {
-                host[name] = value
-        }
+    if (canHideProperty) {
+        Object.defineProperty(host, name, {
+            value: value,
+            writable: true,
+            enumerable: false,
+            configurable: true
+        })
+    } else {
+        host[name] = value
+    }
 }
 
 warlords.hideProperty = hideProperty
 
 var modelAccessor = {
-        get: function () {
-                return toJson(this)
-        },
-        set: avalon.noop,
-        enumerable: false,
-        configurable: true
+    get: function () {
+        return toJson(this)
+    },
+    set: avalon.noop,
+    enumerable: false,
+    configurable: true
 }
 
 warlords.modelAccessor = modelAccessor
 
-function initEvents($vmodel, heirloom) {
+function initViewModel($vmodel, heirloom, keys, accessors, options) {
+    if (options.array) {
+        if (avalon.modern) {
+            Object.defineProperty($vmodel, '$model', modelAccessor)
+        } else {
+            $vmodel.$model = toJson($vmodel)
+        }
+    } else {
+        hideProperty($vmodel, '$accessors', accessors)
+        hideProperty($vmodel, 'hasOwnProperty', function (key) {
+            return keys[key] === true
+        })
+        hideProperty($vmodel, '$track', Object.keys(keys).sort().join(';;'))
+    }
+    hideProperty($vmodel, '$id', options.id)
+    hideProperty($vmodel, '$hashcode', options.hashcode)
+    if (options.master === true) {
+        hideProperty($vmodel, '$run', function () {
+            run.call($vmodel)
+        })
+        hideProperty($vmodel, '$wait', function () {
+            wait.call($vmodel)
+        })
+        hideProperty($vmodel, '$element', null)
+        hideProperty($vmodel, '$render', 0)
         heirloom.__vmodel__ = $vmodel
         hideProperty($vmodel, '$events', heirloom)
         hideProperty($vmodel, '$watch', function () {
-                return $watch.apply($vmodel, arguments)
+            return $watch.apply($vmodel, arguments)
         })
         hideProperty($vmodel, '$fire', function (expr, a, b) {
-                var list = $vmodel.$events[expr]
-                $emit(list, $vmodel, expr, a, b)
+            var list = $vmodel.$events[expr]
+            $emit(list, $vmodel, expr, a, b)
         })
-}
-
-function initViewModel($vmodel, heirloom, keys, accessors, options) {
-        if (options.array) {
-                if (avalon.modern) {
-                        Object.defineProperty($vmodel, '$model', modelAccessor)
-                } else {
-                        $vmodel.$model = toJson($vmodel)
-                }
-        } else {
-                hideProperty($vmodel, '$accessors', accessors)
-                hideProperty($vmodel, 'hasOwnProperty', function (key) {
-                        return keys[key] === true
-                })
-                hideProperty($vmodel, '$track', Object.keys(keys).sort().join(';;'))
-        }
-        hideProperty($vmodel, '$id', options.id)
-        hideProperty($vmodel, '$hashcode', options.hashcode)
-        if (options.master === true) {
-                hideProperty($vmodel, '$run', function () {
-                        run.call($vmodel)
-                })
-                hideProperty($vmodel, '$wait', function () {
-                        wait.call($vmodel)
-                })
-                hideProperty($vmodel, '$element', null)
-                hideProperty($vmodel, '$render', 0)
-                initEvents($vmodel, heirloom)
-        }
+    }
 }
 
 warlords.initViewModel = initViewModel
 
 function wait() {
-        this.$events.$$wait$$ = true
+    this.$events.$$wait$$ = true
 }
 
 function run() {
-        var host = this.$events
-        delete host.$$wait$$
-        if (host.$$dirty$$) {
-                delete host.$$dirty$$
-                avalon.rerenderStart = new Date
-                var id = this.$id
-                var dotIndex = id.indexOf('.')
-                if (dotIndex > 0) {
-                        avalon.batch(id.slice(0, dotIndex))
-                } else {
-                        avalon.batch(id)
-                }
+    var host = this.$events
+    delete host.$$wait$$
+    if (host.$$dirty$$) {
+        delete host.$$dirty$$
+        avalon.rerenderStart = new Date
+        var id = this.$id
+        var dotIndex = id.indexOf('.')
+        if (dotIndex > 0) {
+            avalon.batch(id.slice(0, dotIndex))
+        } else {
+            avalon.batch(id)
         }
+    }
 }
 
 var defineProperties = Object.defineProperties
@@ -176,7 +172,7 @@ if (!canHideProperty) {
             'End Function' //转换一段文本为VB代码
         ].join('\n'), 'VBScript');
 
-        var VBMediator = function(instance, accessors, name, value) {// jshint ignore:line
+        var VBMediator = function (instance, accessors, name, value) {// jshint ignore:line
             var accessor = accessors[name]
             if (arguments.length === 4) {
                 accessor.set.call(instance, value)
@@ -259,3 +255,30 @@ if (!canHideProperty) {
 }
 
 warlords.createViewModel = defineProperties
+/**
+ * 
+ * 
+ * 在routes.php中进行路由设置，；
+作为访问的统一入口，是控制器的统一调度；
+没有配置路由，就没有正确地访问路径；
+路由需要自己规定一定的规则，方便自己查看、使用、理解；
+
+必用参数
+Route::get('/blog/{name}',function($name){
+    return $name; // 返回name显示
+});
+即除了 /blog/{name}的路由类型，都不能进来
+
+可选参数
+Route::get('/blog/{name?}',function($name = 'name'){
+    return $name; // 返回name显示,如果没设置就取默认值
+});
+
+正则参数
+正则可以更灵活些，匹配更多需求。
+Route::get('/blog/{id?}',function($id="1"){
+    return "{$id}";//输出blog的ID，
+})->where('name','^\d+$');//正则匹配为只能是数字，不然将无法找到路由；
+
+https://segmentfault.com/a/1190000004186135
+ */

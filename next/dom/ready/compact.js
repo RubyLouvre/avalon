@@ -1,8 +1,8 @@
 import './scan'
 
 import avalon from '../../seed/core'
+import {win, doc,root} from '../../seed/lang.share'
 
-var document = avalon.document
 
 var readyList = [], isReady
 var fireReady = function (fn) {
@@ -21,13 +21,12 @@ avalon.ready = function (fn) {
 }
 
 avalon.ready(function () {
-    avalon.scan(document.body)
+    avalon.scan(doc.body)
 })
 
 new function () {
-    if (!avalon.browser)
+    if (!avalon.inBrowser)
         return
-    var root = avalon.root
 
     function doScrollCheck() {
         try { //IE下通过doScrollCheck检测DOM树是否建完
@@ -38,26 +37,26 @@ new function () {
         }
     }
 
-    if (document.readyState === 'complete') {
+    if (doc.readyState === 'complete') {
         setTimeout(fireReady) //如果在domReady之外加载
-    } else if (document.addEventListener) {
-        document.addEventListener('DOMContentLoaded', fireReady)
-    } else if (document.attachEvent) {
-        document.attachEvent('onreadystatechange', function () {
-            if (document.readyState === 'complete') {
+    } else if (doc.addEventListener) {
+        doc.addEventListener('DOMContentLoaded', fireReady)
+    } else if (doc.attachEvent) {
+        doc.attachEvent('onreadystatechange', function () {
+            if (doc.readyState === 'complete') {
                 fireReady()
             }
         })
         try {
-            var isTop = window.frameElement === null
+            var isTop = win.frameElement === null
         } catch (e) {
         }
-        if (root.doScroll && isTop && window.external) {//fix IE iframe BUG
+        if (root.doScroll && isTop && win.external) {//fix IE iframe BUG
             doScrollCheck()
         }
     }
 
-    avalon.bind(window, 'load', fireReady)
+    avalon.bind(win, 'load', fireReady)
 }
 
 

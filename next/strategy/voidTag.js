@@ -1,5 +1,5 @@
 
-export var voidTag = {
+export  var voidTag = {
         area: 1,
         base: 1,
         basefont: 1,

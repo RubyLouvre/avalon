@@ -31,10 +31,10 @@ export default function batchUpdate(id) {
         //在最开始时,替换作用域的所有节点,确保虚拟DOM与真实DOM是对齐的
         delete avalon.scopes[id]
     }
-    
+
     avalon.diff(copy, source)
-    
- 
+
+
     var index = needRenderIds.indexOf(renderingID)
     renderingID = 0
     if (index > -1) {

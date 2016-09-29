@@ -6,8 +6,8 @@
  * ------------------------------------------------------------
  */
 import avalon from "../seed/core"
-import clearString from "./clearString"
-import voidTag from "./voidTag"
+import {clearString, stringPool, fill, rfill } from "./clearString"
+import {voidTag} from "./voidTag"
 import addTbody from "./addTbody"
 import variantSpecial from "./variantSpecial"
 
@@ -18,18 +18,15 @@ var rendTag = /^<\/([^>]+)>/
 //https://github.com/rviscomi/trunk8/blob/master/trunk8.js
 //判定里面有没有内容
 var rcontent = /\S/
-var rfill = /\?\?\d+/g
 var rnowhite = /\S+/g
-var number = 1
-var stringPool = {}
 
 export {
 makeNode as variantByText
 }
 
 function makeNode(str) {
-    stringPool = {}
-    str = clearString(str, dig)
+    stringPool.map = {}
+    str = clearString(str)
     var stack = []
     stack.last = function () {
         return stack[stack.length - 1]
@@ -204,12 +201,3 @@ function nomalString(str) {
     return avalon.unescapeHTML(str.replace(rfill, fill))
 }
 
-function dig(a) {
-    var key = '??' + number++
-    stringPool[key] = a
-    return key
-}
-function fill(a) {
-    var val = stringPool[a]
-    return val
-}

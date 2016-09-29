@@ -5,6 +5,7 @@ import './dom/compact'
 import './effect/compact'
 import './vmodel/compact'
 import './directives/compact'
+import './strategy/index'
 
 
 export default avalon

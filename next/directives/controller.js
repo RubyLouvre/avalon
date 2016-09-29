@@ -1,6 +1,8 @@
 // 抽离出来公用
 import update from './_update'
 import avalon from '../seed/core'
+import {quote} from '../seed/lang.share'
+
 var cacheMediator = {}
 avalon.mediatorFactoryCache = function (top, $id) {
     var vm = avalon.vmodels[$id]
@@ -20,7 +22,7 @@ avalon.mediatorFactoryCache = function (top, $id) {
 avalon.directive('controller', {
     priority: 2,
     parse: function (copy, src, binding) {
-        var quoted = avalon.quote(binding.expr)
+        var quoted = quote(binding.expr)
         copy.local = '__local__'
         copy.vmodel = '__vmodel__'
         copy[binding.name] = 1
@@ -69,6 +71,7 @@ avalon.directive('controller', {
         update(vdom, function () {
             avalon(dom).removeClass('ms-controller')
             dom.setAttribute('wid', id)
+            if(avalon._disposeComponent)
             avalon._disposeComponent(dom)
             var events = needFire.$events["onReady"]
             if (events) {

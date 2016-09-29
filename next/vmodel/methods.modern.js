@@ -2,7 +2,7 @@ import avalon from '../seed/core'
 import {warlords} from './warlords'
 import {$emit, $watch} from './dispatch'
 import {$$skipArray} from './skipArray'
-import  './methods.common'
+import './methods.common'
 
 warlords.$$skipArray = $$skipArray
 
@@ -31,7 +31,7 @@ function toJson(val) {
 }
 
 warlords.toJson = toJson
-warlords.toModel = function(){}
+warlords.toModel = function () { }
 
 function hideProperty(host, name, value) {
     Object.defineProperty(host, name, {
@@ -55,15 +55,6 @@ var modelAccessor = {
 
 warlords.modelAccessor = modelAccessor
 
-function initEvents($vmodel, heirloom) {
-    heirloom.__vmodel__ = $vmodel
-    hideProperty($vmodel, '$events', heirloom)
-    hideProperty($vmodel, '$watch', $watch)
-    hideProperty($vmodel, '$fire', function (expr, a, b) {
-        var list = $vmodel.$events[expr]
-        $emit(list, $vmodel, expr, a, b)
-    })
-}
 
 function initViewModel($vmodel, heirloom, keys, accessors, options) {
     if (options.array) {
@@ -80,7 +71,13 @@ function initViewModel($vmodel, heirloom, keys, accessors, options) {
     if (options.master === true) {
         hideProperty($vmodel, '$run', run)
         hideProperty($vmodel, '$wait', wait)
-        initEvents($vmodel, heirloom)
+        heirloom.__vmodel__ = $vmodel
+        hideProperty($vmodel, '$events', heirloom)
+        hideProperty($vmodel, '$watch', $watch)
+        hideProperty($vmodel, '$fire', function (expr, a, b) {
+            var list = $vmodel.$events[expr]
+            $emit(list, $vmodel, expr, a, b)
+        })
     }
 }
 

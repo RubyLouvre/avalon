@@ -1,14 +1,12 @@
 //缓存求值函数，以便多次利用
 
 import avalon from '../seed/core'
-import clearString from './clearString'
+import {clearString, stringPool, fill, rfill, dig} from './clearString'
 
 var pool = avalon.evaluatorPool
-var stringPool = {}
 
-var rfill = /\?\?\d+/g
+
 var brackets = /\(([^)]*)\)/
-
 var rshortCircuit = /\|\|/g
 var rpipeline = /\|(?=\?\?)/
 var ruselessSp = /\s*(\.|\|)\s*/g
@@ -31,31 +29,31 @@ export default function parseExpr(binding) {
         return cache.text
     }
     /* istanbul ignore else  */
-    stringPool = {}
+    stringPool.map = {}
     var paths = {}
     var locals = {}
     var input = str.replace(rregexp, dig)//移除所有正则
-    input = clearString(input, dig)      //移除所有字符串
+    input = clearString(input)      //移除所有字符串
     input = input.replace(rshortCircuit, dig).//移除所有短路运算符
-            replace(ruselessSp, '$1').//移除.|两端空白
-            replace(rguide, '$1__vmodel__.').//转换@与##
-            replace(/\b[\$\w]+\s*:/g, function(a){
-                return dig(a)+' '
-            }).
-            replace(/\|(\w+)/g, function (a, b) {//移除所有过滤器的名字
-                return '|' + dig(b)
-            }).
-            replace(/__vmodel__\.([\$\w\.]+)/g, function (_, b) {
-                paths[b] = 1      //收集路径
-                return _
-            })
+        replace(ruselessSp, '$1').//移除.|两端空白
+        replace(rguide, '$1__vmodel__.').//转换@与##
+        replace(/\b[\$\w]+\s*:/g, function (a) {
+            return dig(a) + ' '
+        }).
+        replace(/\|(\w+)/g, function (a, b) {//移除所有过滤器的名字
+            return '|' + dig(b)
+        }).
+        replace(/__vmodel__\.([\$\w\.]+)/g, function (_, b) {
+            paths[b] = 1      //收集路径
+            return _
+        })
     //收集本地变量
     collectLocal(input, locals)
     //处理过滤器
     var filters = input.split(rpipeline)
     var _body = filters.shift()
     var body = _body.replace(rfill, fill)
-          //  .replace(rfill, fill)//这里必须fix 两次
+    //  .replace(rfill, fill)//这里必须fix 两次
     if (category === 'js') {
         //<!--ms-js:xxx-->指令不存在过滤器,并且只需要替换@与##
         return cacheData(binding, body, paths, locals)
@@ -70,7 +68,7 @@ export default function parseExpr(binding) {
                 return ''
             }).replace(rfill, fill)
             return (filter.replace(/^(\w+)/, '__value__ =  avalon.__format__("$1")') +
-                    bracketArgs + ')')
+                bracketArgs + ')')
         })
     }
 
@@ -131,8 +129,8 @@ export default function parseExpr(binding) {
             'try{',
             'var __value__ = ' + body.replace(rfill, fill),
             (category === 'text' ?
-                    'return avalon.parsers.string(__value__)' :
-                    'return __value__'),
+                'return avalon.parsers.string(__value__)' :
+                'return __value__'),
             '}catch(e){',
             quoteError(str, category),
             '\treturn ""',
@@ -142,7 +140,7 @@ export default function parseExpr(binding) {
         filters.unshift(3, 0)
     }
     ret.splice.apply(ret, filters)
-    return  cacheData(binding, ret.join('\n'), locals, paths)
+    return cacheData(binding, ret.join('\n'), locals, paths)
 }
 
 function cacheData(binding, text, locals, paths) {
@@ -157,24 +155,15 @@ function cacheData(binding, text, locals, paths) {
     pool.put(key, obj)
     return text
 }
-var number = 1
-function dig(a) {
-    var key = '??' + number++
-    stringPool[key] = a
-    return key
-}
 
-function fill(a) {
-    return stringPool[a]
-}
 function collectLocal(str, local) {
     str.replace(/__vmodel__/, ' ').
-            replace(robjectProperty, ' ').
-            replace(rvar, function (el) {
-                if (el !== '$event' && !avalon.keyMap[el]) {
-                    local[el] = 1
-                }
-            })
+        replace(robjectProperty, ' ').
+        replace(rvar, function (el) {
+            if (el !== '$event' && !avalon.keyMap[el]) {
+                local[el] = 1
+            }
+        })
 }
 
 function extLocal(ret) {
@@ -187,6 +176,6 @@ function extLocal(ret) {
 
 function quoteError(str, type) {
     return '\tavalon.warn(e, ' +
-            avalon.quote('parse ' + type + ' binding【 ' + str + ' 】fail')
-            + ')'
+        avalon.quote('parse ' + type + ' binding【 ' + str + ' 】fail')
+        + ')'
 }

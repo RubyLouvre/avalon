@@ -1,4 +1,6 @@
 import avalon from '../seed/core'
+import {quote} from '../seed/lang.share'
+
 import update from './_update'
 
 var rforAs = /\s+as\s+([$\w]+)/
@@ -71,7 +73,7 @@ avalon.directive('for', {
         }
         src.$append = Array('var loop = ' + getLoop + ';',
             'avalon._each(loop, function(' + kv + '){',
-            '__local__[' + avalon.quote(aliasAs || 'valueOf') + '] = loop',
+            '__local__[' + quote(aliasAs || 'valueOf') + '] = loop',
             'vnodes.push({',
             '\tnodeName: "#document-fragment",',
             '\tindex   : arguments[0],',

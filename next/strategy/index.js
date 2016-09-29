@@ -1,4 +1,6 @@
 import avalon from '../seed/core'
+import {quote} from '../seed/lang.share'
+
 import {variantByText} from './variantByText'
 import diff from './diff'
 import batchUpdate from './batch'
@@ -21,7 +23,7 @@ function render(vtree, local) {
     var _local = []
     if (local) {
         for (var i in local) {
-            _local.push('var ' + i + ' = __local__[' + avalon.quote(i) + ']')
+            _local.push('var ' + i + ' = __local__[' + quote(i) + ']')
         }
     }
     //处理 props: {"ms-effect": "{is:\\'star\\',action:@action}" 的情况 

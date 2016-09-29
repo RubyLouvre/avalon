@@ -1,7 +1,7 @@
 import './scan'
 import avalon from '../../seed/core'
+import {win, doc,root} from '../../seed/lang.share'
 
-var document = avalon.document
 
 var readyList = [], isReady
 var fireReady = function (fn) {
@@ -21,19 +21,19 @@ avalon.ready = function (fn) {
 }
 
 avalon.ready(function () {
-    scan(document.body)
+    avalon.scan(doc.body)
 })
 
 new function () {
-    if (!avalon.browser)
+    if (!avalon.inBrowser)
         return
-    if (document.readyState === 'complete') {
+    if (doc.readyState === 'complete') {
         setTimeout(fireReady) //如果在domReady之外加载
     } else {
-        document.addEventListener('DOMContentLoaded', fireReady)
+        doc.addEventListener('DOMContentLoaded', fireReady)
     }
 
-    avalon.bind(window, 'load', fireReady)
+    avalon.bind(win, 'load', fireReady)
 
 }
 

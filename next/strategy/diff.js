@@ -39,7 +39,7 @@ export default function diff(copys, sources) {
                     execHooks(src, copy.afterChange)
                 }
                 break
-            case void(0):
+            case void (0):
                 diff(copy, src)//比较循环区域的内容
                 break
             case '#document-fragment':
@@ -78,7 +78,7 @@ export default function diff(copys, sources) {
 
 function execHooks(el, hooks) {
     if (hooks.length) {
-        for (var hook, i = 0; hook = hooks[i++]; ) {
+        for (var hook, i = 0; hook = hooks[i++];) {
             hook(el.dom, el)
         }
     }

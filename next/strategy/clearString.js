@@ -1,8 +1,21 @@
 /* 
  * 将要检测的字符串的字符串替换成??123这样的格式
  */
-
-export default function clearString(str, dig) {
+export var stringNum = 0
+export var stringPool = {
+    map: {}
+}
+export var rfill = /\?\?\d+/g
+export function dig(a) {
+    var key = '??' + stringNum++
+    stringPool.map[key] = a
+    return key
+}
+export function fill(a) {
+    var val = stringPool.map[a]
+    return val
+}
+export function clearString(str) {
     var array = readString(str)
     for (var i = 0, n = array.length; i < n; i++) {
         str = str.replace(array[i], dig)

@@ -11,25 +11,25 @@ export default function variantSpecial(node, nodeName, innerHTML) {
         case 'template':
         case 'xmp':
             node.children = [{
-                    nodeName: '#text',
-                    skipContent: true,
-                    nodeValue: innerHTML
-                }]
+                nodeName: '#text',
+                skipContent: true,
+                nodeValue: innerHTML
+            }]
             break
         case 'textarea':
             var props = node.props
             props.type = nodeName
             props.value = innerHTML
             node.children = [{
-                    nodeName: '#text',
-                    nodeValue: innerHTML
-                }]
+                nodeName: '#text',
+                nodeValue: innerHTML
+            }]
             break
         case 'option':
             node.children = [{
-                    nodeName: '#text',
-                    nodeValue: trimHTML(innerHTML)
-                }]
+                nodeName: '#text',
+                nodeValue: trimHTML(innerHTML)
+            }]
             break
     }
 

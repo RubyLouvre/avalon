@@ -20,7 +20,7 @@ window.avalon = avalon
 /* istanbul ignore if  */
 if (window.location && window.navigator && window.window) {
     var doc = window.document
-    browser.browser = true
+    browser.inBrowser = true
     browser.document = doc
     browser.root = doc.documentElement
     browser.avalonDiv = doc.createElement('div')
