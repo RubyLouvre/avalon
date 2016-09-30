@@ -1,5 +1,6 @@
+import avalon from '../../seed/core'
 
-var updateView = {
+export var updateView = {
     input: function () {//处理单个value值处理
         this.dom.value = this.value
     },
@@ -37,7 +38,7 @@ var updateView = {
     },
     select: function () {//处理子级的selected属性
         var a = Array.isArray(this.value) ?
-                this.value.map(String) : this.value + ''
+            this.value.map(String) : this.value + ''
         avalon(this.dom).val(a)
     },
     contenteditable: function () {//处理单个innerHTML
@@ -46,4 +47,3 @@ var updateView = {
     }
 }
 
-module.exports = updateView

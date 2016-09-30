@@ -11,7 +11,7 @@ import './html'
 ////需要用到事件的
 import './class.hover.active'
 import './on'
-//import'./duplex/compact'
+import'./duplex/compact'
 import './validate'
 import './rules'
 //

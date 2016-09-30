@@ -1,6 +1,6 @@
-var updateModelMethods = require('./updateModelMethods')
+import {updateModelMethods} from './updateModelMethods'
 
-function updateModelHandle(event) {
+export  function updateModelHandle(event) {
     var elem = this
     var field = this.__ms_duplex__
     if (elem.composing) {
@@ -36,4 +36,6 @@ function updateModelHandle(event) {
     }
 }
 
-module.exports = updateModelHandle
+export {
+    updateModelHandle as updateModel
+}

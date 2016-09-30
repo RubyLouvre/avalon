@@ -1,4 +1,6 @@
-var updateModelMethods = {
+import avalon from '../../seed/core'
+
+export var updateModelMethods = {
     input: function (prop) {//处理单个value值处理
         var data = this
         prop = prop || 'value'
@@ -10,8 +12,6 @@ var updateModelMethods = {
         data.value = rawValue
         data.set(data.vmodel, parsedValue)
         callback(data)
-
-
         var pos = data.pos
         if (dom.caret) {
             data.setCaret(dom, pos)
@@ -57,6 +57,7 @@ var updateModelMethods = {
             } else {
                 val = data.parse(val)
             }
+            console.log(val)
             data.set(data.vmodel, val)
             callback(data)
         }
@@ -77,4 +78,3 @@ function callback(data) {
 
 
 
-module.exports = updateModelMethods

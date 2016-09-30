@@ -1,13 +1,10 @@
 import avalon from '../../seed/core'
-import {getShortID} from '../../seed/lang.share'
+import {getShortID, root, doc, win, eventHooks} from '../../seed/lang.share'
 import {canBubbleUp} from './canBubbleUp'
-export var root = avalon.root
-export var document = avalon.document
-export var eventHooks = avalon.eventHooks
 
-var hackSafari = avalon.modern && document.ontouchstart
 
-var window = avalon.window
+var hackSafari = avalon.modern && doc.ontouchstart
+
 //添加fn.bind, fn.unbind, bind, unbind
 avalon.fn.bind = function (type, fn, phase) {
     if (this[0]) { //此方法不会链
@@ -186,7 +183,7 @@ export function avEvent(event) {
 }
 
 avEvent.prototype = {
-    fixEvent: function(){},
+    fixEvent: function () { },
     preventDefault: function () {
         var e = this.originalEvent || {}
         e.returnValue = this.returnValue = false
@@ -238,7 +235,7 @@ avalon.each({
     AnimationEvent: 'animationend',
     WebKitAnimationEvent: 'webkitAnimationEnd'
 }, function (construct, fixType) {
-    if (window[construct] && !eventHooks.animationend) {
+    if (win[construct] && !eventHooks.animationend) {
         eventHooks.animationend = {
             type: fixType
         }
@@ -246,13 +243,13 @@ avalon.each({
 })
 
 /* istanbul ignore if */
-if (document.onmousewheel === void 0) {
+if (doc.onmousewheel === void 0) {
     /* IE6-11 chrome mousewheel wheelDetla 下 -120 上 120
      firefox DOMMouseScroll detail 下3 上-3
      firefox wheel detlaY 下3 上-3
      IE9-11 wheel deltaY 下40 上-40
      chrome wheel deltaY 下100 上-100 */
-    var fixWheelType = document.onwheel !== void 0 ? 'wheel' : 'DOMMouseScroll'
+    var fixWheelType = doc.onwheel !== void 0 ? 'wheel' : 'DOMMouseScroll'
     var fixWheelDelta = fixWheelType === 'wheel' ? 'deltaY' : 'detail'
     eventHooks.mousewheel = {
         type: fixWheelType,

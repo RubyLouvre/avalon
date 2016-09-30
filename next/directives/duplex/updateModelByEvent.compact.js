@@ -5,12 +5,14 @@
  * 2. value属性重写
  * 3. 定时器轮询
  */
-var updateModel = require('./updateModelHandle')
-var markID = require('../../seed/lang.share').getShortID
+
+import avalon from '../../seed/core'
+import {getShortID as markID, win, doc} from '../../seed/lang.share'
+import {updateModel} from './updateModelHandle'
+
 var msie = avalon.msie
-var window = avalon.window
-var document = avalon.document
-function updateModelByEvent(node, vnode) {
+
+export default function updateModelByEvent(node, vnode) {
     var events = {}
     var data = vnode['ms-duplex']
     data.update = updateModel
@@ -28,11 +30,11 @@ function updateModelByEvent(node, vnode) {
                 events.blur = updateModel
             } else {
                 if (avalon.modern) {
-                    if (window.webkitURL) {
+                    if (win.webkitURL) {
                         // http://code.metager.de/source/xref/WebKit/LayoutTests/fast/events/
                         // https://bugs.webkit.org/show_bug.cgi?id=110742
                         events.webkitEditableContentChanged = updateModel
-                    } else if (window.MutationEvent) {
+                    } else if (win.MutationEvent) {
                         events.DOMCharacterDataModified = updateModel
                     }
                     events.input = updateModel
@@ -75,11 +77,11 @@ function updateModelByEvent(node, vnode) {
 
                     //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
                     //如果当前浏览器支持Int8Array,那么我们就不需要以下这些事件来打补丁了
-                    if (!/\[native code\]/.test(window.Int8Array)) {
+                    if (!/\[native code\]/.test(win.Int8Array)) {
                         events.keydown = updateModelKeyDown //safari < 5 opera < 11
                         events.paste = updateModelDelay//safari < 5
                         events.cut = updateModelDelay//safari < 5 
-                        if (window.netscape) {
+                        if (win.netscape) {
                             // Firefox <= 3.6 doesn't fire the 'input' event when text is filled in through autocomplete
                             events.DOMAutoComplete = updateModel
                         }
@@ -184,7 +186,7 @@ var getCaret = function (target) {
     if (typeof target.selectionStart == 'number' && typeof target.selectionEnd == 'number') {
         start = target.selectionStart
     } else {
-        range = document.selection.createRange()
+        range = doc.selection.createRange()
 
         if (range && range.parentElement() == target) {
             len = target.value.length
@@ -208,4 +210,3 @@ var getCaret = function (target) {
     return start
 }
 
-module.exports = updateModelByEvent

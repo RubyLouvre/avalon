@@ -41,4 +41,5 @@ export var win = avalon.window
 export var doc = avalon.document
 export var root = avalon.root
 export var modern = avalon.modern
+export var eventHooks = avalon.eventHooks
 

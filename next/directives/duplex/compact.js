@@ -1,15 +1,15 @@
-
-var update = require('../_update')
-var stringify = require('../../strategy/parser/stringify')
+import avalon from '../../seed/core'
+import update from '../_update'
+import stringify from '../../strategy/stringify'
+import updateModelByEvent from './updateModelByEvent.compact'
+import {valueHijack as updateModelByValue} from './updateModelByValue'
+import {updateModel} from './updateModelHandle'
+import {updateView} from './updateView.compact'
+import addField from'./addValidateField'
 
 var rchangeFilter = /\|\s*change\b/
 var rcheckedType = /^(?:checkbox|radio)$/
 var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/
-var updateModelByEvent = require('./updateModelByEvent.compact')
-var updateModelByValue = require('./updateModelByValue')
-var updateModel = require('./updateModelHandle')
-var updateView = require('./updateView.compact')
-var addValidateField = require('./addValidateField')
 var duplexDir = 'ms-duplex'
 
 
@@ -40,9 +40,9 @@ avalon.directive('duplex', {
             }
         } else if (!dtype) {
             dtype = src.nodeName === 'select' ? 'select' :
-                    etype === 'checkbox' ? 'checkbox' :
+                etype === 'checkbox' ? 'checkbox' :
                     etype === 'radio' ? 'radio' :
-                    'input'
+                        'input'
         }
         var isChanged = false, debounceTime = 0
         //判定是否使用了 change debounce 过滤器
@@ -75,9 +75,9 @@ avalon.directive('duplex', {
             isString: !!isString,
             isChanged: isChanged, //这个决定同步的频数
             debounceTime: debounceTime, //这个决定同步的频数
-            get: get, 
+            get: get,
             set: avalon.evaluatorPool.get('duplex:set:' + expr),
-            callback: changed ? avalon.parseExpr({expr: changed, type: 'on'}) : 'avalon.noop'
+            callback: changed ? avalon.parseExpr({ expr: changed, type: 'on' }) : 'avalon.noop'
         })
 
     },
@@ -120,11 +120,11 @@ avalon.directive('duplex', {
             //vdom.dynamic变成字符串{}
             vdom.dynamic[duplexDir] = 1
             if (!dom.__ms_duplex__) {
-                dom.__ms_duplex__ = avalon.mix(vdom[duplexDir],{dom: dom})
+                dom.__ms_duplex__ = avalon.mix(vdom[duplexDir], { dom: dom })
                 //绑定事件
                 updateModelByEvent(dom, vdom)
                 //添加验证
-                addValidateField(dom, vdom)
+                addField(dom, vdom)
             }
 
             var data = dom.__ms_duplex__
@@ -132,16 +132,16 @@ avalon.directive('duplex', {
             //如果不支持input.value的Object.defineProperty的属性支持,
             //需要通过轮询同步, chrome 42及以下版本需要这个hack
             if (data.isString
-                    && !avalon.msie
-                    && updateModelByValue === false
-                    && !dom.valueHijack) {
+                && !avalon.msie
+                && updateModelByValue === false
+                && !dom.valueHijack) {
 
                 dom.valueHijack = updateModel
                 var intervalID = setInterval(function () {
                     if (!avalon.contains(avalon.root, dom)) {
                         clearInterval(intervalID)
                     } else {
-                        dom.valueHijack({type: 'poll'})
+                        dom.valueHijack({ type: 'poll' })
                     }
                 }, 30)
             }
@@ -152,7 +152,7 @@ avalon.directive('duplex', {
 })
 
 function parseValue(val) {
-    for (var i = 0, k; k = this.parsers[i++]; ) {
+    for (var i = 0, k; k = this.parsers[i++];) {
         var fn = avalon.parsers[k]
         if (fn) {
             val = fn.call(this, val)

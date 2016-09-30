@@ -1,4 +1,4 @@
-var valueHijack = false
+export var valueHijack = false
 try { //#272 IE9-IE11, firefox
     
     var setters = {}
@@ -28,4 +28,3 @@ try { //#272 IE9-IE11, firefox
     // http://updates.html5rocks.com/2015/04/DOM-attributes-now-on-the-prototype
     // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
 }
-module.exports = valueHijack

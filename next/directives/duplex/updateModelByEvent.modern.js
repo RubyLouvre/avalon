@@ -5,13 +5,14 @@
  * 2. value属性重写
  * 3. 定时器轮询
  */
-var updateModel = require('./updateModelHandle')
-var markID = require('../../seed/lang.share').getShortID
-var msie = avalon.msie
-var window = avalon.window
-var document = avalon.document
+import avalon from '../../seed/core'
+import {getShortID as markID, win, doc} from '../../seed/lang.share'
+import {updateModel} from './updateModelHandle'
 
-function updateModelByEvent(node, vnode) {
+var msie = avalon.msie
+
+
+export default function updateModelByEvent(node, vnode) {
     var events = {}
     var data = vnode['ms-duplex']
     data.update = updateModel
@@ -29,11 +30,11 @@ function updateModelByEvent(node, vnode) {
                 events.blur = updateModel
             } else {
 
-                if (window.webkitURL) {
+                if (win.webkitURL) {
                     // http://code.metager.de/source/xref/WebKit/LayoutTests/fast/events/
                     // https://bugs.webkit.org/show_bug.cgi?id=110742
                     events.webkitEditableContentChanged = updateModel
-                } else if (window.MutationEvent) {
+                } else if (win.MutationEvent) {
                     events.DOMCharacterDataModified = updateModel
                 }
                 events.input = updateModel
@@ -61,7 +62,6 @@ function updateModelByEvent(node, vnode) {
         data.getCaret = getCaret
         data.setCaret = setCaret
     }
-
     for (var name in events) {
         avalon.bind(node, name, events[name])
     }
@@ -121,5 +121,3 @@ function setCaret(field, pos) {
     field.selectionEnd = pos
 }
 
-
-module.exports = updateModelByEvent

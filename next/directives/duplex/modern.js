@@ -1,15 +1,15 @@
-
-var update = require('../_update')
-var stringify = require('../../strategy/parser/stringify')
+import avalon from '../../seed/core'
+import update from '../_update'
+import stringify from '../../strategy/stringify'
+import updateModelByEvent from './updateModelByEvent.modern'
+import {valueHijack as updateModelByValue} from './updateModelByValue'
+import {updateModel} from './updateModelHandle'
+import {updateView} from './updateView.modern'
+import addField from'./addValidateField'
 
 var rchangeFilter = /\|\s*change\b/
 var rcheckedType = /^(?:checkbox|radio)$/
 var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/
-var updateModelByEvent = require('./updateModelByEvent.modern')
-var updateModelByValue = require('./updateModelByValue')
-var updateModel = require('./updateModelHandle')
-var updateView = require('./updateView.modern')
-var addValidateField = require('./addValidateField')
 var duplexDir = 'ms-duplex'
 
 avalon.directive('duplex', {
@@ -120,7 +120,7 @@ avalon.directive('duplex', {
                 //绑定事件
                 updateModelByEvent(dom, vdom)
                 //添加验证
-                addValidateField(dom, vdom)
+                addField(dom, vdom)
             }
             var data = dom.__ms_duplex__
             data.dom = dom
