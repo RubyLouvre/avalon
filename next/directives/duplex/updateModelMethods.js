@@ -57,7 +57,6 @@ export var updateModelMethods = {
             } else {
                 val = data.parse(val)
             }
-            console.log(val)
             data.set(data.vmodel, val)
             callback(data)
         }
@@ -72,7 +71,7 @@ function callback(data) {
         data.callback.call(data.vmodel, {
             type: 'changed',
             target: data.dom
-        })
+        }, data.local)
     }
 }
 

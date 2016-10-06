@@ -71,7 +71,7 @@ function callback(data) {
         data.callback.call(data.vmodel, {
             type: 'changed',
             target: data.dom
-        })
+        },data.local)
     }
 }
 
