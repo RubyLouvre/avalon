@@ -1,9 +1,7 @@
 import avalon from '../../seed/core'
-
 import {canBubbleUp} from './canBubbleUp'
 import {avEvent} from './share'
-
-import { modern as W3C, eventHooks, doc, root} from './../seed/lang.share'
+import { modern as W3C, eventHooks, doc, root} from '../../seed/lang.share'
 
 if (!W3C) {
     delete canBubbleUp.change

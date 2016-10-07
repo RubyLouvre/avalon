@@ -15,7 +15,6 @@ export  function updateModelHandle(event) {
             var pos = field.getCaret(elem)
             field.pos = pos
         } catch (e) {
-            avalon.warn('fixCaret error', e)
         }
     }
     

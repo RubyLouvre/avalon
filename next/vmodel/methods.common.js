@@ -82,6 +82,10 @@ function makeAccessor(sid, spath, heirloom) {
             if (old === val) {
                 return
             }
+            var older = old
+            if(older && older.$model){
+               older = older.$model
+            }
             var vm = heirloom.__vmodel__
             if (val && typeof val === 'object') {
                 val = modelAdaptor(val, old, heirloom, {
@@ -89,7 +93,6 @@ function makeAccessor(sid, spath, heirloom) {
                     id: sid
                 })
             }
-            var older = old
             old = val
             if (this.$hashcode && vm ) {
                 vm.$events.$$dirty$$ = true

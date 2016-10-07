@@ -1,5 +1,5 @@
 /*!
- * built in 2016-10-7:22 version 2.115 by 司徒正美
+ * built in 2016-10-7:23 version 2.115 by 司徒正美
  * npm 2.1.15
  *     普通vm也支持onReady, onDispose方法(生命周期)
  *     添加norequire验证规则
