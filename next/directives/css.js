@@ -35,6 +35,9 @@ var cssDir = avalon.directive('css', {
                 src[name] = patch
             }
             if (hasChange) {
+                if(name === 'ms-effect'){
+                    src[name] = a
+                }
                 update(src, this.update)
             }
         }

@@ -42,7 +42,7 @@ module.exports = function (config) {
             'karma/directives/hover.js',
             'karma/directives/active.js',
             'karma/directives/validate.js',
-            'karma/directives/rules.js',
+            'karma/directives/rules.js' 
         ],
         exclude: [],
         mochaReporter: {
@@ -81,8 +81,7 @@ module.exports = function (config) {
             'karma-firefox-launcher',
             'karma-safari-launcher',
             'karma-chrome-launcher',
-            'karma-ie-launcher',
-            'karma-opera-launcher',
+          
             'karma-safari-launcher'
         ]
     })

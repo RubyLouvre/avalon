@@ -2,7 +2,7 @@
 var update = require('./_update')
 
 avalon.directive('css', {
-    diff: function (copy, src, name) {
+    diff: function (copy, src, name, hookName) {
         var a = copy[name]
         var p = src[name]
         if (Object(a) === a) {
@@ -35,10 +35,14 @@ avalon.directive('css', {
                 src[name] = patch
             }
             if (hasChange) {
-                update(src, this.update)
+                if(name ==='ms-effect'){
+                    src[name] = a
+                }
+                update(src, this.update, hookName)
             }
         }
-        delete copy[name]//释放内存
+        if(src !== copy)
+           delete copy[name]//释放内存
     },
     update: function (dom, vdom) {
         if (dom && dom.nodeType === 1) {
