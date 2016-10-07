@@ -1,5 +1,5 @@
 /*!
- * built in 2016-10-7:17 version 2.115 by 司徒正美
+ * built in 2016-10-7:22 version 2.115 by 司徒正美
  * npm 2.1.15
  *     普通vm也支持onReady, onDispose方法(生命周期)
  *     添加norequire验证规则
@@ -8317,13 +8317,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	                return
 	            }
 	            var vm = heirloom.__vmodel__
+	            var older = old
+	            if(older && older.$model){
+	               older = older.$model
+	            }
 	            if (val && typeof val === 'object') {
 	                val = $$midway.modelAdaptor(val, old, heirloom, {
 	                    pathname: spath,
 	                    id: sid
 	                })
 	            }
-	            var older = old
+	            
 	            old = val
 	            if (this.$hashcode && vm ) {
 	                vm.$events.$$dirty$$ = true

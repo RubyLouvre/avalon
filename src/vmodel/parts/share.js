@@ -84,13 +84,17 @@ function makeAccessor(sid, spath, heirloom) {
                 return
             }
             var vm = heirloom.__vmodel__
+            var older = old
+            if(older && older.$model){
+               older = older.$model
+            }
             if (val && typeof val === 'object') {
                 val = $$midway.modelAdaptor(val, old, heirloom, {
                     pathname: spath,
                     id: sid
                 })
             }
-            var older = old
+            
             old = val
             if (this.$hashcode && vm ) {
                 vm.$events.$$dirty$$ = true
