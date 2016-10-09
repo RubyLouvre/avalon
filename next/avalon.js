@@ -6,6 +6,7 @@ import './vmodel/compact'
 import './directives/compact'
 import './effect/index'
 import './strategy/index'
+import './component/index'
 
 
 export default avalon
