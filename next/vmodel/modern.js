@@ -7,9 +7,9 @@
 import {avalon} from '../seed/core'
 import {warlords} from  './warlords'
 import './methods.modern'
+import {$$skipArray} from './skipArray'
 
 var isSkip = warlords.isSkip
-var $$skipArray = warlords.$$skipArray
 delete $$skipArray.$accessors
 delete $$skipArray.__data__
 delete $$skipArray.__proxy__

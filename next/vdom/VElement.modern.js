@@ -1,10 +1,9 @@
-import {avalon} from '../seed/core'
+import avalon from '../filters/modern'
 
 export default function VElement(type, props, children) {
     this.nodeName = type
     this.props = props
     this.children = children
-
 }
 
 VElement.prototype = {

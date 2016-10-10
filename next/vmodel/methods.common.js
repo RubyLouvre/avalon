@@ -14,16 +14,13 @@ var rskip = /function|window|date|regexp|element/i
  * 
  * 以后将反向操作 ，要求类型只能是array, object, undefined, null, boolean, number, string
  */
-function isSkip(key, value, skipArray) {
+warlords.isSkip  = function (key, value, skipArray) {
     // 判定此属性能否转换访问器
     return key.charAt(0) === '$' ||
             skipArray[key] ||
             (rskip.test(avalon.type(value))) ||
             (value && value.nodeName && value.nodeType > 0)
 }
-
-warlords.isSkip = isSkip
-
 /**
  * 将属性值再进行转换
  */

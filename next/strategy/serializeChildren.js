@@ -2,10 +2,11 @@
  * 本模块是用于将虚拟DOM变成一个函数
  */
 import {avalon} from '../seed/core'
+import config from '../seed/config'
+
 import extractBindings from "./extractBindings"
 import stringify from "./stringify"
 
-var config = avalon.config
 var quote = avalon.quote
 var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
 var rstatement = /^\s*var\s+([$\w]+)\s*\=\s*\S+/

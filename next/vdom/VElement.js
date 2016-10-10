@@ -1,4 +1,4 @@
-import {avalon} from '../seed/core'
+import avalon from '../filters/compact'
 
 export default function VElement(type, props, children) {
     this.nodeName = type

@@ -1,7 +1,7 @@
 /**
  * 虚拟DOM的4大构造器
  */
-import {avalon} from '../seed/core'
+import avalon from '../filters/modern'
 import VText from './VText'
 import VComment from './VComment'
 import VElement from './VElement.modern'

@@ -1,7 +1,7 @@
 import {avalon} from './core'
-var window = Function(' return this')() || this
+var _window = Function(' return this')() || this
 var browser = {
-    window: window,
+    _window: _window,
     document: {//方便在nodejs环境不会报错
         createElement: Object,
         createElementNS: Object,
@@ -16,17 +16,17 @@ var browser = {
     avalonDiv: {},
     avalonFragment: null
 }
-window.avalon = avalon
+_window.avalon = avalon
 /* istanbul ignore if  */
-if (window.location && window.navigator && window.window) {
-    var doc = window.document
+if (_window.location && _window.navigator && _window.window) {
+    var DOC = _window.document
     browser.inBrowser = true
-    browser.document = doc
-    browser.root = doc.documentElement
-    browser.avalonDiv = doc.createElement('div')
-    browser.avalonFragment = doc.createDocumentFragment()
-    if (window.VBArray) {
-        browser.msie = doc.documentMode || (window.XMLHttpRequest ? 7 : 6)
+    browser.document = DOC
+    browser.root = DOC.documentElement
+    browser.avalonDiv = DOC.createElement('div')
+    browser.avalonFragment = DOC.createDocumentFragment()
+    if (_window.VBArray) {
+        browser.msie = DOC.documentMode || (_window.XMLHttpRequest ? 7 : 6)
         browser.modern = browser.msie > 8
     } else {
         browser.modern = true
