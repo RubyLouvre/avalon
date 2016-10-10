@@ -14,6 +14,7 @@ var quoted = {
     nodeName: 1,
     forExpr: 1,
     type: 1,
+    template: 1,
     nodeValue: 1,
     signature: 1,
     wid: 1

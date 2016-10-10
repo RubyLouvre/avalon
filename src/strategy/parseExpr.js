@@ -37,7 +37,10 @@ function parseExpr(binding) {
     input = input.replace(rshortCircuit, dig).//移除所有短路运算符
             replace(ruselessSp, '$1').//移除.|两端空白
             replace(rguide, '$1__vmodel__.').//转换@与##
-            replace(/\b[\$\w]+\s*:/g, dig).
+            //https://github.com/RubyLouvre/avalon/issues/1765
+            replace(/(\b[\$\w]+\s*):/g, function(a, b){//处理所有对象的键名
+                return dig(b.trim())+': '
+            }).
             replace(/\|(\w+)/g, function (a, b) {//移除所有过滤器的名字
                 return '|' + dig(b)
             }).
@@ -122,6 +125,7 @@ function parseExpr(binding) {
         return cacheData(binding, getterBody.replace(rfill, fill), locals, paths)
 
     } else {
+        console.log(body, '!')
         ret = [
             '(function (){',
             'try{',

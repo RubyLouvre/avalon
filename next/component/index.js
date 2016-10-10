@@ -50,7 +50,7 @@ avalon.directive('widget', {
             //如果组件没有初始化,那么先初始化(生成对应的vm,$render)
             if (!src[vmName]) {
                 /* istanbul ignore if */
-                if (!tryInitComponent(src, copy[name], copy.local, copy.template)) {
+                if (!initComponent(src, copy[name], copy.local, copy.template)) {
                     //替换成注释节点
                     src.nodeValue = 'unresolved component placeholder'
                     copyList[index] = src
