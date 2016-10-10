@@ -206,4 +206,3 @@ avalon.shadowCopy(avalon, {
                 }
         }
 })
-

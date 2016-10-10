@@ -1,12 +1,13 @@
 /*!
- * built in 2016-10-10:20 version 2.115 by 司徒正美
- * npm 2.1.15
+ * built in 2016-10-10:21 version 2.1.16 by 司徒正美
+ * https://github.com/RubyLouvre/avalon/tree/2.1.7
  *     fix parseExpr BUG #1768 与 #1765
  *     优化ms-effect指令,与ms-css指令共同相同的diff
  *     data-duplex-changed回调支持更多参数
  *     处理$watch监听复杂数BUG #1762
  *     处理date过滤器不解析 BUG
  *     重构ms-important后面的指令不执行的BUG
+ *     改成es6 modules组织依赖,rollup.js打包
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -14,9 +15,9 @@
 	else if(typeof define === 'function' && define.amd)
 		define([], factory);
 	else if(typeof exports === 'object')
-		exports["avalon.test"] = factory();
+		exports["avalon"] = factory();
 	else
-		root["avalon.test"] = factory();
+		root["avalon"] = factory();
 })(this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -198,23 +199,30 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ },
 
 /***/ 78:
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	/*!
-	 * built in 2016-10-10:20 version 2.115 by 司徒正美
-	 * npm 2.1.15
+	 * built in 2016-10-10:21 version 2.1.16 by 司徒正美
+	 * https://github.com/RubyLouvre/avalon/tree/2.1.7
 	 *     fix parseExpr BUG #1768 与 #1765
 	 *     优化ms-effect指令,与ms-css指令共同相同的diff
 	 *     data-duplex-changed回调支持更多参数
 	 *     处理$watch监听复杂数BUG #1762
 	 *     处理date过滤器不解析 BUG
 	 *     重构ms-important后面的指令不执行的BUG
+	 *     改成es6 modules组织依赖,rollup.js打包
 	 */
+	;;;
 
 	(function (global, factory) {
-		true ? module.exports = factory() :
-			typeof define === 'function' && define.amd ? define(factory) :
-				(global.avalon = factory());
+		   if (true)
+			module.exports = factory()
+		else if (typeof define === 'function' && define.amd)
+			define([], factory)
+		else if (typeof exports === 'object')
+			exports.avalon = factory()
+		else
+			global.avalon = factory()
 	} (this, function () {
 
 		   //avalon的核心,这里都是一些不存在异议的*核心*方法与属性
@@ -251,7 +259,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		   avalon.shadowCopy(avalon, {
 			noop: function () {
 			},
-			version: "2.115",
+			version: "2.1.16",
 			//切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach
 			rword: rword,
 			inspect: ({}).toString,

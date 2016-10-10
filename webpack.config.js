@@ -6,19 +6,16 @@ var fs = require('fs')
 var json = require('./package.json')
 var ExtractTextPlugin = require('extract-text-webpack-plugin');
 var cssExtractor = new ExtractTextPlugin('/[name].css');
-var version = json.version.split('.')
-var v = (version.shift() + '.' + version.join('')).replace(/0+$/, "0")
-var text = fs.readFileSync('./src/seed/core.js', 'utf8')
-text = text.replace(/version\s*\:\s*([^,]+)/, function (a, b) {
-    return 'version: ' + JSON.stringify(v)
-})
+var version = '"'+ json.version +'"'
+var text = fs.readFileSync('./next/seed/core.js', 'utf8')
+
 function heredoc(fn) {
     return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
             replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
 }
 var feather = heredoc(function () {
     /*
-    npm 2.1.15
+    https://github.com/RubyLouvre/avalon/tree/2.1.7
     fix parseExpr BUG #1768 与 #1765
     优化ms-effect指令,与ms-css指令共同相同的diff
     data-duplex-changed回调支持更多参数
@@ -28,15 +25,14 @@ var feather = heredoc(function () {
     改成es6 modules组织依赖,rollup.js打包
      */
 })
-fs.writeFileSync('./src/seed/core.js', text, 'utf8')
+fs.writeFileSync('./next/seed/core.js', text, 'utf8')
 var now = new Date
 var snow = now.getFullYear() + '-' + (now.getMonth() + 1) +
         '-' + now.getDate() + ':' + now.getHours()
 module.exports = {
     entry: {
-     //   avalon: './src/avalon', //我们开发时的入口文件
        // 'avalon': './dist/avalon.r',
-       // 'avalon.modern': './dist/avalon.r.modern',
+      //  'avalon.modern': './dist/avalon.r.modern',
         'avalon.test': './src/avalon.test',
         'avalon.next': './src/avalon.next'
       //  pager: "./src/pager",
@@ -50,7 +46,7 @@ module.exports = {
     plugins: [
           new StringReplacePlugin(),
          cssExtractor,
-        new webpack.BannerPlugin('built in ' + snow + ' version ' + v + ' by 司徒正美\n' + feather)
+        new webpack.BannerPlugin('built in ' + snow + ' version ' +  json.version + ' by 司徒正美\n' + feather)
     ],
    module: {
         loaders: [
