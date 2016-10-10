@@ -1,5 +1,5 @@
-import avalon from '../../seed/core'
-import {cssMap,cssHooks} from './share'
+import {avalon, cssHooks} from '../../seed/core'
+import {cssMap} from './share'
 
 
 /* istanbul ignore if */

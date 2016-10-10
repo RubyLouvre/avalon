@@ -1,4 +1,4 @@
-import avalon from '../../seed/core'
+import {avalon} from '../../seed/core'
 
 export var updateView = {
     input: function () {//处理单个value值处理

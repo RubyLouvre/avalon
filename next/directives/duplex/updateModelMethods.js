@@ -1,4 +1,4 @@
-import avalon from '../../seed/core'
+import {avalon} from '../../seed/core'
 
 export var updateModelMethods = {
     input: function (prop) {//处理单个value值处理

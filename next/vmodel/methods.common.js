@@ -1,4 +1,4 @@
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 import {warlords} from './warlords'
 import {$$skipArray} from './skipArray'
 import {$emit, $watch} from './dispatch'

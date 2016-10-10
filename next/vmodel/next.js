@@ -5,7 +5,7 @@
  * http://caniuse.com/#search=Proxy
  * ------------------------------------------------------------
  */
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 import {warlords} from  './warlords'
 import './methods.compact'
 import {$emit, $watch} from './dispatch'

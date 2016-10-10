@@ -5,7 +5,7 @@
  * 此阶段只会生成VElement,VText,VComment
  * ------------------------------------------------------------
  */
-import avalon from "../seed/core"
+import {avalon} from '../seed/core'
 import {clearString, stringPool, fill, rfill } from "./clearString"
 import {voidTag} from "./voidTag"
 import addTbody from "./addTbody"

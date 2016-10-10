@@ -1,4 +1,4 @@
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 import update from './_update'
 var none = 'none'
 function parseDisplay(elem, val) {

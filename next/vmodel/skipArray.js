@@ -7,6 +7,6 @@ $skipArray: 是当前对象特有的不可监听属性
  $$skipArray被hasOwnProperty后返回false
  $skipArray被hasOwnProperty后返回true
  */
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 
 export var $$skipArray = avalon.oneObject('$id,$render,$track,$element,$watch,$fire,$events,$skipArray,$accessors,$hashcode,$run,$wait,__proxy__,__data__,__const__')

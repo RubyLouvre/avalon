@@ -1,5 +1,5 @@
-import avalon from '../../seed/core'
-import {cssHooks} from './share'
+import {avalon} from '../../seed/core'
+import './share'
 
 avalon.fn.offset = function () { //取得距离页面左右角的坐标
     var node = this[0]

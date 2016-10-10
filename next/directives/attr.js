@@ -1,5 +1,5 @@
 
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 import attrUpdate from '../dom/attr/compact'
 import {cssDiff} from './css'
 

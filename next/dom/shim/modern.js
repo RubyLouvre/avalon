@@ -1,5 +1,5 @@
 //safari5+是把contains方法放在Element.prototype上而不是Node.prototype
-import avalon from '../../seed/core'
+import {avalon} from '../../seed/core'
 if (typeof Node === 'function') {
     if (!document.contains) {
         Node.prototype.contains = function (arg) {

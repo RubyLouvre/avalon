@@ -1,6 +1,6 @@
 // 抽离出来公用
 import update from './_update'
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 import {quote} from '../seed/lang.share'
 
 var cacheMediator = {}

@@ -1,4 +1,4 @@
-import avalon from '../filters/compact'
+import {avalon} from '../seed/core'
 
 export default function VText(text) {
     this.nodeName = '#text'

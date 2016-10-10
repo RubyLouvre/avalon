@@ -5,7 +5,7 @@
  * ------------------------------------------------------------
  */
 
-import avalon from "../seed/core"
+import {avalon} from '../seed/core'
 
 //如果正在更新一个子树,那么将它放到
 var needRenderIds = []

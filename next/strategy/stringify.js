@@ -1,4 +1,4 @@
-import avalon from "../seed/core"
+import {avalon} from '../seed/core'
 import {quote} from "../seed/lang.share"
 
 

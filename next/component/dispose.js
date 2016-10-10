@@ -1,4 +1,4 @@
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 
 function inDomTree(el) {
     while (el) {

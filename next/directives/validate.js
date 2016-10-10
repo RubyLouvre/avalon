@@ -1,4 +1,4 @@
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 import update from './_update'
 var valiDir = avalon.directive('validate', {
     //验证单个表单元素

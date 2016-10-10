@@ -1,5 +1,5 @@
 
-import avalon from '../../seed/core'
+import {avalon} from '../../seed/core'
 
 export default function addField(node, vnode) {
     var field = node.__ms_duplex__

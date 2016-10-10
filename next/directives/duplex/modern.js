@@ -1,4 +1,4 @@
-import avalon from '../../seed/core'
+import {avalon} from '../../seed/core'
 import update from '../_update'
 import stringify from '../../strategy/stringify'
 import updateModelByEvent from './updateModelByEvent.modern'

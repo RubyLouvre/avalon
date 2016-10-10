@@ -1,4 +1,4 @@
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 import {getLongID as markID, quote} from '../seed/lang.share'
 import update from './_update'
 

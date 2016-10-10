@@ -4,7 +4,7 @@
  * masterFactory,slaveFactory,mediatorFactory, ArrayFactory
  * ------------------------------------------------------------
  */
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 import {warlords} from  './warlords'
 import './methods.modern'
 

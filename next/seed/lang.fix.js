@@ -2,8 +2,8 @@
 /**
  * 此模块不依赖任何模块,用于修复语言的底层缺陷
  */
+import {ohasOwn} from './core'
 
-var ohasOwn = Object.prototype.hasOwnProperty
 function isNative(fn){
     return /\[native code\]/.test(fn)
 }

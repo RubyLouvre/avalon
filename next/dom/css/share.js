@@ -1,10 +1,9 @@
-import avalon from '../../seed/core'
-var cssHooks = avalon.cssHooks
+import {avalon, cssHooks} from '../../seed/core'
 var cssMap = {
     'float': 'cssFloat'
 }
 export {
-    cssHooks, cssMap
+    cssMap
 }
 avalon.cssNumber = avalon.oneObject('animationIterationCount,columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom')
 var prefixes = ['', '-webkit-', '-o-', '-moz-', '-ms-']

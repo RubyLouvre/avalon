@@ -1,7 +1,7 @@
 /**
  * 虚拟DOM的3大构造器
  */
-import avalon from '../filters/compact'
+import {avalon} from '../seed/core'
 import VText from './VText'
 import VComment from './VComment'
 import VElement from './VElement'

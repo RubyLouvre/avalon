@@ -6,7 +6,7 @@
  * 3. 定时器轮询
  */
 
-import avalon from '../../seed/core'
+import {avalon} from '../../seed/core'
 import {getShortID as markID, win, doc} from '../../seed/lang.share'
 import {updateModel} from './updateModelHandle'
 

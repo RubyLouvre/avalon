@@ -1,4 +1,4 @@
-import avalon from '../../seed/core'
+import {avalon} from '../../seed/core'
 import {rcheckedType} from '../rcheckedType'
 
 function getValType(elem) {

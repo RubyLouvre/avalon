@@ -1,4 +1,4 @@
-import avalon from '../../seed/core'
+import {avalon} from '../../seed/core'
 import {propMap} from './propMap'
 
 var rsvg = /^\[object SVG\w*Element\]$/

@@ -1,4 +1,4 @@
-import avalon from "../seed/core"
+import {avalon} from '../seed/core'
 
 import numberFilter from "./number"
 import sanitizeFilter from "./sanitize"

@@ -1,5 +1,5 @@
 
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 import update from '../directives/_update'
 import initComponent from './init'
 import disposeComponent from './dispose'

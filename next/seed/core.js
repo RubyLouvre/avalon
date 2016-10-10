@@ -1,5 +1,5 @@
 //avalon的核心,这里都是一些不存在异议的*核心*方法与属性
-export default function avalon(el) {
+export function avalon(el) {
         return new avalon.init(el)
 }
 
@@ -15,7 +15,7 @@ avalon.shadowCopy = function (destination, source) {
         }
         return destination
 }
-var cssHooks = {}
+
 var rhyphen = /([a-z\d])([A-Z]+)/g
 var rcamelize = /[-_][^-_]/g
 var rhashcode = /\d\.\d{4}/
@@ -28,7 +28,9 @@ function defaultParse(cur, pre, binding) {
 var rword = /[^, ]+/g
 
 var hasConsole = typeof console === 'object'
-
+export var ohasOwn = Object.prototype.hasOwnProperty
+export var cssHooks = {}
+export var eventHooks = {}
 avalon.shadowCopy(avalon, {
         noop: function () {
         },
@@ -36,13 +38,13 @@ avalon.shadowCopy(avalon, {
         //切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach
         rword: rword,
         inspect: ({}).toString,
-        ohasOwn: ({}).hasOwnProperty,
+        ohasOwn: ohasOwn,
         caches: {}, //avalon2.0 新增
         vmodels: {},
         filters: {},
         components: {}, //放置组件的类
         directives: {},
-        eventHooks: {},
+        eventHooks: eventHooks,
         eventListeners: {},
         validators: {},
         scopes: {},

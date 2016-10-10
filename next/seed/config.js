@@ -1,4 +1,4 @@
-import avalon from './core'
+import {avalon} from './core'
 export default function config(settings) {
     for (var p in settings) {
          /* istanbul ignore if */

@@ -32,7 +32,7 @@ var snow = now.getFullYear() + '-' + (now.getMonth() + 1) +
 module.exports = {
     entry: {
        // 'avalon': './dist/avalon.r',
-      //  'avalon.modern': './dist/avalon.r.modern',
+       // 'avalon.modern': './dist/avalon.r.modern',
         'avalon.test': './src/avalon.test',
         'avalon.next': './src/avalon.next'
       //  pager: "./src/pager",

@@ -1,5 +1,5 @@
 // 抽离出来公用
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 import update from './_update'
 import {quote} from '../seed/lang.share'
 

@@ -1,5 +1,5 @@
 //这里放置存在异议的方法
-import avalon from './core'
+import {avalon, ohasOwn} from './core'
 
 avalon.quote = typeof JSON !== 'undefined' ? JSON.stringify : new function () {
 //https://github.com/bestiejs/json3/blob/master/lib/json3.js
@@ -91,7 +91,6 @@ for (enu in avalon({})) {
     break
 }
 
-var ohasOwn = avalon.ohasOwn
 enumerateBUG = enu !== '0' //IE6下为true, 其他为false
 
 /*判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例*/

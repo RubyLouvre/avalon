@@ -1,5 +1,5 @@
-import avalon from '../../seed/core'
-import {getShortID, root, doc, win, eventHooks} from '../../seed/lang.share'
+import {avalon, eventHooks} from '../../seed/core'
+import {getShortID, root, doc, win} from '../../seed/lang.share'
 import {canBubbleUp} from './canBubbleUp'
 
 

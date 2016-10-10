@@ -1,4 +1,4 @@
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 import update from './_update'
 //ms-imporant ms-controller ms-for ms-widget ms-effect ms-if   ...
 avalon.directive('if', {

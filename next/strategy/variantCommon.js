@@ -1,6 +1,6 @@
 
 
-import avalon from "../seed/core"
+import {avalon} from '../seed/core'
 
 import {serializeChildren} from './serializeChildren'
 var rmsForStart = /^\s*ms\-for\:\s*/

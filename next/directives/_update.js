@@ -1,4 +1,4 @@
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 
 export default function update(vdom, update, hookName) {
     if (hookName) {

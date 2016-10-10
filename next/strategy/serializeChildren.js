@@ -1,7 +1,7 @@
 /*
  * 本模块是用于将虚拟DOM变成一个函数
  */
-import avalon from "../seed/core"
+import {avalon} from '../seed/core'
 import extractBindings from "./extractBindings"
 import stringify from "./stringify"
 

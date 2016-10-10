@@ -1,6 +1,6 @@
 //缓存求值函数，以便多次利用
 
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 import {clearString, stringPool, fill, rfill, dig} from './clearString'
 
 var pool = avalon.evaluatorPool

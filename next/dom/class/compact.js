@@ -1,4 +1,4 @@
-import avalon from '../../seed/core'
+import {avalon} from '../../seed/core'
 var rnowhite = /\S+/g
 var fakeClassListMethods = {
     _toString: function () {

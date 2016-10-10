@@ -1,4 +1,4 @@
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 import {directives} from '../seed/lang.share'
 
 var rbinding = /^(\:|ms\-)\w+/

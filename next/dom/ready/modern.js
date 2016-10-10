@@ -1,5 +1,5 @@
 import './scan'
-import avalon from '../../seed/core'
+import {avalon} from '../../seed/core'
 import {win, doc,root} from '../../seed/lang.share'
 
 

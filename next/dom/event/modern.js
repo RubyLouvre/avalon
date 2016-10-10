@@ -1,4 +1,4 @@
-import avalon from '../../seed/core'
+import {avalon} from '../../seed/core'
 
 import {doc} from '../../seed/lang.share'
 import {avEvent} from './share'

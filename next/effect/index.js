@@ -1,4 +1,4 @@
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 import {Cache}  from'../seed/cache'
 import {cssDiff} from '../directives/css'
 import effectDetect from './detect'

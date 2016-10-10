@@ -1,4 +1,4 @@
-import avalon from '../../seed/core'
+import {avalon} from '../../seed/core'
 var rnowhite = /\S+/g
 'add,remove'.replace(avalon.rword, function (method) {
     avalon.fn[method + 'Class'] = function (cls) {

@@ -1,5 +1,5 @@
 //此指令实际上不会操作DOM,交由expr指令处理
-import avalon from '../seed/core'
+import {avalon} from '../seed/core'
 import update from './_update'
 
 avalon.directive('text', {
