@@ -1,9 +1,6 @@
 import avalon from '../seed/core'
-import {Cache} from '../seed/cache'
 import {getLongID as markID, quote} from '../seed/lang.share'
 import update from './_update'
-
-var eventCache = new Cache(128)
 
 
 //Ref: http://developers.whatwg.org/webappapis.html#event-handler-idl-attributes

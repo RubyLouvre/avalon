@@ -1,4 +1,5 @@
 var webpack = require('webpack');
+var StringReplacePlugin = require("string-replace-webpack-plugin");
 
 var path = require('path');
 var fs = require('fs')
@@ -18,31 +19,26 @@ function heredoc(fn) {
 var feather = heredoc(function () {
     /*
     npm 2.1.15
-    普通vm也支持onReady, onDispose方法(生命周期)
-    添加norequire验证规则
-    强化UUID的生成策略
-    fix replaceChild的重写BUG(用于onDispose方法)
-    xmp, wbr, template可以直接使用is属性代替ms-widget属性,
-       即<xmp :widget="{is:'ms-button'}"></xmp> -->
-        <xmp is="ms-button"></xmp>
-    简化attr指令的实现,其diff逻辑与css指令的diff一样,直接用css指令的
-    一劳永逸解决IE6-8下VBS属性重复定义抛错的BUG
-    新的 jsparser
+    fix parseExpr BUG #1768 与 #1765
+    优化ms-effect指令,与ms-css指令共同相同的diff
+    data-duplex-changed回调支持更多参数
+    处理$watch监听复杂数BUG #1762
+    处理date过滤器不解析 BUG
+    重构ms-important后面的指令不执行的BUG
      */
 })
 fs.writeFileSync('./src/seed/core.js', text, 'utf8')
 var now = new Date
 var snow = now.getFullYear() + '-' + (now.getMonth() + 1) +
         '-' + now.getDate() + ':' + now.getHours()
-var a = __dirname.replace('avalon', 'koa2')
 module.exports = {
     entry: {
-        avalon: './src/avalon', //我们开发时的入口文件
-        'avalon.modern': './src/avalon.modern',
+     //   avalon: './src/avalon', //我们开发时的入口文件
+        'avalon': './dist/avalon.r',
+        'avalon.modern': './dist/avalon.r.modern',
         'avalon.test': './src/avalon.test',
         'avalon.next': './src/avalon.next'
       //  pager: "./src/pager",
-       // 'routergrid': './src/routergrid'
     },
     output: {
         path: path.join(__dirname, 'dist'),
@@ -51,6 +47,7 @@ module.exports = {
         library: '[name]'
     }, //页面引用的文件
     plugins: [
+          new StringReplacePlugin(),
          cssExtractor,
         new webpack.BannerPlugin('built in ' + snow + ' version ' + v + ' by 司徒正美\n' + feather)
     ],
@@ -60,7 +57,31 @@ module.exports = {
             // https://github.com/b82/webpack-basic-starter/blob/master/webpack.config.js 
             {test: /\.html$/, loader: 'raw!html-minify'},
             {test: /\.scss$/, loader: cssExtractor.extract( 'css!sass')},
-            {test: /\.css$/, loader: cssExtractor.extract( 'css')}
+            {test: /\.css$/, loader: cssExtractor.extract( 'css')},
+            { 
+            test: /\.js$/,
+            loader: StringReplacePlugin.replace({
+                replacements: [
+                    {
+                        pattern: /'use strict';/,
+                        replacement: function () {
+                            return '';
+                        }
+                    },
+                     {
+                        pattern: /\|\|\s+undefined/g,
+                        replacement: function () {
+                            return '|| this'
+                        }
+                    },
+                     {
+                        pattern: /window\$1/g,
+                        replacement: function () {
+                            return 'window'
+                        }
+                    }
+                ]})
+            }
 
         ]
     },
@@ -73,7 +94,7 @@ module.exports = {
         }
     },
     externals: {
-        "avalon2": 'avalon',
+        "avalon2": 'avalon'
     },
     eslint: {
         configFile: './eslintrc.json'

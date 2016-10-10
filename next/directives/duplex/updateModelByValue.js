@@ -4,7 +4,7 @@ try { //#272 IE9-IE11, firefox
     var setters = {}
     var aproto = HTMLInputElement.prototype
     var bproto = HTMLTextAreaElement.prototype
-    function newSetter(value) { // jshint ignore:line
+    var newSetter = function(value) { // jshint ignore:line
         setters[this.tagName].call(this, value)
         var data = this.__ms_duplex__
         if (!this.caret && data && data.isString) {

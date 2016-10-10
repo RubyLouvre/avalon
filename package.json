@@ -33,6 +33,7 @@
     "raw-loader": "~0.5.1",
     "sass-loader": "^3.2.2",
     "sinon": "^1.17.5",
+    "string-replace-webpack-plugin": "0.0.4",
     "style-loader": "~0.13.1",
     "text-loader": "0.0.1",
     "url-loader": "0.5.7",

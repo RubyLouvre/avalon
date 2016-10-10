@@ -8,6 +8,7 @@ module.exports = function (config) {
             {pattern: 'node_modules/chai/chai.js', include: true},
             {pattern: 'node_modules/sinon/pkg/sinon.js', include: true},
             'dist/avalon.test.js',
+            'karma/vmodel/index.js',
             // 'karma/reconcile.js',
             'karma/seed/core.js',
             'karma/seed/browser.js',
@@ -20,7 +21,7 @@ module.exports = function (config) {
             'karma/dom/index.js',
             'karma/strategy/index.js',
             'karma/component/index.js',
-            'karma/vmodel/index.js',
+           
             'karma/directives/text.js',
             'karma/directives/css.js',
              

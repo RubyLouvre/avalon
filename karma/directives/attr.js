@@ -121,7 +121,7 @@ describe('attr', function () {
 
         }, 100)
     })
-
+   
     it("value", function (done) {
 
         div.innerHTML = heredoc(function () {
@@ -175,6 +175,23 @@ describe('attr', function () {
             })
         })
 
+    })
+    
+    it('复制对象指令的处理', function (done) {
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='attr7' :attr="{title: @aaa||@aaa}" :rules="{ required: true, minlength:4 }">ddd</div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'attr7',
+            aaa: '111'
+        })
+        avalon.scan(div)
+        var el = div.children[0]
+
+        expect(el.title).to.equal('111')
+        done()
     })
 
 })

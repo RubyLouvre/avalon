@@ -329,7 +329,7 @@ describe('widget', function () {
             hash: ''
         })
         function changePanel(v) {
-            vm.panel = '<' + v + ' ms-widget=\"{id:"' + v + '"}\"></' + v + '>'
+            vm.panel = '<' + v + ' ms-widget="{id:\'' + v + '\'}"></' + v + '>'
         }
         vm.$watch('hash', changePanel)
         vm.hash = 'ms-hasha'
