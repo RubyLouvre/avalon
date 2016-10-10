@@ -1,13 +1,11 @@
 /*
  * 本模块是用于将虚拟DOM变成一个函数
  */
-import {avalon} from '../seed/core'
-import config from '../seed/config'
 
+import {avalon, quote, config} from '../seed/lang.share'
 import extractBindings from "./extractBindings"
 import stringify from "./stringify"
 
-var quote = avalon.quote
 var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
 var rstatement = /^\s*var\s+([$\w]+)\s*\=\s*\S+/
 var skips = { __local__: 1, vmode: 1, dom: 1 }

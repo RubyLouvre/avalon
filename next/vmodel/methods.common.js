@@ -24,7 +24,7 @@ warlords.isSkip  = function (key, value, skipArray) {
 /**
  * 将属性值再进行转换
  */
-function modelAdaptor(definition, old, heirloom, options) {
+warlords.modelAdaptor = function (definition, old, heirloom, options) {
     var type = avalon.type(definition)
     switch(type){
         case 'array':
@@ -54,7 +54,7 @@ function modelAdaptor(definition, old, heirloom, options) {
     }
 }
 
-warlords.modelAdaptor = modelAdaptor
+
 
 /**
  * 生成访问器属性的定义对象
@@ -67,7 +67,7 @@ warlords.modelAdaptor = modelAdaptor
  * batchUpdateView
  * 
  */
-function makeAccessor(sid, spath, heirloom) {
+warlords.makeAccessor = function (sid, spath, heirloom) {
     var old = NaN
     function get() {
         return old
@@ -85,7 +85,7 @@ function makeAccessor(sid, spath, heirloom) {
             }
             var vm = heirloom.__vmodel__
             if (val && typeof val === 'object') {
-                val = modelAdaptor(val, old, heirloom, {
+                val = warlords.modelAdaptor(val, old, heirloom, {
                     pathname: spath,
                     id: sid
                 })
@@ -119,7 +119,7 @@ function makeAccessor(sid, spath, heirloom) {
     }
 }
 
-warlords.makeAccessor = makeAccessor
+
 
 export function batchUpdateView(id) {
     avalon.rerenderStart = new Date
@@ -182,9 +182,9 @@ export function arrayFactory(array, old, heirloom, options) {
         options.hashcode = hashcode
         options.id = options.id || hashcode
         warlords.initViewModel(array, heirloom, {}, {}, options)
-
+        
         for (var j = 0, n = array.length; j < n; j++) {
-            array[j] = modelAdaptor(array[j], 0, {}, {
+            array[j] = warlords.modelAdaptor(array[j], 0, {}, {
                 id: array.$id + '.*',
                 master: true
             })

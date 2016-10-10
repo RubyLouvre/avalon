@@ -1,7 +1,5 @@
 import {avalon} from './core'
 import {Cache} from './cache'
-
-
 /* 
  * 对html实体进行转义
  * https://github.com/substack/node-ent
@@ -22,9 +20,7 @@ avalon.shadowCopy(avalon, {
     }
 })
 
-export var directives = avalon.directives
 
-//export default avalon
 //生成事件回调的UUID(用户通过ms-on指令)
 export function getLongID(fn) {
     /* istanbul ignore next */
@@ -36,6 +32,11 @@ export function getShortID(fn) {
     /* istanbul ignore next */
     return fn.uuid || (fn.uuid = '_' + (++UUID))
 }
+export var directives = avalon.directives
+
+export var config = avalon.config
+export var cache = Cache
+export {avalon}
 export var quote = avalon.quote
 export var win = avalon.window
 export var doc = avalon.document

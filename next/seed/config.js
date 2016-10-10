@@ -1,20 +1,19 @@
 import {avalon} from './core'
-export default function config(settings) {
+function steinkern(settings) {
     for (var p in settings) {
          /* istanbul ignore if */
         if (!avalon.ohasOwn.call(settings, p))
             continue
         var val = settings[p]
-        if (typeof config.plugins[p] === 'function') {
-            config.plugins[p](val)
+        if (typeof steinkern.plugins[p] === 'function') {
+            steinkern.plugins[p](val)
         } else {
-            config[p] = val
+            steinkern[p] = val
         }
     }
     return this
 }
-
-avalon.config = config
+avalon.config = steinkern
 
 var plugins = {
     interpolate: function (array) {
@@ -34,15 +33,15 @@ var plugins = {
         }
         div.innerHTML = ''
         /*eslint-enable */
-        config.openTag = openTag
-        config.closeTag = closeTag
+        steinkern.openTag = openTag
+        steinkern.closeTag = closeTag
         var o = avalon.escapeRegExp(openTag)
         var c = avalon.escapeRegExp(closeTag)
-        config.rexpr = new RegExp(o + '([\\s\\S]*)' + c)
+        steinkern.rexpr = new RegExp(o + '([\\s\\S]*)' + c)
     }
 }
-config.plugins = plugins
-avalon.config({
+steinkern.plugins = plugins
+steinkern({
     interpolate: ['{{', '}}'],
     debug: true
 })
