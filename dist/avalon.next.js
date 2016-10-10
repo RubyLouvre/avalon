@@ -1,5 +1,5 @@
 /*!
- * built in 2016-10-10:21 version 2.1.16 by 司徒正美
+ * built in 2016-10-10:22 version 2.1.16 by 司徒正美
  * https://github.com/RubyLouvre/avalon/tree/2.1.7
  *     fix parseExpr BUG #1768 与 #1765
  *     优化ms-effect指令,与ms-css指令共同相同的diff

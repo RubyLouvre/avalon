@@ -140,7 +140,7 @@ new function welcome() {
     var welcomeMessage = "You're running avalon in debug mode - messages will be printed to the console to help you fix problems and optimise your application.\n\n" +
             'To disable debug mode, add this line at the start of your app:\n\n  avalon.config({debug: false});\n\n' +
             'Debug mode also automatically shut down amicably when your app is minified.\n\n' +
-            "Get help and support:\n  https://segmentfault.com/t/avalon\n  http://avalonjs.coding.me/\n http://www.baidu-x.com/?q=avalonjs\n http://www.avalon.org.cn/\n\nFound a bug? Raise an issue:\n  https://github.com/RubyLouvre/avalon/issues\n\n";
+            "Get help and support:\n  https://segmentfault.com/t/avalon\n  http://avalonjs.coding.me/\n  http://www.baidu-x.com/?q=avalonjs\n http://www.avalon.org.cn/\n\nFound a bug? Raise an issue:\n  https://github.com/RubyLouvre/avalon/issues\n\n";
 
     var hasGroup = !!console.groupCollapsed 
     console[hasGroup ? 'groupCollapsed': 'log'].apply(console, welcomeIntro)

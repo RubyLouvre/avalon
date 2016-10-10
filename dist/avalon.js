@@ -250,7 +250,7 @@
 	       'toString': null
 	   }).propertyIsEnumerable('toString');
 	   var hasProtoEnumBug = (function () {
-	}).propertyIsEnumerable('prototype');
+	}).propertyIsEnumerable('prototype')
 	   var dontEnums = [
 		'toString',
 		'toLocaleString',
@@ -259,8 +259,8 @@
 		'isPrototypeOf',
 		'propertyIsEnumerable',
 		'constructor'
-	];
-	   var dontEnumsLength = dontEnums.length;
+	]
+	   var dontEnumsLength = dontEnums.length
 	   /* istanbul ignore if*/
 	   if (!isNative(Object.keys)) {
 	       Object.keys = function (object) { //ecma262v5 15.2.3.14
@@ -557,7 +557,7 @@
 	       break
 	   }
 
-	   var ohasOwn$1 = avalon.ohasOwn
+	   var ohasOwn= avalon.ohasOwn
 	   enumerateBUG = enu !== '0' //IE6下为true, 其他为false
 
 	   /*判定是否是一个朴素的javascript对象（Object），不是DOM对象，不是BOM对象，不是自定义类的实例*/
@@ -567,8 +567,8 @@
 	       }
 	       try { //IE内置对象没有constructor
 	           if (obj.constructor &&
-				!ohasOwn$1.call(obj, 'constructor') &&
-				!ohasOwn$1.call(obj.constructor.prototype || {}, 'isPrototypeOf')) {
+				!ohasOwn.call(obj, 'constructor') &&
+				!ohasOwn.call(obj.constructor.prototype || {}, 'isPrototypeOf')) {
 	               return false
 	           }
 	       } catch (e) { //IE8 9会在这里抛错
@@ -576,12 +576,12 @@
 	       }
 	       if (enumerateBUG) {
 	           for (key in obj) {
-	               return ohasOwn$1.call(obj, key)
+	               return ohasOwn.call(obj, key)
 	           }
 	       }
 	       for (key in obj) {
 	       }
-	       return key === void 0 || ohasOwn$1.call(obj, key)
+	       return key === void 0 || ohasOwn.call(obj, key)
 	   }
 
 	   function isPlainObjectModern(obj) {
@@ -704,7 +704,7 @@
 	       var welcomeMessage = "You're running avalon in debug mode - messages will be printed to the console to help you fix problems and optimise your application.\n\n" +
 			'To disable debug mode, add this line at the start of your app:\n\n  avalon.config({debug: false});\n\n' +
 			'Debug mode also automatically shut down amicably when your app is minified.\n\n' +
-			"Get help and support:\n  https://segmentfault.com/t/avalon\n  http://avalonjs.coding.me/\n http://www.baidu-x.com/?q=avalonjs\n  http://www.avalon.org.cn/\n\nFound a bug? Raise an issue:\n  https://github.com/RubyLouvre/avalon/issues\n\n";
+			"Get help and support:\n  https://segmentfault.com/t/avalon\n  http://avalonjs.coding.me/\n  http://www.baidu-x.com/?q=avalonjs\n  http://www.avalon.org.cn/\n\nFound a bug? Raise an issue:\n  https://github.com/RubyLouvre/avalon/issues\n\n";
 	       if (typeof console === 'object') {
 	           var con = console
 	           var method = con.groupCollapsed || con.log
