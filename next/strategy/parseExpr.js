@@ -107,7 +107,7 @@ export default function parseExpr(binding) {
             quoteError(str, category).replace('parse', 'set'),
             '}',
             '}']
-        pool.put('duplex:set:' + binding.expr, setterBody.join('\n'))
+        pool.put('duplex:set:' + binding.expr, setterBody.join('\n').replace(rfill, fill))
         //对某个值进行格式化
         var getterBody = [
             'function (__vmodel__){',
@@ -141,6 +141,7 @@ export default function parseExpr(binding) {
 }
 
 function cacheData(binding, text, locals, paths) {
+    text = text.replace(rfill, fill)
     var obj = {
         text: text,
         locals: Object.keys(locals).join(','),

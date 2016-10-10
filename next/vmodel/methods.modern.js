@@ -58,7 +58,7 @@ warlords.modelAccessor = modelAccessor
 
 function initViewModel($vmodel, heirloom, keys, accessors, options) {
     if (options.array) {
-        hideProperty($vmodel, '$model', modelAccessor)
+        Object.defineProperty($vmodel, '$model', modelAccessor)
     } else {
         hideProperty($vmodel, '$accessors', accessors)
         hideProperty($vmodel, 'hasOwnProperty', function (key) {
