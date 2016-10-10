@@ -1,5 +1,5 @@
 /*!
- * built in 2016-10-10:15 version 2.115 by 司徒正美
+ * built in 2016-10-10:16 version 2.115 by 司徒正美
  * npm 2.1.15
  *     普通vm也支持onReady, onDispose方法(生命周期)
  *     添加norequire验证规则
@@ -7637,10 +7637,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    input = input.replace(rshortCircuit, dig).//移除所有短路运算符
 	            replace(ruselessSp, '$1').//移除.|两端空白
 	            replace(rguide, '$1__vmodel__.').//转换@与##
-	            //https://github.com/RubyLouvre/avalon/issues/1765
-	            replace(/(\b[\$\w]+\s*):/g, function(a, b){//处理所有对象的键名
-	                return dig(b.trim())+': '
-	            }).
+	            replace(/(\b[\$\w]+\s*):/g, dig).
 	            replace(/\|(\w+)/g, function (a, b) {//移除所有过滤器的名字
 	                return '|' + dig(b)
 	            }).
@@ -7725,7 +7722,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return cacheData(binding, getterBody.replace(rfill, fill), locals, paths)
 
 	    } else {
-	        console.log(body, '!')
 	        ret = [
 	            '(function (){',
 	            'try{',
@@ -7758,10 +7754,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return text
 	}
 	var number = 1
+	//https://github.com/RubyLouvre/avalon/issues/1765
+	//https://github.com/RubyLouvre/avalon/issues/1768
 	function dig(a) {
 	    var key = '??' + number++
 	    stringPool[key] = a
-	    return key
+	    return key+' '
 	}
 
 	function fill(a) {

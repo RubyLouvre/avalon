@@ -9,7 +9,7 @@ export var rfill = /\?\?\d+/g
 export function dig(a) {
     var key = '??' + stringNum++
     stringPool.map[key] = a
-    return key
+    return key+' '
 }
 export function fill(a) {
     var val = stringPool.map[a]
