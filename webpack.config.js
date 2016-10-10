@@ -25,6 +25,7 @@ var feather = heredoc(function () {
     处理$watch监听复杂数BUG #1762
     处理date过滤器不解析 BUG
     重构ms-important后面的指令不执行的BUG
+    改成es6 modules组织依赖,rollup.js打包
      */
 })
 fs.writeFileSync('./src/seed/core.js', text, 'utf8')
@@ -34,8 +35,8 @@ var snow = now.getFullYear() + '-' + (now.getMonth() + 1) +
 module.exports = {
     entry: {
      //   avalon: './src/avalon', //我们开发时的入口文件
-        'avalon': './dist/avalon.r',
-        'avalon.modern': './dist/avalon.r.modern',
+       // 'avalon': './dist/avalon.r',
+       // 'avalon.modern': './dist/avalon.r.modern',
         'avalon.test': './src/avalon.test',
         'avalon.next': './src/avalon.next'
       //  pager: "./src/pager",
