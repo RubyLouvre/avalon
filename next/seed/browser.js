@@ -1,7 +1,9 @@
 import {avalon} from './core'
-var _window = Function(' return this')() || this
+var _window = typeof window === 'object' ? window : 
+        (Function(' return this')() || this)
+var window = _window
 var browser = {
-    _window: _window,
+    window: _window,
     document: {//方便在nodejs环境不会报错
         createElement: Object,
         createElementNS: Object,
@@ -16,7 +18,7 @@ var browser = {
     avalonDiv: {},
     avalonFragment: null
 }
-_window.avalon = avalon
+window.avalon = avalon
 /* istanbul ignore if  */
 if (_window.location && _window.navigator && _window.window) {
     var DOC = _window.document

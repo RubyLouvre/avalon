@@ -31,8 +31,8 @@ var snow = now.getFullYear() + '-' + (now.getMonth() + 1) +
         '-' + now.getDate() + ':' + now.getHours()
 module.exports = {
     entry: {
-       // 'avalon': './dist/avalon.r',
-       // 'avalon.modern': './dist/avalon.r.modern',
+        'avalon': './dist/avalon.r',
+        'avalon.modern': './dist/avalon.r.modern',
         'avalon.test': './src/avalon.test',
         'avalon.next': './src/avalon.next'
       //  pager: "./src/pager",
@@ -72,9 +72,15 @@ module.exports = {
                         }
                     },
                      {
-                        pattern: /window\$1/g,
+                        pattern: /root\$1/g,
                         replacement: function () {
-                            return 'window'
+                            return 'root'
+                        }
+                    },
+                     {
+                        pattern: /doc\$1/g,
+                        replacement: function () {
+                            return 'doc'
                         }
                     }
                 ]})

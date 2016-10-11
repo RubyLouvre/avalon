@@ -77,10 +77,10 @@ avalon.fn.offset = function () { //取得距离页面左右角的坐标
     if (!node || !node.tagName || !node.ownerDocument) {
         return box
     }
-    var doc = node.ownerDocument,
-        body = doc.body,
-        root = doc.documentElement,
-        win = doc.defaultView || doc.parentWindow
+    var doc = node.ownerDocument
+    var body = doc.body
+    var root = doc.documentElement
+    var win = doc.defaultView || doc.parentWindow
     if (!avalon.contains(root, node)) {
         return box
     }
@@ -110,9 +110,10 @@ avalon.each({
     scrollTop: 'pageYOffset'
 }, function (method, prop) {
     avalon.fn[method] = function (val) {
-        var node = this[0] || {},
-            win = getWindow(node),
-            top = method === 'scrollTop'
+        var node = this[0] || {}
+        var win = getWindow(node)
+        var root = avalon.root
+        var top = method === 'scrollTop'
         if (!arguments.length) {
             return win ? (prop in win) ? win[prop] : root[method] : node[method]
         } else {

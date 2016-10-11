@@ -1,4 +1,6 @@
 import {avalon} from './core'
+import './config'
+
 import {Cache} from './cache'
 /* 
  * 对html实体进行转义

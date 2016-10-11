@@ -1,2 +1,2 @@
-export var rcheckedType = /radio|checkbox/
+export var rcheckedType = /^(?:checkbox|radio)$/
 

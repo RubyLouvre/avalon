@@ -1,6 +1,7 @@
 import {avalon} from '../../seed/core'
 import update from '../_update'
 import stringify from '../../strategy/stringify'
+import {rcheckedType} from '../../dom/rcheckedType'
 import updateModelByEvent from './updateModelByEvent.compact'
 import {valueHijack as updateModelByValue} from './updateModelByValue'
 import {updateModel} from './updateModelHandle'
@@ -8,7 +9,6 @@ import {updateView} from './updateView.compact'
 import addField from'./addValidateField'
 
 var rchangeFilter = /\|\s*change\b/
-var rcheckedType = /^(?:checkbox|radio)$/
 var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/
 var duplexDir = 'ms-duplex'
 

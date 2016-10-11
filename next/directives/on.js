@@ -18,7 +18,7 @@ avalon.directive('on', {
                     return e.charCodeAt(0)
                 })
 
-        var quoted = avalon.quote(uuid)
+        var quoted = quote(uuid)
         var fn = '(function(){\n' +
                 'var fn610 = ' +
                 avalon.parseExpr(binding) +

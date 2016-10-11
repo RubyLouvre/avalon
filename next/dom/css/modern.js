@@ -29,9 +29,9 @@ avalon.each({
     scrollTop: "pageYOffset"
 }, function (method, prop) {
     avalon.fn[method] = function (val) {
-        var node = this[0] || {},
-                win = getWindow(node),
-                top = method === "scrollTop"
+        var node = this[0] || {}
+        var win = getWindow(node)
+        var top = method === "scrollTop"
         if (!arguments.length) {
             return win ? win[prop] : node[method]
         } else {

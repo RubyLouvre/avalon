@@ -32,7 +32,7 @@
                     defaults: {
                         tree: [],
                         renderSubTree: function (el) {
-                            return  el.subtree.length ? '<wbr is="tree" ms-widget="{$id:"tree_' + (++treeID) + '", tree: el.subtree}" />' : ''
+                            return  el.subtree.length ? '<wbr is="tree" ms-widget="{$id:\'tree_' + (++treeID) + '\', tree: el.subtree}" />' : ''
                         },
                         openSubTree: function (el) {
                             el.open = !el.open
