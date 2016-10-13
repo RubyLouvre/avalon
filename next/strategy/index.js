@@ -1,11 +1,9 @@
-import { avalon } from '../seed/core'
-import { quote } from '../seed/lang.share'
-
+import { avalon,quote } from '../seed/lang.share'
 import { variantByText } from './variantByText'
 import diff from './diff'
 import batchUpdate from './batch'
 import variantCommon from './variantCommon'
-import parseExpr from './parseExpr'
+import { parseExpr, extLocal } from './parseExpr'
 import { serializeChildren } from './serializeChildren'
 
 avalon.lexer = variantByText
@@ -20,12 +18,8 @@ avalon.parseExpr = parseExpr
 var rquoteEscapes = /\\\\(['"])/g
 function render(vtree, local) {
     var _body = Array.isArray(vtree) ? serializeChildren(vtree) : vtree
-    var _local = []
-    if (local) {
-        for (var i in local) {
-            _local.push('var ' + i + ' = __local__[' + quote(i) + ']')
-        }
-    }
+    var _local = extLocal(local || {})
+
     //处理 props: {"ms-effect": "{is:\\'star\\',action:@action}" 的情况 
     _body = _body.replace(rquoteEscapes, "$1")
     var body = '__local__ = __local__ || {};\n' +

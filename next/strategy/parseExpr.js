@@ -20,7 +20,7 @@ var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\
 
 //传入一个包含name, type, expr的对象, 将会返回一个字符串,
 //并为原对象添加paths, locals属性
-export default function parseExpr(binding) {
+export function parseExpr(binding) {
         var str = binding.expr
         var category = binding.type
         var cache = pool.get(category + ':' + str)
@@ -212,7 +212,7 @@ function collectLocal(str, local) {
                 })
 }
 
-function extLocal(ret) {
+export function extLocal(ret) {
         var arr = []
         for (var i in ret) {
                 arr.push('var ' + i + ' = __local__[' + avalon.quote(i) + ']')
