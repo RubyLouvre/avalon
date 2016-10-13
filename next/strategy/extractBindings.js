@@ -2,9 +2,9 @@ import {avalon} from '../seed/core'
 import {directives} from '../seed/lang.share'
 
 var rbinding = /^(\:|ms\-)\w+/
-var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
+export var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
 
-export default function extractBindings(cur, props) {
+export  function extractBindings(cur, props) {
     var bindings = []
     var attrs = {}
     var skip = 'ms-skip' in props//old

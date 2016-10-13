@@ -11,7 +11,7 @@ import {serializeChildren} from './serializeChildren'
 avalon.lexer = variantByText
 avalon.diff = diff
 avalon.batch = batchUpdate
-avalon.speedUp = variantCommon
+avalon.speedUp = avalon.variantCommon = variantCommon
 avalon.parseExpr = parseExpr
 
 

@@ -1,6 +1,8 @@
 //缓存求值函数，以便多次利用
 
 import { avalon } from '../seed/core'
+import { keyMap} from './jsonfy'
+
 import { clearString, stringPool, fill, rfill, dig } from './clearString'
 
 var pool = avalon.evaluatorPool
@@ -184,6 +186,7 @@ avalon.composeFilters = function () {
                 return value
         }
 }
+
 function cacheData(binding, text, locals, paths) {
         text = text.join('\n').replace(rfill, fill)
         var obj = {
@@ -203,7 +206,7 @@ function collectLocal(str, local) {
         str.replace(/__vmodel__/, ' ').
                 replace(robjectProperty, ' ').
                 replace(rvar, function (el) {
-                        if (el !== '$event' && !avalon.keyMap[el]) {
+                        if (el !== '$event' && !keyMap[el]) {
                                 local[el] = 1
                         }
                 })
