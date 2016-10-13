@@ -1,12 +1,12 @@
-import {avalon} from '../seed/core'
-import {quote} from '../seed/lang.share'
+import { avalon } from '../seed/core'
+import { quote } from '../seed/lang.share'
 
-import {variantByText} from './variantByText'
+import { variantByText } from './variantByText'
 import diff from './diff'
 import batchUpdate from './batch'
 import variantCommon from './variantCommon'
 import parseExpr from './parseExpr'
-import {serializeChildren} from './serializeChildren'
+import { serializeChildren } from './serializeChildren'
 
 avalon.lexer = variantByText
 avalon.diff = diff

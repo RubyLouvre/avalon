@@ -1,6 +1,7 @@
-import { avalon } from '../../seed/core'
+import { avalon, config, directives } from '../../seed/lang.share'
 import { variantByDom } from '../../strategy/dom2vdom'
 import { extractBindings } from '../../strategy/extractBindings'
+import { parseText } from '../../strategy/parseText'
 
 avalon.scan = function (a) {
     /* istanbul ignore if */
@@ -43,7 +44,6 @@ function scanNodes(nodes) {
                 collectDeps(vtree[0])
                 vm.$element = elem
                 elem.vtree = avalon.variantCommon(vtree)
-                console.log(vtree)
                 var now2 = new Date()
                 onceWarn && avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')
 
@@ -74,54 +74,15 @@ function getController(a) {
     return a.getAttribute('ms-controller') ||
         a.getAttribute(':controller')
 }
-var rlineSp = /\n\r?\s*/g
 
-var config = avalon.config
-function extractExpr(str) {
-    var ret = []
-    do {//aaa{{@bbb}}ccc
-        var index = str.indexOf(config.openTag)
-        index = index === -1 ? str.length : index
-        var value = str.slice(0, index)
-        if (/\S/.test(value)) {
-            ret.push({ expr: avalon._decode(value) })
-        }
-        str = str.slice(index + config.openTag.length)
-        if (str) {
-            index = str.indexOf(config.closeTag)
-            var value = str.slice(0, index)
-            ret.push({
-                expr: avalon.unescapeHTML(value.replace(rlineSp, '')),
-                type: 'nodeValue',
-                name: 'nodeValue'
-            })
-            str = str.slice(index + config.closeTag.length)
-        }
-    } while (str.length)
-    return ret
-}
+
+
 function collectDeps(node, vm) {
     switch (node.nodeName) {
         case "#text":
-            if (avalon.config.rexpr.test(node.nodeValue)) {
-                //<----  直接换成avalon.parseTex
-                var a = extractExpr(node.nodeValue)
-                if (a.length > 1) {
-                    var v = '' //处理一个文本节点存在多个花括号的情况 
-                    a.forEach(function (el) {
-                        if (!el.type)
-                            el.expr = '+' + avalon.quote(el.expr) + '+'
-                        v += el.expr
-                    })
-                    a = [{
-                        expr: v,
-                        name: 'nodeValue',
-                        type: 'nodeValue'
-                    }]
-                }
-                var b = a[0]
+            if (config.rexpr.test(node.nodeValue)) {
+                var b = parseText(node.nodeValue)
                 b.local = {}
-                //---->
                 makeUpdate(b, vm, node)
             }
             break
@@ -144,6 +105,7 @@ function collectDeps(node, vm) {
                         case 'important':
                             return
                         case 'text':
+                            avalon.directives.text.parse({}, node, b)
                             var dom = b.dom
                             if (dom) {
                                 dom.removeAttribute('ms-text')
@@ -172,7 +134,7 @@ function makeUpdate(b, vm, src) {
     var name = b.name
     var copy = {}
     copy.props = src.props
-    avalon.directives[b.type].parse(copy, src, b)
+    directives[b.type].parse(copy, src, b)
     var body = copy[name]
     if (name === 'nodeValue') {
         /**
@@ -235,7 +197,7 @@ function updater() {
         local: this.local
     }
     copy[this.name] = value
-    avalon.directives[this.type].diff(copy, this.vdom, this.name)
+    directives[this.type].diff(copy, this.vdom, this.name)
     var el = this.vdom, hooks = el.afterChange
     if (hooks) {//处理duplex的afterChange
         for (var hook, i = 0; hook = hooks[i++];) {
