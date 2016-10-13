@@ -1,8 +1,6 @@
-import { avalon } from
-    '../../seed/core'
-import { variantByDom } from
-    '../../strategy/dom2vdom'
-import extractBindings from '../../strategy/extractBindings'
+import { avalon } from '../../seed/core'
+import { variantByDom } from '../../strategy/dom2vdom'
+import { extractBindings } from '../../strategy/extractBindings'
 
 avalon.scan = function (a) {
     /* istanbul ignore if */
@@ -44,13 +42,12 @@ function scanNodes(nodes) {
                 var now = new Date()
                 collectDeps(vtree[0])
                 vm.$element = elem
-                elem.vtree = vtree
-                //    elem.vtree = avalon.speedUp(vtree)
-
+                elem.vtree = avalon.variantCommon(vtree)
+                console.log(vtree)
                 var now2 = new Date()
                 onceWarn && avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')
 
-                //    vm.$render = avalon.render(elem.vtree)
+                vm.$render = avalon.render(elem.vtree)
                 avalon.scopes[vm.$id] = {
                     vmodel: vm,
                     local: {},
@@ -107,6 +104,7 @@ function collectDeps(node, vm) {
     switch (node.nodeName) {
         case "#text":
             if (avalon.config.rexpr.test(node.nodeValue)) {
+                //<----  直接换成avalon.parseTex
                 var a = extractExpr(node.nodeValue)
                 if (a.length > 1) {
                     var v = '' //处理一个文本节点存在多个花括号的情况 
@@ -123,6 +121,7 @@ function collectDeps(node, vm) {
                 }
                 var b = a[0]
                 b.local = {}
+                //---->
                 makeUpdate(b, vm, node)
             }
             break
@@ -157,15 +156,15 @@ function collectDeps(node, vm) {
                             b.update()
                             break
                         default:
-                             makeUpdate(b, vm, node)
-                             break
+                            makeUpdate(b, vm, node)
+                            break
                     }
                 })
             }
             node.children.forEach(function (el) {
                 collectDeps(el, vm)
             })
-            
+
             break
     }
 }
@@ -220,7 +219,6 @@ avalon.composeFilters(["uppercase"],["truncate",5])(avalon.parsers.string(__vmod
     b.update = updater
     if (b.paths) {
         b.paths.split(',').forEach(function (p) {
-            console.log(name, p)
             vm.$watch(p, b)
         })
         delete b.paths
@@ -239,7 +237,7 @@ function updater() {
     copy[this.name] = value
     avalon.directives[this.type].diff(copy, this.vdom, this.name)
     var el = this.vdom, hooks = el.afterChange
-    if(hooks){//处理duplex的afterChange
+    if (hooks) {//处理duplex的afterChange
         for (var hook, i = 0; hook = hooks[i++];) {
             hook(el.dom, el)
         }

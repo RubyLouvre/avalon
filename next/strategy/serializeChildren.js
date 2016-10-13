@@ -13,8 +13,8 @@ var skips = { __local__: 1, vmode: 1, dom: 1 }
 export function serializeChildren(children, skip) {
     var lexeme = children.map(function (a) {
         var stem = serializeNode(a, skip)
-        var suffix = a.suffix
-        var prefix = a.prefix
+        var suffix = a.suffix || a.$append
+        var prefix = a.prefix || a.$prepend
         delete a.suffix
         delete a.prefix
         return {
@@ -28,9 +28,7 @@ export function serializeChildren(children, skip) {
 
     if (needWrapper) {
         var buffer = bufferChildren(lexeme)
-        if (isRepeat) {
-            return buffer.join('\n')
-        }
+        
         buffer.unshift('(function(){', 'var vnodes = []')
         buffer.push('return vnodes', '})()')
         return buffer.join('\n')
@@ -52,7 +50,7 @@ function serializeNode(node, skip) {
             if (!skip && config.rexpr.test(node.nodeValue)) {
                 node.dynamic = {}
                 var binding = parseText(node.nodeValue)
-                return '{nodeName:"#text",dynamic:{},nodeValue:' + avlaon.parseExpr(binding) + '}'
+                return '{nodeName:"#text",\ndynamic:{},\nnodeValue:' + avalon.parseExpr(binding) + '}'
             } else {
                 return jsonfy(node)
             }
@@ -90,7 +88,7 @@ function serializeTag(vdom, skip) {
     if (vdom.isVoidTag) {
         copy.isVoidTag = true
     } else {
-        if (!('children' in copy)) {
+        if (!copy.children ||  (typeof copy.children !== 'string')) {
             var children = vdom.children
             if (Array.isArray(children)) {
                 copy.children = serializeChildren(children, skip || !!vdom.skipContent)

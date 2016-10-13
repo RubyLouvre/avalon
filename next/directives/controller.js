@@ -28,7 +28,7 @@ avalon.directive('controller', {
         copy.vmodel = '__vmodel__'
         copy[binding.name] = 1
 
-        src.$prepend = '(function(__top__){\n' +
+        src.$prepend = ';(function(__top__){\n' +
             'var __vmodel__ = avalon.mediatorFactoryCache(__top__,' + quoted + ')\n'
         src.$append = '\n})(__vmodel__);'
     },

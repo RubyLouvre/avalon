@@ -10,6 +10,7 @@ avalon.directive('text', {
                 parent: src.dom
             }]
             delete src.props['ms-text']
+            delete copy.props['ms-text']
         }
     }
 })

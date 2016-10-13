@@ -2,7 +2,6 @@ import { avalon } from '../seed/core'
 import update from './_update'
 
 avalon.directive('nodeValue', {
-   
     diff: function (a, b, name) {
         var newValue = a[name]
         if (b[name] + '' !== newValue + '') {
