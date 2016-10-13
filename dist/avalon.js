@@ -1,3 +1,4 @@
+
 /*!
  * built in 2016-10-10:21 version 2.1.16 by 司徒正美
  * https://github.com/RubyLouvre/avalon/tree/2.1.7
@@ -1360,12 +1361,12 @@
 	       return ret
 	   }
 
-	var arrayFilters = Object.freeze({
+	  var arrayFilters = {
 	       orderBy: orderBy,
 	       filterBy: filterBy,
 	       selectBy: selectBy,
 	       limitBy: limitBy
-	   });
+	   }
 
 	   var eventFilters = {
 	       stop: function (e) {
@@ -2278,10 +2279,10 @@
 	       if (!node || !node.tagName || !node.ownerDocument) {
 	           return box
 	       }
-	       var doc = node.ownerDocument,
-	           body = doc.body,
-	           root = doc.documentElement,
-	           win = doc.defaultView || doc.parentWindow
+	       var  doc = node.ownerDocument
+	       var  body = doc.body
+	       var  root = doc.documentElement
+	       var  win = doc.defaultView || doc.parentWindow
 	       if (!avalon.contains(root, node)) {
 	           return box
 	       }
@@ -3798,24 +3799,20 @@
 	作为访问的统一入口，是控制器的统一调度；
 	没有配置路由，就没有正确地访问路径；
 	路由需要自己规定一定的规则，方便自己查看、使用、理解；
-
 	必用参数
 	Route::get('/blog/{name}',function($name){
 		return $name; // 返回name显示
 	});
 	即除了 /blog/{name}的路由类型，都不能进来
-
 	可选参数
 	Route::get('/blog/{name?}',function($name = 'name'){
 		return $name; // 返回name显示,如果没设置就取默认值
 	});
-
 	正则参数
 	正则可以更灵活些，匹配更多需求。
 	Route::get('/blog/{id?}',function($id="1"){
 		return "{$id}";//输出blog的ID，
 	})->where('name','^\d+$');//正则匹配为只能是数字，不然将无法找到路由；
-
 	https://segmentfault.com/a/1190000004186135
 	 */
 
@@ -5062,7 +5059,7 @@
 
 
 	           var changed = copy.props['data-duplex-changed']
-	           var get = avalon.parseExpr(binding)// 输出原始数据
+	           var get = avalon.parseExpr(binding)// 输出原始数据
 	           var quoted = parsers.map(function (a) {
 	               return avalon.quote(a)
 	           })
@@ -6744,7 +6741,7 @@
 	           case '#comment':
 	               var nodeValue = vdom.nodeValue
 	               /* istanbul ignore else  */
-	               if (vdom.forExpr) {// 处理ms-for指令
+	               if (vdom.forExpr) {// 处理ms-for指令
 	                   var copy = {
 	                       dynamic: true,
 	                       vmodel: '__vmodel__'
@@ -7850,7 +7847,7 @@
 	                   })
 	                   component.vmodel = comVm
 	                   copyList[index] = component
-	                   // 如果与ms-if配合使用, 会跑这分支
+	                   // 如果与ms-if配合使用, 会跑这分支
 	                   if (src.comment && src.nodeValue) {
 	                       component.dom = src.comment
 	                   }

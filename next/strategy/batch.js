@@ -13,6 +13,7 @@ var renderingID = false
 avalon.suspendUpdate = 0
 
 export default function batchUpdate(id) {
+        return
     if (renderingID) {
         return avalon.Array.ensure(needRenderIds, id)
     } else {

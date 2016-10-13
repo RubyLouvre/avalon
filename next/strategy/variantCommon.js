@@ -81,7 +81,7 @@ var hasDirectives = function (arr) {
 
 
 
-function hasDirective(node) {
+function hasDirective(node ) {
 
     var nodeName = node.nodeName
     switch (nodeName) {

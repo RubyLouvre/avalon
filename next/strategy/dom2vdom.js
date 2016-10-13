@@ -17,12 +17,17 @@ function markNode(node) {
             ret.nodeValue = nodeValue
         }
     } else {
-        var props = markProps(node)
+        var attrs = node.attributes
+        var noSkip = !(attrs['ms-skip'] || attrs[':skip'])
+        var props = markProps(node, attrs, noSkip)
+        if(!noSkip){
+            props['ms-skip'] = true
+        }
         if (voidTag[type]) {
             ret.isVoidTag = true
         }
 
-        ret.children = markChildren(node)
+        ret.children = markChildren(node, noSkip)
 
         if (props) {
             if ('selectedIndex' in props) {
@@ -37,13 +42,13 @@ function markNode(node) {
 
 var rformElement = /input|textarea|select/i
 var rcolon = /^\:/
-function markProps(node) {
-    var attrs = node.attributes, ret = {}
+function markProps(node, attrs, noSkip) {
+    var ret = {}
     for (var i = 0, n = attrs.length; i < n; i++) {
         var attr = attrs[i]
         if (attr.specified) {
             var name = attr.name
-            if (name.charAt(0) === ':') {
+            if (noSkip && name.charAt(0) === ':') {
                 name = name.replace(rcolon, 'ms-')
             }
             ret[name] = attr.value
@@ -75,7 +80,7 @@ function isEmpty(a) {
 
 
 //将当前元素的孩子转换成VDOM
-function markChildren(parent) {
+function markChildren(parent, noSkip) {
     var arr = []
     var node = parent.firstChild
     if (!node) {
@@ -87,7 +92,7 @@ function markChildren(parent) {
             case 1:
                 var a = node.getAttributeNode(':for') || node.getAttributeNode('ms-for')
 
-                if (a) {
+                if (a && noSkip) {
                     var start = document.createComment('ms-for:' + a.value)
                     var end = document.createComment('ms-for-end:')
                     node.removeAttributeNode(a)

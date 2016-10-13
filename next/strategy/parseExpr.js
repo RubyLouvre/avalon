@@ -1,7 +1,7 @@
 //缓存求值函数，以便多次利用
 
-import {avalon} from '../seed/core'
-import {clearString, stringPool, fill, rfill, dig} from './clearString'
+import { avalon } from '../seed/core'
+import { clearString, stringPool, fill, rfill, dig } from './clearString'
 
 var pool = avalon.evaluatorPool
 
@@ -45,6 +45,7 @@ export default function parseExpr(binding) {
             paths[b] = 1      //收集路径
             return _
         })
+
     //收集本地变量
     collectLocal(input, locals)
     //处理过滤器
@@ -58,16 +59,22 @@ export default function parseExpr(binding) {
     }
     if (filters.length) {
         filters = filters.map(function (filter) {
-            var bracketArgs = '(__value__'
+            // var bracketArgs = '(__value__'
+            var bracketArgs = ''
             filter = filter.replace(brackets, function (a, b) {
                 if (/\S/.test(b)) {
                     bracketArgs += ',' + b//还原字符串,正则,短路运算符
                 }
                 return ''
             }).replace(rfill, fill)
-            return (filter.replace(/^(\w+)/, '__value__ =  avalon.__format__("$1")') +
-                bracketArgs + ')')
+            var arg = '[' + avalon.quote(filter.trim()) + bracketArgs + ']'
+
+            return arg
+            
         })
+        filters = '__value__ = avalon.composeFilters(' + filters + ')(__value__)'
+    }else{
+        filters = ''
     }
 
     var ret = []
@@ -75,11 +82,10 @@ export default function parseExpr(binding) {
         if (rhandleName.test(body)) {
             body = body + '($event)'
         }
-        filters = filters.map(function (el) {
-            return el.replace(/__value__/g, '$event')
-        })
-        if (filters.length) {
-            filters.push('if($event.$return){\n\treturn;\n}')
+       
+        if (filters) {
+            filters = filters.replace(/__value__/g, '$event')
+            filters += 'if($event.$return){\n\treturn;\n}'
         }
         /* istanbul ignore if  */
         if (!avalon.modern) {
@@ -90,13 +96,12 @@ export default function parseExpr(binding) {
         ret = ['function ($event, __local__){',
             'try{',
             extLocal(locals).join('\n'),
-            '\tvar __vmodel__ = this;',
+            '\tvar __vmodel__ = this;'+filters,
             '\t' + body,
-            '}catch(e){',
-            quoteError(str, category),
-            '}',
+            '}catch(e){avalon.log(e)}',
             '}']
-        filters.unshift(2, 0)
+       
+       // filters.unshift(2, 0)
     } else if (category === 'duplex') {
         //给vm同步某个属性
         var setterBody = [
@@ -121,6 +126,7 @@ export default function parseExpr(binding) {
             '}'].join('\n')
         return cacheData(binding, getterBody, locals, paths)
     } else {
+        //console.log(category, body, filters)
         ret = [
             '(function (){',
             'try{',
@@ -134,12 +140,42 @@ export default function parseExpr(binding) {
             '}',
             '})()'
         ]
-        filters.unshift(3, 0)
+        if (category === 'nodeValue') {
+            body = body.replace('var __value__ =', '')
+            if (filters && filters.length) {
+                body = filters.replace('__value__ = ', 'return ' ).replace('__value__', body)
+            }else{
+                body = 'return '+ body
+            }
+
+            binding.get = body.replace(rfill, fill)
+            ret = [ binding.get]
+        } else {
+            binding.get = 'var __value__ = ' + (body ).replace(rfill, fill) + "\nreturn __value__"
+        }// binding.update = updater
+        //filters.unshift(3, 0)
+
     }
-    ret.splice.apply(ret, filters)
+  //  ret.splice.apply(ret, filters)
     return cacheData(binding, ret.join('\n'), locals, paths)
 }
-
+avalon.composeFilters = function () {
+    var args = arguments
+    return function (value) {
+        for(var i = 0, arr; arr = args[i++]; ){
+            var name = arr[0]
+            var filter = avalon.filters[name]
+            if (typeof filter === 'function') {
+                arr[0] = value
+                try {
+                    value = filter.apply(0, arr)
+                } catch (e) { 
+                }
+            }
+        }
+        return value
+    }
+}
 function cacheData(binding, text, locals, paths) {
     text = text.replace(rfill, fill)
     var obj = {
@@ -147,6 +183,7 @@ function cacheData(binding, text, locals, paths) {
         locals: Object.keys(locals).join(','),
         paths: Object.keys(paths).join(',')
     }
+    obj.get = binding.get
     var key = binding.type + ":" + binding.expr
     binding.locals = obj.locals
     binding.paths = obj.paths

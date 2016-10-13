@@ -60,7 +60,12 @@ export function $emit(list, vm, path, a, b, i) {
         try {
             for (i = i || list.length - 1; i >= 0; i--) {
                 var callback = list[i]
-                callback.call(vm, a, b, path)
+                if(typeof callback == 'object'){
+                    callback.update()
+                }else{
+                    callback.call(vm, a, b, path)
+                }
+                
             }
         } catch (e) {
             if (i - 1 > 0)
