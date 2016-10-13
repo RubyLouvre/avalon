@@ -104,10 +104,8 @@ function extractExpr(str) {
     return ret
 }
 function collectDeps(node, vm) {
-    var dirs = avalon.directives
     switch (node.nodeName) {
         case "#text":
-
             if (avalon.config.rexpr.test(node.nodeValue)) {
                 var a = extractExpr(node.nodeValue)
                 if (a.length > 1) {
@@ -123,11 +121,9 @@ function collectDeps(node, vm) {
                         type: 'nodeValue'
                     }]
                 }
-                if (a.length === 1) {
-                    var b = a[0]
-                    avalon.parseExpr(b)
-                    makeUpdate(b, vm, node)
-                }
+                var b = a[0]
+                b.local = {}
+                makeUpdate(b, vm, node)
             }
             break
         case '#comment':
@@ -144,42 +140,87 @@ function collectDeps(node, vm) {
                 }
                 var bs = extractBindings(node, props)
                 bs.forEach(function (b) {
-                    
-                    dirs[b.type].parse({}, node, b)
-                    if (b.type === 'text'){
-                        if(node.dom){
-                            node.dom.removeAttribute('ms-text')
-                            node.dom.removeAttribute(':text')
-                        }
-                         return
-                    }
-                       
-                    makeUpdate(b, vm, node)
-                    if(b.type === 'on'){
-                        b.update()
+                    switch (b.type) {
+                        case 'controller':
+                        case 'important':
+                            return
+                        case 'text':
+                            var dom = b.dom
+                            if (dom) {
+                                dom.removeAttribute('ms-text')
+                                dom.removeAttribute(':text')
+                            }
+                            break
+                        case 'on':
+                        case 'duplex':
+                            makeUpdate(b, vm, node)
+                            b.update()
+                            break
+                        default:
+                             makeUpdate(b, vm, node)
+                             break
                     }
                 })
-
             }
             node.children.forEach(function (el) {
                 collectDeps(el, vm)
             })
+            
             break
     }
 }
-function makeUpdate(b, vm, node) {
-   
-       b.get = Function('__vmodel__', '__local__', b.get)
-    var s = (b.get + '').replace(/\r?\n\/\*{2}\//, '')
-    b.get.toString = function () { return s }
+function makeUpdate(b, vm, src) {
+    var name = b.name
+    var copy = {}
+    copy.props = src.props
+    avalon.directives[b.type].parse(copy, src, b)
+    var body = copy[name]
+    if (name === 'nodeValue') {
+        /**
+         *将
+```
+(function (){
+try{
+var __value__ = __vmodel__.b
+__value__ =  avalon.parsers.string(__value__)
+__value__ = avalon.composeFilters(["uppercase"],["truncate",5])(__value__)
+return __value__
+}catch(e){
+	avalon.warn(e, "parse nodeValue binding【 @b|uppercase | truncate(5) 】fail")
+	return ""
+}
+})()
+```
+        变成
+```
+avalon.composeFilters(["uppercase"],["truncate",5])(avalon.parsers.string(__vmodel__.b))       
+```
+         */
+        var arr = body.split('\n').slice(2, 5).map(function (s) {
+            return s.replace('__value__ = ', '')
+        })
+        body = arr[0].replace('var ', '').trim()
+        body = arr[1].replace('__value__', body)
+        if (arr[2].indexOf('composeFilters') !== -1) {
+            body = arr[2].replace('__value__', body)
+        }
+    }
+    var get = Function('__vmodel__', '__local__', 'return ' + body)
+    b.get = get
+    b.update = updater
+    var s = (get + '').replace(/\r?\n\/\*{2}\//, '')
+    b.get.toString = function () {
+        return s
+    }
     b.vmodel = vm
-    b.vdom = node
-    if(!node.dynamic){
-        node.dynamic = {}
+    b.vdom = src
+    if (!src.dynamic) {
+        src.dynamic = {}
     }
     b.update = updater
     if (b.paths) {
         b.paths.split(',').forEach(function (p) {
+            console.log(name, p)
             vm.$watch(p, b)
         })
         delete b.paths
@@ -191,11 +232,17 @@ function updater() {
     } catch (e) {
         return
     }
-    
     var copy = {
         vmodel: this.vmodel,
         local: this.local
     }
     copy[this.name] = value
     avalon.directives[this.type].diff(copy, this.vdom, this.name)
+    var el = this.vdom, hooks = el.afterChange
+    if(hooks){//处理duplex的afterChange
+        for (var hook, i = 0; hook = hooks[i++];) {
+            hook(el.dom, el)
+        }
+        delete el.afterChange
+    }
 }

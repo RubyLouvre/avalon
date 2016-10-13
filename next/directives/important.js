@@ -6,7 +6,8 @@ import {quote} from '../seed/lang.share'
 avalon.directive('important', {
     priority: 1,
     parse: function (copy, src, binding) {
-        var quoted = quote(binding.expr)
+        var id = binding.expr = binding.expr.trim()
+        var quoted = quote(id)
         copy.local = '{}'
         copy.vmodel = '__vmodel__'
         copy[binding.name] = 1

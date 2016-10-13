@@ -22,7 +22,8 @@ avalon.mediatorFactoryCache = function (top, $id) {
 avalon.directive('controller', {
     priority: 2,
     parse: function (copy, src, binding) {
-        var quoted = quote(binding.expr)
+        var id = binding.expr = binding.expr.trim()
+        var quoted = quote(id)
         copy.local = '__local__'
         copy.vmodel = '__vmodel__'
         copy[binding.name] = 1

@@ -25,7 +25,7 @@ avalon.directive('on', {
                 '\nfn610.uuid =' + quoted + ';\nreturn fn610})()'
         copy.vmodel = '__vmodel__'
         copy.local = '__local__'
-        binding.get = 'return '+fn
+      
         copy[binding.name] = fn
 
     },
