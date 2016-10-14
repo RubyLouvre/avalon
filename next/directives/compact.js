@@ -17,7 +17,7 @@ import './rules'
 //
 ////处理逻辑
 import './if.compact'
-import './for'
+import './ms-for'
 
 //import'./widget'
 //优先级 ms-important, ms-controller, ms-for, ms-widget, ms-effect, ms-if

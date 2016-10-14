@@ -101,12 +101,37 @@ function variantProps(node) {
         }
 
 }
-
+var rforAs = /\s+as\s+([$\w]+)/
+var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
+var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
+var rargs = /[$\w_]+/g
 function makeRange(begin, range, end) {
         var uuid = begin.signature || (begin.signature = avalon.makeHashCode('for'))
         end.signature = uuid
         end.dynamic = true
-        begin.forExpr = begin.nodeValue.replace(rmsForBegin, '')
+        begin.end = end
+        
+        var str =  begin.nodeValue.replace(rmsForBegin, ''), aliasAs
+        str = str.replace(rforAs, function (a, b) {
+            /* istanbul ignore if */
+            if (!rident.test(b) || rinvalid.test(b)) {
+                avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.')
+            } else {
+                aliasAs = b
+            }
+            return ''
+        })
+        var arr = str.split(' in ')
+        var kv = (arr[0] + ' traceKey __local__').match(rargs)
+        if (kv.length === 3) {//确保avalon._each的回调有三个参数
+            kv.unshift('$key')
+        }
+     
+      
+        begin.expr = arr[1].trim()
+        begin.aliasAs = aliasAs || 'valueOf'
+        begin.args = kv.join(',')
+        console.log(begin)
         if (range.length === 1) {
                 var elem = range[0]
                 var props = elem.props

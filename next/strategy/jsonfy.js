@@ -45,11 +45,13 @@ export var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default
 var quoted = {
     nodeName: 1,
     template: 1,
-    forExpr: 1,
     type: 1,
     nodeValue: 1,
     signature: 1,
-    wid: 1
+    wid: 1,
+    aliasAs:1,
+    args: 1,
+    expr: 1
 }
 
 var rneedQuote = /[W\:-]/

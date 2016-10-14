@@ -9,8 +9,8 @@ import { extractBindings } from './extractBindings'
 import { jsonfy } from './jsonfy'
 
 
-var skips = { __local__: 1, vmode: 1, dom: 1 }
-export function serializeChildren(children, skip) {
+var skips = { __local__: 1, vmode: 1, dom: 1, end: 1 }
+export function serializeChildren(children, skip, binding) {
     var lexeme = children.map(function (a) {
         var stem = serializeNode(a, skip)
         var suffix = a.suffix || a.$append
@@ -55,7 +55,7 @@ function serializeNode(node, skip) {
                 return jsonfy(node)
             }
         case '#comment':
-            if (node.forExpr) {// 处理ms-for指令
+            if (node.expr) {// 处理ms-for指令
                 return serializeFor(node, skip)
             } else if (!skip && node.nodeValue.indexOf('ms-if:') === 0) {
                 return serializeLogic(node, skip)
@@ -105,14 +105,17 @@ function serializeTag(vdom, skip) {
 
 function serializeFor(vdom) {
     var copy = {
-        vmodel: '__vmodel__'
+        vmodel: '__vmodel__',
+        
     }
+    var binding = {}
     for (var i in vdom) {
         if (vdom.hasOwnProperty(i) && !skips[i]) {
             copy[i] = vdom[i]
+            binding[i] = vdom[i]
         }
     }
-    avalon.directives['for'].parse(copy, vdom, {})
+    avalon.directives['for'].parse(copy, vdom, binding)
     //为copy添加dynamic
     return jsonfy(copy)
 }

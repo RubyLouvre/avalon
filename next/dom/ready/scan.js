@@ -1,5 +1,5 @@
 import { avalon, config, directives } from '../../seed/lang.share'
-import { variantByDom } from '../../strategy/dom2vdom'
+import { variantByDom } from '../../strategy/variantByDom'
 import { extractBindings } from '../../strategy/extractBindings'
 import { parseText } from '../../strategy/parseText'
 
@@ -87,6 +87,14 @@ function collectDeps(node, vm) {
             }
             break
         case '#comment':
+            if (node.expr) {
+                b = {
+                  expr: node.expr,
+                  type: 'for',
+                  name: 'ms-for'
+               }
+               makeUpdate(b, vm, node)
+            }
             break
         default:
             var props = node.props
@@ -105,6 +113,7 @@ function collectDeps(node, vm) {
                         case 'important':
                             return
                         case 'text':
+                            //ms-text指令并不干活,只是负责生成了一个可变的文本节点
                             avalon.directives.text.parse({}, node, b)
                             var dom = b.dom
                             if (dom) {
@@ -114,6 +123,8 @@ function collectDeps(node, vm) {
                             break
                         case 'on':
                         case 'duplex':
+                        case 'active':
+                        case 'hover': //添加了事件的指令
                             makeUpdate(b, vm, node)
                             b.update()
                             break

@@ -17,4 +17,4 @@ import './rules'
 
 //处理逻辑
 import './if.modern'
-import './for'
+import './ms-for'

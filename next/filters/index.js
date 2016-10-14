@@ -9,19 +9,8 @@ import escapeFilter from "./escape"
 
 var filters = avalon.filters
 
-function K(a) {
-    /* istanbul ignore next*/
-    return a
-}
-avalon.escapeHtml = escapeFilter
 
-avalon.__format__ = function (name) {
-    var fn = filters[name]
-    if (fn) {
-        return fn
-    }
-    return K
-}
+avalon.escapeHtml = escapeFilter
 
 avalon.mix(filters, {
     uppercase: function (str) {
