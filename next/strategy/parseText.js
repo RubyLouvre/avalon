@@ -1,8 +1,13 @@
-import { avalon, config, quote } from '../seed/lang.share'
+import { avalon, config, quote, cache } from '../seed/lang.share'
 var rlineSp = /\n\r?/g
-
+var textCache = new cache(400)
 export function parseText(nodeValue) {
     var text = nodeValue.trim().replace(rlineSp, '')
+    var hit = textCache.get(text)
+    var key = text
+    if(hit){
+        return avalon.mix({}, hit)
+    }
     var pieces = text.split(config.rtext)
     var tokens = []
     pieces.forEach(function (piece) {
@@ -15,11 +20,11 @@ export function parseText(nodeValue) {
             text = text.replace(piece,'')
         }
     })
-    return {
+    return textCache.put(key,{
         expr: tokens.join('+'),
         name: 'nodeValue',
         type: 'nodeValue'
-    }
+    })
 }
 
 
