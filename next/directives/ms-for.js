@@ -52,10 +52,10 @@ avalon.directive('for', {
          *      __local__.valueOf = loop
          *      vnodes.push({
          *         nodeName: '#document-fragment',
-         *         key: traceKey,
+         *         key     : traceKey,
+         *         index   : arguments[0],',
          *         children: new function(){
-         *             var vnodes = []
-         *             serializeChildren(copy['ms-for][0].children)
+         *             var vnodes =  var vnodes = ' + avalon.caches[src.signature],
          *             vnodes.push({
          *                 nodeName: '#comment',
          *                 nodeValue: quote(src.signature)

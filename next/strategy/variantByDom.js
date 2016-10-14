@@ -1,10 +1,12 @@
 
-
 import {voidTag} from './voidTag'
+import variantCommon from "./variantCommon"
 
-export {
-markNode as variantByDom
+export function variantByDom(dom){
+    var node = markNode(dom)
+    return variantCommon([node])
 }
+
 
 function markNode(node) {
     var ret = {}

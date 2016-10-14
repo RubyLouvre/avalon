@@ -25,7 +25,7 @@ function scanNodes(nodes) {
                 /* istanbul ignore if */
                 if (avalon.serverTemplates && avalon.serverTemplates[$id]) {
                     var tmpl = avalon.serverTemplates[$id]
-                    var oldTree = avalon.speedUp(avalon.lexer(tmpl))
+                    var oldTree = avalon.speedUp(tmpl)
                     var render = avalon.render(oldTree)
                     var vtree = render(vm)
                     var dom = avalon.vdom(vtree[0], 'toDOM')
@@ -39,11 +39,11 @@ function scanNodes(nodes) {
 
                 //IE6-8下元素的outerHTML前面会有空白
                 //第一次扫描就清空所有空白节点,并生成最初的vtree
-                var vtree = [variantByDom(elem)]
+                var vtree = variantByDom(elem)
                 var now = new Date()
 
                 vm.$element = elem
-                elem.vtree = avalon.variantCommon(vtree)
+                elem.vtree = vtree
                 collectDeps(vtree[0])
                 var now2 = new Date()
                 onceWarn && avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')

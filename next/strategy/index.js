@@ -9,7 +9,7 @@ import { serializeChildren } from './serializeChildren'
 avalon.lexer = variantByText
 avalon.diff = diff
 avalon.batch = batchUpdate
-avalon.speedUp = avalon.variantCommon = variantCommon
+avalon.speedUp = variantCommon
 avalon.parseExpr = parseExpr
 
 

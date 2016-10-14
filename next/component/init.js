@@ -100,7 +100,7 @@ export default function initComponent(src, rawOption, local, template) {
     shellRoot.children = shellRoot.children || []
     shellRoot.props.is = is
     shellRoot.props.wid = $id
-    avalon.speedUp(shell)
+  //  avalon.speedUp(shell)
 
     var render = avalon.render(shell, local)
 

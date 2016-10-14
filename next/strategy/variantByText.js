@@ -10,6 +10,7 @@ import {clearString, stringPool, fill, rfill } from "./clearString"
 import {voidTag} from "./voidTag"
 import addTbody from "./addTbody"
 import variantSpecial from "./variantSpecial"
+import variantCommon from "./variantCommon"
 
 var specialTag = avalon.oneObject('script,style,textarea,xmp,noscript,option,template')
 
@@ -20,8 +21,9 @@ var rendTag = /^<\/([^>]+)>/
 var rcontent = /\S/
 var rnowhite = /\S+/g
 
-export {
-makeNode as variantByText
+export function variantByText(str){
+    var nodes = markNode(str)
+    return variantCommon(nodes)
 }
 
 function makeNode(str) {
