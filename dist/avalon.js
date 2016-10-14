@@ -2798,7 +2798,7 @@
 	   }
 
 	   var rmouseEvent = /^(?:mouse|contextmenu|drag)|click/
-	   avEvent.prototype.fixEvent = function () {
+	   avEvent.prototype.fixEvent = function (event) {
 	       if (this.which == null && event.type.indexOf('key') === 0) {
 	           this.which = event.charCode != null ? event.charCode : event.keyCode
 	       } else if (rmouseEvent.test(event.type) && !('pageX' in this)) {
