@@ -1,7 +1,7 @@
 //缓存求值函数，以便多次利用
 
 import { avalon } from '../seed/core'
-import { keyMap} from './jsonfy'
+import { keyMap } from './jsonfy'
 
 import { clearString, stringPool, fill, rfill, dig } from './clearString'
 
@@ -194,7 +194,7 @@ function cacheData(binding, text, locals, paths) {
                 locals: Object.keys(locals).join(','),
                 paths: Object.keys(paths).join(',')
         }
-     
+
         var key = binding.type + ":" + binding.expr
         binding.locals = obj.locals
         binding.paths = obj.paths

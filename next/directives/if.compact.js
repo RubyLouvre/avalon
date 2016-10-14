@@ -3,7 +3,7 @@ import update from './_update'
 
 avalon.directive('if', {
     priority: 6,
-    diff: function (copy, src, name, copys, sources, index) {
+    diff: function (copy, src, name) {
         var cur = !!copy[name]
         src[name] = cur
         update(src, this.update)

@@ -37,6 +37,8 @@ var plugins = {
         steinkern.closeTag = closeTag
         var o = avalon.escapeRegExp(openTag)
         var c = avalon.escapeRegExp(closeTag)
+        
+        steinkern.rtext = new RegExp(o + '(.+?)' + c, 'g')
         steinkern.rexpr = new RegExp(o + '([\\s\\S]*)' + c)
     }
 }
