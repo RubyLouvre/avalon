@@ -2798,11 +2798,12 @@
 	   }
 
 	   var rmouseEvent = /^(?:mouse|contextmenu|drag)|click/
-	   avEvent.prototype.fixEvent = function (event) {
+	   avEvent.prototype.fixEvent = function () {
+               var event = this
 	       if (this.which == null && event.type.indexOf('key') === 0) {
 	           this.which = event.charCode != null ? event.charCode : event.keyCode
 	       } else if (rmouseEvent.test(event.type) && !('pageX' in this)) {
-	           var DOC = target.ownerDocument || doc$1
+	           var DOC = event.target.ownerDocument || doc$1
 	           var box = DOC.compatMode === 'BackCompat' ? DOC.body : DOC.documentElement
 	           this.pageX = event.clientX + (box.scrollLeft >> 0) - (box.clientLeft >> 0)
 	           this.pageY = event.clientY + (box.scrollTop >> 0) - (box.clientTop >> 0)
