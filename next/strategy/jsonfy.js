@@ -48,10 +48,10 @@ var quoted = {
     type: 1,
     nodeValue: 1,
     signature: 1,
-    wid: 1,
-    aliasAs:1,
-    args: 1,
-    expr: 1
+    wid: 1
+//    aliasAs:1,
+//    args: 1,
+//    expr: 1
 }
 
 var rneedQuote = /[W\:-]/

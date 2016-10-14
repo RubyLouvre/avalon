@@ -169,11 +169,11 @@ export function arrayFactory(array, old, heirloom, options) {
                         options.pathname :
                         options.pathname + '.' + a
                 vm.$fire(path, b, c)
-                if (!d && !heirloom.$$wait$$ && !avalon.suspendUpdate ) {
-                    avalon.callArray = path
-                    batchUpdateView(vm.$id)
-                    delete avalon.callArray 
-                }
+//                if (!d && !heirloom.$$wait$$ && !avalon.suspendUpdate ) {
+//                    avalon.callArray = path
+//                    batchUpdateView(vm.$id)
+//                    delete avalon.callArray 
+//                }
             }
         }
 

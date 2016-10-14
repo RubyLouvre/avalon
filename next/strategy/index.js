@@ -1,4 +1,4 @@
-import { avalon,quote } from '../seed/lang.share'
+import { avalon, quote } from '../seed/lang.share'
 import { variantByText } from './variantByText'
 import diff from './diff'
 import batchUpdate from './batch'

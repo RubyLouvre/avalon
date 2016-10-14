@@ -1,5 +1,6 @@
-import { avalon, quote } from  '../seed/lang.share'
-import {serializeChildren} from '../strategy/serializeChildren'
+import { avalon, quote } from '../seed/lang.share'
+import { serializeChildren } from '../strategy/serializeChildren'
+
 import update from './_update'
 
 
@@ -11,12 +12,9 @@ function getTraceKey(item) {
 }
 
 avalon._each = function (obj, fn, local) {
-    
-    //  vnodes.push(repeat)
+
     var arr = (fn + '').slice(0, 40).match(rargs)
-
     arr.shift()
-
     if (Array.isArray(obj)) {
         for (var i = 0; i < obj.length; i++) {
             iterator(i, obj[i], local, fn, arr[0], arr[1], true)
@@ -47,43 +45,43 @@ function iterator(index, item, vars, fn, k1, k2, isArray) {
 avalon.directive('for', {
     priority: 3,
     parse: function (copy, src, binding) {
-      
         var getLoop = avalon.parseExpr(binding)
-     
         /**
-         *  
          *  var vnodes = []
-         *  var loop = function(){}
          *  avalon._each(loop, function(index, item, trackKey, __local__){
          *      __local__.valueOf = loop
          *      vnodes.push({
          *         nodeName: '#document-fragment',
-         *         key: trackKey,
+         *         key: traceKey,
          *         children: new function(){
          *             var vnodes = []
          *             serializeChildren(copy['ms-for][0].children)
          *             vnodes.push({
          *                 nodeName: '#comment',
-         *                 nodeValue: src.signature
+         *                 nodeValue: quote(src.signature)
          *             })
          *             return vnodes
          *         }
          *      })
-         *  })
+         *  },__local__|| {})
          *  return vnodes
          */
-
-        copy['ms-for'] = ['(function(){',
-            '  var loop = ' + getLoop + ';',
+        var d = src.dynamic
+        delete copy.action
+        copy.dynamic = '{}'
+        copy['ms-for'] = getLoop
+        copy.vmodel = '__vmodel__'
+        copy.local = '__local__'
+        var renderBody = [
             '  var vnodes = [];',
-            '  avalon._each(loop, function(' + src.args + '){',
-            '  __local__[' + quote(src.aliasAs || 'valueOf') + '] = loop',
+            '  avalon._each(loop, function(' + d.args + '){',
+            '  __local__[' + quote(d.aliasAs || 'valueOf') + '] = loop',
             '  vnodes.push({',
             '     nodeName: "#document-fragment",',
-            '     key     : trackKey,',
+            '     key     : traceKey,',
             '     index   : arguments[0],',
             '     children: new function(){',
-            '        var vnodes = '+  serializeChildren(copy['ms-for'][0].children, 0, binding),
+            '        var vnodes = ' + avalon.caches[src.signature],
             '        vnodes.push({',
             '           nodeName: "#comment",',
             '           nodeValue:' + quote(src.signature),
@@ -92,32 +90,25 @@ avalon.directive('for', {
             '    }',
             '  })',
             '  return vnodes;',
-            '  })',
-            '})()'
+            '  },__local__|| {})',
+            'return vnodes'
         ].join('\n')
-
-
+        copy.render = src.render = new Function('__vmodel__', ' __local__', 'loop', renderBody)
     },
     diff: function (copy, src, name) {
         //将curRepeat转换成一个个可以比较的component,并求得compareText
         //如果这个元素没有插入
-        if (avalon.callArray) {
-            if (src.list && src.expr.indexOf(avalon.callArray) === -1) {
-                return
-            }
-        }
 
         var srcRepeat = src[name]
-        var curRepeat = copy[name]
+        var curRepeat = src.render(copy.vmodel, copy.local, copy[name])
         var end = src.end
         //preRepeat不为空时
         var cache = src.cache || {}
         //for指令只做添加删除操作
         var i, c, p
         var removes = []
-        if (!srcRepeat.length) {//一维数组最开始初始化时
+        if (!src.list || !src.list.length) {//一维数组最开始初始化时
             src.action = 'init'
-
             /* eslint-disable no-cond-assign */
             src[name] = curRepeat
             curRepeat.forEach(function (c, i) {
@@ -125,13 +116,14 @@ avalon.directive('for', {
                 saveInCache(cache, c)
             })
             src.cache = cache
+          
         } else if (srcRepeat === curRepeat) {
             curRepeat.forEach(function (c) {
                 c.action = 'move'
                 saveInCache(cache, c)
             })
             src.cache = cache
-            var noUpdate = true
+
         } else {
             src.action = 'update'
             var newCache = {}
@@ -179,8 +171,9 @@ avalon.directive('for', {
                     delete p.arr
                 }
             }
-
+           
         }
+          src.list = srcRepeat
         /* istanbul ignore if */
         if (removes.length > 1) {
             removes.sort(function (a, b) {
@@ -199,28 +192,25 @@ avalon.directive('for', {
                 })
             }]
         }
-        if (!noUpdate) {
-            src.list = srcRepeat
-            update(src, this.update)
-        }
-        return true
 
+        update(src, this.update)
     },
     update: function (dom, vdom, parent) {
         if (vdom.action === 'init') {
             var b = parent
             parent = document.createDocumentFragment()
         }
+       
         var before = dom
         var signature = vdom.signature
-
+        var hasEffect = vdom.dynamic.hasEffect
         for (var i = 0, item; item = vdom.removes[i++];) {
             if (item.dom) {
 
                 delete item.split
                 /* istanbul ignore if*/
                 /* istanbul ignore else*/
-                if (vdom.hasEffect) {
+                if (hasEffect) {
                     !function (obj) {
                         var nodes = moveItem(obj)
                         var children = obj.children.concat()
@@ -241,6 +231,7 @@ avalon.directive('for', {
 
             }
         }
+
         vdom.list.forEach(function (el, i) {
             if (el.action === 'leave')
                 return
@@ -249,14 +240,14 @@ avalon.directive('for', {
             }
             var f = el.dom
             if (el.oldIndex === void 0) {
-                if (vdom.hasEffect)
+                if (hasEffect)
                     var nodes = avalon.slice(f.childNodes)
                 if (i === 0 && vdom.action === 'init') {
                     parent.appendChild(f)
                 } else {
                     parent.insertBefore(f, before.nextSibling)
                 }
-                if (vdom.hasEffect) {
+                if (hasEffect) {
                     applyEffects(nodes, el.children, {
                         hook: 'onEnterDone',
                         staggerKey: signature + 'enter'
@@ -265,7 +256,7 @@ avalon.directive('for', {
             } else if (el.index !== el.oldIndex) {
                 var nodes = moveItem(el, 'add')
                 parent.insertBefore(el.dom, before.nextSibling)
-                vdom.hasEffect && applyEffects(nodes, el.children, {
+                hasEffect && applyEffects(nodes, el.children, {
                     hook: 'onMoveDone',
                     staggerKey: signature + 'move'
                 })

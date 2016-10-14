@@ -1,5 +1,7 @@
 var rmsForBegin = /^\s*ms\-for\:\s*/
 var rmsForEnd = /^\s*ms\-for\-end/
+import { serializeChildren } from './serializeChildren'
+
 export default function variantCommon(array) {
         variantChildren(array)
         return array
@@ -108,30 +110,32 @@ var rargs = /[$\w_]+/g
 function makeRange(begin, range, end) {
         var uuid = begin.signature || (begin.signature = avalon.makeHashCode('for'))
         end.signature = uuid
-        end.dynamic = true
         begin.end = end
-        
-        var str =  begin.nodeValue.replace(rmsForBegin, ''), aliasAs
+
+        var str = begin.nodeValue.replace(rmsForBegin, ''), aliasAs
         str = str.replace(rforAs, function (a, b) {
-            /* istanbul ignore if */
-            if (!rident.test(b) || rinvalid.test(b)) {
-                avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.')
-            } else {
-                aliasAs = b
-            }
-            return ''
+                /* istanbul ignore if */
+                if (!rident.test(b) || rinvalid.test(b)) {
+                        avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.')
+                } else {
+                        aliasAs = b
+                }
+                return ''
         })
         var arr = str.split(' in ')
         var kv = (arr[0] + ' traceKey __local__').match(rargs)
         if (kv.length === 3) {//确保avalon._each的回调有三个参数
-            kv.unshift('$key')
+                kv.unshift('$key')
         }
-     
-      
-        begin.expr = arr[1].trim()
-        begin.aliasAs = aliasAs || 'valueOf'
-        begin.args = kv.join(',')
-        console.log(begin)
+
+
+        begin.dynamic = {
+                expr: arr[1].trim(),
+                aliasAs: aliasAs || 'valueOf',
+                args: kv.join(', '),
+                hasEffect: hasEffect(range)
+        }
+
         if (range.length === 1) {
                 var elem = range[0]
                 var props = elem.props
@@ -160,16 +164,18 @@ function makeRange(begin, range, end) {
                         dom.parentNode.removeChild(dom)
                 }
         }
-        begin.hasEffect = hasEffect(range)
+       
         variantChildren(range)
         if (!avalon.caches[uuid]) {
-            var children = range.concat()
-            range.length = 0
-            range.push({
-                nodeName:'#document-fragment',
-                children: children
-            })
+             avalon.caches[uuid] = serializeChildren(range,0)
+                
         }
+        var children = range.concat()
+                range.length = 0
+                range.push({
+                        nodeName: '#document-fragment',
+                        children: children
+                })
 }
 //将循环区域变成一个数组,然后再转换成一个方法
 function pressIn(arr, el, list) {

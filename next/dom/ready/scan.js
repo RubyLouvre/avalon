@@ -41,9 +41,10 @@ function scanNodes(nodes) {
                 //第一次扫描就清空所有空白节点,并生成最初的vtree
                 var vtree = [variantByDom(elem)]
                 var now = new Date()
-                collectDeps(vtree[0])
+
                 vm.$element = elem
                 elem.vtree = avalon.variantCommon(vtree)
+                collectDeps(vtree[0])
                 var now2 = new Date()
                 onceWarn && avalon.log('构建虚拟DOM耗时', now2 - now, 'ms')
 
@@ -87,13 +88,13 @@ function collectDeps(node, vm) {
             }
             break
         case '#comment':
-            if (node.expr) {
-                b = {
-                  expr: node.expr,
-                  type: 'for',
-                  name: 'ms-for'
-               }
-               makeUpdate(b, vm, node)
+            if (node.dynamic && node.end) {
+                b = avalon.mix({
+                    type: 'for',
+                    name: 'ms-for'
+                }, node.dynamic)
+                makeUpdate(b, vm, node)
+                b.update()
             }
             break
         default:
@@ -186,10 +187,11 @@ avalon.composeFilters(["uppercase"],["truncate",5])(avalon.parsers.string(__vmod
     }
     b.vmodel = vm
     b.vdom = src
+    b.update = updater
     if (!src.dynamic) {
         src.dynamic = {}
     }
-    b.update = updater
+
     if (b.paths) {
         b.paths.split(',').forEach(function (p) {
             vm.$watch(p, b)
@@ -201,6 +203,7 @@ function updater() {
     try {
         var value = this.get(this.vmodel, this.local)
     } catch (e) {
+        avalon.log(e)
         return
     }
     var copy = {

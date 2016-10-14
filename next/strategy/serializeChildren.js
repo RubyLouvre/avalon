@@ -55,7 +55,7 @@ function serializeNode(node, skip) {
                 return jsonfy(node)
             }
         case '#comment':
-            if (node.expr) {// 处理ms-for指令
+            if (node.dynamic && node.end) {// 处理ms-for指令
                 return serializeFor(node, skip)
             } else if (!skip && node.nodeValue.indexOf('ms-if:') === 0) {
                 return serializeLogic(node, skip)
@@ -106,16 +106,17 @@ function serializeTag(vdom, skip) {
 function serializeFor(vdom) {
     var copy = {
         vmodel: '__vmodel__',
-        
     }
-    var binding = {}
+   
     for (var i in vdom) {
         if (vdom.hasOwnProperty(i) && !skips[i]) {
             copy[i] = vdom[i]
-            binding[i] = vdom[i]
         }
     }
-    avalon.directives['for'].parse(copy, vdom, binding)
+    avalon.directives['for'].parse(copy, vdom, avalon.mix({
+        type: 'for',
+        name: 'ms-for'
+    },vdom.dynamic))
     //为copy添加dynamic
     return jsonfy(copy)
 }

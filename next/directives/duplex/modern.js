@@ -1,6 +1,6 @@
 import {avalon} from '../../seed/core'
 import update from '../_update'
-import stringify from '../../strategy/stringify'
+import {jsonfy} from '../../strategy/jsonfy'
 import {rcheckedType} from '../../dom/rcheckedType'
 import updateModelByEvent from './updateModelByEvent.modern'
 import {valueHijack as updateModelByValue} from './updateModelByValue'
