@@ -1,5 +1,4 @@
 import { avalon, quote } from '../seed/lang.share'
-import { serializeChildren } from '../strategy/serializeChildren'
 
 import update from './_update'
 

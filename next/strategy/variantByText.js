@@ -20,9 +20,8 @@ var rendTag = /^<\/([^>]+)>/
 //判定里面有没有内容
 var rcontent = /\S/
 var rnowhite = /\S+/g
-
 export function variantByText(str){
-    var nodes = markNode(str)
+    var nodes = makeNode(str)
     return variantCommon(nodes)
 }
 
@@ -133,6 +132,7 @@ function makeNode(str) {
     return ret
 
 }
+
 
 
 

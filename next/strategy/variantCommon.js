@@ -1,6 +1,6 @@
 var rmsForBegin = /^\s*ms\-for\:\s*/
 var rmsForEnd = /^\s*ms\-for\-end/
-import { serializeChildren } from './serializeChildren'
+import { serializeChildren } from './makeRender'
 
 export default function variantCommon(array) {
         variantChildren(array)

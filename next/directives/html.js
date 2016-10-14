@@ -19,12 +19,9 @@ avalon.directive('html', {
             src[name] = copyValue
 
             var oldTree = avalon.lexer(copyValue)
-
             var render = avalon.render(oldTree, copy.local)
             src.render = render
-
             var newTree = render(copy.vmodel, copy.local)
-
             src.children = copy.children = newTree
             update(src, this.update)
         } else if (src.render) {

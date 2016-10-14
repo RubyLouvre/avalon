@@ -5,6 +5,7 @@
  */
 import { avalon, config, directives } from '../seed/lang.share'
 import { parseText } from './parseText'
+import { extLocal } from './parseExpr'
 import { extractBindings } from './extractBindings'
 import { jsonfy } from './jsonfy'
 
@@ -163,3 +164,23 @@ function bufferChildren(nodes) {
     }
     return buffer
 }
+
+
+var rquoteEscapes = /\\\\(['"])/g
+export function render(vtree, local) {
+    var _body =  serializeChildren(vtree)
+    var _local = extLocal(local || {})
+
+    //处理 props: {"ms-effect": "{is:\\'star\\',action:@action}" 的情况 
+    _body = _body.replace(rquoteEscapes, "$1")
+    var body = '__local__ = __local__ || {};\n' +
+        _local.join(';\n') + '\nreturn ' + _body
+
+    try {
+        var fn = Function('__vmodel__', '__local__', body)
+    } catch (e) {
+        avalon.warn(_body, 'render parse error')
+    }
+    return fn
+}
+

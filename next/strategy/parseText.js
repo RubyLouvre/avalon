@@ -29,12 +29,13 @@ export function extractExpr(str) {
 export function parseText(nodeValue) {
     var tokens = extractExpr(nodeValue) 
     if (tokens.length > 1) {
-        var v = '' //处理一个文本节点存在多个花括号的情况 
-        tokens.forEach(function (el) {
+        //处理一个文本节点存在多个花括号的情况 
+        var v =  tokens.map(function (el) {
             if (!el.type)
-                el.expr = '+' + avalon.quote(el.expr) + '+'
-            v += el.expr
+               return avalon.quote(el.expr) 
+           return el.expr
         })
+        v = v.join(' + ')
         tokens = [{
             expr: v,
             name: 'nodeValue',
