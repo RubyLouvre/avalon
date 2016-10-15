@@ -14,7 +14,7 @@ avalon.noop = function () {
 
 
 avalon.quote = typeof JSON !== 'undefined' ? JSON.stringify : new function () {
-//https://github.com/bestiejs/json3/blob/master/lib/json3.js
+    //https://github.com/bestiejs/json3/blob/master/lib/json3.js
     var Escapes = {
         92: "\\\\",
         34: '\\"',
@@ -65,7 +65,7 @@ function copy(target) {
 }
 function hasAttr(node, name) {
     return typeof node.getAttribute(node, 'ms-' + name) === 'string' ||
-            typeof node.getAttribute(node, ':' + name) === 'string'
+        typeof node.getAttribute(node, ':' + name) === 'string'
 }
 
 avalon.each = function (a) {
@@ -94,7 +94,7 @@ avalon.oneObject = function (array, val) {
         array = array.match(rword) || []
     }
     var result = {},
-            value = val !== void 0 ? val : 1
+        value = val !== void 0 ? val : 1
     for (var i = 0, n = array.length; i < n; i++) {
         result[array[i]] = value
     }
@@ -213,11 +213,11 @@ function rewriteArrayMethods(array) {
 __method__.forEach(function (method) {
     var original = ap[method]
     __array__[method] = function () {
-// 继续尝试劫持数组元素的属性
+        // 继续尝试劫持数组元素的属性
 
         var args = [],
-                size = this.length,
-                core = this.$events
+            size = this.length,
+            core = this.$events
         for (var i = 0; i < arguments.length; i++) {
             args.push(arguments[i])
         }
@@ -236,8 +236,8 @@ __method__.forEach(function (method) {
         if (inserts && inserts) {
             observeArray(inserts, 0, 1)
         }
-//  warlords.toModel(this)
-//  notifySize(this, size)
+        //  warlords.toModel(this)
+        //  notifySize(this, size)
         core.__dep__.notify({
             method: method,
             args: args
@@ -396,6 +396,7 @@ wp.setValue = function (value) {
 wp.get = function () {
     var value;
     this.beforeGet();
+
     value = this.getValue();
     // 深层依赖获取
     if (this.deep) {
@@ -460,6 +461,9 @@ wp.update = function (args, guid) {
     var callback = this.callback;
 
     if (callback && (oldVal !== newVal)) {
+        //    if(this.checker ){
+        // console.log(this.checker)
+        // }
         if (this.type == 'nodeValue')
             console.log(this.node, this.node && this.node.parentNode)
         var fromDeep = this.deep && this.shallowIds.indexOf(guid) < 0;
@@ -470,47 +474,28 @@ wp.update = function (args, guid) {
 wp.destroy = function () {
     this.value = null
     this.removeDepends()
+    if (this._destroy) {
+        this._destroy()
+    }
     for (var i in this) {
         delete this[i]
     }
 }
 avalon.scan = function (vm, el) {
-    return new Compiler(vm, el)
+    return new Render(vm, el)
 }
-//-----------
-function Compiler(vm, el) {
-    this.$element = el
-    this.vm = vm
-    this.$queue = []
-    this.$afters = []
-    this.$directives = []
-    // this.fragment = nodeToFragment(this.element);
-    this.mount()
-}
-function nodeToFragment(a) {
-    var f = document.createDocumentFragment()
-    while (a.firstChild) {
-        f.appendChild(a.firstChild)
-    }
-    return f
-}
-var cp = Compiler.prototype
-cp.mount = function () {
-    this.$done = false;
-    this.$fragment = nodeToFragment(this.$element);
-    this.compile(this.$fragment, true);
-}
+//--------------
+
 function isDirective(directive) {
     return /^(?:\:|ms-)\w+/.test(directive)
 }
 
 function delayCompileNodes(dirs) {
-    for(var i in delayCompile){
-        if(('ms-'+ i) in dirs){
+    for (var i in delayCompile) {
+        if (('ms-' + i) in dirs) {
             return true
         }
     }
-
 }
 var regMustache = /\{\{.+\}\}/
 function hasDirective(node) {
@@ -541,6 +526,29 @@ function hasDirective(node) {
         }
     }
 }
+function nodeToFragment(a) {
+    var f = document.createDocumentFragment()
+    while (a.firstChild) {
+        f.appendChild(a.firstChild)
+    }
+    return f
+}
+function Render(vm, el) {
+    this.$element = el
+    this.vm = vm
+    this.$queue = []
+    this.$afters = []
+    this.$directives = []
+    this.init()
+}
+
+var cp = Render.prototype
+cp.init = function () {
+    this.$done = false;
+    this.$fragment = nodeToFragment(this.$element);
+    this.compile(this.$fragment, true);
+}
+
 
 cp.compile = function (element, root) {
     var childNodes = element.childNodes
@@ -550,7 +558,6 @@ cp.compile = function (element, root) {
         this.$queue.push([element, scope, dirs]);
     }
 
-
     for (var i = 0; i < childNodes.length; i++) {
         var node = childNodes[i];
         dirs = hasDirective(node)
@@ -559,10 +566,10 @@ cp.compile = function (element, root) {
         }
 
         if (!/style|textarea|xmp|script|template/i.test(node.nodeName)
-                && !delayCompileNodes(dirs || {})
-                && node.childNodes
-                && node.childNodes.length
-                ) {
+            && !delayCompileNodes(dirs || {})
+            && node.childNodes
+            && node.childNodes.length
+        ) {
 
             this.compile(node, false, scope)
 
@@ -578,7 +585,7 @@ cp.compileAll = function () {
     this.$queue.forEach(function (tuple) {
         this.complieNode(tuple)
     }, this);
-    this.$queue.length = 0
+    console.log(this.$queue)
     this.completed()
 }
 
@@ -595,12 +602,15 @@ cp.completed = function () {
     }
 }
 cp.destroy = function () {
-    this.$data = null;
-    //empty(this.$element);
+
     this.$directives.forEach(function (directive) {
+
         directive.destroy();
-        return null;
     });
+    for (var i in this) {
+        delete this[i]
+    }
+
 }
 var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
 
@@ -664,7 +674,7 @@ cp.complieNode = function (tuple) {
 }
 cp.parse = function (node, binding, scope) {
     if (avalon.directives[binding.type]) {
-        this.$directives.push(new Directive(node, binding, scope))
+        this.$directives.push(new Directive(node, binding, scope, this))
     }
 }
 
@@ -691,47 +701,27 @@ cp.parseText = function (node, dir, scope) {
         type: 'nodeValue'
     }
 
-    this.$directives.push(new Directive(node, binding, scope))
+    this.$directives.push(new Directive(node, binding, scope, this))
 }
-
+//指令是一个warcher
 function Directive(node, binding, scope) {
     var type = binding.type
     var directive = avalon.directives[type]
     var callback = directive.update ? function (value) {
         directive.update.call(this, node, value)
     } : avalon.noop
-    var watcher = this.watcher = new Watcher(scope, binding, callback)
+
+    var watcher = new Watcher(scope, binding, callback)
     watcher.node = node
+    watcher._destory = directive.destory
     if (directive.init)
         directive.init(watcher)
     delete watcher.value
-    watcher.update();
-}
-
-var dp = Directive.prototype;
-
-
-
-/**
- * 销毁/卸载指令
- */
-dp.destroy = function () {
-    this.watcher.destroy();
+    watcher.update()
+    return watcher
 }
 
 
-
-dp.get = function () {
-    return this.watcher.value;
-}
-
-/**
- * 设置依赖数据的值（用于双向数据绑定）
- * @param  {Mix}  value
- */
-dp.set = function (value) {
-    this.watcher.setValue(value);
-}
 //===============
 var stringNum = 0
 var stringPool = {
@@ -789,8 +779,8 @@ function addScope(expr) {
     var body = expr.trim().replace(rregexp, dig)//移除所有正则
     body = clearString(body)      //移除所有字符串
     return body.replace(ruselessSp, '$1').//移除.|两端空白
-            replace(rguide, '$1__vmodel__.').//转换@与##
-            replace(rfill, fill).replace(rfill, fill)
+        replace(rguide, '$1__vmodel__.').//转换@与##
+        replace(rfill, fill).replace(rfill, fill)
 }
 function createGetter(expr) {
     var body = addScope(expr)
@@ -836,7 +826,7 @@ avalon.directive('attr', {
 })
 avalon.directive('on', {
     init: function (watcher) {
-        var node = watcher.noder
+        var node = watcher.node
         var body = addScope(watcher.expr)
         var rhandleName = /^__vmodel__\.[$\w\.]+$/i
         if (rhandleName.test(body)) {
@@ -852,9 +842,13 @@ avalon.directive('on', {
             '\t' + body,
             '}catch(e){console.log(e)}']
         var fn = new Function('$event', ret.join('\n'))
-        node.addEventListener(watcher.param, function (e) {
+        this.eventHandler = function (e) {
             return fn.call(watcher.vm, e)
-        })
+        }
+        node.addEventListener(watcher.param, this.eventHandler)
+    },
+    destory: function () {
+        this.node.removeEventListener(this.param, this.eventHandler)
     }
 })
 avalon.directive('if', {
@@ -870,7 +864,7 @@ avalon.directive('if', {
         var f = document.createDocumentFragment()
         f.appendChild(node)
         watcher.fragment = f.cloneNode(true)
-        watcher.cp = avalon.scan(watcher.vm, f)
+        watcher.boss = avalon.scan(watcher.vm, f)
         if (!!watcher.value) {
             parent.replaceChild(f, c)
         }
@@ -885,7 +879,7 @@ avalon.directive('if', {
             var c = this.placeholder
             var p = c.parentNode
             var node = this.fragment.cloneNode(true)
-            this.cp = avalon.scan(this.vm, node)
+            this.boss = avalon.scan(this.vm, node)
             this.node = node.firstChild
             p.replaceChild(node, c)
 
@@ -894,7 +888,7 @@ avalon.directive('if', {
             var p = this.node.parentNode
             var c = this.placeholder
             p.replaceChild(c, this.node)
-            this.cp.destroy()
+            this.boss.destroy()
         }
 
 
@@ -902,10 +896,10 @@ avalon.directive('if', {
 })
 avalon.directive('html', {
     update: function (node, value) {
-        this.cb && this.cb.destroy()
+        this.boss && this.boss.destroy()
         var div = document.createElement('div')
         div.innerHTML = value
-        this.cp = avalon.scan(this.vm, div)
+        this.boss = avalon.scan(this.vm, div)
         nodeToFragment(node)
         node.appendChild(nodeToFragment(div))
     }
@@ -913,16 +907,19 @@ avalon.directive('html', {
 avalon.directive('duplex', {
     init: function (watcher) {
         var node = watcher.node
-
+        this.eventHandler = function () {
+            watcher.setValue(node.value)
+        }
         if (/password|text|hidden/i.test(node.type)) {
-            node.addEventListener('input', function () {
-                watcher.setValue(node.value)
-            })
+            node.addEventListener('input', this.eventHandler)
         }
     },
     update: function (node, value) {
         if (/password|text|hidden/i.test(node.type)) {
             node.value = value
         }
+    },
+    destory: function () {
+        this.node.removeEventListener('input', this.eventHandler)
     }
 })
