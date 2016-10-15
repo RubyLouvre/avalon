@@ -65,7 +65,7 @@ function copy(target) {
 }
 function hasAttr(node, name) {
     return typeof node.getAttribute(node, 'ms-' + name) === 'string' ||
-        typeof node.getAttribute(node, ':' + name) === 'string'
+            typeof node.getAttribute(node, ':' + name) === 'string'
 }
 
 avalon.each = function (a) {
@@ -89,19 +89,18 @@ avalon.directive = function (name, opts) {
 
 
 avalon.oneObject = function (array, val) {
-    /* istanbul ignore if*/
     if (typeof array === 'string') {
         array = array.match(rword) || []
     }
     var result = {},
-        value = val !== void 0 ? val : 1
+            value = val !== void 0 ? val : 1
     for (var i = 0, n = array.length; i < n; i++) {
         result[array[i]] = value
     }
     return result
 }
 function createObserver(target, key) {
-    if (target && typeof target === 'object') {
+    if (isObject(target)) {
         return target.$events ? target : new Observer(target, key)
     }
 }
@@ -216,8 +215,8 @@ __method__.forEach(function (method) {
         // 继续尝试劫持数组元素的属性
 
         var args = [],
-            size = this.length,
-            core = this.$events
+                size = this.length,
+                core = this.$events
         for (var i = 0; i < arguments.length; i++) {
             args.push(arguments[i])
         }
@@ -270,7 +269,7 @@ var dp = Depend.prototype;
  * @param  {Object}  watcher
  */
 dp.addWatcher = function (watcher) {
-    this.watchers.push(watcher);
+    this.watchers.push(watcher)
 }
 
 /**
@@ -289,7 +288,7 @@ dp.removeWatcher = function (watcher) {
  */
 dp.collect = function () {
     if (Depend.watcher) {
-        Depend.watcher.addDepend(this);
+        Depend.watcher.addDepend(this)
     }
 }
 
@@ -313,9 +312,7 @@ dp.notify = function (args) {
     });
 }
 
-//----
-
-
+//============Watcher模块============
 
 /**
  * 遍历对象/数组每一个可枚举属性
@@ -459,11 +456,8 @@ wp.update = function (args, guid) {
     var oldVal = this.oldVal;
     var newVal = this.value = this.get();
     var callback = this.callback;
-
     if (callback && (oldVal !== newVal)) {
-        //    if(this.checker ){
-        // console.log(this.checker)
-        // }
+   
         if (this.type == 'nodeValue')
             console.log(this.node, this.node && this.node.parentNode)
         var fromDeep = this.deep && this.shallowIds.indexOf(guid) < 0;
@@ -498,7 +492,7 @@ function delayCompileNodes(dirs) {
     }
 }
 var regMustache = /\{\{.+\}\}/
-function hasDirective(node) {
+function getRawBindings(node) {
     if (node.nodeType === 1) {
         var attrs = node.attributes;
         var props = {}, has = false
@@ -553,29 +547,20 @@ cp.init = function () {
 cp.compile = function (element, root) {
     var childNodes = element.childNodes
     var scope = this.vm
-    var dirs = hasDirective(element)
-    if (root && dirs) {
+    var dirs = getRawBindings(element)
+    if ( dirs) {
         this.$queue.push([element, scope, dirs]);
     }
-
-    for (var i = 0; i < childNodes.length; i++) {
-        var node = childNodes[i];
-        dirs = hasDirective(node)
-        if (dirs) {
-            this.$queue.push([node, scope, dirs])
-        }
-
-        if (!/style|textarea|xmp|script|template/i.test(node.nodeName)
+    var childNodes = element.childNodes
+    if (!/style|textarea|xmp|script|template/i.test(element.nodeName)
+            && childNodes
+            && childNodes.length
             && !delayCompileNodes(dirs || {})
-            && node.childNodes
-            && node.childNodes.length
-        ) {
-
-            this.compile(node, false, scope)
-
+            ) {
+        for (var i = 0; i < childNodes.length; i++) {
+            this.compile(childNodes[i], false)
         }
     }
-
     if (root) {
         this.compileAll();
     }
@@ -585,12 +570,12 @@ cp.compileAll = function () {
     this.$queue.forEach(function (tuple) {
         this.complieNode(tuple)
     }, this);
-    console.log(this.$queue)
     this.completed()
 }
 
 cp.completed = function () {
-    if (this.$queue.length === 0 && !this.$done) {
+    //console.log('ooo',this.$queue.length)
+   
         this.$done = true;
         this.$element.appendChild(this.$fragment);
 
@@ -599,7 +584,7 @@ cp.completed = function () {
             after[0].call(after[1]);
             return null;
         });
-    }
+    
 }
 cp.destroy = function () {
 
@@ -627,7 +612,6 @@ cp.complieNode = function (tuple) {
     } else if (!('ms-skip' in dirs)) {
         var uniq = {}, bindings = []
         var directives = avalon.directives
-
         for (var name in dirs) {
             var value = dirs[name]
             var rbinding = /^(\:|ms\-)\w+/
@@ -674,7 +658,7 @@ cp.complieNode = function (tuple) {
 }
 cp.parse = function (node, binding, scope) {
     if (avalon.directives[binding.type]) {
-        this.$directives.push(new Directive(node, binding, scope, this))
+        this.$directives.push(new DirectiveWatcher(node, binding, scope))
     }
 }
 
@@ -701,24 +685,7 @@ cp.parseText = function (node, dir, scope) {
         type: 'nodeValue'
     }
 
-    this.$directives.push(new Directive(node, binding, scope, this))
-}
-//指令是一个warcher
-function Directive(node, binding, scope) {
-    var type = binding.type
-    var directive = avalon.directives[type]
-    var callback = directive.update ? function (value) {
-        directive.update.call(this, node, value)
-    } : avalon.noop
-
-    var watcher = new Watcher(scope, binding, callback)
-    watcher.node = node
-    watcher._destory = directive.destory
-    if (directive.init)
-        directive.init(watcher)
-    delete watcher.value
-    watcher.update()
-    return watcher
+    this.$directives.push(new DirectiveWatcher(node, binding, scope))
 }
 
 
@@ -779,8 +746,8 @@ function addScope(expr) {
     var body = expr.trim().replace(rregexp, dig)//移除所有正则
     body = clearString(body)      //移除所有字符串
     return body.replace(ruselessSp, '$1').//移除.|两端空白
-        replace(rguide, '$1__vmodel__.').//转换@与##
-        replace(rfill, fill).replace(rfill, fill)
+            replace(rguide, '$1__vmodel__.').//转换@与##
+            replace(rfill, fill).replace(rfill, fill)
 }
 function createGetter(expr) {
     var body = addScope(expr)
@@ -811,6 +778,28 @@ function createSetter(expr) {
     }
 }
 
+//指令是一个warcher
+function DirectiveWatcher(node, binding, scope) {
+    var type = binding.type
+    var directive = avalon.directives[type]
+    if (node.nodeType === 1) {
+        node.removeAttribute('ms-' + type)
+        node.removeAttribute(':' + type)
+    }
+    var callback = directive.update ? function (value) {
+       
+        directive.update.call(this, node, value)
+    } : avalon.noop
+console.log(callback+'')
+    var watcher = new Watcher(scope, binding, callback)
+    watcher.node = node
+    watcher._destory = directive.destory
+    if (directive.init)
+        directive.init(watcher)
+    delete watcher.value
+    watcher.update()
+    return watcher
+}
 
 avalon.directive('nodeValue', {
     update: function (node, value) {
@@ -852,6 +841,7 @@ avalon.directive('on', {
     }
 })
 avalon.directive('if', {
+    delay: true,
     init: function (watcher) {
         var node = watcher.node
         node.removeAttribute('ms-if')
@@ -902,7 +892,8 @@ avalon.directive('html', {
         this.boss = avalon.scan(this.vm, div)
         nodeToFragment(node)
         node.appendChild(nodeToFragment(div))
-    }
+    },
+    delay: true
 })
 avalon.directive('duplex', {
     init: function (watcher) {
@@ -921,5 +912,21 @@ avalon.directive('duplex', {
     },
     destory: function () {
         this.node.removeEventListener('input', this.eventHandler)
+    }
+})
+avalon.directive('text', {
+    delay: true,
+    init: function (watcher) {
+        var node = watcher.node
+        nodeToFragment(node)
+        var child = document.createTextNode( watcher.value )
+        node.appendChild(child)
+        watcher.node = child
+        var type = 'nodeValue'
+        watcher.type = watcher.name = type
+        var directive = avalon.directives[type]
+        watcher.callback = function (value) {
+            directive.update.call(this, watcher.node, value)
+        }
     }
 })
