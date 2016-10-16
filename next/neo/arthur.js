@@ -227,7 +227,6 @@ function createAccessor(key, val, core) {
             }
             core.__dep__.beforeNotify()
             value = newValue
-            console.log(newValue)
             childOb = createObserver(newValue, key)
             core.__dep__.notify()
         },
@@ -373,7 +372,6 @@ dp.notify = function (args) {
 var walkedObs = [];
 function walkThrough(target, root) {
     var events = target && target.$events
-
 
     var guid = events && events.__dep__.guid
 
@@ -858,7 +856,6 @@ function DirectiveWatcher(node, binding, scope) {
         node.removeAttribute(':' + type)
     }
     var callback = directive.update ? function (value) {
-
         directive.update.call(this, node, value)
     } : avalon.noop
     var watcher = new Watcher(scope, binding, callback)
@@ -1147,9 +1144,7 @@ avalon.directive('for', {
         } else {
             updateFragments(this)
         }
-
     }
-
 })
 
 
@@ -1195,6 +1190,7 @@ function updateFragments(watcher) {
     list.forEach(function (el) {
         el._destory = true
     })
+    //===========  diff ============
     watcher.fragments.forEach(function (c, index) {
         var fragment = isInCache(cache, c.key)
         //取出之前的文档碎片
@@ -1215,7 +1211,7 @@ function updateFragments(watcher) {
         if (fragment) {//重复利用
             fragment.oldIndex = fragment.index
             fragment.key = c.key
-            var val = fragment.val = fragment.val
+            var val = fragment.val = c.val
             var index = fragment.index = c.index
             fragment.vm[watcher.valName] = val
             fragment.vm[watcher.keyName] = index
@@ -1232,52 +1228,28 @@ function updateFragments(watcher) {
         return a.index - b.index
     })
     watcher.cache = newCache
-
-    // a, b, c --> c, b, a
+    //===========  diff end ============
+    //===========  update  =============
     var before = watcher.node
     var parent = before.parentNode
     for (var i = 0, item; item = list[i]; i++) {
         if (item._destory) {
             list.splice(i, 1)
             i--
-            removeFragment(item, watcher)
+            item.destory()
             continue
         }
         if (item.ordexIndex !== item.index) {
             if (item.dom && !item.dom.childNodes.length) {
-                moveFragment(item, watcher)
+                item.move()
             }
             parent.insertBefore(item.dom, before.nextSibling)
         }
         before = item.split
     }
-
+    //===========  update end  ============
 }
 
-function moveFragment(item, watcher) {
-    var pre = item.split
-    var f = item.dom, list = [pre]
-    var a = 10000
-    do {
-        pre = pre.previousSibling
-        if (!pre || pre === watcher.node || pre.nodeValue === watcher.signature) {
-            break
-        }
-        list.unshift(pre)
-
-    } while (--a);
-    list.forEach(function (el) {
-        f.appendChild(el)
-    })
-    return f
-}
-function removeFragment(item, watcher) {
-    moveFragment(item, watcher)
-    item.boss.destroy()
-    for (var i in item) {
-        item[i] = null
-    }
-}
 
 function mountFragments(watcher) {
     var f = createFragment()
@@ -1325,7 +1297,7 @@ Fragment.prototype = {
 /**
  * 
  * @param {type} fragment
- * @param {type} item
+ * @param {type} watcher
  * @param {type} index
  * @returns { key, val, index, oldIndex, watcher, dom, split, boss, vm}
  */
