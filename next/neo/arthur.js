@@ -388,7 +388,14 @@ function walkThrough(target, root) {
         walkedObs.length = 0;
     }
 }
-//每一个$watch
+/**
+ * 用户watch回调及页面上的指令都会转换它的实例
+ * @param {type} vm
+ * @param {type} desc
+ * @param {type} callback
+ * @param {type} context
+ * @returns {Watcher}
+ */
 
 function Watcher(vm, desc, callback, context) {
     this.vm = vm;
@@ -576,6 +583,8 @@ function nodeToFragment(a) {
     }
     return f
 }
+var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
+
 function Render(vm, el) {
     this.$element = el
     this.vm = vm
@@ -589,11 +598,11 @@ var cp = Render.prototype
 cp.init = function () {
     this.$done = false;
     this.$fragment = nodeToFragment(this.$element);
-    this.compile(this.$fragment, true);
+    this.getBindings(this.$fragment, true);
 }
 
 
-cp.compile = function (element, root) {
+cp.getBindings = function (element, root) {
     var childNodes = element.childNodes
     var scope = this.vm
     var dirs = getRawBindings(element)
@@ -607,24 +616,18 @@ cp.compile = function (element, root) {
             && !delayCompileNodes(dirs || {})
             ) {
         for (var i = 0; i < childNodes.length; i++) {
-            this.compile(childNodes[i], false)
+            this.getBindings(childNodes[i], false)
         }
     }
     if (root) {
-        this.compileAll();
+        this.compileBindings();
     }
 }
 
-cp.compileAll = function () {
+cp.compileBindings = function () {
     this.$queue.forEach(function (tuple) {
-        this.complieNode(tuple)
+        this.parseBindings(tuple)
     }, this);
-    this.completed()
-}
-
-cp.completed = function () {
-
-    this.$done = true;
     this.$element.appendChild(this.$fragment);
 
     // 触发编译完成后的回调函数
@@ -632,25 +635,15 @@ cp.completed = function () {
         after[0].call(after[1]);
         return null;
     });
-
 }
-cp.destroy = function () {
 
-    this.$directives.forEach(function (directive) {
-        directive.destroy();
-    });
-    for (var i in this) {
-        delete this[i]
-    }
 
-}
-var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
 
 /**
- * 收集并编译节点指令
- * @param   {Array}  tuple  [node, scope]
+ * 将收集到的绑定属性进行深加工,最后转换为watcher
+ * @param   {Array}  tuple  [node, scope, dirs]
  */
-cp.complieNode = function (tuple) {
+cp.parseBindings = function (tuple) {
     var node = tuple[0]
     var scope = tuple[1]
     var dirs = tuple[2]
@@ -703,6 +696,7 @@ cp.complieNode = function (tuple) {
         }, this)
     }
 }
+
 cp.parse = function (node, binding, scope) {
     var dir = avalon.directives[binding.type]
     if (dir) {
@@ -715,9 +709,7 @@ cp.parse = function (node, binding, scope) {
 
 cp.parseText = function (node, dir, scope) {
     var rlineSp = /\n\r?/g
-
     var text = dir.nodeValue.trim().replace(rlineSp, '')
-
     var pieces = text.split(/\{\{(.+?)\}\}/g)
     var tokens = []
     pieces.forEach(function (piece) {
@@ -739,6 +731,14 @@ cp.parseText = function (node, dir, scope) {
     this.$directives.push(new DirectiveWatcher(node, binding, scope))
 }
 
+cp.destroy = function () {
+    this.$directives.forEach(function (directive) {
+        directive.destroy();
+    });
+    for (var i in this) {
+        delete this[i]
+    }
+}
 
 //===============
 var stringNum = 0
@@ -1112,8 +1112,6 @@ avalon.directive('for', {
         if (asName) {
             binding.asName = asName
         }
-
-
     },
     init: function (watcher) {
         var begin = createAnchor('ms-for:' + watcher.origExpr)
@@ -1130,7 +1128,6 @@ avalon.directive('for', {
         watcher.fragment = f
         watcher.end = end
         watcher.node = begin
-
         watcher.update = function () {
             var newVal = this.value = this.get()
             var traceIds = createFragments(this, newVal)
@@ -1200,13 +1197,11 @@ function updateFragments(watcher) {
     list.forEach(function (el) {
         el.destory = true
     })
-    var destoryCount = list.length
     watcher.fragments.forEach(function (item, index) {
         var el = isInCache(cache, item.key)
         //取出之前的文档碎片
         if (el) {
             delete el.destory
-            destoryCount--
             el.oldIndex = el.index
             el.index = item.index
             saveInCache(newCache, el)
@@ -1223,10 +1218,8 @@ function updateFragments(watcher) {
             p.index = c.index
             p.key = c.key
             delete p.destory
-            destoryCount--
         } else {
             p = Fragment(watcher, c, c.index)
-            console.log('----')
             list.push(p)
         }
         saveInCache(newCache, p)
@@ -1238,25 +1231,29 @@ function updateFragments(watcher) {
     })
     watcher.cache = newCache
 
-    if (destoryCount) {
 
-    }
     // a, b, c --> c, b, a
     var before = watcher.node
     var parent = before.parentNode
-    list.forEach(function (item) {
+    for (var i = 0, item; item = list[i]; i++) {
+        if (item.destory) {
+            list.splice(i, 1)
+            i--
+            removeFragment(item, watcher)
+            continue
+        }
         if (item.ordexIndex !== item.index) {
             if (item.dom && !item.dom.childNodes.length) {
-                moveItem(item, watcher)
+                moveFragment(item, watcher)
             }
-           parent.insertBefore(item.dom, before.nextSibling)
+            parent.insertBefore(item.dom, before.nextSibling)
         }
         before = item.split
-    })
+    }
 
 }
 
-function moveItem(item, watcher) {
+function moveFragment(item, watcher) {
     var pre = item.split
     var f = item.dom, list = [pre]
     var a = 10000
@@ -1272,6 +1269,13 @@ function moveItem(item, watcher) {
         f.appendChild(el)
     })
     return f
+}
+function removeFragment(item, watcher) {
+    moveFragment(item, watcher)
+    item.boss.destroy()
+    for (var i in item) {
+        item[i] = null
+    }
 }
 function Fragment(watcher, item, index) {
     item.dom = watcher.fragment.cloneNode(true)
