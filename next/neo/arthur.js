@@ -159,13 +159,12 @@ function observeObject(object) {
     return observe
 }
 
-function observeObject2(before, after) {
+function observeItemObject(before, after) {
     var core = before.$events
     var state = before.$accessor
     var object = after.data
     delete after.data
     var props = after
-    console.log('observeObject2')
     for (var key in object) {
         state[key] = createAccessor(key, object[key], core)
     }
@@ -177,6 +176,9 @@ function observeObject2(before, after) {
         observe[i] = props[i]
     }
     core.observe = observe
+    if(!core.__dep__){
+        core.__dep__ = new Depend()
+    }
     return observe
 }
 
@@ -1087,7 +1089,7 @@ avalon.directive('for', {
             kv.unshift('$key')
         }
         binding.expr = arr[1]
-        binding.indexName = kv[0]
+        binding.keyName = kv[0]
         binding.valName = kv[1]
         binding.signature = avalon.makeHashCode('for')
         if (asName) {
@@ -1104,18 +1106,14 @@ avalon.directive('for', {
         var p = node.parentNode
         p.insertBefore(begin, node)
         p.replaceChild(end, node)
+      
         var f = createFragment()
-        watcher.fragment = f.appendChild(node)
+        f.appendChild(node)
         f.appendChild(createAnchor(watcher.signature))
+        
+        watcher.fragment = f
+        watcher.end = end
         watcher.node = begin
-      /**
-       * 
-       *  if (directive.init)
-        directive.init(watcher)
-    delete watcher.value
-    watcher.update()
-       * 
-       */
      
         watcher.update = function () {
             var newVal = this.value = this.get()
@@ -1185,19 +1183,23 @@ function createAnchor(nodeValue) {
 }
 
 function buildItems(watcher) {
-    console.log("333333")
+    var f = createFragment()
     watcher.items.forEach(function (item, index) {
-        item.dom = watcher.fragment.cloneNode()
+        item.dom = watcher.fragment.cloneNode(true)
         var data = {}
         data[watcher.keyName] = index
-        data[watcher.valName] = item
+        data[watcher.valName] = item.s
         if (watcher.asName) {
             data[watcher.asName] = []
         }
-//        item.vm = observeObject2(watcher.vm, {
-//            data: data
-//        })
-        console.log(watcher.vm)
+        item.vm = observeItemObject(watcher.vm, {
+            data: data
+        })
+        item.boss = avalon.scan(item.vm, item.dom)
+        f.appendChild(item.dom)
     })
+   
+    watcher.end.parentNode.insertBefore(f,  watcher.end)
+    
 
 }
