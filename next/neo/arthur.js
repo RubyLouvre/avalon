@@ -122,14 +122,17 @@ avalon.oneObject = function (array, val) {
     }
     return result
 }
-function createObserver(target, key) {
+function createObserver(target, key, ret) {
     if (isObject(target)) {
         return target.$events ? target : new Observer(target, key)
+    }
+    if (ret) {
+        return target
     }
 }
 function Observer(data, key, vm) {
     if (isArray(data)) {
-        vm = observeArray(data, key);
+        vm = observeArray(data);
     } else {
         vm = observeObject(data);
     }
@@ -187,11 +190,11 @@ function observeItemObject(before, after) {
 function createViewModel(a, b, c) {
     return Object.defineProperties(a, b)
 }
-function observeArray(array, key, skip) {
-    if (!skip)
+function observeArray(array, rewrite, ret) {
+    if (!rewrite)
         rewriteArrayMethods(array)
-    array.forEach(function (item) {
-        createObserver(item, key, skip)
+    array.forEach(function (item, i) {
+        array[i] = createObserver(item, ret)
     })
     return array
 }
@@ -208,13 +211,13 @@ function createAccessor(key, val, core) {
                     childOb.$events.__dep__.collect()
                 }
             }
-            if (isArray(ret)) {
-                ret.forEach(function (el) {
-                    if (el && el.$events) {
-                        el.$events.__dep__.collect()
-                    }
-                })
-            }
+//            if (isArray(ret)) {
+//                ret.forEach(function (el) {
+//                    if (el && el.$events) {
+//                        el.$events.__dep__.collect()
+//                    }
+//                })
+//            }
             return ret
         },
         set: function Setter(newValue) {
@@ -224,6 +227,7 @@ function createAccessor(key, val, core) {
             }
             core.__dep__.beforeNotify()
             value = newValue
+            console.log(newValue)
             childOb = createObserver(newValue, key)
             core.__dep__.notify()
         },
@@ -280,7 +284,7 @@ __method__.forEach(function (method) {
                 break;
         }
         if (inserts && inserts) {
-            observeArray(inserts, 0, 1)
+            inserts = observeArray(inserts, 1, 1)
         }
         //  warlords.toModel(this)
         //  notifySize(this, size)
@@ -463,7 +467,7 @@ wp.get = function () {
 }
 
 wp.beforeGet = function () {
-    Depend.watcher = this;
+    Depend.watcher = this
 }
 
 wp.addDepend = function (depend) {
@@ -513,9 +517,6 @@ wp.update = function (args, guid) {
     var newVal = this.value = this.get();
     var callback = this.callback;
     if (callback && (oldVal !== newVal)) {
-
-        if (this.type == 'nodeValue')
-            console.log(this.node, this.node && this.node.parentNode)
         var fromDeep = this.deep && this.shallowIds.indexOf(guid) < 0;
         callback.call(this.context, newVal, oldVal, fromDeep, args);
     }
@@ -1131,7 +1132,8 @@ avalon.directive('for', {
         watcher.update = function () {
             var newVal = this.value = this.get()
             var traceIds = createFragments(this, newVal)
-            var callback = this.callback;
+            var callback = this.callback
+            // console.log(this.oldTrackIds !== traceIds)
             if (this.oldTrackIds !== traceIds) {
                 this.oldTrackIds = traceIds
                 callback.call(this.context, newVal);
@@ -1158,6 +1160,7 @@ function getTraceKey(item) {
 function createFragment() {
     return document.createDocumentFragment()
 }
+
 //创建一组fragment的虚拟DOM
 function createFragments(watcher, obj) {
     if (isObject(obj)) {
@@ -1166,12 +1169,7 @@ function createFragments(watcher, obj) {
         var fragments = [], i = 0
         avalon.each(obj, function (key, value) {
             var k = array ? getTraceKey(value) : key
-            fragments.push({
-                nodeName: '#document-fragment',
-                key: k,
-                index: i++,
-                val: value
-            })
+            fragments.push(new Fragment(k, value, i++))
             ids.push(k)
         })
         if (watcher.fragments) {
@@ -1195,34 +1193,38 @@ function updateFragments(watcher) {
     var fuzzy = []
     var list = watcher.preFragments
     list.forEach(function (el) {
-        el.destory = true
+        el._destory = true
     })
-    watcher.fragments.forEach(function (item, index) {
-        var el = isInCache(cache, item.key)
+    watcher.fragments.forEach(function (c, index) {
+        var fragment = isInCache(cache, c.key)
         //取出之前的文档碎片
-        if (el) {
-            delete el.destory
-            el.oldIndex = el.index
-            el.index = item.index
-            saveInCache(newCache, el)
+        if (fragment) {
+            delete fragment._destory
+            fragment.oldIndex = fragment.index
+            fragment.index = index // 相当于 c.index
+            fragment.vm[watcher.keyName] = index
+            saveInCache(newCache, fragment)
         } else {
             //如果找不到就进行模糊搜索
-            fuzzy.push(item)
+            fuzzy.push(c)
         }
     })
     var list = watcher.preFragments
-    fuzzy.forEach(function (c, i) {
-        var p = fuzzyMatchCache(cache, c.key)
-        if (p) {//重复利用
-            p.oldIndex = p.index
-            p.index = c.index
-            p.key = c.key
-            delete p.destory
+    fuzzy.forEach(function (c) {
+        var fragment = fuzzyMatchCache(cache, c.key)
+        if (fragment) {//重复利用
+            fragment.oldIndex = fragment.index
+            fragment.key = c.key
+            var val = fragment.val = fragment.val
+            var index = fragment.index = c.index
+            fragment.vm[watcher.valName] = val
+            fragment.vm[watcher.keyName] = index
+            delete fragment._destory
         } else {
-            p = Fragment(watcher, c, c.index)
-            list.push(p)
+            fragment = FragmentDecorator(c, watcher, c.index)
+            list.push(fragment)
         }
-        saveInCache(newCache, p)
+        saveInCache(newCache, fragment)
     })
 
     watcher.fragments = list
@@ -1231,12 +1233,11 @@ function updateFragments(watcher) {
     })
     watcher.cache = newCache
 
-
     // a, b, c --> c, b, a
     var before = watcher.node
     var parent = before.parentNode
     for (var i = 0, item; item = list[i]; i++) {
-        if (item.destory) {
+        if (item._destory) {
             list.splice(i, 1)
             i--
             removeFragment(item, watcher)
@@ -1277,33 +1278,76 @@ function removeFragment(item, watcher) {
         item[i] = null
     }
 }
-function Fragment(watcher, item, index) {
-    item.dom = watcher.fragment.cloneNode(true)
-    item.split = item.dom.lastChild
-    var data = {}
-    data[watcher.keyName] = item.index
-    data[watcher.valName] = item.val
-    if (watcher.asName) {
-        data[watcher.asName] = []
-    }
 
-    item.vm = observeItemObject(watcher.vm, {
-        data: data
-    })
-    item.index = index
-    item.boss = avalon.scan(item.vm, item.dom)
-    return item
-}
 function mountFragments(watcher) {
     var f = createFragment()
-    watcher.fragments.forEach(function (item, index) {
-        item = new Fragment(watcher, item, index)
-        saveInCache(watcher.cache, item)
-        f.appendChild(item.dom)
+    watcher.fragments.forEach(function (fragment, index) {
+        FragmentDecorator(fragment, watcher, index)
+        saveInCache(watcher.cache, fragment)
+        f.appendChild(fragment.dom)
     })
     watcher.end.parentNode.insertBefore(f, watcher.end)
 }
+function Fragment(key, val, index) {
+    this.name = '#document-fragment'
+    this.key = key
+    this.val = val
+    this.index = index
+}
+Fragment.prototype = {
+    destory: function () {
+        this.move()
+        this.boss.destroy()
+        for (var i in this) {
+            this[i] = null
+        }
+    },
+    move: function () {
+        var pre = this.split
+        var f = this.dom
+        var list = [pre]
+        var w = this.watcher
+        var a = 10000
+        do {
+            pre = pre.previousSibling
+            if (!pre || pre === w.node || pre.nodeValue === w.signature) {
+                break
+            }
+            list.unshift(pre)
 
+        } while (--a);
+        list.forEach(function (el) {
+            f.appendChild(el)
+        })
+        return f
+    }
+}
+/**
+ * 
+ * @param {type} fragment
+ * @param {type} item
+ * @param {type} index
+ * @returns { key, val, index, oldIndex, watcher, dom, split, boss, vm}
+ */
+function FragmentDecorator(fragment, watcher, index) {
+    var dom = fragment.dom = watcher.fragment.cloneNode(true)
+    fragment.split = dom.lastChild
+    fragment.watcher = watcher
+    fragment.vm = observeItemObject(watcher.vm, {
+        data: new function () {
+            var data = {}
+            data[watcher.keyName] = fragment.index
+            data[watcher.valName] = fragment.val
+            if (watcher.asName) {
+                data[watcher.asName] = []
+            }
+            return data
+        }
+    })
+    fragment.index = index
+    fragment.boss = avalon.scan(fragment.vm, dom)
+    return fragment
+}
 // 新位置: 旧位置
 function isInCache(cache, id) {
     var c = cache[id]
