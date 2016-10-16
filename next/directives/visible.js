@@ -1,4 +1,4 @@
-import {avalon} from '../seed/core'
+import { avalon } from '../seed/core'
 import update from './_update'
 var none = 'none'
 function parseDisplay(elem, val) {
@@ -39,6 +39,9 @@ avalon.directive('visible', {
                     value = vdom.displayValue
                     if (!value) {
                         dom.style.display = ''
+                        if (dom.style.cssText === '') {
+                            dom.removeAttribute('style')
+                        }
                     }
                 }
                 if (dom.style.display === '' && avalon(dom).css('display') === none &&
@@ -53,7 +56,7 @@ avalon.directive('visible', {
                     vdom.displayValue = display
                 }
             }
-            var cb = function() {
+            var cb = function () {
                 if (value !== void 0) {
                     dom.style.display = value
                 }

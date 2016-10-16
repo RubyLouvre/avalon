@@ -11,6 +11,28 @@ avalon.mix = function (a, b) {
 var delayCompile = {}
 avalon.noop = function () {
 }
+var rhashcode = /\d\.\d{4}/
+avalon.makeHashCode = function (prefix) {
+    /* istanbul ignore next*/
+    prefix = prefix || 'avalon'
+    /* istanbul ignore next*/
+    return String(Math.random() + Math.random()).replace(rhashcode, prefix)
+}
+var hasConsole = typeof console === 'object'
+avalon.config = function fn(obj) {
+    for (var i in obj) {
+        fn[i] = obj[i]
+    }
+}
+avalon.config({
+    debug: 1
+})
+avalon.log = function () {
+    if (hasConsole && avalon.config.debug) {
+        // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
+        Function.apply.call(console.log, console, arguments)
+    }
+}
 
 
 avalon.quote = typeof JSON !== 'undefined' ? JSON.stringify : new function () {
@@ -68,7 +90,7 @@ function hasAttr(node, name) {
             typeof node.getAttribute(node, ':' + name) === 'string'
 }
 
-avalon.each = function (a) {
+avalon.each = function (a, fn) {
     if (isArray(a)) {
         a.forEach(function (el, index) {
             fn(index, el)
@@ -126,8 +148,8 @@ function observeObject(object) {
             props[key] = val
         }
     }
-    addMoreState(state)
-    addMoreProps(props, core)
+
+    addMoreProps(props, object, state, core)
     var observe = {}
     observe = createViewModel(observe, state, props)
     for (var i in props) {
@@ -136,6 +158,29 @@ function observeObject(object) {
     core.observe = observe
     return observe
 }
+
+function observeObject2(before, after) {
+    var core = before.$events
+    var state = before.$accessor
+    var object = after.data
+    delete after.data
+    var props = after
+    console.log('observeObject2')
+    for (var key in object) {
+        state[key] = createAccessor(key, object[key], core)
+    }
+
+    addMoreProps(props, object, state, core)
+    var observe = {}
+    observe = createViewModel(observe, state, props)
+    for (var i in props) {
+        observe[i] = props[i]
+    }
+    core.observe = observe
+    return observe
+}
+
+
 function createViewModel(a, b, c) {
     return Object.defineProperties(a, b)
 }
@@ -185,15 +230,14 @@ function createAccessor(key, val, core) {
 }
 
 
-function addMoreState(state) {
-    state.$model = {
-    }
-}
 
-function addMoreProps(props, core) {
+function addMoreProps(props, object, state, core) {
+    var hash = avalon.makeHashCode("$")
     avalon.mix(props, {
-        $id: "$" + new Date - 0,
-        $events: core
+        $id: object.$id || hash,
+        $events: core,
+        $hashcode: hash,
+        $accessor: state
     })
 
 }
@@ -380,7 +424,11 @@ wp.getScope = function () {
 
 wp.getValue = function () {
     var scope = this.getScope();
-    return this.getter.call(scope, scope);
+    try {
+        return this.getter.call(scope, scope)
+    } catch (e) {
+        avalon.log(this.getter + 'exec error')
+    }
 }
 
 wp.setValue = function (value) {
@@ -389,12 +437,10 @@ wp.setValue = function (value) {
         this.setter.call(scope, scope, value);
     }
 }
-
 wp.get = function () {
     var value;
-    this.beforeGet();
-
-    value = this.getValue();
+    this.beforeGet()
+    value = this.getValue()
     // 深层依赖获取
     if (this.deep) {
         // 先缓存浅依赖的 ids
@@ -457,7 +503,7 @@ wp.update = function (args, guid) {
     var newVal = this.value = this.get();
     var callback = this.callback;
     if (callback && (oldVal !== newVal)) {
-   
+
         if (this.type == 'nodeValue')
             console.log(this.node, this.node && this.node.parentNode)
         var fromDeep = this.deep && this.shallowIds.indexOf(guid) < 0;
@@ -521,7 +567,7 @@ function getRawBindings(node) {
     }
 }
 function nodeToFragment(a) {
-    var f = document.createDocumentFragment()
+    var f = createFragment()
     while (a.firstChild) {
         f.appendChild(a.firstChild)
     }
@@ -548,7 +594,7 @@ cp.compile = function (element, root) {
     var childNodes = element.childNodes
     var scope = this.vm
     var dirs = getRawBindings(element)
-    if ( dirs) {
+    if (dirs) {
         this.$queue.push([element, scope, dirs]);
     }
     var childNodes = element.childNodes
@@ -574,22 +620,20 @@ cp.compileAll = function () {
 }
 
 cp.completed = function () {
-    //console.log('ooo',this.$queue.length)
-   
-        this.$done = true;
-        this.$element.appendChild(this.$fragment);
 
-        // 触发编译完成后的回调函数
-        this.$afters.forEach(function (after) {
-            after[0].call(after[1]);
-            return null;
-        });
-    
+    this.$done = true;
+    this.$element.appendChild(this.$fragment);
+
+    // 触发编译完成后的回调函数
+    this.$afters.forEach(function (after) {
+        after[0].call(after[1]);
+        return null;
+    });
+
 }
 cp.destroy = function () {
 
     this.$directives.forEach(function (directive) {
-
         directive.destroy();
     });
     for (var i in this) {
@@ -657,7 +701,11 @@ cp.complieNode = function (tuple) {
     }
 }
 cp.parse = function (node, binding, scope) {
-    if (avalon.directives[binding.type]) {
+    var dir = avalon.directives[binding.type]
+    if (dir) {
+        if (dir.parse) {
+            dir.parse(binding)
+        }
         this.$directives.push(new DirectiveWatcher(node, binding, scope))
     }
 }
@@ -755,7 +803,7 @@ function createGetter(expr) {
     try {
         return new Function('__vmodel__', 'return ' + body + ';');
     } catch (e) {
-        console.log('Invalid generated expression: [' + expr + ']');
+        avalon.log('parse getter: ', expr, ' error');
         return avalon.noop
     }
 }
@@ -773,7 +821,7 @@ function createSetter(expr) {
     try {
         return new Function('__vmodel__', '__value__', body + ';');
     } catch (e) {
-        console.log('Invalid generated expression: [' + expr + ']');
+        avalon.log('parse setter: ', expr, ' error');
         return avalon.noop
     }
 }
@@ -787,11 +835,12 @@ function DirectiveWatcher(node, binding, scope) {
         node.removeAttribute(':' + type)
     }
     var callback = directive.update ? function (value) {
-       
+
         directive.update.call(this, node, value)
     } : avalon.noop
-console.log(callback+'')
     var watcher = new Watcher(scope, binding, callback)
+    // get (beforeGet, getter, afterGet)
+
     watcher.node = node
     watcher._destory = directive.destory
     if (directive.init)
@@ -814,6 +863,8 @@ avalon.directive('attr', {
     }
 })
 avalon.directive('on', {
+   
+
     init: function (watcher) {
         var node = watcher.node
         var body = addScope(watcher.expr)
@@ -829,7 +880,7 @@ avalon.directive('on', {
             'try{',
             '\tvar __vmodel__ = this;',
             '\t' + body,
-            '}catch(e){console.log(e)}']
+            '}catch(e){avalon.log(e)}']
         var fn = new Function('$event', ret.join('\n'))
         this.eventHandler = function (e) {
             return fn.call(watcher.vm, e)
@@ -848,10 +899,10 @@ avalon.directive('if', {
         node.removeAttribute(':if')
         watcher.node = node
         var parent = node.parentNode
-        var c = watcher.placeholder = document.createComment('if')
+        var c = watcher.placeholder = createAnchor('if')
         parent.replaceChild(c, node)
         watcher.isShow = true
-        var f = document.createDocumentFragment()
+        var f = createFragment()
         f.appendChild(node)
         watcher.fragment = f.cloneNode(true)
         watcher.boss = avalon.scan(watcher.vm, f)
@@ -919,7 +970,7 @@ avalon.directive('text', {
     init: function (watcher) {
         var node = watcher.node
         nodeToFragment(node)
-        var child = document.createTextNode( watcher.value )
+        var child = document.createTextNode(watcher.value)
         node.appendChild(child)
         watcher.node = child
         var type = 'nodeValue'
@@ -930,3 +981,223 @@ avalon.directive('text', {
         }
     }
 })
+
+avalon.directive('text', {
+    delay: true,
+    init: function (watcher) {
+        var node = watcher.node
+        nodeToFragment(node)
+        var child = document.createTextNode(watcher.value)
+        node.appendChild(child)
+        watcher.node = child
+        var type = 'nodeValue'
+        watcher.type = watcher.name = type
+        var directive = avalon.directives[type]
+        watcher.callback = function (value) {
+            directive.update.call(this, watcher.node, value)
+        }
+    }
+})
+
+var none = 'none'
+function getDisplay(el) {
+    return window.getComputedStyle(el, null).display
+}
+function parseDisplay(elem, val) {
+    //用于取得此类标签的默认display值
+    var doc = elem.ownerDocument
+    var nodeName = elem.nodeName
+    var key = '_' + nodeName
+    if (!parseDisplay[key]) {
+        var temp = doc.body.appendChild(doc.createElement(nodeName))
+        val = getDisplay(temp)
+        doc.body.removeChild(temp)
+        if (val === none) {
+            val = 'block'
+        }
+        parseDisplay[key] = val
+    }
+    return parseDisplay[key]
+}
+avalon.directive('skip', {
+    delay: true
+})
+avalon.directive('visible', {
+    init: function (watcher) {
+        watcher.isShow = true
+    },
+    update: function (node, value) {
+        var isShow = !!value
+        if (this.isShow === isShow)
+            return
+        this.isShow = isShow
+        var display = node.style.display
+        if (isShow) {
+            if (display === none) {
+                value = this.displayValue
+                if (!value) {
+                    node.style.display = ''
+                    if (node.style.cssText === '') {
+                        node.removeAttribute('style')
+                    }
+                }
+            }
+            if (node.style.display === '' && getDisplay(node) === none &&
+                    // fix firefox BUG,必须挂到页面上
+                    node.ownerDocument.contains(node)) {
+
+                value = parseDisplay(node)
+            }
+
+        } else {
+            if (display !== none) {
+                value = none
+                this.displayValue = display
+            }
+        }
+        function cb() {
+            if (value !== void 0) {
+                node.style.display = value
+            }
+        }
+        cb()
+    }
+})
+var rforAs = /\s+as\s+([$\w]+)/
+var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
+var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
+var rargs = /[$\w_]+/g
+avalon.directive('for', {
+    delay: true,
+    parse: function(binding){
+        var str = binding.origExpr = binding.expr, asName
+        str = str.replace(rforAs, function (a, b) {
+            /* istanbul ignore if */
+            if (!rident.test(b) || rinvalid.test(b)) {
+                avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.')
+            } else {
+                asName = b
+            }
+            return ''
+        })
+
+        var arr = str.split(' in ')
+        var kv = arr[0].match(rargs)
+        if (kv.length === 1) {//确保avalon._each的回调有三个参数
+            kv.unshift('$key')
+        }
+        binding.expr = arr[1]
+        binding.indexName = kv[0]
+        binding.valName = kv[1]
+        binding.signature = avalon.makeHashCode('for')
+        if (asName) {
+            binding.asName = asName
+        }
+      
+
+    },
+    init: function (watcher) {
+       
+        var begin = createAnchor('ms-for:' + watcher.origExpr)
+        var end = createAnchor('ms-for-end:')
+        var node = watcher.node
+        var p = node.parentNode
+        p.insertBefore(begin, node)
+        p.replaceChild(end, node)
+        var f = createFragment()
+        watcher.fragment = f.appendChild(node)
+        f.appendChild(createAnchor(watcher.signature))
+        watcher.node = begin
+      /**
+       * 
+       *  if (directive.init)
+        directive.init(watcher)
+    delete watcher.value
+    watcher.update()
+       * 
+       */
+     
+        watcher.update = function () {
+            var newVal = this.value = this.get()
+            var traceIds = createTraceIDs(this, newVal)
+            var callback = this.callback;
+            if (this.oldTrackIds !== traceIds) {
+                this.oldTrackIds = traceIds
+                callback.call(this.context, newVal, traceIds);
+            }
+        }
+        
+    },
+    update: function (node, value) {
+        var preItems = this.preItems
+        var items = this.items
+        if (!preItems) {
+            buildItems(this)
+        }
+
+    }
+
+})
+
+
+function getTraceKey(item) {
+    var type = typeof item
+    return item && type === 'object' ? item.$hashcode : type + ':' + item
+}
+function createFragment() {
+    return document.createDocumentFragment()
+}
+function createTraceIDs(watcher, obj) {
+    if (isObject(obj)) {
+        var array = isArray(obj)
+        var ids = []
+        var items = []
+        avalon.each(obj, function (key, value) {
+            if (array) {
+                var k = getTraceKey(value)
+                items.push({
+                    key: k,
+                    s: value
+                })
+                ids.push(k)
+            } else {
+                items.push({
+                    key: k,
+                    s: value
+                })
+                ids.push(key)
+            }
+        })
+        if (watcher.items) {
+            watcher.preItems = watcher.items
+            watcher.items = items
+        } else {
+            watcher.items = items
+        }
+        return ids.join(';;')
+    } else {
+        return NaN
+    }
+}
+
+function createAnchor(nodeValue) {
+    return document.createComment(nodeValue)
+}
+
+function buildItems(watcher) {
+    console.log("333333")
+    watcher.items.forEach(function (item, index) {
+        item.dom = watcher.fragment.cloneNode()
+        var data = {}
+        data[watcher.keyName] = index
+        data[watcher.valName] = item
+        if (watcher.asName) {
+            data[watcher.asName] = []
+        }
+//        item.vm = observeObject2(watcher.vm, {
+//            data: data
+//        })
+        console.log(watcher.vm)
+    })
+
+}
