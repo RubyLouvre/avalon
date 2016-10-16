@@ -7,6 +7,7 @@ avalon.mix = function (a, b) {
     for (var i in b) {
         a[i] = b[i]
     }
+    return a
 }
 var delayCompile = {}
 avalon.noop = function () {
@@ -176,7 +177,7 @@ function observeItemObject(before, after) {
         observe[i] = props[i]
     }
     core.observe = observe
-    if(!core.__dep__){
+    if (!core.__dep__) {
         core.__dep__ = new Depend()
     }
     return observe
@@ -788,24 +789,43 @@ function readString(str) {
     }
     return ret
 }
-
+var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false," +
+        "finally,for,function,if,in,instanceof,new,null,return,switch,this," +
+        "throw,true,try,typeof,var,void,while,with," + /* 关键字*/
+        "abstract,boolean,byte,char,class,const,double,enum,export,extends," +
+        "final,float,goto,implements,import,int,interface,long,native," +
+        "package,private,protected,public,short,static,super,synchronized," +
+        "throws,transient,volatile")
+var skipMap = avalon.mix({
+    Math: 1,
+    Date: 1,
+    $event: 1,
+    __vmodel__: 1
+}, keyMap)
 var rguide = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
 var ruselessSp = /\s*(\.|\|)\s*/g
+var rlocal = /[$a-z_][$\.\w\_]*/gi
 var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
 function addScope(expr) {
     var body = expr.trim().replace(rregexp, dig)//移除所有正则
     body = clearString(body)      //移除所有字符串
-    return body.replace(ruselessSp, '$1').//移除.|两端空白
+    body = body.replace(ruselessSp, '$1').//移除.|两端空白
             replace(rguide, '$1__vmodel__.').//转换@与##
-            replace(rfill, fill).replace(rfill, fill)
+            replace(rlocal, function (a, b) {
+                var arr = a.split('.')
+                if (!skipMap[arr[0]]) {
+                    return '__vmodel__.' + a
+                }
+                return a
+            }).replace(rfill, fill).replace(rfill, fill)
+    return body
 }
 function createGetter(expr) {
     var body = addScope(expr)
-
     try {
         return new Function('__vmodel__', 'return ' + body + ';');
     } catch (e) {
-        avalon.log('parse getter: ', expr, ' error');
+        avalon.log('parse getter: ', expr, body, ' error');
         return avalon.noop
     }
 }
@@ -841,7 +861,6 @@ function DirectiveWatcher(node, binding, scope) {
         directive.update.call(this, node, value)
     } : avalon.noop
     var watcher = new Watcher(scope, binding, callback)
-    // get (beforeGet, getter, afterGet)
 
     watcher.node = node
     watcher._destory = directive.destory
@@ -865,8 +884,6 @@ avalon.directive('attr', {
     }
 })
 avalon.directive('on', {
-   
-
     init: function (watcher) {
         var node = watcher.node
         var body = addScope(watcher.expr)
@@ -1071,7 +1088,7 @@ var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
 var rargs = /[$\w_]+/g
 avalon.directive('for', {
     delay: true,
-    parse: function(binding){
+    parse: function (binding) {
         var str = binding.origExpr = binding.expr, asName
         str = str.replace(rforAs, function (a, b) {
             /* istanbul ignore if */
@@ -1095,42 +1112,41 @@ avalon.directive('for', {
         if (asName) {
             binding.asName = asName
         }
-      
+
 
     },
     init: function (watcher) {
-       
         var begin = createAnchor('ms-for:' + watcher.origExpr)
         var end = createAnchor('ms-for-end:')
         var node = watcher.node
         var p = node.parentNode
         p.insertBefore(begin, node)
         p.replaceChild(end, node)
-      
+
         var f = createFragment()
         f.appendChild(node)
         f.appendChild(createAnchor(watcher.signature))
-        
+        watcher.cache = {}
         watcher.fragment = f
         watcher.end = end
         watcher.node = begin
-     
+
         watcher.update = function () {
             var newVal = this.value = this.get()
-            var traceIds = createTraceIDs(this, newVal)
+            var traceIds = createFragments(this, newVal)
             var callback = this.callback;
             if (this.oldTrackIds !== traceIds) {
                 this.oldTrackIds = traceIds
-                callback.call(this.context, newVal, traceIds);
+                callback.call(this.context, newVal);
             }
         }
-        
+
     },
     update: function (node, value) {
-        var preItems = this.preItems
-        var items = this.items
-        if (!preItems) {
-            buildItems(this)
+        if (!this.preFragments) {
+            mountFragments(this)
+        } else {
+            updateFragments(this)
         }
 
     }
@@ -1145,32 +1161,27 @@ function getTraceKey(item) {
 function createFragment() {
     return document.createDocumentFragment()
 }
-function createTraceIDs(watcher, obj) {
+//创建一组fragment的虚拟DOM
+function createFragments(watcher, obj) {
     if (isObject(obj)) {
         var array = isArray(obj)
         var ids = []
-        var items = []
+        var fragments = [], i = 0
         avalon.each(obj, function (key, value) {
-            if (array) {
-                var k = getTraceKey(value)
-                items.push({
-                    key: k,
-                    s: value
-                })
-                ids.push(k)
-            } else {
-                items.push({
-                    key: k,
-                    s: value
-                })
-                ids.push(key)
-            }
+            var k = array ? getTraceKey(value) : key
+            fragments.push({
+                nodeName: '#document-fragment',
+                key: k,
+                index: i++,
+                val: value
+            })
+            ids.push(k)
         })
-        if (watcher.items) {
-            watcher.preItems = watcher.items
-            watcher.items = items
+        if (watcher.fragments) {
+            watcher.preFragments = watcher.fragments
+            watcher.fragments = fragments
         } else {
-            watcher.items = items
+            watcher.fragments = fragments
         }
         return ids.join(';;')
     } else {
@@ -1181,25 +1192,152 @@ function createTraceIDs(watcher, obj) {
 function createAnchor(nodeValue) {
     return document.createComment(nodeValue)
 }
-
-function buildItems(watcher) {
-    var f = createFragment()
-    watcher.items.forEach(function (item, index) {
-        item.dom = watcher.fragment.cloneNode(true)
-        var data = {}
-        data[watcher.keyName] = index
-        data[watcher.valName] = item.s
-        if (watcher.asName) {
-            data[watcher.asName] = []
+function updateFragments(watcher) {
+    var cache = watcher.cache
+    var newCache = {}
+    var fuzzy = []
+    var list = watcher.preFragments
+    list.forEach(function (el) {
+        el.destory = true
+    })
+    var destoryCount = list.length
+    watcher.fragments.forEach(function (item, index) {
+        var el = isInCache(cache, item.key)
+        //取出之前的文档碎片
+        if (el) {
+            delete el.destory
+            destoryCount--
+            el.oldIndex = el.index
+            el.index = item.index
+            saveInCache(newCache, el)
+        } else {
+            //如果找不到就进行模糊搜索
+            fuzzy.push(item)
         }
-        item.vm = observeItemObject(watcher.vm, {
-            data: data
-        })
-        item.boss = avalon.scan(item.vm, item.dom)
+    })
+    var list = watcher.preFragments
+    fuzzy.forEach(function (c, i) {
+        var p = fuzzyMatchCache(cache, c.key)
+        if (p) {//重复利用
+            p.oldIndex = p.index
+            p.index = c.index
+            p.key = c.key
+            delete p.destory
+            destoryCount--
+        } else {
+            p = Fragment(watcher, c, c.index)
+            console.log('----')
+            list.push(p)
+        }
+        saveInCache(newCache, p)
+    })
+
+    watcher.fragments = list
+    list.sort(function (a, b) {
+        return a.index - b.index
+    })
+    watcher.cache = newCache
+
+    if (destoryCount) {
+
+    }
+    // a, b, c --> c, b, a
+    var before = watcher.node
+    var parent = before.parentNode
+    list.forEach(function (item) {
+        if (item.ordexIndex !== item.index) {
+            if (item.dom && !item.dom.childNodes.length) {
+                moveItem(item, watcher)
+            }
+           parent.insertBefore(item.dom, before.nextSibling)
+        }
+        before = item.split
+    })
+
+}
+
+function moveItem(item, watcher) {
+    var pre = item.split
+    var f = item.dom, list = [pre]
+    var a = 10000
+    do {
+        pre = pre.previousSibling
+        if (!pre || pre === watcher.node || pre.nodeValue === watcher.signature) {
+            break
+        }
+        list.unshift(pre)
+
+    } while (--a);
+    list.forEach(function (el) {
+        f.appendChild(el)
+    })
+    return f
+}
+function Fragment(watcher, item, index) {
+    item.dom = watcher.fragment.cloneNode(true)
+    item.split = item.dom.lastChild
+    var data = {}
+    data[watcher.keyName] = item.index
+    data[watcher.valName] = item.val
+    if (watcher.asName) {
+        data[watcher.asName] = []
+    }
+
+    item.vm = observeItemObject(watcher.vm, {
+        data: data
+    })
+    item.index = index
+    item.boss = avalon.scan(item.vm, item.dom)
+    return item
+}
+function mountFragments(watcher) {
+    var f = createFragment()
+    watcher.fragments.forEach(function (item, index) {
+        item = new Fragment(watcher, item, index)
+        saveInCache(watcher.cache, item)
         f.appendChild(item.dom)
     })
-   
-    watcher.end.parentNode.insertBefore(f,  watcher.end)
-    
+    watcher.end.parentNode.insertBefore(f, watcher.end)
+}
 
+// 新位置: 旧位置
+function isInCache(cache, id) {
+    var c = cache[id]
+    if (c) {
+        var arr = c.arr
+        /* istanbul ignore if*/
+        if (arr) {
+            var r = arr.pop()
+            if (!arr.length) {
+                c.arr = 0
+            }
+            return r
+        }
+        delete cache[id]
+        return c
+    }
+}
+//[1,1,1] number1 number1_ number1__
+function saveInCache(cache, component) {
+    var trackId = component.key
+    if (!cache[trackId]) {
+        cache[trackId] = component
+    } else {
+        var c = cache[trackId]
+        var arr = c.arr || (c.arr = [])
+        arr.push(component)
+    }
+}
+
+var rfuzzy = /^(string|number|boolean)/
+var rkfuzzy = /^_*(string|number|boolean)/
+function fuzzyMatchCache(cache) {
+    var key
+    for (var id in cache) {
+        var key = id
+        break
+    }
+    if (key) {
+        return isInCache(cache, key)
+    }
 }
