@@ -52,10 +52,12 @@
         }
         return result
     }
-
+    
     avalon.quote = JSON.stringify
 
-
+   function startWith(long, short){
+       return long.indexOf(short) === 0
+   }
     function isArray(a) {
         return Array.isArray(a)
     }
@@ -81,7 +83,10 @@
 
         return ret || target
     }
-
+    function replaceNode(newNode, oldNode) {
+        oldNode.parentNode.replaceChild(newNode, oldNode)
+        return newNode
+    }
 
     avalon.each = function (a, fn) {
         if (isArray(a)) {
@@ -168,14 +173,45 @@
         }
         return observe
     }
-
+    var modelAccessor = {
+        get: function () {
+            return toJson(this)
+        },
+        set: avalon.noop,
+        enumerable: false,
+        configurable: true
+    }
+    
+    function toJson(val) {
+        if (isArray(val)) {
+            var array = []
+            for (var i = 0; i < val.length; i++) {
+                array[i] = toJson(val[i])
+            }
+            return array
+        } else if (isObject(val)) {
+            var obj = {}
+            for (i in val) {
+                if (val.hasOwnProperty(i)) {
+                    var value = val[i]
+                    obj[i] = value && value.nodeType ? value : toJson(value)
+                }
+            }
+            return obj
+        } else {
+            return val
+        }
+    }
 
     function createViewModel(a, b, c) {
         return Object.defineProperties(a, b)
     }
+    
     function observeArray(array, rewrite, ret) {
-        if (!rewrite)
+        if (!rewrite){
             rewriteArrayMethods(array)
+            Object.defineProperty(array, '$model', modelAccessor)
+        }
         array.forEach(function (item, i) {
             array[i] = createObserver(item, ret)
         })
@@ -213,14 +249,14 @@
 
 
     function addMoreProps(props, object, state, core) {
-        var hash = avalon.makeHashCode("$")
+        var hash = avalon.makeHashCode('$')
+        state.$model = modelAccessor
         avalon.mix(props, {
             $id: object.$id || hash,
             $events: core,
             $hashcode: hash,
             $accessor: state
         })
-
     }
     //============ 监控数组   ==========
     var ap = Array.prototype
@@ -259,8 +295,7 @@
             if (inserts && inserts) {
                 inserts = observeArray(inserts, 1, 1)
             }
-            //  warlords.toModel(this)
-            //  notifySize(this, size)
+            
             core.__dep__.notify({
                 method: method,
                 args: args
@@ -525,12 +560,18 @@
                     if (name.charAt(0) === ':') {
                         name = name.replace(rcolon, 'ms-')
                     }
-                    if (name.indexOf('ms-') === 0) {
+                    if (startWith(name,'ms-')) {
                         props[name] = attr.value
                         has = true
                     }
 
                 }
+            }
+            if (attrs['is']) {
+                if (!props['ms-widget']) {
+                    props['ms-widget'] = '{}'
+                }
+                has = true
             }
 
             return has ? props : false
@@ -541,7 +582,7 @@
                 }
             }
         } else if (node.nodeType === 8) {
-            if (node.nodeValue.indexOf('ms-for:') === 0) {
+            if (startWith(node.nodeValue,'ms-for:')) {
                 var nodes = []
                 var deep = 1
                 var begin = node
@@ -551,11 +592,11 @@
                     nodes.push(node)
 
                     if (node.nodeType === 8) {
-                        if (node.nodeValue.indexOf('ms-for:') == 0) {
+                        if (startWith(node.nodeValue,'ms-for:')) {
                             deep++
-                        } else if (node.nodeValue.indexOf('ms-for-end:') == 0) {
+                        } else if (startWith(node.nodeValue,'ms-for-end:')) {
                             deep--
-                            if (deep == 0) {
+                            if (deep === 0) {
                                 node.nodeValue = 'msfor-end:'
                                 nodes.pop()
                             }
@@ -567,7 +608,7 @@
                 nodes.forEach(function (n) {
                     f.appendChild(n)
                 })
-                this.$queue.push([
+                this.queue.push([
                     f, this.vm, {'ms-for': expr}, begin
                 ])
 
@@ -581,25 +622,23 @@
         }
         return f
     }
-    avalon.scan = function (vm, el) {
-        return new Render(vm, el)
+    avalon.scan = function (node, vm) {
+        return new Render(node, vm)
     }
     var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
 
-    function Render(vm, el) {
-        this.$element = el
+    function Render(node, vm) {
+        this.node = node
         this.vm = vm
-        this.$queue = []
-        this.$afters = []
-        this.$directives = []
+        this.queue = []
+        this.directives = []
         this.init()
     }
 
     var cp = Render.prototype
     cp.init = function () {
-        this.$done = false
-        this.$fragment = emptyNode(this.$element)
-        this.getBindings(this.$fragment, true)
+        this.fragment = emptyNode(this.node)
+        this.getBindings(this.fragment, true)
     }
 
     cp.getRawBindings = getRawBindings
@@ -608,7 +647,7 @@
         var scope = this.vm
         var dirs = this.getRawBindings(element)
         if (dirs) {
-            this.$queue.push([element, scope, dirs])
+            this.queue.push([element, scope, dirs])
         }
         var childNodes = element.childNodes
         if (!/style|textarea|xmp|script|template/i.test(element.nodeName)
@@ -626,19 +665,11 @@
     }
 
     cp.compileBindings = function () {
-        this.$queue.forEach(function (tuple) {
+        this.queue.forEach(function (tuple) {
             this.parseBindings(tuple)
         }, this)
-        this.$element.appendChild(this.$fragment)
-
-        // 触发编译完成后的回调函数
-        this.$afters.forEach(function (after) {
-            after[0].call(after[1])
-            return null
-        })
+        this.node.appendChild(this.fragment)
     }
-
-
 
     /**
      * 将收集到的绑定属性进行深加工,最后转换为watcher
@@ -705,7 +736,7 @@
             if (dir.parse) {
                 dir.parse(binding)
             }
-            this.$directives.push(new DirectiveWatcher(node, binding, scope))
+            this.directives.push(new DirectiveWatcher(node, binding, scope))
         }
     }
 
@@ -715,7 +746,7 @@
         var pieces = text.split(/\{\{(.+?)\}\}/g)
         var tokens = []
         pieces.forEach(function (piece) {
-            var segment = "{{" + piece + "}}"
+            var segment = '{{' + piece + '}}'
             if (text.indexOf(segment) > -1) {
                 tokens.push('(' + piece + ')')
                 text = text.replace(segment, '')
@@ -730,11 +761,11 @@
             type: 'nodeValue'
         }
 
-        this.$directives.push(new DirectiveWatcher(node, binding, scope))
+        this.directives.push(new DirectiveWatcher(node, binding, scope))
     }
 
     cp.destroy = function () {
-        this.$directives.forEach(function (directive) {
+        this.directives.forEach(function (directive) {
             directive.destroy()
         })
         for (var i in this) {
@@ -838,7 +869,7 @@
      */
     function createSetter(expr) {
         var body = addScope(expr)
-        if (body.indexOf('__vmodel__') !== 0) {
+        if (!startWith(body,'__vmodel__.')) {
             body = ' __vmodel__.' + body
         }
         body = 'try{ ' + body + ' = __value__}catch(e){}'
@@ -897,7 +928,7 @@
             }
 
             body = body.replace(/__vmodel__\.([^(]+)\(([^)]*)\)/, function (a, b, c) {
-                return '__vmodel__.' + b + ".call(__vmodel__" + (/\S/.test(c) ? ',' + c : "") + ")"
+                return '__vmodel__.' + b + '.call(__vmodel__' + (/\S/.test(c) ? ',' + c : '') + ')'
             })
             var ret = [
                 'try{',
@@ -916,6 +947,7 @@
     })
     avalon.directive('if', {
         delay: true,
+        priority: 5,
         init: function (watcher) {
             var node = watcher.node
             node.removeAttribute('ms-if')
@@ -923,12 +955,12 @@
             watcher.node = node
             var parent = node.parentNode
             var c = watcher.placeholder = createAnchor('if')
-            parent.replaceChild(c, node)
+            replaceNode(c, node)
             watcher.isShow = true
             var f = createFragment()
             f.appendChild(node)
             watcher.fragment = f.cloneNode(true)
-            watcher.boss = avalon.scan(watcher.vm, f)
+            watcher.boss = avalon.scan(f, watcher.vm)
             if (!!watcher.value) {
                 parent.replaceChild(f, c)
             }
@@ -943,7 +975,7 @@
                 var c = this.placeholder
                 var p = c.parentNode
                 var node = this.fragment.cloneNode(true)
-                this.boss = avalon.scan(this.vm, node)
+                this.boss = avalon.scan(node, this.vm)
                 this.node = node.firstChild
                 p.replaceChild(node, c)
 
@@ -963,13 +995,14 @@
             this.boss && this.boss.destroy()
             var div = document.createElement('div')
             div.innerHTML = value
-            this.boss = avalon.scan(this.vm, div)
+            this.boss = avalon.scan(div, this.vm)
             emptyNode(node)
             node.appendChild(emptyNode(div))
         },
         delay: true
     })
     avalon.directive('duplex', {
+        priority: 999999,
         init: function (watcher) {
             var node = watcher.node
             this.eventHandler = function () {
@@ -1092,6 +1125,7 @@
     var rargs = /[$\w_]+/g
     avalon.directive('for', {
         delay: true,
+        priority: 3,
         parse: function (binding) {
             var str = binding.origExpr = binding.expr, asName
             str = str.replace(rforAs, function (a, b) {
@@ -1132,6 +1166,10 @@
                 var f = createFragment()
                 f.appendChild(node)
                 watcher.fragment = f
+                var cb = node.getAttribute('data-for-rendered')
+                if (cb) {
+                    watcher.forCb = createGetter(cb)
+                }
             }
             watcher.node = begin
             watcher.end = watcher.node.nextSibling
@@ -1158,6 +1196,9 @@
             } else {
                 diffList(this)
                 updateList(this)
+            }
+            if (this.forCb) {
+                this.forCb()
             }
         }
     })
@@ -1269,8 +1310,6 @@
         }
     }
 
-
-
     function Fragment(key, val, index) {
         this.name = '#document-fragment'
         this.key = key
@@ -1290,7 +1329,7 @@
             var f = this.dom
             var list = [pre]
             var w = this.watcher
-            var a = 10000
+            var a = 99999
             do {
                 pre = pre.previousSibling
                 if (!pre || pre === w.node || pre.nodeValue === w.signature) {
@@ -1328,7 +1367,7 @@
             }
         })
         fragment.index = index
-        fragment.boss = avalon.scan(fragment.vm, dom)
+        fragment.boss = avalon.scan(dom, fragment.vm)
         return fragment
     }
     // 新位置: 旧位置
@@ -1372,5 +1411,73 @@
             return isInCache(cache, key)
         }
     }
+    avalon.directive('widget', {
+        delay: true,
+        priority: 4,
+        init: function (watcher) {
+            var node = watcher.node
+            var is = node.getAttribute('is')
+            var component = avalon.components[is]
+            if (component) {
+                var slots = {}, soleSlot
+                if (component.soleSlot) {
+                    soleSlot = avalon.scan(emptyNode(node), watcher.vm)
+                } else {
+                    avalon.each(node.childNodes, function (el) {
+                        var name = el.getAttribute('slot')
+                        if (name) {
+                            slots[name] = avalon.scan(el, watcher.vm)
+                        }
+                    })
+                }
+                var opt = watcher.value
+                if (isObject(watcher.value)) {
+                    var def = avalon.mix({}, component.defaults)
+                    for (var i in def) {
+                        def[i] = opt[i]
+                    }
+                    if (opt.id) {
+                        def.$id = opt.id
+                    }
+                    var vm = avalon.define(def)
+                    var div = document.createElement('div')
+                    div.innerHTML = component.template
+                    var boss = avalon.scan(div, vm)
+                    var com = div.children[0]
+                    var els = com.querySelectorAll('slot')
+                    var push = Array.prototype.push
+                    if (soleSlot) {
+                        push.apply(boss.directives, soleSlot.directives)
+                        replaceNode(soleSlot.node, els[0])
+                    } else {
+                        avalon.each(function (el) {
+                            var name = el.getAttribute('name')
+                            replaceNode(slots[name].node, el)
+                            push.apply(boss.directives, slots[name].directives)
+                        })
+                    }
+                    replaceNode(com, node)
+                    watcher.node = com
+                    watcher.comBoss = boss
+                }
+            }
+        },
+        update: function (node, value) {
+            
+        },
+        destory: function () {
+            this.comBoss.destory()
+        }
+    })
 
+    avalon.components = {}
+    avalon.component = function (name, component) {
+        /**
+         * template: string
+         * defaults: object
+         * soleSlot: string
+         */
+        avalon.components[name] = component
+    }
 })()
+
