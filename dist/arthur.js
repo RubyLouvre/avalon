@@ -1,3 +1,7 @@
+/*!
+ * 
+ * 这是一个迷你版avalon,支持IE9+
+ */
 (function () {
     var avalon = function () {
     }
@@ -25,9 +29,7 @@
     }
     var hasConsole = typeof console === 'object'
     avalon.config = function fn(obj) {
-        for (var i in obj) {
-            fn[i] = obj[i]
-        }
+        avalon.mix(fn, obj)
     }
     avalon.config({
         debug: 1
@@ -103,15 +105,15 @@
     }
     //============ Observer 模块 ==========
 
-    function createObserver(target, key, ret) {
+    function createObserver(target, ret) {
         if (isObject(target)) {
-            return target.$events ? target : new Observer(target, key)
+            return target.$events ? target : new Observer(target, ret)
         }
         if (ret) {
             return target
         }
     }
-    function Observer(data, key, vm) {
+    function Observer(data, vm) {
         if (isArray(data)) {
             vm = observeArray(data)
         } else {
@@ -182,7 +184,7 @@
 
     function createAccessor(key, val, core) {
         var value = val
-        var childOb = createObserver(val, key)
+        var childOb = createObserver(val)
         return {
             get: function Getter() {
                 var ret = value
@@ -192,13 +194,6 @@
                         childOb.$events.__dep__.collect()
                     }
                 }
-                //            if (isArray(ret)) {
-                //                ret.forEach(function (el) {
-                //                    if (el && el.$events) {
-                //                        el.$events.__dep__.collect()
-                //                    }
-                //                })
-                //            }
                 return ret
             },
             set: function Setter(newValue) {
@@ -208,7 +203,7 @@
                 }
                 core.__dep__.beforeNotify()
                 value = newValue
-                childOb = createObserver(newValue, key)
+                childOb = createObserver(newValue)
                 core.__dep__.notify()
             },
             enumerable: true,
@@ -227,7 +222,7 @@
         })
 
     }
-    //------------------
+    //============ 监控数组   ==========
     var ap = Array.prototype
     var __array__ = {}
     var __method__ = ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse']
@@ -714,7 +709,7 @@
         }
     }
 
-    //===============
+    //========== Eval  ========
     var stringNum = 0
     var stringPool = {
         map: {}
@@ -821,8 +816,11 @@
             return avalon.noop
         }
     }
-
-    //指令是一个warcher
+   //=================== 各种指令的实现  ==============
+   /**
+    * 一个watcher装饰器
+    * @returns {watcher}
+    */
     function DirectiveWatcher(node, binding, scope) {
         var type = binding.type
         var directive = avalon.directives[type]
@@ -1152,7 +1150,6 @@
     }
 
 
-
     function mountList(watcher) {
         var f = createFragment()
         watcher.fragments.forEach(function (fragment, index) {
@@ -1171,7 +1168,6 @@
         list.forEach(function (el) {
             el._destory = true
         })
-        //===========  diff ============
         watcher.fragments.forEach(function (c, index) {
             var fragment = isInCache(cache, c.key)
             //取出之前的文档碎片
@@ -1211,8 +1207,7 @@
         watcher.cache = newCache
     }
     function updateList(watcher) {
-        //===========  diff end ============
-        //===========  update  =============
+   
         var before = watcher.node
         var parent = before.parentNode
         var list = watcher.fragments
@@ -1231,7 +1226,6 @@
             }
             before = item.split
         }
-        //===========  update end  ============
     }
 
 
