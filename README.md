@@ -1,6 +1,10 @@
 #avalon 2 
 
-avalon2是基于虚拟DOM的超高性能MVVM框架,兼容到IE6.(QQ学习群 314247255)
+avalon2是基于虚拟DOM的超高性能MVVM框架,兼容到IE6.(QQ学习群 453286795 314247255)
+
+##artcher.js
+
+位于 dist 目录下, 只有不到2000行, 现只支持IE9+ ,它是avalon2的浓缩版
 
 ###[avalon电子文档](avalon%20cookbook.pdf)
 
