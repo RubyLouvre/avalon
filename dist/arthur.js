@@ -46,7 +46,7 @@
             array = array.match(rword) || []
         }
         var result = {},
-            value = val !== void 0 ? val : 1
+                value = val !== void 0 ? val : 1
         for (var i = 0, n = array.length; i < n; i++) {
             result[array[i]] = value
         }
@@ -540,6 +540,38 @@
                     nodeValue: node.nodeValue
                 }
             }
+        } else if (node.nodeType === 8) {
+            if (node.nodeValue.indexOf('ms-for:') === 0) {
+                var nodes = []
+                var deep = 1
+                var begin = node
+                var expr = node.nodeValue.replace('ms-for:', '')
+                node.nodeValue = 'msfor:' + expr
+                while (node = node.nextSibling) {
+                    nodes.push(node)
+
+                    if (node.nodeType === 8) {
+                        if (node.nodeValue.indexOf('ms-for:') == 0) {
+                            deep++
+                        } else if (node.nodeValue.indexOf('ms-for-end:') == 0) {
+                            deep--
+                            if (deep == 0) {
+                                node.nodeValue = 'msfor-end:'
+                                nodes.pop()
+                            }
+                        }
+                    }
+
+                }
+                var f = createFragment()
+                nodes.forEach(function (n) {
+                    f.appendChild(n)
+                })
+                this.$queue.push([
+                    f, this.vm, {'ms-for': expr}, begin
+                ])
+
+            }
         }
     }
     function emptyNode(a) {
@@ -570,20 +602,20 @@
         this.getBindings(this.$fragment, true)
     }
 
-
+    cp.getRawBindings = getRawBindings
     cp.getBindings = function (element, root) {
         var childNodes = element.childNodes
         var scope = this.vm
-        var dirs = getRawBindings(element)
+        var dirs = this.getRawBindings(element)
         if (dirs) {
             this.$queue.push([element, scope, dirs])
         }
         var childNodes = element.childNodes
         if (!/style|textarea|xmp|script|template/i.test(element.nodeName)
-            && childNodes
-            && childNodes.length
-            && !delayCompileNodes(dirs || {})
-        ) {
+                && childNodes
+                && childNodes.length
+                && !delayCompileNodes(dirs || {})
+                ) {
             for (var i = 0; i < childNodes.length; i++) {
                 this.getBindings(childNodes[i], false)
             }
@@ -651,6 +683,7 @@
                         uniq[binding.name] = value
                         bindings.push(binding)
                         if (type === 'for') {
+                            binding.begin = tuple[3]
                             bindings = [binding]
                             break
                         }
@@ -759,12 +792,12 @@
         return ret
     }
     var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false," +
-        "finally,for,function,if,in,instanceof,new,null,return,switch,this," +
-        "throw,true,try,typeof,var,void,while,with," + /* 关键字*/
-        "abstract,boolean,byte,char,class,const,double,enum,export,extends," +
-        "final,float,goto,implements,import,int,interface,long,native," +
-        "package,private,protected,public,short,static,super,synchronized," +
-        "throws,transient,volatile")
+            "finally,for,function,if,in,instanceof,new,null,return,switch,this," +
+            "throw,true,try,typeof,var,void,while,with," + /* 关键字*/
+            "abstract,boolean,byte,char,class,const,double,enum,export,extends," +
+            "final,float,goto,implements,import,int,interface,long,native," +
+            "package,private,protected,public,short,static,super,synchronized," +
+            "throws,transient,volatile")
     var skipMap = avalon.mix({
         Math: 1,
         Date: 1,
@@ -779,14 +812,14 @@
         var body = expr.trim().replace(rregexp, dig)//移除所有正则
         body = clearString(body)      //移除所有字符串
         body = body.replace(ruselessSp, '$1').//移除.|两端空白
-            replace(rguide, '$1__vmodel__.').//转换@与##
-            replace(rlocal, function (a, b) {
-                var arr = a.split('.')
-                if (!skipMap[arr[0]]) {
-                    return '__vmodel__.' + a
-                }
-                return a
-            }).replace(rfill, fill).replace(rfill, fill)
+                replace(rguide, '$1__vmodel__.').//转换@与##
+                replace(rlocal, function (a, b) {
+                    var arr = a.split('.')
+                    if (!skipMap[arr[0]]) {
+                        return '__vmodel__.' + a
+                    }
+                    return a
+                }).replace(rfill, fill).replace(rfill, fill)
         return body
     }
     function createGetter(expr) {
@@ -816,11 +849,11 @@
             return avalon.noop
         }
     }
-   //=================== 各种指令的实现  ==============
-   /**
-    * 一个watcher装饰器
-    * @returns {watcher}
-    */
+    //=================== 各种指令的实现  ==============
+    /**
+     * 一个watcher装饰器
+     * @returns {watcher}
+     */
     function DirectiveWatcher(node, binding, scope) {
         var type = binding.type
         var directive = avalon.directives[type]
@@ -1033,8 +1066,8 @@
                     }
                 }
                 if (node.style.display === '' && getDisplay(node) === none &&
-                    // fix firefox BUG,必须挂到页面上
-                    node.ownerDocument.contains(node)) {
+                        // fix firefox BUG,必须挂到页面上
+                        node.ownerDocument.contains(node)) {
 
                     value = parseDisplay(node)
                 }
@@ -1085,20 +1118,28 @@
             }
         },
         init: function (watcher) {
-            var begin = createAnchor('ms-for:' + watcher.origExpr)
-            var end = createAnchor('ms-for-end:')
             var node = watcher.node
-            var p = node.parentNode
-            p.insertBefore(begin, node)
-            p.replaceChild(end, node)
-
-            var f = createFragment()
-            f.appendChild(node)
-            f.appendChild(createAnchor(watcher.signature))
-            watcher.cache = {}
-            watcher.fragment = f
-            watcher.end = end
+            if (node.nodeType === 11) {
+                watcher.fragment = node
+                var begin = watcher.begin
+                delete watcher.begin
+            } else {
+                begin = createAnchor('msfor:' + watcher.origExpr)
+                var end = createAnchor('msfor-end:')
+                var p = node.parentNode
+                p.insertBefore(begin, node)
+                p.replaceChild(end, node)
+                var f = createFragment()
+                f.appendChild(node)
+                watcher.fragment = f
+            }
             watcher.node = begin
+            watcher.end = watcher.node.nextSibling
+
+
+            watcher.fragment.appendChild(createAnchor(watcher.signature))
+            watcher.cache = {}
+
             watcher.update = function () {
                 var newVal = this.value = this.get()
                 var traceIds = createFragments(this, newVal)
@@ -1207,7 +1248,7 @@
         watcher.cache = newCache
     }
     function updateList(watcher) {
-   
+
         var before = watcher.node
         var parent = before.parentNode
         var list = watcher.fragments
