@@ -1,814 +1,789 @@
-var avalon = {}
-avalon.define = function (obj) {
-    return Observer(obj)
-}
-var rword = /[^, ]+/g
-avalon.mix = function (a, b) {
-    for (var i in b) {
-        a[i] = b[i]
+(function () {
+    var avalon = function () {
     }
-    return a
-}
-var delayCompile = {}
-avalon.noop = function () {
-}
-var rhashcode = /\d\.\d{4}/
-avalon.makeHashCode = function (prefix) {
-    /* istanbul ignore next*/
-    prefix = prefix || 'avalon'
-    /* istanbul ignore next*/
-    return String(Math.random() + Math.random()).replace(rhashcode, prefix)
-}
-var hasConsole = typeof console === 'object'
-avalon.config = function fn(obj) {
-    for (var i in obj) {
-        fn[i] = obj[i]
-    }
-}
-avalon.config({
-    debug: 1
-})
-avalon.log = function () {
-    if (hasConsole && avalon.config.debug) {
-        // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
-        Function.apply.call(console.log, console, arguments)
-    }
-}
-
-
-avalon.quote = typeof JSON !== 'undefined' ? JSON.stringify : new function () {
-    //https://github.com/bestiejs/json3/blob/master/lib/json3.js
-    var Escapes = {
-        92: "\\\\",
-        34: '\\"',
-        8: "\\b",
-        12: "\\f",
-        10: "\\n",
-        13: "\\r",
-        9: "\\t"
+    window.avalon = avalon
+    var vmodels = avalon.vmodels = {}
+    avalon.define = function (obj) {
+        return vmodels[obj.$id] = Observer(obj)
     }
 
-    var leadingZeroes = '000000'
-    var toPaddedString = function (width, value) {
-        return (leadingZeroes + (value || 0)).slice(-width)
-    };
-    var unicodePrefix = '\\u00'
-    var escapeChar = function (character) {
-        var charCode = character.charCodeAt(0), escaped = Escapes[charCode]
-        if (escaped) {
-            return escaped
+    avalon.mix = function (a, b) {
+        for (var i in b) {
+            a[i] = b[i]
         }
-        return unicodePrefix + toPaddedString(2, charCode.toString(16))
-    };
-    var reEscape = /[\x00-\x1f\x22\x5c]/g
-    return function (value) {
-        reEscape.lastIndex = 0
-        return '"' + (reEscape.test(value) ? String(value).replace(reEscape, escapeChar) : value) + '"'
-    }
-}
-function isArray(a) {
-    return Array.isArray(a)
-}
-function isObservable(key, value) {
-    return (typeof value !== 'function') && key.charAt(0) !== '$'
-}
-function isObject(a) {
-    return a && typeof a === 'object'
-}
-function copy(target) {
-    var ret;
-
-    if (isArray(target)) {
-        ret = target.slice(0);
-    } else if (isObject(target)) {
-        ret = avalon.mix({}, target);
+        return a
     }
 
-    return ret || target
-}
-function hasAttr(node, name) {
-    return typeof node.getAttribute(node, 'ms-' + name) === 'string' ||
-            typeof node.getAttribute(node, ':' + name) === 'string'
-}
+    avalon.noop = avalon
 
-avalon.each = function (a, fn) {
-    if (isArray(a)) {
-        a.forEach(function (el, index) {
-            fn(index, el)
-        })
-    } else {
-        for (var i in a) {
-            fn(i, a[i])
+    var rhashcode = /\d\.\d{4}/
+    avalon.makeHashCode = function (prefix) {
+        /* istanbul ignore next*/
+        prefix = prefix || 'avalon'
+        /* istanbul ignore next*/
+        return String(Math.random() + Math.random()).replace(rhashcode, prefix)
+    }
+    var hasConsole = typeof console === 'object'
+    avalon.config = function fn(obj) {
+        for (var i in obj) {
+            fn[i] = obj[i]
         }
     }
-}
-avalon.directives = {}
-avalon.directive = function (name, opts) {
-    avalon.directives[name] = opts
-    if (opts.delay) {
-        delayCompile[name] = 1
+    avalon.config({
+        debug: 1
+    })
+    avalon.log = function () {
+        if (hasConsole && avalon.config.debug) {
+            // http://stackoverflow.com/questions/8785624/how-to-safely-wrap-console-log
+            Function.apply.call(console.log, console, arguments)
+        }
     }
-}
-
-
-avalon.oneObject = function (array, val) {
-    if (typeof array === 'string') {
-        array = array.match(rword) || []
-    }
-    var result = {},
+    var rword = /[^, ]+/g
+    avalon.oneObject = function (array, val) {
+        if (typeof array === 'string') {
+            array = array.match(rword) || []
+        }
+        var result = {},
             value = val !== void 0 ? val : 1
-    for (var i = 0, n = array.length; i < n; i++) {
-        result[array[i]] = value
-    }
-    return result
-}
-function createObserver(target, key, ret) {
-    if (isObject(target)) {
-        return target.$events ? target : new Observer(target, key)
-    }
-    if (ret) {
-        return target
-    }
-}
-function Observer(data, key, vm) {
-    if (isArray(data)) {
-        vm = observeArray(data);
-    } else {
-        vm = observeObject(data);
-    }
-    vm.$events.__dep__ = new Depend()
-    return vm
-}
-
-function observeObject(object) {
-    var core = {} //events
-    var state = {}
-    var props = {}
-    for (var key in object) {
-        var val = object[key]
-        if (isObservable(key, val)) {
-            state[key] = createAccessor(key, val, core)
-        } else {
-            props[key] = val
+        for (var i = 0, n = array.length; i < n; i++) {
+            result[array[i]] = value
         }
-    }
-
-    addMoreProps(props, object, state, core)
-    var observe = {}
-    observe = createViewModel(observe, state, props)
-    for (var i in props) {
-        observe[i] = props[i]
-    }
-    core.observe = observe
-    return observe
-}
-
-function observeItemObject(before, after) {
-    var core = before.$events
-    var state = before.$accessor
-    var object = after.data
-    delete after.data
-    var props = after
-    for (var key in object) {
-        state[key] = createAccessor(key, object[key], core)
-    }
-
-    addMoreProps(props, object, state, core)
-    var observe = {}
-    observe = createViewModel(observe, state, props)
-    for (var i in props) {
-        observe[i] = props[i]
-    }
-    core.observe = observe
-    if (!core.__dep__) {
-        core.__dep__ = new Depend()
-    }
-    return observe
-}
-
-
-function createViewModel(a, b, c) {
-    return Object.defineProperties(a, b)
-}
-function observeArray(array, rewrite, ret) {
-    if (!rewrite)
-        rewriteArrayMethods(array)
-    array.forEach(function (item, i) {
-        array[i] = createObserver(item, ret)
-    })
-    return array
-}
-
-function createAccessor(key, val, core) {
-    var value = val
-    var childOb = createObserver(val, key)
-    return {
-        get: function Getter() {
-            var ret = value
-            if (Depend.watcher) {
-                core.__dep__.collect()
-                if (childOb && childOb.$events) {
-                    childOb.$events.__dep__.collect()
-                }
-            }
-//            if (isArray(ret)) {
-//                ret.forEach(function (el) {
-//                    if (el && el.$events) {
-//                        el.$events.__dep__.collect()
-//                    }
-//                })
-//            }
-            return ret
-        },
-        set: function Setter(newValue) {
-            var oldValue = value
-            if (newValue === oldValue) {
-                return
-            }
-            core.__dep__.beforeNotify()
-            value = newValue
-            childOb = createObserver(newValue, key)
-            core.__dep__.notify()
-        },
-        enumerable: true,
-        configurable: true
-    }
-}
-
-
-
-function addMoreProps(props, object, state, core) {
-    var hash = avalon.makeHashCode("$")
-    avalon.mix(props, {
-        $id: object.$id || hash,
-        $events: core,
-        $hashcode: hash,
-        $accessor: state
-    })
-
-}
-//------------------
-var ap = Array.prototype
-var __array__ = {}
-var __method__ = ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse']
-function rewriteArrayMethods(array) {
-    /* istanbul ignore else */
-    for (var i in __array__) {
-        array[i] = __array__[i]
-    }
-    array.$events = {} // 以后自动加上    
-}
-
-__method__.forEach(function (method) {
-    var original = ap[method]
-    __array__[method] = function () {
-        // 继续尝试劫持数组元素的属性
-
-        var args = [],
-                size = this.length,
-                core = this.$events
-        for (var i = 0; i < arguments.length; i++) {
-            args.push(arguments[i])
-        }
-        core.__dep__.beforeNotify()
-        var result = original.apply(this, args)
-        var inserts = []
-        switch (method) {
-            case 'push':
-            case 'unshift':
-                inserts = args;
-                break;
-            case 'splice':
-                inserts = args.slice(2);
-                break;
-        }
-        if (inserts && inserts) {
-            inserts = observeArray(inserts, 1, 1)
-        }
-        //  warlords.toModel(this)
-        //  notifySize(this, size)
-        core.__dep__.notify({
-            method: method,
-            args: args
-        })
         return result
     }
-})
 
-//------------------
+    avalon.quote = JSON.stringify
 
-var guid = 0;
-/**
- * 依赖收集模块
- * @param  {String}  key  [依赖数据字段]
- */
-function Depend(key) {
-    this.key = key;
-    this.watchers = [];
-    this.guid = guid++;
-}
 
-/**
- * 当前收集依赖的订阅模块 watcher
- * @type  {Object}
- */
-Depend.watcher = null;
-var dp = Depend.prototype;
-/**
- * 添加依赖订阅
- * @param  {Object}  watcher
- */
-dp.addWatcher = function (watcher) {
-    this.watchers.push(watcher)
-}
-
-/**
- * 移除依赖订阅
- * @param  {Object}  watcher
- */
-dp.removeWatcher = function (watcher) {
-    var index = this.watchers.indexOf(watcher);
-    if (index > -1) {
-        this.watchers.splice(index, 1);
+    function isArray(a) {
+        return Array.isArray(a)
     }
-}
-
-/**
- * 为 watcher 收集当前的依赖
- */
-dp.collect = function () {
-    if (Depend.watcher) {
-        Depend.watcher.addDepend(this)
+    function isObservable(key, value) {
+        return (typeof value !== 'function') && key.charAt(0) !== '$'
     }
-}
+    function isObject(a) {
+        return a && typeof a === 'object'
+    }
+    function createFragment() {
+        return document.createDocumentFragment()
+    }
+    function createAnchor(nodeValue) {
+        return document.createComment(nodeValue)
+    }
+    function copy(target) {
+        var ret
+        if (isArray(target)) {
+            ret = target.slice(0)
+        } else if (isObject(target)) {
+            ret = avalon.mix({}, target)
+        }
 
-/**
- * 依赖变更前调用方法，用于旧数据的缓存处理
- */
-dp.beforeNotify = function () {
-    this.watchers.forEach(function (watcher) {
-        watcher.beforeUpdate();
-    });
-}
+        return ret || target
+    }
 
-/**
- * 依赖变更，通知每一个订阅了该依赖的 watcher
- * @param  {Object}  args  [数组操作参数信息]
- */
-dp.notify = function (args) {
-    var guid = this.guid;
-    this.watchers.forEach(function (watcher) {
-        watcher.update(args, guid);
-    });
-}
 
-//============Watcher模块============
-
-/**
- * 遍历对象/数组每一个可枚举属性
- * @param  {Object|Array}  target  [遍历值/对象或数组]
- * @param  {Boolean}       root    [是否是根对象/数组]
- */
-var walkedObs = [];
-function walkThrough(target, root) {
-    var events = target && target.$events
-
-    var guid = events && events.__dep__.guid
-
-    if (guid) {
-        if (walkedObs.indexOf(guid) > -1) {
-            return;
+    avalon.each = function (a, fn) {
+        if (isArray(a)) {
+            a.forEach(function (el, index) {
+                fn(index, el)
+            })
         } else {
-            walkedObs.push(guid);
-        }
-    }
-
-    avalon.each(target, function (key, value) {
-        walkThrough(value, false)
-    });
-    if (root) {
-        walkedObs.length = 0;
-    }
-}
-/**
- * 用户watch回调及页面上的指令都会转换它的实例
- * @param {type} vm
- * @param {type} desc
- * @param {type} callback
- * @param {type} context
- * @returns {Watcher}
- */
-
-function Watcher(vm, desc, callback, context) {
-    this.vm = vm;
-    avalon.mix(this, desc);
-    this.callback = callback;
-    this.context = context || this;
-    // 依赖 id 缓存
-    this.depIds = [];
-    this.newDepIds = [];
-    this.shallowIds = [];
-    // 依赖实例缓存
-    this.depends = [];
-    this.newDepends = [];
-    var expr = desc.expr;
-    var preSetFunc = typeof expr === 'function'
-    // 缓存取值函数
-    this.getter = preSetFunc ? expr : createGetter(expr);
-    // 缓存设值函数（双向数据绑定）
-    this.setter = this.type === 'duplex' ? createSetter(expr) : null;
-    // 缓存表达式旧值
-    this.oldVal = null;
-    // 表达式初始值 & 提取依赖
-    this.value = this.get();
-}
-
-
-
-var wp = Watcher.prototype;
-/**
- * 获取取值域
- * @return  {Object}
- */
-wp.getScope = function () {
-    return this.context.scope || this.vm
-}
-
-wp.getValue = function () {
-    var scope = this.getScope();
-    try {
-        return this.getter.call(scope, scope)
-    } catch (e) {
-        avalon.log(this.getter + 'exec error')
-    }
-}
-
-wp.setValue = function (value) {
-    var scope = this.getScope();
-    if (this.setter) {
-        this.setter.call(scope, scope, value);
-    }
-}
-wp.get = function () {
-    var value;
-    this.beforeGet()
-    value = this.getValue()
-    // 深层依赖获取
-    if (this.deep) {
-        // 先缓存浅依赖的 ids
-        this.shallowIds = copy(this.newDepIds);
-        walkThrough(value, true);
-    }
-
-    this.afterGet();
-    return value;
-}
-
-wp.beforeGet = function () {
-    Depend.watcher = this
-}
-
-wp.addDepend = function (depend) {
-    var guid = depend.guid;
-    var newIds = this.newDepIds;
-    if (newIds.indexOf(guid) < 0) {
-        newIds.push(guid);
-        this.newDepends.push(depend);
-        if (this.depIds.indexOf(guid) < 0) {
-            depend.addWatcher(this);
-        }
-    }
-}
-
-wp.removeDepends = function (filter) {
-    var self = this
-    this.depends.forEach(function (depend) {
-        if (filter) {
-            if (filter.call(self, depend)) {
-                depend.removeWatcher(self);
+            for (var i in a) {
+                fn(i, a[i])
             }
+        }
+    }
+
+    var delayCompile = {}
+    avalon.directives = {}
+    avalon.directive = function (name, opts) {
+        avalon.directives[name] = opts
+        if (opts.delay) {
+            delayCompile[name] = 1
+        }
+    }
+    //============ Observer 模块 ==========
+
+    function createObserver(target, key, ret) {
+        if (isObject(target)) {
+            return target.$events ? target : new Observer(target, key)
+        }
+        if (ret) {
+            return target
+        }
+    }
+    function Observer(data, key, vm) {
+        if (isArray(data)) {
+            vm = observeArray(data)
         } else {
-            depend.removeWatcher(self);
+            vm = observeObject(data)
         }
-    });
-}
-
-wp.afterGet = function () {
-    Depend.watcher = null;
-    // 清除无用的依赖
-    this.removeDepends(function (depend) {
-        return this.newDepIds.indexOf(depend.guid) < 0;
-    });
-    // 重设依赖缓存
-    this.depIds = copy(this.newDepIds);
-    this.newDepIds.length = 0;
-    this.depends = copy(this.newDepends);
-    this.newDepends.length = 0;
-}
-
-wp.beforeUpdate = function () {
-    this.oldVal = copy(this.value);
-}
-
-wp.update = function (args, guid) {
-    var oldVal = this.oldVal;
-    var newVal = this.value = this.get();
-    var callback = this.callback;
-    if (callback && (oldVal !== newVal)) {
-        var fromDeep = this.deep && this.shallowIds.indexOf(guid) < 0;
-        callback.call(this.context, newVal, oldVal, fromDeep, args);
+        vm.$events.__dep__ = new Depend()
+        return vm
     }
-}
 
-wp.destroy = function () {
-    this.value = null
-    this.removeDepends()
-    if (this._destroy) {
-        this._destroy()
-    }
-    for (var i in this) {
-        delete this[i]
-    }
-}
-avalon.scan = function (vm, el) {
-    return new Render(vm, el)
-}
-//--------------
-
-function isDirective(directive) {
-    return /^(?:\:|ms-)\w+/.test(directive)
-}
-
-function delayCompileNodes(dirs) {
-    for (var i in delayCompile) {
-        if (('ms-' + i) in dirs) {
-            return true
-        }
-    }
-}
-var regMustache = /\{\{.+\}\}/
-function getRawBindings(node) {
-    if (node.nodeType === 1) {
-        var attrs = node.attributes;
-        var props = {}, has = false
-        for (var i = 0, n = attrs.length; i < n; i++) {
-            var attr = attrs[i]
-            if (attr.specified) {
-                var name = attr.name
-                if (name.charAt(0) === ':') {
-                    name = name.replace(rcolon, 'ms-')
-                }
-                if (name.indexOf('ms-') === 0) {
-                    props[name] = attr.value
-                    has = true
-                }
-
+    function observeObject(object) {
+        var core = {} //events
+        var state = {}
+        var props = {}
+        for (var key in object) {
+            var val = object[key]
+            if (isObservable(key, val)) {
+                state[key] = createAccessor(key, val, core)
+            } else {
+                props[key] = val
             }
         }
 
-        return has ? props : false
-    } else if (node.nodeType === 3) {
-        if (regMustache.test(node.nodeValue)) {
-            return {
-                nodeValue: node.nodeValue
+        addMoreProps(props, object, state, core)
+        var observe = {}
+        observe = createViewModel(observe, state, props)
+        for (var i in props) {
+            observe[i] = props[i]
+        }
+        core.observe = observe
+        return observe
+    }
+
+    function observeItemObject(before, after) {
+        var core = before.$events
+        var state = before.$accessor
+        var object = after.data
+        delete after.data
+        var props = after
+        for (var key in object) {
+            state[key] = createAccessor(key, object[key], core)
+        }
+
+        addMoreProps(props, object, state, core)
+        var observe = {}
+        observe = createViewModel(observe, state, props)
+        for (var i in props) {
+            observe[i] = props[i]
+        }
+        core.observe = observe
+        if (!core.__dep__) {
+            core.__dep__ = new Depend()
+        }
+        return observe
+    }
+
+
+    function createViewModel(a, b, c) {
+        return Object.defineProperties(a, b)
+    }
+    function observeArray(array, rewrite, ret) {
+        if (!rewrite)
+            rewriteArrayMethods(array)
+        array.forEach(function (item, i) {
+            array[i] = createObserver(item, ret)
+        })
+        return array
+    }
+
+    function createAccessor(key, val, core) {
+        var value = val
+        var childOb = createObserver(val, key)
+        return {
+            get: function Getter() {
+                var ret = value
+                if (Depend.watcher) {
+                    core.__dep__.collect()
+                    if (childOb && childOb.$events) {
+                        childOb.$events.__dep__.collect()
+                    }
+                }
+                //            if (isArray(ret)) {
+                //                ret.forEach(function (el) {
+                //                    if (el && el.$events) {
+                //                        el.$events.__dep__.collect()
+                //                    }
+                //                })
+                //            }
+                return ret
+            },
+            set: function Setter(newValue) {
+                var oldValue = value
+                if (newValue === oldValue) {
+                    return
+                }
+                core.__dep__.beforeNotify()
+                value = newValue
+                childOb = createObserver(newValue, key)
+                core.__dep__.notify()
+            },
+            enumerable: true,
+            configurable: true
+        }
+    }
+
+
+    function addMoreProps(props, object, state, core) {
+        var hash = avalon.makeHashCode("$")
+        avalon.mix(props, {
+            $id: object.$id || hash,
+            $events: core,
+            $hashcode: hash,
+            $accessor: state
+        })
+
+    }
+    //------------------
+    var ap = Array.prototype
+    var __array__ = {}
+    var __method__ = ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse']
+    function rewriteArrayMethods(array) {
+        /* istanbul ignore else */
+        for (var i in __array__) {
+            array[i] = __array__[i]
+        }
+        array.$events = {} // 以后自动加上    
+    }
+
+    __method__.forEach(function (method) {
+        var original = ap[method]
+        __array__[method] = function () {
+            // 继续尝试劫持数组元素的属性
+            var args = []
+            var size = this.length
+            var core = this.$events
+            for (var i = 0; i < arguments.length; i++) {
+                args.push(arguments[i])
+            }
+            core.__dep__.beforeNotify()
+            var result = original.apply(this, args)
+            var inserts = []
+            switch (method) {
+                case 'push':
+                case 'unshift':
+                    inserts = args
+                    break
+                case 'splice':
+                    inserts = args.slice(2)
+                    break
+            }
+            if (inserts && inserts) {
+                inserts = observeArray(inserts, 1, 1)
+            }
+            //  warlords.toModel(this)
+            //  notifySize(this, size)
+            core.__dep__.notify({
+                method: method,
+                args: args
+            })
+            return result
+        }
+    })
+
+    //============== Depend ============
+
+    var guid = 0
+    /**
+     * 依赖收集类 用于联结 VM 与 Watcher
+     */
+    function Depend() {
+        this.watchers = []
+        this.guid = guid++
+    }
+
+    /**
+     * 当前收集依赖的订阅模块 watcher
+     * @type  {Object}
+     */
+    Depend.watcher = null
+    var dp = Depend.prototype
+    /**
+     * 添加依赖订阅
+     * @param  {Object}  watcher
+     */
+    dp.addWatcher = function (watcher) {
+        this.watchers.push(watcher)
+    }
+
+    /**
+     * 移除依赖订阅
+     * @param  {Object}  watcher
+     */
+    dp.removeWatcher = function (watcher) {
+        var index = this.watchers.indexOf(watcher)
+        if (index > -1) {
+            this.watchers.splice(index, 1)
+        }
+    }
+
+    /**
+     * 为 watcher 收集当前的依赖
+     */
+    dp.collect = function () {
+        if (Depend.watcher) {
+            Depend.watcher.addDepend(this)
+        }
+    }
+
+    /**
+     * 依赖变更前调用方法，用于旧数据的缓存处理
+     */
+    dp.beforeNotify = function () {
+        this.watchers.forEach(function (watcher) {
+            watcher.beforeUpdate()
+        })
+    }
+
+    /**
+     * 依赖变更，通知每一个订阅了该依赖的 watcher
+     * @param  {Object}  args  [数组操作参数信息]
+     */
+    dp.notify = function (args) {
+        var guid = this.guid
+        this.watchers.forEach(function (watcher) {
+            watcher.update(args, guid)
+        })
+    }
+
+    //============ Watcher模块 ============
+
+    /** 
+     * 遍历对象/数组每一个可枚举属性
+     * @param  {Object|Array}  target  [遍历值/对象或数组]
+     * @param  {Boolean}       root    [是否是根对象/数组]
+     */
+    var walkedObs = []
+    function walkThrough(target, root) {
+        var events = target && target.$events
+
+        var guid = events && events.__dep__.guid
+
+        if (guid) {
+            if (walkedObs.indexOf(guid) > -1) {
+                return
+            } else {
+                walkedObs.push(guid)
+            }
+        }
+
+        avalon.each(target, function (key, value) {
+            walkThrough(value, false)
+        })
+        if (root) {
+            walkedObs.length = 0
+        }
+    }
+    /**
+     * 用户watch回调及页面上的指令都会转换它的实例
+     * @param {type} vm
+     * @param {type} desc
+     * @param {type} callback
+     * @param {type} context
+     * @returns {Watcher}
+     */
+
+    function Watcher(vm, desc, callback, context) {
+        this.vm = vm
+        avalon.mix(this, desc)
+        this.callback = callback
+        this.context = context || this
+        // 依赖 id 缓存
+        this.depIds = []
+        this.newDepIds = []
+        this.shallowIds = []
+        // 依赖实例缓存
+        this.depends = []
+        this.newDepends = []
+        var expr = desc.expr
+        var preSetFunc = typeof expr === 'function'
+        // 缓存取值函数
+        this.getter = preSetFunc ? expr : createGetter(expr)
+        // 缓存设值函数（双向数据绑定）
+        this.setter = this.type === 'duplex' ? createSetter(expr) : null
+        // 缓存表达式旧值
+        this.oldVal = null
+        // 表达式初始值 & 提取依赖
+        this.value = this.get()
+    }
+
+    var wp = Watcher.prototype
+    /**
+     * 获取取值域
+     * @return  {Object}
+     */
+    wp.getScope = function () {
+        return this.context.scope || this.vm
+    }
+
+    wp.getValue = function () {
+        var scope = this.getScope()
+        try {
+            return this.getter.call(scope, scope)
+        } catch (e) {
+            avalon.log(this.getter + 'exec error')
+        }
+    }
+
+    wp.setValue = function (value) {
+        var scope = this.getScope()
+        if (this.setter) {
+            this.setter.call(scope, scope, value)
+        }
+    }
+    wp.get = function () {
+        var value
+        this.beforeGet()
+        value = this.getValue()
+        // 深层依赖获取
+        if (this.deep) {
+            // 先缓存浅依赖的 ids
+            this.shallowIds = copy(this.newDepIds)
+            walkThrough(value, true)
+        }
+
+        this.afterGet()
+        return value
+    }
+
+    wp.beforeGet = function () {
+        Depend.watcher = this
+    }
+
+    wp.addDepend = function (depend) {
+        var guid = depend.guid
+        var newIds = this.newDepIds
+        if (newIds.indexOf(guid) < 0) {
+            newIds.push(guid)
+            this.newDepends.push(depend)
+            if (this.depIds.indexOf(guid) < 0) {
+                depend.addWatcher(this)
             }
         }
     }
-}
-function nodeToFragment(a) {
-    var f = createFragment()
-    while (a.firstChild) {
-        f.appendChild(a.firstChild)
+
+    wp.removeDepends = function (filter) {
+        var self = this
+        this.depends.forEach(function (depend) {
+            if (filter) {
+                if (filter.call(self, depend)) {
+                    depend.removeWatcher(self)
+                }
+            } else {
+                depend.removeWatcher(self)
+            }
+        })
     }
-    return f
-}
-var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
 
-function Render(vm, el) {
-    this.$element = el
-    this.vm = vm
-    this.$queue = []
-    this.$afters = []
-    this.$directives = []
-    this.init()
-}
-
-var cp = Render.prototype
-cp.init = function () {
-    this.$done = false;
-    this.$fragment = nodeToFragment(this.$element);
-    this.getBindings(this.$fragment, true);
-}
-
-
-cp.getBindings = function (element, root) {
-    var childNodes = element.childNodes
-    var scope = this.vm
-    var dirs = getRawBindings(element)
-    if (dirs) {
-        this.$queue.push([element, scope, dirs]);
+    wp.afterGet = function () {
+        Depend.watcher = null
+        // 清除无用的依赖
+        this.removeDepends(function (depend) {
+            return this.newDepIds.indexOf(depend.guid) < 0
+        })
+        // 重设依赖缓存
+        this.depIds = copy(this.newDepIds)
+        this.newDepIds.length = 0
+        this.depends = copy(this.newDepends)
+        this.newDepends.length = 0
     }
-    var childNodes = element.childNodes
-    if (!/style|textarea|xmp|script|template/i.test(element.nodeName)
+
+    wp.beforeUpdate = function () {
+        this.oldVal = copy(this.value)
+    }
+
+    wp.update = function (args, guid) {
+        var oldVal = this.oldVal
+        var newVal = this.value = this.get()
+        var callback = this.callback
+        if (callback && (oldVal !== newVal)) {
+            var fromDeep = this.deep && this.shallowIds.indexOf(guid) < 0
+            callback.call(this.context, newVal, oldVal, fromDeep, args)
+        }
+    }
+
+    wp.destroy = function () {
+        this.value = null
+        this.removeDepends()
+        if (this._destroy) {
+            this._destroy()
+        }
+        for (var i in this) {
+            delete this[i]
+        }
+    }
+
+    //========== 渲染模块 =========
+    function isDirective(directive) {
+        return /^(?:\:|ms-)\w+/.test(directive)
+    }
+
+    function delayCompileNodes(dirs) {
+        for (var i in delayCompile) {
+            if (('ms-' + i) in dirs) {
+                return true
+            }
+        }
+    }
+    var regMustache = /\{\{.+\}\}/
+    function getRawBindings(node) {
+        if (node.nodeType === 1) {
+            var attrs = node.attributes
+            var props = {}, has = false
+            for (var i = 0, n = attrs.length; i < n; i++) {
+                var attr = attrs[i]
+                if (attr.specified) {
+                    var name = attr.name
+                    if (name.charAt(0) === ':') {
+                        name = name.replace(rcolon, 'ms-')
+                    }
+                    if (name.indexOf('ms-') === 0) {
+                        props[name] = attr.value
+                        has = true
+                    }
+
+                }
+            }
+
+            return has ? props : false
+        } else if (node.nodeType === 3) {
+            if (regMustache.test(node.nodeValue)) {
+                return {
+                    nodeValue: node.nodeValue
+                }
+            }
+        }
+    }
+    function emptyNode(a) {
+        var f = createFragment()
+        while (a.firstChild) {
+            f.appendChild(a.firstChild)
+        }
+        return f
+    }
+    avalon.scan = function (vm, el) {
+        return new Render(vm, el)
+    }
+    var eventMap = avalon.oneObject('animationend,blur,change,input,click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit')
+
+    function Render(vm, el) {
+        this.$element = el
+        this.vm = vm
+        this.$queue = []
+        this.$afters = []
+        this.$directives = []
+        this.init()
+    }
+
+    var cp = Render.prototype
+    cp.init = function () {
+        this.$done = false
+        this.$fragment = emptyNode(this.$element)
+        this.getBindings(this.$fragment, true)
+    }
+
+
+    cp.getBindings = function (element, root) {
+        var childNodes = element.childNodes
+        var scope = this.vm
+        var dirs = getRawBindings(element)
+        if (dirs) {
+            this.$queue.push([element, scope, dirs])
+        }
+        var childNodes = element.childNodes
+        if (!/style|textarea|xmp|script|template/i.test(element.nodeName)
             && childNodes
             && childNodes.length
             && !delayCompileNodes(dirs || {})
-            ) {
-        for (var i = 0; i < childNodes.length; i++) {
-            this.getBindings(childNodes[i], false)
+        ) {
+            for (var i = 0; i < childNodes.length; i++) {
+                this.getBindings(childNodes[i], false)
+            }
+        }
+        if (root) {
+            this.compileBindings()
         }
     }
-    if (root) {
-        this.compileBindings();
-    }
-}
 
-cp.compileBindings = function () {
-    this.$queue.forEach(function (tuple) {
-        this.parseBindings(tuple)
-    }, this);
-    this.$element.appendChild(this.$fragment);
-
-    // 触发编译完成后的回调函数
-    this.$afters.forEach(function (after) {
-        after[0].call(after[1]);
-        return null;
-    });
-}
-
-
-
-/**
- * 将收集到的绑定属性进行深加工,最后转换为watcher
- * @param   {Array}  tuple  [node, scope, dirs]
- */
-cp.parseBindings = function (tuple) {
-    var node = tuple[0]
-    var scope = tuple[1]
-    var dirs = tuple[2]
-    if ('nodeValue' in dirs) {
-        this.parseText(node, dirs, scope);
-    } else if (!('ms-skip' in dirs)) {
-        var uniq = {}, bindings = []
-        var directives = avalon.directives
-        for (var name in dirs) {
-            var value = dirs[name]
-            var rbinding = /^(\:|ms\-)\w+/
-            var match = name.match(rbinding)
-            var arr = name.replace(match[1], '').split('-')
-
-            if (eventMap[arr[0]]) {
-                arr.unshift('on')
-            }
-            if (arr[0] === 'on') {
-                arr[2] = parseFloat(arr[2]) || 0
-            }
-            arr.unshift('ms')
-            var type = arr[1]
-            if (directives[type]) {
-
-                var binding = {
-                    type: type,
-                    param: arr[2],
-                    name: arr.join('-'),
-                    expr: value,
-                    priority: directives[type].priority || type.charCodeAt(0) * 100
-                }
-                if (type === 'on') {
-                    binding.priority += arr[3]
-                }
-                if (!uniq[binding.name]) {
-                    uniq[binding.name] = value
-                    bindings.push(binding)
-                    if (type === 'for') {
-                        bindings = [binding]
-                        break
-                    }
-                }
-
-            }
-
-        }
-
-        bindings.forEach(function (binding) {
-            this.parse(node, binding, scope);
+    cp.compileBindings = function () {
+        this.$queue.forEach(function (tuple) {
+            this.parseBindings(tuple)
         }, this)
-    }
-}
+        this.$element.appendChild(this.$fragment)
 
-cp.parse = function (node, binding, scope) {
-    var dir = avalon.directives[binding.type]
-    if (dir) {
-        if (dir.parse) {
-            dir.parse(binding)
+        // 触发编译完成后的回调函数
+        this.$afters.forEach(function (after) {
+            after[0].call(after[1])
+            return null
+        })
+    }
+
+
+
+    /**
+     * 将收集到的绑定属性进行深加工,最后转换为watcher
+     * @param   {Array}  tuple  [node, scope, dirs]
+     */
+    cp.parseBindings = function (tuple) {
+        var node = tuple[0]
+        var scope = tuple[1]
+        var dirs = tuple[2]
+        if ('nodeValue' in dirs) {
+            this.parseText(node, dirs, scope)
+        } else if (!('ms-skip' in dirs)) {
+            var uniq = {}, bindings = []
+            var directives = avalon.directives
+            for (var name in dirs) {
+                var value = dirs[name]
+                var rbinding = /^(\:|ms\-)\w+/
+                var match = name.match(rbinding)
+                var arr = name.replace(match[1], '').split('-')
+
+                if (eventMap[arr[0]]) {
+                    arr.unshift('on')
+                }
+                if (arr[0] === 'on') {
+                    arr[2] = parseFloat(arr[2]) || 0
+                }
+                arr.unshift('ms')
+                var type = arr[1]
+                if (directives[type]) {
+
+                    var binding = {
+                        type: type,
+                        param: arr[2],
+                        name: arr.join('-'),
+                        expr: value,
+                        priority: directives[type].priority || type.charCodeAt(0) * 100
+                    }
+                    if (type === 'on') {
+                        binding.priority += arr[3]
+                    }
+                    if (!uniq[binding.name]) {
+                        uniq[binding.name] = value
+                        bindings.push(binding)
+                        if (type === 'for') {
+                            bindings = [binding]
+                            break
+                        }
+                    }
+
+                }
+
+            }
+
+            bindings.forEach(function (binding) {
+                this.parse(node, binding, scope)
+            }, this)
         }
+    }
+
+    cp.parse = function (node, binding, scope) {
+        var dir = avalon.directives[binding.type]
+        if (dir) {
+            if (dir.parse) {
+                dir.parse(binding)
+            }
+            this.$directives.push(new DirectiveWatcher(node, binding, scope))
+        }
+    }
+
+    cp.parseText = function (node, dir, scope) {
+        var rlineSp = /\n\r?/g
+        var text = dir.nodeValue.trim().replace(rlineSp, '')
+        var pieces = text.split(/\{\{(.+?)\}\}/g)
+        var tokens = []
+        pieces.forEach(function (piece) {
+            var segment = "{{" + piece + "}}"
+            if (text.indexOf(segment) > -1) {
+                tokens.push('(' + piece + ')')
+                text = text.replace(segment, '')
+            } else if (piece) {
+                tokens.push(avalon.quote(piece))
+                text = text.replace(piece, '')
+            }
+        })
+        var binding = {
+            expr: tokens.join('+'),
+            name: 'nodeValue',
+            type: 'nodeValue'
+        }
+
         this.$directives.push(new DirectiveWatcher(node, binding, scope))
     }
-}
 
-cp.parseText = function (node, dir, scope) {
-    var rlineSp = /\n\r?/g
-    var text = dir.nodeValue.trim().replace(rlineSp, '')
-    var pieces = text.split(/\{\{(.+?)\}\}/g)
-    var tokens = []
-    pieces.forEach(function (piece) {
-        var segment = "{{" + piece + "}}"
-        if (text.indexOf(segment) > -1) {
-            tokens.push('(' + piece + ')')
-            text = text.replace(segment, '')
-        } else if (piece) {
-            tokens.push(avalon.quote(piece))
-            text = text.replace(piece, '')
-        }
-    })
-    var binding = {
-        expr: tokens.join('+'),
-        name: 'nodeValue',
-        type: 'nodeValue'
-    }
-
-    this.$directives.push(new DirectiveWatcher(node, binding, scope))
-}
-
-cp.destroy = function () {
-    this.$directives.forEach(function (directive) {
-        directive.destroy();
-    });
-    for (var i in this) {
-        delete this[i]
-    }
-}
-
-//===============
-var stringNum = 0
-var stringPool = {
-    map: {}
-}
-var rfill = /\?\?\d+/g
-function dig(a) {
-    var key = '??' + stringNum++
-    stringPool.map[key] = a
-    return key + ' '
-}
-function fill(a) {
-    var val = stringPool.map[a]
-    return val
-}
-function clearString(str) {
-    var array = readString(str)
-    for (var i = 0, n = array.length; i < n; i++) {
-        str = str.replace(array[i], dig)
-    }
-    return str
-}
-
-function readString(str) {
-    var end, s = 0
-    var ret = []
-    for (var i = 0, n = str.length; i < n; i++) {
-        var c = str.charAt(i)
-        if (!end) {
-            if (c === "'") {
-                end = "'"
-                s = i
-            } else if (c === '"') {
-                end = '"'
-                s = i
-            }
-        } else {
-            if (c === '\\') {
-                i += 1
-                continue
-            }
-            if (c === end) {
-                ret.push(str.slice(s, i + 1))
-                end = false
-            }
+    cp.destroy = function () {
+        this.$directives.forEach(function (directive) {
+            directive.destroy()
+        })
+        for (var i in this) {
+            delete this[i]
         }
     }
-    return ret
-}
-var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false," +
+
+    //===============
+    var stringNum = 0
+    var stringPool = {
+        map: {}
+    }
+    var rfill = /\?\?\d+/g
+    function dig(a) {
+        var key = '??' + stringNum++
+        stringPool.map[key] = a
+        return key + ' '
+    }
+    function fill(a) {
+        var val = stringPool.map[a]
+        return val
+    }
+    function clearString(str) {
+        var array = readString(str)
+        for (var i = 0, n = array.length; i < n; i++) {
+            str = str.replace(array[i], dig)
+        }
+        return str
+    }
+
+    function readString(str) {
+        var end, s = 0
+        var ret = []
+        for (var i = 0, n = str.length; i < n; i++) {
+            var c = str.charAt(i)
+            if (!end) {
+                if (c === "'") {
+                    end = "'"
+                    s = i
+                } else if (c === '"') {
+                    end = '"'
+                    s = i
+                }
+            } else {
+                if (c === '\\') {
+                    i += 1
+                    continue
+                }
+                if (c === end) {
+                    ret.push(str.slice(s, i + 1))
+                    end = false
+                }
+            }
+        }
+        return ret
+    }
+    var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false," +
         "finally,for,function,if,in,instanceof,new,null,return,switch,this," +
         "throw,true,try,typeof,var,void,while,with," + /* 关键字*/
         "abstract,boolean,byte,char,class,const,double,enum,export,extends," +
         "final,float,goto,implements,import,int,interface,long,native," +
         "package,private,protected,public,short,static,super,synchronized," +
         "throws,transient,volatile")
-var skipMap = avalon.mix({
-    Math: 1,
-    Date: 1,
-    $event: 1,
-    __vmodel__: 1
-}, keyMap)
-var rguide = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
-var ruselessSp = /\s*(\.|\|)\s*/g
-var rlocal = /[$a-z_][$\.\w\_]*/gi
-var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
-function addScope(expr) {
-    var body = expr.trim().replace(rregexp, dig)//移除所有正则
-    body = clearString(body)      //移除所有字符串
-    body = body.replace(ruselessSp, '$1').//移除.|两端空白
+    var skipMap = avalon.mix({
+        Math: 1,
+        Date: 1,
+        $event: 1,
+        __vmodel__: 1
+    }, keyMap)
+    var rguide = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g
+    var ruselessSp = /\s*(\.|\|)\s*/g
+    var rlocal = /[$a-z_][$\.\w\_]*/gi
+    var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
+    function addScope(expr) {
+        var body = expr.trim().replace(rregexp, dig)//移除所有正则
+        body = clearString(body)      //移除所有字符串
+        body = body.replace(ruselessSp, '$1').//移除.|两端空白
             replace(rguide, '$1__vmodel__.').//转换@与##
             replace(rlocal, function (a, b) {
                 var arr = a.split('.')
@@ -817,547 +792,550 @@ function addScope(expr) {
                 }
                 return a
             }).replace(rfill, fill).replace(rfill, fill)
-    return body
-}
-function createGetter(expr) {
-    var body = addScope(expr)
-    try {
-        return new Function('__vmodel__', 'return ' + body + ';');
-    } catch (e) {
-        avalon.log('parse getter: ', expr, body, ' error');
-        return avalon.noop
+        return body
     }
-}
-
-/**
- * 生成表达式设值函数
- * @param  {String}  expr
- */
-function createSetter(expr) {
-    var body = addScope(expr)
-    if (body.indexOf('__vmodel__') !== 0) {
-        body = ' __vmodel__.' + body
-    }
-    body = 'try{ ' + body + ' = __value__}catch(e){}'
-    try {
-        return new Function('__vmodel__', '__value__', body + ';');
-    } catch (e) {
-        avalon.log('parse setter: ', expr, ' error');
-        return avalon.noop
-    }
-}
-
-//指令是一个warcher
-function DirectiveWatcher(node, binding, scope) {
-    var type = binding.type
-    var directive = avalon.directives[type]
-    if (node.nodeType === 1) {
-        node.removeAttribute('ms-' + type)
-        node.removeAttribute(':' + type)
-    }
-    var callback = directive.update ? function (value) {
-        directive.update.call(this, node, value)
-    } : avalon.noop
-    var watcher = new Watcher(scope, binding, callback)
-
-    watcher.node = node
-    watcher._destory = directive.destory
-    if (directive.init)
-        directive.init(watcher)
-    delete watcher.value
-    watcher.update()
-    return watcher
-}
-
-avalon.directive('nodeValue', {
-    update: function (node, value) {
-        node.nodeValue = value
-    }
-})
-avalon.directive('attr', {
-    update: function (node, value) {
-        for (var i in value) {
-            node[i] = value[i]
+    function createGetter(expr) {
+        var body = addScope(expr)
+        try {
+            return new Function('__vmodel__', 'return ' + body + ';')
+        } catch (e) {
+            avalon.log('parse getter: ', expr, body, ' error')
+            return avalon.noop
         }
     }
-})
-avalon.directive('on', {
-    init: function (watcher) {
-        var node = watcher.node
-        var body = addScope(watcher.expr)
-        var rhandleName = /^__vmodel__\.[$\w\.]+$/i
-        if (rhandleName.test(body)) {
-            body = body + '($event)'
-        }
 
-        body = body.replace(/__vmodel__\.([^(]+)\(([^)]*)\)/, function (a, b, c) {
-            return '__vmodel__.' + b + ".call(__vmodel__" + (/\S/.test(c) ? ',' + c : "") + ")"
-        })
-        var ret = [
-            'try{',
-            '\tvar __vmodel__ = this;',
-            '\t' + body,
-            '}catch(e){avalon.log(e)}']
-        var fn = new Function('$event', ret.join('\n'))
-        this.eventHandler = function (e) {
-            return fn.call(watcher.vm, e)
+    /**
+     * 生成表达式设值函数
+     * @param  {String}  expr
+     */
+    function createSetter(expr) {
+        var body = addScope(expr)
+        if (body.indexOf('__vmodel__') !== 0) {
+            body = ' __vmodel__.' + body
         }
-        node.addEventListener(watcher.param, this.eventHandler)
-    },
-    destory: function () {
-        this.node.removeEventListener(this.param, this.eventHandler)
+        body = 'try{ ' + body + ' = __value__}catch(e){}'
+        try {
+            return new Function('__vmodel__', '__value__', body + ';')
+        } catch (e) {
+            avalon.log('parse setter: ', expr, ' error')
+            return avalon.noop
+        }
     }
-})
-avalon.directive('if', {
-    delay: true,
-    init: function (watcher) {
-        var node = watcher.node
-        node.removeAttribute('ms-if')
-        node.removeAttribute(':if')
+
+    //指令是一个warcher
+    function DirectiveWatcher(node, binding, scope) {
+        var type = binding.type
+        var directive = avalon.directives[type]
+        if (node.nodeType === 1) {
+            node.removeAttribute('ms-' + type)
+            node.removeAttribute(':' + type)
+        }
+        var callback = directive.update ? function (value) {
+            directive.update.call(this, node, value)
+        } : avalon.noop
+        var watcher = new Watcher(scope, binding, callback)
+
         watcher.node = node
-        var parent = node.parentNode
-        var c = watcher.placeholder = createAnchor('if')
-        parent.replaceChild(c, node)
-        watcher.isShow = true
-        var f = createFragment()
-        f.appendChild(node)
-        watcher.fragment = f.cloneNode(true)
-        watcher.boss = avalon.scan(watcher.vm, f)
-        if (!!watcher.value) {
-            parent.replaceChild(f, c)
-        }
-    },
-    update: function (node, value) {
-        value = !!value
-        if (this.isShow === value)
-            return
-        this.isShow = value
-        if (value) {
-
-            var c = this.placeholder
-            var p = c.parentNode
-            var node = this.fragment.cloneNode(true)
-            this.boss = avalon.scan(this.vm, node)
-            this.node = node.firstChild
-            p.replaceChild(node, c)
-
-        } else {
-
-            var p = this.node.parentNode
-            var c = this.placeholder
-            p.replaceChild(c, this.node)
-            this.boss.destroy()
-        }
-
-
+        watcher._destory = directive.destory
+        if (directive.init)
+            directive.init(watcher)
+        delete watcher.value
+        watcher.update()
+        return watcher
     }
-})
-avalon.directive('html', {
-    update: function (node, value) {
-        this.boss && this.boss.destroy()
-        var div = document.createElement('div')
-        div.innerHTML = value
-        this.boss = avalon.scan(this.vm, div)
-        nodeToFragment(node)
-        node.appendChild(nodeToFragment(div))
-    },
-    delay: true
-})
-avalon.directive('duplex', {
-    init: function (watcher) {
-        var node = watcher.node
-        this.eventHandler = function () {
-            watcher.setValue(node.value)
-        }
-        if (/password|text|hidden/i.test(node.type)) {
-            node.addEventListener('input', this.eventHandler)
-        }
-    },
-    update: function (node, value) {
-        if (/password|text|hidden/i.test(node.type)) {
-            node.value = value
-        }
-    },
-    destory: function () {
-        this.node.removeEventListener('input', this.eventHandler)
-    }
-})
-avalon.directive('text', {
-    delay: true,
-    init: function (watcher) {
-        var node = watcher.node
-        nodeToFragment(node)
-        var child = document.createTextNode(watcher.value)
-        node.appendChild(child)
-        watcher.node = child
-        var type = 'nodeValue'
-        watcher.type = watcher.name = type
-        var directive = avalon.directives[type]
-        watcher.callback = function (value) {
-            directive.update.call(this, watcher.node, value)
-        }
-    }
-})
 
-avalon.directive('text', {
-    delay: true,
-    init: function (watcher) {
-        var node = watcher.node
-        nodeToFragment(node)
-        var child = document.createTextNode(watcher.value)
-        node.appendChild(child)
-        watcher.node = child
-        var type = 'nodeValue'
-        watcher.type = watcher.name = type
-        var directive = avalon.directives[type]
-        watcher.callback = function (value) {
-            directive.update.call(this, watcher.node, value)
+    avalon.directive('nodeValue', {
+        update: function (node, value) {
+            node.nodeValue = value
         }
-    }
-})
+    })
+    avalon.directive('attr', {
+        update: function (node, value) {
+            for (var i in value) {
+                node[i] = value[i]
+            }
+        }
+    })
+    avalon.directive('on', {
+        init: function (watcher) {
+            var node = watcher.node
+            var body = addScope(watcher.expr)
+            var rhandleName = /^__vmodel__\.[$\w\.]+$/i
+            if (rhandleName.test(body)) {
+                body = body + '($event)'
+            }
 
-var none = 'none'
-function getDisplay(el) {
-    return window.getComputedStyle(el, null).display
-}
-function parseDisplay(elem, val) {
-    //用于取得此类标签的默认display值
-    var doc = elem.ownerDocument
-    var nodeName = elem.nodeName
-    var key = '_' + nodeName
-    if (!parseDisplay[key]) {
-        var temp = doc.body.appendChild(doc.createElement(nodeName))
-        val = getDisplay(temp)
-        doc.body.removeChild(temp)
-        if (val === none) {
-            val = 'block'
+            body = body.replace(/__vmodel__\.([^(]+)\(([^)]*)\)/, function (a, b, c) {
+                return '__vmodel__.' + b + ".call(__vmodel__" + (/\S/.test(c) ? ',' + c : "") + ")"
+            })
+            var ret = [
+                'try{',
+                '\tvar __vmodel__ = this;',
+                '\t' + body,
+                '}catch(e){avalon.log(e)}']
+            var fn = new Function('$event', ret.join('\n'))
+            this.eventHandler = function (e) {
+                return fn.call(watcher.vm, e)
+            }
+            node.addEventListener(watcher.param, this.eventHandler)
+        },
+        destory: function () {
+            this.node.removeEventListener(this.param, this.eventHandler)
         }
-        parseDisplay[key] = val
+    })
+    avalon.directive('if', {
+        delay: true,
+        init: function (watcher) {
+            var node = watcher.node
+            node.removeAttribute('ms-if')
+            node.removeAttribute(':if')
+            watcher.node = node
+            var parent = node.parentNode
+            var c = watcher.placeholder = createAnchor('if')
+            parent.replaceChild(c, node)
+            watcher.isShow = true
+            var f = createFragment()
+            f.appendChild(node)
+            watcher.fragment = f.cloneNode(true)
+            watcher.boss = avalon.scan(watcher.vm, f)
+            if (!!watcher.value) {
+                parent.replaceChild(f, c)
+            }
+        },
+        update: function (node, value) {
+            value = !!value
+            if (this.isShow === value)
+                return
+            this.isShow = value
+            if (value) {
+
+                var c = this.placeholder
+                var p = c.parentNode
+                var node = this.fragment.cloneNode(true)
+                this.boss = avalon.scan(this.vm, node)
+                this.node = node.firstChild
+                p.replaceChild(node, c)
+
+            } else {
+
+                var p = this.node.parentNode
+                var c = this.placeholder
+                p.replaceChild(c, this.node)
+                this.boss.destroy()
+            }
+
+
+        }
+    })
+    avalon.directive('html', {
+        update: function (node, value) {
+            this.boss && this.boss.destroy()
+            var div = document.createElement('div')
+            div.innerHTML = value
+            this.boss = avalon.scan(this.vm, div)
+            emptyNode(node)
+            node.appendChild(emptyNode(div))
+        },
+        delay: true
+    })
+    avalon.directive('duplex', {
+        init: function (watcher) {
+            var node = watcher.node
+            this.eventHandler = function () {
+                watcher.setValue(node.value)
+            }
+            if (/password|text|hidden/i.test(node.type)) {
+                node.addEventListener('input', this.eventHandler)
+            }
+        },
+        update: function (node, value) {
+            if (/password|text|hidden/i.test(node.type)) {
+                node.value = value
+            }
+        },
+        destory: function () {
+            this.node.removeEventListener('input', this.eventHandler)
+        }
+    })
+    avalon.directive('text', {
+        delay: true,
+        init: function (watcher) {
+            var node = watcher.node
+            emptyNode(node)
+            var child = document.createTextNode(watcher.value)
+            node.appendChild(child)
+            watcher.node = child
+            var type = 'nodeValue'
+            watcher.type = watcher.name = type
+            var directive = avalon.directives[type]
+            watcher.callback = function (value) {
+                directive.update.call(this, watcher.node, value)
+            }
+        }
+    })
+
+    avalon.directive('text', {
+        delay: true,
+        init: function (watcher) {
+            var node = watcher.node
+            emptyNode(node)
+            var child = document.createTextNode(watcher.value)
+            node.appendChild(child)
+            watcher.node = child
+            var type = 'nodeValue'
+            watcher.type = watcher.name = type
+            var directive = avalon.directives[type]
+            watcher.callback = function (value) {
+                directive.update.call(this, watcher.node, value)
+            }
+        }
+    })
+
+    var none = 'none'
+    function getDisplay(el) {
+        return window.getComputedStyle(el, null).display
     }
-    return parseDisplay[key]
-}
-avalon.directive('skip', {
-    delay: true
-})
-avalon.directive('visible', {
-    init: function (watcher) {
-        watcher.isShow = true
-    },
-    update: function (node, value) {
-        var isShow = !!value
-        if (this.isShow === isShow)
-            return
-        this.isShow = isShow
-        var display = node.style.display
-        if (isShow) {
-            if (display === none) {
-                value = this.displayValue
-                if (!value) {
-                    node.style.display = ''
-                    if (node.style.cssText === '') {
-                        node.removeAttribute('style')
+    function parseDisplay(elem, val) {
+        //用于取得此类标签的默认display值
+        var doc = elem.ownerDocument
+        var nodeName = elem.nodeName
+        var key = '_' + nodeName
+        if (!parseDisplay[key]) {
+            var temp = doc.body.appendChild(doc.createElement(nodeName))
+            val = getDisplay(temp)
+            doc.body.removeChild(temp)
+            if (val === none) {
+                val = 'block'
+            }
+            parseDisplay[key] = val
+        }
+        return parseDisplay[key]
+    }
+    avalon.directive('skip', {
+        delay: true
+    })
+    avalon.directive('visible', {
+        init: function (watcher) {
+            watcher.isShow = true
+        },
+        update: function (node, value) {
+            var isShow = !!value
+            if (this.isShow === isShow)
+                return
+            this.isShow = isShow
+            var display = node.style.display
+            if (isShow) {
+                if (display === none) {
+                    value = this.displayValue
+                    if (!value) {
+                        node.style.display = ''
+                        if (node.style.cssText === '') {
+                            node.removeAttribute('style')
+                        }
                     }
                 }
-            }
-            if (node.style.display === '' && getDisplay(node) === none &&
+                if (node.style.display === '' && getDisplay(node) === none &&
                     // fix firefox BUG,必须挂到页面上
                     node.ownerDocument.contains(node)) {
 
-                value = parseDisplay(node)
-            }
+                    value = parseDisplay(node)
+                }
 
-        } else {
-            if (display !== none) {
-                value = none
-                this.displayValue = display
-            }
-        }
-        function cb() {
-            if (value !== void 0) {
-                node.style.display = value
-            }
-        }
-        cb()
-    }
-})
-var rforAs = /\s+as\s+([$\w]+)/
-var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
-var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
-var rargs = /[$\w_]+/g
-avalon.directive('for', {
-    delay: true,
-    parse: function (binding) {
-        var str = binding.origExpr = binding.expr, asName
-        str = str.replace(rforAs, function (a, b) {
-            /* istanbul ignore if */
-            if (!rident.test(b) || rinvalid.test(b)) {
-                avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.')
             } else {
-                asName = b
+                if (display !== none) {
+                    value = none
+                    this.displayValue = display
+                }
             }
-            return ''
-        })
-
-        var arr = str.split(' in ')
-        var kv = arr[0].match(rargs)
-        if (kv.length === 1) {//确保avalon._each的回调有三个参数
-            kv.unshift('$key')
+            function cb() {
+                if (value !== void 0) {
+                    node.style.display = value
+                }
+            }
+            cb()
         }
-        binding.expr = arr[1]
-        binding.keyName = kv[0]
-        binding.valName = kv[1]
-        binding.signature = avalon.makeHashCode('for')
-        if (asName) {
-            binding.asName = asName
-        }
-    },
-    init: function (watcher) {
-        var begin = createAnchor('ms-for:' + watcher.origExpr)
-        var end = createAnchor('ms-for-end:')
-        var node = watcher.node
-        var p = node.parentNode
-        p.insertBefore(begin, node)
-        p.replaceChild(end, node)
+    })
+    var rforAs = /\s+as\s+([$\w]+)/
+    var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
+    var rinvalid = /^(null|undefined|NaN|window|this|\$index|\$id)$/
+    var rargs = /[$\w_]+/g
+    avalon.directive('for', {
+        delay: true,
+        parse: function (binding) {
+            var str = binding.origExpr = binding.expr, asName
+            str = str.replace(rforAs, function (a, b) {
+                /* istanbul ignore if */
+                if (!rident.test(b) || rinvalid.test(b)) {
+                    avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.')
+                } else {
+                    asName = b
+                }
+                return ''
+            })
 
+            var arr = str.split(' in ')
+            var kv = arr[0].match(rargs)
+            if (kv.length === 1) {//确保avalon._each的回调有三个参数
+                kv.unshift('$key')
+            }
+            binding.expr = arr[1]
+            binding.keyName = kv[0]
+            binding.valName = kv[1]
+            binding.signature = avalon.makeHashCode('for')
+            if (asName) {
+                binding.asName = asName
+            }
+        },
+        init: function (watcher) {
+            var begin = createAnchor('ms-for:' + watcher.origExpr)
+            var end = createAnchor('ms-for-end:')
+            var node = watcher.node
+            var p = node.parentNode
+            p.insertBefore(begin, node)
+            p.replaceChild(end, node)
+
+            var f = createFragment()
+            f.appendChild(node)
+            f.appendChild(createAnchor(watcher.signature))
+            watcher.cache = {}
+            watcher.fragment = f
+            watcher.end = end
+            watcher.node = begin
+            watcher.update = function () {
+                var newVal = this.value = this.get()
+                var traceIds = createFragments(this, newVal)
+                var callback = this.callback
+                // console.log(this.oldTrackIds !== traceIds)
+                if (this.oldTrackIds !== traceIds) {
+                    this.oldTrackIds = traceIds
+                    callback.call(this.context, newVal)
+                }
+            }
+
+        },
+        update: function (node, value) {
+            if (!this.preFragments) {
+                mountList(this)
+            } else {
+                diffList(this)
+                updateList(this)
+            }
+        }
+    })
+
+    function getTraceKey(item) {
+        var type = typeof item
+        return item && type === 'object' ? item.$hashcode : type + ':' + item
+    }
+
+    //创建一组fragment的虚拟DOM
+    function createFragments(watcher, obj) {
+        if (isObject(obj)) {
+            var array = isArray(obj)
+            var ids = []
+            var fragments = [], i = 0
+            avalon.each(obj, function (key, value) {
+                var k = array ? getTraceKey(value) : key
+                fragments.push(new Fragment(k, value, i++))
+                ids.push(k)
+            })
+            if (watcher.fragments) {
+                watcher.preFragments = watcher.fragments
+                watcher.fragments = fragments
+            } else {
+                watcher.fragments = fragments
+            }
+            return ids.join(';;')
+        } else {
+            return NaN
+        }
+    }
+
+
+
+    function mountList(watcher) {
         var f = createFragment()
-        f.appendChild(node)
-        f.appendChild(createAnchor(watcher.signature))
-        watcher.cache = {}
-        watcher.fragment = f
-        watcher.end = end
-        watcher.node = begin
-        watcher.update = function () {
-            var newVal = this.value = this.get()
-            var traceIds = createFragments(this, newVal)
-            var callback = this.callback
-            // console.log(this.oldTrackIds !== traceIds)
-            if (this.oldTrackIds !== traceIds) {
-                this.oldTrackIds = traceIds
-                callback.call(this.context, newVal);
-            }
-        }
-
-    },
-    update: function (node, value) {
-        if (!this.preFragments) {
-            mountFragments(this)
-        } else {
-            updateFragments(this)
-        }
-    }
-})
-
-
-function getTraceKey(item) {
-    var type = typeof item
-    return item && type === 'object' ? item.$hashcode : type + ':' + item
-}
-function createFragment() {
-    return document.createDocumentFragment()
-}
-
-//创建一组fragment的虚拟DOM
-function createFragments(watcher, obj) {
-    if (isObject(obj)) {
-        var array = isArray(obj)
-        var ids = []
-        var fragments = [], i = 0
-        avalon.each(obj, function (key, value) {
-            var k = array ? getTraceKey(value) : key
-            fragments.push(new Fragment(k, value, i++))
-            ids.push(k)
+        watcher.fragments.forEach(function (fragment, index) {
+            FragmentDecorator(fragment, watcher, index)
+            saveInCache(watcher.cache, fragment)
+            f.appendChild(fragment.dom)
         })
-        if (watcher.fragments) {
-            watcher.preFragments = watcher.fragments
-            watcher.fragments = fragments
-        } else {
-            watcher.fragments = fragments
-        }
-        return ids.join(';;')
-    } else {
-        return NaN
+        watcher.end.parentNode.insertBefore(f, watcher.end)
     }
-}
 
-function createAnchor(nodeValue) {
-    return document.createComment(nodeValue)
-}
-function updateFragments(watcher) {
-    var cache = watcher.cache
-    var newCache = {}
-    var fuzzy = []
-    var list = watcher.preFragments
-    list.forEach(function (el) {
-        el._destory = true
-    })
-    //===========  diff ============
-    watcher.fragments.forEach(function (c, index) {
-        var fragment = isInCache(cache, c.key)
-        //取出之前的文档碎片
-        if (fragment) {
-            delete fragment._destory
-            fragment.oldIndex = fragment.index
-            fragment.index = index // 相当于 c.index
-            fragment.vm[watcher.keyName] = index
-            saveInCache(newCache, fragment)
-        } else {
-            //如果找不到就进行模糊搜索
-            fuzzy.push(c)
-        }
-    })
-    var list = watcher.preFragments
-    fuzzy.forEach(function (c) {
-        var fragment = fuzzyMatchCache(cache, c.key)
-        if (fragment) {//重复利用
-            fragment.oldIndex = fragment.index
-            fragment.key = c.key
-            var val = fragment.val = c.val
-            var index = fragment.index = c.index
-            fragment.vm[watcher.valName] = val
-            fragment.vm[watcher.keyName] = index
-            delete fragment._destory
-        } else {
-            fragment = FragmentDecorator(c, watcher, c.index)
-            list.push(fragment)
-        }
-        saveInCache(newCache, fragment)
-    })
-
-    watcher.fragments = list
-    list.sort(function (a, b) {
-        return a.index - b.index
-    })
-    watcher.cache = newCache
-    //===========  diff end ============
-    //===========  update  =============
-    var before = watcher.node
-    var parent = before.parentNode
-    for (var i = 0, item; item = list[i]; i++) {
-        if (item._destory) {
-            list.splice(i, 1)
-            i--
-            item.destory()
-            continue
-        }
-        if (item.ordexIndex !== item.index) {
-            if (item.dom && !item.dom.childNodes.length) {
-                item.move()
-            }
-            parent.insertBefore(item.dom, before.nextSibling)
-        }
-        before = item.split
-    }
-    //===========  update end  ============
-}
-
-
-function mountFragments(watcher) {
-    var f = createFragment()
-    watcher.fragments.forEach(function (fragment, index) {
-        FragmentDecorator(fragment, watcher, index)
-        saveInCache(watcher.cache, fragment)
-        f.appendChild(fragment.dom)
-    })
-    watcher.end.parentNode.insertBefore(f, watcher.end)
-}
-function Fragment(key, val, index) {
-    this.name = '#document-fragment'
-    this.key = key
-    this.val = val
-    this.index = index
-}
-Fragment.prototype = {
-    destory: function () {
-        this.move()
-        this.boss.destroy()
-        for (var i in this) {
-            this[i] = null
-        }
-    },
-    move: function () {
-        var pre = this.split
-        var f = this.dom
-        var list = [pre]
-        var w = this.watcher
-        var a = 10000
-        do {
-            pre = pre.previousSibling
-            if (!pre || pre === w.node || pre.nodeValue === w.signature) {
-                break
-            }
-            list.unshift(pre)
-
-        } while (--a);
+    function diffList(watcher) {
+        var cache = watcher.cache
+        var newCache = {}
+        var fuzzy = []
+        var list = watcher.preFragments
         list.forEach(function (el) {
-            f.appendChild(el)
+            el._destory = true
         })
-        return f
-    }
-}
-/**
- * 
- * @param {type} fragment
- * @param {type} watcher
- * @param {type} index
- * @returns { key, val, index, oldIndex, watcher, dom, split, boss, vm}
- */
-function FragmentDecorator(fragment, watcher, index) {
-    var dom = fragment.dom = watcher.fragment.cloneNode(true)
-    fragment.split = dom.lastChild
-    fragment.watcher = watcher
-    fragment.vm = observeItemObject(watcher.vm, {
-        data: new function () {
-            var data = {}
-            data[watcher.keyName] = fragment.index
-            data[watcher.valName] = fragment.val
-            if (watcher.asName) {
-                data[watcher.asName] = []
+        //===========  diff ============
+        watcher.fragments.forEach(function (c, index) {
+            var fragment = isInCache(cache, c.key)
+            //取出之前的文档碎片
+            if (fragment) {
+                delete fragment._destory
+                fragment.oldIndex = fragment.index
+                fragment.index = index // 相当于 c.index
+                fragment.vm[watcher.keyName] = index
+                saveInCache(newCache, fragment)
+            } else {
+                //如果找不到就进行模糊搜索
+                fuzzy.push(c)
             }
-            return data
-        }
-    })
-    fragment.index = index
-    fragment.boss = avalon.scan(fragment.vm, dom)
-    return fragment
-}
-// 新位置: 旧位置
-function isInCache(cache, id) {
-    var c = cache[id]
-    if (c) {
-        var arr = c.arr
-        /* istanbul ignore if*/
-        if (arr) {
-            var r = arr.pop()
-            if (!arr.length) {
-                c.arr = 0
-            }
-            return r
-        }
-        delete cache[id]
-        return c
-    }
-}
-//[1,1,1] number1 number1_ number1__
-function saveInCache(cache, component) {
-    var trackId = component.key
-    if (!cache[trackId]) {
-        cache[trackId] = component
-    } else {
-        var c = cache[trackId]
-        var arr = c.arr || (c.arr = [])
-        arr.push(component)
-    }
-}
+        })
 
-var rfuzzy = /^(string|number|boolean)/
-var rkfuzzy = /^_*(string|number|boolean)/
-function fuzzyMatchCache(cache) {
-    var key
-    for (var id in cache) {
-        var key = id
-        break
+        fuzzy.forEach(function (c) {
+            var fragment = fuzzyMatchCache(cache, c.key)
+            if (fragment) {//重复利用
+                fragment.oldIndex = fragment.index
+                fragment.key = c.key
+                var val = fragment.val = c.val
+                var index = fragment.index = c.index
+                fragment.vm[watcher.valName] = val
+                fragment.vm[watcher.keyName] = index
+                delete fragment._destory
+            } else {
+                fragment = FragmentDecorator(c, watcher, c.index)
+                list.push(fragment)
+            }
+            saveInCache(newCache, fragment)
+        })
+
+        watcher.fragments = list
+        list.sort(function (a, b) {
+            return a.index - b.index
+        })
+        watcher.cache = newCache
     }
-    if (key) {
-        return isInCache(cache, key)
+    function updateList(watcher) {
+        //===========  diff end ============
+        //===========  update  =============
+        var before = watcher.node
+        var parent = before.parentNode
+        var list = watcher.fragments
+        for (var i = 0, item; item = list[i]; i++) {
+            if (item._destory) {
+                list.splice(i, 1)
+                i--
+                item.destory()
+                continue
+            }
+            if (item.ordexIndex !== item.index) {
+                if (item.dom && !item.dom.childNodes.length) {
+                    item.move()
+                }
+                parent.insertBefore(item.dom, before.nextSibling)
+            }
+            before = item.split
+        }
+        //===========  update end  ============
     }
-}
+
+
+
+    function Fragment(key, val, index) {
+        this.name = '#document-fragment'
+        this.key = key
+        this.val = val
+        this.index = index
+    }
+    Fragment.prototype = {
+        destory: function () {
+            this.move()
+            this.boss.destroy()
+            for (var i in this) {
+                this[i] = null
+            }
+        },
+        move: function () {
+            var pre = this.split
+            var f = this.dom
+            var list = [pre]
+            var w = this.watcher
+            var a = 10000
+            do {
+                pre = pre.previousSibling
+                if (!pre || pre === w.node || pre.nodeValue === w.signature) {
+                    break
+                }
+                list.unshift(pre)
+
+            } while (--a)
+            list.forEach(function (el) {
+                f.appendChild(el)
+            })
+            return f
+        }
+    }
+    /**
+     * 
+     * @param {type} fragment
+     * @param {type} watcher
+     * @param {type} index
+     * @returns { key, val, index, oldIndex, watcher, dom, split, boss, vm}
+     */
+    function FragmentDecorator(fragment, watcher, index) {
+        var dom = fragment.dom = watcher.fragment.cloneNode(true)
+        fragment.split = dom.lastChild
+        fragment.watcher = watcher
+        fragment.vm = observeItemObject(watcher.vm, {
+            data: new function () {
+                var data = {}
+                data[watcher.keyName] = fragment.index
+                data[watcher.valName] = fragment.val
+                if (watcher.asName) {
+                    data[watcher.asName] = []
+                }
+                return data
+            }
+        })
+        fragment.index = index
+        fragment.boss = avalon.scan(fragment.vm, dom)
+        return fragment
+    }
+    // 新位置: 旧位置
+    function isInCache(cache, id) {
+        var c = cache[id]
+        if (c) {
+            var arr = c.arr
+            /* istanbul ignore if*/
+            if (arr) {
+                var r = arr.pop()
+                if (!arr.length) {
+                    c.arr = 0
+                }
+                return r
+            }
+            delete cache[id]
+            return c
+        }
+    }
+    //[1,1,1] number1 number1_ number1__
+    function saveInCache(cache, component) {
+        var trackId = component.key
+        if (!cache[trackId]) {
+            cache[trackId] = component
+        } else {
+            var c = cache[trackId]
+            var arr = c.arr || (c.arr = [])
+            arr.push(component)
+        }
+    }
+
+    var rfuzzy = /^(string|number|boolean)/
+    var rkfuzzy = /^_*(string|number|boolean)/
+    function fuzzyMatchCache(cache) {
+        var key
+        for (var id in cache) {
+            var key = id
+            break
+        }
+        if (key) {
+            return isInCache(cache, key)
+        }
+    }
+
+})()
