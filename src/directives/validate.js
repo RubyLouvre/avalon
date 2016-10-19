@@ -67,6 +67,7 @@ var dir = avalon.directive('validate', {
         })
 
         return Promise.all(promise).then(function (array) {
+            array = array || []
             var reasons = array.concat.apply([], array)
             if (validator.deduplicateInValidateAll) {
                 var uniq = {}
