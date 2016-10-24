@@ -2,37 +2,40 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>Document</title>
-        <script type="text/javascript" src="../dist/avalon.js"></script>
+        <title>arthur.js</title>
+        <script type="text/javascript" src="../dist/arthur.js"></script>
     </head>
     <body>
-        <div ms-controller='widget1' >
-            <xmp ms-widget="{is:'ms-button',aa:@kk}" ms-attr="{title: @aa}">{{@bb}}</xmp>
-
-            <p><button :click="@click">click</button></p>
+        <div ms-controller='test' id="test" >
+            <xmp is='ms-button' >{{@bb}}</xmp>
+            <p>{{@aa}}</p>
+            <ul>
+                <li ms-for="el in @arr">{{el}}</li>
+            </ul>
+            <p><input ms-duplex="@aa">{{@aa}}</p>
+            <input ms-duplex="@bb">{{@bb}}
+            <p><button ms-click="@click" type='button'>click</button></p>
         </div>
         <script type="text/javascript">
            
-//           
+        
 avalon.component('ms-button', {
     template: '<button type="button" ><span><slot /></span></button>',
     defaults: {
         buttonText: "button",
-        onReady: function(){
-            console.log('333')
-        }
     },
     soleSlot: 'buttonText'
 })
-vm = avalon.define({
-    $id: 'widget1',
-    aa: 111,
-    kk: 77,
-    aaa: {
-        buttonText: "vm中的值"
+var vm = avalon.define({
+    $id: 'test',
+    aa: 'aa',
+    bb:'button value',
+    click: function(){
+        alert(this.bb)
     },
-    bb: '动态内容'
+    arr: [1,2,3]
 })
+avalon.scan(document.getElementById('test'),vm)
 
         </script>
     </body>

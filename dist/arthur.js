@@ -124,6 +124,7 @@
         } else {
             vm = observeObject(data)
         }
+        if(vm)
         vm.$events.__dep__ = new Depend()
         return vm
     }
@@ -213,7 +214,7 @@
             Object.defineProperty(array, '$model', modelAccessor)
         }
         array.forEach(function (item, i) {
-            array[i] = createObserver(item, ret)
+            array[i] = createObserver(item, true)
         })
         return array
     }
@@ -549,6 +550,7 @@
         }
     }
     var regMustache = /\{\{.+\}\}/
+    var rcolon = /^(:|ms)-/
     function getRawBindings(node) {
         if (node.nodeType === 1) {
             var attrs = node.attributes
@@ -918,6 +920,14 @@
             }
         }
     })
+     avalon.directive('css', {
+        update: function (node, value) {
+             for (var i in value) {
+                node.style.setPropertyValue(i, value[i])
+            }
+            
+        }
+    })
     avalon.directive('on', {
         init: function (watcher) {
             var node = watcher.node
@@ -1054,6 +1064,8 @@
             }
         }
     })
+   
+    
 
     var none = 'none'
     function getDisplay(el) {
@@ -1170,6 +1182,7 @@
                 if (cb) {
                     watcher.forCb = createGetter(cb)
                 }
+              
             }
             watcher.node = begin
             watcher.end = watcher.node.nextSibling
@@ -1182,7 +1195,6 @@
                 var newVal = this.value = this.get()
                 var traceIds = createFragments(this, newVal)
                 var callback = this.callback
-                // console.log(this.oldTrackIds !== traceIds)
                 if (this.oldTrackIds !== traceIds) {
                     this.oldTrackIds = traceIds
                     callback.call(this.context, newVal)

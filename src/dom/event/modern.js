@@ -166,6 +166,7 @@ function avEvent(event) {
         return this
     }
     for (var i in event) {
+        /* istanbul ignore if */
         if (!rconstant.test(i) && typeof event[i] !== 'function') {
             this[i] = event[i]
         }
@@ -228,6 +229,7 @@ if (!('onmouseenter' in root)) {
     })
 }
 //针对IE9+, w3c修正animationend
+/* istanbul ignore next */
 avalon.each({
     AnimationEvent: 'animationend',
     WebKitAnimationEvent: 'webkitAnimationEnd'
