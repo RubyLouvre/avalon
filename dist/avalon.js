@@ -1,14 +1,14 @@
 
 /*!
- * built in 2016-10-10:21 version 2.1.16 by 司徒正美
+ * built in 2016-10-10:21 version 2.1.16.Enhanced Edition by 司徒正美
  * https://github.com/RubyLouvre/avalon/tree/2.1.7
- *     fix parseExpr BUG #1768 与 #1765
- *     优化ms-effect指令,与ms-css指令共同相同的diff
- *     data-duplex-changed回调支持更多参数
- *     处理$watch监听复杂数BUG #1762
- *     处理date过滤器不解析 BUG
- *     重构ms-important后面的指令不执行的BUG
- *     改成es6 modules组织依赖,rollup.js打包
+ *     解决$render方法不存在的BUG， 这个是老BUG，在2.1.14已经修了
+ *     fix IE6 fixEvent BUG
+ *     fix IE6-8 script元素由虚拟DOM变成DOM的BUG
+ *     fix IE6-8 对noscript元素innerText操作时抛错的BUG
+ *     fix IE6-8 对opacity对值不正确的BUG
+ *     fix  Object.freeze方法不存在的BUG
+ *     添加可用的arthur.js迷你库
  */
 ;;;
 
@@ -57,7 +57,7 @@
 	   avalon.shadowCopy(avalon, {
 		noop: function () {
 		},
-		version: "2.1.16",
+		version: "2.1.161",
 		//切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach
 		rword: rword,
 		inspect: ({}).toString,
@@ -1565,7 +1565,9 @@
 	           var template = c[0] ? c[0].nodeValue : ''
 	           switch (this.nodeName) {
 	               case 'script':
+				       dom.type = 'noexec'
 	                   dom.text = template
+					   dom.type = props.type || ''
 	                   break
 	               case 'style':
 	                   if ('styleSheet' in dom) {
@@ -1577,7 +1579,7 @@
 	                   break
 	               case 'xmp'://IE6-8,XMP元素里面只能有文本节点,不能使用innerHTML
 	               case 'noscript':
-	                   dom.innerText = dom.textContent = template
+	                   dom.textContent = template
 	                   break
 	               case 'template':
 	                   dom.innerHTML = template
@@ -1739,7 +1741,6 @@
 
 	   function fixCloneNode(src) {
 	       var target = src.cloneNode(true)
-	       var t = getAll(target)
 	       var s = getAll(src)
 	       for (var i = 0; i < s.length; i++) {
 	           fix(t[i], s[i])
@@ -2262,10 +2263,17 @@
 	           }
 	       }
 	       cssHooks$1['opacity:get'] = function (node) {
-	           //这是最快的获取IE透明值的方式，不需要动用正则了！
-	           var alpha = node.filters.alpha || node.filters[salpha],
-	               op = alpha && alpha.enabled ? alpha.opacity : 100
-	           return (op / 100) + '' //确保返回的是字符串
+			    var ropactiy = /(opacity|\d(\d|\.)*)/g
+	            var match = node.style.filter.match(ropactiy) || []
+				var ret = false
+				for (var i = 0, el; el = match[i++];) {
+					if (el === 'opacity') {
+						ret = true
+					} else if (ret) {
+						return (el / 100) + ''
+					}
+				}
+				return '1' //确保返回的是字符串
 	       }
 	   }
 
@@ -2660,7 +2668,7 @@
 	   var rconstant = /^[A-Z_]+$/
 	   function avEvent(event) {
 	       if (event.originalEvent) {
-	           return this
+	           return event
 	       }
 	       for (var i in event) {
 	           if (!rconstant.test(i) && typeof event[i] !== 'function') {
@@ -5269,7 +5277,7 @@
 	           var promises = []
 	           var value = field.value
 	           var elem = field.dom
-	           var validator = field.validator
+	           var validator = field.validator 
 	           /* istanbul ignore if */
 	           if (typeof Promise !== 'function') {
 	               avalon.error('please npm install avalon-promise or bluebird')

@@ -651,7 +651,6 @@
         if (dirs) {
             this.queue.push([element, scope, dirs])
         }
-        var childNodes = element.childNodes
         if (!/style|textarea|xmp|script|template/i.test(element.nodeName)
                 && childNodes
                 && childNodes.length
@@ -1031,23 +1030,6 @@
             this.node.removeEventListener('input', this.eventHandler)
         }
     })
-    avalon.directive('text', {
-        delay: true,
-        init: function (watcher) {
-            var node = watcher.node
-            emptyNode(node)
-            var child = document.createTextNode(watcher.value)
-            node.appendChild(child)
-            watcher.node = child
-            var type = 'nodeValue'
-            watcher.type = watcher.name = type
-            var directive = avalon.directives[type]
-            watcher.callback = function (value) {
-                directive.update.call(this, watcher.node, value)
-            }
-        }
-    })
-
     avalon.directive('text', {
         delay: true,
         init: function (watcher) {

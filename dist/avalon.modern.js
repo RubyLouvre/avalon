@@ -1,13 +1,13 @@
 /*!
- * built in 2016-10-10:21 version 2.1.16 by 司徒正美
+ * built in 2016-10-10:21 version 2.1.16.Enhanced Edition by 司徒正美
  * https://github.com/RubyLouvre/avalon/tree/2.1.7
- *     fix parseExpr BUG #1768 与 #1765
- *     优化ms-effect指令,与ms-css指令共同相同的diff
- *     data-duplex-changed回调支持更多参数
- *     处理$watch监听复杂数BUG #1762
- *     处理date过滤器不解析 BUG
- *     重构ms-important后面的指令不执行的BUG
- *     改成es6 modules组织依赖,rollup.js打包
+ *     解决$render方法不存在的BUG， 这个是老BUG，在2.1.14已经修了
+ *     fix IE6 fixEvent BUG
+ *     fix IE6-8 script元素由虚拟DOM变成DOM的BUG
+ *     fix IE6-8 对noscript元素innerText操作时抛错的BUG
+ *     fix IE6-8 对opacity对值不正确的BUG
+ *     fix  Object.freeze方法不存在的BUG
+ *     添加可用的arthur.js迷你库
  */
 ;;;
 
@@ -56,7 +56,7 @@
 	   avalon.shadowCopy(avalon, {
 		noop: function () {
 		},
-		version: "2.1.16",
+		version: "2.1.161",
 		//切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach
 		rword: rword,
 		inspect: ({}).toString,
@@ -1360,12 +1360,12 @@
 	       return ret
 	   }
 
-	var arrayFilters = Object.freeze({
+	var arrayFilters = {
 	       orderBy: orderBy,
 	       filterBy: filterBy,
 	       selectBy: selectBy,
 	       limitBy: limitBy
-	   });
+	   }
 
 	   var eventFilters = {
 	       stop: function (e) {
@@ -1564,7 +1564,9 @@
 	           var template = c[0] ? c[0].nodeValue : ''
 	           switch (this.nodeName) {
 	               case 'script':
+				       dom.type = 'noexec'
 	                   dom.text = template
+					   dom.type = props.type || ''
 	                   break
 	               case 'style':
 	                   if ('styleSheet' in dom) {
@@ -2659,7 +2661,7 @@
 	   var rconstant = /^[A-Z_]+$/
 	   function avEvent(event) {
 	       if (event.originalEvent) {
-	           return this
+	           return event
 	       }
 	       for (var i in event) {
 	           if (!rconstant.test(i) && typeof event[i] !== 'function') {
