@@ -1,5 +1,5 @@
 /*!
- * built in 2016-10-10:21 version 2.1.16.Enhanced Edition by 司徒正美
+ * built in 2016-10-10:21 version 2.1.16ee (Enhanced Edition) by 司徒正美
  * https://github.com/RubyLouvre/avalon/tree/2.1.7
  *     解决$render方法不存在的BUG， 这个是老BUG，在2.1.14已经修了
  *     fix IE6 fixEvent BUG
@@ -56,7 +56,7 @@
 	   avalon.shadowCopy(avalon, {
 		noop: function () {
 		},
-		version: "2.1.161",
+		version: "2.1.16.1",
 		//切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach
 		rword: rword,
 		inspect: ({}).toString,
