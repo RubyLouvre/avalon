@@ -209,16 +209,6 @@
     }
     
     function observeArray(array, rewrite, ret) {
-        if (!rewrite){
-            rewriteArrayMethods(array)
-            Object.defineProperty(array, '$model', modelAccessor)
-        }
-        array.forEach(function (item, i) {
-            array[i] = createObserver(item, true)
-        })
-        return array
-    }
-
     function createAccessor(key, val, core) {
         var value = val
         var childOb = createObserver(val)

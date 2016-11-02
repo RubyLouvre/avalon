@@ -1,14 +1,8 @@
 
 /*!
- * built in 2016-10-10:21 version 2.1.16.1 (Enhanced Edition) by 司徒正美
- * https://github.com/RubyLouvre/avalon/tree/2.1.7
- *     解决$render方法不存在的BUG， 这个是老BUG，在2.1.14已经修了
- *     fix IE6 fixEvent BUG
- *     fix IE6-8 script元素由虚拟DOM变成DOM的BUG
- *     fix IE6-8 对noscript元素innerText操作时抛错的BUG
- *     fix IE6-8 对opacity对值不正确的BUG
- *     fix  Object.freeze方法不存在的BUG
- *     添加可用的arthur.js迷你库
+ * built in 2016-11-2:13 version 2.1.17 by 司徒正美
+ * https://github.com/RubyLouvre/avalon/tree/2.1.8
+ *     修复validate BUG
  */
 ;;;
 
@@ -57,7 +51,7 @@
 	   avalon.shadowCopy(avalon, {
 		noop: function () {
 		},
-		version: "2.1.16.1",
+		version: "2.1.17",
 		//切割字符串为一个个小块，以空格或逗号分开它们，结合replace实现字符串的forEach
 		rword: rword,
 		inspect: ({}).toString,
@@ -5257,13 +5251,13 @@
 			/* istanbul ignore if */
 			if (validator.validateInKeyup && (!field.isChanged && !field.debounceTime)) {
 				avalon.bind(node, 'keyup', function (e) {
-					validator.validate(field, 0, e)
+					valiDir.validate(field, 0, e)
 				})
 			}
 			/* istanbul ignore if */
 			if (validator.validateInBlur) {
 				avalon.bind(node, 'blur', function (e) {
-					validator.validate(field, 0, e)
+					valiDir.validate(field, 0, e)
 				})
 			}
 			/* istanbul ignore if */

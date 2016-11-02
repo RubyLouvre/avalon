@@ -3,7 +3,7 @@ import {avalon} from '../seed/core'
 import numberFilter from "./number"
 import sanitizeFilter from "./sanitize"
 import dateFilter from "./date"
-import * as arrayFilters from "./array"
+import {limitBy, filterBy, selectBy, orderBy} from "./array"
 import eventFilters from "./event"
 import escapeFilter from "./escape"
 
@@ -43,6 +43,6 @@ avalon.mix(filters, {
             numberFilter(amount,
                 isFinite(fractionSize) ?/* istanbul ignore else*/ fractionSize : 2)
     }
-}, arrayFilters, eventFilters)
+}, {limitBy, filterBy, selectBy, orderBy}, eventFilters)
 
 
