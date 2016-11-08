@@ -100,13 +100,22 @@ if (typeof getComputedStyle === 'function') {
         return ret
     }
     cssHooks['opacity:get'] = function (node) {
-        var ret = cssHooks['@:get'](node, 'opacity')
-        return ret === '' ? '1' : ret
+       var match = node.style.filter.match(ropactiy) || []
+        var ret = false
+        for (var i = 0, el; el = match[i++];) {
+            if (el === 'opacity') {
+                ret = true
+            } else if (ret) {
+                return (el / 100) + ''
+            }
+        }
+        return '1' //确保返回的是字符串
     }
 } else {
     var rnumnonpx = /^-?(?:\d*\.)?\d+(?!px)[^\d\s]+$/i
     var rposition = /^(top|right|bottom|left)$/
     var ralpha = /alpha\([^)]*\)/i
+    var ropactiy = /(opacity|\d(\d|\.)*)/g
     var ie8 = avalon.msie === 8
     var salpha = 'DXImageTransform.Microsoft.Alpha'
     var border = {
@@ -146,23 +155,30 @@ if (typeof getComputedStyle === 'function') {
     }
     cssHooks['opacity:set'] = function (node, name, value) {
         var style = node.style
-        var opacity = isFinite(value) && value <= 1 ? 'alpha(opacity=' + value * 100 + ')' : ''
+        var opacity = Number(value) <= 1 ? 'alpha(opacity=' + value * 100 + ')' : ''
         var filter = style.filter || ''
         style.zoom = 1
         //不能使用以下方式设置透明度
         //node.filters.alpha.opacity = value * 100
         style.filter = (ralpha.test(filter) ?
-                filter.replace(ralpha, opacity) :
-                filter + ' ' + opacity).trim()
+            filter.replace(ralpha, opacity) :
+            filter + ' ' + opacity).trim()
+
         if (!style.filter) {
             style.removeAttribute('filter')
         }
     }
     cssHooks['opacity:get'] = function (node) {
-        //这是最快的获取IE透明值的方式，不需要动用正则了！
-        var alpha = node.filters.alpha || node.filters[salpha],
-                op = alpha && alpha.enabled ? alpha.opacity : 100
-        return (op / 100) + '' //确保返回的是字符串
+       var match = node.style.filter.match(ropactiy) || []
+        var ret = false
+        for (var i = 0, el; el = match[i++];) {
+            if (el === 'opacity') {
+                ret = true
+            } else if (ret) {
+                return (el / 100) + ''
+            }
+        }
+        return '1' //确保返回的是字符串
     }
 }
 
