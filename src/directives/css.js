@@ -1,12 +1,12 @@
 
 var update = require('./_update')
-
+var share = requrire('../vmodel/parts/share')
 avalon.directive('css', {
     diff: function (copy, src, name, hookName) {
         var a = copy[name]
         var p = src[name]
         if (Object(a) === a) {
-            a = a.$model || a//安全的遍历VBscript
+            a = share.toJson(a)//安全的遍历VBscript
             if (Array.isArray(a)) {//转换成对象
                 var b = {}
                 a.forEach(function (el) {
