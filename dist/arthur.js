@@ -1463,5 +1463,6 @@
          */
         avalon.components[name] = component
     }
+  }
 })()
 
