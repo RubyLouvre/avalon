@@ -1,76 +1,52 @@
-var Cache = require('../seed/cache')
-var eventCache = new Cache(128)
-var update = require('./_update')
-var markID = require('../seed/lang.share').getLongID
+import { avalon, inBrowser } from '../seed/core'
 
-var rmson = /^ms\-on\-(\w+)/
-//基于事件代理的高性能事件绑定
+import { addScope, makeHandle } from '../parser/index'
+
 avalon.directive('on', {
-    priority: 3000,
-    parse: function (copy, src, binding) {
-        var underline = binding.name.replace('ms-on-', 'e').replace('-', '_')
-        var uuid = underline + '_' + binding.expr.
-                replace(/\s/g, '').
-                replace(/[^$a-z]/ig, function (e) {
-                    return e.charCodeAt(0)
-                })
-
-        var quoted = avalon.quote(uuid)
-        var fn = '(function(){\n' +
-                'var fn610 = ' +
-                avalon.parseExpr(binding) +
-                '\nfn610.uuid =' + quoted + ';\nreturn fn610})()'
-        copy.vmodel = '__vmodel__'
-        copy.local = '__local__'
-        copy[binding.name] = fn
-
+    beforeInit: function () {
+        this.getter = avalon.noop
     },
-    diff: function (copy, src, name) {
-        var fn = copy[name]
-        var uuid = fn.uuid
-        var srcFn = src[name] || {}
-        var hasChange = false
+    init: function () {
+        var vdom = this.node
+        var underline = this.name.replace('ms-on-', 'e').replace('-', '_')
+        var uuid = underline + '_' + this.expr.
+            replace(/\s/g, '').
+            replace(/[^$a-z]/ig, function (e) {
+                return e.charCodeAt(0)
+            })
+        var fn = avalon.eventListeners[uuid]
+        if (!fn) {
+            var arr = addScope(this.expr)
+            var body = arr[0], filters = arr[1]
+            body = makeHandle(body)
 
-        if (!src.dynamic[name] || srcFn.uuid !== uuid) {
-            src[name] = fn
-            avalon.eventListeners[uuid] = fn
-            hasChange = true
-        }
-
-        if (diffObj(src.local || {}, copy.local)) {
-            hasChange = true
-        }
-        if (hasChange) {
-            src.local = copy.local
-            src.vmodel = copy.vmodel
-            update(src, this.update)
-        }else if(src.dom){
-            src.dom._ms_local = copy.local
-        }
-    },
-    update: function (dom, vdom) {
-        if (dom && dom.nodeType === 1) { //在循环绑定中，这里为null
-            var key, listener
-            dom._ms_context_ = vdom.vmodel
-            dom._ms_local = vdom.local
-            for (key in vdom) {
-                var match = key.match(rmson)
-                if (match) {
-                    listener = vdom[key]
-                    vdom.dynamic[key] = 1
-                    avalon.bind(dom, match[1], listener)
-                }
+            if (filters) {
+                filters = filters.replace(/__value__/g, '$event')
+                filters += '\nif($event.$return){\n\treturn;\n}'
             }
+            var ret = [
+                'try{',
+                '\tvar __vmodel__ = this;',
+                '\t' + filters,
+                '\treturn ' + body,
+                '}catch(e){avalon.log(e, "in on dir")}'].filter(function (el) {
+                    return /\S/.test(el)
+                })
+            fn = new Function('$event', ret.join('\n'))
+            fn.uuid = uuid
+            avalon.eventListeners[uuid] = fn
         }
+
+
+        var dom = avalon.vdom(vdom, 'toDOM')
+        dom._ms_context_ = this.vm
+
+        this.eventType = this.param.replace(/\-(\d)$/, '')
+        delete this.param
+        avalon(dom).bind(this.eventType, fn)
+    },
+
+    beforeDestroy: function () {
+        avalon(this.node.dom).unbind(this.eventType)
     }
 })
-
-function diffObj(a, b) {
-    for (var i in a) {//diff差异点
-        if (a[i] !== b[i]) {
-            return true
-        }
-    }
-    return false
-}
-

@@ -1,17 +1,15 @@
-var avalon = require('../../seed/core')
+import { avalon } from '../../seed/core'
+import { getDuplexType } from './getDuplexType'
+export { getDuplexType }
 
-function getValType(elem) {
-    var ret = elem.tagName.toLowerCase()
-    return ret === 'input' && /checkbox|radio/.test(elem.type) ? 'checked' : ret
-}
+
 var valHooks = {
     'select:get': function self(node, ret, index, singleton) {
         var nodes = node.children, value,
-                getter = valHooks['option:get']
-        index = ret ? index : node.selectedIndex
+            index = ret ? index : node.selectedIndex
         singleton = ret ? singleton : node.type === 'select-one' || index < 0
         ret = ret || []
-        for (var i = 0, el; el = nodes[i++]; ) {
+        for (var i = 0, el; el = nodes[i++];) {
             if (!el.disabled) {
                 switch (el.nodeName.toLowerCase()) {
                     case 'option':
@@ -37,7 +35,7 @@ var valHooks = {
     },
     'select:set': function (node, values, optionSet) {
         values = [].concat(values) //强制转换为数组
-        for (var i = 0, el; el = node.options[i++]; ) {
+        for (var i = 0, el; el = node.options[i++];) {
             if ((el.selected = values.indexOf(el.value) > -1)) {
                 optionSet = true
             }
@@ -53,7 +51,7 @@ avalon.fn.val = function (value) {
     if (node && node.nodeType === 1) {
         var get = arguments.length === 0
         var access = get ? ':get' : ':set'
-        var fn = valHooks[getValType(node) + access]
+        var fn = valHooks[getDuplexType(node) + access]
         if (fn) {
             var val = fn(node, value)
         } else if (get) {

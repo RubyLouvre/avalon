@@ -1,23 +1,20 @@
-require('./important')
-require('./controller')
-//处理属性样式
-require('./attr.modern')
-require('./css')
-require('./visible')
-//处理内容
-require('./expr')
-require('./text')
-require('./html')
-//需要用到事件的
-require('./class.hover.active')
-require('./on')
-require('./duplex/modern')
-require('./validate')
-require('./rules')
+import './important'
+import './controller'
 
-//处理逻辑
-require('./if.modern')
-require('./for')
+import './skip'
+import './visible'
+import './text'
 
-require('./widget')
-require('./effect')
+import './css'
+import './expr'
+
+import './attr.modern'
+import './html'
+import './if'
+import './on'
+import './for'
+
+import './class.hover.active'
+import './duplex/modern'
+import './rules'
+import './validate'

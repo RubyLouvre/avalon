@@ -1,4 +1,4 @@
-var propMap = {//不规则的属性名映射
+export var propMap = {//不规则的属性名映射
     'accept-charset': 'acceptCharset',
     'char': 'ch',
     charoff: 'chOff',
@@ -35,4 +35,4 @@ anomaly.replace(/\w+/g, function (name) {
     propMap[name.toLowerCase()] = name
 })
 
-module.exports = propMap
+//module.exports = propMap

@@ -1,4 +1,3 @@
-
 /*
  https://github.com/rsms/js-lru
  entry             entry             entry             entry        
@@ -9,7 +8,7 @@
  
  removed  <--  <--  <--  <--  <--  <--  <--  <--  <--  <--  <--  added 
  */
-function LRU(maxLength) {
+export function Cache(maxLength) {
     // 标识当前缓存数组的大小
     this.size = 0
     // 标识缓存数组能达到的最大长度
@@ -20,9 +19,9 @@ function LRU(maxLength) {
     this._keymap = {}
 }
 
-var p = LRU.prototype
+var cp = Cache.prototype
 
-p.put = function (key, value) {
+cp.put = function (key, value) {
     var entry = {
         key: key,
         value: value
@@ -47,7 +46,7 @@ p.put = function (key, value) {
     return value
 }
 
-p.shift = function () {
+cp.shift = function () {
     /* istanbul ignore next */
     var entry = this.head
     /* istanbul ignore if */
@@ -56,16 +55,16 @@ p.shift = function () {
         this.head = this.head.newer
         // 同步更新 _keymap 里面的属性值
         this.head.older =
-                entry.newer =
-                entry.older =
-                this._keymap[entry.key] =
-                void 0
+            entry.newer =
+            entry.older =
+            this._keymap[entry.key] =
+            void 0
         delete this._keymap[entry.key] //#1029
         // 同步更新 缓存数组的长度
         this.size--
     }
 }
-p.get = function (key) {
+cp.get = function (key) {
     var entry = this._keymap[key]
     // 如果查找不到含有`key`这个属性的缓存对象
     if (entry === void 0)
@@ -109,4 +108,4 @@ p.get = function (key) {
     return entry.value
 }
 
-module.exports = LRU
+

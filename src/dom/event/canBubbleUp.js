@@ -1,6 +1,6 @@
 //http://www.feiesoft.com/html/events.html
 //http://segmentfault.com/q/1010000000687977/a-1020000000688757
-module.exports = {
+export var canBubbleUp = {
     click: true,
     dblclick: true,
     keydown: true,

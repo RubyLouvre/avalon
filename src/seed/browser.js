@@ -1,38 +1,29 @@
-var avalon = require('./core')
-var window = Function(' return this')() || this
-var browser = {
-    window: window,
-    document: {//方便在nodejs环境不会报错
-        createElement: Object,
-        createElementNS: Object,
-        contains: Boolean
-    },
-    root: {
-        outerHTML: 'x'
-    },
-    msie: NaN,
-    browser: false,
-    modern: true,
-    avalonDiv: {},
-    avalonFragment: null
-}
-window.avalon = avalon
+export let win = typeof window === 'object' ? window :
+    typeof global === 'object' ? global : {}
+    
+export let inBrowser = !!win.location && win.navigator
 /* istanbul ignore if  */
-if (window.location && window.navigator && window.window) {
-    var doc = window.document
-    browser.browser = true
-    browser.document = doc
-    browser.root = doc.documentElement
-    browser.avalonDiv = doc.createElement('div')
-    browser.avalonFragment = doc.createDocumentFragment()
-    if (window.VBArray) {
-        browser.msie = doc.documentMode || (window.XMLHttpRequest ? 7 : 6)
-        browser.modern = browser.msie > 8
-    } else {
-        browser.modern = true
-    }
+
+
+export let document = inBrowser ? win.document : {
+    createElement: Object,
+    createElementNS: Object,
+    documentElement: 'xx',
+    contains: Boolean
+}
+export var root = inBrowser ? document.documentElement : {
+    outerHTML: 'x'
 }
 
-avalon.shadowCopy(avalon, browser)
+let versions = {
+    objectobject: 7,//IE7-8
+    objectundefined: 6,//IE6
+    undefinedfunction: NaN,// other modern browsers
+    undefinedobject: NaN //Mobile Safari 8.0.0 (iOS 8.4.0) 
+}
+/* istanbul ignore next  */
+export var msie =  document.documentMode ||
+    versions[typeof document.all + typeof XMLHttpRequest]
 
+export var modern = /NaN/.test(msie) || msie > 8 
 

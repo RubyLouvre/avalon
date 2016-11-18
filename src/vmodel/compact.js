@@ -1,309 +1,240 @@
-/**
- * ------------------------------------------------------------
- * avalon基于纯净的Object.defineProperties的vm工厂 
- * masterFactory,slaveFactory,mediatorFactory, ArrayFactory
- * ------------------------------------------------------------
- */
+import { avalon, platform, modern, msie } from '../seed/core'
+import { $$skipArray } from './reserved'
+import { Directive } from '../renders/Directive'
+import './share'
+import './ProxyArray'
 
-var share = require('./parts/compact')
-var createViewModel = require('./parts/createViewModel')
+export { avalon, platform, itemFactory }
 
-var isSkip = share.isSkip
-var toJson = share.toJson
-var $$midway = share.$$midway
-var $$skipArray = share.$$skipArray
-
-var makeAccessor = share.makeAccessor
-var initViewModel = share.initViewModel
-var modelAccessor = share.modelAccessor
-var modelAdaptor = share.modelAdaptor
-var makeHashCode = avalon.makeHashCode
-
-
-//一个vm总是为Observer的实例
-function Observer() {
-}
-
-function masterFactory(definition, heirloom, options) {
-
-    var $skipArray = {}
-    if (definition.$skipArray) {//收集所有不可监听属性
-        $skipArray = avalon.oneObject(definition.$skipArray)
-        delete definition.$skipArray
-    }
-
-    var keys = {}
-    options = options || {}
-    heirloom = heirloom || {}
-    var accessors = {}
-    var hashcode = makeHashCode('$')
-    var pathname = options.pathname || ''
-    options.id = options.id || hashcode
-    options.hashcode = options.hashcode || hashcode
-    var key, sid, spath
-    for (key in definition) {
-        if ($$skipArray[key])
-            continue
-        var val = keys[key] = definition[key]
-        if (!isSkip(key, val, $skipArray)) {
-            sid = options.id + '.' + key
-            spath = pathname ? pathname + '.' + key : key
-            accessors[key] = makeAccessor(sid, spath, heirloom)
-        }
-    }
-
-    accessors.$model = modelAccessor
-    var $vmodel = new Observer()
-    $vmodel = createViewModel($vmodel, accessors, definition)
-
-    for (key in keys) {
-        //对普通监控属性或访问器属性进行赋值
-        $vmodel[key] = keys[key]
-
-        //删除系统属性
-        if (key in $skipArray) {
-            delete keys[key]
-        } else {
-            keys[key] = true
-        }
-    }
-    initViewModel($vmodel, heirloom, keys, accessors, options)
-
-    return $vmodel
-}
-
-$$midway.masterFactory = masterFactory
-var empty = {}
-function slaveFactory(before, after, heirloom, options) {
-    var keys = {}
-    var skips = {}
-    var accessors = {}
-    heirloom = heirloom || {}
-    var pathname = options.pathname
-    var resue = before.$accessors || {}
-    var key, sid, spath
-    for (key in after) {
-        if ($$skipArray[key])
-            continue
-        keys[key] = true//包括可监控与不可监控的
-        if (!isSkip(key, after[key], empty)) {
-            if (resue[key]) {
-                accessors[key] = resue[key]
-            } else {
-                sid = options.id + '.' + key
-                spath = pathname ? pathname + '.' + key : key
-                accessors[key] = makeAccessor(sid, spath, heirloom)
-            }
-        } else {
-            skips[key] = after[key]
-            delete after[key]
-        }
-    }
-
-    options.hashcode = before.$hashcode || makeHashCode('$')
-    accessors.$model = modelAccessor
-    var $vmodel = new Observer()
-    $vmodel = createViewModel($vmodel, accessors, skips)
-
-    for (key in skips) {
-        $vmodel[key] = skips[key]
-    }
-
-    initViewModel($vmodel, heirloom, keys, accessors, options)
-
-    return $vmodel
-}
-
-$$midway.slaveFactory = slaveFactory
-
-function mediatorFactory(before, after) {
-    var keys = {}, key
-    var accessors = {}//新vm的访问器
-    var unresolve = {}//需要转换的属性集合
-    var heirloom = {}
-    var arr = avalon.slice(arguments)
-    var $skipArray = {}
-    var isWidget = typeof this === 'function' && this.isWidget
-    var config
-    var configName
-    for (var i = 0; i < arr.length; i++) {
-        var obj = arr[i]
-        //收集所有键值对及访问器属性
-        var $accessors = obj.$accessors
-        for (var key in obj) {
-            if (!obj.hasOwnProperty(key)) {
-                continue
-            }
-            var cur = obj[key]
-            if (key === '$skipArray') {//处理$skipArray
-                if (Array.isArray(cur)) {
-                    cur.forEach(function (el) {
-                        $skipArray[el] = 1
-                    })
-                }
-                continue
-            }
-
-            if (isWidget && arr.indexOf(cur) !== -1) {//处理配置对象
-                config = cur
-                configName = key
-                continue
-            }
-
-            keys[key] = cur
-            if (accessors[key] && avalon.isObject(cur)) {//处理子vm
-                delete accessors[key]
-            }
-            if ($accessors && $accessors[key]) {
-                accessors[key] = $accessors[key]
-            } else if (typeof keys[key] !== 'function') {
-                unresolve[key] = 1
-            }
-        }
-    }
-
-
-    if (typeof this === 'function') {
-        this(keys, unresolve)
-    }
-    for (key in unresolve) {
-        //系统属性跳过,已经有访问器的属性跳过
-        if ($$skipArray[key] || accessors[key])
-            continue
-        if (!isSkip(key, keys[key], $skipArray)) {
-         
-            accessors[key] = makeAccessor(before.$id, key, heirloom)
-            accessors[key].set(keys[key])
-        }
-    }
-
-    var $vmodel = new Observer()
-    $vmodel = createViewModel($vmodel, accessors, keys)
-    for (key in keys) {
-        if (!accessors[key]) {//添加不可监控的属性
-           
-            $vmodel[key] = keys[key]
-        }
-        //用于通过配置对象触发组件的$watch回调
-        if (isWidget && config && accessors[key] && config.hasOwnProperty(key)) {
-            var GET = accessors[key].get
-          //  GET.heirloom = heirloom
-            if (!GET.$decompose) {
-                GET.$decompose = {}
-            }
-            GET.$decompose[configName + '.' + key] = $vmodel
-        }
-
-        if (key in $$skipArray) {
-            delete keys[key]
-        } else {
-            keys[key] = true
-        }
-
-    }
-
-    initViewModel($vmodel, heirloom, keys, accessors, {
-        id: before.$id,
-        hashcode: makeHashCode('$'),
-        master: true
+//如果浏览器不支持ecma262v5的Object.defineProperties或者存在BUG，比如IE8
+//标准浏览器使用__defineGetter__, __defineSetter__实现
+var canHideProperty = true
+try {
+    Object.defineProperty({}, '_', {
+        value: 'x'
     })
-
-    return $vmodel
+} catch (e) {
+    /* istanbul ignore next*/
+    canHideProperty = false
 }
 
 
-$$midway.mediatorFactory = avalon.mediatorFactory = mediatorFactory
 
-var __array__ = share.__array__
-
-
-var ap = Array.prototype
-var _splice = ap.splice
-function notifySize(array, size) {
-    if (array.length !== size) {
-        array.notify('length', array.length, size, true)
+var protectedVB = { $vbthis: 1, $vbsetter: 1 }
+/* istanbul ignore next */
+export function hideProperty(host, name, value) {
+    if (canHideProperty) {
+        Object.defineProperty(host, name, {
+            value: value,
+            writable: true,
+            enumerable: false,
+            configurable: true
+        })
+    } else if (!protectedVB[name]) {
+        /* istanbul ignore next */
+        host[name] = value
     }
 }
 
-__array__.removeAll = function (all) { //移除N个元素
-    var size = this.length
-    if (Array.isArray(all)) {
-        for (var i = this.length - 1; i >= 0; i--) {
-            if (all.indexOf(this[i]) !== -1) {
-                _splice.call(this, i, 1)
-            }
-        }
-    } else if (typeof all === 'function') {
-        for (i = this.length - 1; i >= 0; i--) {
-            var el = this[i]
-            if (all(el, i)) {
-                _splice.call(this, i, 1)
-            }
-        }
-    } else {
-        _splice.call(this, 0, this.length)
 
-    }
-    if (!avalon.modern) {
-        this.$model = toJson(this)
-    }
-    notifySize(this, size)
-    this.notify()
-}
-
-
-var __method__ = ['push', 'pop', 'shift', 'unshift', 'splice']
-
-__method__.forEach(function (method) {
-    var original = ap[method]
-    __array__[method] = function (a, b) {
-        // 继续尝试劫持数组元素的属性
-        var args = [], size = this.length
-
-        if (method === 'splice' && Object(this[0]) === this[0]) {
-            var old = this.slice(a, b)
-            var neo = ap.slice.call(arguments, 2)
-            var args = [a, b]
-            for (var j = 0, jn = neo.length; j < jn; j++) {
-                var item = old[j]
-
-                args[j + 2] = modelAdaptor(neo[j], item, (item && item.$events || {}), {
-                    id: this.$id + '.*',
-                    master: true
-                })
-            }
-
+export function watchFactory(core) {
+    return function $watch(expr, callback, deep) {
+        var w = new Directive(core.__proxy__, {
+            deep: deep,
+            type: 'user',
+            expr: expr
+        }, callback)
+        if (!core[expr]) {
+            core[expr] = [w]
         } else {
-            for (var i = 0, n = arguments.length; i < n; i++) {
-                args[i] = modelAdaptor(arguments[i], 0, {}, {
-                    id: this.$id + '.*',
-                    master: true
-                })
+            core[expr].push(w)
+        }
+
+        return function () {
+            w.destroy()
+            avalon.Array.remove(core[expr], w)
+            if (core[expr].length === 0) {
+                delete core[expr]
             }
         }
-        var result = original.apply(this, args)
-        if (!avalon.modern) {
-            this.$model = toJson(this)
-        }
-        notifySize(this, size)
-        this.notify()
-        return result
     }
-})
+}
 
-'sort,reverse'.replace(avalon.rword, function (method) {
-    __array__[method] = function () {
-        ap[method].apply(this, arguments)
-        if (!avalon.modern) {
-            this.$model = toJson(this)
+export function fireFactory(core) {
+    return function $fire(expr, a) {
+        var list = core[expr]
+        if (Array.isArray(list)) {
+            for (var i = 0, w; w = list[i++];) {
+                w.callback.call(w.vm, a, w.value, w.expr)
+            }
         }
-        this.notify()
-        return this
     }
-})
+}
+
+function wrapIt(str) {
+    return 'Ȣ' + str + 'Ȣ'
+}
+
+export function afterCreate(vm, core, keys) {
+    var ac = vm.$accessors
+    //隐藏系统属性
+    for (var key in $$skipArray) {
+        if (avalon.msie < 9 && core[key] === void 0)
+            continue
+        hideProperty(vm, key, core[key])
+    }
+    //为不可监听的属性或方法赋值
+    for (var i = 0; i < keys.length; i++) {
+        key = keys[i]
+        if (!(key in ac)) {
+            if (avalon.msie < 9 && typeof core[key] === 'function') {
+                vm[key] = core[key].bind(vm)
+                continue
+            }
+            vm[key] = core[key]
+        }
+    }
+    vm.$track = keys.join('Ȣ')
+
+    function hasOwnKey(key) {
+        return wrapIt(vm.$track).indexOf(wrapIt(key)) > -1
+    }
+    if (avalon.msie < 9) {
+        vm.hasOwnProperty = hasOwnKey
+    }
+    vm.$events.__proxy__ = vm
+}
+
+platform.hideProperty = hideProperty
+platform.fireFactory = fireFactory
+platform.watchFactory = watchFactory
+platform.afterCreate = afterCreate
+platform.toModel = function (obj) {
+    if (avalon.msie < 9) {
+        return obj.$model = platform.toJson(obj)
+    }
+}
 
 
-module.exports = avalon
-//使用这个来扁平化数据  https://github.com/gaearon/normalizr
-//使用Promise  https://github.com/stefanpenner/es6-promise
-//使用这个AJAX库 https://github.com/matthew-andrews/isomorphic-fetch
+var createViewModel = Object.defineProperties
+var defineProperty
+
+var timeBucket = new Date() - 0
+/* istanbul ignore if*/
+if (!canHideProperty) {
+    if ('__defineGetter__' in avalon) {
+        defineProperty = function (obj, prop, desc) {
+            if ('value' in desc) {
+                obj[prop] = desc.value
+            }
+            if ('get' in desc) {
+                obj.__defineGetter__(prop, desc.get)
+            }
+            if ('set' in desc) {
+                obj.__defineSetter__(prop, desc.set)
+            }
+            return obj
+        }
+        createViewModel = function (obj, descs) {
+            for (var prop in descs) {
+                if (descs.hasOwnProperty(prop)) {
+                    defineProperty(obj, prop, descs[prop])
+                }
+            }
+            return obj
+        }
+    }
+    /* istanbul ignore if*/
+    if (msie < 9) {
+        var VBClassPool = {}
+        window.execScript([ // jshint ignore:line
+            'Function parseVB(code)',
+            '\tExecuteGlobal(code)',
+            'End Function' //转换一段文本为VB代码
+        ].join('\n'), 'VBScript');
+
+        var VBMediator = function (instance, accessors, name, value) { // jshint ignore:line
+            var accessor = accessors[name]
+            if (arguments.length === 4) {
+                accessor.set.call(instance, value)
+            } else {
+                return accessor.get.call(instance)
+            }
+        }
+        createViewModel = function (name, accessors, properties) {
+            // jshint ignore:line
+            var buffer = []
+            buffer.push(
+                '\tPrivate [$vbsetter]',
+                '\tPublic  [$accessors]',
+                '\tPublic Default Function [$vbthis](ac' + timeBucket + ', s' + timeBucket + ')',
+                '\t\tSet  [$accessors] = ac' + timeBucket + ': set [$vbsetter] = s' + timeBucket,
+                '\t\tSet  [$vbthis]    = Me', //链式调用
+                '\tEnd Function')
+            //添加普通属性,因为VBScript对象不能像JS那样随意增删属性，必须在这里预先定义好
+            var uniq = {
+                $vbthis: true,
+                $vbsetter: true,
+                $accessors: true
+            }
+            for (name in $$skipArray) {
+                if (!uniq[name]) {
+                    buffer.push('\tPublic [' + name + ']')
+                    uniq[name] = true
+                }
+            }
+            //添加访问器属性 
+            for (name in accessors) {
+                if (uniq[name]) {
+                    continue
+                }
+                uniq[name] = true
+                buffer.push(
+                    //由于不知对方会传入什么,因此set, let都用上
+                    '\tPublic Property Let [' + name + '](val' + timeBucket + ')', //setter
+                    '\t\tCall [$vbsetter](Me, [$accessors], "' + name + '", val' + timeBucket + ')',
+                    '\tEnd Property',
+                    '\tPublic Property Set [' + name + '](val' + timeBucket + ')', //setter
+                    '\t\tCall [$vbsetter](Me, [$accessors], "' + name + '", val' + timeBucket + ')',
+                    '\tEnd Property',
+                    '\tPublic Property Get [' + name + ']', //getter
+                    '\tOn Error Resume Next', //必须优先使用set语句,否则它会误将数组当字符串返回
+                    '\t\tSet[' + name + '] = [$vbsetter](Me, [$accessors],"' + name + '")',
+                    '\tIf Err.Number <> 0 Then',
+                    '\t\t[' + name + '] = [$vbsetter](Me, [$accessors],"' + name + '")',
+                    '\tEnd If',
+                    '\tOn Error Goto 0',
+                    '\tEnd Property')
+
+            }
+
+            for (name in properties) {
+                if (!uniq[name]) {
+                    uniq[name] = true
+                    buffer.push('\tPublic [' + name + ']')
+                }
+            }
+
+            buffer.push('\tPublic [hasOwnProperty]')
+            buffer.push('End Class')
+            var body = buffer.join('\r\n')
+            var className = VBClassPool[body]
+            if (!className) {
+                className = avalon.makeHashCode('VBClass')
+                window.parseVB('Class ' + className + body)
+                window.parseVB([
+                    'Function ' + className + 'Factory(acc, vbm)', //创建实例并传入两个关键的参数
+                    '\tDim o',
+                    '\tSet o = (New ' + className + ')(acc, vbm)',
+                    '\tSet ' + className + 'Factory = o',
+                    'End Function'
+                ].join('\r\n'))
+                VBClassPool[body] = className
+            }
+            var ret = window[className + 'Factory'](accessors, VBMediator) //得到其产品
+            return ret //得到其产品
+        }
+    }
+}
+
+platform.createViewModel = createViewModel

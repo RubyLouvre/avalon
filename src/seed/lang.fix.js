@@ -1,12 +1,13 @@
 
 /**
- * 此模块不依赖任何模块,用于修复语言的底层缺陷
+ * 此模块用于修复语言的底层缺陷
  */
+import { avalon, ohasOwn, ap, _slice } from './core'
 
-var ohasOwn = Object.prototype.hasOwnProperty
-function isNative(fn){
+function isNative(fn) {
     return /\[native code\]/.test(fn)
 }
+
 /* istanbul ignore if*/
 if (!isNative('司徒正美'.trim)) {
     var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
@@ -17,18 +18,18 @@ if (!isNative('司徒正美'.trim)) {
 var hasDontEnumBug = !({
     'toString': null
 }).propertyIsEnumerable('toString'),
-        hasProtoEnumBug = (function () {
-        }).propertyIsEnumerable('prototype'),
-        dontEnums = [
-            'toString',
-            'toLocaleString',
-            'valueOf',
-            'hasOwnProperty',
-            'isPrototypeOf',
-            'propertyIsEnumerable',
-            'constructor'
-        ],
-        dontEnumsLength = dontEnums.length;
+    hasProtoEnumBug = (function () {
+    }).propertyIsEnumerable('prototype'),
+    dontEnums = [
+        'toString',
+        'toLocaleString',
+        'valueOf',
+        'hasOwnProperty',
+        'isPrototypeOf',
+        'propertyIsEnumerable',
+        'constructor'
+    ],
+    dontEnumsLength = dontEnums.length;
 /* istanbul ignore if*/
 if (!isNative(Object.keys)) {
     Object.keys = function (object) { //ecma262v5 15.2.3.14
@@ -41,7 +42,7 @@ if (!isNative(Object.keys)) {
         } else {
             for (var name in object) {
                 if (!(skipProto && name === 'prototype') &&
-                        ohasOwn.call(object, name)) {
+                    ohasOwn.call(object, name)) {
                     theKeys.push(String(name))
                 }
             }
@@ -49,7 +50,7 @@ if (!isNative(Object.keys)) {
 
         if (hasDontEnumBug) {
             var ctor = object.constructor,
-                    skipConstructor = ctor && ctor.prototype === object
+                skipConstructor = ctor && ctor.prototype === object
             for (var j = 0; j < dontEnumsLength; j++) {
                 var dontEnum = dontEnums[j]
                 if (!(skipConstructor && dontEnum === 'constructor') && ohasOwn.call(object, dontEnum)) {
@@ -66,16 +67,18 @@ if (!isNative(Array.isArray)) {
         return Object.prototype.toString.call(a) === '[object Array]'
     }
 }
+
 /* istanbul ignore if*/
 if (!isNative(isNative.bind)) {
+    /* istanbul ignore next*/
     Function.prototype.bind = function (scope) {
         if (arguments.length < 2 && scope === void 0)
             return this
         var fn = this,
-                argv = arguments
+            argv = arguments
         return function () {
             var args = [],
-                    i
+                i
             for (i = 1; i < argv.length; i++)
                 args.push(argv[i])
             for (i = 0; i < arguments.length; i++)
@@ -86,37 +89,36 @@ if (!isNative(isNative.bind)) {
 }
 //https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Array/slice
 /**
-* Shim for "fixing" IE's lack of support (IE < 9) for applying slice
-* on host objects like NamedNodeMap, NodeList, and HTMLCollection
-* (technically, since host objects have been implementation-dependent,
-* at least before ES6, IE hasn't needed to work this way).
-* Also works on strings, fixes IE < 9 to allow an explicit undefined
-* for the 2nd argument (as in Firefox), and prevents errors when
-* called on other DOM objects.
-*/
-var ap = Array.prototype
+ * Shim for "fixing" IE's lack of support (IE < 9) for applying slice
+ * on host objects like NamedNodeMap, NodeList, and HTMLCollection
+ * (technically, since host objects have been implementation-dependent,
+ * at least before ES6, IE hasn't needed to work this way).
+ * Also works on strings, fixes IE < 9 to allow an explicit undefined
+ * for the 2nd argument (as in Firefox), and prevents errors when
+ * called on other DOM objects.
+ */
 
-var _slice = ap.slice
 try {
     // Can't be used with DOM elements in IE < 9
-    _slice.call(document.documentElement)
+    _slice.call(avalon.document.documentElement)
 } catch (e) { // Fails in IE < 9
     // This will work for genuine arrays, array-like objects,
     // NamedNodeMap (attributes, entities, notations),
     // NodeList (e.g., getElementsByTagName), HTMLCollection (e.g., childNodes),
     // and will not fail on other DOM objects (as do DOM elements in IE < 9)
+    /* istanbul ignore next*/
     ap.slice = function (begin, end) {
         // IE < 9 gets unhappy with an undefined end argument
         end = (typeof end !== 'undefined') ? end : this.length
 
         // For native Array objects, we use the native slice function
-        if (Array.isArray(this) ) {
+        if (Array.isArray(this)) {
             return _slice.call(this, begin, end)
         }
 
         // For array like object we handle it ourselves.
         var i, cloned = [],
-                size, len = this.length
+            size, len = this.length
 
         // Handle negative value for "begin"
         var start = begin || 0
@@ -147,22 +149,22 @@ try {
         return cloned
     }
 }
-
+/* istanbul ignore next*/
 function iterator(vars, body, ret) {
     var fun = 'for(var ' + vars + 'i=0,n = this.length; i < n; i++){' +
-            body.replace('_', '((i in this) && fn.call(scope,this[i],i,this))') +
-            '}' + ret
+        body.replace('_', '((i in this) && fn.call(scope,this[i],i,this))') +
+        '}' + ret
     /* jshint ignore:start */
     return Function('fn,scope', fun)
     /* jshint ignore:end */
 }
 /* istanbul ignore if*/
 if (!isNative(ap.map)) {
-    var shim = {
+    avalon.shadowCopy(ap, {
         //定位操作，返回数组中第一个等于给定参数的元素的索引值。
         indexOf: function (item, index) {
             var n = this.length,
-                    i = ~~index
+                i = ~~index
             if (i < 0)
                 i += n
             for (; i < n; i++)
@@ -173,7 +175,7 @@ if (!isNative(ap.map)) {
         //定位操作，同上，不过是从后遍历。
         lastIndexOf: function (item, index) {
             var n = this.length,
-                    i = index == null ? n - 1 : index
+                i = index == null ? n - 1 : index
             if (i < 0)
                 i = Math.max(0, n + i)
             for (; i >= 0; i--)
@@ -191,10 +193,6 @@ if (!isNative(ap.map)) {
         some: iterator('', 'if(_)return true', 'return false'),
         //只有数组中的元素都满足条件（放进给定函数返回true），它才返回true。Prototype.js的对应名字为all。
         every: iterator('', 'if(!_)return false', 'return true')
-    }
+    })
 
-    for (var i in shim) {
-        ap[i] = shim[i]
-    }
 }
-module.exports = {}

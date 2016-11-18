@@ -1,92 +1,111 @@
+// Generated on Sun Feb 21 2016 14:19:52 GMT+1100 (AEDT)
 
-module.exports = function (config) {
+
+module.exports = function(config) {
+
     config.set({
+
+        // base path that will be used to resolve all patterns (eg. files, exclude)
         basePath: '',
-        frameworks: ['mocha'],
+
+        // frameworks to use
+        // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
+        frameworks: ['jasmine'], //jasmine
+
+
+        // list of files / patterns to load in the browser
         files: [
-            //  {pattern: 'node_modules/sinon/chai.js', include: true},
-            {pattern: 'node_modules/chai/chai.js', include: true},
-            {pattern: 'node_modules/sinon/pkg/sinon.js', include: true},
-            'dist/avalon.test.js',
-            'karma/vmodel/index.js',
-            // 'karma/reconcile.js',
-            'karma/seed/core.js',
-            'karma/seed/browser.js',
-            'karma/seed/lang.js',
-            'karma/seed/cache.js',
-            'karma/seed/config.js',
-          
-            'karma/filters/index.js',
-            'karma/vdom/index.js',
-            'karma/dom/index.js',
-            'karma/strategy/index.js',
-            'karma/component/index.js',
-           
-            'karma/directives/text.js',
-            'karma/directives/css.js',
-             
-            'karma/directives/controller.js',
-            'karma/directives/important.js',
-            'karma/directives/expr.js',
-            'karma/directives/effect.js',
-            'karma/directives/class.js',
-          
-            'karma/directives/attr.js',
-            'karma/directives/html.js',
-            'karma/directives/visible.js',
-            'karma/directives/if.js',
-            'karma/directives/on.js',
-            'karma/directives/duplex.js',
-            'karma/directives/for.js',
-            'karma/directives/widget.js',
-          
-            'karma/directives/hover.js',
-            'karma/directives/active.js',
-            'karma/directives/validate.js',
-            'karma/directives/rules.js' 
+            './promise.js',
+            './matchers.js',
+            './beforeIt.js',
+            './dist/avalon.test.js'
         ],
+
+
+        // list of files to exclude
         exclude: [],
-        mochaReporter: {
-            output: 'autowatch',
-            colors: {
-                success: 'green',
-                info: 'magenta',
-                warning: 'cyan',
-                error: 'bgRed'
+
+
+        // preprocess matching files before serving them to the browser
+        // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
+
+
+        // test results reporter to use
+        // possible values: 'dots', 'progress'
+        // available reporters: https://npmjs.org/browse/keyword/karma-reporter
+        reporters: ['spec', 'coverage'],
+
+
+
+        // web server port
+        port: 9876,
+
+
+        // enable / disable colors in the output (reporters and logs)
+        colors: true,
+
+
+        // level of logging
+        // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
+        logLevel: config.LOG_INFO,
+
+
+        // enable / disable watching file and executing tests whenever any file changes
+        autoWatch: true,
+
+
+        // start these browsers
+        // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
+        browsers: ['Chrome'], //'PhantomJS''IE', 'IE7','Chrome'
+
+        customLaunchers: {
+            IE6: {
+                base: 'IE',
+                flags: ['-extoff'],
+                'x-ua-compatible': 'IE=5'
+            },
+            IE8: {
+                base: 'IE',
+                flags: ['-extoff'],
+                'x-ua-compatible': 'IE=8'
+            },
+            IE10: {
+                base: 'IE',
+                flags: ['-extoff'],
+                'x-ua-compatible': 'IE=EmulateIE10'
+            },
+            IE9: {
+                base: 'IE',
+                flags: ['-extoff'],
+                'x-ua-compatible': 'IE=EmulateIE9'
             }
         },
-        reporters: ['mocha', 'coverage'],
-        preprocessors: {
-            // source files, that you wanna generate coverage for
-            // do not include tests or libraries
-            // (these files will be instrumented by Istanbul)
-            'dist/avalon.test.js': ['coverage']
-        },
         coverageReporter: {
-            type: 'html',
-            dir: 'coverage/'
+            dir: 'coverage/',
+            reporters: [{
+                type: 'text'
+            }, {
+                type: 'html',
+                subdir: 'html'
+            }]
+
         },
-        port: 9858,
-        colors: true,
-        logLevel: config.LOG_INFO,
-//autoWatch为true,Karma将自动执行测试用例
-        autoWatch: true,
-//http://www.cnblogs.com/NetSos/p/4371075.html
-        browsers: ['Chrome'],
+        // Continuous Integration mode
+        // if true, Karma captures browsers, runs the tests and exits
         singleRun: false,
-        plugins: [
-            'karma-mocha',
-            'karma-sinon',
-            'karma-coverage',
-            'karma-mocha-reporter',
-            'karma-firefox-launcher',
-            'karma-safari-launcher',
-            'karma-chrome-launcher',
-          
-            'karma-safari-launcher'
-        ]
+
+        // Concurrency level
+        // how many browser should be started simultaneous
+        concurrency: Infinity,
+
+
+        // webpack: require('./webpack.config.js'),
+
+        webpackServer: {
+            noInfo: true //please don't spam the console when running in karma!
+        }
+
     })
+
+
 }
-
-//使用 karma start
-

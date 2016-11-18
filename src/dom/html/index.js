@@ -1,13 +1,13 @@
-var Cache = require('../../seed/cache')
-var avalon = require('../../seed/core')
-
+import {avalon, Cache, document, createFragment} from '../../seed/core'
+import {fromString} from '../../vtree/fromString'
+export {avalon}
 
 var rhtml = /<|&#?\w+;/
 var htmlCache = new Cache(128)
 var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
 
 avalon.parseHTML = function (html) {
-    var fragment = avalon.avalonFragment.cloneNode(false)
+    var fragment = createFragment()
     //处理非字符串
     if (typeof html !== 'string') {
         return fragment
@@ -22,9 +22,10 @@ avalon.parseHTML = function (html) {
     if (hasCache) {
         return avalon.cloneNode(hasCache)
     }
-    var vnodes = avalon.lexer(html)
+    var vnodes = fromString(html)
     for (var i = 0, el; el = vnodes[i++]; ) {
-        fragment.appendChild(avalon.vdom(el, 'toDOM'))
+        var child = avalon.vdom(el, 'toDOM')
+        fragment.appendChild(child)
     }
     if (html.length < 1024) {
         htmlCache.put(html, fragment)
@@ -33,9 +34,9 @@ avalon.parseHTML = function (html) {
 }
 
 avalon.innerHTML = function (node, html) {
-
-    var parsed = this.parseHTML(html)
-    this.clearHTML(node).appendChild(parsed)
+    var parsed = avalon.parseHTML(html)
+    this.clearHTML(node)
+    node.appendChild(parsed)
 }
 
 //https://github.com/karloespiritu/escapehtmlent/blob/master/index.js
@@ -51,7 +52,6 @@ avalon.unescapeHTML = function (html) {
 
 
 avalon.clearHTML = function (node) {
-    node.textContent = ''
     /* istanbul ignore next */
     while (node.lastChild) {
         node.removeChild(node.lastChild)

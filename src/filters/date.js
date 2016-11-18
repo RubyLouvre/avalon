@@ -79,7 +79,6 @@ function timeZoneGetter(date) {
     return paddedZone
 }
 //取得上午下午
-var tos = Object.prototype.toString
 function ampmGetter(date, formats) {
     return date.getHours() < 12 ? formats.AMPMS[0] : formats.AMPMS[1]
 }
@@ -109,11 +108,11 @@ var DATE_FORMATS = {
 }
 var rdateFormat = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/
 var raspnetjson = /^\/Date\((\d+)\)\/$/
-function dateFilter(date, format) {
+export function dateFilter(date, format) {
     var locate = dateFilter.locate,
-            text = "",
-            parts = [],
-            fn, match
+        text = "",
+        parts = [],
+        fn, match
     format = format || "mediumDate"
     format = locate[format] || format
     if (typeof date === "string") {
@@ -234,5 +233,3 @@ var locate = {
 }
 locate.SHORTMONTH = locate.MONTH
 dateFilter.locate = locate
-
-module.exports = dateFilter

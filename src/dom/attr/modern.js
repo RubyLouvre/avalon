@@ -1,23 +1,12 @@
-var avalon = require('../../seed/core')
-var propMap = require('./propMap')
+import { avalon, window, document } from '../../seed/core'
+import { propMap } from './propMap'
+
 var rsvg = /^\[object SVG\w*Element\]$/
-function attrUpdate(node, vnode) {
-    /* istanbul ignore if*/
-    if (!node || node.nodeType !== 1) {
-        return
-    }
-    vnode.dynamic['ms-attr'] = 1
-    var attrs = vnode['ms-attr']
+export function updateAttrs(node, attrs) {
     for (var attrName in attrs) {
         var val = attrs[attrName]
         /* istanbul ignore if*/
-        if (attrName === 'src' && window.chrome && node.tagName === 'EMBED') {
-            node[attrName] = val
-            var parent = node.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
-            var comment = document.createComment('ms-src')
-            parent.replaceChild(comment, node)
-            parent.replaceChild(node, comment)
-        } else if (attrName.indexOf('data-') === 0) {
+        if (attrName.indexOf('data-') === 0 || rsvg.test(node)) {
             node.setAttribute(attrName, val)
         } else {
             var propName = propMap[attrName] || attrName
@@ -34,7 +23,7 @@ function attrUpdate(node, vnode) {
 
             //SVG只能使用setAttribute(xxx, yyy), VML只能使用node.xxx = yyy ,
             //HTML的固有属性必须node.xxx = yyy
-            var isInnate = rsvg.test(node) ? false : attrName in node.cloneNode(false)
+            var isInnate = attrName in node.cloneNode(false)
             if (isInnate) {
                 node[propName] = val + ''
             } else {
@@ -55,5 +44,3 @@ avalon.fn.attr = function (name, value) {
     }
 }
 
-
-module.exports = attrUpdate

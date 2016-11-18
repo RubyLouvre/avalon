@@ -1,58 +1,119 @@
 
-var update = require('./_update')
+import { avalon, platform } from '../seed/core'
 
-avalon.directive('css', {
-    diff: function (copy, src, name, hookName) {
-        var a = copy[name]
-        var p = src[name]
-        if (Object(a) === a) {
-            a = a.$model || a//安全的遍历VBscript
-            if (Array.isArray(a)) {//转换成对象
+var cssDir = avalon.directive('css', {
+    diff: function (newVal, oldVal) {
+        if (Object(newVal) === newVal) {
+            newVal = platform.toJson(newVal)//安全的遍历VBscript
+            if (Array.isArray(newVal)) {//转换成对象
                 var b = {}
-                a.forEach(function (el) {
+                newVal.forEach(function (el) {
                     el && avalon.shadowCopy(b, el)
                 })
-                a = b
+                newVal = b
+                avalon.warn(this.type, '指令的值不建议使用数组形式了！')
             }
+
             var hasChange = false
-            if (!src.dynamic[name] || !p) {//如果一开始为空
-                src[name] = a
+            var patch = {}
+            if (!oldVal) {//如果一开始为空
+                patch = newVal
                 hasChange = true
             } else {
-                var patch = {}
-                for (var i in a) {//diff差异点
-                    if (a[i] !== p[i]) {
-                        hasChange = true
+                if (this.deep) {
+                    var deep = typeof this.deep == 'number' ? this.deep : 6
+                    for (var i in newVal) {//diff差异点  
+                        if (!deepEquals(newVal[i], oldVal[i], 4)) {
+                            this.value = newVal
+                            return true
+                        }
+                        patch[i] = newVal[i]
                     }
-                    patch[i] = a[i]
+                } else {
+                    for (var i in newVal) {//diff差异点
+                        if (newVal[i] !== oldVal[i]) {
+                            hasChange = true
+                        }
+                        patch[i] = newVal[i]
+                    }
                 }
-                for (var i in p) {
+
+                for (var i in oldVal) {
                     if (!(i in patch)) {
                         hasChange = true
                         patch[i] = ''
                     }
                 }
-                src[name] = patch
             }
             if (hasChange) {
-                if(name ==='ms-effect'){
-                    src[name] = a
-                }
-                update(src, this.update, hookName)
+                this.value = patch
+                return true
             }
         }
-        if(src !== copy)
-           delete copy[name]//释放内存
+        return false
     },
-    update: function (dom, vdom) {
+    update: function (vdom, value) {
+
+        var dom = vdom.dom
         if (dom && dom.nodeType === 1) {
             var wrap = avalon(dom)
-            vdom.dynamic['ms-css'] = 1
-            var change = vdom['ms-css']
-            for (var name in change) {
-                wrap.css(name, change[name])
+            for (var name in value) {
+                wrap.css(name, value[name])
             }
         }
     }
 })
-module.exports = avalon.directives.css
+
+export var cssDiff = cssDir.diff
+
+export function getEnumerableKeys(obj) {
+    const res = [];
+    for (let key in obj)
+        res.push(key)
+    return res
+}
+
+export function deepEquals(a, b, level) {
+    if (level === 0)
+        return a === b
+    if (a === null && b === null)
+        return true
+    if (a === undefined && b === undefined)
+        return true
+    const aIsArray = Array.isArray(a)
+    if (aIsArray !== Array.isArray(b)) {
+        return false
+    } else if (aIsArray) {
+        if (a.length !== b.length) {
+            return false
+        }
+        for (let i = a.length - 1; i >= 0; i--) {
+            try {
+                if (!deepEquals(a[i], b[i], level - 1)) {
+                    return false
+                }
+            } catch (noThisPropError) {
+                return false
+            }
+        }
+        return true
+    } else if (typeof a === "object" && typeof b === "object") {
+        if (a === null || b === null)
+            return false;
+        if (getEnumerableKeys(a).length !== getEnumerableKeys(b).length)
+            return false;
+        for (let prop in a) {
+            if (!(prop in b))
+                return false
+            try {
+                if (!deepEquals(a[prop], b[prop], level - 1)) {
+                    return false
+                }
+            } catch (noThisPropError) {
+                return false
+            }
+        }
+        return true
+    }
+    return a === b
+}

@@ -5,13 +5,12 @@
  * ------------------------------------------------------------
  */
 
-require('./shim/compact')
-require('./class/compact')
-require('./attr/compact')
-require('./css/compact')
-require('./val/compact')
-require('./html/index')
-require('./event/compact')
-require('./ready/compact')
+import './shim/compact'
+import './class/compact'
+import './attr/compact'
+import './css/compact'
+import './val/compact'
+import './html/index'
+import './event/compact'
+import './ready/compact'
 
-module.exports = avalon

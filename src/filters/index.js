@@ -1,26 +1,35 @@
 
-var avalon = require('../seed/core')
-var number = require("./number")
-var sanitize = require("./sanitize")
-var date = require("./date")
-var arrayFilters = require("./array")
-var eventFilters = require("./event")
-var filters = avalon.filters
-var escape = avalon.escapeHtml = require("./escape")
+import {
+    avalon
+} from '../seed/core'
 
-function K(a) {
-    /* istanbul ignore next*/
-    return a
-}
+import { numberFilter } from "./number"
+import { sanitizeFilter } from "./sanitize"
+import { dateFilter } from "./date"
+import { filterBy, orderBy, selectBy, limitBy } from "./array"
+import { eventFilters } from "./event"
+import { escapeFilter } from "./escape"
+var filters = avalon.filters = {}
 
-avalon.__format__ = function (name) {
-    var fn = filters[name]
-    if (fn) {
-        return fn
+avalon.composeFilters = function () {
+    var args = arguments
+    return function (value) {
+        for (var i = 0, arr; arr = args[i++];) {
+            var name = arr[0]
+            var filter = avalon.filters[name]
+            if (typeof filter === 'function') {
+                arr[0] = value
+                try {
+                    value = filter.apply(0, arr)
+                } catch (e) {
+                }
+            }
+        }
+        return value
     }
-    return K
 }
 
+avalon.escapeHtml = escapeFilter
 
 avalon.mix(filters, {
     uppercase: function (str) {
@@ -40,20 +49,20 @@ avalon.mix(filters, {
         }
         end = typeof end === "string" ? end : "..."
         return str.length > length ?
-                str.slice(0, length - end.length) + end :/* istanbul ignore else*/
-                str
+            str.slice(0, length - end.length) + end : /* istanbul ignore else*/
+            str
     },
     camelize: avalon.camelize,
-    date: date,
-    escape: escape,
-    sanitize: sanitize,
-    number: number,
+    date: dateFilter,
+    escape: escapeFilter,
+    sanitize: sanitizeFilter,
+    number: numberFilter,
     currency: function (amount, symbol, fractionSize) {
         return (symbol || '\u00a5') +
-                number(amount,
-                        isFinite(fractionSize) ?/* istanbul ignore else*/ fractionSize : 2)
+            numberFilter(amount,
+                isFinite(fractionSize) ? /* istanbul ignore else*/ fractionSize : 2)
     }
-}, arrayFilters, eventFilters)
+}, { filterBy, orderBy, selectBy, limitBy }, eventFilters)
 
+export { avalon }
 
-module.exports = avalon

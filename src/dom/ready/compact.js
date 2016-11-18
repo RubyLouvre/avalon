@@ -1,32 +1,27 @@
-var avalon = require('../../seed/core')
-var scan = require('./scan')
-var document = avalon.document
+import { avalon, window, document, root, inBrowser } from '../../seed/core'
 
-var readyList = [], isReady
-var fireReady = function (fn) {
-    isReady = true
+var readyList = []
 
+export function fireReady(fn) {
+    avalon.isReady = true
     while (fn = readyList.shift()) {
         fn(avalon)
     }
 }
+
 avalon.ready = function (fn) {
-    if (!isReady) {
-        readyList.push(fn)
-    } else {
-        fn(avalon)
+    readyList.push(fn)
+    if (avalon.isReady) {
+        fireReady()
     }
 }
 
 avalon.ready(function () {
-    scan(document.body)
+   avalon.scan && avalon.scan(document.body)
 })
 
-new function () {
-    if (!avalon.browser)
-        return
-    var root = avalon.root
-
+/* istanbul ignore next */
+function bootstrap() {
     function doScrollCheck() {
         try { //IE下通过doScrollCheck检测DOM树是否建完
             root.doScroll('left')
@@ -35,7 +30,6 @@ new function () {
             setTimeout(doScrollCheck)
         }
     }
-
     if (document.readyState === 'complete') {
         setTimeout(fireReady) //如果在domReady之外加载
     } else if (document.addEventListener) {
@@ -57,6 +51,8 @@ new function () {
 
     avalon.bind(window, 'load', fireReady)
 }
-
+if (inBrowser) {
+    bootstrap()
+}
 
 

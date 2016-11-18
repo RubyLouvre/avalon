@@ -1,4 +1,3 @@
-
 var eventFilters = {
     stop: function (e) {
         e.stopPropagation()
@@ -32,4 +31,4 @@ for (var name in keys) {
 }
 
 
-module.exports = eventFilters
+export { eventFilters }

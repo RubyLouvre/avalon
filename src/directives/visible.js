@@ -1,4 +1,5 @@
-var update = require('./_update')
+import { avalon } from '../seed/core'
+import '../effect/index'
 
 var none = 'none'
 function parseDisplay(elem, val) {
@@ -19,19 +20,18 @@ function parseDisplay(elem, val) {
 }
 
 avalon.parseDisplay = parseDisplay
-
 avalon.directive('visible', {
-    diff: function (copy, src, name) {
-        var c = !!copy[name]
-        if (!src.dynamic[name] || c !== src[name]) {
-            src[name] = c
-            update(src, this.update)
+    diff: function (newVal, oldVal) {
+        var n = !!newVal
+        if (oldVal === void 0 || n !== oldVal) {
+            this.value = n
+            return true
         }
     },
-    update: function (dom, vdom) {
+    ready: true,
+    update: function (vdom, show) {     
+        var dom = vdom.dom
         if (dom && dom.nodeType === 1) {
-            vdom.dynamic['ms-visible'] = 1
-            var show = vdom['ms-visible']
             var display = dom.style.display
             var value
             if (show) {
@@ -39,25 +39,30 @@ avalon.directive('visible', {
                     value = vdom.displayValue
                     if (!value) {
                         dom.style.display = ''
+                        if (dom.style.cssText === '') {
+                            dom.removeAttribute('style')
+                        }
                     }
                 }
                 if (dom.style.display === '' && avalon(dom).css('display') === none &&
-                        // fix firefox BUG,必须挂到页面上
-                        avalon.contains(dom.ownerDocument, dom)) {
-
+                    // fix firefox BUG,必须挂到页面上
+                    avalon.contains(dom.ownerDocument, dom)) {
                     value = parseDisplay(dom)
                 }
+
             } else {
+
                 if (display !== none) {
                     value = none
                     vdom.displayValue = display
                 }
             }
-            function cb() {
+            var cb = function () {
                 if (value !== void 0) {
                     dom.style.display = value
                 }
             }
+     
             avalon.applyEffect(dom, vdom, {
                 hook: show ? 'onEnterDone' : 'onLeaveDone',
                 cb: cb

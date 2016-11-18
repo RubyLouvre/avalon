@@ -1,44 +1,45 @@
-var update = require('./_update')
-
-var dir = avalon.directive('validate', {
-//验证单个表单元素
-    diff: function (copy, src, name) {
-        var validator = copy[name]
-        var p = src[name]
-        /* istanbul ignore if */
-        /* istanbul ignore else */
-        if (p && p.onError && p.addField) {
+import { avalon,isObject, platform} from '../seed/core'
+var valiDir = avalon.directive('validate', {
+    diff: function (validator) {
+        var vdom = this.node
+        if (vdom.validator ) {
             return
-        } else if (Object(validator) === validator) {
-            src.vmValidator = validator
-            if (validator.$id) {//转换为普通对象
-                validator = validator.$model
-            }
-
-            src[name] = validator
-            for (var name in dir.defaults) {
+        }
+        if (isObject(validator)) {
+            //注意，这个Form标签的虚拟DOM有两个验证对象
+            //一个是vmValidator，它是用户VM上的那个原始子对象，也是一个VM
+            //一个是validator，它是vmValidator.$model， 这是为了防止IE6－8添加子属性时添加的hack
+            //也可以称之为safeValidate
+            vdom.vmValidator = validator
+            validator = platform.toJson(validator)
+    
+            vdom.validator = validator
+            for (var name in valiDir.defaults) {
                 if (!validator.hasOwnProperty(name)) {
-                    validator[name] = dir.defaults[name]
+                    validator[name] = valiDir.defaults[name]
                 }
             }
             validator.fields = validator.fields || []
-            update(src, this.update)
-
+            return true
         }
     },
-    update: function (dom, vdom) {
-        var validator = vdom['ms-validate']
-        dom._ms_validator_ = validator
+    update: function (vdom, value) {
+        var validator = vdom.validator
+        var dom = vdom.dom
         validator.dom = dom
+        dom._ms_validate_ = validator
+        
+        //为了方便用户手动执行验证，我们需要为原始vmValidate上添加一个onManual方法
         var v = vdom.vmValidator
         try {
             v.onManual = onManual
         } catch (e) {
         }
         delete vdom.vmValidator
+
         dom.setAttribute('novalidate', 'novalidate')
         function onManual() {
-            dir.validateAll.call(validator, validator.onValidateAll)
+            valiDir.validateAll.call(validator, validator.onValidateAll)
         }
         /* istanbul ignore if */
         if (validator.validateAllInSubmit) {
@@ -59,21 +60,21 @@ var dir = avalon.directive('validate', {
     validateAll: function (callback) {
         var validator = this
         var fn = typeof callback === 'function' ? callback : validator.onValidateAll
-        var promise = validator.fields.filter(function (field) {
+        var promises = validator.fields.filter(function (field) {
             var el = field.dom
             return el && !el.disabled && validator.dom.contains(el)
         }).map(function (field) {
-            return dir.validate(field, true)
+            return valiDir.validate(field, true)
         })
-
-        return Promise.all(promise).then(function (array) {
-            array = array || []
+        var uniq = {}
+        return Promise.all(promises).then(function (array) {
             var reasons = array.concat.apply([], array)
             if (validator.deduplicateInValidateAll) {
-                var uniq = {}
+               
                 reasons = reasons.filter(function (reason) {
                     var el = reason.element
                     var uuid = el.uniqueID || (el.uniqueID = setTimeout('1'))
+                    
                     if (uniq[uuid]) {
                         return false
                     } else {
@@ -90,19 +91,19 @@ var dir = avalon.directive('validate', {
         /* istanbul ignore if */
         if (validator.validateInKeyup && (!field.isChanged && !field.debounceTime)) {
             avalon.bind(node, 'keyup', function (e) {
-                dir.validate(field, 0, e)
+                valiDir.validate(field, 0, e)
             })
         }
         /* istanbul ignore if */
         if (validator.validateInBlur) {
             avalon.bind(node, 'blur', function (e) {
-                dir.validate(field, 0, e)
+                valiDir.validate(field, 0, e)
             })
         }
         /* istanbul ignore if */
         if (validator.resetInFocus) {
             avalon.bind(node, 'focus', function (e) {
-                validator.onReset.call(node, e, field)
+                valiDir.onReset.call(node, e, field)
             })
         }
     },
@@ -110,10 +111,10 @@ var dir = avalon.directive('validate', {
         var promises = []
         var value = field.value
         var elem = field.dom
-        var validator = field.validator
+       
         /* istanbul ignore if */
-        if (typeof Promise !== 'function') {
-            avalon.error('please npm install avalon-promise or bluebird')
+        if (typeof Promise !== 'function') {//avalon-promise不支持phantomjs
+            avalon.error('please npm install es6-promise or bluebird')
         }
         /* istanbul ignore if */
         if (elem.disabled)
@@ -156,6 +157,7 @@ var dir = avalon.directive('validate', {
                 return typeof el === 'object'
             })
             if (!isValidateAll) {
+                var validator = field.validator
                 if (reasons.length) {
                     validator.onError.call(elem, reasons, event)
                 } else {
@@ -176,8 +178,9 @@ function getMessage() {
         return data[name] == null ? '' : data[name]
     })
 }
-dir.defaults = {
-    addField: dir.addField, //供内部使用,收集此元素底下的所有ms-duplex的域对象
+valiDir.defaults = {
+    validate: valiDir.validate,
+    addField: valiDir.addField, //供内部使用,收集此元素底下的所有ms-duplex的域对象
     onError: avalon.noop,
     onSuccess: avalon.noop,
     onComplete: avalon.noop,

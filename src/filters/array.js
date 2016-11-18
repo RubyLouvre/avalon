@@ -1,42 +1,50 @@
-var avalon = require('../seed/core')
+import { avalon } from '../seed/core'
+/*
+https://github.com/hufyhang/orderBy/blob/master/index.js
+*/
 
-function orderBy(array, criteria, reverse) {
+export function orderBy(array, by, decend) {
     var type = avalon.type(array)
     if (type !== 'array' && type !== 'object')
         throw 'orderBy只能处理对象或数组'
-    var order = (reverse && reverse < 0) ? -1 : 1
+    var criteria = typeof by == 'string' ? function (el) {
+        return el && el[by]
+    } : typeof by === 'function' ? by : function (el) {
+        return el
+    }
+    var mapping = {}
+    var temp = []
+    var index = 0
+    for (var key in array) {
+        if (array.hasOwnProperty(key)) {
+            var val = array[key]
+            var k = criteria(val, key)
+            if (k in mapping) {
+                mapping[k].push(key)
+            } else {
+                mapping[k] = [key]
+            }
 
-    if (typeof criteria === 'string') {
-        var key = criteria
-        criteria = function (a) {
-            return a && a[key]
+            temp.push(k)
         }
     }
-    array = convertArray(array)
-    array.forEach(function (el) {
-        el.order = criteria(el.value, el.key)
-    })
-    array.sort(function (left, right) {
-        var a = left.order
-        var b = right.order
-        /* istanbul ignore if */
-        if (Number.isNaN(a) && Number.isNaN(b)) {
-            return 0
-        }
-        return a === b ? 0 : a > b ? order : -order
-    })
-    var isArray = type === 'array'
-    var target = isArray ? [] : {}
-    return recovery(target, array, function (el) {
-        if (isArray) {
-            target.push(el.value)
+
+    temp.sort()
+    if (decend < 0) {
+        temp.reverse()
+    }
+    var _array = type === 'array'
+    var target = _array ? [] : {}
+    return recovery(target, temp, function (k) {
+        var key = mapping[k].shift()
+        if (_array) {
+            target.push(array[key])
         } else {
-            target[el.key] = el.value
+            target[key] = array[key]
         }
     })
 }
-
-function filterBy(array, search) {
+export function filterBy(array, search) {
     var type = avalon.type(array)
     if (type !== 'array' && type !== 'object')
         throw 'filterBy只能处理对象或数组'
@@ -72,7 +80,7 @@ function filterBy(array, search) {
     })
 }
 
-function selectBy(data, array, defaults) {
+export function selectBy(data, array, defaults) {
     if (avalon.isObject(data) && !Array.isArray(data)) {
         var target = []
         return recovery(target, array, function (name) {
@@ -83,11 +91,7 @@ function selectBy(data, array, defaults) {
     }
 }
 
-Number.isNaN = Number.isNaN || /* istanbul ignore next*/ function (a) {
-    return a !== a
-}
-
-function limitBy(input, limit, begin) {
+export function limitBy(input, limit, begin) {
     var type = avalon.type(input)
     if (type !== 'array' && type !== 'object')
         throw 'limitBy只能处理对象或数组'
@@ -96,7 +100,7 @@ function limitBy(input, limit, begin) {
         return input
     }
     //不能为NaN
-    if (Number.isNaN(limit)) {
+    if (limit !== limit) {
         return input
     }
     //将目标转换为数组
@@ -133,21 +137,19 @@ function recovery(ret, array, callback) {
     return ret
 }
 
-
+//Chrome谷歌浏览器中js代码Array.sort排序的bug乱序解决办法
+//http://www.cnblogs.com/yzeng/p/3949182.html
 function convertArray(array) {
     var ret = [], i = 0
-    avalon.each(array, function (key, value) {
-        ret[i++] = {
-            value: value,
-            key: key
+    for (var key in array) {
+        if (array.hasOwnProperty(key)) {
+            ret[i] = {
+                oldIndex: i,
+                value: array[key],
+                key: key
+            }
+            i++
         }
-    })
+    }
     return ret
-}
-
-module.exports = {
-    limitBy: limitBy,
-    orderBy: orderBy,
-    selectBy: selectBy,
-    filterBy: filterBy
 }
