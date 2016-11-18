@@ -1,56 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title></title>
-        <script src="../lib/avalon.js"></script>
-        <link href="./index.css" rel="stylesheet" />
-        <script>
 
-            var vm = avalon.define({
-                $id: "test-ant",
-                size: "small",
-                shape: "circle-outline",
-                type: "ghost"
-            })
-            avalon.component("ms-icon", {
-                template: "<i ms-class='[\"anticon\",\"anticon-\"+@type]'></i>",
-                defaults: {
-                    type: ''
-                }
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
 
+<body>
+    <div class="ms-controller" ms-controller="testCrl">
+        <xmp is="ms-test" ms-widget="[{id:'test11'},@config]"></xmp>
+        <div style="margin-top: 10px;">
+            <h2>父组件数据同步测试</h2>
+            <div>
+                父组件：{{@str}}
+                <br>父组件:{{@config.test}}
+                <br>父组件：{{@config.testObj.objStr}}
+            </div>
+        </div>
+    </div>
 
-            })
-            avalon.component("ms-button", {
-                defaults: {
-                    prefixCls: 'ant-btn',
-                    type: undefined,
-                    htmlType: 'button',
-                    shape: undefined,
-                    size: undefined,
-                    loading: false,
-                    className: '',
-                    sizeCls: function () {
-                        if (this.size) {
-                            return this.prefixCls + "-" + ({
-                                large: 'lg',
-                                small: 'sm'
-                            })[this.size];
-                        }
-                        return ""
-                    },
-                    getCls: function (k) {
-                        return this[k] ? this.prefixCls + "-" + this[k] : "";
-                    },
-                    buttonText: "test"
+    <!--<script src="http://cdn.bootcss.com/avalon.js/2.1.6/avalon.js"></script>-->
+    <script src="../dist/avalon.js"></script>
+
+    <script>
+        var vm;
+        avalon.component('ms-test', {
+            template: '<div>{{@str}}<div>{{@test}}</div><div>{{@testObj.objStr}}</div></div>',
+            defaults: {
+                str: '子组件str',
+                test: '子组件测试',
+                testObj: {
+                    objStr: '子级对象'
                 },
-                soleSlot: "buttonText",
-                template: '<button ms-attr="{type:@htmlType}" ms-class="[@prefixCls,@sizeCls(),@getCls(\'type\'),@getCls(\'shape\'),@getCls(\'loading\')]"><slot name="buttonText"></slot></button>'
-            })
-        </script>
-    </head>
-    <body ms-controller="test-ant" style="padding: 50px">
+                onReady: function() {
+                    var self = this;
+                    setTimeout(function() {
+                        self.str = '子组件数据更新了';
+                        self.test = '子组件数据更新了';
+                        self.testObj = {
+                            objStr: '子组件对象更新了'
+                        }
+                    }, 2000);
+                }
+            }
+        });
 
-    <ms-button ms-widget="{type:@type}"><ms-icon ms-widget="{type:'search'}"></ms-icon></ms-button>
+        vm = avalon.define({
+            $id: 'testCrl',
+            str: '父组件str',
+            config: {
+                test: '父组件测试对象',
+                testObj: {
+                    objStr: '父级对象'
+                }
+            }
+        })
+
+        setTimeout(function() {
+            vm.str = '父组件 str 更新了';
+        }, 3000)
+    </script>
 </body>
+
 </html>

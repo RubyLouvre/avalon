@@ -1,9 +1,8 @@
-import { avalon, document, config } from '../seed/core'
+import { avalon, document } from '../seed/core'
 
 export function VText(text) {
     this.nodeName = '#text'
     this.nodeValue = text
-    this.skipContent = !config.rexpr.test(text)
 }
 
 VText.prototype = {

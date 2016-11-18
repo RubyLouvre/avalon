@@ -13,7 +13,6 @@ export function makeOrphan(node, nodeName, innerHTML) {
         case 'xmp':
             node.children = [{
                 nodeName: '#text',
-                skipContent: true,
                 nodeValue: innerHTML
             }]
             break
@@ -23,7 +22,6 @@ export function makeOrphan(node, nodeName, innerHTML) {
             props.value = innerHTML
             node.children = [{
                 nodeName: '#text',
-                skipContent: true,
                 nodeValue: innerHTML
             }]
             break

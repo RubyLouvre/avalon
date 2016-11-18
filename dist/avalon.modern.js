@@ -1717,7 +1717,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             case 'xmp':
                 node.children = [{
                     nodeName: '#text',
-                    skipContent: true,
                     nodeValue: innerHTML
                 }];
                 break;
@@ -1727,7 +1726,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 props.value = innerHTML;
                 node.children = [{
                     nodeName: '#text',
-                    skipContent: true,
                     nodeValue: innerHTML
                 }];
                 break;
@@ -2530,7 +2528,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     function VText(text) {
         this.nodeName = '#text';
         this.nodeValue = text;
-        this.skipContent = !config.rexpr.test(text);
     }
 
     VText.prototype = {
