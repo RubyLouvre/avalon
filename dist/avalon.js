@@ -1,10 +1,12 @@
 'use strict';
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory() : typeof define === 'function' && define.amd ? define(factory) : factory();
+    (typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) === 'object' && typeof module !== 'undefined' ? factory() : typeof define === 'function' && define.amd ? define(factory) : factory();
 })(this, function () {
 
-    var win = typeof window === 'object' ? window : typeof global === 'object' ? global : {};
+    var win = (typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object' ? window : (typeof global === 'undefined' ? 'undefined' : _typeof(global)) === 'object' ? global : {};
 
     var inBrowser = !!win.location && win.navigator;
     /* istanbul ignore if  */
@@ -26,7 +28,7 @@
         undefinedobject: NaN //Mobile Safari 8.0.0 (iOS 8.4.0) 
     };
     /* istanbul ignore next  */
-    var msie = document$1.documentMode || versions[typeof document$1.all + typeof XMLHttpRequest];
+    var msie = document$1.documentMode || versions[_typeof(document$1.all) + (typeof XMLHttpRequest === 'undefined' ? 'undefined' : _typeof(XMLHttpRequest))];
 
     var modern = /NaN/.test(msie) || msie > 8;
 
@@ -203,7 +205,7 @@
     var ohasOwn = op.hasOwnProperty;
     var ap = Array.prototype;
 
-    var hasConsole = typeof console === 'object';
+    var hasConsole = (typeof console === 'undefined' ? 'undefined' : _typeof(console)) === 'object';
     avalon.config = { debug: true };
     function log() {
         if (hasConsole && avalon.config.debug) {
@@ -222,7 +224,7 @@
     }
     function noop() {}
     function isObject(a) {
-        return a !== null && typeof a === 'object';
+        return a !== null && (typeof a === 'undefined' ? 'undefined' : _typeof(a)) === 'object';
     }
 
     function range(start, end, step) {
@@ -674,12 +676,12 @@
             return String(obj);
         }
         // 早期的webkit内核浏览器实现了已废弃的ecma262v4标准，可以将正则字面量当作函数使用，因此typeof在判定正则时会返回function
-        return typeof obj === 'object' || typeof obj === 'function' ? class2type[inspect.call(obj)] || 'object' : typeof obj;
+        return (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === 'object' || typeof obj === 'function' ? class2type[inspect.call(obj)] || 'object' : typeof obj === 'undefined' ? 'undefined' : _typeof(obj);
     };
 
     var rfunction = /^\s*\bfunction\b/;
 
-    avalon.isFunction = /* istanbul ignore if */typeof alert === 'object' ? function (fn) {
+    avalon.isFunction = /* istanbul ignore if */(typeof alert === 'undefined' ? 'undefined' : _typeof(alert)) === 'object' ? function (fn) {
         /* istanbul ignore next */
         try {
             /* istanbul ignore next */
@@ -773,7 +775,7 @@
         }
 
         //当参数为其他简单类型 ,改为空对象
-        if (typeof target !== 'object' && !avalon.isFunction(target)) {
+        if ((typeof target === 'undefined' ? 'undefined' : _typeof(target)) !== 'object' && !avalon.isFunction(target)) {
             target = {};
         }
 
@@ -867,7 +869,7 @@
     new function welcome() {
         var welcomeIntro = ["%cavalon.js %c" + avalon.version + " %cin debug mode, %cmore...", "color: rgb(114, 157, 52); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(82, 140, 224); font-weight: normal; text-decoration: underline;"];
         var welcomeMessage = "You're running avalon in debug mode - messages will be printed to the console to help you fix problems and optimise your application.\n\n" + 'To disable debug mode, add this line at the start of your app:\n\n  avalon.config({debug: false});\n\n' + 'Debug mode also automatically shut down amicably when your app is minified.\n\n' + "Get help and support:\n  https://segmentfault.com/t/avalon\n  http://avalonjs.coding.me/\n  http://www.baidu-x.com/?q=avalonjs\n  http://www.avalon.org.cn/\n\nFound a bug? Raise an issue:\n  https://github.com/RubyLouvre/avalon/issues\n\n";
-        if (typeof console === 'object') {
+        if ((typeof console === 'undefined' ? 'undefined' : _typeof(console)) === 'object') {
             var con = console;
             var method = con.groupCollapsed || con.log;
             Function.apply.call(method, con, welcomeIntro);
@@ -1551,7 +1553,7 @@
         set: function set(cls) {
             cls = cls.trim();
             var node = this.node;
-            if (typeof node.className === 'object') {
+            if (_typeof(node.className) === 'object') {
                 //SVG元素的className是一个对象 SVGAnimatedString { baseVal='', animVal=''}，只能通过set/getAttribute操作
                 node.setAttribute('class', cls);
             } else {
@@ -4507,7 +4509,7 @@
                 }
             }
             return true;
-        } else if (typeof a === "object" && typeof b === "object") {
+        } else if ((typeof a === 'undefined' ? 'undefined' : _typeof(a)) === "object" && (typeof b === 'undefined' ? 'undefined' : _typeof(b)) === "object") {
             if (a === null || b === null) return false;
             if (getEnumerableKeys(a).length !== getEnumerableKeys(b).length) return false;
             for (var prop in a) {
@@ -5197,7 +5199,7 @@
     });
 
     function getTraceKey(item) {
-        var type = typeof item;
+        var type = typeof item === 'undefined' ? 'undefined' : _typeof(item);
         return item && type === 'object' ? item.$hashcode : type + ':' + item;
     }
 
@@ -5396,7 +5398,7 @@
         var classes = [];
         for (var i = 0; i < arguments.length; i++) {
             var arg = arguments[i];
-            var argType = typeof arg;
+            var argType = typeof arg === 'undefined' ? 'undefined' : _typeof(arg);
             if (argType === 'string' || argType === 'number' || arg === true) {
                 classes.push(arg);
             } else if (Array.isArray(arg)) {
@@ -5433,7 +5435,7 @@
 
             var className = classNames(newVal);
 
-            if (typeof oldVal === void 0 || oldVal !== className) {
+            if ((typeof oldVal === 'undefined' ? 'undefined' : _typeof(oldVal)) === void 0 || oldVal !== className) {
                 this.value = className;
 
                 vdom['change-' + type] = className;
@@ -6430,7 +6432,7 @@
             //如果promises不为空，说明经过验证拦截器
             return Promise.all(promises).then(function (array) {
                 var reasons = array.filter(function (el) {
-                    return typeof el === 'object';
+                    return (typeof el === 'undefined' ? 'undefined' : _typeof(el)) === 'object';
                 });
                 if (!isValidateAll) {
                     var validator = field.validator;
@@ -6886,10 +6888,10 @@
     cp$1.yieldDirectives = function () {
         var tuple;
         while (tuple = this.bindings.shift()) {
-            var _tuple = tuple;
-            var vdom = _tuple[0];
-            var scope = _tuple[1];
-            var dirs = _tuple[2];
+            var _tuple = tuple,
+                vdom = _tuple[0],
+                scope = _tuple[1],
+                dirs = _tuple[2];
 
             var bindings = [];
             if ('nodeValue' in dirs) {

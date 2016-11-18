@@ -15,9 +15,9 @@ module.exports = function(config) {
 
         // list of files / patterns to load in the browser
         files: [
-            './promise.js',
-            './matchers.js',
-            './beforeIt.js',
+            './test/promise.js',
+            './test/matchers.js',
+            './test/beforeIt.js',
             './dist/avalon.test.js'
         ],
 
