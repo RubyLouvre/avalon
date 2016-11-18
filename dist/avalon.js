@@ -1,10 +1,23 @@
-'use strict';
+/*!
+built in 2016-11-18:23 version 2.2.0 by 司徒正美
+https://github.com/RubyLouvre/avalon/tree/2.2.0
+fix IE6-8 opacity BUG
+减少VM的系统属性，__const__, __data__,__proxy__,$skipArray被废掉
+vmodel模块全部重写，让它内部用到的私用方法更加合理
+directives模块全部重写，因为现在不走react的渲染模板思路了
+component模块全部重写，它现在是完全独立的作用域，可能与这前的有一点不兼容。不过，这对维护组件自身的状态非常有利。
+$watch不再支持*号
+strategy模块被打散了，细分为parser与renders与vtree这三个模块。renders里面有domRender与serverRender。
+vdom模块，虚拟DOM转真实DOM时，对低版本浏览器的支持更好。
+
+*/
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 (function (global, factory) {
     (typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) === 'object' && typeof module !== 'undefined' ? factory() : typeof define === 'function' && define.amd ? define(factory) : factory();
 })(this, function () {
+    
 
     var win = (typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object' ? window : (typeof global === 'undefined' ? 'undefined' : _typeof(global)) === 'object' ? global : {};
 
