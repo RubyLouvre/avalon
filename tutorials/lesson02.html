@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+
+<head>
+    <title>TODO supply a title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <h1>将内容输出到页面</h1>
+    <h2>Output the content to the page</h2>
+    <p>与后端模板一样,avalon能将动态的内容放到它们该呆的地方.并且提供多种便捷的方式. 第一种就是双花括号,第二种是ms-text属性.如果要输出大段HTML内容,还可以用ms-html </p>
+    <p>As same as the back-end templates, Avalon will be able to put dynamic content to the place where they should be, and provide a variety of convenient ways.The first one is double parentheses, the second is the ms-text attribute. If you want to output
+        a large segment of the HTML content, can also use ms-html</p>
+    <ul ms-skip="true">
+        <li>{{@aaa}}</li>
+        <li>
+            <xmp><span ms-text="@bbb"></span></xmp>
+        </li>
+        <li>
+            <xmp>
+                <div ms-html="@bbb"></div>
+            </xmp>
+        </li>
+    </ul>
+    <p>双花括号是最便捷的方式，因此许多MVVM框架都支持这种语法，它类似于JSP的
+        <xmp>
+            <%= aa %>
+        </xmp>。 动态内容可以是VM中的属性，方法，或多个属性组成的表达式。 为了方便avalon知晓这些属性是来自VM而不是来自全局对象，需要在这些属性或方法前面加上一个@。
+    </p>
+    <p>
+        Double brace is the most convenient way, so many of the MVVM framework to support this syntax, it is similar to the JSP
+        <xmp>
+            <%= AA% ></xmp>. Dynamic content can be a property, 
+    method, or an expression of a number of properties in VM. 
+    In order to help Avalon to know that these properties are derived from VM 
+    rather than from the global scope,
+    you need to add a <b>@</b> in front of these properties or methods.
+</p>
+        
+        
+    </body>
+</html>
