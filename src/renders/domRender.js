@@ -164,16 +164,22 @@ cp.scanTag = function(vdom, scope, parentChildren, isRoot) {
         var type = dirs['ms-important'] === expr ? 'important' : 'controller'
             //推算出用户定义时属性名,是使用ms-属性还是:属性
         var name = ('ms-' + type) in attrs ? 'ms-' + type : ':' + type
-        var clazz = attrs['class']
-        if (clazz) {
-            attrs['class'] = (' ' + clazz + ' ').replace(' ms-controller ', '').trim()
-        }
+
         if (inBrowser) {
             delete attrs[name]
         }
         var dir = directives[type]
         scope = dir.getScope.call(this, expr, scope)
+        if (scope) {
+            return
+        } else {
+            var clazz = attrs['class']
+            if (clazz) {
+                attrs['class'] = (' ' + clazz + ' ').replace(' ms-controller ', '').trim()
+            }
+        }
         var render = this
+
         this.callbacks.push(function() {
             //用于删除ms-controller
             dir.update.call(render, vdom, scope, name)
