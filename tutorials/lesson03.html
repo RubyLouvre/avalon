@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>lesson03</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="../dist/avalon.js"></script>
+        <script src="//cdn.bootcss.com/jquery/3.0.0-beta1/jquery.js"></script>
+       
+        <script>
+           
+            var vm = avalon.define({
+                $id: 'effect',
+                a: 111,
+                aaa: {
+                    bbb: {
+                        ccc: 111
+                    }
+                }
+               
+            })
+            vm.$watch('a', function(a,b){
+                console.log(a, b)
+            })
+            vm.$watch('aaa.bbb.ccc', function(a, b,c){
+                console.log(a, b, c)
+            })
+            vm.a = 999
+            vm.aaa.bbb.ccc = 777
+            console.log(vm.$model)
+
+        </script>
+    </head>
+    <body>
+        
+    </body>
+</html>
