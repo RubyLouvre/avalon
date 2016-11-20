@@ -20,11 +20,10 @@ console.log(vm === data) //false
 
 Depending on the version of the browser or the version of avalon, the type and structure of the VM is different.
 
-| IE6-8      | IE9-11, modern browsers(not support es7 Proxy) | modern browsers(support es7 Proxy) |          |
-|------------|------------------------------------------------|------------------------------------|----------|
-| avalon2.2- | VBScript                                       | Obsever                            | Observer |
-| avalon2.2  | VBScript                                       | IProxy                             | Proxy    |
-
+| &nbsp;     | IE6-8    | IE9-11, modern browsers(not support es7 Proxy) | modern browsers(support es7 Proxy) |
+|------------|----------|------------------------------------------------|------------------------------------|
+| avalon2.2- | VBScript | Obsever                                        | Observer                           |
+| avalon2.2+ | VBScript | IProxy                                         | Proxy                              |
 
 
 
@@ -34,9 +33,9 @@ Depending on the version of the browser or the version of avalon, the type and s
 
 https://github.com/RubyLouvre/avalon/blob/v2.1.16/src/vmodel/parts/createViewModel.js#L35-L123
 
-Observer，是一个javascript构造函数产生的实例，它使用了Object.defineProperties来定义访问器属性
+**Observer**，是一个javascript构造函数产生的实例，它使用了Object.defineProperties来定义访问器属性
 
-Observer, is an instance of a javascript constructor that uses Object.defineProperties to define accessor properties
+**Observer**, is an instance of a javascript constructor that uses Object.defineProperties to define accessor properties
 
 https://github.com/RubyLouvre/avalon/blob/v2.1.16/src/vmodel/modern.js#L23-L25
 
@@ -49,6 +48,7 @@ https://msdn.microsoft.com/en-us/library/hh965578(v=vs.94).aspx
 
 https://github.com/RubyLouvre/avalon/blob/2.2.0/src/vmodel/share.js#L33-L55
 
+
 **Proxy**，是一个es6 新添加的特征，Proxy可以监听对象身上发生了什么事情,并在这些事情发生后执行一些相应的操作。它比访问器属性强多了，因此它将是avalon实现VM的主要手段。
 
 **Proxy** is a new feature added by es6. Proxy can listen for what is happening on the object and do something after that happens. It is much more powerful than the accessor property, so it will be the primary means for Avalon to implement the VM.
@@ -57,15 +57,17 @@ https://github.com/RubyLouvre/avalon/blob/2.2.0/src/vmodel/proxy.js#L39-L43
 
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy
 
-我们在定义VM时，必须指定`$id`属性，并且尽量不要用`$`属性开头，因为`$`属性是留给框架用，并且不能转换为访问器属性。目前，avalon保留了以下几个属性：`$id`,  `$element`,  `$render`， `$fire`， `$watch`， `$track`， `$events`，`$accessors`, `$model`。我们平时只会`$fire`, `$watch`与`$model`。
+我们在定义VM时，必须指定`$id`属性，并且尽量不要用`$`属性开头，因为`$`属性是留给框架用，并且不能转换为访问器属性。目前，avalon保留了以下几个属性：`$id`,  `$element`,  `$render`， `$fire`， `$watch`， `$track`， `$events`，`$accessors`,`$hashcode`, `$model`。我们平时只会`$fire`, `$watch`与`$model`。
 
-When defining a VM, you must specify the $id attribute, and try not to start with the `$` attribute because the `$-prefix` attribute is left to the framework and can not be converted to an accessor property. Currently, avalon have the following properties: `$id`, `$element`, `$render`, `$fire`, `$watch`, `$track`, `$events`, `$accessors`, `$model`. We usually use  `$ fire`,` $ watch` and `$ model`.
+When defining a VM, you must specify the $id attribute, and try not to start with the `$` attribute because the `$-prefix` attribute is left to the framework and can not be converted to an accessor property. Currently, avalon have the following properties: `$id`, `$element`, `$render`, `$fire`, `$watch`, `$track`, `$events`, `$accessors`,`$hashcode`, `$model`. We usually use  `$ fire`,` $ watch` and `$ model`.
+
+![](./lesson03.png)
 
 **$watch**是用于监听属性的变化，然后唤用一个回调
 
 **$watch** is used to listen for changes in attributes, and then call a callback
 
-```
+```javascript
 var vm = avalon.define({
    $id: 'test',
    aaa: 111
@@ -78,8 +80,9 @@ vm.aaa = 999
 
 **$fire**是用于触发监听的回调
 
-`$fire` trigger callbacks for the given **$watch**
-```
+**$fire** trigger callbacks for the given **$watch**
+
+```javascript
 var vm = avalon.define({
    $id: 'test',
    aaa: 111
