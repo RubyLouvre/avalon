@@ -38,6 +38,6 @@ npm install avalon2
 
 ![](./lesson01_0.gif)
 
-[index](./index.html)
+[index](./index.md)
 
-[next](./lesson02.html)
+[next](./lesson02.md)

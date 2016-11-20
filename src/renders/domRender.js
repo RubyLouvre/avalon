@@ -170,7 +170,7 @@ cp.scanTag = function(vdom, scope, parentChildren, isRoot) {
         }
         var dir = directives[type]
         scope = dir.getScope.call(this, expr, scope)
-        if (scope) {
+        if (!scope) {
             return
         } else {
             var clazz = attrs['class']

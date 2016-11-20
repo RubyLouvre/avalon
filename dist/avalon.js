@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-20:13 version 2.2.0 by 司徒正美
+built in 2016-11-20:15 version 2.2.0 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.0
 fix IE6-8 opacity BUG
 减少VM的系统属性，__const__, __data__,__proxy__,$skipArray被废掉
@@ -6840,7 +6840,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             }
             var dir = directives[type];
             scope = dir.getScope.call(this, expr, scope);
-            if (scope) {
+            if (!scope) {
                 return;
             } else {
                 var clazz = attrs['class'];

@@ -5,7 +5,7 @@
 
 As same as the back-end templates, Avalon will be able to put dynamic content to the place where they should be, and provide a variety of convenient ways.The first one is double parentheses, the second is the ms-text attribute. If you want to output a large segment of the HTML content, can also use ms-html
 
-*  `<span>{{@aaa}}</span`
+*   `<span>{{@aaa}}</span`
 *   `<span ms-text="@bbb"></span>`
 *   `<div ms-html="@bbb"></div>`
 
@@ -44,3 +44,34 @@ avalon.config({
  </div>
 ```
 
+The complete example：
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>avalon</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="dist/avalon.js"></script>
+    <script>
+        avalon.config({
+            interpolate: ["{&", "&}"]
+        })
+        avalon.define({
+            $id: 'test',
+            aaa: 111,
+            bbb: 222
+        })
+    </script>
+</head>
+
+<body>
+    <div ms-controller="test">
+        <p ms-text="##aaa"></p>
+        <p>{& ##aaa &}</p>
+    </div>
+</body>
+</html>
+
+```
+![](lesson02.png)
