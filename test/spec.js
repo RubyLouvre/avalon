@@ -42,6 +42,7 @@ import './directives/important.spec'
 import './directives/on.spec'
 
 import './directives/controller.spec'
+import './directives/if.spec'
 
 import './directives/text.spec'
 import './directives/class.spec'

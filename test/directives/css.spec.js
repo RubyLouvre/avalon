@@ -54,16 +54,16 @@ describe('css', function () {
         })
 
         avalon.scan(div)
-        var css = div.children[0].style
-        expect(css['float']).toBe('right')
+        var child = avalon(div.children[0])
+        expect(child.css('float')).toBe('right')
 
         vm.a = 'left'
         vm.a = 'right'
         vm.a = 'left'
         setTimeout(function () {
-            expect(css['float']).toBe('left')
+            expect(child.css('float')).toBe('left')
             done()
-        })
+        },100)
 
     })
     it('width', function (done) {

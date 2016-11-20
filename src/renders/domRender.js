@@ -114,9 +114,9 @@ cp.scanComment = function(vdom, scope, parentChildren) {
      * @param {type} isRoot 用于执行complete方法
      * @returns {undefined}
      */
-    
-    
-cp.scanTag = function(vdom, scope, parentChildren, isRoot) {  
+
+
+cp.scanTag = function(vdom, scope, parentChildren, isRoot) {
     var dirs = {},
         attrs = vdom.props,
         hasDir, hasFor
@@ -164,17 +164,21 @@ cp.scanTag = function(vdom, scope, parentChildren, isRoot) {
         var type = dirs['ms-important'] === expr ? 'important' : 'controller'
             //推算出用户定义时属性名,是使用ms-属性还是:属性
         var name = ('ms-' + type) in attrs ? 'ms-' + type : ':' + type
-        if(inBrowser){
+        var clazz = attrs['class']
+        if (clazz) {
+            attrs['class'] = (' ' + clazz + ' ').replace(' ms-controller ', '').trim()
+        }
+        if (inBrowser) {
             delete attrs[name]
         }
         var dir = directives[type]
-       scope = dir.getScope.call(this, expr, scope)
-       var render = this
-       this.callbacks.push(function(){
-          //用于删除ms-controller
-           dir.update.call(render, vdom, scope, name)
-       })
-      
+        scope = dir.getScope.call(this, expr, scope)
+        var render = this
+        this.callbacks.push(function() {
+            //用于删除ms-controller
+            dir.update.call(render, vdom, scope, name)
+        })
+
     }
     if (hasFor) {
         if (vdom.dom) {

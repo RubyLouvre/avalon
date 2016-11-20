@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-18:23 version 2.2.0 by 司徒正美
+built in 2016-11-20:13 version 2.2.0 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.0
 fix IE6-8 opacity BUG
 减少VM的系统属性，__const__, __data__,__proxy__,$skipArray被废掉
@@ -2411,12 +2411,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
     /* istanbul ignore next */
     avalon._nativeBind = function (el, type, fn, capture) {
-        el.addEventListener(type, fn, capture);
+        el.addEventListener(type, fn, !!capture);
     };
 
     /* istanbul ignore next */
-    avalon._nativeUnBind = function (el, type, fn) {
-        el.removeEventListener(type, fn);
+    avalon._nativeUnBind = function (el, type, fn, a) {
+        el.removeEventListener(type, fn, !!a);
     };
 
     /* istanbul ignore next */
@@ -2455,7 +2455,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         if (document$1.readyState === 'complete') {
             setTimeout(fireReady); //如果在domReady之外加载
         } else {
-            document$1.addEventListener('DOMContentLoaded', fireReady);
+            //必须传入三个参数，否则在firefox4-26中报错
+            //caught exception: [Exception... "Not enough arguments"  nsresult: "0x80570001 (NS_ERROR_XPC_NOT_ENOUGH_ARGS)" 
+            document$1.addEventListener('DOMContentLoaded', fireReady, false);
         }
 
         avalon.bind(window$1, 'load', fireReady);
@@ -3676,8 +3678,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         update: function update(node, scope, attrName) {
             if (!avalon.inBrowser) return;
             var dom = avalon.vdom(node, 'toDOM');
-            dom.removeAttribute(attrName);
-            avalon(dom).removeClass('ms-controller');
+            if (dom.nodeType === 1) {
+                dom.removeAttribute(attrName);
+                avalon(dom).removeClass('ms-controller');
+            }
             scope.$fire('onReady');
             scope.$element = node;
             scope.$render = this;
@@ -5987,6 +5991,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             var type = dirs['ms-important'] === expr ? 'important' : 'controller';
             //推算出用户定义时属性名,是使用ms-属性还是:属性
             var name = 'ms-' + type in attrs ? 'ms-' + type : ':' + type;
+            var clazz = attrs['class'];
+            if (clazz) {
+                attrs['class'] = (' ' + clazz + ' ').replace(' ms-controller ', '').trim();
+            }
             if (inBrowser) {
                 delete attrs[name];
             }

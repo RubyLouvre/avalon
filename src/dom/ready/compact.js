@@ -33,8 +33,10 @@ function bootstrap() {
     if (document.readyState === 'complete') {
         setTimeout(fireReady) //如果在domReady之外加载
     } else if (document.addEventListener) {
-        document.addEventListener('DOMContentLoaded', fireReady)
+        document.addEventListener('DOMContentLoaded', fireReady,false)
     } else if (document.attachEvent) {
+        //必须传入三个参数，否则在firefox4-26中报错
+        //caught exception: [Exception... "Not enough arguments"  nsresult: "0x
         document.attachEvent('onreadystatechange', function () {
             if (document.readyState === 'complete') {
                 fireReady()

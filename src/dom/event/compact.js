@@ -11,13 +11,13 @@ if (!modern) {
 }
 /* istanbul ignore next */
 avalon._nativeBind = modern ? function (el, type, fn, capture) {
-    el.addEventListener(type, fn, capture)
+    el.addEventListener(type, fn, !!capture)
 } : function (el, type, fn) {
     el.attachEvent('on' + type, fn)
 }
 /* istanbul ignore next */
-avalon._nativeUnBind = modern ? function (el, type, fn) {
-    el.removeEventListener(type, fn)
+avalon._nativeUnBind = modern ? function (el, type, fn, a) {
+    el.removeEventListener(type, fn, !!a)
 } : function (el, type, fn) {
     el.detachEvent('on' + type, fn)
 }

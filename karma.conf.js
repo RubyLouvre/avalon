@@ -18,7 +18,7 @@ module.exports = function(config) {
             './test/promise.js',
             './test/matchers.js',
             './test/beforeIt.js',
-            './dist/avalon.test.js'
+            './dist/avalon.modern.test.js'
         ],
 
 
@@ -56,7 +56,7 @@ module.exports = function(config) {
 
         // start these browsers
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-        browsers: ['Chrome','Firefox','PhantomJS_custom'], //'PhantomJS''IE', 'IE7','Chrome'
+        browsers: ['Chrome', 'Firefox', 'PhantomJS_custom'], //'PhantomJS''IE', 'IE7','Chrome'
 
         customLaunchers: {
             IE6: {

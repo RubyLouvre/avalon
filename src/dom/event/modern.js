@@ -6,12 +6,12 @@ export {
 }
  /* istanbul ignore next */
 avalon._nativeBind = function (el, type, fn, capture) {
-    el.addEventListener(type, fn, capture)
+    el.addEventListener(type, fn, !!capture)
 }
 
  /* istanbul ignore next */
-avalon._nativeUnBind = function (el, type, fn) {
-    el.removeEventListener(type, fn)
+avalon._nativeUnBind = function (el, type, fn, a) {
+    el.removeEventListener(type, fn, !!a)
 }
 
  /* istanbul ignore next */
