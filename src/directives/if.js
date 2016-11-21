@@ -47,3 +47,4 @@ function continueScan(instance, vdom){
     vdom.children = boss.root.children
     vdom.dom = boss.root.dom
 }
+

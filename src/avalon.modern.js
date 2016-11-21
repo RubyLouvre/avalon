@@ -1,4 +1,4 @@
-import './seed/core'
+import {avalon} from './seed/core'
 import './seed/lang.modern'
 
 import './filters/index'
@@ -17,4 +17,5 @@ import './renders/domRender'
 
 import './effect/index'
 import './component/index'
+export default avalon
 

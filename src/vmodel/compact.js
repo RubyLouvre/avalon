@@ -13,6 +13,8 @@ try {
     Object.defineProperty({}, '_', {
         value: 'x'
     })
+    delete $$skipArray.$vbsetter
+    delete $$skipArray.$vbthis
 } catch (e) {
     /* istanbul ignore next*/
     canHideProperty = false

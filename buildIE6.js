@@ -2,6 +2,8 @@ var rollup = require('rollup');
 var fs = require('fs');
 var babel = require("babel-core");
 var transform = require('es3ify').transform;
+var less = require('semicolon-less')
+
 // used to track the cache for subsequent bundles
 var cache;
 var json = require('./package.json')
@@ -35,8 +37,8 @@ module.exports = rollup.rollup({
         /Object\.defineProperty\(exports,\s*'__esModule',\s*\{\s*value:\s*true\s*\}\);/,
         "exports.__esModule = true").
 
-    replace(/version\:\s*1/, v).
-    replace(/avalon\$1/g, 'avalon')
+    replace(/version\:\s*1/, v)
+
 
     result = babel.transform(result.code, {
         presets: ['es2015-loose', 'stage-0'],
@@ -67,8 +69,11 @@ vdom模块，虚拟DOM转真实DOM时，对低版本浏览器的支持更好。
 
     var code = banner + transform(result.code).
     replace(/\}\)\(undefined,/, '})(this,').
-    replace(/'use strict';?/g, '')
-    fs.writeFileSync('./dist/avalon.js', code);
+    replace(/avalon\$\d/g, 'avalon')
+
+    //这个不需要了
+    //  replace(/'use strict';?/g, '')
+    fs.writeFileSync('./dist/avalon.js', less(code));
 
 
 }).catch(function(e) {

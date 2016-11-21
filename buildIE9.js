@@ -2,6 +2,7 @@ var rollup = require('rollup');
 var fs = require('fs');
 var istanbul = require('rollup-plugin-istanbul');
 var babel = require("babel-core");
+var less = require('semicolon-less')
 var json = require('./package.json')
 var v = 'version:' + JSON.stringify(json.version)
 
@@ -65,10 +66,10 @@ vdom模块，虚拟DOM转真实DOM时，对低版本浏览器的支持更好。
         '-' + now.getDate() + ':' + now.getHours()
     var banner = '/*!\nbuilt in ' + snow + ' version ' + json.version + ' by 司徒正美\n' + feather + '\n\n*/'
     code = banner + result.code.
-    replace(/\}\)\(undefined,/, '})(this,').
-    replace(/'use strict';?/g, '')
+    replace(/\}\)\(undefined,/, '})(this,')
+        // replace(/'use strict';?/g, '')
 
-    fs.writeFileSync('./dist/avalon.modern.js', code);
+    fs.writeFileSync('./dist/avalon.modern.js', less(code));
     // fs.writeFileSync( '../avalon-server-render-example/dist/avalon2.2.js', code );
 
 }).catch(function(e) {
