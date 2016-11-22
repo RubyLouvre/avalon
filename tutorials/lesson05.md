@@ -1,7 +1,9 @@
+#属性操作
+#attributes manipulating
 avalon2与avalon1的属性操作虽然都是使用ms-attr，但用法完全不一样。  
-avalon2 and avalon1 all use ms-attr to opreat attributes,but way of useing is exactly the different.  
+avalon2 and avalon1 use `ms-attr` to manipulate attributes,but way of useing is exactly the different.  
 avalon1是这样操作属性的  
-avalon1 operate attributes like this  
+avalon1 manipulate attributes like this  
 ```
 <div ms-attr-aaa='a' ms-attr-bbb='b' ms-attr-ccc='b'></div>
 ```
