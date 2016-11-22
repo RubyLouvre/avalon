@@ -16,7 +16,6 @@ it's a wrong example,these two below are correct
 in avalon1.* series,it allows you to insert a Interpolation expression into directive value,such as  
 `ms-css-width=”prop”(会自动补px)，ms-css-height=”{{prop}}%”, ms-css-color=”prop”, ms-css-background-color=”prop”, ms-css-font-size=”{{prop}}px`  
 `ms-css-width=”prop”(avalon will add `px` for you )，ms-css-height=”{{prop}}%”, ms-css-color=”prop”, ms-css-background-color=”prop”, ms-css-font-size=”{{prop}}px`  
-
 这些在avalon2中都不支持，它顶多帮你的样式加上厂商前缀，驼峰化，对数字属性加上px。  
 this featrue is no more supported in avalon2, the framework only correct your style name and add `px` for number values.  
 
@@ -48,7 +47,7 @@ this featrue is no more supported in avalon2, the framework only correct your st
     </body>
 </html>
 ```
-
+![](lesson006_01.gif)  
 我们来看另一个动画效果：  
 another animation example  
 ```
@@ -108,7 +107,7 @@ another animation example
     </body>
 </html>
 ```
-
+![](lesson006_02.gif)  
 最后看一下与ms-duplex结合使用的例子  
 a example using `ms-duplex`  
 ```
@@ -142,6 +141,6 @@ a example using `ms-duplex`
     </body>
 </html>
 ```
-
+![](lesson006_03.gif)  
 如果读者一口气看了N篇教程，建议马上到GITHUB里下avalon.js 的源码，动手试试。多看不如多码，那样才是成功的学习方式。  
 Thank you for reading all these 6 lessons,I strongly suggest you to download avalon.js file and try to make some your own examples.Coding is much better than reading only,that is a successful way of learning.
