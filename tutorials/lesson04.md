@@ -67,40 +67,10 @@ we are talking about ms-visible today,it works very samilarly to the jQuery togg
     </body>
 </html>
 ```  
+![](lesson04_0.gif)  
 这里用到ms-for循环指令及ms-click事件指令，语法与ng没有二致，不懂可以暂时忽略。  
 this example use ms-for loop directive and ms-click event diretive,the grammar is exactly the same as ng,you may skip this if you don‘t know diretives.
-```
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width">
-        <script src="./dist/avalon.js"></script>
-        <script >
-            var vm = avalon.define({
-                $id: "test",
-                toggle: true
-            })
-          
-        </script>
-        <style>
-            div div{
-                flex:1;
-                margin: 20px;
-                height: 30px;
-                background: #a9ea00;
-            }
-        </style>
-    </head>
-    <body ms-controller="test" >
-        <div ms-visible="@toggle" style="display: flex;display:-webkit-flex;background: #ffd">
-            <div></div> <div></div> <div></div>
-        </div>
-        <p ms-click="@toggle = !@toggle">click me</p>
-    </body>
-</html>
-```
+
 再看它能否处理内联样式的干扰：  
 let‘s see if it can precede over a inline style:  
 ```
@@ -135,6 +105,7 @@ let‘s see if it can precede over a inline style:
     </body>
 </html>
 ```
+![](lesson04_1.gif)  
 我们再来一个有用的例子，做一个切换卡。
 a useful example,tab switcher  
 ```
@@ -182,3 +153,4 @@ a useful example,tab switcher
     </body>
 </html>
 ```
+![](lesson04_2.gif)  
