@@ -47,7 +47,7 @@ this featrue is no more supported in avalon2, the framework only correct your st
     </body>
 </html>
 ```
-![](lesson006_01.gif)  
+![](lesson06_0.gif)  
 我们来看另一个动画效果：  
 another animation example  
 ```
@@ -107,7 +107,7 @@ another animation example
     </body>
 </html>
 ```
-![](lesson006_02.gif)  
+![](lesson06_1.gif)  
 最后看一下与ms-duplex结合使用的例子  
 a example using `ms-duplex`  
 ```
@@ -141,6 +141,6 @@ a example using `ms-duplex`
     </body>
 </html>
 ```
-![](lesson006_03.gif)  
+![](lesson06_3.gif)  
 如果读者一口气看了N篇教程，建议马上到GITHUB里下avalon.js 的源码，动手试试。多看不如多码，那样才是成功的学习方式。  
 Thank you for reading all these 6 lessons,I strongly suggest you to download avalon.js file and try to make some your own examples.Coding is much better than reading only,that is a successful way of learning.
