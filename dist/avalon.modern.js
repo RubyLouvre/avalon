@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-21:20 version 2.2.1 by 司徒正美
+built in 2016-11-23:20 version 2.2.1 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.0
 fix IE6-8 opacity BUG
 减少VM的系统属性，__const__, __data__,__proxy__,$skipArray被废掉
@@ -6237,6 +6237,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                     var text = vdom.children[0]
                     if (text && text.nodeValue) {
                         this.fragment = text.nodeValue
+                    } else {
+                        this.fragment = avalon$2.vdom(vdom.children, 'toHTML')
                     }
                 } else {
                     this.fragment = false
@@ -6312,7 +6314,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                         }
                     })
                 }
-
                 //将原来元素的所有孩子，全部移动新的元素的第一个slot的位置上
                 if (component.soleSlot) {
                     insertArraySlot(boss.vnodes, arraySlot)
@@ -6434,7 +6435,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         }
     }
     function resetParentChildren(nodes, arr) {
-        var dir = arr[0].forDir
+        var dir = arr && arr[0] && arr[0].forDir
         if (dir) {
             dir.parentChildren = nodes
         }
@@ -6457,7 +6458,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 var name = el.props.name
                 resetParentChildren(nodes, obj[name])
                 nodes.splice.apply(nodes, [i, 1].concat(obj[name]))
-                break
+                continue
             } else if (el.children) {
                 insertObjectSlot(el.children, obj)
             }

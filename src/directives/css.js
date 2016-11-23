@@ -1,13 +1,12 @@
-
 import { avalon, platform } from '../seed/core'
 
 var cssDir = avalon.directive('css', {
-    diff: function (newVal, oldVal) {
+    diff: function(newVal, oldVal) {
         if (Object(newVal) === newVal) {
-            newVal = platform.toJson(newVal)//安全的遍历VBscript
-            if (Array.isArray(newVal)) {//转换成对象
+            newVal = platform.toJson(newVal) //安全的遍历VBscript
+            if (Array.isArray(newVal)) { //转换成对象
                 var b = {}
-                newVal.forEach(function (el) {
+                newVal.forEach(function(el) {
                     el && avalon.shadowCopy(b, el)
                 })
                 newVal = b
@@ -16,13 +15,13 @@ var cssDir = avalon.directive('css', {
 
             var hasChange = false
             var patch = {}
-            if (!oldVal) {//如果一开始为空
+            if (!oldVal) { //如果一开始为空
                 patch = newVal
                 hasChange = true
             } else {
                 if (this.deep) {
                     var deep = typeof this.deep == 'number' ? this.deep : 6
-                    for (var i in newVal) {//diff差异点  
+                    for (var i in newVal) { //diff差异点  
                         if (!deepEquals(newVal[i], oldVal[i], 4)) {
                             this.value = newVal
                             return true
@@ -30,7 +29,7 @@ var cssDir = avalon.directive('css', {
                         patch[i] = newVal[i]
                     }
                 } else {
-                    for (var i in newVal) {//diff差异点
+                    for (var i in newVal) { //diff差异点
                         if (newVal[i] !== oldVal[i]) {
                             hasChange = true
                         }
@@ -52,7 +51,7 @@ var cssDir = avalon.directive('css', {
         }
         return false
     },
-    update: function (vdom, value) {
+    update: function(vdom, value) {
 
         var dom = vdom.dom
         if (dom && dom.nodeType === 1) {

@@ -9,7 +9,7 @@ avalon.component('ms-button', {
     soleSlot: 'buttonText'
 })
 avalon.component('ms-panel', {
-    template: heredoc(function () {
+    template: heredoc(function() {
         /*
 <div>
     <div class="body">
@@ -28,21 +28,22 @@ avalon.component('ms-panel', {
     soleSlot: 'body'
 })
 
-describe('widget', function () {
+describe('widget', function() {
 
-    var body = document.body, div, vm
-    beforeEach(function () {
+    var body = document.body,
+        div, vm
+    beforeEach(function() {
         div = document.createElement('div')
         body.appendChild(div)
     })
 
 
-    afterEach(function () {
+    afterEach(function() {
         body.removeChild(div)
         delete avalon.vmodels[vm.$id]
     })
-    it('ms-button中buttonText', function (done) {
-        div.innerHTML = heredoc(function () {
+    it('ms-button中buttonText', function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller='widget0' >
              <xmp is='ms-button'>{{@btn}}</xmp>
@@ -57,7 +58,7 @@ describe('widget', function () {
             btn: '这是VM中的TEXT'
         })
         avalon.scan(div)
-        setTimeout(function () {
+        setTimeout(function() {
 
             var span = div.getElementsByTagName('span')
             expect(span[0][textProp]).toBe('这是VM中的TEXT')
@@ -65,7 +66,7 @@ describe('widget', function () {
             expect(span[2][textProp]).toBe('这是属性中的TEXT')
             expect(span[3][textProp]).toBe('button')
             vm.btn = '改动'
-            setTimeout(function () {
+            setTimeout(function() {
                 expect(span[0][textProp]).toBe('改动')
 
                 done()
@@ -75,8 +76,8 @@ describe('widget', function () {
 
     })
 
-    it('通过更新配置对象修改组件界面(VM对象形式)', function (done) {
-        div.innerHTML = heredoc(function () {
+    it('通过更新配置对象修改组件界面(VM对象形式)', function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller='widget1' >
              <xmp is='ms-panel' ms-widget="@aaa" style='border:1px solid red;display:block'>{{@aaa.panelBody}}</xmp>
@@ -93,27 +94,28 @@ describe('widget', function () {
             }
         })
         avalon.scan(div)
+
         function getDiv(el) {
             if (el.querySelector) {
                 return el.querySelector('.body')
             } else {
                 return el.getElementsByTagName('div')[0].
-                    getElementsByTagName('div')[0]
+                getElementsByTagName('div')[0]
             }
         }
-        setTimeout(function () {
+        setTimeout(function() {
             var div2 = getDiv(div)
             var span = div.getElementsByTagName('span')[0]
             expect(div2[textProp]).toBe('aaa面板')
             expect(span[textProp]).toBe('aaa按钮')
             vm.aaa.panelBody = '新面板'
             vm.aaa.button.buttonText = "新按钮"
-            setTimeout(function () {
+            setTimeout(function() {
                 expect(div2[textProp]).toBe('新面板')
                 expect(span[textProp]).toBe('新按钮')
                 vm.aaa.panelBody = '新面板plus'
                 vm.aaa.button.buttonText = "新按钮plus"
-                setTimeout(function () {
+                setTimeout(function() {
 
                     expect(div2[textProp]).toBe('新面板plus')
                     expect(span[textProp]).toBe('新按钮plus')
@@ -123,8 +125,8 @@ describe('widget', function () {
         }, 300)
     })
 
-    it('通过更新配置对象修改组件界面(数组形式)', function (done) {
-        div.innerHTML = heredoc(function () {
+    it('通过更新配置对象修改组件界面(数组形式)', function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller='widget1' >
              <xmp ms-widget="[{is:'ms-panel'}, @aaa]" style='border:1px solid red;display:block'>{{@aaa.panelBody}}</xmp>
@@ -141,27 +143,28 @@ describe('widget', function () {
             }
         })
         avalon.scan(div)
+
         function getDiv(el) {
             if (el.querySelector) {
                 return el.querySelector('.body')
             } else {
                 return el.getElementsByTagName('div')[0].
-                    getElementsByTagName('div')[0]
+                getElementsByTagName('div')[0]
             }
         }
-        setTimeout(function () {
+        setTimeout(function() {
             var div2 = getDiv(div)
             var span = div.getElementsByTagName('span')[0]
             expect(div2[textProp]).toBe('aaa面板')
             expect(span[textProp]).toBe('aaa按钮')
             vm.aaa.panelBody = '新面板'
             vm.aaa.button.buttonText = "新按钮"
-            setTimeout(function () {
+            setTimeout(function() {
                 expect(div2[textProp]).toBe('新面板')
                 expect(span[textProp]).toBe('新按钮')
                 vm.aaa.panelBody = '新面板plus'
                 vm.aaa.button.buttonText = "新按钮plus"
-                setTimeout(function () {
+                setTimeout(function() {
 
                     expect(div2[textProp]).toBe('新面板plus')
                     expect(span[textProp]).toBe('新按钮plus')
@@ -172,8 +175,8 @@ describe('widget', function () {
     })
 
 
-    it('通过更新配置对象修改组件界面(字面量形式)', function (done) {
-        div.innerHTML = heredoc(function () {
+    it('通过更新配置对象修改组件界面(字面量形式)', function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller='widget1' >
              <xmp is='ms-panel' ms-widget="{body: @aaa.panelBody, button: @aaa.button }" style='border:1px solid red;display:block'></xmp>
@@ -190,27 +193,28 @@ describe('widget', function () {
             }
         })
         avalon.scan(div)
+
         function getDiv(el) {
             if (el.querySelector) {
                 return el.querySelector('.body')
             } else {
                 return el.getElementsByTagName('div')[0].
-                    getElementsByTagName('div')[0]
+                getElementsByTagName('div')[0]
             }
         }
-        setTimeout(function () {
+        setTimeout(function() {
             var div2 = getDiv(div)
             var span = div.getElementsByTagName('span')[0]
             expect(div2[textProp]).toBe('aaa面板')
             expect(span[textProp]).toBe('aaa按钮')
             vm.aaa.panelBody = '新面板'
             vm.aaa.button.buttonText = "新按钮"
-            setTimeout(function () {
+            setTimeout(function() {
                 expect(div2[textProp]).toBe('新面板')
                 expect(span[textProp]).toBe('新按钮')
                 vm.aaa.panelBody = '新面板plus'
                 vm.aaa.button.buttonText = "新按钮plus"
-                setTimeout(function () {
+                setTimeout(function() {
 
                     expect(div2[textProp]).toBe('新面板plus')
                     expect(span[textProp]).toBe('新按钮plus')
@@ -220,8 +224,8 @@ describe('widget', function () {
         }, 300)
     })
 
-    it('确保都被扫描', function (done) {
-        div.innerHTML = heredoc(function () {
+    it('确保都被扫描', function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <form ms-controller='widget2'>
              <div ms-attr="{title:@option.text}">{{@option.text}}</div>
@@ -243,14 +247,14 @@ describe('widget', function () {
             }
         })
         avalon.scan(div)
-        setTimeout(function () {
+        setTimeout(function() {
             var div1 = div.getElementsByTagName('div')
             expect(div1[0].innerHTML).toBe('test')
             var blockquote1 = div.getElementsByTagName('blockquote')
             expect(blockquote1[0].innerHTML).toBe('test')
             expect(blockquote1[0].title).toBe('test')
             vm.option.text = 999
-            setTimeout(function () {
+            setTimeout(function() {
                 expect(div1[0].innerHTML).toBe('999')
                 expect(blockquote1[0].innerHTML).toBe('999')
                 expect(blockquote1[0].title).toBe('999')
@@ -258,8 +262,8 @@ describe('widget', function () {
             })
         })
     });
-    it('确保生命周期钩子都生效,其onViewChange回调会在config被修复也触发', function (done) {
-        div.innerHTML = heredoc(function () {
+    it('确保生命周期钩子都生效,其onViewChange回调会在config被修复也触发', function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <form ms-controller='widget3'>
              <wbr ms-widget="[{is:'ms-dialog',id:'aaa'},@config]" />
@@ -271,19 +275,19 @@ describe('widget', function () {
             template: '<div class="dialog"><p><slot name="content"/></p></div>',
             defaults: {
                 buttonText: "内容",
-                onInit: function (a) {
+                onInit: function(a) {
                     hookIndex++
                     expect(a.type).toBe('init')
                 },
-                onReady: function (a) {
+                onReady: function(a) {
                     hookIndex++
                     expect(a.type).toBe('ready')
                 },
-                onViewChange: function (a) {
+                onViewChange: function(a) {
                     hookIndex++
                     expect(a.type).toBe('viewchange')
                 },
-                onDispose: function (a) {
+                onDispose: function(a) {
                     hookIndex++
                     expect(a.type).toBe('dispose')
                 }
@@ -297,7 +301,7 @@ describe('widget', function () {
             }
         })
         avalon.scan(div, vm)
-        setTimeout(function () {
+        setTimeout(function() {
             var divs = div.getElementsByTagName('div')
             var successRender = false
             for (var i = 0, el; el = divs[i++];) {
@@ -310,13 +314,13 @@ describe('widget', function () {
             var hasText = div.innerHTML.indexOf('弹窗1') > 0
             expect(hasText).toBe(true)
             vm.config.content = '弹窗2'
-            setTimeout(function () {
+            setTimeout(function() {
                 var hasText = div.innerHTML.indexOf('弹窗2') > 0
                 expect(hasText).toBe(true)
                 vm.$render.destroy()
-                //div.innerHTML = ''
+                    //div.innerHTML = ''
 
-                setTimeout(function () {
+                setTimeout(function() {
                     expect(hookIndex).toBe(4)
                     done()
                 }, 120)
@@ -326,9 +330,9 @@ describe('widget', function () {
 
     });
 
-    it('lifecycle', function (done) {
+    it('lifecycle', function(done) {
 
-        div.innerHTML = heredoc(function () {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller='widget4' >
              <div><wbr ms-widget="[{is:'ms-button'},@config]"/></div>
@@ -340,33 +344,33 @@ describe('widget', function () {
             $id: 'widget4',
             config: {
                 buttonText: '按钮',
-                onInit: function (e) {
+                onInit: function(e) {
                     expect(e.type).toBe('init')
-                    ++index
+                        ++index
                 },
-                onReady: function (e) {
+                onReady: function(e) {
                     expect(e.type).toBe('ready')
-                    ++index
+                        ++index
                 },
-                onViewChange: function (e) {
+                onViewChange: function(e) {
                     expect(e.type).toBe('viewchange')
-                    ++index
+                        ++index
                 },
-                onDispose: function (e) {
+                onDispose: function(e) {
                     expect(e.type).toBe('dispose')
-                    ++index
+                        ++index
                 }
             }
         })
         avalon.scan(div)
-        setTimeout(function () {
+        setTimeout(function() {
             expect(index + "!").toBe(2 + "!")
 
             vm.config.buttonText = 'change'
-            setTimeout(function () {
+            setTimeout(function() {
                 vm.$render.destroy()
                 div.innerHTML = ""
-                setTimeout(function () {
+                setTimeout(function() {
                     expect(index).toBe(4)
                     done()
                 }, 120)
@@ -374,8 +378,8 @@ describe('widget', function () {
         }, 120)
     })
 
-    it('操作组件vm来更新组件的界面', function (done) {
-        div.innerHTML = heredoc(function () {
+    it('操作组件vm来更新组件的界面', function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller="widget5">
              <xmp ms-widget='{is:"ms-pager"}'></xmp>
@@ -391,13 +395,13 @@ describe('widget', function () {
             template: '<div><strong>{{@totalPages}}</strong><button ms-click="@xx" type="button">++</button></div>',
             defaults: {
                 totalPages: 21,
-                xx: function () {
+                xx: function() {
                     this.totalPages += 1;
                 }
             }
         })
         avalon.scan(div)
-        setTimeout(function () {
+        setTimeout(function() {
             var button = div.getElementsByTagName('button')[0]
             var strong = div.getElementsByTagName('strong')[0]
             expect(strong.innerHTML).toBe('21')
@@ -412,8 +416,8 @@ describe('widget', function () {
 
     })
 
-    it('使用顶层VM的子对象作配置对象', function (done) {
-        div.innerHTML = heredoc(function () {
+    it('使用顶层VM的子对象作配置对象', function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller='widget6' >
              <wbr ms-widget="@config"/>
@@ -425,24 +429,24 @@ describe('widget', function () {
             config: {
                 is: 'ms-button',
                 buttonText: '按钮',
-                onInit: function (a) {
+                onInit: function(a) {
                     console.log("onInit!!")
                 },
-                onReady: function (a) {
+                onReady: function(a) {
                     console.log("onReady!!")
                 },
-                onViewChange: function () {
+                onViewChange: function() {
                     console.log("onViewChange!!")
                 },
-                onDispose: function () {
+                onDispose: function() {
                     console.log("onDispose!!")
                 }
             }
         })
         avalon.scan(div, vm)
-        setTimeout(function () {
+        setTimeout(function() {
             vm.config.buttonText = 'change'
-            setTimeout(function () {
+            setTimeout(function() {
                 var s = div.getElementsByTagName('span')[0]
                 expect(s[textProp]).toBe('change')
                 done()
@@ -451,8 +455,8 @@ describe('widget', function () {
 
     })
 
-    it('组件的最外层元素定义其他指令不生效的BUG', function (done) {
-        div.innerHTML = heredoc(function () {
+    it('组件的最外层元素定义其他指令不生效的BUG', function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller="widget7" id="widget7"><wbr ms-widget="[{is : 'Test'},@$config]"></div>
              */
@@ -469,7 +473,7 @@ describe('widget', function () {
             $config: {}
         })
         avalon.scan(div)
-        setTimeout(function () {
+        setTimeout(function() {
             var widget = div.getElementsByTagName('test')[0]
             expect(widget.nodeName.toLowerCase()).toBe('test')
             expect(widget.title).toBe('title')
@@ -481,8 +485,8 @@ describe('widget', function () {
 
     })
 
-    it('&nbsp;的解析问题', function (done) {
-        div.innerHTML = heredoc(function () {
+    it('&nbsp;的解析问题', function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller="widget8">
              <xmp cached='true' ms-widget="{is:'ms-time',id:'d234234'}"></xmp>
@@ -499,7 +503,7 @@ describe('widget', function () {
             $id: "widget8"
         })
         avalon.scan(div)
-        setTimeout(function () {
+        setTimeout(function() {
             var span = div.getElementsByTagName('kbd')[0]
             expect(span.firstChild.nodeValue.trim()).toBe('123')
             delete avalon.components['ms-time']
@@ -510,9 +514,9 @@ describe('widget', function () {
 
     })
 
-    it('应该ms-widget没有cached,并且出现不规范的ms-if的情况', function (done) {
+    it('应该ms-widget没有cached,并且出现不规范的ms-if的情况', function(done) {
         //https://github.com/RubyLouvre/avalon/issues/1584
-        div.innerHTML = heredoc(function () {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller="widget9"><wbr ms-widget="[{is:'ms-pagination2', id:'xxx_'}, @configPagination]"/></div>
              */
@@ -522,15 +526,15 @@ describe('widget', function () {
             configPagination: {
                 totalPages: 0
             },
-            clickPage1: function () {
+            clickPage1: function() {
                 vm.configPagination.totalPages = 0
 
             },
-            clickPage2: function () {
+            clickPage2: function() {
                 vm.configPagination.totalPages = 12
             }
         })
-        var paginationTemplate = heredoc(function () {
+        var paginationTemplate = heredoc(function() {
             /*
              <nav ms-if="@_isShow">
              {{@totalPages}}
@@ -543,29 +547,29 @@ describe('widget', function () {
                 totalPages: 1,
                 _isShow: true,
                 isShowPagination: true,
-                onInit: function (e) {
+                onInit: function(e) {
                     var vm = e.vmodel;
                     vm._showPaginations();
-                    this.$watch('totalPages', function (a) {
-                        setTimeout(function () {
+                    this.$watch('totalPages', function(a) {
+                        setTimeout(function() {
                             vm._showPaginations()
                         }, 2)
                     })
                 },
-                _showPaginations: function () {
+                _showPaginations: function() {
                     var vm = this;
                     return vm._isShow = vm.totalPages > 0 && vm.isShowPagination
                 }
             }
         })
         avalon.scan(div)
-        setTimeout(function () {
+        setTimeout(function() {
             expect(div.getElementsByTagName('nav').length).toBe(0)
             vm.clickPage2()
-            setTimeout(function () {
+            setTimeout(function() {
                 expect(div.getElementsByTagName('nav').length).toBe(1)
                 vm.clickPage1()
-                setTimeout(function () {
+                setTimeout(function() {
                     expect(div.getElementsByTagName('nav').length).toBe(0)
 
                     delete avalon.components['ms-pagination2']
@@ -578,13 +582,13 @@ describe('widget', function () {
     })
 
 
-    it('组件没有cached的情况不断切换里面的事件还能生效', function (done) {
-        div.innerHTML = heredoc(function () {
+    it('组件没有cached的情况不断切换里面的事件还能生效', function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller="widget10" ms-html="@tpl"></div>
              */
         })
-        var v123 = heredoc(function () {
+        var v123 = heredoc(function() {
             /*
              <div ms-controller="widget10_1">
              <p ms-click="@alert">123</p>
@@ -592,7 +596,7 @@ describe('widget', function () {
              </div>
              */
         })
-        var v456 = heredoc(function () {
+        var v456 = heredoc(function() {
             /*
              <div ms-controller="widget10_2">
              <p ms-click="@alert">456</p>
@@ -605,7 +609,7 @@ describe('widget', function () {
             template: "<span ms-click='@click'>{{@ddd}}</span>",
             defaults: {
                 ddd: '3333',
-                click: function () {
+                click: function() {
                     ++clickIndex
                 }
             }
@@ -613,17 +617,17 @@ describe('widget', function () {
         vm = avalon.define({
             $id: 'widget10',
             tpl: v123,
-            switch1: function () {
+            switch1: function() {
                 vm.tpl = v123
             },
-            switch2: function () {
+            switch2: function() {
                 vm.tpl = v456
             }
         })
         avalon.define({
             $id: 'widget10_1',
             ddd: 'aaaa',
-            alert: function () {
+            alert: function() {
                 avalon.log('????')
             }
         });
@@ -631,27 +635,27 @@ describe('widget', function () {
         avalon.define({
             $id: 'widget10_2',
             ddd: 'bbbb',
-            alert: function () {
+            alert: function() {
                 avalon.log('!!!!')
             }
         });
         avalon.scan(div)
-        setTimeout(function () {
+        setTimeout(function() {
             var spans = div.getElementsByTagName('span')
             expect(spans.length).toBe(1)
             expect(spans[0].innerHTML).toBe('aaaa')
             vm.switch2()
-            setTimeout(function () {
+            setTimeout(function() {
                 var spans = div.getElementsByTagName('span')
                 expect(spans.length).toBe(1)
                 expect(spans[0].innerHTML).toBe('bbbb')
                 vm.switch1()
-                setTimeout(function () {
+                setTimeout(function() {
                     var spans = div.getElementsByTagName('span')
                     expect(spans.length).toBe(1)
                     expect(spans[0].innerHTML).toBe('aaaa')
                     fireClick(spans[0])
-                    setTimeout(function () {
+                    setTimeout(function() {
                         expect(clickIndex).toBe(1)
                         delete avalon.components['ms-remove']
 
@@ -665,9 +669,9 @@ describe('widget', function () {
 
     })
 
-    it('skipContent导致组件渲染异常', function (done) {
+    it('skipContent导致组件渲染异常', function(done) {
 
-        div.innerHTML = heredoc(function () {
+        div.innerHTML = heredoc(function() {
             /*
              <div :controller="widget11">
              <xmp :widget='{is:"CoursePlanCard", id:"CoursePlanCard"}'></xmp>
@@ -675,7 +679,7 @@ describe('widget', function () {
              */
         })
         avalon.component("CoursePlanCard", {
-            template: heredoc(function () {
+            template: heredoc(function() {
                 /*
                  <div class="CoursePlanCard" >
                  <div class="CoursePlanCard-info">
@@ -692,8 +696,7 @@ describe('widget', function () {
                  */
             }),
             defaults: {
-                onInit: function (a) {
-                }
+                onInit: function(a) {}
             }
         })
 
@@ -701,7 +704,7 @@ describe('widget', function () {
             $id: "widget11"
         })
         avalon.scan(div)
-        setTimeout(function () {
+        setTimeout(function() {
             expect(div.getElementsByTagName('span').length).toBe(4)
             delete avalon.components['CoursePlanCard']
 
@@ -711,8 +714,8 @@ describe('widget', function () {
         }, 150)
 
     })
-    it('移动多个同名的slot元素到组件内部', function (done) {
-        div.innerHTML = heredoc(function () {
+    it('移动多个同名的slot元素到组件内部', function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <div :controller="widget12">
              <xmp :widget='{is:"Slots"}'>
@@ -725,7 +728,7 @@ describe('widget', function () {
              */
         })
         avalon.component("Slots", {
-            template: heredoc(function () {
+            template: heredoc(function() {
                 /*
                  <div class="slots" >
                  <div>
@@ -747,7 +750,7 @@ describe('widget', function () {
             arr: [1, 2, 3]
         })
         avalon.scan(div)
-        setTimeout(function () {
+        setTimeout(function() {
             expect(div.getElementsByTagName('p').length).toBe(4)
 
             delete avalon.components.Slots
@@ -755,8 +758,8 @@ describe('widget', function () {
         }, 150)
 
     })
-    it('slot+ms-for', function (done) {
-        div.innerHTML = heredoc(function () {
+    it('slot+ms-for', function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <div :controller="widget12">
              <xmp :widget='{is:"Slots"}'>
@@ -766,7 +769,7 @@ describe('widget', function () {
              */
         })
         avalon.component("Slots", {
-            template: heredoc(function () {
+            template: heredoc(function() {
                 /*
                  <div class="slots" >
                  <div>
@@ -785,7 +788,7 @@ describe('widget', function () {
             arr: [111, 222, 333]
         })
         avalon.scan(div)
-        setTimeout(function () {
+        setTimeout(function() {
             expect(div.getElementsByTagName('p').length).toBe(3)
 
             delete avalon.components.Slots
@@ -793,8 +796,8 @@ describe('widget', function () {
         }, 150)
 
     })
-    it('cached', function (done) {
-        div.innerHTML = heredoc(function () {
+    it('cached', function(done) {
+        div.innerHTML = heredoc(function() {
             /*
            <div ms-controller="widget13">
            <div ms-if="@aaa">
@@ -812,9 +815,9 @@ describe('widget', function () {
         var text = button[textProp]
         button.setAttribute('title', 'vvvv')
         vm.aaa = false
-        setTimeout(function () {
+        setTimeout(function() {
             vm.aaa = true
-            setTimeout(function () {
+            setTimeout(function() {
                 button = div.getElementsByTagName('button')[0]
                 expect(button[textProp]).toBe(text)
                 expect(button.getAttribute('title')).toBe('vvvv')
@@ -824,12 +827,12 @@ describe('widget', function () {
 
     })
 
-    it('路由组件', function (done) {
+    it('路由组件', function(done) {
         avalon.component('ms-hasha', {
             template: '<div>{{@num}}<input type="text" ms-duplex-number="@num"/><button type="button" ms-on-click="@onPlus">+++</button></div>',
             defaults: {
                 num: 1,
-                onPlus: function () {
+                onPlus: function() {
                     this.num++;
                 }
             }
@@ -841,7 +844,7 @@ describe('widget', function () {
             defaults: {
                 title: "这是标题",
                 random: 0,
-                onChangeTitle: function (e) {
+                onChangeTitle: function(e) {
                     this.title = 'title' + (++time);
                 }
             }
@@ -851,19 +854,20 @@ describe('widget', function () {
             panel: '',
             hash: ''
         })
+
         function changePanel(v) {
             vm.panel = '<' + v + ' cached="true" ms-widget="{id:\'' + v + '\'}"></' + v + '>'
         }
         vm.$watch('hash', changePanel)
         vm.hash = 'ms-hasha'
 
-        div.innerHTML = heredoc(function () {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller="router" ms-html="@panel">xxx</div>
              */
         })
         avalon.scan(div)
-        setTimeout(function () {
+        setTimeout(function() {
             var input = div.getElementsByTagName('input')[0]
             var button = div.getElementsByTagName('button')[0]
 
@@ -875,7 +879,7 @@ describe('widget', function () {
             fireClick(button)
             expect(input.value).toBe('4')
             vm.hash = 'ms-hashb'
-            setTimeout(function () {
+            setTimeout(function() {
                 var h4 = div.getElementsByTagName('h4')[0]
                 var button = div.getElementsByTagName('button')[0]
                 expect(h4.innerHTML).toBe('这是标题')
@@ -886,7 +890,7 @@ describe('widget', function () {
                 fireClick(button)
                 expect(h4.innerHTML).toBe('title13')
                 vm.hash = 'ms-hasha'
-                setTimeout(function () {
+                setTimeout(function() {
                     var input = div.getElementsByTagName('input')[0]
                     var button = div.getElementsByTagName('button')[0]
 
@@ -904,42 +908,74 @@ describe('widget', function () {
         })
 
     })
- it('延迟初始化组件',function(done){
-       if(avalon.msie < 9){
-        div.innerHTML = heredoc(function () {
-            /*
-            <div ms-controller="widget14" style="behavior: url(#default#VML)" ><v:ms-kkk/></div>
-            */
-        })
-    }else{
-          div.innerHTML = heredoc(function () {
-            /*
-            <div ms-controller="widget14" ><ms-kkk /></div>
-            */
-        })
-    }
+    it('延迟初始化组件', function(done) {
+        if (avalon.msie < 9) {
+            div.innerHTML = heredoc(function() {
+                /*
+                <div ms-controller="widget14" style="behavior: url(#default#VML)" ><v:ms-kkk/></div>
+                */
+            })
+        } else {
+            div.innerHTML = heredoc(function() {
+                /*
+                <div ms-controller="widget14" ><ms-kkk /></div>
+                */
+            })
+        }
         console.log(div.innerHTML, '延迟初始化')
         vm = avalon.define({
             $id: 'widget14'
         })
         avalon.scan(div)
-        setTimeout(function(){
+        setTimeout(function() {
             expect(div.innerHTML).toMatch(/unresolved/)
-            avalon.component('ms-kkk',{
+            avalon.component('ms-kkk', {
                 template: '<div>good</div>',
                 defaults: {}
             })
-            setTimeout(function(){
+            setTimeout(function() {
                 expect(div.innerHTML).toMatch(/good/)
                 done()
                 delete avalon.components['ms-kkk']
-            },100)
-        },100)
+            }, 100)
+        }, 100)
     })
-    it('onViewChange', function () {
+    
+     it('object slot', function(done) {
+        div.innerHTML = heredoc(function() {
+            /*
+<div ms-controller="widget15">
+    <ms-myview>
+        <div slot="header">aaa</div>
+        <div slot="body">bbb</div>
+    </ms-myview>
+</div>
+            */
+        })
+        avalon.component('ms-myview', {
+            template: '<div type="button">\
+                <slot name="header" />\
+                <slot name="body" />\
+                </div>',
+            defaults: {
+                buttonText: ""
+            }
+        })
+        vm = avalon.define({
+            $id: 'widget15'
+        });
+        avalon.scan(div)
+        setTimeout(function() {
+            expect(div[textProp].replace(/[\r\n\s]+/g, '')).toBe('aaabbb')
+            done()
+            delete avalon.components['ms-myview']
+        }, 100)
+    })
+
+    it('onViewChange', function() {
         var onViewChangeCount = 0
         avalon.component('ms-select', {
-            template: heredoc(function () {
+            template: heredoc(function() {
                 /*
                  <div>
                  <select ms-duplex="@num">
@@ -952,37 +988,37 @@ describe('widget', function () {
             defaults: {
                 numList: [6, 12, 18, 24, 30],
                 num: 12,
-                onInit: function () {
+                onInit: function() {
                     console.log('onInit')
                 },
-                onReady: function () {
+                onReady: function() {
                     console.log('onReady')
                 },
-                onViewChange: function (e) {
+                onViewChange: function(e) {
                     ++onViewChangeCount
                 }
             }
         })
-        div.innerHTML = heredoc(function () {
+        div.innerHTML = heredoc(function() {
             /*
-            <div ms-controller="widget15" ><ms-select :widget="{num: @aaa}" /></div>
+            <div ms-controller="widget16" ><ms-select :widget="{num: @aaa}" /></div>
             */
         })
         vm = avalon.define({
-            $id: 'widget15',
+            $id: 'widget16',
             aaa: 6
         })
         avalon.scan(div)
-        setTimeout(function () {
+        setTimeout(function() {
             var p = div.getElementsByTagName('p')[0]
             expect(p.innerHTML).toBe('6')
             vm.aaa = 12
-            setTimeout(function () {
+            setTimeout(function() {
                 expect(p.innerHTML).toBe('12')
                 vm.aaa = 18
-                setTimeout(function () {
+                setTimeout(function() {
                     expect(p.innerHTML).toBe('18')
-                    setTimeout(function () {
+                    setTimeout(function() {
                         expect(onViewChangeCount).toBe(2)
                         delete avalon.components['ms-select']
                         done()
@@ -990,9 +1026,10 @@ describe('widget', function () {
 
                 }, 100)
             }, 100)
-        }, 100)
+        }, 300)
 
     })
-    
+
    
+
 })
