@@ -91,19 +91,19 @@ var valiDir = avalon.directive('validate', {
         /* istanbul ignore if */
         if (validator.validateInKeyup && (!field.isChanged && !field.debounceTime)) {
             avalon.bind(node, 'keyup', function (e) {
-                valiDir.validate(field, 0, e)
+                validator.validate(field, 0, e)
             })
         }
         /* istanbul ignore if */
         if (validator.validateInBlur) {
             avalon.bind(node, 'blur', function (e) {
-                valiDir.validate(field, 0, e)
+                validator.validate(field, 0, e)
             })
         }
         /* istanbul ignore if */
         if (validator.resetInFocus) {
             avalon.bind(node, 'focus', function (e) {
-                valiDir.onReset.call(node, e, field)
+                validator.onReset.call(node, e, field)
             })
         }
     },

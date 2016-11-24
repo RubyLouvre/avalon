@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-24:19 version 2.2.1 by 司徒正美
+built in 2016-11-24:20 version 2.2.1 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.0
 fix IE6-8 opacity BUG
 减少VM的系统属性，__const__, __data__,__proxy__,$skipArray被废掉
@@ -5550,19 +5550,19 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             /* istanbul ignore if */
             if (validator.validateInKeyup && !field.isChanged && !field.debounceTime) {
                 avalon$2.bind(node, 'keyup', function (e) {
-                    valiDir.validate(field, 0, e)
+                    validator.validate(field, 0, e)
                 })
             }
             /* istanbul ignore if */
             if (validator.validateInBlur) {
                 avalon$2.bind(node, 'blur', function (e) {
-                    valiDir.validate(field, 0, e)
+                    validator.validate(field, 0, e)
                 })
             }
             /* istanbul ignore if */
             if (validator.resetInFocus) {
                 avalon$2.bind(node, 'focus', function (e) {
-                    valiDir.onReset.call(node, e, field)
+                    validator.onReset.call(node, e, field)
                 })
             }
         },
