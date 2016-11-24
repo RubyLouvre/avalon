@@ -51,6 +51,8 @@ cp.init = function() {
         dumpTree(this.root)
     } else if (typeof this.root === 'string') {
         vnodes = fromString(this.root) //转换虚拟DOM
+    }else{
+        return avalon.warn('avalon.scan first argument must element or HTML string')
     }
 
     this.root = vnodes[0]

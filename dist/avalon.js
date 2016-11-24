@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-24:20 version 2.2.1 by 司徒正美
+built in 2016-11-24:23 version 2.2.1 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.0
 fix IE6-8 opacity BUG
 减少VM的系统属性，__const__, __data__,__proxy__,$skipArray被废掉
@@ -6737,6 +6737,8 @@ vdom模块，虚拟DOM转真实DOM时，对低版本浏览器的支持更好。
             dumpTree(this.root)
         } else if (typeof this.root === 'string') {
             vnodes = fromString(this.root) //转换虚拟DOM
+        } else {
+            return avalon.warn('avalon.scan first argument must element or HTML string')
         }
 
         this.root = vnodes[0]
