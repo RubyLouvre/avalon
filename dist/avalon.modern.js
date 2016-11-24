@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-23:23 version 2.2.1 by 司徒正美
+built in 2016-11-24:15 version 2.2.1 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.0
 fix IE6-8 opacity BUG
 减少VM的系统属性，__const__, __data__,__proxy__,$skipArray被废掉
@@ -3675,17 +3675,20 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             if (v) return v
             throw 'error! no vmodel called ' + name
         },
-        update: function update(node, scope, attrName) {
+        update: function update(node, attrName, $id) {
             if (!avalon$2.inBrowser) return
             var dom = avalon$2.vdom(node, 'toDOM')
             if (dom.nodeType === 1) {
                 dom.removeAttribute(attrName)
                 avalon$2(dom).removeClass('ms-controller')
             }
-            scope.$fire('onReady')
-            scope.$element = node
-            scope.$render = this
-            delete scope.$events.onReady
+            var vm = avalon$2.vmodels[$id]
+            if (vm) {
+                vm.$element = dom
+                vm.$render = this
+                vm.$fire('onReady')
+                delete vm.$events.onReady
+            }
         }
     })
 
@@ -4352,6 +4355,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             }
             this.isShow = value
             var placeholder = this.placeholder
+
             if (value) {
                 var p = placeholder.parentNode
                 continueScan(this, vdom)
@@ -4359,11 +4363,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             } else {
                 //移除DOM
                 this.boss && this.boss.destroy()
+                vdom.nodeValue = 'if'
+                vdom.nodeName = '#comment'
+                delete vdom.children
                 var dom = vdom.dom
-                if (!dom.parentNode || dom.parentNode.nodeType === 11) {
-                    vdom.dom = placeholder
-                } else {
-                    var p = dom.parentNode
+                var p = dom && dom.parentNode
+                vdom.dom = placeholder
+                if (p) {
                     p.replaceChild(placeholder, dom)
                 }
             }
@@ -4371,8 +4377,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     })
     function continueScan(instance, vdom) {
         var boss = instance.boss = avalon$2.scan(instance.fragment, instance.vm)
-        vdom.children = boss.root.children
-        vdom.dom = boss.root.dom
+        avalon$2.shadowCopy(vdom, boss.root)
+        delete vdom.nodeValue
     }
 
     avalon$2.directive('on', {
@@ -4533,7 +4539,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
     function mountList(instance) {
         var args = instance.fragments.map(function (fragment, index) {
-
             FragmentDecorator(fragment, instance, index)
             saveInCache(instance.cache, fragment)
             return fragment
@@ -5777,12 +5782,17 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     }
 
     function groupTree(parent, children) {
-        children.forEach(function (vdom) {
+        children && children.forEach(function (vdom) {
             if (!vdom) return
             if (vdom.nodeName === '#document-fragment') {
                 var dom = createFragment()
             } else {
                 dom = avalon$2.vdom(vdom, 'toDOM')
+                if (dom.childNodes && vdom.children) {
+                    if (dom.childNodes.length > vdom.children.length) {
+                        avalon$2.clearHTML(dom)
+                    }
+                }
             }
             if (vdom.children && vdom.children.length) {
                 groupTree(dom, vdom.children)
@@ -5972,35 +5982,35 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 delete attrs[oldName]
             }
         }
-        var expr = dirs['ms-important'] || dirs['ms-controller']
-        if (expr) {
+        var $id = dirs['ms-important'] || dirs['ms-controller']
+        if ($id) {
             /**
              * 后端渲染
              * serverTemplates后端给avalon添加的对象,里面都是模板,
              * 将原来后端渲染好的区域再还原成原始样子,再被扫描
              */
             var templateCaches = avalon$2.serverTemplates
-            if (templateCaches && templateCaches[expr]) {
+            var temp = templateCaches && templateCaches[$id]
+            if (temp) {
                 avalon$2.log('前端再次渲染后端传过来的模板')
-                var tmpl = templateCaches[expr]
                 var node = fromString(tmpl)[0]
                 for (var i in node) {
                     vdom[i] = node[i]
                 }
-                delete templateCaches[expr]
+                delete templateCaches[$id]
                 this.scanTag(vdom, scope, parentChildren, isRoot)
                 return
             }
             //推算出指令类型
-            var type = dirs['ms-important'] === expr ? 'important' : 'controller'
+            var type = dirs['ms-important'] === $id ? 'important' : 'controller'
             //推算出用户定义时属性名,是使用ms-属性还是:属性
-            var name = 'ms-' + type in attrs ? 'ms-' + type : ':' + type
+            var attrName = 'ms-' + type in attrs ? 'ms-' + type : ':' + type
 
             if (inBrowser) {
-                delete attrs[name]
+                delete attrs[attrName]
             }
             var dir = directives[type]
-            scope = dir.getScope.call(this, expr, scope)
+            scope = dir.getScope.call(this, $id, scope)
             if (!scope) {
                 return
             } else {
@@ -6010,10 +6020,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 }
             }
             var render = this
-
+            scope.$render = render
             this.callbacks.push(function () {
                 //用于删除ms-controller
-                dir.update.call(render, vdom, scope, name)
+                dir.update.call(render, vdom, attrName, $id)
             })
         }
         if (hasFor) {
@@ -6060,7 +6070,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         }
 
         this.mount = true
-        for (var i = 0, fn; fn = this.callbacks[i++];) {
+        var fn
+        while (fn = this.callbacks.pop()) {
             fn()
         }
         this.optimizeDirectives()

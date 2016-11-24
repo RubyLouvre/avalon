@@ -8,7 +8,7 @@ var impDir = avalon.directive('important', {
             return v
         throw 'error! no vmodel called ' + name
     },
-    update: function(node, scope, attrName) {
+    update: function(node, attrName, $id) {
         if (!avalon.inBrowser)
             return
         var dom = avalon.vdom(node, 'toDOM')
@@ -16,10 +16,14 @@ var impDir = avalon.directive('important', {
             dom.removeAttribute(attrName)
             avalon(dom).removeClass('ms-controller')
         }
-        scope.$fire('onReady')
-        scope.$element = node
-        scope.$render = this
-        delete scope.$events.onReady
+        var vm = avalon.vmodels[$id]
+        if(vm){
+           vm.$element = dom
+           vm.$render = this
+           vm.$fire('onReady')
+           delete vm.$events.onReady
+        }
+       
     }
 })
 

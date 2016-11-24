@@ -140,36 +140,36 @@ cp.scanTag = function(vdom, scope, parentChildren, isRoot) {
             delete attrs[oldName]
         }
     }
-    var expr = dirs['ms-important'] || dirs['ms-controller']
-    if (expr) {
+    var $id = dirs['ms-important'] || dirs['ms-controller']
+    if ($id) {
         /**
          * 后端渲染
          * serverTemplates后端给avalon添加的对象,里面都是模板,
          * 将原来后端渲染好的区域再还原成原始样子,再被扫描
          */
         var templateCaches = avalon.serverTemplates
-        if (templateCaches && templateCaches[expr]) {
+        var temp = templateCaches && templateCaches[$id]
+        if (temp) {
             avalon.log('前端再次渲染后端传过来的模板')
-            var tmpl = templateCaches[expr]
             var node = fromString(tmpl)[0]
             for (var i in node) {
                 vdom[i] = node[i]
             }
-            delete templateCaches[expr]
+            delete templateCaches[$id]
             this.scanTag(vdom, scope, parentChildren, isRoot)
             return
 
         }
         //推算出指令类型
-        var type = dirs['ms-important'] === expr ? 'important' : 'controller'
+        var type = dirs['ms-important'] === $id ? 'important' : 'controller'
             //推算出用户定义时属性名,是使用ms-属性还是:属性
-        var name = ('ms-' + type) in attrs ? 'ms-' + type : ':' + type
+        var attrName = ('ms-' + type) in attrs ? 'ms-' + type : ':' + type
 
         if (inBrowser) {
-            delete attrs[name]
+            delete attrs[attrName]
         }
         var dir = directives[type]
-        scope = dir.getScope.call(this, expr, scope)
+        scope = dir.getScope.call(this, $id, scope)
         if (!scope) {
             return
         } else {
@@ -179,10 +179,10 @@ cp.scanTag = function(vdom, scope, parentChildren, isRoot) {
             }
         }
         var render = this
-
+        scope.$render = render
         this.callbacks.push(function() {
             //用于删除ms-controller
-            dir.update.call(render, vdom, scope, name)
+            dir.update.call(render, vdom, attrName, $id)
         })
 
     }
@@ -235,7 +235,8 @@ cp.complete = function() {
     }
 
     this.mount = true
-    for (var i = 0, fn; fn = this.callbacks[i++];) {
+    var fn
+    while(fn = this.callbacks.pop()){
         fn()
     }
     this.optimizeDirectives()

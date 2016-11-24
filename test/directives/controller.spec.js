@@ -153,4 +153,46 @@ describe('controller', function() {
 
 
     })
+
+    it('确保内部的onReady也能执行', function(done) {
+        div.innerHTML = heredoc(function() {
+            /*
+              <div ms-controller="nest01">
+             <div ms-controller="nest02">
+             <div ms-controller="nest03">
+             111
+              </div>
+              </div>
+              </div>
+             */
+        })
+        var add = ''
+        vm = avalon.define({
+            $id: "nest01"
+        })
+        vm.$watch('onReady', function() {
+            add += '111'
+        })
+        var vm2 = avalon.define({
+            $id: "nest02"
+
+        })
+        vm2.$watch('onReady', function() {
+            add += '222'
+        })
+        var vm3 = avalon.define({
+            $id: "nest03"
+
+        })
+        vm3.$watch('onReady', function() {
+            add += '333'
+        })
+        avalon.scan(div)
+        setTimeout(function() {
+            expect(add).toBe('333222111')
+            done()
+            delete avalon.vmodels.nest03
+            delete avalon.vmodels.nest02
+        }, 100)
+    })
 })
