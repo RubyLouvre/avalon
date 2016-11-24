@@ -25,18 +25,20 @@ avalon.directive('if', {
         }
         this.isShow = value
         var placeholder = this.placeholder
+      
         if (value) {
             var p = placeholder.parentNode
             continueScan(this, vdom)
             p && p.replaceChild(vdom.dom, placeholder)
-
         } else {//移除DOM
             this.boss && this.boss.destroy()
+            vdom.nodeValue = 'if'
+            vdom.nodeName = '#comment'
+            delete vdom.children
             var dom = vdom.dom
-            if (!dom.parentNode || dom.parentNode.nodeType === 11) {
-                vdom.dom = placeholder
-            } else {
-                var p = dom.parentNode
+            var p = dom && dom.parentNode
+            vdom.dom = placeholder
+            if (p) {
                 p.replaceChild(placeholder, dom)
             }
         }
@@ -44,7 +46,7 @@ avalon.directive('if', {
 })
 function continueScan(instance, vdom){
     var boss = instance.boss = avalon.scan(instance.fragment, instance.vm)
-    vdom.children = boss.root.children
-    vdom.dom = boss.root.dom
+    avalon.shadowCopy(vdom, boss.root)
+    delete vdom.nodeValue
 }
 

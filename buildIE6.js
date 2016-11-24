@@ -2,7 +2,7 @@ var rollup = require('rollup');
 var fs = require('fs');
 var babel = require("babel-core");
 var transform = require('es3ify').transform;
-var less = require('semicolon-less')
+var less = function(a){return a} //require('semicolon-less')
 
 // used to track the cache for subsequent bundles
 var cache;

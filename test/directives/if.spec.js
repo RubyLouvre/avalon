@@ -36,4 +36,81 @@ describe('if', function() {
         }, 100)
 
     })
+    it('组件里的if', function(done) {
+        div.innerHTML = heredoc(function() {
+            /*
+             <div ms-controller='if2' >
+             <xmp ms-widget="{is:'ms-like',likeFlag:true}"></xmp>
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'if2',
+            aaa: false
+        })
+        var vm2
+        avalon.component('ms-like', {
+            template: '\
+                <div class="ms-like-wrap">\
+                    <a href="javascript:void(0);" >\
+                        <span ms-if="@likeFlag==true">取消赞!<\/span>\
+                        <span ms-if="@likeFlag==false">赞<\/span>\
+                    </a>\
+                </div>',
+            defaults: {
+                likeFlag: false,onInit:function(e){
+                    vm2 = e.vmodel
+                }
+            }
+        });
+        avalon.scan(div)
+        setTimeout(function() {
+            expect(div[textProp].replace(/[\r\n\s]/g,'')).toBe('取消赞!')
+            vm2.likeFlag = false
+            setTimeout(function() {
+                expect(div[textProp].replace(/[\r\n\s]/g,'')).toBe('赞')
+                delete avalon.components['ms-like']
+                delete avalon.vmodels[vm2.$id]
+                done()
+            }, 100)
+        }, 100)
+
+    })
+    it('ms-for+ms-if',function(done){
+           div.innerHTML = heredoc(function() {
+            /*
+             <div ms-controller='if3' >
+              <div ms-for="($index,el) in @arr" ms-class="['quesBlock_'+$index,($index==@activeIndex?'active':'')]" > 
+                <h5  ms-if="el.type > 0" class="quesName">
+                  <span class="nameID">{{$index+1}}:</span>
+                  <span> {{el.name}} </span>
+                </h5>
+              </div>
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'if3',
+            surveyName: {
+                isHideNameID:false
+              },
+              activeIndex:0,
+              arr: [
+                {
+                  type:0,
+                  name:"Ques ONE"
+                },
+                {
+                  type:7,
+                  name:"Ques TWO"
+                }
+              ]
+        })
+      
+        avalon.scan(div)
+        setTimeout(function() {
+            expect(div[textProp].replace(/[\r\n\s]/g,'')).toBe('2:QuesTWO')
+           done()
+        }, 100)
+    })
 })

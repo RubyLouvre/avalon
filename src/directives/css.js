@@ -1,5 +1,5 @@
 import { avalon, platform } from '../seed/core'
-
+var arrayWarn = {}
 var cssDir = avalon.directive('css', {
     diff: function(newVal, oldVal) {
         if (Object(newVal) === newVal) {
@@ -10,7 +10,10 @@ var cssDir = avalon.directive('css', {
                     el && avalon.shadowCopy(b, el)
                 })
                 newVal = b
-                avalon.warn(this.type, '指令的值不建议使用数组形式了！')
+                if(!arrayWarn[this.type]){
+                   avalon.warn('ms-'+this.type+ '指令的值不建议使用数组形式了！')
+                   arrayWarn[this.type] = 1
+                }
             }
 
             var hasChange = false

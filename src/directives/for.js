@@ -122,7 +122,6 @@ function createFragments(instance, obj) {
 
 function mountList(instance) {
     var args = instance.fragments.map(function(fragment, index) {
-
         FragmentDecorator(fragment, instance, index)
         saveInCache(instance.cache, fragment)
         return fragment
