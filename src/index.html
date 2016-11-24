@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="renderer" content="webkit">
+  <title></title>
+</head>
+<body ms-controller="test" class="ms-controller">
+
+
+  <script src="../dist/avalon.js"></script>
+   <script src="./newVM.js"></script>
+  <script type="text/javascript">
+  
+    var vm = {}
+    addOb(vm, 'a',111)
+    addOb(vm, 'b',222)
+    addCu(vm, 'c',function(){
+        console.log('计算computed的值')
+        return this.a + this.b
+    },{isStable: true, setter: function(v){
+           var arr = v.split(' ')
+           console.log(this)
+           this.a = ~~arr[0]
+           this.b = ~~arr[1]
+    }})
+       new Action('hhhh', {
+            vm: vm,
+            getter: function() {
+                var v = this.c + this.a
+                 console.log('update view@@', v)
+                return v
+            }
+        })
+         new Action('text', {
+            vm: vm,
+            getter: function() {
+                var v = this.a
+               console.log('update view', v)
+                return v
+            }
+        })
+  </script>
+ 
+
+</body>
+</html>
