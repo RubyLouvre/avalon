@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-24:15 version 2.2.1 by 司徒正美
+built in 2016-11-24:19 version 2.2.1 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.0
 fix IE6-8 opacity BUG
 减少VM的系统属性，__const__, __data__,__proxy__,$skipArray被废掉
@@ -6749,10 +6749,10 @@ vdom模块，虚拟DOM转真实DOM时，对低版本浏览器的支持更好。
             var vdom = children[i]
             switch (vdom.nodeName) {
                 case '#text':
-                    this.scanText(vdom, scope)
+                    scope && this.scanText(vdom, scope)
                     break
                 case '#comment':
-                    this.scanComment(vdom, scope, children)
+                    scope && this.scanComment(vdom, scope, children)
                     break
                 case '#document-fragment':
                     this.scanChildren(vdom.children, scope, false)

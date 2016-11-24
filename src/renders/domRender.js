@@ -63,10 +63,10 @@ cp.scanChildren = function(children, scope, isRoot) {
             var vdom = children[i]
             switch (vdom.nodeName) {
                 case '#text':
-                    this.scanText(vdom, scope)
+                    scope && this.scanText(vdom, scope)
                     break
                 case '#comment':
-                    this.scanComment(vdom, scope, children)
+                    scope && this.scanComment(vdom, scope, children)
                     break
                 case '#document-fragment':
                     this.scanChildren(vdom.children, scope, false)

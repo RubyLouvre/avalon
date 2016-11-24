@@ -531,7 +531,8 @@ describe('for', function() {
             }, 100)
         }, 100);
     })
-    it('防止构建循环区域错误', function(done) {
+    it('多次扫描同一个区域', function(done) {
+        //https://github.com/RubyLouvre/avalon/issues/1830
         div.innerHTML = heredoc(function() {
             /*
              <ul ms-controller="for13">
@@ -550,8 +551,14 @@ describe('for', function() {
         setTimeout(function() {
             var lis = div.getElementsByTagName('li')
             expect(lis.length).toBe(4)
-            done()
-        }, 150)
+            avalon.scan(div)
+            setTimeout(function() {
+                lis = div.getElementsByTagName('li')
+                expect(lis.length).toBe(4)
+                done()
+            },100)
+           
+        }, 100)
     })
 
     it('注解for指令嵌套问题', function(done) {
