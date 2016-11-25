@@ -36,7 +36,7 @@ avalon.directive('widget', {
         var component = avalon.components[is]
         //外部传入的总大于内部
         if (!('fragment' in this)) {
-            if (!vdom.isVoidTag) {
+            if (!vdom.isVoidTag) {//提取组件容器内部的东西作为模板
                 var text = vdom.children[0]
                 if (text && text.nodeValue) {
                     this.fragment = text.nodeValue
