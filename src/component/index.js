@@ -171,13 +171,12 @@ avalon.directive('widget', {
             default:
                 var comVm = this.comVm
                 avalon.viewChanging = true
-                if (!this.useWatchOk) {
-                    for (var i in value) {
-                        if (comVm.hasOwnProperty(i)) {
-                            comVm[i] = value[i]
-                        }
+                for (var i in value) {
+                    if (comVm.hasOwnProperty(i)) {
+                        comVm[i] = value[i]
                     }
                 }
+                
                 //要保证要先触发孩子的ViewChange 然后再到它自己的ViewChange
                 fireComponentHook(comVm, vdom, 'ViewChange')
                 delete avalon.viewChanging

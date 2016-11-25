@@ -1,6 +1,6 @@
 import { avalon, config } from '../seed/core'
 
-avalon.pendingReactions = []
+avalon.pendingActions = []
 avalon.inTransaction = 0
 avalon.inBatch = 0
 avalon.observerQueue = []
@@ -29,15 +29,16 @@ export function endBatch(name) {
     avalon.inBatch--
 }
 
-export function runReactions() {
-    if (avalon.isRunningReactions === true || avalon.inTransaction > 0)
+export function runActions() {
+    console.log(avalon.isRunningActions ,avalon.pendingActions , avalon.inTransaction)
+    if (avalon.isRunningActions === true || avalon.inTransaction > 0)
         return
-    avalon.isRunningReactions = true
-    var tasks = avalon.pendingReactions.splice(0);
+    avalon.isRunningActions = true
+    var tasks = avalon.pendingActions.splice(0);
     for (var i = 0, task; task = tasks[i++];) {
         task.update()
     }
-    avalon.isRunningReactions = false
+    avalon.isRunningActions = false
 }
 
 
@@ -53,7 +54,7 @@ export function propagateChanged(target) {
 export function reportObserved(observer) {
     var action = avalon.trackingAction || null
     if (action !== null) {
-        avalon.track('收集到', (observer.key || observer.expr))
+        avalon.track( '收集到', observer.expr)
         action.mapIDs[observer.uuid] = observer;
     } else if (observer.observers.length === 0) {
         addToQueue(observer);
@@ -67,12 +68,16 @@ function addToQueue(observer) {
     }
 }
 
+var targetStack = []
 
 export function collectDeps(action, getter) {
-
+   
     var preAction = avalon.trackingAction
+    if(preAction){
+        targetStack.push(preAction)
+    }
     avalon.trackingAction = action
-    avalon.track('【action】', action.type, action.expr || action.key, '开始收集依赖项')
+    avalon.track('【action】', action.type, action.expr, '开始收集依赖项')
     action.mapIDs = {} //重新收集依赖
     var hasError = true,
         result
@@ -87,8 +92,12 @@ export function collectDeps(action, getter) {
             avalon.trackingAction = preAction
         } else {
             // 确保它总是为null
-            avalon.trackingAction = preAction
+            avalon.trackingAction = targetStack.pop()
             resetDeps(action)
+           
+//            if(avalon.trackingAction){
+//                resetDeps(avalon.trackingAction)
+//            }
         }
         return result
     }
@@ -97,41 +106,37 @@ export function collectDeps(action, getter) {
 
 
 function resetDeps(action) {
-    var prevObserving = action.observers
-    var list = []
-    for (var i in action.mapIDs) {
-        var dep = action.mapIDs[i]
+    var prev = action.observers, curr = []
+    for (let i in action.mapIDs) {
+        let dep = action.mapIDs[i]
         if (dep.isJustCollect === 0) {
             dep.isJustCollect = 1
-            list.push(dep)
+            curr.push(dep)
         }
     }
     if (!action.isComputed) {
-        action.observers = list
+        action.observers = curr
     } else {
-        action.depsCount = list.length
+        action.depsCount = curr.length
         action.deps = avalon.mix({}, action.mapIDs)
         action.depsVersion = {};
-        for (var ii in action.mapIDs) {
-            var dep = action.mapIDs[ii]
+        for (let i in action.mapIDs) {
+            let dep = action.mapIDs[ii]
             action.depsVersion[dep.uuid] = dep.version
         }
-
-
     }
-    var l = prevObserving.length
-    while (l--) {
-        var dep = prevObserving[l]
+    
+    for (let i = 0, dep; dep = prev[i++];) {
         if (dep.isJustCollect === 0) {
             removeObserver(dep, action)
         }
-        dep.isJustCollect = 0
     }
+   
 
-    for (var i = 0, dep; dep = list[i++];) {
+    for (let i = 0, dep; dep = curr[i++];) {
         if (dep.isJustCollect === 1) {
             dep.isJustCollect = 0
-            addObserver(dep, action);
+            addObserver(dep, action)
         }
     }
 }
@@ -155,7 +160,9 @@ export function transactionStart(name) {
 
 export function transactionEnd(name) {
     if (--avalon.inTransaction === 0) {
-        runReactions()
+        avalon.isRunningActions = false
+        console.log('00000000')
+        runActions()
     }
     endBatch(name)
 }

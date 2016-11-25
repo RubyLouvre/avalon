@@ -311,6 +311,7 @@ cp.optimizeDirectives = function() {
                 }
                  this._isScheduled = false
             }
+            el._isScheduled = false
         }
     }
     /**

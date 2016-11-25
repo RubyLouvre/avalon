@@ -5,7 +5,7 @@ import {
 import {
     startBatch,
     endBatch,
-    runReactions,
+    runActions,
     collectDeps
 } from './transaction'
 
@@ -93,13 +93,14 @@ ap.update = function(args, uuid) {
 
 
 ap.schedule = function() {
+    console.log(this._isScheduled,'schedule')
     if (!this._isScheduled) {
         this._isScheduled = true
-        avalon.pendingReactions.push(this);
+        avalon.pendingActions.push(this);
         startBatch('schedule ' + this.expr)
-        runReactions() //这里会还原_isScheduled
+        runActions() //这里会还原_isScheduled
         endBatch('schedule ' + this.expr)
-    }
+   }
 }
 
 ap.removeDepends = function(filter) {

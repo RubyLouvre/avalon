@@ -16,7 +16,7 @@ import {
 export var obid = 1
 
 export function Mutation(key, value, vm) {
-    this.key = key
+    this.expr = key
     if (value) {
         var childVm = platform.createProxy(value, this)
         if (childVm) {
@@ -47,7 +47,7 @@ Mutation.prototype.get = function() {
 }
 
 Mutation.prototype.collect = function() {
-    var name = 'mutation ' + this.key
+    var name = 'mutation ' + this.expr
     startBatch(name)
     reportObserved(this)
     endBatch(name)
