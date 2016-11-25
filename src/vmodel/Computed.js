@@ -39,7 +39,7 @@ var Computed = (function(_super) {
     Computed.prototype.getValue = function() {
         return this.value = this.getter.call(this.vm)
     }
-    
+
     Computed.prototype.schedule = function() {
         var observers = this.observers;
         var i = observers.length;
@@ -73,7 +73,7 @@ var Computed = (function(_super) {
             //  startBatch('computed '+ this.key)
             //当被设置了就不稳定,当它被访问了一次就是稳定
             this.isJustChange = false
-            this.reportObserved()
+            this.collect()
             if (avalon.inBatch === 1) {
 
                 if (this.shouldCompute()) {

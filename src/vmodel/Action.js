@@ -47,7 +47,7 @@ export function Action(vm, options, callback) {
 
 var ap = Action.prototype
 
-ap.getValue = function () {
+ap.getValue = function() {
     var scope = this.vm
     try {
         return this.getter.call(scope, scope)
@@ -56,7 +56,7 @@ ap.getValue = function () {
     }
 }
 
-ap.setValue = function (value) {
+ap.setValue = function(value) {
     var scope = this.vm
     if (this.setter) {
         this.setter.call(scope, scope, value)
@@ -64,7 +64,7 @@ ap.setValue = function (value) {
 }
 
 // get --> getValue --> getter
-ap.get = function (fn) {
+ap.get = function(fn) {
     var name = 'action track ' + this.type
     startBatch(name)
     var value = collectDeps(this, this.getValue)
@@ -75,12 +75,12 @@ ap.get = function (fn) {
 /**
  * 在更新视图前保存原有的value
  */
-ap.beforeUpdate = function () {
+ap.beforeUpdate = function() {
     var v = this.value
     return this.oldValue = v && v.$events ? v.$model : v
 }
 
-ap.update = function (args, uuid) {
+ap.update = function(args, uuid) {
     var oldVal = this.beforeUpdate()
     var newVal = this.value = this.get()
     var callback = this.callback
@@ -92,7 +92,7 @@ ap.update = function (args, uuid) {
 
 
 
-ap.schedule = function () {
+ap.schedule = function() {
     if (!this._isScheduled) {
         this._isScheduled = true
         avalon.pendingReactions.push(this);
@@ -102,9 +102,9 @@ ap.schedule = function () {
     }
 }
 
-ap.removeDepends = function (filter) {
+ap.removeDepends = function(filter) {
     var self = this
-    this.observers.forEach(function (depend) {
+    this.observers.forEach(function(depend) {
         avalon.Array.remove(depend.observers, self)
     })
 }
@@ -112,14 +112,14 @@ ap.removeDepends = function (filter) {
 /**
  * 比较两个计算值是否,一致,在for, class等能复杂数据类型的指令中,它们会重写diff复法
  */
-ap.diff = function (a, b) {
+ap.diff = function(a, b) {
     return a !== b
 }
 
 /**
  * 销毁指令
  */
-ap.destroy = function () {
+ap.destroy = function() {
     this.value = null
     this.removeDepends()
     if (this.beforeDestroy) {

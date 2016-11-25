@@ -9,7 +9,10 @@ import { VFragment } from './VFragment'
 
 
 avalon.mix(avalon, {
-   VText, VComment,VElement,VFragment
+    VText,
+    VComment,
+    VElement,
+    VFragment
 })
 
 var constNameMap = {
@@ -18,21 +21,20 @@ var constNameMap = {
     '#comment': 'VComment'
 }
 
-var vdom = avalon.vdom = avalon.vdomAdaptor = function (obj, method) {
-    if (!obj) {//obj在ms-for循环里面可能是null
+var vdom = avalon.vdomAdaptor = avalon.vdom = function(obj, method) {
+    if (!obj) { //obj在ms-for循环里面可能是null
         return method === "toHTML" ? '' : createFragment()
     }
     var nodeName = obj.nodeName
-    if(!nodeName){
+    if (!nodeName) {
         return (new avalon.VFragment(obj))[method]()
     }
     var constName = constNameMap[nodeName] || 'VElement'
     return avalon[constName].prototype[method].call(obj)
 }
 
-avalon.domize = function (a) {
+avalon.domize = function(a) {
     return avalon.vdom(a, 'toDOM')
 }
 
-export {vdom, avalon, VText, VComment,VElement,VFragment}
-
+export { vdom, avalon, VText, VComment, VElement, VFragment }

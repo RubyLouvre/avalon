@@ -33,11 +33,11 @@ export function Mutation(key, value, vm) {
 }
 
 Mutation.prototype.get = function() {
-    this.reportObserved()
+    this.collect()
     return this.value
 }
 
-Mutation.prototype.reportObserved = function() {
+Mutation.prototype.collect = function() {
     var name = 'mutation ' + this.key
     startBatch(name)
     reportObserved(this)
@@ -48,7 +48,7 @@ Mutation.prototype.updateVersion = function() {
     this.version = Math.random() + Math.random()
 }
 
-Mutation.prototype.reportChanged = function() {
+Mutation.prototype.notify = function() {
     transactionStart()
     propagateChanged(this)
     transactionEnd()
@@ -70,6 +70,6 @@ Mutation.prototype.set = function(newValue, vm) {
         }
         this.value = newValue
         this.updateVersion()
-        this.reportChanged()
+        this.notify()
     }
 }

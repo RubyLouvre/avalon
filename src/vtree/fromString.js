@@ -5,7 +5,7 @@
  * 此阶段只会生成VElement,VText,VComment
  * ------------------------------------------------------------
  */
-import { avalon } from '../seed/core'
+import { avalon,Cache } from '../seed/core'
 import { clearString, stringPool, fill, rfill } from "./clearString"
 import { voidTag } from "./voidTag"
 import { orphanTag } from "./orphanTag"
@@ -24,7 +24,14 @@ export function fromString(str) {
 }
 avalon.lexer = fromString
 var rtagStart = /[\!\/a-z]/i //闭标签的第一个字符,开标签的第一个英文,注释节点的!
+var strCache = new Cache(100)
+
 function from(str) {
+    var cacheKey = str
+    var cached = strCache.get(cacheKey)
+    if(cached){
+      return avalon.mix(true,[],cached)
+    }
     stringPool.map = {}
     str = clearString(str)
     var stack = []
@@ -149,10 +156,11 @@ function from(str) {
             delete node.end
         }
 
-    } while (str.length);
-
+    } while (str.length)
+        
+    strCache.put(cacheKey, avalon.mix(true, [],ret))
     return ret
-
+  
 }
 
 

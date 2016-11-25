@@ -6,15 +6,15 @@ avalon.inBatch = 0
 avalon.observerQueue = []
 config.trackDeps = true
 avalon.track = function() {
-    if (config.trackDeps) {
-        avalon.log.apply(avalon, arguments)
+        if (config.trackDeps) {
+            avalon.log.apply(avalon, arguments)
+        }
     }
-}
-/**
- * Batch is a pseudotransaction, just for purposes of memoizing ComputedValues when nothing else does.
- * During a batch `onBecomeUnobserved` will be called at most once per observable.
- * Avoids unnecessary recalculations.
- */
+    /**
+     * Batch is a pseudotransaction, just for purposes of memoizing ComputedValues when nothing else does.
+     * During a batch `onBecomeUnobserved` will be called at most once per observable.
+     * Avoids unnecessary recalculations.
+     */
 export function startBatch(name) {
     avalon.inBatch++;
 }
@@ -55,10 +55,7 @@ export function reportObserved(observer) {
     if (action !== null) {
         avalon.track('收集到', (observer.key || observer.expr))
         action.mapIDs[observer.uuid] = observer;
-        return
-    }
-    avalon.track(observer.key, observer, observer.isComputed ? 'computed 也想收集依赖' : 'mutation也想收集依赖', observer.observers)
-    if (observer.observers.length === 0) {
+    } else if (observer.observers.length === 0) {
         addToQueue(observer);
     }
 }
@@ -80,17 +77,17 @@ export function collectDeps(action, getter) {
     var hasError = true,
         result
     try {
-       
+
         result = getter.call(action)
         hasError = false
     } finally {
         if (hasError) {
-            avalon.warn('collectDeps fail',getter+"", action)
+            avalon.warn('collectDeps fail', getter + "", action)
             action.mapIDs = {}
-            avalon.trackingAction = preAction 
+            avalon.trackingAction = preAction
         } else {
             // 确保它总是为null
-            avalon.trackingAction = preAction 
+            avalon.trackingAction = preAction
             resetDeps(action)
         }
         return result
@@ -171,7 +168,7 @@ function addObserver(observer, action) {
 }
 
 function removeObserver(observer, action) {
-   if (observer.isAction) {
+    if (observer.isAction) {
         return true
     }
     delete action.mapIDs[observer.uuid]
