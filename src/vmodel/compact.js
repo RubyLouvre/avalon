@@ -1,7 +1,7 @@
 import { avalon, platform, modern, msie } from '../seed/core'
 import { $$skipArray } from './reserved'
 import { Directive } from '../renders/Directive'
-import './share'
+import './neo'
 import './ProxyArray'
 
 export { avalon, platform, itemFactory }

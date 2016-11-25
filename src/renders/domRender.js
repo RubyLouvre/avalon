@@ -3,7 +3,7 @@ import { fromDOM } from '../vtree/fromDOM'
 import { fromString } from '../vtree/fromString'
 
 import { VFragment } from '../vdom/VFragment'
-import { DirectiveDecorator } from './decorator'
+import { Directive } from './Directive'
 
 import { orphanTag } from '../vtree/orphanTag'
 import { parseAttributes, eventMap } from '../parser/attributes'
@@ -267,7 +267,7 @@ cp.yieldDirectives = function() {
                     dir.beforeInit.call(binding)
                 }
 
-                var directive = new DirectiveDecorator(scope, binding, vdom, this)
+                var directive = new Directive(scope, binding, vdom, this)
                 this.directives.push(directive)
             }
         }
@@ -281,7 +281,7 @@ cp.optimizeDirectives = function() {
         for (var i = 0, el; el = this.directives[i++];) {
             el.callback = directives[el.type].update
             el.update = function() {
-                var oldVal = this.oldValue
+                var oldVal = this.beforeUpdate()
                 var newVal = this.value = this.get()
                 if (this.callback && this.diff(newVal, oldVal)) {
                     this.callback(this.node, this.value)
@@ -309,6 +309,7 @@ cp.optimizeDirectives = function() {
                     }
 
                 }
+                 this._isScheduled = false
             }
         }
     }

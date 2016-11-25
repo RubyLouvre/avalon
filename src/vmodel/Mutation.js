@@ -34,6 +34,15 @@ export function Mutation(key, value, vm) {
 
 Mutation.prototype.get = function() {
     this.collect()
+    var childOb = this.value
+    if (avalon.deepCollect && childOb && childOb.$events) {
+        for (var key in childOb) {
+            if (childOb.hasOwnProperty(key)) {
+                var collectIt = childOb[key]
+            }
+        }
+
+    }
     return this.value
 }
 
@@ -54,9 +63,8 @@ Mutation.prototype.notify = function() {
     transactionEnd()
 }
 
-Mutation.prototype.set = function(newValue, vm) {
+Mutation.prototype.set = function(newValue) {
     var oldValue = this.value
-    this.vm = vm
     if (newValue !== oldValue) {
         if (newValue) {
             var hash = oldValue && oldValue.$hashcode

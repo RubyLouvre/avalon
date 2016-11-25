@@ -23,7 +23,7 @@ var valiDir = avalon.directive('validate', {
             return true
         }
     },
-    update: function (vdom, value) {
+    update: function (vdom) {
         var validator = vdom.validator
         var dom = vdom.dom
         validator.dom = dom

@@ -6,15 +6,16 @@ avalon.inBatch = 0
 avalon.observerQueue = []
 config.trackDeps = true
 avalon.track = function() {
-        if (config.trackDeps) {
-            avalon.log.apply(avalon, arguments)
-        }
+    if (config.trackDeps) {
+        avalon.log.apply(avalon, arguments)
     }
-    /**
-     * Batch is a pseudotransaction, just for purposes of memoizing ComputedValues when nothing else does.
-     * During a batch `onBecomeUnobserved` will be called at most once per observable.
-     * Avoids unnecessary recalculations.
-     */
+}
+
+/**
+ * Batch is a pseudotransaction, just for purposes of memoizing ComputedValues when nothing else does.
+ * During a batch `onBecomeUnobserved` will be called at most once per observable.
+ * Avoids unnecessary recalculations.
+ */
 export function startBatch(name) {
     avalon.inBatch++;
 }
@@ -40,12 +41,11 @@ export function runReactions() {
 }
 
 
-export function propagateChanged(observable) {
-    var observers = observable.observers;
-    var i = observers.length;
-    while (i--) {
-        var d = observers[i]
-        d.schedule(); //通知action, computed做它们该做的事
+export function propagateChanged(target) {
+    var list = target.observers,
+        el
+    while (el = list.pop()) {
+        el.schedule(); //通知action, computed做它们该做的事
     }
 }
 
@@ -72,7 +72,7 @@ export function collectDeps(action, getter) {
 
     var preAction = avalon.trackingAction
     avalon.trackingAction = action
-    avalon.track('【action】 ', action.expr || action.key, '开始收集依赖项')
+    avalon.track('【action】', action.type, action.expr || action.key, '开始收集依赖项')
     action.mapIDs = {} //重新收集依赖
     var hasError = true,
         result

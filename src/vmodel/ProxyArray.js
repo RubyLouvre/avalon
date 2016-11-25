@@ -1,5 +1,5 @@
 import { avalon, ap, platform, modern, isObject } from '../seed/core'
-import { Depend } from './depend'
+import { Mutation } from './Mutation'
 
 var _splice = ap.splice
 var __array__ = {
@@ -72,7 +72,6 @@ __method__.forEach(function (method) {
         // 继续尝试劫持数组元素的属性
          var core = this.$events
       
-        core.__dep__.beforeNotify()
         var args = platform.listFactory(arguments, true, core.__dep__)
         var result = original.apply(this, args)
    
