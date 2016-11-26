@@ -78,7 +78,7 @@ multiple bindings to one single element is supported(`ms-click=fn, ms-click-1=fn
     </body>
 </html>
 ```
-![](lesson09_0.gif)  
+![](lesson10_0.gif)  
 ```
 <!DOCTYPE HTML>
 <html>
@@ -119,7 +119,7 @@ multiple bindings to one single element is supported(`ms-click=fn, ms-click-1=fn
     </body>
 </html>
 ```
-![](lesson09_1.gif)  
+![](lesson10_1.gif)  
 ```
 <!DOCTYPE HTML>
 <html>
@@ -185,7 +185,7 @@ avalon2 has resolved `ms-mouseenter, ms-mouseleave` problems,all morden bowsers 
     </body>
 </html>
 ```
-![](lesson09_2.gif)  
+![](lesson10_2.gif)  
 最后是mousewheel事件的修改，主要问题是出现firefox上，它死活也不愿意支持mousewheel，在avalon里是用DOMMouseScroll或wheel实现模拟的。我们在事件对象通过wheelDelta属性是否为正数判定它在向上滚动。  
 and `mousewheel` events was modified,Firefox is to blame for not supporting `mousewheel` event,so I have to use `DOMMouseScroll` or `wheel` event to simulate it.Scrolling directioni is judged by  event object `wheelDelta` property value sign.  
 ```
@@ -215,6 +215,6 @@ and `mousewheel` events was modified,Firefox is to blame for not supporting `mou
     </body>
 </html>
 ```
-![](lesson09_03.gif)  
+![](lesson10_03.gif)  
 此外avalon2还对input，animationend事件进行修复，大家也可以直接用avalon.bind, avalon.fn.bind来绑定这些事件。但建议都用ms-on绑定来处理。  
 avalon2 has also solved `input、animation` events issues,you may also use `avalon.bind, avalon.fn.bind` these events,but using `ms-on` directives is suggested.
