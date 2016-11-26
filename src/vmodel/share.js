@@ -4,7 +4,7 @@ import { Mutation } from './Mutation'
 import { Computed } from './Computed'
 
 if (modern) {
-    $$skipArray.mutations = false
+    $$skipArray.$mutations = false
 }
 
 /**
@@ -31,9 +31,11 @@ avalon.define = function(definition) {
         var vm = platform.modelFactory(definition)
         return avalon.vmodels[$id] = vm
     }
+    
     /**
      * 在末来的版本,avalon改用Proxy来创建VM,因此
      */
+    
 export function IProxy(definition, dd) {
     avalon.mix(this, definition)
     avalon.mix(this, $$skipArray)
@@ -43,7 +45,9 @@ export function IProxy(definition, dd) {
         __dep__: dd || new Mutation(this.$id)
     }
     if (avalon.config.inProxyMode) {
-        this.$accessors = this.$accessors || {}
+        delete this.$mutations
+        this.$accessors = {}
+        this.$track = ''
     } else {
         this.$accessors = {
             $model: modelAccessor

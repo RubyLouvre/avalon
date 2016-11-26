@@ -8,17 +8,17 @@ import {
     $$skipArray
 } from './reserved'
 import {
-    Depend
-} from './depend'
+    Mutation
+} from './Mutation'
 import {
     IProxy,
-    collectDeps,
     canHijack,
     createProxy
 } from './share'
 
 if (typeof Proxy === 'function') {
     avalon.config.inProxyMode = true
+
     platform.modelFactory = function modelFactory(definition, dd) {
         var clone = {}
         for (var i in definition) {
@@ -27,7 +27,7 @@ if (typeof Proxy === 'function') {
         }
         definition.$id = clone.$id
         var proxy = new IProxy(definition, dd)
-        proxy.$track = ''
+
         var vm = toProxy(proxy)
         for (var i in clone) {
             vm[i] = clone[i]
@@ -63,38 +63,40 @@ if (typeof Proxy === 'function') {
                 return platform.toJson(target)
             }
             //收集依赖
-            var selfDep = target.$accessors[name]
+            var mutation = target.$accessors[name]
             var childObj = target[name]
-            if (selfDep) {
-                collectDeps(selfDep, childObj)
+            if (mutation) {
+                //  collectDeps(selfDep, childObj)
             }
-            return selfDep ? selfDep.value : childObj
+            return mutation ? mutation.get() : childObj
         },
         set: function(target, name, value) {
             if (name === '$model') {
                 return true
             }
-            var ac = target.$accessors
+            if (name === '$computed') {
+                setComputed(target, name, value)
+                return true
+            }
+
 
             var oldValue = target[name]
             if (oldValue !== value) {
                 if (canHijack(name, value, target.$proxyItemBackdoor)) {
-                    var ac = target.$accessors
+                    var mutations = target.$accessors
                         //如果是新属性
-                    if (!(name in $$skipArray) && !ac[name]) {
-                        updateTrack(target, ac, name)
+                    if (!(name in $$skipArray) && !mutations[name]) {
+                        updateTrack(target, name, value, mutations)
                     }
-                    var selfDep = ac[name]
-                    selfDep && selfDep.beforeNotify()
+                    var mutation = mutations[name]
                         //创建子对象
                     var hash = oldValue && oldValue.$hashcode
-                    var childObj = createProxy(value, selfDep)
+                    var childObj = createProxy(value, mutation)
                     if (childObj) {
                         childObj.$hashcode = hash
                         value = childObj
                     }
-                    target[name] = selfDep.value = value //必须修改才notify
-                    selfDep.notify()
+                    mutation.set(value)
                 } else {
                     target[name] = value
                 }
@@ -108,13 +110,17 @@ if (typeof Proxy === 'function') {
         }
     }
 
-    function updateTrack(target, ac, name) {
+    function setComputed() {
+
+    }
+
+    function updateTrack(target, name, value, mutations) {
         var arr = target.$track.split('☥')
         if (arr[0] === '') {
             arr.shift()
         }
         arr.push(name)
-        ac[name] = new Depend(name)
+        mutations[name] = new Mutation(name, value, target)
         target.$track = arr.sort().join('☥')
     }
     platform.itemFactory = function itemFactory(before, after) {

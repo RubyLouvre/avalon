@@ -1,6 +1,6 @@
 import { avalon, platform, modern } from '../seed/core'
 import { $$skipArray } from './reserved'
-import { Directive } from './Action'
+import { Action } from './Action'
 import './share'
 import './ProxyArray'
 export { avalon, platform }

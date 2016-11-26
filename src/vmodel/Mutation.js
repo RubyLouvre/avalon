@@ -15,8 +15,8 @@ import {
 */
 export let obid = 1
 export class Mutation {
-    constructor(key, value, vm) { //构造函数
-        this.expr = key
+    constructor(expr, value, vm) { //构造函数
+        this.expr = expr
         if (value) {
             var childVm = platform.createProxy(value, this)
             if (childVm) {
