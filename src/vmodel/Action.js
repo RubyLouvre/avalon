@@ -27,7 +27,7 @@ export function Action(vm, options, callback) {
     this.callback = callback
     this.uuid = ++actionUUID
     this.mapIDs = {} //这个用于去重
-    this.observers = []
+    this.isAction = true
     var expr = this.expr
         // 缓存取值函数
     if (typeof this.getter !== 'function') {
@@ -93,10 +93,9 @@ ap.update = function(args, uuid) {
 
 
 ap.schedule = function() {
-    console.log(this._isScheduled,'schedule')
     if (!this._isScheduled) {
         this._isScheduled = true
-        avalon.pendingActions.push(this);
+        avalon.Array.ensure(avalon.pendingActions,this);
         startBatch('schedule ' + this.expr)
         runActions() //这里会还原_isScheduled
         endBatch('schedule ' + this.expr)
@@ -105,6 +104,7 @@ ap.schedule = function() {
 
 ap.removeDepends = function(filter) {
     var self = this
+    avalon.log('removeDepends')
     this.observers.forEach(function(depend) {
         avalon.Array.remove(depend.observers, self)
     })

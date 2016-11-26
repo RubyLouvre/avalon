@@ -30,7 +30,6 @@ export function endBatch(name) {
 }
 
 export function runActions() {
-    console.log(avalon.isRunningActions ,avalon.pendingActions , avalon.inTransaction)
     if (avalon.isRunningActions === true || avalon.inTransaction > 0)
         return
     avalon.isRunningActions = true
@@ -43,9 +42,8 @@ export function runActions() {
 
 
 export function propagateChanged(target) {
-    var list = target.observers,
-        el
-    while (el = list.pop()) {
+    var list = target.observers
+    for(var i = 0,el;el = list[i++];){
         el.schedule(); //通知action, computed做它们该做的事
     }
 }
@@ -56,6 +54,7 @@ export function reportObserved(observer) {
     if (action !== null) {
         avalon.track( '收集到', observer.expr)
         action.mapIDs[observer.uuid] = observer;
+        observer.isCollected = 1
     } else if (observer.observers.length === 0) {
         addToQueue(observer);
     }
@@ -78,11 +77,11 @@ export function collectDeps(action, getter) {
     }
     avalon.trackingAction = action
     avalon.track('【action】', action.type, action.expr, '开始收集依赖项')
+   //多个observe持有同一个action
     action.mapIDs = {} //重新收集依赖
     var hasError = true,
         result
     try {
-
         result = getter.call(action)
         hasError = false
     } finally {
@@ -93,11 +92,11 @@ export function collectDeps(action, getter) {
         } else {
             // 确保它总是为null
             avalon.trackingAction = targetStack.pop()
-            resetDeps(action)
-           
-//            if(avalon.trackingAction){
-//                resetDeps(avalon.trackingAction)
-//            }
+            try{
+              resetDeps(action)
+            }catch(e){
+                avalon.warn(e)
+            }
         }
         return result
     }
@@ -106,12 +105,14 @@ export function collectDeps(action, getter) {
 
 
 function resetDeps(action) {
-    var prev = action.observers, curr = []
+    var prev = action.observers, curr = [], checked = {}
     for (let i in action.mapIDs) {
         let dep = action.mapIDs[i]
-        if (dep.isJustCollect === 0) {
-            dep.isJustCollect = 1
+        if(!dep.isAction){
             curr.push(dep)
+            dep.isCollected = false
+            checked[dep.uuid] = 1
+            avalon.Array.ensure(dep.observers, action)
         }
     }
     if (!action.isComputed) {
@@ -127,18 +128,11 @@ function resetDeps(action) {
     }
     
     for (let i = 0, dep; dep = prev[i++];) {
-        if (dep.isJustCollect === 0) {
-            removeObserver(dep, action)
+        if (!checked[dep.uuid]) {
+          avalon.Array.remove(dep.observers, action)
         }
     }
    
-
-    for (let i = 0, dep; dep = curr[i++];) {
-        if (dep.isJustCollect === 1) {
-            dep.isJustCollect = 0
-            addObserver(dep, action)
-        }
-    }
 }
 
 
@@ -161,23 +155,9 @@ export function transactionStart(name) {
 export function transactionEnd(name) {
     if (--avalon.inTransaction === 0) {
         avalon.isRunningActions = false
-        console.log('00000000')
         runActions()
     }
     endBatch(name)
 }
 
-function addObserver(observer, action) {
-    if (observer.isAction) {
-        return true
-    }
-    avalon.Array.ensure(observer.observers, action)
-}
 
-function removeObserver(observer, action) {
-    if (observer.isAction) {
-        return true
-    }
-    delete action.mapIDs[observer.uuid]
-    avalon.Array.remove(observer.observers, action)
-}
