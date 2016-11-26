@@ -6,9 +6,6 @@ import './ProxyArray'
 export { avalon, platform }
 
 
-
-
-
 export function hideProperty(host, name, value) {
     Object.defineProperty(host, name, {
         value: value,
@@ -17,9 +14,6 @@ export function hideProperty(host, name, value) {
         configurable: true
     })
 }
-
-
-
 
 function $fire(expr, a) {
     var list = this.$events[expr]

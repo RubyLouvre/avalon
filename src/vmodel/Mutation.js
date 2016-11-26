@@ -32,6 +32,7 @@ export class Mutation {
         this.mapIDs = {}
         this.observers = []
     }
+
     get() {
         this.collect()
         var childOb = this.value
@@ -45,6 +46,7 @@ export class Mutation {
         }
         return this.value
     }
+
     collect() {
         var name = 'mutation ' + this.expr
         startBatch(name)

@@ -4,13 +4,13 @@ import { canBubbleUp } from './canBubbleUp'
 var hackSafari = avalon.modern && document.ontouchstart
 
 //添加fn.bind, fn.unbind, bind, unbind
-avalon.fn.bind = function (type, fn, phase) {
+avalon.fn.bind = function(type, fn, phase) {
     if (this[0]) { //此方法不会链
         return avalon.bind(this[0], type, fn, phase)
     }
 }
 
-avalon.fn.unbind = function (type, fn, phase) {
+avalon.fn.unbind = function(type, fn, phase) {
     if (this[0]) {
         var args = _slice.call(arguments)
         args.unshift(this[0])
@@ -20,14 +20,14 @@ avalon.fn.unbind = function (type, fn, phase) {
 }
 
 /*绑定事件*/
-avalon.bind = function (elem, type, fn) {
+avalon.bind = function(elem, type, fn) {
     if (elem.nodeType === 1) {
         var value = elem.getAttribute('avalon-events') || ''
-        //如果是使用ms-on-*绑定的回调,其uuid格式为e12122324,
-        //如果是使用bind方法绑定的回调,其uuid格式为_12
+            //如果是使用ms-on-*绑定的回调,其uuid格式为e12122324,
+            //如果是使用bind方法绑定的回调,其uuid格式为_12
         var uuid = getShortID(fn)
         var hook = eventHooks[type]
-        /* istanbul ignore if */
+            /* istanbul ignore if */
         if (type === 'click' && hackSafari) {
             elem.addEventListener('click', avalon.noop)
         }
@@ -41,8 +41,8 @@ avalon.bind = function (elem, type, fn) {
         }
         var key = type + ':' + uuid
         avalon.eventListeners[fn.uuid] = fn
-        /* istanbul ignore if */
-        if (value.indexOf(type + ':') === -1) {//同一种事件只绑定一次
+            /* istanbul ignore if */
+        if (value.indexOf(type + ':') === -1) { //同一种事件只绑定一次
             if (canBubbleUp[type] || (avalon.modern && focusBlur[type])) {
                 delegateEvent(type)
             } else {
@@ -50,14 +50,14 @@ avalon.bind = function (elem, type, fn) {
             }
         }
         var keys = value.split(',')
-        /* istanbul ignore if */
+            /* istanbul ignore if */
         if (keys[0] === '') {
             keys.shift()
         }
         if (keys.indexOf(key) === -1) {
             keys.push(key)
             setEventId(elem, keys.join(','))
-            //将令牌放进avalon-events属性中
+                //将令牌放进avalon-events属性中
         }
 
     } else {
@@ -66,11 +66,12 @@ avalon.bind = function (elem, type, fn) {
     }
     return fn //兼容之前的版本
 }
+
 function setEventId(node, value) {
     node.setAttribute('avalon-events', value)
 }
 /* istanbul ignore next */
-avalon.unbind = function (elem, type, fn) {
+avalon.unbind = function(elem, type, fn) {
     if (elem.nodeType === 1) {
         var value = elem.getAttribute('avalon-events') || ''
         switch (arguments.length) {
@@ -79,14 +80,14 @@ avalon.unbind = function (elem, type, fn) {
                 elem.removeAttribute('avalon-events')
                 break
             case 2:
-                value = value.split(',').filter(function (str) {
+                value = value.split(',').filter(function(str) {
                     return str.indexOf(type + ':') === -1
                 }).join(',')
                 setEventId(elem, value)
                 break
             default:
                 var search = type + ':' + fn.uuid
-                value = value.split(',').filter(function (str) {
+                value = value.split(',').filter(function(str) {
                     return str !== search
                 }).join(',')
                 setEventId(elem, value)
@@ -99,12 +100,13 @@ avalon.unbind = function (elem, type, fn) {
 }
 
 var typeRegExp = {}
+
 function collectHandlers(elem, type, handlers) {
     var value = elem.getAttribute('avalon-events')
     if (value && (elem.disabled !== true || type !== 'click')) {
         var uuids = []
         var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp("\\b" + type + '\\:([^,\\s]+)', 'g'))
-        value.replace(reg, function (a, b) {
+        value.replace(reg, function(a, b) {
             uuids.push(b)
             return a
         })
@@ -123,13 +125,15 @@ function collectHandlers(elem, type, handlers) {
 }
 
 var rhandleHasVm = /^e/
+
 function dispatch(event) {
     event = new avEvent(event)
     var type = event.type
     var elem = event.target
     var handlers = []
     collectHandlers(elem, type, handlers)
-    var i = 0, j, uuid, handler
+    var i = 0,
+        j, uuid, handler
     while ((handler = handlers[i++]) && !event.cancelBubble) {
         var host = event.currentTarget = handler.elem
         j = 0
@@ -170,53 +174,53 @@ function delegateEvent(type) {
     }
 }
 
-var rconstant = /^[A-Z_]+$/
-var eventProto = {
-    webkitMovementY:1,
-    webkitMovementX: 1,
-    fixEvent: function () { },
-    preventDefault: function () {
+export class avEvent {
+    constructor(event) {
+        if (event.originalEvent) {
+            return event
+        }
+        for (var i in event) {
+            if (avEvent.prototype[i]) {
+                this[i] = event[i]
+            }
+        }
+        if (!this.target) {
+            this.target = event.srcElement
+        }
+        var target = this.target
+        this.fixEvent()
+        this.timeStamp = new Date() - 0
+        this.originalEvent = event
+    }
+
+    //chrome如果操作真实事件的webkitMovementX/Y会抛警告
+    webkitMovementY() {}
+
+    webkitMovementX() {}
+
+    fixEvent() {}
+    preventDefault() {
         var e = this.originalEvent || {}
         e.returnValue = this.returnValue = false
         if (modern && e.preventDefault) {
             e.preventDefault()
         }
-    },
-    stopPropagation: function () {
+    }
+    stopPropagation() {
         var e = this.originalEvent || {}
         e.cancelBubble = this.cancelBubble = true
         if (modern && e.stopPropagation) {
             e.stopPropagation()
         }
-    },
-    stopImmediatePropagation: function () {
+    }
+    stopImmediatePropagation() {
         this.stopPropagation()
         this.stopImmediate = true
-    },
-    toString: function () {
-        return '[object Event]'//#1619
+    }
+    toString() {
+        return '[object Event]' //#1619
     }
 }
-
-export function avEvent(event) {
-    if (event.originalEvent) {
-        return event
-    }
-    for (var i in event) {
-        if (!rconstant.test(i) && !eventProto[i]) {
-            this[i] = event[i]
-        }
-    }
-    if (!this.target) {
-        this.target = event.srcElement
-    }
-    var target = this.target
-    this.fixEvent()
-    this.timeStamp = new Date() - 0
-    this.originalEvent = event
-}
-
-avEvent.prototype = eventProto
 
 
 //针对firefox, chrome修正mouseenter, mouseleave
@@ -225,11 +229,11 @@ if (!('onmouseenter' in root)) {
     avalon.each({
         mouseenter: 'mouseover',
         mouseleave: 'mouseout'
-    }, function (origType, fixType) {
+    }, function(origType, fixType) {
         eventHooks[origType] = {
             type: fixType,
-            fix: function (elem, fn) {
-                return function (e) {
+            fix: function(elem, fn) {
+                return function(e) {
                     var t = e.relatedTarget
                     if (!t || (t !== elem && !(elem.compareDocumentPosition(t) & 16))) {
                         delete e.type
@@ -245,7 +249,7 @@ if (!('onmouseenter' in root)) {
 avalon.each({
     AnimationEvent: 'animationend',
     WebKitAnimationEvent: 'webkitAnimationEnd'
-}, function (construct, fixType) {
+}, function(construct, fixType) {
     if (window[construct] && !eventHooks.animationend) {
         eventHooks.animationend = {
             type: fixType
@@ -264,8 +268,8 @@ if (!("onmousewheel" in document)) {
     var fixWheelDelta = fixWheelType === 'wheel' ? 'deltaY' : 'detail'
     eventHooks.mousewheel = {
         type: fixWheelType,
-        fix: function (elem, fn) {
-            return function (e) {
+        fix: function(elem, fn) {
+            return function(e) {
                 var delta = e[fixWheelDelta] > 0 ? -120 : 120
                 e.wheelDelta = ~~elem._ms_wheel_ + delta
                 elem._ms_wheel_ = e.wheelDeltaY = e.wheelDelta
