@@ -59,13 +59,14 @@ export function IProxy(definition, dd) {
 }
 
 platform.modelFactory = function modelFactory(definition, dd) {
+    var $computed = definition.$computed || {}
+    delete definition.$computed
     var core = new IProxy(definition, dd)
     var $accessors = core.$accessors
     var keys = []
     if (modern)
         platform.hideProperty(core, '$mutations', {})
-    var $computed = definition.$computed || {}
-    delete definition.$computed
+
     for (var key in definition) {
         if (key in $$skipArray)
             continue
@@ -81,10 +82,12 @@ platform.modelFactory = function modelFactory(definition, dd) {
         var val = $computed[key]
         if (typeof val === 'function') {
             val = {
-                getter: val
+                get: val
             }
         }
-        if (val && val.getter) {
+        if (val && val.get) {
+            val.getter = val.get
+            val.setter = val.set
             avalon.Array.ensure(keys, key)
             $accessors[key] = createAccessor(key, val, true)
         }

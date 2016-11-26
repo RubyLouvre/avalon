@@ -16,8 +16,9 @@ function getBody(fn) {
 let instability = /(\?|if\b|\(.+\))/
 export class Computed extends Mutation {
     constructor(name, opts, vm) { //构造函数
+        delete opts.get
+        delete opts.set
         super(name, opts, vm);
-        delete this.value
         avalon.mix(this, opts)
         this.deps = {}
         this.depsVersion = {}
