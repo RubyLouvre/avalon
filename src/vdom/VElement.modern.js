@@ -1,15 +1,14 @@
 import { avalon, document } from '../seed/core'
 
-export function VElement(type, props, children, isVoidTag) {
-    this.nodeName = type
-    this.props = props
-    this.children = children
-    this.isVoidTag = isVoidTag
-}
+export class VElement {
+    constructor(type, props, children, isVoidTag) {
+        this.nodeName = type
+        this.props = props
+        this.children = children
+        this.isVoidTag = isVoidTag
+    }
 
-VElement.prototype = {
-    constructor: VElement,
-    toDOM: function() {
+    toDOM() {
         if (this.dom)
             return this.dom
         var dom, tagName = this.nodeName
@@ -30,8 +29,8 @@ VElement.prototype = {
         var template = c[0] ? c[0].nodeValue : ''
         switch (this.nodeName) {
             case 'xmp':
-            case 'script':
             case 'style':
+            case 'script':
             case 'noscript':
                 dom.innerHTML = template
                 break
@@ -44,19 +43,16 @@ VElement.prototype = {
                 }
                 break
             default:
-                if (!this.isVoidTag) {
-                    if (!this.children) {
-                        return
-                    }
-                    this.children.forEach(function(c) {
-                        c && dom.appendChild(avalon.vdom(c, 'toDOM'))
-                    })
+                if (!this.isVoidTag && this.children) {
+                    this.children.forEach(el =>
+                        el && dom.appendChild(avalon.vdom(el, 'toDOM'))
+                    )
                 }
                 break
         }
         return this.dom = dom
-    },
-    toHTML: function() {
+    }
+    toHTML() {
         var arr = []
         var props = this.props || {}
         for (var i in props) {
@@ -72,9 +68,9 @@ VElement.prototype = {
         }
         str += '>'
         if (this.children) {
-            str += this.children.map(function(c) {
-                return c ? avalon.vdom(c, 'toHTML') : ''
-            }).join('')
+            str += this.children.map(el =>
+                (el ? avalon.vdom(el, 'toHTML') : '')
+            ).join('')
         }
         return str + '</' + this.nodeName + '>'
     }

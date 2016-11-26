@@ -97,6 +97,7 @@ if (typeof Proxy === 'function') {
                         value = childObj
                     }
                     mutation.set(value)
+                    target[name] = mutation.value
                 } else {
                     target[name] = value
                 }

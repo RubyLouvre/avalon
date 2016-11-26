@@ -40,7 +40,7 @@ export class Action {
         }
         // 缓存表达式旧值
         this.oldValue = null
-            // 表达式初始值 & 提取依赖
+         // 表达式初始值 & 提取依赖
         if (!(this.node)) {
             this.value = this.get()
         }

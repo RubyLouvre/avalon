@@ -1,43 +1,20 @@
 import { avalon, document, msie } from '../seed/core'
 
-export function VElement(type, props, children, isVoidTag) {
-    this.nodeName = type
-    this.props = props
-    this.children = children
-    this.isVoidTag = isVoidTag
-}
+export class VElement {
 
-function skipFalseAndFunction(a) {
-    return a !== false && (Object(a) !== a)
-}
-/* istanbul ignore next */
-var specalAttrs = {
-    "class": function (dom, val) {
-        dom.className = val
-    },
-    style: function (dom, val) {
-        dom.style.cssText = val
-    },
-    type: function (dom, val) {
-        try { //textarea,button 元素在IE6,7设置 type 属性会抛错
-            dom.type = val
-        } catch (e) { }
-    },
-    'for': function (dom, val) {
-        dom.setAttribute('for', val)
-        dom.htmlFor = val
+    constructor(type, props, children, isVoidTag) {
+        this.nodeName = type
+        this.props = props
+        this.children = children
+        this.isVoidTag = isVoidTag
     }
-}
-
-VElement.prototype = {
-    constructor: VElement,
-    toDOM: function () {
+    toDOM() {
         if (this.dom)
             return this.dom
         var dom, tagName = this.nodeName
         if (avalon.modern && svgTags[tagName]) {
             dom = createSVG(tagName)
-            /* istanbul ignore next*/
+                /* istanbul ignore next*/
         } else if (!avalon.modern && (VMLTags[tagName] || rvml.test(tagName))) {
             dom = createVML(tagName)
         } else {
@@ -61,43 +38,49 @@ VElement.prototype = {
         var template = c[0] ? c[0].nodeValue : ''
         switch (this.nodeName) {
             case 'script':
+            case 'style':
+            case 'xmp':
+            case 'noscript':
+            case 'template':
+                try {
+                    dom.innerHTML = template
+                } catch (e) {
+                    this.hackIE(dom, this.nodeName, template, props)
+                }
+                break
+            case 'option':
+                //IE6-8,为option添加文本子节点,不会同步到text属性中
+                if (msie < 9)
+                    dom.text = template
+            default:
+                /* istanbul ignore next */
+                if (!this.isVoidTag && this.children) {
+                    this.children.forEach(el =>
+                        c && dom.appendChild(avalon.vdom(c, 'toDOM'))
+                    )
+                }
+                break
+        }
+        return this.dom = dom
+    }
+    hackIE(dom, nodeName, template, prop) {
+        switch (dom.nodeName) {
+            case 'script':
                 dom.type = 'noexec'
                 dom.text = template
                 dom.type = props.type || ''
                 break
             case 'style':
-                /* istanbul ignore if*/
-                if ('styleSheet' in dom) {
-                    dom.setAttribute('type', 'text/css')
-                    dom.styleSheet.cssText = template
-                } else {
-                    dom.innerHTML = template
-                }
+                dom.setAttribute('type', 'text/css')
+                dom.styleSheet.cssText = template
                 break
-            case 'xmp'://IE6-8,XMP元素里面只能有文本节点,不能使用innerHTML
+            case 'xmp': //IE6-8,XMP元素里面只能有文本节点,不能使用innerHTML
             case 'noscript':
                 dom.textContent = template
-                //IE-8 下设置noscript.innerText会报运行时错误
-                break
-            case 'template':
-                dom.innerHTML = template
-                break
-            case 'option':
-                //IE6-8,为option添加文本子节点,不会同步到text属性中
-                if(msie < 9)
-                dom.text = template
-            default:
-                /* istanbul ignore next */
-                if (!this.isVoidTag && this.children) {
-                    this.children.forEach(function (c) {
-                        c && dom.appendChild(avalon.vdom(c, 'toDOM'))
-                    })
-                }
                 break
         }
-        return this.dom = dom
-    },
-    toHTML: function () {
+    }
+    toHTML() {
         var arr = []
         var props = this.props || {}
         for (var i in props) {
@@ -113,13 +96,36 @@ VElement.prototype = {
         }
         str += '>'
         if (this.children) {
-            str += this.children.map(function (c) {
-                return c ? avalon.vdom(c, 'toHTML') : ''
-            }).join('')
+            str += this.children.map(
+                el => (el ? avalon.vdom(el, 'toHTML') : '')
+            ).join('')
         }
         return str + '</' + this.nodeName + '>'
     }
 }
+
+function skipFalseAndFunction(a) {
+    return a !== false && (Object(a) !== a)
+}
+/* istanbul ignore next */
+var specalAttrs = {
+    "class": function(dom, val) {
+        dom.className = val
+    },
+    style: function(dom, val) {
+        dom.style.cssText = val
+    },
+    type: function(dom, val) {
+        try { //textarea,button 元素在IE6,7设置 type 属性会抛错
+            dom.type = val
+        } catch (e) {}
+    },
+    'for': function(dom, val) {
+        dom.setAttribute('for', val)
+        dom.htmlFor = val
+    }
+}
+
 function createSVG(type) {
     return document.createElementNS('http://www.w3.org/2000/svg', type)
 }
@@ -127,7 +133,7 @@ var svgTags = avalon.oneObject('circle,defs,ellipse,image,line,' +
     'path,polygon,polyline,rect,symbol,text,use,g,svg')
 
 var rvml = /^\w+\:\w+/
-/* istanbul ignore next*/
+    /* istanbul ignore next*/
 function createVML(type) {
     if (document.styleSheets.length < 31) {
         document.createStyleSheet().addRule(".rvml", "behavior:url(#default#VML)");
@@ -151,6 +157,3 @@ function createVML(type) {
 var VMLTags = avalon.oneObject('shape,line,polyline,rect,roundrect,oval,arc,' +
     'curve,background,image,shapetype,group,fill,' +
     'stroke,shadow, extrusion, textbox, imagedata, textpath')
-
-
-
