@@ -63,9 +63,17 @@ export class Action {
     // get --> getValue --> getter
     get(fn) {
         var name = 'action track ' + this.type
+        
+        if(this.deep){
+            avalon.deepCollect = true
+        }
         startBatch(name)
         var value = collectDeps(this, this.getValue)
         endBatch(name)
+        if(this.deep && avalon.deepCollect){
+            avalon.deepCollect = false
+        }
+       
         return value
     }
 
