@@ -1,28 +1,28 @@
 import { avalon, rnowhite, rword } from '../../seed/core'
 
-export function ClassList(node){
-    this.node = node
-}
-ClassList.prototype = {
-    toString: function () {
+export class ClassList {
+    constructor(node) {
+        this.node = node
+    }
+    toString() {
         var node = this.node
         var cls = node.className
         var str = typeof cls === 'string' ? cls : cls.baseVal
         var match = str.match(rnowhite)
         return match ? match.join(' ') : ''
-    },
-    contains: function (cls) {
+    }
+    contains(cls) {
         return (' ' + this + ' ').indexOf(' ' + cls + ' ') > -1
-    },
-    add: function (cls) {
+    }
+    add(cls) {
         if (!this.contains(cls)) {
             this.set(this + ' ' + cls)
         }
-    },
-    remove: function (cls) {
+    }
+    remove(cls) {
         this.set((' ' + this + ' ').replace(' ' + cls + ' ', ' '))
-    },
-    set: function (cls) {
+    }
+    set(cls) {
         cls = cls.trim()
         var node = this.node
         if (typeof node.className === 'object') {
@@ -31,7 +31,9 @@ ClassList.prototype = {
         } else {
             node.className = cls
         }
-    } //toggle存在版本差异，因此不使用它
+        //toggle存在版本差异，因此不使用它
+    }
+
 }
 
 export function classListFactory(node) {
@@ -42,12 +44,12 @@ export function classListFactory(node) {
 }
 
 
-'add,remove'.replace(rword, function (method) {
-    avalon.fn[method + 'Class'] = function (cls) {
+'add,remove'.replace(rword, function(method) {
+    avalon.fn[method + 'Class'] = function(cls) {
         var el = this[0] || {}
-        //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
+            //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
         if (cls && typeof cls === 'string' && el.nodeType === 1) {
-            cls.replace(rnowhite, function (c) {
+            cls.replace(rnowhite, function(c) {
                 classListFactory(el)[method](c)
             })
         }
@@ -56,18 +58,17 @@ export function classListFactory(node) {
 })
 
 avalon.shadowCopy(avalon.fn, {
-    hasClass: function (cls) {
+    hasClass: function(cls) {
         var el = this[0] || {}
         return el.nodeType === 1 && classListFactory(el).contains(cls)
     },
-    toggleClass: function (value, stateVal) {
+    toggleClass: function(value, stateVal) {
         var isBool = typeof stateVal === 'boolean'
         var me = this
-        String(value).replace(rnowhite, function (c) {
+        String(value).replace(rnowhite, function(c) {
             var state = isBool ? stateVal : !me.hasClass(c)
             me[state ? 'addClass' : 'removeClass'](c)
         })
         return this
     }
 })
-

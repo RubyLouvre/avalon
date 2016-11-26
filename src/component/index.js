@@ -4,11 +4,12 @@ import { dumpTree, groupTree, getRange } from '../renders/share'
 var legalTags = { wbr: 1, xmp: 1, template: 1 }
 var events = 'onInit,onReady,onViewChange,onDispose,onEnter,onLeave'
 var componentEvents = avalon.oneObject(events)
+
 function toObject(value) {
     var value = platform.toJson(value)
     if (Array.isArray(value)) {
         var v = {}
-        value.forEach(function (el) {
+        value.forEach(function(el) {
             el && avalon.shadowCopy(v, el)
         })
         return v
@@ -20,7 +21,7 @@ avalon.directive('widget', {
     delay: true,
     priority: 4,
     deep: true,
-    init: function () {
+    init: function() {
         //cached属性必须定义在组件容器里面,不是template中
         var vdom = this.node
         this.cacheVm = !!vdom.props.cached
@@ -29,19 +30,19 @@ avalon.directive('widget', {
         }
         var oldValue = this.getValue()
         var value = toObject(oldValue)
-        //外部VM与内部VM
-        // ＝＝＝创建组件的VM＝＝BEGIN＝＝＝
+            //外部VM与内部VM
+            // ＝＝＝创建组件的VM＝＝BEGIN＝＝＝
         var is = vdom.props.is || value.is
         this.is = is
         var component = avalon.components[is]
-        //外部传入的总大于内部
+            //外部传入的总大于内部
         if (!('fragment' in this)) {
-            if (!vdom.isVoidTag) {//提取组件容器内部的东西作为模板
+            if (!vdom.isVoidTag) { //提取组件容器内部的东西作为模板
                 var text = vdom.children[0]
                 if (text && text.nodeValue) {
                     this.fragment = text.nodeValue
-                }else{
-                    this.fragment = avalon.vdom(vdom.children,'toHTML') 
+                } else {
+                    this.fragment = avalon.vdom(vdom.children, 'toHTML')
                 }
             } else {
                 this.fragment = false
@@ -57,7 +58,7 @@ avalon.directive('widget', {
             return
         }
         this.readyState = 1
-        //如果是非空元素，比如说xmp, ms-*, template
+            //如果是非空元素，比如说xmp, ms-*, template
         var id = value.id || value.$id
         var hasCache = avalon.vmodels[id]
         var fromCache = false
@@ -82,7 +83,7 @@ avalon.directive('widget', {
             if (this.fragment || component.soleSlot) {
                 var curVM = this.fragment ? this.vm : comVm
                 var curText = this.fragment || '{{##' + component.soleSlot + '}}'
-                var childBoss = avalon.scan('<div>' + curText + '</div>', curVM, function () {
+                var childBoss = avalon.scan('<div>' + curText + '</div>', curVM, function() {
                     nodesWithSlot = this.root.children
                 })
                 directives = childBoss.directives
@@ -92,12 +93,13 @@ avalon.directive('widget', {
             }
             boss.directives.push.apply(boss.directives, directives)
 
-            var arraySlot = [], objectSlot = {}
-            //从用户写的元素内部 收集要移动到 新创建的组件内部的元素
+            var arraySlot = [],
+                objectSlot = {}
+                //从用户写的元素内部 收集要移动到 新创建的组件内部的元素
             if (component.soleSlot) {
                 arraySlot = nodesWithSlot
             } else {
-                nodesWithSlot.forEach(function (el, i) {//要求带slot属性
+                nodesWithSlot.forEach(function(el, i) { //要求带slot属性
                     if (el.slot) {
                         var nodes = getRange(nodesWithSlot, el)
                         nodes.push(nodes.end)
@@ -139,7 +141,7 @@ avalon.directive('widget', {
         } else {
             fireComponentHook(comVm, vdom, 'Ready')
         }
-        this.beforeDestroy = function () {
+        this.beforeDestroy = function() {
             if (!this.cacheVm) {
                 fireComponentHook(comVm, vdom, 'Dispose')
                 comVm.$hashcode = false
@@ -152,12 +154,12 @@ avalon.directive('widget', {
         }
 
     },
-    diff: function (newVal, oldVal) {
+    diff: function(newVal, oldVal) {
         if (cssDiff.call(this, newVal, oldVal)) {
             return true
         }
     },
-    update: function (vdom, value) {
+    update: function(vdom, value) {
         this.oldValue = value //★★防止递归
         switch (this.readyState) {
             case 0:
@@ -167,16 +169,20 @@ avalon.directive('widget', {
                 break
             case 1:
                 this.readyState++
-                break
+                    break
             default:
-                var comVm = this.comVm
+                this.readyState++
+
+                    var comVm = this.comVm
                 avalon.viewChanging = true
-                for (var i in value) {
-                    if (comVm.hasOwnProperty(i)) {
-                        comVm[i] = value[i]
+                avalon.transaction(function() {
+                    for (var i in value) {
+                        if (comVm.hasOwnProperty(i)) {
+                            comVm[i] = value[i]
+                        }
                     }
-                }
-                
+                })
+
                 //要保证要先触发孩子的ViewChange 然后再到它自己的ViewChange
                 fireComponentHook(comVm, vdom, 'ViewChange')
                 delete avalon.viewChanging
@@ -195,10 +201,11 @@ function replaceRoot(instance, boss) {
     boss.root = vdom
     boss.vnodes[0] = vdom
 }
+
 function fireComponentHook(vm, vdom, name) {
     var list = vm.$events['on' + name]
     if (list) {
-        list.forEach(function (el) {
+        list.forEach(function(el) {
             el.callback.call(vm, {
                 type: name.toLowerCase(),
                 target: vdom.dom,
@@ -219,7 +226,7 @@ export function createComponentVm(component, value, is) {
     delete value.$id
     avalon.mix(def, value)
     var vm = avalon.define(def)
-    hooks.forEach(function (el) {
+    hooks.forEach(function(el) {
         vm.$watch(el.type, el.cb)
     })
     return vm
@@ -238,12 +245,14 @@ function collectHooks(a, list) {
         }
     }
 }
+
 function resetParentChildren(nodes, arr) {
     var dir = arr && arr[0] && arr[0].forDir
-    if (dir) {      
+    if (dir) {
         dir.parentChildren = nodes
     }
 }
+
 function insertArraySlot(nodes, arr) {
     for (var i = 0, el; el = nodes[i]; i++) {
         if (el.nodeName === 'slot') {
@@ -256,7 +265,7 @@ function insertArraySlot(nodes, arr) {
     }
 }
 
-  
+
 
 function insertObjectSlot(nodes, obj) {
     for (var i = 0, el; el = nodes[i]; i++) {
@@ -272,7 +281,7 @@ function insertObjectSlot(nodes, obj) {
 }
 
 avalon.components = {}
-avalon.component = function (name, component) {
+avalon.component = function(name, component) {
     /**
      * template: string
      * defaults: object
