@@ -39,16 +39,15 @@ var __array__ = {
     },
     removeAll: function(all) { //移除N个元素
         var size = this.length
-        if (Array.isArray(all)) {
+        var eliminate = Array.isArray(all) ?
+            function(el) {
+                return all.indexOf(el) !== -1
+            } : typeof all === 'function' ?
+            all : false
+
+        if (eliminate) {
             for (var i = this.length - 1; i >= 0; i--) {
-                if (all.indexOf(this[i]) !== -1) {
-                    _splice.call(this, i, 1)
-                }
-            }
-        } else if (typeof all === 'function') {
-            for (i = this.length - 1; i >= 0; i--) {
-                var el = this[i]
-                if (all(el, i)) {
+                if (eliminate(this[i], i)) {
                     _splice.call(this, i, 1)
                 }
             }
