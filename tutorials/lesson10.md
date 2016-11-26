@@ -3,7 +3,7 @@
 avalon2的事件指令，比起avalon1来强大多了。  
 avalon2 has much more powerful evevts directive than 1.X versions.  
 首先其内部是使用事件代理实现的，能冒泡的事件全部绑定document上。只有旧式IE的几个事件还绑定在原元素上。  
-events are all bind to the document,only old IE events are bind to the original elements.  
+events are all bound to the document,only old IE events are bind to the original elements.  
 其次，this直接指向vmodel，元素节点则通过e.target获取。如果要传入多个参数，需要指定事件对象，还是与原来一样使用$event  
 secondly,`this` is directly pointed to vmodel,elements nodes are got by e.target.If multiple parameters are passed in,event object must be given,as using $event as former.
 ```
@@ -217,4 +217,4 @@ and `mousewheel` events was modified,Firefox is to blame for not supporting `mou
 ```
 ![](lesson10_03.gif)  
 此外avalon2还对input，animationend事件进行修复，大家也可以直接用avalon.bind, avalon.fn.bind来绑定这些事件。但建议都用ms-on绑定来处理。  
-avalon2 has also solved `input、animation` events issues,you may also use `avalon.bind, avalon.fn.bind` these events,but using `ms-on` directives is suggested.
+avalon2 has also solved `input、animation` events issues,you may also use `avalon.bind, avalon.fn.bind` to bind these events,but using `ms-on` directives is suggested.
