@@ -1,6 +1,6 @@
 import { avalon, platform, isObject, modern } from '../seed/core'
 import { $$skipArray } from './reserved'
-import { Depend } from './depend'
+import { Mutation } from './Mutation'
 
 
 /**
@@ -36,7 +36,7 @@ export function IProxy(definition, dd) {
     this.$hashcode = avalon.makeHashCode('$')
     this.$id = this.$id || this.$hashcode
     this.$events = {
-        __dep__: dd || new Depend(this.$id)
+        __dep__: dd || new Mutation(this.$id)
     }
     if (avalon.config.inProxyMode) {
         this.$accessors = this.$accessors || {}
@@ -58,6 +58,8 @@ platform.modelFactory = function modelFactory(definition, dd) {
     var core = new IProxy(definition, dd)
     var $accessors = core.$accessors
     var keys = []
+    if(modern)
+        core.$mutations = {}
     for (var key in definition) {
         if (key in $$skipArray)
             continue
@@ -115,60 +117,24 @@ export function createProxy(target, dd) {
 
 platform.createProxy = createProxy
 
-// 指令需要计算自己的值，来刷新
-// 在计算前，将自己放到DepStack中
-// 然后开始计算，在Getter方法里，
-export function collectDeps(selfDep, childOb) {
-    if (Depend.target) {
-        selfDep.collect()
-    }
-    if (childOb && childOb.$events) {
-        if (Array.isArray(childOb)) {
-            childOb.forEach(function(item) {
-                if (item && item.$events) {
-                    item.$events.__dep__.collect()
-                }
-            })
-        } else if (avalon.deepCollect) {
-            for (var key in childOb) {
-                if (childOb.hasOwnProperty(key)) {
-                    var collectIt = childOb[key]
-                }
-            }
-        }
-        return childOb
-    }
-}
-
 
 function createAccessor(key, val) {
-    var priVal = val
-    var selfDep = new Depend(key) //当前值对象的Depend
-    var childOb = createProxy(val, selfDep)
-    var hash = childOb && childOb.$hashcode
+    var mutation = new Mutation(key,val)
     return {
         get: function Getter() {
-            var ret = priVal
-                //nodejs中,函数内部通过函数名,对原函数进行操作,比如下面这句会报错
-                //     Getter.dd = selfDep
-            var child = collectDeps(selfDep, childOb)
-            if (child) {
-                return child
+            if(!mutation.vm){  
+                mutation.vm = this
+                if(modern){
+                   this.$mutations[key] = mutation
+                }
             }
-            return ret
+            return mutation.get()
         },
         set: function Setter(newValue) {
-            var oldValue = priVal
-            if (newValue === oldValue) {
-                return
+            if(!mutation.vm){   
+                mutation.vm = this
             }
-            selfDep.beforeNotify()
-            priVal = newValue
-            childOb = createProxy(newValue, selfDep)
-            if (childOb && hash) {
-                childOb.$hashcode = hash
-            }
-            selfDep.notify()
+            mutation.set(newValue)
         },
         enumerable: true,
         configurable: true
@@ -218,7 +184,7 @@ platform.fuseFactory = function fuseFactory(before, after) {
     } else if (xtype === 'object') {
         if (typeof val.$track === 'string') {
             var obj = {}
-            val.$track.split('Ȣ').forEach(function(i) {
+            val.$track.split('☥').forEach(function(i) {
                 var value = val[i]
                 obj[i] = value && value.$events ? toJson(value) : value
             })

@@ -27,7 +27,6 @@ export class Mutation {
         this.value = value
         this.vm = vm
         this.uuid = ++obid
-        this.isJustCollect = 0;
         this.updateVersion()
         this.mapIDs = {}
         this.observers = []
@@ -36,10 +35,18 @@ export class Mutation {
     get() {
         this.collect()
         var childOb = this.value
-        if (avalon.deepCollect && childOb && childOb.$events) {
-            for (var key in childOb) {
-                if (childOb.hasOwnProperty(key)) {
-                    var collectIt = childOb[key]
+        if (childOb && childOb.$events) {
+            if (Array.isArray(childOb)) {
+                childOb.forEach(function(item) {
+                    if (item && item.$events) {
+                        item.$events.__dep__.collect()
+                    }
+                })
+            } else if (avalon.deepCollect) {
+                for (var key in childOb) {
+                    if (childOb.hasOwnProperty(key)) {
+                        var collectIt = childOb[key]
+                    }
                 }
             }
 

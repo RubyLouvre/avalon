@@ -1,7 +1,7 @@
 import { avalon, platform, modern, msie } from '../seed/core'
 import { $$skipArray } from './reserved'
-import { Directive } from '../renders/Directive'
-import './neo'
+import { Action } from './Action'
+import './share'
 import './ProxyArray'
 
 export { avalon, platform, itemFactory }
@@ -41,7 +41,7 @@ export function hideProperty(host, name, value) {
 
 export function watchFactory(core) {
     return function $watch(expr, callback, deep) {
-        var w = new Directive(core.__proxy__, {
+        var w = new Action(core.__proxy__, {
             deep: deep,
             type: 'user',
             expr: expr
@@ -74,7 +74,7 @@ export function fireFactory(core) {
 }
 
 function wrapIt(str) {
-    return 'Ȣ' + str + 'Ȣ'
+    return '☥' + str + '☥'
 }
 
 export function afterCreate(vm, core, keys) {
@@ -96,7 +96,7 @@ export function afterCreate(vm, core, keys) {
             vm[key] = core[key]
         }
     }
-    vm.$track = keys.join('Ȣ')
+    vm.$track = keys.join('☥')
 
     function hasOwnKey(key) {
         return wrapIt(vm.$track).indexOf(wrapIt(key)) > -1

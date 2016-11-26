@@ -43,7 +43,7 @@ if (typeof Proxy === 'function') {
     }
 
     function wrapIt(str) {
-        return 'Ȣ' + str + 'Ȣ'
+        return '☥' + str + '☥'
     }
     var traps = {
         deleteProperty: function(target, name) {
@@ -109,13 +109,13 @@ if (typeof Proxy === 'function') {
     }
 
     function updateTrack(target, ac, name) {
-        var arr = target.$track.split('Ȣ')
+        var arr = target.$track.split('☥')
         if (arr[0] === '') {
             arr.shift()
         }
         arr.push(name)
         ac[name] = new Depend(name)
-        target.$track = arr.sort().join('Ȣ')
+        target.$track = arr.sort().join('☥')
     }
     platform.itemFactory = function itemFactory(before, after) {
         var definition = before.$model

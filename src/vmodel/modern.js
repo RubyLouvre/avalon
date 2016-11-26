@@ -1,6 +1,6 @@
 import { avalon, platform, modern } from '../seed/core'
 import { $$skipArray } from './reserved'
-import { Directive } from '../renders/Directive'
+import { Directive } from './Action'
 import './share'
 import './ProxyArray'
 export { avalon, platform }
@@ -26,7 +26,7 @@ function $fire(expr, a) {
 
 function $watch(expr, callback, deep) {
     var core = this.$events
-    var w = new Directive(this, {
+    var w = new Action(this, {
         deep: deep,
         type: 'user',
         expr: expr
@@ -66,7 +66,7 @@ export function afterCreate(vm, core, keys) {
             vm[key] = core[key]
         }
     }
-    vm.$track = keys.join('Ȣ')
+    vm.$track = keys.join('☥')
     vm.$events.__proxy__ = vm
 }
 
