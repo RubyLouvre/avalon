@@ -1,8 +1,10 @@
 import { avalon, platform, isObject, modern } from '../seed/core'
 import { $$skipArray } from './reserved'
 import { Mutation } from './Mutation'
-if(modern){
-   $$skipArray.mutations = false
+import { Computed } from './Computed'
+
+if (modern) {
+    $$skipArray.mutations = false
 }
 
 /**
@@ -62,6 +64,8 @@ platform.modelFactory = function modelFactory(definition, dd) {
     var keys = []
     if (modern)
         platform.hideProperty(core, '$mutations', {})
+    var $computed = definition.$computed || {}
+    delete definition.$computed
     for (var key in definition) {
         if (key in $$skipArray)
             continue
@@ -69,6 +73,20 @@ platform.modelFactory = function modelFactory(definition, dd) {
         keys.push(key)
         if (canHijack(key, val)) {
             $accessors[key] = createAccessor(key, val)
+        }
+    }
+    for (var key in $computed) {
+        if (key in $$skipArray)
+            continue
+        var val = $computed[key]
+        if (typeof val === 'function') {
+            val = {
+                getter: val
+            }
+        }
+        if (val && val.getter) {
+            avalon.Array.ensure(keys, key)
+            $accessors[key] = createAccessor(key, val, true)
         }
     }
     //将系统API以unenumerable形式加入vm,
@@ -120,18 +138,19 @@ export function createProxy(target, dd) {
 platform.createProxy = createProxy
 
 
-function createAccessor(key, val) {
+function createAccessor(key, val, isComputed) {
     var mutation = null
+    var Accessor = isComputed ? Computed : Mutation
     return {
         get: function Getter() {
             if (!mutation) {
-                mutation = new Mutation(key, val, this)
+                mutation = new Accessor(key, val, this)
             }
             return mutation.get()
         },
         set: function Setter(newValue) {
             if (!mutation) {
-                mutation = new Mutation(key, val, this)
+                mutation = new Accessor(key, val, this)
             }
             mutation.set(newValue)
         },
@@ -139,6 +158,7 @@ function createAccessor(key, val) {
         configurable: true
     }
 }
+
 
 platform.itemFactory = function itemFactory(before, after) {
     var keyMap = before.$model
