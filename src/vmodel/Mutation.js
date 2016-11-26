@@ -13,8 +13,7 @@ import {
 * 
  与Computed等共享UUID
 */
-export var obid = 1
-
+export let obid = 1
 export class Mutation {
     constructor(key, value, vm) { //构造函数
         this.expr = key
@@ -26,6 +25,9 @@ export class Mutation {
         }
         this.value = value
         this.vm = vm
+        try {
+            vm.$mutations[key] = this
+        } catch (ignoreIE) {}
         this.uuid = ++obid
         this.updateVersion()
         this.mapIDs = {}

@@ -1,7 +1,9 @@
 import { avalon, platform, isObject, modern } from '../seed/core'
 import { $$skipArray } from './reserved'
 import { Mutation } from './Mutation'
-
+if(modern){
+   $$skipArray.mutations = false
+}
 
 /**
  * 这里放置ViewModel模块的共用方法
@@ -58,8 +60,8 @@ platform.modelFactory = function modelFactory(definition, dd) {
     var core = new IProxy(definition, dd)
     var $accessors = core.$accessors
     var keys = []
-    if(modern)
-        core.$mutations = {}
+    if (modern)
+        platform.hideProperty(core, '$mutations', {})
     for (var key in definition) {
         if (key in $$skipArray)
             continue
@@ -119,20 +121,17 @@ platform.createProxy = createProxy
 
 
 function createAccessor(key, val) {
-    var mutation = new Mutation(key,val)
+    var mutation = null
     return {
         get: function Getter() {
-            if(!mutation.vm){  
-                mutation.vm = this
-                if(modern){
-                   this.$mutations[key] = mutation
-                }
+            if (!mutation) {
+                mutation = new Mutation(key, val, this)
             }
             return mutation.get()
         },
         set: function Setter(newValue) {
-            if(!mutation.vm){   
-                mutation.vm = this
+            if (!mutation) {
+                mutation = new Mutation(key, val, this)
             }
             mutation.set(newValue)
         },
@@ -173,7 +172,7 @@ platform.fuseFactory = function fuseFactory(before, after) {
     return vm
 }
 
- function toJson(val) {
+function toJson(val) {
     var xtype = avalon.type(val)
     if (xtype === 'array') {
         var array = []
