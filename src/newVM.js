@@ -1,5 +1,18 @@
 //这里只用到avalon.mix,可以用for in 循环赋值代替
 var uuid = 1
+var config = avalon.config
+config.trackDeps = true
+avalon.track = function() {
+    if (config.trackDeps) {
+        avalon.log.apply(avalon, arguments)
+    }
+}
+var STEASDY = 0 //稳定的
+var FISHY = 1 //不确定稳定不稳定
+var STALE = 2
+    //不稳定,比如说computed c依赖于mutationa, b,
+    //当a变化了,c就变成不稳定,需要进行求值
+
 var __extends = function(d, b) { //子类,父类
     for (var p in b)
         if (b.hasOwnProperty(p))
@@ -15,27 +28,30 @@ function Mutation(key, value, vm) {
     this.vm = vm
     this.uuid = ++uuid
     this.isJustCollect = 0;
+    this.isJustChange = false
     this.updateVersion()
     this.mapIDs = {}
     this.observers = []
 }
 Mutation.prototype.get = function() {
-    this.reportObserved();
-    return this.value;
+
+    this.reportObserved()
+    this.isJustChange = false
+    return this.value
 }
 Mutation.prototype.reportObserved = function() {
-    startBatch();
+    startBatch('observer ' + this.key);
     reportObserved(this)
-    endBatch()
+    endBatch('observer ' + this.key)
 }
 Mutation.prototype.updateVersion = function() {
     this.version = Math.random() + Math.random()
 }
 Mutation.prototype.reportChanged = function() {
-
     transactionStart("propagatingAtomChange")
     propagateChanged(this);
-    transactionEnd();
+    transactionEnd()
+
 }
 
 Mutation.prototype.set = function(newValue) {
@@ -43,13 +59,14 @@ Mutation.prototype.set = function(newValue) {
     if (newValue !== oldValue) {
         this.value = newValue
         this.updateVersion()
+        this.isJustChange = true
         this.reportChanged()
     }
 }
 
 function getBody(fn) {
-    var entire = fn.toString(); // this part may fail!
-    return entire.substring(entire.indexOf("{") + 1, entire.lastIndexOf("}"));
+    var entire = fn.toString() // this part may fail!
+    return entire.substring(entire.indexOf("{") + 1, entire.lastIndexOf("}"))
 }
 var Computed = (function(_super) {
     __extends(Computed, _super);
@@ -84,7 +101,7 @@ var Computed = (function(_super) {
         var i = observers.length;
         while (i--) {
             var d = observers[i];
-           
+
             d.onBecomeStale()
 
         }
@@ -109,26 +126,31 @@ var Computed = (function(_super) {
             }
         },
         Computed.prototype.get = function() {
-            startBatch()
+            //下面这一行好像没用
+            //  startBatch('computed '+ this.key)
+            //当被设置了就不稳定,当它被访问了一次就是稳定
+            this.isJustChange = false
+            this.reportObserved()
             if (avalon.inBatch === 1) {
+
                 if (this.shouldCompute()) {
                     this.getValue()
                     this.updateVersion()
-                    console.log('computed 1 分支')
-                   // this.reportChanged()
+                    this.isJustChange = true
+                        //console.log('computed 1 分支')
+                        // this.reportChanged()
                 }
             } else {
-
-                this.reportObserved()
                 if (this.shouldCompute()) {
                     this.trackAndCompute()
-                    console.log('computed 2 分支')
+                        // console.log('computed 2 分支')
                     this.updateVersion()
-                  //  this.reportChanged()
+                    this.isJustChange = true
+                        //  this.reportChanged()
                 }
             }
-
-            endBatch()
+            //下面这一行好像没用
+            //  endBatch('computed '+ this.key)
             return this.value
         }
 
@@ -137,51 +159,71 @@ var Computed = (function(_super) {
 
 var actionUUID = 1
 
-function Action(type, opts, callback) {
-    this.type = type
+function Action(vm, opts, callback) {
+    this.vm = vm
     avalon.mix(this, opts)
     this.observers = []
+    this.callback =  callback
     this.uuid = ++actionUUID
     this.mapIDs = {} //这个用于去重
     var oldValue = this.value
-    this.onInvalidate = function() {
-        var newValue = this.value = this.track(this.getter)
+    
+    var expr = this.expr
+    // 缓存取值函数
+    if (typeof this.getter !== 'function') {
+        this.getter = createGetter(expr, this.type)
     }
-    var newValue = this.onInvalidate()
-    if (callback) {
-        callback(newValue, oldValue)
+    // 缓存设值函数（双向数据绑定）
+    if (this.type === 'duplex') {
+        this.setter = createSetter(expr, this.type)
+    }
+    // 缓存表达式旧值
+    this.oldValue = null
+    // 表达式初始值 & 提取依赖
+    if(!(this.node)){
+       this.value = this.get()
+   }
+}
+var ap = Action.prototype
+ap.doAction = function(args) {
+    var v = this.value
+    var oldVal =  this.oldValue = v && v.$events ? v.$model : v
+    var newVal = this.value = this.track(this.getter)
+    var callback = this.callback
+    if (callback && this.diff(newVal, oldVal, args)) {
+      callback.call(this.vm, this.value, oldVal, this.expr)
     }
 }
 
-
-Action.prototype.track = function(fn) {
-    startBatch();
+ap.track = function(fn) {
+    var name = 'action track ' + this.type
+    startBatch(name);
     this._isRunning = true;
     var value = collectDeps(this, fn);
-    this._isRunning = false;
+    this._isRunning = false
     if (this.isDisposed) {
-        // clearObserving(this);
+        this.observers = []
     }
-    endBatch()
+    endBatch(name)
     return value
 }
-Action.prototype.runReaction = function() {
 
-    this.onInvalidate(); //执行视图刷新
+ap.runReaction = function() {
+    this.update() //执行视图刷新
     //它必须放在函数内的最后一行
     this._isScheduled = false
-
 };
 Action.prototype.onBecomeStale = function() {
     this.schedule()
-};
+}
+
 Action.prototype.schedule = function() {
     if (!this._isScheduled) {
         this._isScheduled = true;
         avalon.pendingReactions.push(this);
-        startBatch()
+        startBatch('schedule ' + this.type)
         runReactions() //这里会还原_isScheduled
-        endBatch()
+        endBatch('schedule ' + this.type)
     }
 }
 
@@ -199,8 +241,12 @@ function propagateChanged(observable) {
 function reportObserved(observer) {
     var action = avalon.trackingAction || null
     if (action !== null) {
+        avalon.track('收集到', (observer.key || observer.type))
         action.mapIDs[observer.uuid] = observer;
-    } else if (observer.observers.length === 0) {
+        return
+    }
+    avalon.track(observer.key, observer.isComputed ? 'computed 也想收集依赖' : 'mutation也想收集依赖', observer.observers)
+    if (observer.observers.length === 0) {
         addToQueue(observer);
     }
 }
@@ -219,9 +265,8 @@ avalon.inTransaction = 0
 avalon.inBatch = 0
 
 function runReactions() {
-    console.log(avalon.isRunningReactions, avalon.inTransaction)
     if (avalon.isRunningReactions === true || avalon.inTransaction > 0)
-        return;
+        return
     avalon.isRunningReactions = true
     var remainingReactions = avalon.pendingReactions.splice(0);
     for (var i = 0, l = remainingReactions.length; i < l; i++) {
@@ -234,6 +279,7 @@ function collectDeps(action, getter) {
 
     var preAction = avalon.trackingAction
     avalon.trackingAction = action
+    avalon.track('【action】 ', action.type || action.key, '开始收集依赖项')
     action.mapIDs = {} //重新收集依赖
     var hasError = true,
         result
@@ -253,12 +299,14 @@ function collectDeps(action, getter) {
 
 }
 
-function startBatch() {
+function startBatch(name) {
+    // console.log('startBatch '+ name)
     avalon.inBatch++;
 }
 
-function endBatch() {
+function endBatch(name) {
     if (avalon.inBatch === 1) {
+
         avalon.observerQueue.forEach(function(el) {
             el.isAddToQueue = false
         })
@@ -266,6 +314,7 @@ function endBatch() {
     }
 
     avalon.inBatch--;
+    //  console.log('endBatch '+name)
 }
 
 function resetDeps(action) {
@@ -284,7 +333,6 @@ function resetDeps(action) {
         action.depsCount = list.length
         action.deps = avalon.mix({}, action.mapIDs)
         action.depsVersion = {};
-
         for (var ii in action.mapIDs) {
             var dep = action.mapIDs[ii]
             action.depsVersion[dep.uuid] = dep.version
@@ -313,23 +361,24 @@ function resetDeps(action) {
 
 function transaction(action, thisArg, args) {
     args = args || []
-    transactionStart(action.name || action.displayName || 'anonymous transaction')
+    var name = 'transaction ' + (action.name || action.displayName || 'noop')
+    transactionStart(name)
     var res = action.apply(thisArg, args)
-    transactionEnd()
+    transactionEnd(name)
     return res
 }
 avalon.transaction = transaction
 
-function transactionStart() {
-    startBatch()
+function transactionStart(name) {
+    startBatch(name)
     avalon.inTransaction += 1;
 }
 
-function transactionEnd(report) {
+function transactionEnd(name) {
     if (--avalon.inTransaction === 0) {
         runReactions()
     }
-    endBatch()
+    endBatch(name)
 }
 
 function addMutation(observer, action) {
@@ -370,4 +419,62 @@ function addCu(vm, key, getter, opts) {
             vm.observes[key].set(newValue)
         }
     })
+}
+
+function autorun(arg1, arg2, arg3) {
+    var name, view, scope;
+    if (typeof arg1 === "string") {
+        name = arg1;
+        view = arg2;
+        scope = arg3;
+    } else if (typeof arg1 === "function") {
+        name = arg1.name || ("Autorun@" + getNextId());
+        view = arg1;
+        scope = arg2;
+    }
+    if (scope)
+        view = view.bind(scope);
+    var reaction = new Reaction(name, function() {
+        this.track(reactionRunner);
+    });
+
+    function reactionRunner() {
+        view(reaction);
+    }
+    reaction.schedule();
+    return reaction.getDisposer();
+}
+
+function autorunAsync(arg1, arg2, arg3, arg4) {
+    var name, func, delay, scope;
+    if (typeof arg1 === "string") {
+        name = arg1;
+        func = arg2;
+        delay = arg3;
+        scope = arg4;
+    } else if (typeof arg1 === "function") {
+        name = arg1.name || ("AutorunAsync@" + getNextId());
+        func = arg1;
+        delay = arg2;
+        scope = arg3;
+    }
+    if (delay === void 0)
+        delay = 1;
+    if (scope)
+        func = func.bind(scope);
+    var isScheduled = false;
+    var r = new Reaction(name, function() {
+        if (!isScheduled) {
+            isScheduled = true;
+            setTimeout(function() {
+                isScheduled = false;
+                if (!r.isDisposed)
+                    r.track(reactionRunner);
+            }, delay);
+        }
+    });
+
+    function reactionRunner() { func(r); }
+    r.schedule();
+    return r.getDisposer();
 }

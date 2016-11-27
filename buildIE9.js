@@ -49,16 +49,16 @@ module.exports = rollup.rollup({
         replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
     }
     var feather = heredoc(function() {
-        /*
-https://github.com/RubyLouvre/avalon/tree/2.2.0
-fix IE6-8 opacity BUG
-减少VM的系统属性，__const__, __data__,__proxy__,$skipArray被废掉
-vmodel模块全部重写，让它内部用到的私用方法更加合理
-directives模块全部重写，因为现在不走react的渲染模板思路了
-component模块全部重写，它现在是完全独立的作用域，可能与这前的有一点不兼容。不过，这对维护组件自身的状态非常有利。
-$watch不再支持*号
-strategy模块被打散了，细分为parser与renders与vtree这三个模块。renders里面有domRender与serverRender。
-vdom模块，虚拟DOM转真实DOM时，对低版本浏览器的支持更好。
+/*
+https://github.com/RubyLouvre/avalon/tree/2.2.1
+添加计算属性
+添加事务
+内部所有类使用es6重写
+修正使用requirejs加载avalon2.2.0，返回空对象的BUG
+优化组件延迟定义的逻辑
+fromString进行性能优化
+fix 空字符串不生成节点的BUG
+确保onReady的执行时机，多个ms-controller套嵌，先执行里面的，再执行外面的   
 */
     })
     var now = new Date

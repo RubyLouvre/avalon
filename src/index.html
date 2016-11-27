@@ -17,8 +17,9 @@
     var vm = {}
     addOb(vm, 'a',111)
     addOb(vm, 'b',222)
+    addOb(vm, 'e',222)
     addCu(vm, 'c',function(){
-        console.log('计算computed的值')
+        console.log('计算computed c的值')
         return this.a + this.b
     },{isStable: true, setter: function(v){
            var arr = v.split(' ')
@@ -26,22 +27,38 @@
            this.a = ~~arr[0]
            this.b = ~~arr[1]
     }})
-       new Action('hhhh', {
+//    addCu(vm, 'd',function(){
+//        console.log('计算computed d的值')
+//        return this.c + this.e
+//    },{isStable: true})
+
+       new Action('hhh', {
             vm: vm,
             getter: function() {
-                var v = this.c + this.a
-                 console.log('update view@@', v)
+                var v = this.c +this.a
+                 console.log('update action@hhh', v)
                 return v
             }
         })
-         new Action('text', {
+        setTimeout(function(){
+            avalon.transaction(function(){
+                vm.a = 999
+                vm.b = 888
+                  avalon.transaction(function(){
+                vm.a = 44
+                vm.b = 11
+               })
+            })
+            
+        },500)
+       /*  new Action('kkk', {
             vm: vm,
             getter: function() {
                 var v = this.a
-               console.log('update view', v)
+               console.log('update action@kkk', v)
                 return v
             }
-        })
+        })*/
   </script>
  
 
