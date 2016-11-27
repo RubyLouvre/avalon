@@ -172,7 +172,6 @@ avalon.directive('widget', {
                     break
             default:
                 this.readyState++
-
                     var comVm = this.comVm
                 avalon.viewChanging = true
                 avalon.transaction(function() {
@@ -292,7 +291,7 @@ avalon.component = function(name, component) {
         if (el.is === name) {
             componentQueue.splice(i, 1)
             el.reInit = true
-            delete el.oldValue
+            delete el.value
             el.update()
             i--;
         }

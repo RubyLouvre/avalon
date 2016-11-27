@@ -180,7 +180,7 @@ export class avEvent {
             return event
         }
         for (var i in event) {
-            if (avEvent.prototype[i]) {
+            if (!avEvent.prototype[i]) {
                 this[i] = event[i]
             }
         }

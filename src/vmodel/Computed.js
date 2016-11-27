@@ -77,7 +77,6 @@ export class Computed extends Mutation {
         //下面这一行好像没用
         //  startBatch('computed '+ this.key)
         //当被设置了就不稳定,当它被访问了一次就是稳定
-        this.isJustChange = false
         this.collect()
         if (avalon.inBatch === 1) {
 
@@ -93,7 +92,6 @@ export class Computed extends Mutation {
                 this.trackAndCompute()
                     // console.log('computed 2 分支')
                 this.updateVersion()
-                this.isJustChange = true
                     //  this.reportChanged()
             }
         }

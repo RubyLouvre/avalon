@@ -1,9 +1,9 @@
 import { avalon, afterCreate, platform } from
     '../../src/vmodel/modern'
-import { Depend } from
-    '../../src/vmodel/depend'
-import { Directive } from
-    '../../src/renders/Directive'
+import { Mutation } from
+    '../../src/vmodel/Mutation'
+import { Action } from
+    '../../src/vmodel/Action'
 import { canHijack as isObservable } from
     '../../src/vmodel/share'
 describe('vmodel', function () {
@@ -248,46 +248,15 @@ describe('itemFactory', function () {
     })
 })
 
-describe('depend', function () {
+describe('Mutation', function () {
     it('test', function () {
-        var d = new Depend
-        var a = 1
-        var b = 1
-        d.subs.push({
-            update: function () {
-                a = 2
-            },
-            beforeUpdate: function () {
-                b = 2
-            }
-        })
-        d.beforeNotify()
-        expect(b).toBe(2)
-        d.notify()
-        expect(a).toBe(2)
+       
     })
 })
 
-describe('Directive', function () {
+describe('Action', function () {
     it('test', function () {
-        var vm = avalon.define({
-            $id: 'watcher',
-            aaa: 11
-        })
-        var args = []
-        var d = new Directive(vm, {
-            expr: '@aaa',
-            deep: false,
-            type: 'user'
-        }, function (a, b) {
-            args = [a, b]
-        })
-        expect(d.depends.length >= 1).toBe(true)
-        expect(d.value).toBe(11)
-        vm.aaa = 333
-        expect(args).toEqual([333, 11])
-        delete avalon.vmodels.watcher
+        
     })
-
 
 })

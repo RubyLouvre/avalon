@@ -106,7 +106,6 @@ export class Action {
     }
     removeDepends(filter) {
         var self = this
-        avalon.log('removeDepends')
         this.observers.forEach(function(depend) {
             avalon.Array.remove(depend.observers, self)
         })

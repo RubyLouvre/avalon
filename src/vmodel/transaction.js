@@ -4,7 +4,7 @@ avalon.pendingActions = []
 avalon.inTransaction = 0
 avalon.inBatch = 0
 avalon.observerQueue = []
-config.trackDeps = true
+config.trackDeps = false
 avalon.track = function() {
     if (config.trackDeps) {
         avalon.log.apply(avalon, arguments)
