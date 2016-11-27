@@ -6,9 +6,7 @@ export class VComment {
         this.nodeValue = text
     }
     toDOM() {
-        if (this.dom)
-            return this.dom
-        return this.dom = document.createComment(this.nodeValue)
+        return this.dom || (this.dom = document.createComment(this.nodeValue))
     }
     toHTML() {
         return '<!--' + this.nodeValue + '-->'

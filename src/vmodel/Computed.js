@@ -15,17 +15,20 @@ function getBody(fn) {
 //如果不存在三目,if,方法
 let instability = /(\?|if\b|\(.+\))/
 export class Computed extends Mutation {
-    constructor(name, opts, vm) { //构造函数
-        delete opts.get
-        delete opts.set
-        super(name, opts, vm);
-        avalon.mix(this, opts)
+
+    constructor(name, options, vm) { //构造函数
+        super(name, undefined, vm);
+        delete options.get
+        delete options.set
+
+        avalon.mix(this, options)
         this.deps = {}
+        this.type = 'computed'
         this.depsVersion = {}
         this.isComputed = true
         this.trackAndCompute()
         if (!('isStable' in this)) {
-            this.isStable = !instability.test(getBody(opts.getter))
+            this.isStable = !instability.test(getBody(this.getter))
         }
     }
 

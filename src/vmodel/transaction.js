@@ -43,7 +43,7 @@ export function runActions() {
 
 export function propagateChanged(target) {
     var list = target.observers
-    for(var i = 0,el;el = list[i++];){
+    for (var i = 0, el; el = list[i++];) {
         el.schedule(); //通知action, computed做它们该做的事
     }
 }
@@ -52,7 +52,7 @@ export function propagateChanged(target) {
 export function reportObserved(observer) {
     var action = avalon.trackingAction || null
     if (action !== null) {
-        avalon.track( '收集到', observer.expr)
+        avalon.track('收集到', observer.expr)
         action.mapIDs[observer.uuid] = observer;
         observer.isCollected = 1
     } else if (observer.observers.length === 0) {
@@ -70,14 +70,14 @@ function addToQueue(observer) {
 var targetStack = []
 
 export function collectDeps(action, getter) {
-   
+
     var preAction = avalon.trackingAction
-    if(preAction){
+    if (preAction) {
         targetStack.push(preAction)
     }
     avalon.trackingAction = action
     avalon.track('【action】', action.type, action.expr, '开始收集依赖项')
-   //多个observe持有同一个action
+        //多个observe持有同一个action
     action.mapIDs = {} //重新收集依赖
     var hasError = true,
         result
@@ -92,9 +92,9 @@ export function collectDeps(action, getter) {
         } else {
             // 确保它总是为null
             avalon.trackingAction = targetStack.pop()
-            try{
-              resetDeps(action)
-            }catch(e){
+            try {
+                resetDeps(action)
+            } catch (e) {
                 avalon.warn(e)
             }
         }
@@ -105,10 +105,12 @@ export function collectDeps(action, getter) {
 
 
 function resetDeps(action) {
-    var prev = action.observers, curr = [], checked = {}
+    var prev = action.observers,
+        curr = [],
+        checked = {}
     for (let i in action.mapIDs) {
         let dep = action.mapIDs[i]
-        if(!dep.isAction){
+        if (!dep.isAction) {
             curr.push(dep)
             dep.isCollected = false
             checked[dep.uuid] = 1
@@ -122,17 +124,17 @@ function resetDeps(action) {
         action.deps = avalon.mix({}, action.mapIDs)
         action.depsVersion = {};
         for (let i in action.mapIDs) {
-            let dep = action.mapIDs[ii]
+            let dep = action.mapIDs[i]
             action.depsVersion[dep.uuid] = dep.version
         }
     }
-    
+
     for (let i = 0, dep; dep = prev[i++];) {
         if (!checked[dep.uuid]) {
-          avalon.Array.remove(dep.observers, action)
+            avalon.Array.remove(dep.observers, action)
         }
     }
-   
+
 }
 
 
@@ -159,5 +161,3 @@ export function transactionEnd(name) {
     }
     endBatch(name)
 }
-
-

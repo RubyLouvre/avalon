@@ -11,6 +11,9 @@ import {
     Mutation
 } from './Mutation'
 import {
+    Computed
+} from './Computed'
+import {
     IProxy,
     canHijack,
     createProxy
@@ -21,17 +24,46 @@ if (typeof Proxy === 'function') {
 
     platform.modelFactory = function modelFactory(definition, dd) {
         var clone = {}
-        for (var i in definition) {
+        for (let i in definition) {
             clone[i] = definition[i]
             delete definition[i]
         }
+
         definition.$id = clone.$id
         var proxy = new IProxy(definition, dd)
 
         var vm = toProxy(proxy)
-        for (var i in clone) {
+            //先添加普通属性与监控属性
+        for (let i in clone) {
             vm[i] = clone[i]
         }
+        var $computed = clone.$computed
+            //再添加计算属性
+        if ($computed) {
+            delete clone.$computed
+            for (let i in $computed) {
+                let val = $computed[i]
+                if (typeof val === 'function') {
+                    let _val = val
+                    val = { get: _val }
+                }
+                if (val && val.get) {
+                    val.getter = val.get
+                        //在set方法中的target是IProxy，需要重写成Proxy，才能依赖收集
+                    val.vm = vm
+                    if (val.set)
+                        val.setter = val.set
+                    $computed[i] = val
+                    delete clone[i] //去掉重名的监控属性
+                } else {
+                    delete $computed[i]
+                }
+            }
+            for (let i in $computed) {
+                vm[i] = $computed[i]
+            }
+        }
+
 
         return vm
     }
@@ -62,12 +94,10 @@ if (typeof Proxy === 'function') {
             if (name === '$model') {
                 return platform.toJson(target)
             }
+
             //收集依赖
             var mutation = target.$accessors[name]
             var childObj = target[name]
-            if (mutation) {
-                //  collectDeps(selfDep, childObj)
-            }
             return mutation ? mutation.get() : childObj
         },
         set: function(target, name, value) {
@@ -75,27 +105,24 @@ if (typeof Proxy === 'function') {
                 return true
             }
             if (name === '$computed') {
-                setComputed(target, name, value)
+                target[name] = value
                 return true
             }
-
 
             var oldValue = target[name]
             if (oldValue !== value) {
                 if (canHijack(name, value, target.$proxyItemBackdoor)) {
                     var mutations = target.$accessors
+                    var $computed = target.$computed || {}
                         //如果是新属性
                     if (!(name in $$skipArray) && !mutations[name]) {
-                        updateTrack(target, name, value, mutations)
+                        updateTrack(target, name, value, !!$computed[name])
+                            //   var a = mutations[name].get()
+                        return true
                     }
                     var mutation = mutations[name]
                         //创建子对象
-                    var hash = oldValue && oldValue.$hashcode
-                    var childObj = createProxy(value, mutation)
-                    if (childObj) {
-                        childObj.$hashcode = hash
-                        value = childObj
-                    }
+
                     mutation.set(value)
                     target[name] = mutation.value
                 } else {
@@ -111,17 +138,14 @@ if (typeof Proxy === 'function') {
         }
     }
 
-    function setComputed() {
-
-    }
-
-    function updateTrack(target, name, value, mutations) {
+    function updateTrack(target, name, value, isComputed) {
         var arr = target.$track.split('☥')
         if (arr[0] === '') {
             arr.shift()
         }
         arr.push(name)
-        mutations[name] = new Mutation(name, value, target)
+        var Observable = isComputed ? Computed : Mutation
+        target.$accessors[name] = new Observable(name, value, target)
         target.$track = arr.sort().join('☥')
     }
     platform.itemFactory = function itemFactory(before, after) {

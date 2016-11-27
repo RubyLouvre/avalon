@@ -21,21 +21,21 @@ if (modern) {
 
 
 avalon.define = function(definition) {
-        var $id = definition.$id
-        if (!$id) {
-            avalon.error('vm.$id must be specified')
-        }
-        if (avalon.vmodels[$id]) {
-            avalon.warn('error:[' + $id + '] had defined!')
-        }
-        var vm = platform.modelFactory(definition)
-        return avalon.vmodels[$id] = vm
+    var $id = definition.$id
+    if (!$id) {
+        avalon.error('vm.$id must be specified')
     }
-    
-    /**
-     * 在末来的版本,avalon改用Proxy来创建VM,因此
-     */
-    
+    if (avalon.vmodels[$id]) {
+        avalon.warn('error:[' + $id + '] had defined!')
+    }
+    var vm = platform.modelFactory(definition)
+    return avalon.vmodels[$id] = vm
+}
+
+/**
+ * 在末来的版本,avalon改用Proxy来创建VM,因此
+ */
+
 export function IProxy(definition, dd) {
     avalon.mix(this, definition)
     avalon.mix(this, $$skipArray)
@@ -47,6 +47,7 @@ export function IProxy(definition, dd) {
     if (avalon.config.inProxyMode) {
         delete this.$mutations
         this.$accessors = {}
+        this.$computed = {}
         this.$track = ''
     } else {
         this.$accessors = {
