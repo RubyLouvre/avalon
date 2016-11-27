@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.modern.js 1.5.8 built in 2016.9.23
+ avalon.modern.js 1.5.9 built in 2016.11.27
  support IE10+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -240,7 +240,7 @@ avalon.mix = avalon.fn.mix = function () {
 avalon.mix({
     rword: rword,
     subscribers: subscribers,
-    version: 1.58,
+    version: 1.59,
     ui: {},
     log: log,
     slice: function (nodes, start, end) {
@@ -1223,27 +1223,22 @@ var newProto = {
         return this._.length
     },
     removeAll: function (all) { //移除N个元素
-        if (Array.isArray(all)) {
+        var eliminate = Array.isArray(all) ?
+            function(el) {
+                return all.indexOf(el) !== -1
+            } : typeof all === 'function' ?
+            all : false
+
+        if (eliminate) {
             for (var i = this.length - 1; i >= 0; i--) {
-                if (all.indexOf(this[i]) !== -1) {
+                if (eliminate(this[i], i)) {
                     _splice.call(this.$track, i, 1)
                     _splice.call(this, i, 1)
-
-                }
-            }
-        } else if (typeof all === "function") {
-            for (i = this.length - 1; i >= 0; i--) {
-                var el = this[i]
-                if (all(el, i)) {
-                    _splice.call(this.$track, i, 1)
-                    _splice.call(this, i, 1)
-
                 }
             }
         } else {
             _splice.call(this.$track, 0, this.length)
             _splice.call(this, 0, this.length)
-
         }
         if (!W3C) {
             this.$model = toJson(this)
@@ -2280,11 +2275,17 @@ function parseExpr(expr, vmodels, binding) {
     }) + expr + dataType
     var getter = evaluatorPool.get(exprId) //直接从缓存，免得重复生成
     if (getter) {
+        binding.getter = getter
+        // https://github.com/RubyLouvre/avalon/issues/1833
         if (dataType === "duplex") {
             var setter = evaluatorPool.get(exprId + "setter")
-            binding.setter = setter.apply(setter, binding.args)
+            if(setter){
+               binding.setter = setter.apply(setter, binding.args)
+               return getter
+            }    
+        }else{
+            return  getter
         }
-        return binding.getter = getter
     }
 
     if (!assigns.length) {
@@ -3075,47 +3076,52 @@ var attrDir = avalon.directive("attr", {
     update: function (val) {
         var elem = this.element
         var attrName = this.param
-        if (attrName === "href" || attrName === "src") {
-            if (typeof val === "string" && !root.hasAttribute) {
-                val = val.replace(/&amp;/g, "&") //处理IE67自动转义的问题
-            }
-            elem[attrName] = val
-            if (window.chrome && elem.tagName === "EMBED") {
-                var parent = elem.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
-                var comment = document.createComment("ms-src")
-                parent.replaceChild(comment, elem)
-                parent.replaceChild(elem, comment)
-            }
+        //这模块在1.5.9被重构了
+        if (attrName.indexOf('data-') === 0 || rsvg.test(elem)) {
+            elem.setAttribute(attrName, val)
         } else {
+            var propName = propMap[attrName] || attrName
+            if (typeof elem[propName] === 'boolean') {
+                elem[propName] = !!val
+                //布尔属性必须使用el.xxx = true|false方式设值
+                //如果为false, IE全系列下相当于setAttribute(xxx,''),
+                //会影响到样式,需要进一步处理
+            }
 
-            // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
-            // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
-            // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
-            var toRemove = (val === false) || (val === null) || (val === void 0)
-            if (!W3C && propMap[attrName]) { //旧式IE下需要进行名字映射
-                attrName = propMap[attrName]
+            if (val === false) {//移除属性
+                elem.removeAttribute(propName)
+                return
             }
-            var bool = boolMap[attrName]
-            if (typeof elem[bool] === "boolean") {
-                elem[bool] = !!val //布尔属性必须使用el.xxx = true|false方式设值
-                if (!val) { //如果为false, IE全系列下相当于setAttribute(xxx,''),会影响到样式,需要进一步处理
-                    toRemove = true
-                }
+            //IE6中classNamme, htmlFor等无法检测它们为内建属性　
+            if(!W3C && /[A-Z]/.test(propName)){
+               elem[propName] = val + ''
+               return
             }
-            if (toRemove) {
-                return elem.removeAttribute(attrName)
-            }
-            //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
-            var isInnate = rsvg.test(elem) ? false : (DOC.namespaces && isVML(elem)) ? true : attrName in elem.cloneNode(false)
+            //SVG只能使用setAttribute(xxx, yyy), VML只能使用node.xxx = yyy ,
+            //HTML的固有属性必须node.xxx = yyy
+            var isInnate = (!W3C && isVML(elem)) ? true :
+                    isInnateProps(elem.nodeName, attrName)
+            /* istanbul ignore next */
             if (isInnate) {
-                elem[attrName] = val + ""
+                if (attrName === 'href' || attrName === 'src') {
+                    val = String(val).replace(/&amp;/g, '&') //处理IE67自动转义的问题
+                }
+                elem[propName] = val + ''
             } else {
                 elem.setAttribute(attrName, val)
             }
-        }
+        }   
+        
     }
 })
-
+var innateMap = {}
+function isInnateProps(nodeName, attrName) {
+    var key = nodeName + ":" + attrName
+    if (key in innateMap) {
+        return innateMap[key]
+    }
+    return innateMap[key] = (attrName in document.createElement(nodeName))
+}
 //这几个指令都可以使用插值表达式，如ms-src="aaa/{{b}}/{{c}}.html"
 "title,alt,src,value,css,include,href".replace(rword, function (name) {
     directives[name] = attrDir

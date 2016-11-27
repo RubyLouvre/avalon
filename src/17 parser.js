@@ -199,11 +199,17 @@ function parseExpr(expr, vmodels, binding) {
     }) + expr + dataType
     var getter = evaluatorPool.get(exprId) //直接从缓存，免得重复生成
     if (getter) {
+        binding.getter = getter
+        // https://github.com/RubyLouvre/avalon/issues/1833
         if (dataType === "duplex") {
             var setter = evaluatorPool.get(exprId + "setter")
-            binding.setter = setter.apply(setter, binding.args)
+            if(setter){
+               binding.setter = setter.apply(setter, binding.args)
+               return getter
+            }    
+        }else{
+            return  getter
         }
-        return binding.getter = getter
     }
 
     if (!assigns.length) {

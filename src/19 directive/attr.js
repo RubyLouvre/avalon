@@ -56,47 +56,52 @@ var attrDir = avalon.directive("attr", {
     update: function (val) {
         var elem = this.element
         var attrName = this.param
-        if (attrName === "href" || attrName === "src") {
-            if (typeof val === "string" && !root.hasAttribute) {
-                val = val.replace(/&amp;/g, "&") //处理IE67自动转义的问题
-            }
-            elem[attrName] = val
-            if (window.chrome && elem.tagName === "EMBED") {
-                var parent = elem.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
-                var comment = document.createComment("ms-src")
-                parent.replaceChild(comment, elem)
-                parent.replaceChild(elem, comment)
-            }
+        //这模块在1.5.9被重构了
+        if (attrName.indexOf('data-') === 0 || rsvg.test(elem)) {
+            elem.setAttribute(attrName, val)
         } else {
+            var propName = propMap[attrName] || attrName
+            if (typeof elem[propName] === 'boolean') {
+                elem[propName] = !!val
+                //布尔属性必须使用el.xxx = true|false方式设值
+                //如果为false, IE全系列下相当于setAttribute(xxx,''),
+                //会影响到样式,需要进一步处理
+            }
 
-            // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
-            // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
-            // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
-            var toRemove = (val === false) || (val === null) || (val === void 0)
-            if (!W3C && propMap[attrName]) { //旧式IE下需要进行名字映射
-                attrName = propMap[attrName]
+            if (val === false) {//移除属性
+                elem.removeAttribute(propName)
+                return
             }
-            var bool = boolMap[attrName]
-            if (typeof elem[bool] === "boolean") {
-                elem[bool] = !!val //布尔属性必须使用el.xxx = true|false方式设值
-                if (!val) { //如果为false, IE全系列下相当于setAttribute(xxx,''),会影响到样式,需要进一步处理
-                    toRemove = true
-                }
+            //IE6中classNamme, htmlFor等无法检测它们为内建属性　
+            if(!W3C && /[A-Z]/.test(propName)){
+               elem[propName] = val + ''
+               return
             }
-            if (toRemove) {
-                return elem.removeAttribute(attrName)
-            }
-            //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
-            var isInnate = rsvg.test(elem) ? false : (DOC.namespaces && isVML(elem)) ? true : attrName in elem.cloneNode(false)
+            //SVG只能使用setAttribute(xxx, yyy), VML只能使用node.xxx = yyy ,
+            //HTML的固有属性必须node.xxx = yyy
+            var isInnate = (!W3C && isVML(elem)) ? true :
+                    isInnateProps(elem.nodeName, attrName)
+            /* istanbul ignore next */
             if (isInnate) {
-                elem[attrName] = val + ""
+                if (attrName === 'href' || attrName === 'src') {
+                    val = String(val).replace(/&amp;/g, '&') //处理IE67自动转义的问题
+                }
+                elem[propName] = val + ''
             } else {
                 elem.setAttribute(attrName, val)
             }
-        }
+        }   
+        
     }
 })
-
+var innateMap = {}
+function isInnateProps(nodeName, attrName) {
+    var key = nodeName + ":" + attrName
+    if (key in innateMap) {
+        return innateMap[key]
+    }
+    return innateMap[key] = (attrName in document.createElement(nodeName))
+}
 //这几个指令都可以使用插值表达式，如ms-src="aaa/{{b}}/{{c}}.html"
 "title,alt,src,value,css,include,href".replace(rword, function (name) {
     directives[name] = attrDir

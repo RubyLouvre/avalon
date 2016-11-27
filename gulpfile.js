@@ -4,7 +4,6 @@ var concat = require('gulp-concat')
 var replace = require('gulp-replace')
 //http://www.cnblogs.com/code/articles/4103070.html
 //https://github.com/basecss/jshint-doc-cn/blob/master/options.md
-var jshint = require('gulp-jshint')
 var rename = require('gulp-rename');
 var uglify = require('gulp-uglify');
 
@@ -35,7 +34,7 @@ gulp.task('combo', function () {
             return !/\$\$|noop|modern|next|observe|touch/.test(f)
         })
 
-        var version = '1.5.8' //当前版本号
+        var version = '1.5.9' //当前版本号
         var now = new Date  //构建日期
         var date = now.getFullYear() + "." + (now.getMonth() + 1) + "." + now.getDate()
         gulp.src(compatibleFiles)
@@ -48,8 +47,7 @@ gulp.task('combo', function () {
                 }))
                 .pipe(gulp.dest('./'))
                 .pipe(gulp.dest('./dist'))
-                .pipe(jshint())
-                .pipe(jshint.reporter('default'))
+               
                 .pipe(gulp.dest('../avalon.test/src/'))
                 .pipe(uglify())
                 .pipe(rename('avalon.modern.min.js'))

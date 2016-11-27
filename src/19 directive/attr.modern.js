@@ -54,43 +54,34 @@ var attrDir = avalon.directive("attr", {
         }
     },
     update: function (val) {
-        var elem = this.element
+        var node = this.element
         var attrName = this.param
-        if (attrName === "href" || attrName === "src") {
-            elem[attrName] = val
-            if (window.chrome && elem.tagName === "EMBED") {
-                var parent = elem.parentNode //#525  chrome1-37下embed标签动态设置src不能发生请求
-                var comment = document.createComment("ms-src")
-                parent.replaceChild(comment, elem)
-                parent.replaceChild(elem, comment)
-            }
+        //这模块在1.5.9被重构了
+        if (attrName.indexOf('data-') === 0 || rsvg.test(node)) {
+            node.setAttribute(attrName, val)
         } else {
+            var propName = propMap[attrName] || attrName
+            if (typeof node[propName] === 'boolean') {
+                //布尔属性必须使用el.xxx = true|false方式设值
+                //如果为false, IE全系列下相当于setAttribute(xxx,''),
+                //会影响到样式,需要进一步处理
+                node[propName] = !!val
+            }
+            if (val === false) {
+                node.removeAttribute(attrName)
+                return
+            }
 
-            // ms-attr-class="xxx" vm.xxx="aaa bbb ccc"将元素的className设置为aaa bbb ccc
-            // ms-attr-class="xxx" vm.xxx=false  清空元素的所有类名
-            // ms-attr-name="yyy"  vm.yyy="ooo" 为元素设置name属性
-            var toRemove = (val === false) || (val === null) || (val === void 0)
-            if (!W3C && propMap[attrName]) { //旧式IE下需要进行名字映射
-                attrName = propMap[attrName]
-            }
-            var bool = boolMap[attrName]
-            if (typeof elem[bool] === "boolean") {
-                elem[bool] = !!val //布尔属性必须使用el.xxx = true|false方式设值
-                if (!val) { //如果为false, IE全系列下相当于setAttribute(xxx,''),会影响到样式,需要进一步处理
-                    toRemove = true
-                }
-            }
-            if (toRemove) {
-                return elem.removeAttribute(attrName)
-            }
-            //SVG只能使用setAttribute(xxx, yyy), VML只能使用elem.xxx = yyy ,HTML的固有属性必须elem.xxx = yyy
-            var isInnate = rsvg.test(elem) ? false : attrName in elem.cloneNode(false)
+            //SVG只能使用setAttribute(xxx, yyy), VML只能使用node.xxx = yyy ,
+            //HTML的固有属性必须node.xxx = yyy
+            var isInnate = attrName in node.cloneNode(false)
             if (isInnate) {
-                elem[attrName] = val + ""
+                node[propName] = val + ''
             } else {
-                elem.setAttribute(attrName, val)
+                node.setAttribute(attrName, val)
             }
         }
+
     }
 })
 
