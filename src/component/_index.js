@@ -34,7 +34,7 @@ avalon.directive('widget', {
             // ＝＝＝创建组件的VM＝＝BEGIN＝＝＝
         var is = vdom.props.is || value.is
         this.is = is
-        var component = avalon.components[is]
+        var Component = avalon.components[is]
             //外部传入的总大于内部
         if (!('fragment' in this)) {
             if (!vdom.isVoidTag) { //提取组件容器内部的东西作为模板
@@ -49,7 +49,7 @@ avalon.directive('widget', {
             }
         }
         //如果组件还没有注册，那么将原元素变成一个占位用的注释节点
-        if (!component) {
+        if (!Component) {
             this.readyState = 0
             vdom.nodeName = '#comment'
             vdom.nodeValue = 'unresolved component placeholder'
@@ -57,12 +57,13 @@ avalon.directive('widget', {
             avalon.Array.ensure(componentQueue, this)
             return
         }
+
         this.readyState = 1
             //如果是非空元素，比如说xmp, ms-*, template
         var id = value.id || value.$id
         var hasCache = avalon.vmodels[id]
         var fromCache = false
-
+        var component = new Component()
         if (hasCache) {
             comVm = hasCache
             this.comVm = comVm
@@ -70,11 +71,12 @@ avalon.directive('widget', {
             fromCache = true
 
         } else {
-            var comVm = createComponentVm(component, value, is)
+console.log(value)
+            var comVm = component.__getVm(value)
             fireComponentHook(comVm, vdom, 'Init')
             this.comVm = comVm
 
-            // ＝＝＝创建组件的VM＝＝END＝＝＝
+
             var boss = avalon.scan(component.template, comVm)
             comVm.$render = boss
             replaceRoot(this, boss)
@@ -150,7 +152,6 @@ avalon.directive('widget', {
             } else {
                 fireComponentHook(comVm, vdom, 'Leave')
             }
-
         }
 
     },
@@ -215,35 +216,12 @@ function fireComponentHook(vm, vdom, name) {
 }
 
 
-export function createComponentVm(component, value, is) {
-    var hooks = []
-    var defaults = component.defaults
-    collectHooks(defaults, hooks)
-    collectHooks(value, hooks)
-    var obj = {}
-    for(var i in defaults){
-        var val = value[i]
-        if(val == null){
-            obj[i] = defaults[i]
-        }else{
-            obj[i] = val
-        }
-    }
-    obj.$id = value.id || value.$id || avalon.makeHashCode(is)
-    delete obj.id
-    var def = avalon.mix(true, {}, obj)
-    var vm = avalon.define(def)
-    hooks.forEach(function(el) {
-        vm.$watch(el.type, el.cb)
-    })
-    return vm
-}
 
 function collectHooks(a, list) {
     for (var i in a) {
         if (componentEvents[i]) {
-            if (typeof a[i] === 'function'
-                    && i.indexOf('on') === 0) {
+            if (typeof a[i] === 'function' &&
+                i.indexOf('on') === 0) {
                 list.unshift({
                     type: i,
                     cb: a[i]
@@ -288,6 +266,83 @@ function insertObjectSlot(nodes, obj) {
     }
 }
 
+function Avalon() {}
+Avalon.prototype = {
+    constructor: Avalon,
+    __getVm: function(props) {
+        var hooks = []
+        var ctor = this.constructor
+        var def = avalon.mix(true, {}, this, this.defaults, (ctor.defaults || {}))
+        delete def.__getVm
+        delete def.id
+        delete def.is
+        delete def.template
+        delete def.soleSlot
+        collectHooks(def, hooks)
+        if (props) {
+            collectHooks(props, hooks)
+            for (var i in def) {
+                var value = props[i]
+                if (value != null){
+                    if(value && typeof value === 'object' ){
+                       def[i] = avalon.mix(true, Array.isArray(value) ? []: {},value)
+                    }else{
+                       def[i] = value
+                    }
+                }
+            }
+
+        } else {
+            props = {}
+        }
+
+        var is = ctor.name || '$'
+        def.$id = props.id || props.$id || avalon.makeHashCode(is)
+
+        var vm = avalon.define(def)
+        hooks.forEach(function(el) {
+            vm.$watch(el.type, el.cb)
+        })
+        return vm
+    }
+
+}
+avalon.Avalon = Avalon
+avalon.createComponent = (function() {
+    function obj(o) {
+        var __ = function() {}
+        __.prototype = o
+        return new __
+    }
+
+    function extend(child, parent) {
+        //这里要创建对象就是防止对parent产生污染
+        var proto = child.prototype = obj(parent.prototype);
+        proto.constructor = child
+    }
+    return function(className, define, superClass) {
+        className = avalon.camelize(className)
+        var body = ['function ' + className + '(props){',
+            '\t__parent.call(this)',
+            '\tthis.template = ' + avalon.quote(define.template),
+            (define.soleSlot ?
+                '\tthis.soleSlot = ' + avalon.quote(define.soleSlot) : ''),
+            '}',
+            '__extends(' + className + ',__parent)',
+            'return ' + className
+        ].join('\n')
+        var factory = Function('__parent', '__extends', body)
+        var parentClass = Avalon
+        if (superClass) {
+            parentClass = superClass
+        }
+        var c = factory(parentClass, extend)
+        var m = superClass ? superClass.defaults : {}
+        c.defaults = avalon.mix({}, m, define.defaults)
+        return c
+    }
+})()
+
 avalon.components = {}
 avalon.component = function(name, component) {
     /**
@@ -295,7 +350,11 @@ avalon.component = function(name, component) {
      * defaults: object
      * soleSlot: string
      */
+    if (component !== 'function') { //2.2.1
+        component = avalon.createComponent(name, component)
+    }
     avalon.components[name] = component
+
     for (var el, i = 0; el = componentQueue[i]; i++) {
         if (el.is === name) {
             componentQueue.splice(i, 1)

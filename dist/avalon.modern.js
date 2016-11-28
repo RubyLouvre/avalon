@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-27:16 version 2.2.1 by 司徒正美
+built in 2016-11-28:20 version 2.2.1 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -3172,7 +3172,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 try {
                     return this.getter.call(scope, scope)
                 } catch (e) {
-                    avalon$2.log(this.getter + ' exec error', this)
+                    avalon$2.log(this.getter + ' exec error')
                 }
             }
         }, {
@@ -5423,11 +5423,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             //处理多个checked属性
             var node = this.node
             var props = node.props
-            var value = props.value
+            var value = props.value + ''
             var values = [].concat(this.value)
             var checked = values.some(function (el) {
                 return el + '' === value
             })
+
             props.defaultChecked = props.checked = checked
             updateView.updateChecked(node, checked)
         },
@@ -6864,13 +6865,21 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
     function createComponentVm(component, value, is) {
         var hooks = []
-        var def = avalon$2.mix({}, component.defaults)
-        collectHooks(def, hooks)
+        var defaults = component.defaults
+        collectHooks(defaults, hooks)
         collectHooks(value, hooks)
-        def.$id = value.id || value.$id || avalon$2.makeHashCode(is)
-        delete value.id
-        delete value.$id
-        avalon$2.mix(def, value)
+        var obj = {}
+        for (var i in defaults) {
+            var val = value[i]
+            if (val == null) {
+                obj[i] = defaults[i]
+            } else {
+                obj[i] = val
+            }
+        }
+        obj.$id = value.id || value.$id || avalon$2.makeHashCode(is)
+        delete obj.id
+        var def = avalon$2.mix(true, {}, obj)
         var vm = avalon$2.define(def)
         hooks.forEach(function (el) {
             vm.$watch(el.type, el.cb)
@@ -6881,7 +6890,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     function collectHooks(a, list) {
         for (var i in a) {
             if (componentEvents[i]) {
-                if (typeof a[i] === 'function') {
+                if (typeof a[i] === 'function' && i.indexOf('on') === 0) {
                     list.unshift({
                         type: i,
                         cb: a[i]

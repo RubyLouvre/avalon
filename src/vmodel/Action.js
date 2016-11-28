@@ -50,7 +50,7 @@ export class Action {
         try {
             return this.getter.call(scope, scope)
         } catch (e) {
-            avalon.log(this.getter + ' exec error', this)
+            avalon.log(this.getter + ' exec error')
         }
     }
     setValue(value) {

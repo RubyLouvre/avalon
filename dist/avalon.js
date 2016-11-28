@@ -1,14 +1,14 @@
 /*!
-built in 2016-11-27:15 version 2.2.1 by 司徒正美
-https://github.com/RubyLouvre/avalon/tree/2.2.0
-fix IE6-8 opacity BUG
-减少VM的系统属性，__const__, __data__,__proxy__,$skipArray被废掉
-vmodel模块全部重写，让它内部用到的私用方法更加合理
-directives模块全部重写，因为现在不走react的渲染模板思路了
-component模块全部重写，它现在是完全独立的作用域，可能与这前的有一点不兼容。不过，这对维护组件自身的状态非常有利。
-$watch不再支持*号
-strategy模块被打散了，细分为parser与renders与vtree这三个模块。renders里面有domRender与serverRender。
-vdom模块，虚拟DOM转真实DOM时，对低版本浏览器的支持更好。
+built in 2016-11-28:20 version 2.2.1 by 司徒正美
+https://github.com/RubyLouvre/avalon/tree/2.2.1
+添加计算属性
+添加事务
+内部所有类使用es6重写
+修正使用requirejs加载avalon2.2.0，返回空对象的BUG
+优化组件延迟定义的逻辑
+fromString进行性能优化
+fix 空字符串不生成节点的BUG
+确保onReady的执行时机，多个ms-controller套嵌，先执行里面的，再执行外面的
 
 */'use strict';
 
@@ -3857,7 +3857,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             try {
                 return this.getter.call(scope, scope);
             } catch (e) {
-                avalon.log(this.getter + ' exec error', this);
+                avalon.log(this.getter + ' exec error');
             }
         };
 
@@ -6072,11 +6072,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             //处理多个checked属性
             var node = this.node;
             var props = node.props;
-            var value = props.value;
+            var value = props.value + '';
             var values = [].concat(this.value);
             var checked = values.some(function (el) {
                 return el + '' === value;
             });
+
             props.defaultChecked = props.checked = checked;
             updateView.updateChecked(node, checked);
         },
@@ -7627,13 +7628,21 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
     function createComponentVm(component, value, is) {
         var hooks = [];
-        var def = avalon.mix({}, component.defaults);
-        collectHooks(def, hooks);
+        var defaults = component.defaults;
+        collectHooks(defaults, hooks);
         collectHooks(value, hooks);
-        def.$id = value.id || value.$id || avalon.makeHashCode(is);
-        delete value.id;
-        delete value.$id;
-        avalon.mix(def, value);
+        var obj = {};
+        for (var i in defaults) {
+            var val = value[i];
+            if (val == null) {
+                obj[i] = defaults[i];
+            } else {
+                obj[i] = val;
+            }
+        }
+        obj.$id = value.id || value.$id || avalon.makeHashCode(is);
+        delete obj.id;
+        var def = avalon.mix(true, {}, obj);
         var vm = avalon.define(def);
         hooks.forEach(function (el) {
             vm.$watch(el.type, el.cb);
@@ -7644,7 +7653,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     function collectHooks(a, list) {
         for (var i in a) {
             if (componentEvents[i]) {
-                if (typeof a[i] === 'function') {
+                if (typeof a[i] === 'function' && i.indexOf('on') === 0) {
                     list.unshift({
                         type: i,
                         cb: a[i]

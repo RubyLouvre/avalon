@@ -183,11 +183,12 @@ export var updateView = {
     checkbox: function () {//处理多个checked属性
         var node = this.node
         var props = node.props
-        var value = props.value
+        var value = props.value+''
         var values = [].concat(this.value)
         var checked = values.some(function (el) {
-            return el + '' === value
+            return el + ''=== value
         })
+        
         props.defaultChecked = props.checked = checked
         updateView.updateChecked(node, checked)
     },
