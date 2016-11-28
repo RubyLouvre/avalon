@@ -6,7 +6,8 @@
         <script src="../../dist/avalon.js"></script>
         <script>
             avalon.component('ms-list', {
-                template: '<div><input type="checkbox" ms-for="el in @list" data-duplex-changed="@change" ms-duplex-number="@selected" ms-attr="{value:el}"/></div>'
+                template: '<div><input type="checkbox" ms-for="el in @list" \n\
+        data-duplex-changed="@change" ms-duplex="@selected" ms-attr="{value:el}"/></div>'
                 , defaults: {
                     selected: [1, 2],
                     list: [1,2,3,4,5],
