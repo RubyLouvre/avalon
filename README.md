@@ -13,8 +13,7 @@
 
 ###[QuickStart](https://github.com/RubyLouvre/avalon/tree/master/components/router)
 大家期望已久的avalon2+mmRouter+各种组件的综合示例,不断完善中
-这是它的构建脚本,需要另外npm install raw-loader webpack grunt
-https://github.com/RubyLouvre/avalon/blob/master/router.build.js
+
 
 
 
