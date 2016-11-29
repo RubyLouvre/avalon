@@ -37,7 +37,7 @@ function $watch(expr, callback, deep) {
         core[expr].push(w)
     }
     return function() {
-        w.destroy()
+        w.dispose()
         avalon.Array.remove(core[expr], w)
         if (core[expr].length === 0) {
             delete core[expr]

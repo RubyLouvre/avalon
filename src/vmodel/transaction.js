@@ -52,7 +52,7 @@ export function propagateChanged(target) {
 export function reportObserved(observer) {
     var action = avalon.trackingAction || null
     if (action !== null) {
-        avalon.track('收集到', observer.expr)
+        avalon.track('征收到', observer.expr)
         action.mapIDs[observer.uuid] = observer;
         observer.isCollected = 1
     } else if (observer.observers.length === 0) {
@@ -76,7 +76,7 @@ export function collectDeps(action, getter) {
         targetStack.push(preAction)
     }
     avalon.trackingAction = action
-    avalon.track('【action】', action.type, action.expr, '开始收集依赖项')
+    avalon.track('【action】', action.type, action.expr, '开始征收依赖项')
         //多个observe持有同一个action
     action.mapIDs = {} //重新收集依赖
     var hasError = true,

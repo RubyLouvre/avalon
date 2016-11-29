@@ -26,7 +26,7 @@ export class Mutation {
         this.value = value
         this.vm = vm
         try {
-            vm.$mutations[key] = this
+            vm.$mutations[expr] = this
         } catch (ignoreIE) {}
         this.uuid = ++obid
         this.updateVersion()
@@ -59,6 +59,7 @@ export class Mutation {
     collect() {
         var name = 'mutation ' + this.expr
         startBatch(name)
+        avalon.track(name, '要被上交了')
         reportObserved(this)
         endBatch(name)
     }

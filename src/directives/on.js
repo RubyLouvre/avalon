@@ -3,21 +3,22 @@ import { avalon, inBrowser } from '../seed/core'
 import { addScope, makeHandle } from '../parser/index'
 
 avalon.directive('on', {
-    beforeInit: function () {
+    beforeInit: function() {
         this.getter = avalon.noop
     },
-    init: function () {
+    init: function() {
         var vdom = this.node
         var underline = this.name.replace('ms-on-', 'e').replace('-', '_')
         var uuid = underline + '_' + this.expr.
-            replace(/\s/g, '').
-            replace(/[^$a-z]/ig, function (e) {
-                return e.charCodeAt(0)
-            })
+        replace(/\s/g, '').
+        replace(/[^$a-z]/ig, function(e) {
+            return e.charCodeAt(0)
+        })
         var fn = avalon.eventListeners[uuid]
         if (!fn) {
             var arr = addScope(this.expr)
-            var body = arr[0], filters = arr[1]
+            var body = arr[0],
+                filters = arr[1]
             body = makeHandle(body)
 
             if (filters) {
@@ -29,9 +30,10 @@ avalon.directive('on', {
                 '\tvar __vmodel__ = this;',
                 '\t' + filters,
                 '\treturn ' + body,
-                '}catch(e){avalon.log(e, "in on dir")}'].filter(function (el) {
-                    return /\S/.test(el)
-                })
+                '}catch(e){avalon.log(e, "in on dir")}'
+            ].filter(function(el) {
+                return /\S/.test(el)
+            })
             fn = new Function('$event', ret.join('\n'))
             fn.uuid = uuid
             avalon.eventListeners[uuid] = fn
@@ -46,7 +48,7 @@ avalon.directive('on', {
         avalon(dom).bind(this.eventType, fn)
     },
 
-    beforeDestroy: function () {
+    beforeDispose: function() {
         avalon(this.node.dom).unbind(this.eventType)
     }
 })

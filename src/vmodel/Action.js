@@ -40,7 +40,7 @@ export class Action {
         }
         // 缓存表达式旧值
         this.oldValue = null
-         // 表达式初始值 & 提取依赖
+            // 表达式初始值 & 提取依赖
         if (!(this.node)) {
             this.value = this.get()
         }
@@ -63,17 +63,17 @@ export class Action {
     // get --> getValue --> getter
     get(fn) {
         var name = 'action track ' + this.type
-        
-        if(this.deep){
+
+        if (this.deep) {
             avalon.deepCollect = true
         }
         startBatch(name)
         var value = collectDeps(this, this.getValue)
         endBatch(name)
-        if(this.deep && avalon.deepCollect){
+        if (this.deep && avalon.deepCollect) {
             avalon.deepCollect = false
         }
-       
+
         return value
     }
 
@@ -121,11 +121,11 @@ export class Action {
     /**
      * 销毁指令
      */
-    destroy() {
+    dispose() {
         this.value = null
         this.removeDepends()
-        if (this.beforeDestroy) {
-            this.beforeDestroy()
+        if (this.beforeDispose) {
+            this.beforeDispose()
         }
         for (var i in this) {
             delete this[i]
@@ -159,6 +159,6 @@ export var protectedMenbers = {
     //name: "ms-for"
     //attrName: ":for"
     //param: "click"
-    //beforeDestroy
-    destroy: 1
+    //beforeDispose
+    dispose: 1
 }
