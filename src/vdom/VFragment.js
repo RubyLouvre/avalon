@@ -21,7 +21,7 @@ export class VFragment {
     }
     destory() {
         this.toFragment()
-        this.boss && this.boss.destroy()
+        this.boss && this.boss.dispose()
         for (var i in this) {
             this[i] = null
         }

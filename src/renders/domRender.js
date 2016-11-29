@@ -318,10 +318,10 @@ class Render {
      * 销毁所有指令
      * @returns {undefined}
      */
-    destroy() {
+    dispose() {
         var list = this.directives || []
         for (var i = 0, el; el = list[i++];) {
-            el.destroy()
+            el.dispose()
         }
         for (var i in this) {
             delete this[i]
