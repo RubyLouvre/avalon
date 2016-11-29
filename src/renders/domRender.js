@@ -323,7 +323,7 @@ class Render {
         for (var i = 0, el; el = list[i++];) {
             el.dispose()
         }
-        //防止其他地方的this.boss && this.boss.dispose报错
+        //防止其他地方的this.innerRender && this.innerRender.dispose报错
         for (var i in this) {
             if(i !== 'dispose')
                delete this[i]

@@ -104,7 +104,7 @@ export class Action {
             endBatch('schedule ' + this.expr)
         }
     }
-    removeDepends(filter) {
+    removeDepends() {
         var self = this
         this.observers.forEach(function(depend) {
             avalon.Array.remove(depend.observers, self)

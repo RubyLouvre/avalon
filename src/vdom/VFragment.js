@@ -19,9 +19,9 @@ export class VFragment {
         this.split = f.lastChild
         return this.dom = f
     }
-    destory() {
+    dispose() {
         this.toFragment()
-        this.boss && this.boss.dispose()
+        this.innerRender && this.innerRender.dispose()
         for (var i in this) {
             this[i] = null
         }

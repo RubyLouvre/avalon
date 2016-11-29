@@ -75,9 +75,9 @@ avalon.directive('widget', {
             this.comVm = comVm
 
             // ＝＝＝创建组件的VM＝＝END＝＝＝
-            var boss = avalon.scan(component.template, comVm)
-            comVm.$render = boss
-            replaceRoot(this, boss)
+            var innerRender = avalon.scan(component.template, comVm)
+            comVm.$render = innerRender
+            replaceRoot(this, innerRender)
             var nodesWithSlot = []
             var directives = []
             if (this.fragment || component.soleSlot) {
@@ -87,11 +87,12 @@ avalon.directive('widget', {
                     nodesWithSlot = this.root.children
                 })
                 directives = childBoss.directives
+                this.childBoss= childBoss
                 for (var i in childBoss) {
                     delete childBoss[i]
                 }
             }
-            boss.directives.push.apply(boss.directives, directives)
+            Array.prototype.push.apply(innerRender.directives, directives)
 
             var arraySlot = [],
                 objectSlot = {}
@@ -120,16 +121,16 @@ avalon.directive('widget', {
             }
             //将原来元素的所有孩子，全部移动新的元素的第一个slot的位置上
             if (component.soleSlot) {
-                insertArraySlot(boss.vnodes, arraySlot)
+                insertArraySlot(innerRender.vnodes, arraySlot)
             } else {
-                insertObjectSlot(boss.vnodes, objectSlot)
+                insertObjectSlot(innerRender.vnodes, objectSlot)
             }
         }
 
         if (comment) {
             var dom = avalon.vdom(vdom, 'toDOM')
             comment.parentNode.replaceChild(dom, comment)
-            comVm.$element = boss.root.dom = dom
+            comVm.$element = innerRender.root.dom = dom
             delete this.reInit
         }
 
@@ -141,24 +142,13 @@ avalon.directive('widget', {
         } else {
             fireComponentHook(comVm, vdom, 'Ready')
         }
-        this.beforeDispose = function() {
-            if (!this.cacheVm) {
-                fireComponentHook(comVm, vdom, 'Dispose')
-                comVm.$hashcode = false
-                delete avalon.vmodels[comVm.$id]
-                this.boss.dispose()
-            } else {
-                fireComponentHook(comVm, vdom, 'Leave')
-            }
-
-        }
-
     },
     diff: function(newVal, oldVal) {
         if (cssDiff.call(this, newVal, oldVal)) {
             return true
         }
     },
+
     update: function(vdom, value) {
         this.oldValue = value //★★防止递归
         switch (this.readyState) {
@@ -187,18 +177,29 @@ avalon.directive('widget', {
                 delete avalon.viewChanging
                 break
         }
-    }
+    },
+    beforeDispose: function() {
+        var comVm = this.comVm
+        if (!this.cacheVm) {
+            fireComponentHook(comVm, this.node, 'Dispose')
+            comVm.$hashcode = false
+            delete avalon.vmodels[comVm.$id]
+            this.innerRender && this.innerRender.dispose()
+        } else {
+            fireComponentHook(comVm, this.node, 'Leave')
+        }
+    },
 })
 
-function replaceRoot(instance, boss) {
-    instance.boss = boss
-    var root = boss.root
+function replaceRoot(instance, innerRender) {
+    instance.innerRender = innerRender
+    var root = innerRender.root
     var vdom = instance.node
     for (var i in root) {
         vdom[i] = root[i]
     }
-    boss.root = vdom
-    boss.vnodes[0] = vdom
+    innerRender.root = vdom
+    innerRender.vnodes[0] = vdom
 }
 
 function fireComponentHook(vm, vdom, name) {
