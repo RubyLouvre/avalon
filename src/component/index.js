@@ -135,7 +135,9 @@ avalon.directive('widget', {
         }
 
         //处理DOM节点
+      
         dumpTree(vdom.dom)
+        comVm.$element = vdom.dom
         groupTree(vdom.dom, vdom.children)
         if (fromCache) {
             fireComponentHook(comVm, vdom, 'Enter')
@@ -195,8 +197,12 @@ function replaceRoot(instance, innerRender) {
     instance.innerRender = innerRender
     var root = innerRender.root
     var vdom = instance.node
+    var slot = vdom.props.slot
     for (var i in root) {
         vdom[i] = root[i]
+    }
+    if(vdom.props && slot){
+        vdom.props.slot = slot
     }
     innerRender.root = vdom
     innerRender.vnodes[0] = vdom

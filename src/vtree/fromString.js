@@ -138,7 +138,9 @@ function from(str) {
                     avalon.error(match[0] + '前面缺少<' + nodeName + '>')
                      /* istanbul ignore else*/
                 } else if (last.nodeName !== nodeName) {
-                    avalon.error(last.nodeName + '没有闭合')
+                    var errMsg = ast.nodeName + '没有闭合,请注意属性的引号'
+                    avalon.warn(errMsg)
+                    avalon.error(errMsg)
                 }
                 node = stack.pop()
                 node.end = true

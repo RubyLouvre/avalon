@@ -1,7 +1,6 @@
 var webpack = require('webpack')
 var path = require('path')
-//sudo npm install raw-loader html-minify-loader webpack
-// npm install grunt@~0.4.0
+//sudo npm install raw-loader webpack grunt@~0.4.0
 module.exports = {
     entry: {
         main: './components/router/main',

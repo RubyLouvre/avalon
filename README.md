@@ -1,18 +1,23 @@
 #avalon 2 
 
-avalon2是基于虚拟DOM的超高性能MVVM框架,兼容到IE6.(QQ学习群 453286795 314247255)
 
-##artcher.js
+###[English tutorials](https://github.com/RubyLouvre/avalon/tree/master/tutorials)
 
-位于 dist 目录下, 只有不到2000行, 现只支持IE9+ ,它是avalon2的浓缩版
-
-###[avalon电子文档](avalon%20cookbook.pdf)
+###[avalon cookbook](https://github.com/RubyLouvre/avalon/blob/2.1.8/avalon%20cookbook.pdf)
 
 这是基于官网制成的电子书,方便大家离线阅览
 
 ###[avalon2官网](http://avalonjs.coding.me/)
-
 这是基于gitbook制作的,对移动端支持很好,大家上班或睡觉时,可以过目一下.
+
+
+###[QuickStart](https://github.com/RubyLouvre/avalon/tree/master/components/router)
+大家期望已久的avalon2+mmRouter+各种组件的综合示例,不断完善中
+这是它的构建脚本,需要另外npm install raw-loader webpack grunt
+https://github.com/RubyLouvre/avalon/blob/master/router.build.js
+
+
+
 
 ```javascript
 npm install avalon2

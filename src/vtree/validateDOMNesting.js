@@ -44,7 +44,7 @@ var nestObject = {
     // https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incolgroup
     colgroup: oneObject('col,template,#document-fragment'),
     // https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intable
-    table: oneObject('caption,colgroup,tbody,thead,tfoot,style,script,template,#document-fragment'),
+    // table: oneObject('caption,colgroup,tbody,thead,tfoot,style,script,template,#document-fragment'),
     // https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inhead
     head: oneObject('base,basefont,bgsound,link,style,script,meta,title,noscript,noframes,template,#document-fragment'),
     // https://html.spec.whatwg.org/multipage/semantics.html#the-html-element
