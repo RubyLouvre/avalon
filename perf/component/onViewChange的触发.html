@@ -57,7 +57,8 @@
                 dd: '22',
                 cc: "555",
                 click: function () {
-                    avalon.clearHTML(document.body)
+                   vm.$render.dispose()
+                   avalon.clearHTML(document.body)
                 }
             })
 

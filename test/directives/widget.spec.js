@@ -317,7 +317,7 @@ describe('widget', function() {
             setTimeout(function() {
                 var hasText = div.innerHTML.indexOf('弹窗2') > 0
                 expect(hasText).toBe(true)
-                vm.$render.destroy()
+                vm.$render.dispose()
                     //div.innerHTML = ''
 
                 setTimeout(function() {
@@ -368,7 +368,7 @@ describe('widget', function() {
 
             vm.config.buttonText = 'change'
             setTimeout(function() {
-                vm.$render.destroy()
+                vm.$render.dispose()
                 div.innerHTML = ""
                 setTimeout(function() {
                     expect(index).toBe(4)
@@ -940,8 +940,8 @@ describe('widget', function() {
             }, 100)
         }, 100)
     })
-    
-     it('object slot', function(done) {
+
+    it('object slot', function(done) {
         div.innerHTML = heredoc(function() {
             /*
 <div ms-controller="widget15">
@@ -1030,6 +1030,6 @@ describe('widget', function() {
 
     })
 
-   
+
 
 })

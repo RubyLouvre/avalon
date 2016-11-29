@@ -1,74 +1,80 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="../../dist/avalon.js"></script>
-        <script>
-            avalon.component('ms-button', {
-                template: '<button type="button"><span><slot /></span></button>',
-                defaults: {
-                    buttonText: "button"
+
+<head>
+    <title>TODO supply a title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="../../dist/avalon.js"></script>
+    <script>
+        avalon.component('ms-button', {
+            template: '<button type="button"><span><slot /></span></button>',
+            defaults: {
+                buttonText: "button"
+            },
+            soleSlot: 'buttonText'
+        })
+        var index = 0
+        var vm = avalon.define({
+            $id: 'test',
+            click: function() {
+                vm.config.buttonText = new Date - 0
+            },
+            config: {
+                buttonText: '按钮',
+                onInit: function(e) {
+                    avalon.log('init')
+                        ++index
                 },
-                soleSlot: 'buttonText'
-            })
-            var index = 0
-            var vm = avalon.define({
-                $id: 'test',
-                click: function () {
-                    vm.config.buttonText = new Date - 0
+                onReady: function(e) {
+                    avalon.log('ready')
+                        ++index
                 },
-                config: {
-                    buttonText: '按钮',
-                    onInit: function (e) {
-                        avalon.log('init')
+                onViewChange: function(e) {
+                    avalon.log('viewchange')
                         ++index
-                    },
-                    onReady: function (e) {
-                        avalon.log('ready')
+                },
+                onDispose: function(e) {
+                    avalon.log('dispose')
                         ++index
-                    },
-                    onViewChange: function (e) {
-                        avalon.log('viewchange')
-                        ++index
-                    },
-                    onDispose: function (e) {
-                        avalon.log('dispose')
-                        ++index
-                    }
                 }
-            })
-            function expect(a) {
-                return {
-                    to: {
-                        equal: function (b) {
-                            console.log(a, b, a === b)
-                        }
+            }
+        })
+
+        function expect(a) {
+            return {
+                to: {
+                    equal: function(b) {
+                        console.log(a, b, a === b)
                     }
                 }
             }
-            setTimeout(function () {
-                expect(index).to.equal(2)
-                vm.click()
-                setTimeout(function () {
-                    expect(index).to.equal(3)
-                    document.getElementById('aaa').innerHTML = ''
-                    setTimeout(function () {
-                        expect(index).to.equal(4)
-                    }, 500)
+        }
+        setTimeout(function() {
+            expect(index).to.equal(2)
+            vm.click()
+            setTimeout(function() {
+                expect(index).to.equal(3)
+                if (vm.$render) {
+                    vm.$render.dispose()
+                }
+                document.getElementById('aaa').innerHTML = ''
+                setTimeout(function() {
+                    expect(index).to.equal(4)
                 }, 500)
             }, 500)
+        }, 500)
+    </script>
+</head>
 
-        </script>
-    </head>
-    <body>
-        <h2>通过外部传入生命周期钩子</h2>
-        <div ms-controller='test' id="aaa" >
-            <div><wbr ms-widget="[{is:'ms-button'},@config]"/></div>
-            <button ms-click="@click" type="button">change</button>
-        </div>
+<body>
+    <h2>通过外部传入生命周期钩子</h2>
+    <div ms-controller='test' id="aaa">
+        <div><wbr ms-widget="[{is:'ms-button'},@config]" /></div>
+        <button ms-click="@click" type="button">change</button>
+    </div>
 
 
-    </body>
+</body>
+
 </html>

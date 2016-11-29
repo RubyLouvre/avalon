@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-29:20 version 2.2.1 by 司徒正美
+built in 2016-11-29:22 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -428,7 +428,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         inspect: inspect,
         ohasOwn: ohasOwn,
         rword: rword,
-        version: "2.2.1",
+        version: "2.2.2",
         vmodels: {},
 
         directives: directives,
@@ -3622,7 +3622,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             hasError = false;
         } finally {
             if (hasError) {
-                avalon.warn('collectDeps fail', getter + "", action);
+                avalon.warn('collectDeps fail', getter + '');
                 action.mapIDs = {};
                 avalon.trackingAction = preAction;
             } else {
