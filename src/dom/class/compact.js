@@ -1,27 +1,28 @@
 import { avalon, rnowhite, rword } from '../../seed/core'
 
-export class ClassList {
-    constructor(node) {
-        this.node = node
-    }
+export function ClassList(node) {
+    this.node = node
+}
+
+ClassList.prototype = {
     toString() {
         var node = this.node
         var cls = node.className
         var str = typeof cls === 'string' ? cls : cls.baseVal
         var match = str.match(rnowhite)
         return match ? match.join(' ') : ''
-    }
+    },
     contains(cls) {
         return (' ' + this + ' ').indexOf(' ' + cls + ' ') > -1
-    }
+    },
     add(cls) {
         if (!this.contains(cls)) {
             this.set(this + ' ' + cls)
         }
-    }
+    },
     remove(cls) {
         this.set((' ' + this + ' ').replace(' ' + cls + ' ', ' '))
-    }
+    },
     set(cls) {
         cls = cls.trim()
         var node = this.node
@@ -33,7 +34,6 @@ export class ClassList {
         }
         //toggle存在版本差异，因此不使用它
     }
-
 }
 
 export function classListFactory(node) {

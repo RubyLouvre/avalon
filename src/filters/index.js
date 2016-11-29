@@ -1,4 +1,3 @@
-
 import {
     avalon
 } from '../seed/core'
@@ -11,9 +10,9 @@ import { eventFilters } from "./event"
 import { escapeFilter } from "./escape"
 var filters = avalon.filters = {}
 
-avalon.composeFilters = function () {
+avalon.composeFilters = function() {
     var args = arguments
-    return function (value) {
+    return function(value) {
         for (var i = 0, arr; arr = args[i++];) {
             var name = arr[0]
             var filter = avalon.filters[name]
@@ -21,8 +20,7 @@ avalon.composeFilters = function () {
                 arr[0] = value
                 try {
                     value = filter.apply(0, arr)
-                } catch (e) {
-                }
+                } catch (e) {}
             }
         }
         return value
@@ -32,13 +30,13 @@ avalon.composeFilters = function () {
 avalon.escapeHtml = escapeFilter
 
 avalon.mix(filters, {
-    uppercase: function (str) {
+    uppercase(str) {
         return String(str).toUpperCase()
     },
-    lowercase: function (str) {
+    lowercase(str) {
         return String(str).toLowerCase()
     },
-    truncate: function (str, length, end) {
+    truncate(str, length, end) {
         //length，新字符串长度，truncation，新字符串的结尾的字段,返回新字符串
         if (!str) {
             return ''
@@ -57,7 +55,7 @@ avalon.mix(filters, {
     escape: escapeFilter,
     sanitize: sanitizeFilter,
     number: numberFilter,
-    currency: function (amount, symbol, fractionSize) {
+    currency(amount, symbol, fractionSize) {
         return (symbol || '\u00a5') +
             numberFilter(amount,
                 isFinite(fractionSize) ? /* istanbul ignore else*/ fractionSize : 2)
@@ -65,4 +63,3 @@ avalon.mix(filters, {
 }, { filterBy, orderBy, selectBy, limitBy }, eventFilters)
 
 export { avalon }
-

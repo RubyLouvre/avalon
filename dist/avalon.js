@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-29:22 version 2.2.2 by 司徒正美
+built in 2016-11-30:3 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -11,12 +11,6 @@ fix 空字符串不生成节点的BUG
 确保onReady的执行时机，多个ms-controller套嵌，先执行里面的，再执行外面的
 
 */'use strict';
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() : typeof define === 'function' && define.amd ? define(factory) : global.avalon = factory();
@@ -59,22 +53,19 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
      
      removed  <--  <--  <--  <--  <--  <--  <--  <--  <--  <--  <--  added 
      */
+    function Cache(maxLength) {
+        // 标识当前缓存数组的大小
+        this.size = 0;
+        // 标识缓存数组能达到的最大长度
+        this.limit = maxLength;
+        //  head（最不常用的项），tail（最常用的项）全部初始化为undefined
 
-    var Cache = function () {
-        function Cache(maxLength) {
-            _classCallCheck(this, Cache);
+        this.head = this.tail = void 0;
+        this._keymap = {};
+    }
 
-            // 标识当前缓存数组的大小
-            this.size = 0;
-            // 标识缓存数组能达到的最大长度
-            this.limit = maxLength;
-            //  head（最不常用的项），tail（最常用的项）全部初始化为undefined
-
-            this.head = this.tail = void 0;
-            this._keymap = {};
-        }
-
-        Cache.prototype.put = function put(key, value) {
+    Cache.prototype = {
+        put: function put(key, value) {
             var entry = {
                 key: key,
                 value: value
@@ -97,9 +88,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 this.size++;
             }
             return value;
-        };
-
-        Cache.prototype.shift = function shift() {
+        },
+        shift: function shift() {
             /* istanbul ignore next */
             var entry = this.head;
             /* istanbul ignore if */
@@ -112,9 +102,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 // 同步更新 缓存数组的长度
                 this.size--;
             }
-        };
-
-        Cache.prototype.get = function get(key) {
+        },
+        get: function get(key) {
             var entry = this._keymap[key];
             // 如果查找不到含有`key`这个属性的缓存对象
             if (entry === void 0) return;
@@ -125,7 +114,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             }
             // HEAD--------------TAIL
             //   <.older   .newer>
-            //   <--- add direction --
+            //  <--- add direction --
             //   A  B  C  <D>  E
             if (entry.newer) {
                 // 处理 newer 指向
@@ -155,10 +144,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             // 改变 tail 为D 
             this.tail = entry;
             return entry.value;
-        };
-
-        return Cache;
-    }();
+        }
+    };
 
     var delayCompile = {};
 
@@ -1437,6 +1424,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             return str.length > length ? str.slice(0, length - end.length) + end : /* istanbul ignore else*/
             str;
         },
+
         camelize: avalon.camelize,
         date: dateFilter,
         escape: escapeFilter,
@@ -1551,36 +1539,30 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         shimHack();
     }
 
-    var ClassList = function () {
-        function ClassList(node) {
-            _classCallCheck(this, ClassList);
+    function ClassList(node) {
+        this.node = node;
+    }
 
-            this.node = node;
-        }
-
-        ClassList.prototype.toString = function toString() {
+    ClassList.prototype = {
+        toString: function toString() {
             var node = this.node;
             var cls = node.className;
             var str = typeof cls === 'string' ? cls : cls.baseVal;
             var match = str.match(rnowhite);
             return match ? match.join(' ') : '';
-        };
-
-        ClassList.prototype.contains = function contains(cls) {
+        },
+        contains: function contains(cls) {
             return (' ' + this + ' ').indexOf(' ' + cls + ' ') > -1;
-        };
-
-        ClassList.prototype.add = function add(cls) {
+        },
+        add: function add(cls) {
             if (!this.contains(cls)) {
                 this.set(this + ' ' + cls);
             }
-        };
-
-        ClassList.prototype.remove = function remove(cls) {
+        },
+        remove: function remove(cls) {
             this.set((' ' + this + ' ').replace(' ' + cls + ' ', ' '));
-        };
-
-        ClassList.prototype.set = function set(cls) {
+        },
+        set: function set(cls) {
             cls = cls.trim();
             var node = this.node;
             if (typeof node.className === 'object') {
@@ -1590,10 +1572,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 node.className = cls;
             }
             //toggle存在版本差异，因此不使用它
-        };
-
-        return ClassList;
-    }();
+        }
+    };
 
     function classListFactory(node) {
         if (!('classList' in node)) {
@@ -2908,68 +2888,53 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         }
     }
 
-    var avEvent = function () {
-        function avEvent(event) {
-            _classCallCheck(this, avEvent);
-
-            if (event.originalEvent) {
-                return event;
-            }
-            for (var i in event) {
-                if (!avEvent.prototype[i]) {
-                    this[i] = event[i];
-                }
-            }
-            if (!this.target) {
-                this.target = event.srcElement;
-            }
-            var target = this.target;
-            this.fixEvent();
-            this.timeStamp = new Date() - 0;
-            this.originalEvent = event;
-        }
-
-        //chrome如果操作真实事件的webkitMovementX/Y会抛警告
-
-
-        avEvent.prototype.webkitMovementY = function webkitMovementY() {};
-
-        avEvent.prototype.webkitMovementX = function webkitMovementX() {};
-
-        avEvent.prototype.fixEvent = function fixEvent() {};
-
-        avEvent.prototype.preventDefault = function preventDefault() {
+    var eventProto = {
+        webkitMovementY: 1,
+        webkitMovementX: 1,
+        fixEvent: function fixEvent() {},
+        preventDefault: function preventDefault() {
             var e = this.originalEvent || {};
             e.returnValue = this.returnValue = false;
             if (modern && e.preventDefault) {
                 e.preventDefault();
             }
-        };
-
-        avEvent.prototype.stopPropagation = function stopPropagation() {
+        },
+        stopPropagation: function stopPropagation() {
             var e = this.originalEvent || {};
             e.cancelBubble = this.cancelBubble = true;
             if (modern && e.stopPropagation) {
                 e.stopPropagation();
             }
-        };
-
-        avEvent.prototype.stopImmediatePropagation = function stopImmediatePropagation() {
+        },
+        stopImmediatePropagation: function stopImmediatePropagation() {
             this.stopPropagation();
             this.stopImmediate = true;
-        };
-
-        avEvent.prototype.toString = function toString() {
+        },
+        toString: function toString() {
             return '[object Event]'; //#1619
-        };
+        }
+    };
 
-        return avEvent;
-    }();
-
+    function avEvent(event) {
+        if (event.originalEvent) {
+            return event;
+        }
+        for (var i in event) {
+            if (!eventProto[i]) {
+                this[i] = event[i];
+            }
+        }
+        if (!this.target) {
+            this.target = event.srcElement;
+        }
+        var target = this.target;
+        this.fixEvent();
+        this.timeStamp = new Date() - 0;
+        this.originalEvent = event;
+    }
+    avEvent.prototype = eventProto;
     //针对firefox, chrome修正mouseenter, mouseleave
     /* istanbul ignore if */
-
-
     if (!('onmouseenter' in root)) {
         avalon.each({
             mouseenter: 'mouseover',
@@ -3232,58 +3197,48 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         return ret;
     }
 
-    var VText = function () {
-        function VText(text) {
-            _classCallCheck(this, VText);
+    function VText(text) {
+        this.nodeName = '#text';
+        this.nodeValue = text;
+    }
 
-            this.nodeName = '#text';
-            this.nodeValue = text;
-        }
-
-        VText.prototype.toDOM = function toDOM() {
+    VText.prototype = {
+        constructor: VText,
+        toDOM: function toDOM() {
             /* istanbul ignore if*/
             if (this.dom) return this.dom;
             var v = avalon._decode(this.nodeValue);
             return this.dom = document$1.createTextNode(v);
-        };
-
-        VText.prototype.toHTML = function toHTML() {
+        },
+        toHTML: function toHTML() {
             return this.nodeValue;
-        };
-
-        return VText;
-    }();
-
-    var VComment = function () {
-        function VComment(text) {
-            _classCallCheck(this, VComment);
-
-            this.nodeName = '#comment';
-            this.nodeValue = text;
         }
+    };
 
-        VComment.prototype.toDOM = function toDOM() {
-            return this.dom || (this.dom = document$1.createComment(this.nodeValue));
-        };
-
-        VComment.prototype.toHTML = function toHTML() {
+    function VComment(text) {
+        this.nodeName = '#comment';
+        this.nodeValue = text;
+    }
+    VComment.prototype = {
+        constructor: VComment,
+        toDOM: function toDOM() {
+            if (this.dom) return this.dom;
+            return this.dom = document$1.createComment(this.nodeValue);
+        },
+        toHTML: function toHTML() {
             return '<!--' + this.nodeValue + '-->';
-        };
-
-        return VComment;
-    }();
-
-    var VElement = function () {
-        function VElement(type, props, children, isVoidTag) {
-            _classCallCheck(this, VElement);
-
-            this.nodeName = type;
-            this.props = props;
-            this.children = children;
-            this.isVoidTag = isVoidTag;
         }
+    };
 
-        VElement.prototype.toDOM = function toDOM() {
+    function VElement(type, props, children, isVoidTag) {
+        this.nodeName = type;
+        this.props = props;
+        this.children = children;
+        this.isVoidTag = isVoidTag;
+    }
+    VElement.prototype = {
+        constructor: VElement,
+        toDOM: function toDOM() {
             if (this.dom) return this.dom;
             var dom,
                 tagName = this.nodeName;
@@ -3336,9 +3291,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                     break;
             }
             return this.dom = dom;
-        };
-
-        VElement.prototype.hackIE = function hackIE(dom, nodeName, template, prop) {
+        },
+        hackIE: function hackIE(dom, nodeName, template, prop) {
             switch (dom.nodeName) {
                 case 'script':
                     dom.type = 'noexec';
@@ -3354,9 +3308,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                     dom.textContent = template;
                     break;
             }
-        };
-
-        VElement.prototype.toHTML = function toHTML() {
+        },
+        toHTML: function toHTML() {
             var arr = [];
             var props = this.props || {};
             for (var i in props) {
@@ -3377,10 +3330,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 }).join('');
             }
             return str + '</' + this.nodeName + '>';
-        };
-
-        return VElement;
-    }();
+        }
+    };
 
     function skipFalseAndFunction(a) {
         return a !== false && Object(a) !== a;
@@ -3434,57 +3385,48 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
     var VMLTags = avalon.oneObject('shape,line,polyline,rect,roundrect,oval,arc,' + 'curve,background,image,shapetype,group,fill,' + 'stroke,shadow, extrusion, textbox, imagedata, textpath');
 
-    var VFragment = function () {
-        function VFragment(children, key, val, index) {
-            _classCallCheck(this, VFragment);
-
-            this.nodeName = '#document-fragment';
-            this.children = children || [];
-            this.key = key;
-            this.val = val;
-            this.index = index;
-            this.props = {};
-        }
-
-        VFragment.prototype.toDOM = function toDOM() {
+    function VFragment(children, key, val, index) {
+        this.nodeName = '#document-fragment';
+        this.children = children || [];
+        this.key = key;
+        this.val = val;
+        this.index = index;
+        this.props = {};
+    }
+    VFragment.prototype = {
+        constructor: VFragment,
+        toDOM: function toDOM() {
             if (this.dom) return this.dom;
             var f = this.toFragment();
             //IE6-11 docment-fragment都没有children属性 
             this.split = f.lastChild;
             return this.dom = f;
-        };
-
-        VFragment.prototype.dispose = function dispose() {
+        },
+        dispose: function dispose() {
             this.toFragment();
             this.innerRender && this.innerRender.dispose();
             for (var i in this) {
                 this[i] = null;
             }
-        };
-
-        VFragment.prototype.toFragment = function toFragment() {
+        },
+        toFragment: function toFragment() {
             var f = createFragment();
             this.children.forEach(function (el) {
                 return f.appendChild(avalon.vdom(el, 'toDOM'));
             });
             return f;
-        };
-
-        VFragment.prototype.toHTML = function toHTML() {
+        },
+        toHTML: function toHTML() {
             var c = this.children || [];
             return c.map(function (el) {
                 return avalon.vdom(el, 'toHTML');
             }).join('');
-        };
-
-        return VFragment;
-    }();
+        }
+    };
 
     /**
      * 虚拟DOM的4大构造器
      */
-
-
     avalon.mix(avalon, {
         VText: VText,
         VComment: VComment,
@@ -3824,58 +3766,54 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
     var actionUUID = 1;
 
-    var Action = function () {
-        function Action(vm, options, callback) {
-            _classCallCheck(this, Action);
-
-            for (var i in options) {
-                if (protectedMenbers[i] !== 1) {
-                    this[i] = options[i];
-                }
-            }
-            this.vm = vm;
-            this.observers = [];
-            this.callback = callback;
-            this.uuid = ++actionUUID;
-            this.mapIDs = {}; //这个用于去重
-            this.isAction = true;
-            var expr = this.expr;
-            // 缓存取值函数
-            if (typeof this.getter !== 'function') {
-                this.getter = createGetter(expr, this.type);
-            }
-            // 缓存设值函数（双向数据绑定）
-            if (this.type === 'duplex') {
-                this.setter = createSetter(expr, this.type);
-            }
-            // 缓存表达式旧值
-            this.oldValue = null;
-            // 表达式初始值 & 提取依赖
-            if (!this.node) {
-                this.value = this.get();
+    function Action(vm, options, callback) {
+        for (var i in options) {
+            if (protectedMenbers[i] !== 1) {
+                this[i] = options[i];
             }
         }
+        this.vm = vm;
+        this.observers = [];
+        this.callback = callback;
+        this.uuid = ++actionUUID;
+        this.mapIDs = {}; //这个用于去重
+        this.isAction = true;
+        var expr = this.expr;
+        // 缓存取值函数
+        if (typeof this.getter !== 'function') {
+            this.getter = createGetter(expr, this.type);
+        }
+        // 缓存设值函数（双向数据绑定）
+        if (this.type === 'duplex') {
+            this.setter = createSetter(expr, this.type);
+        }
+        // 缓存表达式旧值
+        this.oldValue = null;
+        // 表达式初始值 & 提取依赖
+        if (!this.node) {
+            this.value = this.get();
+        }
+    }
 
-        Action.prototype.getValue = function getValue() {
+    Action.prototype = {
+        getValue: function getValue() {
             var scope = this.vm;
             try {
                 return this.getter.call(scope, scope);
             } catch (e) {
                 avalon.log(this.getter + ' exec error');
             }
-        };
-
-        Action.prototype.setValue = function setValue(value) {
+        },
+        setValue: function setValue(value) {
             var scope = this.vm;
             if (this.setter) {
                 this.setter.call(scope, scope, value);
             }
-        };
+        },
+
 
         // get --> getValue --> getter
-
-
-        Action.prototype.get = function get(fn) {
+        get: function get(fn) {
             var name = 'action track ' + this.type;
 
             if (this.deep) {
@@ -3889,19 +3827,17 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             }
 
             return value;
-        };
+        },
+
 
         /**
          * 在更新视图前保存原有的value
          */
-
-
-        Action.prototype.beforeUpdate = function beforeUpdate() {
+        beforeUpdate: function beforeUpdate() {
             var v = this.value;
             return this.oldValue = v && v.$events ? v.$model : v;
-        };
-
-        Action.prototype.update = function update(args, uuid) {
+        },
+        update: function update(args, uuid) {
             var oldVal = this.beforeUpdate();
             var newVal = this.value = this.get();
             var callback = this.callback;
@@ -3909,9 +3845,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 callback.call(this.vm, this.value, oldVal, this.expr);
             }
             this._isScheduled = false;
-        };
-
-        Action.prototype.schedule = function schedule() {
+        },
+        schedule: function schedule() {
             if (!this._isScheduled) {
                 this._isScheduled = true;
                 avalon.Array.ensure(avalon.pendingActions, this);
@@ -3919,30 +3854,27 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 runActions(); //这里会还原_isScheduled
                 endBatch('schedule ' + this.expr);
             }
-        };
-
-        Action.prototype.removeDepends = function removeDepends() {
+        },
+        removeDepends: function removeDepends() {
             var self = this;
             this.observers.forEach(function (depend) {
                 avalon.Array.remove(depend.observers, self);
             });
-        };
+        },
+
 
         /**
          * 比较两个计算值是否,一致,在for, class等能复杂数据类型的指令中,它们会重写diff复法
          */
-
-
-        Action.prototype.diff = function diff(a, b) {
+        diff: function diff(a, b) {
             return a !== b;
-        };
+        },
+
 
         /**
          * 销毁指令
          */
-
-
-        Action.prototype.dispose = function dispose() {
+        dispose: function dispose() {
             this.value = null;
             this.removeDepends();
             if (this.beforeDispose) {
@@ -3951,10 +3883,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             for (var i in this) {
                 delete this[i];
             }
-        };
-
-        return Action;
-    }();
+        }
+    };
 
     var protectedMenbers = {
         vm: 1,
@@ -3988,31 +3918,28 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
      与Computed等共享UUID
     */
     var obid = 1;
-
-    var Mutation = function () {
-        function Mutation(expr, value, vm) {
-            _classCallCheck(this, Mutation);
-
-            //构造函数
-            this.expr = expr;
-            if (value) {
-                var childVm = platform.createProxy(value, this);
-                if (childVm) {
-                    value = childVm;
-                }
+    function Mutation(expr, value, vm) {
+        //构造函数
+        this.expr = expr;
+        if (value) {
+            var childVm = platform.createProxy(value, this);
+            if (childVm) {
+                value = childVm;
             }
-            this.value = value;
-            this.vm = vm;
-            try {
-                vm.$mutations[expr] = this;
-            } catch (ignoreIE) {}
-            this.uuid = ++obid;
-            this.updateVersion();
-            this.mapIDs = {};
-            this.observers = [];
         }
+        this.value = value;
+        this.vm = vm;
+        try {
+            vm.$mutations[expr] = this;
+        } catch (ignoreIE) {}
+        this.uuid = ++obid;
+        this.updateVersion();
+        this.mapIDs = {};
+        this.observers = [];
+    }
 
-        Mutation.prototype.get = function get() {
+    Mutation.prototype = {
+        get: function get() {
             this.collect();
             var childOb = this.value;
             if (childOb && childOb.$events) {
@@ -4031,27 +3958,23 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 }
             }
             return this.value;
-        };
-
-        Mutation.prototype.collect = function collect() {
+        },
+        collect: function collect() {
             var name = 'mutation ' + this.expr;
             startBatch(name);
             avalon.track(name, '要被上交了');
             reportObserved(this);
             endBatch(name);
-        };
-
-        Mutation.prototype.updateVersion = function updateVersion() {
+        },
+        updateVersion: function updateVersion() {
             this.version = Math.random() + Math.random();
-        };
-
-        Mutation.prototype.notify = function notify() {
+        },
+        notify: function notify() {
             transactionStart();
             propagateChanged(this);
             transactionEnd();
-        };
-
-        Mutation.prototype.set = function set(newValue) {
+        },
+        set: function set(newValue) {
             var oldValue = this.value;
             if (newValue !== oldValue) {
                 if (newValue) {
@@ -4068,10 +3991,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 this.updateVersion();
                 this.notify();
             }
-        };
-
-        return Mutation;
-    }();
+        }
+    };
 
     function getBody(fn) {
         var entire = fn.toString();
@@ -4080,31 +4001,39 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     //如果不存在三目,if,方法
     var instability = /(\?|if\b|\(.+\))/;
 
-    var Computed = function (_Mutation) {
-        _inherits(Computed, _Mutation);
+    function __create(o) {
+        var __ = function __() {};
+        __.prototype = o;
+        return new __();
+    }
+
+    function __extends(child, parent) {
+        if (typeof parent === 'function') {
+            var proto = child.prototype = __create(parent.prototype);
+            proto.constructor = child;
+        }
+    }
+    var Computed = function (_super) {
+        __extends(Computed, _super);
 
         function Computed(name, options, vm) {
-            _classCallCheck(this, Computed);
-
-            var _this = _possibleConstructorReturn(this, _Mutation.call(this, name, undefined, vm)); //构造函数
-
-
+            //构造函数
+            _super.call(this, name, undefined, vm);
             delete options.get;
             delete options.set;
 
-            avalon.mix(_this, options);
-            _this.deps = {};
-            _this.type = 'computed';
-            _this.depsVersion = {};
-            _this.isComputed = true;
-            _this.trackAndCompute();
-            if (!('isStable' in _this)) {
-                _this.isStable = !instability.test(getBody(_this.getter));
+            avalon.mix(this, options);
+            this.deps = {};
+            this.type = 'computed';
+            this.depsVersion = {};
+            this.isComputed = true;
+            this.trackAndCompute();
+            if (!('isStable' in this)) {
+                this.isStable = !instability.test(getBody(this.getter));
             }
-            return _this;
         }
-
-        Computed.prototype.trackAndCompute = function trackAndCompute() {
+        var cp = Computed.prototype;
+        cp.trackAndCompute = function () {
             if (this.isStable && this.depsCount > 0) {
                 this.getValue();
             } else {
@@ -4112,11 +4041,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             }
         };
 
-        Computed.prototype.getValue = function getValue() {
+        cp.getValue = function () {
             return this.value = this.getter.call(this.vm);
         };
 
-        Computed.prototype.schedule = function schedule() {
+        cp.schedule = function () {
             var observers = this.observers;
             var i = observers.length;
             while (i--) {
@@ -4127,7 +4056,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             }
         };
 
-        Computed.prototype.shouldCompute = function shouldCompute() {
+        cp.shouldCompute = function () {
             if (this.isStable) {
                 //如果变动因子确定,那么只比较变动因子的版本
                 var toComputed = false;
@@ -4141,14 +4070,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             }
             return true;
         };
-
-        Computed.prototype.set = function set() {
+        cp.set = function () {
             if (this.setter) {
                 avalon.transaction(this.setter, this.vm, arguments);
             }
         };
-
-        Computed.prototype.get = function get() {
+        cp.get = function () {
             //下面这一行好像没用
             //  startBatch('computed '+ this.key)
             //当被设置了就不稳定,当它被访问了一次就是稳定
@@ -4174,8 +4101,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             //  endBatch('computed '+ this.key)
             return this.value;
         };
-
-        return Computed;
     }(Mutation);
 
     if (modern) {
@@ -7061,28 +6986,23 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     /**
      * avalon.scan 的内部实现
      */
+    function Render(node, vm, beforeReady) {
+        this.root = node; //如果传入的字符串,确保只有一个标签作为根节点
+        this.vm = vm;
+        this.beforeReady = beforeReady;
+        this.bindings = []; //收集待加工的绑定属性
+        this.callbacks = [];
+        this.directives = [];
+        this.init();
+    }
 
-    var Render = function () {
-        function Render(node, vm, beforeReady) {
-            _classCallCheck(this, Render);
-
-            this.root = node; //如果传入的字符串,确保只有一个标签作为根节点
-            this.vm = vm;
-            this.beforeReady = beforeReady;
-            this.bindings = []; //收集待加工的绑定属性
-            this.callbacks = [];
-            this.directives = [];
-            this.init();
-        }
-
+    Render.prototype = {
         /**
          * 开始扫描指定区域
          * 收集绑定属性
          * 生成指令并建立与VM的关联
          */
-
-
-        Render.prototype.init = function init() {
+        init: function init() {
             var vnodes;
             if (this.root && this.root.nodeType > 0) {
                 vnodes = fromDOM(this.root); //转换虚拟DOM
@@ -7097,9 +7017,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             this.root = vnodes[0];
             this.vnodes = vnodes;
             this.scanChildren(vnodes, this.vm, true);
-        };
-
-        Render.prototype.scanChildren = function scanChildren(children, scope, isRoot) {
+        },
+        scanChildren: function scanChildren(children, scope, isRoot) {
             for (var i = 0; i < children.length; i++) {
                 var vdom = children[i];
                 switch (vdom.nodeName) {
@@ -7120,7 +7039,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             if (isRoot) {
                 this.complete();
             }
-        };
+        },
+
 
         /**
          * 从文本节点获取指令
@@ -7128,15 +7048,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
          * @param {type} scope
          * @returns {undefined}
          */
-
-
-        Render.prototype.scanText = function scanText(vdom, scope) {
+        scanText: function scanText(vdom, scope) {
             if (config.rexpr.test(vdom.nodeValue)) {
                 this.bindings.push([vdom, scope, {
                     nodeValue: vdom.nodeValue
                 }]);
             }
-        };
+        },
+
 
         /**
          * 从注释节点获取指令
@@ -7145,13 +7064,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
          * @param {type} parentChildren
          * @returns {undefined}
          */
-
-
-        Render.prototype.scanComment = function scanComment(vdom, scope, parentChildren) {
+        scanComment: function scanComment(vdom, scope, parentChildren) {
             if (startWith(vdom.nodeValue, 'ms-for:')) {
                 this.getForBinding(vdom, scope, parentChildren);
             }
-        };
+        },
+
 
         /**
          * 从元素节点的nodeName与属性中获取指令
@@ -7161,9 +7079,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
          * @param {type} isRoot 用于执行complete方法
          * @returns {undefined}
          */
-
-
-        Render.prototype.scanTag = function scanTag(vdom, scope, parentChildren, isRoot) {
+        scanTag: function scanTag(vdom, scope, parentChildren, isRoot) {
             var dirs = {},
                 attrs = vdom.props,
                 hasDir,
@@ -7257,16 +7173,15 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             if (!orphanTag[vdom.nodeName] && children && children.length && !delayCompileNodes(dirs)) {
                 this.scanChildren(children, scope, false);
             }
-        };
+        },
+
 
         /**
          * 将绑定属性转换为指令
          * 执行各种回调与优化指令
          * @returns {undefined}
          */
-
-
-        Render.prototype.complete = function complete() {
+        complete: function complete() {
             this.yieldDirectives();
             this.beforeReady();
             if (inBrowser) {
@@ -7283,23 +7198,20 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 fn();
             }
             this.optimizeDirectives();
-        };
+        },
+
 
         /**
          * 将收集到的绑定属性进行深加工,最后转换指令
          * @returns {Array<tuple>}
          */
-
-
-        Render.prototype.yieldDirectives = function yieldDirectives() {
+        yieldDirectives: function yieldDirectives() {
             var tuple;
             while (tuple = this.bindings.shift()) {
-                var _tuple = tuple,
-                    vdom = _tuple[0],
-                    scope = _tuple[1],
-                    dirs = _tuple[2];
-
-                var bindings = [];
+                var vdom = tuple[0],
+                    scope = tuple[1],
+                    dirs = tuple[2],
+                    bindings = [];
                 if ('nodeValue' in dirs) {
                     bindings = parseInterpolate(dirs);
                 } else if (!('ms-skip' in dirs)) {
@@ -7318,15 +7230,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                     this.directives.push(directive$$1);
                 }
             }
-        };
+        },
+
 
         /**
          * 修改指令的update与callback方法,让它们以后执行时更加高效
          * @returns {undefined}
          */
-
-
-        Render.prototype.optimizeDirectives = function optimizeDirectives() {
+        optimizeDirectives: function optimizeDirectives() {
             for (var i = 0, el; el = this.directives[i++];) {
                 el.callback = directives[el.type].update;
                 el.update = function () {
@@ -7358,15 +7269,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 };
                 el._isScheduled = false;
             }
-        };
+        },
+
 
         /**
          * 销毁所有指令
          * @returns {undefined}
          */
-
-
-        Render.prototype.dispose = function dispose() {
+        dispose: function dispose() {
             var list = this.directives || [];
             for (var i = 0, el; el = list[i++];) {
                 el.dispose();
@@ -7375,7 +7285,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             for (var i in this) {
                 if (i !== 'dispose') delete this[i];
             }
-        };
+        },
+
 
         /**
          * 将循环区域转换为for指令
@@ -7385,9 +7296,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
          * @param {type} userCb 循环结束回调
          * @returns {undefined}
          */
-
-
-        Render.prototype.getForBinding = function getForBinding(begin, scope, parentChildren, userCb) {
+        getForBinding: function getForBinding(begin, scope, parentChildren, userCb) {
             var expr = begin.nodeValue.replace('ms-for:', '').trim();
             begin.nodeValue = 'ms-for:' + expr;
             var nodes = getRange(parentChildren, begin);
@@ -7405,7 +7314,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 fragment: fragment,
                 parentChildren: parentChildren
             }]);
-        };
+        },
+
 
         /**
          * 在带ms-for元素节点旁添加两个注释节点,组成循环区域
@@ -7415,9 +7325,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
          * @param {type} expr
          * @returns {undefined}
          */
-
-
-        Render.prototype.getForBindingByElement = function getForBindingByElement(vdom, scope, parentChildren, expr) {
+        getForBindingByElement: function getForBindingByElement(vdom, scope, parentChildren, expr) {
             var index = parentChildren.indexOf(vdom); //原来带ms-for的元素节点
             var props = vdom.props;
             var begin = {
@@ -7434,10 +7342,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             };
             parentChildren.splice(index, 1, begin, vdom, end);
             this.getForBinding(begin, scope, parentChildren, props['data-for-rendered']);
-        };
-
-        return Render;
-    }();
+        }
+    };
 
     var events = 'onInit,onReady,onViewChange,onDispose,onEnter,onLeave';
     var componentEvents = avalon.oneObject(events);

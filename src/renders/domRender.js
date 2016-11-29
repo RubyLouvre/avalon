@@ -26,17 +26,17 @@ var viewID
     /**
      * avalon.scan 的内部实现
      */
-class Render {
-    constructor(node, vm, beforeReady) {
-        this.root = node //如果传入的字符串,确保只有一个标签作为根节点
-        this.vm = vm
-        this.beforeReady = beforeReady
-        this.bindings = [] //收集待加工的绑定属性
-        this.callbacks = []
-        this.directives = []
-        this.init()
-    }
+function Render(node, vm, beforeReady) {
+    this.root = node //如果传入的字符串,确保只有一个标签作为根节点
+    this.vm = vm
+    this.beforeReady = beforeReady
+    this.bindings = [] //收集待加工的绑定属性
+    this.callbacks = []
+    this.directives = []
+    this.init()
+}
 
+Render.prototype = {
     /**
      * 开始扫描指定区域
      * 收集绑定属性
@@ -57,7 +57,7 @@ class Render {
         this.root = vnodes[0]
         this.vnodes = vnodes
         this.scanChildren(vnodes, this.vm, true)
-    }
+    },
 
     scanChildren(children, scope, isRoot) {
         for (var i = 0; i < children.length; i++) {
@@ -80,7 +80,7 @@ class Render {
         if (isRoot) {
             this.complete()
         }
-    }
+    },
 
     /**
      * 从文本节点获取指令
@@ -94,7 +94,7 @@ class Render {
                 nodeValue: vdom.nodeValue
             }])
         }
-    }
+    },
 
     /**
      * 从注释节点获取指令
@@ -107,7 +107,7 @@ class Render {
         if (startWith(vdom.nodeValue, 'ms-for:')) {
             this.getForBinding(vdom, scope, parentChildren)
         }
-    }
+    },
 
     /**
      * 从元素节点的nodeName与属性中获取指令
@@ -216,7 +216,7 @@ class Render {
         ) {
             this.scanChildren(children, scope, false)
         }
-    }
+    },
 
 
     /**
@@ -241,7 +241,7 @@ class Render {
             fn()
         }
         this.optimizeDirectives()
-    }
+    },
 
     /**
      * 将收集到的绑定属性进行深加工,最后转换指令
@@ -250,8 +250,10 @@ class Render {
     yieldDirectives() {
         var tuple
         while (tuple = this.bindings.shift()) {
-            var [vdom, scope, dirs] = tuple
-            var bindings = []
+            var vdom = tuple[0],
+                scope = tuple[1],
+                dirs = tuple[2],
+                bindings = []
             if ('nodeValue' in dirs) {
                 bindings = parseInterpolate(dirs)
             } else if (!('ms-skip' in dirs)) {
@@ -270,7 +272,7 @@ class Render {
                 this.directives.push(directive)
             }
         }
-    }
+    },
 
     /**
      * 修改指令的update与callback方法,让它们以后执行时更加高效
@@ -312,7 +314,7 @@ class Render {
             }
             el._isScheduled = false
         }
-    }
+    },
 
     /**
      * 销毁所有指令
@@ -325,10 +327,10 @@ class Render {
         }
         //防止其他地方的this.innerRender && this.innerRender.dispose报错
         for (var i in this) {
-            if(i !== 'dispose')
-               delete this[i]
+            if (i !== 'dispose')
+                delete this[i]
         }
-    }
+    },
 
     /**
      * 将循环区域转换为for指令
@@ -358,7 +360,7 @@ class Render {
                 parentChildren
             }
         ])
-    }
+    },
 
 
     /**

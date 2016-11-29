@@ -1,13 +1,13 @@
 import { avalon, document } from '../seed/core'
 
-export class VElement {
-    constructor(type, props, children, isVoidTag) {
-        this.nodeName = type
-        this.props = props
-        this.children = children
-        this.isVoidTag = isVoidTag
-    }
-
+export function VElement(type, props, children, isVoidTag) {
+    this.nodeName = type
+    this.props = props
+    this.children = children
+    this.isVoidTag = isVoidTag
+}
+VElement.prototype = {
+    constructor: VElement,
     toDOM() {
         if (this.dom)
             return this.dom
@@ -51,7 +51,7 @@ export class VElement {
                 break
         }
         return this.dom = dom
-    }
+    },
     toHTML() {
         var arr = []
         var props = this.props || {}

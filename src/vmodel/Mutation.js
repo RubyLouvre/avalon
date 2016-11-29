@@ -14,26 +14,26 @@ import {
  与Computed等共享UUID
 */
 export let obid = 1
-export class Mutation {
-    constructor(expr, value, vm) { //构造函数
-        this.expr = expr
-        if (value) {
-            var childVm = platform.createProxy(value, this)
-            if (childVm) {
-                value = childVm
-            }
+export function Mutation(expr, value, vm) { //构造函数
+    this.expr = expr
+    if (value) {
+        var childVm = platform.createProxy(value, this)
+        if (childVm) {
+            value = childVm
         }
-        this.value = value
-        this.vm = vm
-        try {
-            vm.$mutations[expr] = this
-        } catch (ignoreIE) {}
-        this.uuid = ++obid
-        this.updateVersion()
-        this.mapIDs = {}
-        this.observers = []
     }
+    this.value = value
+    this.vm = vm
+    try {
+        vm.$mutations[expr] = this
+    } catch (ignoreIE) {}
+    this.uuid = ++obid
+    this.updateVersion()
+    this.mapIDs = {}
+    this.observers = []
+}
 
+Mutation.prototype = {
     get() {
         this.collect()
         var childOb = this.value
@@ -54,7 +54,7 @@ export class Mutation {
 
         }
         return this.value
-    }
+    },
 
     collect() {
         var name = 'mutation ' + this.expr
@@ -62,17 +62,17 @@ export class Mutation {
         avalon.track(name, '要被上交了')
         reportObserved(this)
         endBatch(name)
-    }
+    },
 
     updateVersion() {
         this.version = Math.random() + Math.random()
-    }
+    },
 
     notify() {
         transactionStart()
         propagateChanged(this)
         transactionEnd()
-    }
+    },
 
     set(newValue) {
         var oldValue = this.value

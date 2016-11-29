@@ -8,17 +8,19 @@
  
  removed  <--  <--  <--  <--  <--  <--  <--  <--  <--  <--  <--  added 
  */
-export class Cache {
-    constructor(maxLength) {
-        // 标识当前缓存数组的大小
-        this.size = 0
-            // 标识缓存数组能达到的最大长度
-        this.limit = maxLength
-            //  head（最不常用的项），tail（最常用的项）全部初始化为undefined
+export function Cache(maxLength) {
+    // 标识当前缓存数组的大小
+    this.size = 0
+        // 标识缓存数组能达到的最大长度
+    this.limit = maxLength
+        //  head（最不常用的项），tail（最常用的项）全部初始化为undefined
 
-        this.head = this.tail = void 0
-        this._keymap = {}
-    }
+    this.head = this.tail = void 0
+    this._keymap = {}
+}
+
+Cache.prototype = {
+
     put(key, value) {
         var entry = {
             key: key,
@@ -42,7 +44,7 @@ export class Cache {
             this.size++
         }
         return value
-    }
+    },
 
     shift() {
         /* istanbul ignore next */
@@ -61,7 +63,7 @@ export class Cache {
                 // 同步更新 缓存数组的长度
             this.size--
         }
-    }
+    },
 
     get(key) {
         var entry = this._keymap[key]
@@ -75,7 +77,7 @@ export class Cache {
         }
         // HEAD--------------TAIL
         //   <.older   .newer>
-        //   <--- add direction --
+        //  <--- add direction --
         //   A  B  C  <D>  E
         if (entry.newer) {
             // 处理 newer 指向
@@ -106,6 +108,4 @@ export class Cache {
         this.tail = entry
         return entry.value
     }
-
-
 }

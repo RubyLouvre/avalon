@@ -78,7 +78,7 @@ if (typeof Proxy === 'function') {
         return '☥' + str + '☥'
     }
     var traps = {
-        deleteProperty: function(target, name) {
+        deleteProperty(target, name) {
             if (target.hasOwnProperty(name)) {
                 //移除一个属性,分三昌:
                 //1. 移除监听器
@@ -90,7 +90,7 @@ if (typeof Proxy === 'function') {
             }
             return true
         },
-        get: function(target, name) {
+        get(target, name) {
             if (name === '$model') {
                 return platform.toJson(target)
             }
@@ -100,7 +100,7 @@ if (typeof Proxy === 'function') {
             var childObj = target[name]
             return mutation ? mutation.get() : childObj
         },
-        set: function(target, name, value) {
+        set(target, name, value) {
             if (name === '$model') {
                 return true
             }
@@ -133,7 +133,7 @@ if (typeof Proxy === 'function') {
             //'set' on proxy: trap returned falsish for property xxx 错误
             return true
         },
-        has: function(target, name) {
+        has(target, name) {
             return target.hasOwnProperty(name)
         }
     }
