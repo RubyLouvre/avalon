@@ -25,7 +25,7 @@ var brackets = /\(([^)]*)\)/
 var rpipeline = /\|(?=\?\?)/
 var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
 var robjectProp = /\.[\w\.\$]+/g //对象的属性 el.xxx 中的xxx
-var robjectKey = /(\b[\$\w]+\s*):/g  //对象的键名与冒号 {xxx:1,yyy: 2}中的xxx, yyy
+var robjectKey = /(\{|\,)\s*([\$\w]+)\s*:/g  //对象的键名与冒号 {xxx:1,yyy: 2}中的xxx, yyy
 var rfilterName = /\|(\w+)/g
 var rlocalVar = /[$a-zA-Z_][$a-zA-Z0-9_]*/g
 
@@ -55,7 +55,9 @@ export function addScope(expr, type) {
     input = input.replace(rshortCircuit, dig).   //移除所有短路运算符
         replace(ruselessSp, '$1').               //移除.|两端空白
         replace(rvmKey, '$1__vmodel__.').        //转换@与##为__vmodel__
-        replace(robjectKey, dig).                //移除所有键名
+        replace(robjectKey, function(_,a,b){     //移除所有键名
+            return a+dig(b)+':'                  //比如 ms-widget="[{is:'ms-address-wrap', $id:'address'}]"这样极端的情况 
+        }).               
         replace(rfilterName, function (a, b) {   //移除所有过滤器的名字
             return '|' + dig(b)
         })
