@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-28:20 version 2.2.1 by 司徒正美
+built in 2016-11-29:20 version 2.2.1 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -2443,7 +2443,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         // https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incolgroup
         colgroup: oneObject('col,template,#document-fragment'),
         // https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intable
-        table: oneObject('caption,colgroup,tbody,thead,tfoot,style,script,template,#document-fragment'),
+        // table: oneObject('caption,colgroup,tbody,thead,tfoot,style,script,template,#document-fragment'),
         // https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inhead
         head: oneObject('base,basefont,bgsound,link,style,script,meta,title,noscript,noframes,template,#document-fragment'),
         // https://html.spec.whatwg.org/multipage/semantics.html#the-html-element
@@ -2580,7 +2580,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                         avalon.error(match[0] + '前面缺少<' + nodeName + '>');
                         /* istanbul ignore else*/
                     } else if (last.nodeName !== nodeName) {
-                        avalon.error(last.nodeName + '没有闭合');
+                        var errMsg = ast.nodeName + '没有闭合,请注意属性的引号';
+                        avalon.warn(errMsg);
+                        avalon.error(errMsg);
                     }
                     node = stack.pop();
                     node.end = true;
@@ -3452,9 +3454,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             return this.dom = f;
         };
 
-        VFragment.prototype.destory = function destory() {
+        VFragment.prototype.dispose = function dispose() {
             this.toFragment();
-            this.boss && this.boss.destroy();
+            this.innerRender && this.innerRender.dispose();
             for (var i in this) {
                 this[i] = null;
             }
@@ -3586,7 +3588,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     function reportObserved(observer) {
         var action = avalon.trackingAction || null;
         if (action !== null) {
-            avalon.track('收集到', observer.expr);
+            avalon.track('征收到', observer.expr);
             action.mapIDs[observer.uuid] = observer;
             observer.isCollected = 1;
         } else if (observer.observers.length === 0) {
@@ -3610,7 +3612,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             targetStack.push(preAction);
         }
         avalon.trackingAction = action;
-        avalon.track('【action】', action.type, action.expr, '开始收集依赖项');
+        avalon.track('【action】', action.type, action.expr, '开始征收依赖项');
         //多个observe持有同一个action
         action.mapIDs = {}; //重新收集依赖
         var hasError = true,
@@ -3917,7 +3919,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             }
         };
 
-        Action.prototype.removeDepends = function removeDepends(filter) {
+        Action.prototype.removeDepends = function removeDepends() {
             var self = this;
             this.observers.forEach(function (depend) {
                 avalon.Array.remove(depend.observers, self);
@@ -3938,11 +3940,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
          */
 
 
-        Action.prototype.destroy = function destroy() {
+        Action.prototype.dispose = function dispose() {
             this.value = null;
             this.removeDepends();
-            if (this.beforeDestroy) {
-                this.beforeDestroy();
+            if (this.beforeDispose) {
+                this.beforeDispose();
             }
             for (var i in this) {
                 delete this[i];
@@ -3975,8 +3977,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         //name: "ms-for"
         //attrName: ":for"
         //param: "click"
-        //beforeDestroy
-        destroy: 1
+        //beforeDispose
+        dispose: 1
     };
 
     /**
@@ -4000,7 +4002,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             this.value = value;
             this.vm = vm;
             try {
-                vm.$mutations[key] = this;
+                vm.$mutations[expr] = this;
             } catch (ignoreIE) {}
             this.uuid = ++obid;
             this.updateVersion();
@@ -4032,6 +4034,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         Mutation.prototype.collect = function collect() {
             var name = 'mutation ' + this.expr;
             startBatch(name);
+            avalon.track(name, '要被上交了');
             reportObserved(this);
             endBatch(name);
         };
@@ -4542,7 +4545,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             }
 
             return function () {
-                w.destroy();
+                w.dispose();
                 avalon.Array.remove(core[expr], w);
                 if (core[expr].length === 0) {
                     delete core[expr];
@@ -4828,8 +4831,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
     function getEnumerableKeys(obj) {
         var res = [];
-        for (var _key in obj) {
-            res.push(_key);
+        for (var key in obj) {
+            res.push(key);
         }return res;
     }
 
@@ -5359,15 +5362,22 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     });
 
     avalon.directive('html', {
-        update: function update(vdom, value) {
-            this.boss && this.boss.destroy();
 
-            this.boss = avalon.scan('<div>' + value + '</div>', this.vm, function () {
+        update: function update(vdom, value) {
+            this.beforeDispose();
+
+            this.innerRender = avalon.scan('<div class="ms-html-container">' + value + '</div>', this.vm, function () {
                 var oldRoot = this.root;
+                if (vdom.children) vdom.children.splice(0);
                 vdom.children = oldRoot.children;
                 this.root = vdom;
-                avalon.clearHTML(vdom.dom);
+                if (vdom.dom) avalon.clearHTML(vdom.dom);
             });
+        },
+        beforeDispose: function beforeDispose() {
+            if (this.innerRender) {
+                this.innerRender.dispose();
+            }
         },
         delay: true
     });
@@ -5403,7 +5413,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 p && p.replaceChild(vdom.dom, placeholder);
             } else {
                 //移除DOM
-                this.boss && this.boss.destroy();
+                this.beforeDispose();
                 vdom.nodeValue = 'if';
                 vdom.nodeName = '#comment';
                 delete vdom.children;
@@ -5414,11 +5424,17 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                     p.replaceChild(placeholder, dom);
                 }
             }
+        },
+        beforeDispose: function beforeDispose() {
+            if (this.innerRender) {
+                this.innerRender.dispose();
+            }
         }
     });
+
     function continueScan(instance, vdom) {
-        var boss = instance.boss = avalon.scan(instance.fragment, instance.vm);
-        avalon.shadowCopy(vdom, boss.root);
+        var innerRender = instance.innerRender = avalon.scan(instance.fragment, instance.vm);
+        avalon.shadowCopy(vdom, innerRender.root);
         delete vdom.nodeValue;
     }
 
@@ -5460,7 +5476,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             avalon(dom).bind(this.eventType, fn);
         },
 
-        beforeDestroy: function beforeDestroy() {
+        beforeDispose: function beforeDispose() {
             avalon(this.node.dom).unbind(this.eventType);
         }
     });
@@ -5545,6 +5561,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 });
             }
             delete this.updating;
+        },
+        beforeDispose: function beforeDispose() {
+            this.fragments.forEach(function (el) {
+                el.dispose;
+            });
         }
     });
 
@@ -5596,13 +5617,13 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         var list = instance.preFragments;
 
         list.forEach(function (el) {
-            el._destory = true;
+            el._dispose = true;
         });
         instance.fragments.forEach(function (c, index) {
             var fragment = isInCache(cache, c.key);
             //取出之前的文档碎片
             if (fragment) {
-                delete fragment._destory;
+                delete fragment._dispose;
                 fragment.oldIndex = fragment.index;
                 fragment.index = index; // 相当于 c.index
                 fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key;
@@ -5623,7 +5644,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
                 fragment.vm[instance.valName] = val;
                 fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key;
-                delete fragment._destory;
+                delete fragment._dispose;
             } else {
                 fragment = FragmentDecorator(c, instance, c.index);
                 list.push(fragment);
@@ -5645,10 +5666,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         var list = instance.fragments;
         var end = instance.end.dom;
         for (var i = 0, item; item = list[i]; i++) {
-            if (item._destory) {
+            if (item._dispose) {
                 list.splice(i, 1);
                 i--;
-                item.destory();
+                item.dispose();
                 continue;
             }
             if (item.oldIndex !== item.index) {
@@ -5669,7 +5690,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
      * @param {type} fragment
      * @param {type} this
      * @param {type} index
-     * @returns { key, val, index, oldIndex, this, dom, split, boss, vm}
+     * @returns { key, val, index, oldIndex, this, dom, split, vm}
      */
     function FragmentDecorator(fragment, instance, index) {
         var data = {};
@@ -5693,7 +5714,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             });
         }
         fragment.index = index;
-        fragment.boss = avalon.scan(instance.fragment, vm, function () {
+        fragment.innerRender = avalon.scan(instance.fragment, vm, function () {
             var oldRoot = this.root;
             ap.push.apply(fragment.children, oldRoot.children);
             this.root = fragment;
@@ -7343,13 +7364,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
          */
 
 
-        Render.prototype.destroy = function destroy() {
+        Render.prototype.dispose = function dispose() {
             var list = this.directives || [];
             for (var i = 0, el; el = list[i++];) {
-                el.destroy();
+                el.dispose();
             }
+            //防止其他地方的this.innerRender && this.innerRender.dispose报错
             for (var i in this) {
-                delete this[i];
+                if (i !== 'dispose') delete this[i];
             }
         };
 
@@ -7488,9 +7510,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 this.comVm = comVm;
 
                 // ＝＝＝创建组件的VM＝＝END＝＝＝
-                var boss = avalon.scan(component.template, comVm);
-                comVm.$render = boss;
-                replaceRoot(this, boss);
+                var innerRender = avalon.scan(component.template, comVm);
+                comVm.$render = innerRender;
+                replaceRoot(this, innerRender);
                 var nodesWithSlot = [];
                 var directives$$1 = [];
                 if (this.fragment || component.soleSlot) {
@@ -7500,11 +7522,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                         nodesWithSlot = this.root.children;
                     });
                     directives$$1 = childBoss.directives;
+                    this.childBoss = childBoss;
                     for (var i in childBoss) {
                         delete childBoss[i];
                     }
                 }
-                boss.directives.push.apply(boss.directives, directives$$1);
+                Array.prototype.push.apply(innerRender.directives, directives$$1);
 
                 var arraySlot = [],
                     objectSlot = {};
@@ -7534,43 +7557,36 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 }
                 //将原来元素的所有孩子，全部移动新的元素的第一个slot的位置上
                 if (component.soleSlot) {
-                    insertArraySlot(boss.vnodes, arraySlot);
+                    insertArraySlot(innerRender.vnodes, arraySlot);
                 } else {
-                    insertObjectSlot(boss.vnodes, objectSlot);
+                    insertObjectSlot(innerRender.vnodes, objectSlot);
                 }
             }
 
             if (comment) {
                 var dom = avalon.vdom(vdom, 'toDOM');
                 comment.parentNode.replaceChild(dom, comment);
-                comVm.$element = boss.root.dom = dom;
+                comVm.$element = innerRender.root.dom = dom;
                 delete this.reInit;
             }
 
             //处理DOM节点
+
             dumpTree(vdom.dom);
+            comVm.$element = vdom.dom;
             groupTree(vdom.dom, vdom.children);
             if (fromCache) {
                 fireComponentHook(comVm, vdom, 'Enter');
             } else {
                 fireComponentHook(comVm, vdom, 'Ready');
             }
-            this.beforeDestroy = function () {
-                if (!this.cacheVm) {
-                    fireComponentHook(comVm, vdom, 'Dispose');
-                    comVm.$hashcode = false;
-                    delete avalon.vmodels[comVm.$id];
-                    this.boss.destroy();
-                } else {
-                    fireComponentHook(comVm, vdom, 'Leave');
-                }
-            };
         },
         diff: function diff(newVal, oldVal) {
             if (cssDiff.call(this, newVal, oldVal)) {
                 return true;
             }
         },
+
         update: function update(vdom, value) {
             this.oldValue = value; //★★防止递归
             switch (this.readyState) {
@@ -7599,18 +7615,33 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                     delete avalon.viewChanging;
                     break;
             }
+        },
+        beforeDispose: function beforeDispose() {
+            var comVm = this.comVm;
+            if (!this.cacheVm) {
+                fireComponentHook(comVm, this.node, 'Dispose');
+                comVm.$hashcode = false;
+                delete avalon.vmodels[comVm.$id];
+                this.innerRender && this.innerRender.dispose();
+            } else {
+                fireComponentHook(comVm, this.node, 'Leave');
+            }
         }
     });
 
-    function replaceRoot(instance, boss) {
-        instance.boss = boss;
-        var root$$1 = boss.root;
+    function replaceRoot(instance, innerRender) {
+        instance.innerRender = innerRender;
+        var root$$1 = innerRender.root;
         var vdom = instance.node;
+        var slot = vdom.props.slot;
         for (var i in root$$1) {
             vdom[i] = root$$1[i];
         }
-        boss.root = vdom;
-        boss.vnodes[0] = vdom;
+        if (vdom.props && slot) {
+            vdom.props.slot = slot;
+        }
+        innerRender.root = vdom;
+        innerRender.vnodes[0] = vdom;
     }
 
     function fireComponentHook(vm, vdom, name) {
@@ -7659,7 +7690,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                         cb: a[i]
                     });
                 }
-                delete a[i];
+                //delete a[i] 这里不能删除,会导致再次切换时没有onReady
             }
         }
     }

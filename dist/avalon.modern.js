@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-28:20 version 2.2.1 by 司徒正美
+built in 2016-11-29:0 version 2.2.1 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -4712,8 +4712,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     avalon$2.directive('html', {
         update: function update(vdom, value) {
             this.boss && this.boss.destroy()
-
+            console.log(value, '!!!')
             this.boss = avalon$2.scan('<div>' + value + '</div>', this.vm, function () {
+
                 var oldRoot = this.root
                 vdom.children = oldRoot.children
                 this.root = vdom

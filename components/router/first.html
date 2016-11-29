@@ -1,0 +1,23 @@
+<div ms-important="first" class="view">
+    <style>
+        .active{
+            background: blueviolet;
+        }
+        .panel{
+            margin: 2em;
+            height:300px;
+            border:1px solid #666;
+            background: gainsboro;
+        }
+    </style>
+    <p>
+        <button ms-for="(index, el) in @tabs" 
+                ms-class="{active: index === @activeIndex}"
+                ms-click="@activeIndex = index">
+            {{el}}
+        </button>
+    </p>
+    <div ms-for="(index,el) in @panels" class='panel' ms-visible="index === @activeIndex">
+        {{el}}
+    </div>
+</div>

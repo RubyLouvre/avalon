@@ -1,0 +1,75 @@
+<div ms-important="widget1">
+<style>
+    .header {
+        border:1px solid #000;
+        width: 600px;
+        border-collapse: collapse;
+    }
+    .header td{
+        border:1px solid #000;
+        text-align: center;
+        font-weight: 700;
+        height:30px;
+        color: #607fa6;
+        font-weight: 700;
+    }
+    .tbody{
+        width: 600px;
+        margin-top: -1px;
+        border:1px solid #000;
+        border-collapse: collapse;
+    }
+    .tbody td{
+        border:1px solid #000;
+        height: 30px;
+    }
+
+    .pagination ul{
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    .pagination li{
+        float: left;
+    }
+    .pagination li a{
+        text-decoration: none;
+        display: inline-block;
+        width:40px;
+        height: 30px;
+        line-height: 30px;
+        text-align: center;
+        background: #fafafa;
+        color:#000;
+
+    }
+    .pagination .active a{
+        background: #009a61;
+        color:#fff;
+    }
+    .pager{
+        width:600px;
+        background: #fafafa;
+    }
+    .pager > *{
+        float: right;
+
+    }
+
+</style>    
+    <xmp cached="true" :widget="{id:'grid',is:'ms-grid'}">
+            <table slot='header' class="header">
+                <tr>
+                    <td :for="el in @header" style="width:200px" >
+                        {{el}}
+                    </td>
+                </tr>
+            </table>
+            <table slot="tbody" class="tbody">
+                <tr :for="obj in @data | limitBy(@count, @start)">
+                    <td :for="el in obj | selectBy(@header)" style="width:200px">{{el}}</td>
+                </tr>
+            </table> 
+            <ms-pager slot="pager" :widget="{onReady:@ready}" />
+    </xmp>
+</div>
