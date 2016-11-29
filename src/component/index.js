@@ -141,12 +141,12 @@ avalon.directive('widget', {
         } else {
             fireComponentHook(comVm, vdom, 'Ready')
         }
-        this.beforeDestroy = function() {
+        this.beforeDispose = function() {
             if (!this.cacheVm) {
                 fireComponentHook(comVm, vdom, 'Dispose')
                 comVm.$hashcode = false
                 delete avalon.vmodels[comVm.$id]
-                this.boss.destroy()
+                this.boss.dispose()
             } else {
                 fireComponentHook(comVm, vdom, 'Leave')
             }
@@ -221,11 +221,11 @@ export function createComponentVm(component, value, is) {
     collectHooks(defaults, hooks)
     collectHooks(value, hooks)
     var obj = {}
-    for(var i in defaults){
+    for (var i in defaults) {
         var val = value[i]
-        if(val == null){
+        if (val == null) {
             obj[i] = defaults[i]
-        }else{
+        } else {
             obj[i] = val
         }
     }
@@ -242,14 +242,14 @@ export function createComponentVm(component, value, is) {
 function collectHooks(a, list) {
     for (var i in a) {
         if (componentEvents[i]) {
-            if (typeof a[i] === 'function'
-                    && i.indexOf('on') === 0) {
+            if (typeof a[i] === 'function' &&
+                i.indexOf('on') === 0) {
                 list.unshift({
                     type: i,
                     cb: a[i]
                 })
             }
-            delete a[i]
+            //delete a[i] 这里不能删除,会导致再次切换时没有onReady
         }
     }
 }

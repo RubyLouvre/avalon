@@ -71,7 +71,7 @@ avalon.directive('widget', {
             fromCache = true
 
         } else {
-console.log(value)
+            console.log(value)
             var comVm = component.__getVm(value)
             fireComponentHook(comVm, vdom, 'Init')
             this.comVm = comVm
@@ -143,12 +143,12 @@ console.log(value)
         } else {
             fireComponentHook(comVm, vdom, 'Ready')
         }
-        this.beforeDestroy = function() {
+        this.beforeDispose = function() {
             if (!this.cacheVm) {
                 fireComponentHook(comVm, vdom, 'Dispose')
                 comVm.$hashcode = false
                 delete avalon.vmodels[comVm.$id]
-                this.boss.destroy()
+                this.boss.dispose()
             } else {
                 fireComponentHook(comVm, vdom, 'Leave')
             }
@@ -283,11 +283,11 @@ Avalon.prototype = {
             collectHooks(props, hooks)
             for (var i in def) {
                 var value = props[i]
-                if (value != null){
-                    if(value && typeof value === 'object' ){
-                       def[i] = avalon.mix(true, Array.isArray(value) ? []: {},value)
-                    }else{
-                       def[i] = value
+                if (value != null) {
+                    if (value && typeof value === 'object') {
+                        def[i] = avalon.mix(true, Array.isArray(value) ? [] : {}, value)
+                    } else {
+                        def[i] = value
                     }
                 }
             }
