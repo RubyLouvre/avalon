@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-30:3 version 2.2.2 by 司徒正美
+built in 2016-11-30:11 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -12,12 +12,14 @@ fix 空字符串不生成节点的BUG
 
 */'use strict';
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() : typeof define === 'function' && define.amd ? define(factory) : global.avalon = factory();
+    (typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) === 'object' && typeof module !== 'undefined' ? module.exports = factory() : typeof define === 'function' && define.amd ? define(factory) : global.avalon = factory();
 })(this, function () {
     'use strict';
 
-    var win = typeof window === 'object' ? window : typeof global === 'object' ? global : {};
+    var win = (typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object' ? window : (typeof global === 'undefined' ? 'undefined' : _typeof(global)) === 'object' ? global : {};
 
     var inBrowser = !!win.location && win.navigator;
     /* istanbul ignore if  */
@@ -39,7 +41,7 @@ fix 空字符串不生成节点的BUG
         undefinedobject: NaN //Mobile Safari 8.0.0 (iOS 8.4.0) 
     };
     /* istanbul ignore next  */
-    var msie = document$1.documentMode || versions[typeof document$1.all + typeof XMLHttpRequest];
+    var msie = document$1.documentMode || versions[_typeof(document$1.all) + (typeof XMLHttpRequest === 'undefined' ? 'undefined' : _typeof(XMLHttpRequest))];
 
     var modern = /NaN/.test(msie) || msie > 8;
 
@@ -215,7 +217,7 @@ fix 空字符串不生成节点的BUG
     var ohasOwn = op.hasOwnProperty;
     var ap = Array.prototype;
 
-    var hasConsole = typeof console === 'object';
+    var hasConsole = (typeof console === 'undefined' ? 'undefined' : _typeof(console)) === 'object';
     avalon.config = { debug: true };
     function log() {
         if (hasConsole && avalon.config.debug) {
@@ -234,7 +236,7 @@ fix 空字符串不生成节点的BUG
     }
     function noop() {}
     function isObject(a) {
-        return a !== null && typeof a === 'object';
+        return a !== null && (typeof a === 'undefined' ? 'undefined' : _typeof(a)) === 'object';
     }
 
     function range(start, end, step) {
@@ -686,12 +688,12 @@ fix 空字符串不生成节点的BUG
             return String(obj);
         }
         // 早期的webkit内核浏览器实现了已废弃的ecma262v4标准，可以将正则字面量当作函数使用，因此typeof在判定正则时会返回function
-        return typeof obj === 'object' || typeof obj === 'function' ? class2type[inspect.call(obj)] || 'object' : typeof obj;
+        return (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === 'object' || typeof obj === 'function' ? class2type[inspect.call(obj)] || 'object' : typeof obj === 'undefined' ? 'undefined' : _typeof(obj);
     };
 
     var rfunction = /^\s*\bfunction\b/;
 
-    avalon.isFunction = /* istanbul ignore if */typeof alert === 'object' ? function (fn) {
+    avalon.isFunction = /* istanbul ignore if */(typeof alert === 'undefined' ? 'undefined' : _typeof(alert)) === 'object' ? function (fn) {
         /* istanbul ignore next */
         try {
             /* istanbul ignore next */
@@ -785,7 +787,7 @@ fix 空字符串不生成节点的BUG
         }
 
         //当参数为其他简单类型 ,改为空对象
-        if (typeof target !== 'object' && !avalon.isFunction(target)) {
+        if ((typeof target === 'undefined' ? 'undefined' : _typeof(target)) !== 'object' && !avalon.isFunction(target)) {
             target = {};
         }
 
@@ -879,7 +881,7 @@ fix 空字符串不生成节点的BUG
     new function welcome() {
         var welcomeIntro = ["%cavalon.js %c" + avalon.version + " %cin debug mode, %cmore...", "color: rgb(114, 157, 52); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(82, 140, 224); font-weight: normal; text-decoration: underline;"];
         var welcomeMessage = "You're running avalon in debug mode - messages will be printed to the console to help you fix problems and optimise your application.\n\n" + 'To disable debug mode, add this line at the start of your app:\n\n  avalon.config({debug: false});\n\n' + 'Debug mode also automatically shut down amicably when your app is minified.\n\n' + "Get help and support:\n  https://segmentfault.com/t/avalon\n  http://avalonjs.coding.me/\n  http://www.baidu-x.com/?q=avalonjs\n  http://www.avalon.org.cn/\n\nFound a bug? Raise an issue:\n  https://github.com/RubyLouvre/avalon/issues\n\n";
-        if (typeof console === 'object') {
+        if ((typeof console === 'undefined' ? 'undefined' : _typeof(console)) === 'object') {
             var con = console;
             var method = con.groupCollapsed || con.log;
             Function.apply.call(method, con, welcomeIntro);
@@ -1565,7 +1567,7 @@ fix 空字符串不生成节点的BUG
         set: function set(cls) {
             cls = cls.trim();
             var node = this.node;
-            if (typeof node.className === 'object') {
+            if (_typeof(node.className) === 'object') {
                 //SVG元素的className是一个对象 SVGAnimatedString { baseVal='', animVal=''}，只能通过set/getAttribute操作
                 node.setAttribute('class', cls);
             } else {
@@ -3268,9 +3270,14 @@ fix 空字符串不生成节点的BUG
             var template = c[0] ? c[0].nodeValue : '';
             switch (this.nodeName) {
                 case 'script':
+                    dom.type = 'noexec';
+                    dom.text = template;
+                    dom.type = props.type || '';
+                    break;
+                case 'noscript':
+                    dom.textContent = template;
                 case 'style':
                 case 'xmp':
-                case 'noscript':
                 case 'template':
                     try {
                         dom.innerHTML = template;
@@ -3292,13 +3299,8 @@ fix 空字符串不生成节点的BUG
             }
             return this.dom = dom;
         },
-        hackIE: function hackIE(dom, nodeName, template, prop) {
-            switch (dom.nodeName) {
-                case 'script':
-                    dom.type = 'noexec';
-                    dom.text = template;
-                    dom.type = props.type || '';
-                    break;
+        hackIE: function hackIE(dom, nodeName, template) {
+            switch (nodeName) {
                 case 'style':
                     dom.setAttribute('type', 'text/css');
                     dom.styleSheet.cssText = template;
@@ -3512,7 +3514,7 @@ fix 空字符串不生成节点的BUG
     function runActions() {
         if (avalon.isRunningActions === true || avalon.inTransaction > 0) return;
         avalon.isRunningActions = true;
-        var tasks = avalon.pendingActions.splice(0);
+        var tasks = avalon.pendingActions.splice(0, avalon.pendingActions.length);
         for (var i = 0, task; task = tasks[i++];) {
             task.update();
         }
@@ -4784,7 +4786,7 @@ fix 空字符串不生成节点的BUG
                 }
             }
             return true;
-        } else if (typeof a === "object" && typeof b === "object") {
+        } else if ((typeof a === 'undefined' ? 'undefined' : _typeof(a)) === "object" && (typeof b === 'undefined' ? 'undefined' : _typeof(b)) === "object") {
             if (a === null || b === null) return false;
             if (getEnumerableKeys(a).length !== getEnumerableKeys(b).length) return false;
             for (var prop in a) {
@@ -5295,7 +5297,7 @@ fix 空字符串不生成节点的BUG
 
             this.innerRender = avalon.scan('<div class="ms-html-container">' + value + '</div>', this.vm, function () {
                 var oldRoot = this.root;
-                if (vdom.children) vdom.children.splice(0);
+                if (vdom.children) vdom.children.length = 0;
                 vdom.children = oldRoot.children;
                 this.root = vdom;
                 if (vdom.dom) avalon.clearHTML(vdom.dom);
@@ -5497,7 +5499,7 @@ fix 空字符串不生成节点的BUG
     });
 
     function getTraceKey(item) {
-        var type = typeof item;
+        var type = typeof item === 'undefined' ? 'undefined' : _typeof(item);
         return item && type === 'object' ? item.$hashcode : type + ':' + item;
     }
 
@@ -5694,7 +5696,7 @@ fix 空字符串不生成节点的BUG
         var classes = [];
         for (var i = 0; i < arguments.length; i++) {
             var arg = arguments[i];
-            var argType = typeof arg;
+            var argType = typeof arg === 'undefined' ? 'undefined' : _typeof(arg);
             if (argType === 'string' || argType === 'number' || arg === true) {
                 classes.push(arg);
             } else if (Array.isArray(arg)) {
@@ -5731,7 +5733,7 @@ fix 空字符串不生成节点的BUG
 
             var className = classNames(newVal);
 
-            if (typeof oldVal === void 0 || oldVal !== className) {
+            if ((typeof oldVal === 'undefined' ? 'undefined' : _typeof(oldVal)) === void 0 || oldVal !== className) {
                 this.value = className;
 
                 vdom['change-' + type] = className;
@@ -6729,7 +6731,7 @@ fix 空字符串不生成节点的BUG
             //如果promises不为空，说明经过验证拦截器
             return Promise.all(promises).then(function (array) {
                 var reasons = array.filter(function (el) {
-                    return typeof el === 'object';
+                    return (typeof el === 'undefined' ? 'undefined' : _typeof(el)) === 'object';
                 });
                 if (!isValidateAll) {
                     var validator = field.validator;

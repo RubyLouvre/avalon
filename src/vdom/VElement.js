@@ -38,9 +38,14 @@ VElement.prototype = {
         var template = c[0] ? c[0].nodeValue : ''
         switch (this.nodeName) {
             case 'script':
+                dom.type = 'noexec'
+                dom.text = template
+                dom.type = props.type || ''
+                break
+            case 'noscript':    
+                dom.textContent = template
             case 'style':
             case 'xmp':
-            case 'noscript':
             case 'template':
                 try {
                     dom.innerHTML = template
@@ -63,13 +68,8 @@ VElement.prototype = {
         }
         return this.dom = dom
     },
-    hackIE(dom, nodeName, template, prop) {
-        switch (dom.nodeName) {
-            case 'script':
-                dom.type = 'noexec'
-                dom.text = template
-                dom.type = props.type || ''
-                break
+    hackIE(dom, nodeName, template) {
+        switch (nodeName) {
             case 'style':
                 dom.setAttribute('type', 'text/css')
                 dom.styleSheet.cssText = template

@@ -33,7 +33,7 @@ export function runActions() {
     if (avalon.isRunningActions === true || avalon.inTransaction > 0)
         return
     avalon.isRunningActions = true
-    var tasks = avalon.pendingActions.splice(0);
+    var tasks = avalon.pendingActions.splice(0, avalon.pendingActions.length )
     for (var i = 0, task; task = tasks[i++];) {
         task.update()
     }

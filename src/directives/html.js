@@ -8,7 +8,7 @@ avalon.directive('html', {
         this.innerRender = avalon.scan('<div class="ms-html-container">' + value + '</div>', this.vm, function() {
             var oldRoot = this.root
             if(vdom.children)
-               vdom.children.splice(0)
+               vdom.children.length = 0
             vdom.children = oldRoot.children
             this.root = vdom
             if (vdom.dom)

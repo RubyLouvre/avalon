@@ -3,40 +3,65 @@
     <head>
         <meta charset="UTF-8">
         <title>arthur.js</title>
-        <script type="text/javascript" src="../dist/arthur.js"></script>
+        <script type="text/javascript" src="../dist/avalon.js"></script>
+
     </head>
     <body>
-        <div ms-controller='test' id="test" >
-            <xmp is='ms-button' >{{@bb}}</xmp>
-            <p>{{@aa}}</p>
-            <ul>
-                <li ms-for="el in @arr">{{el}}</li>
-            </ul>
-            <p><input ms-duplex="@aa">{{@aa}}</p>
-            <input ms-duplex="@bb">{{@bb}}
-            <p><button ms-click="@click" type='button'>click</button></p>
-        </div>
-        <script type="text/javascript">
-           
-        
-avalon.component('ms-button', {
-    template: '<button type="button" ><span><slot /></span></button>',
-    defaults: {
-        buttonText: "button",
-    },
-    soleSlot: 'buttonText'
-})
-var vm = avalon.define({
-    $id: 'test',
-    aa: 'aa',
-    bb:'button value',
-    click: function(){
-        alert(this.bb)
-    },
-    arr: [1,2,3]
-})
-avalon.scan(document.getElementById('test'),vm)
+        <div id="aaa"></div>
 
-        </script>
+          <script>
+        function heredoc(fn) {
+    return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+            replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+}
+var textProp = 'textContent' in document ? 'textContent': 'innerText'
+function fireClick(el) {
+    if (el.click) {
+        el.click()
+    }else {
+//https://developer.mozilla.org/samples/domref/dispatchEvent.html
+        var evt = document.createEvent('MouseEvents')
+        evt.initMouseEvent('click', true, true, window,
+                0, 0, 0, 0, 0, false, false, false, false, 0, null);
+        !el.dispatchEvent(evt);
+    }
+}
+
+function expect(a){
+    return {
+        toBe:function(b){
+            console.log(a, b, a === b)
+        }
+    }
+}
+        var div = document.getElementById('aaa')
+          div.innerHTML = heredoc(function () {
+            /*
+             <input type='radio' ms-controller='attr1' ms-attr='{checked:@a}' >
+             */
+        })
+        vm = avalon.define({
+            $id: 'attr1',
+            a: true
+        })
+        avalon.scan(div)
+        var el = div.children[0]
+     
+            expect(el.checked).toBe(true)
+            console.log('  第一次求值 ',el.nodeName)
+            vm.a = false
+            setTimeout(function () {
+                expect(el.checked).toBe(false)
+  console.log('  第2次求值 ')
+                fireClick(div.children[0])
+                setTimeout(function () {
+                    expect(el.checked + '1').toBe('true1')
+                   console.log('  第3次求值 ')
+                }, 1000)
+
+            }, 100)
+     
+    
+    </script>
     </body>
 </html>
