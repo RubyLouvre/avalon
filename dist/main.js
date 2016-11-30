@@ -8538,7 +8538,7 @@
 /* 3 */
 /***/ function(module, exports) {
 
-	module.exports = "<div ms-important=\"first\" class=\"view\">\n    <style>\n        .active{\n            background: blueviolet;\n        }\n        .panel{\n            margin: 2em;\n            height:200px;\n            border:1px solid #666;\n            background: gainsboro;\n        }\n    </style>\n    <p>\n        <button ms-for=\"(index, el) in @tabs\" \n                ms-class=\"{active: index === @activeIndex}\"\n                ms-click=\"@activeIndex = index\">\n            {{el}}\n        </button>\n    </p>\n    <div class=\"panel\" ms-visible=\"0 === @activeIndex\">\n        <p>银行卡:<input placeholder=\"xxxx xxxx xxxx xxxx\" \n                  ms-duplex=\"@aaa | debounce(100) \" \n                  data-duplex-changed=\"@formatCard\"/>\n        </p>\n    </div>\n     <div class=\"panel\" ms-visible=\"1 === @activeIndex\">\n       22\n    </div>\n     <div class=\"panel\" ms-visible=\"2 === @activeIndex\">\n       111\n    </div>\n</div>"
+	module.exports = "<div ms-important=\"first\" class=\"view\">\n    <style>\n        .active {\n            background: blueviolet;\n        }\n        \n        .panel {\n            margin: 2em;\n            padding:1em;\n            min-height: 200px;\n            border: 1px solid #666;\n            background: #0e97e2;\n        }\n        \n        .grid table {\n            border: 1px solid #000;\n            width: 500px;\n            border-collapse: collapse;\n        }\n        \n        .grid button {\n            width: 400px;\n            background: orange;\n        }\n        \n        .grid table th,\n        .grid table td {\n            border: 1px solid #000;\n            padding: 2px 5px;\n        }\n    </style>\n    <p>\n        <button ms-for=\"(index, el) in @tabs\" ms-class=\"{active: index === @activeIndex}\" ms-click=\"@activeIndex = index\">\n            {{el}}\n        </button>\n    </p>\n    <div class=\"panel\" ms-visible=\"0 === @activeIndex\">\n        <p>银行卡:<input placeholder=\"xxxx xxxx xxxx xxxx\" ms-duplex=\"@aaa | debounce(100) \" data-duplex-changed=\"@formatCard\" />\n        </p>\n    </div>\n    <div class=\"panel\" ms-visible=\"1 === @activeIndex\">\n        <div ms-important=\"grid\" class=\"grid\">\n            <div>\n                <p> <input ms-duplex=\"@id\">\n                    <input ms-duplex=\"@name\">\n                    <input ms-duplex=\"@score | change\"></p>\n                <p><button ms-click=\"@add\"> add</button></p>\n            </div>\n            <p>共{{@array.length}}条------------------合计{{@total}}分</p>\n            <table>\n                <thead>\n                    <tr>\n                        <th>ID</th>\n                        <th>姓名</th>\n                        <th>分数</th>\n                        <th>操作</th>\n                    </tr>\n                </thead>\n\n                <tbody ms-for=\"el in @array\">\n                    <tr>\n                        <td>{{el.id}}</td>\n                        <td>{{el.name}}</td>\n                        <td>{{el.score}}</td>\n                        <td align=\"center\"><a ms-click=\"@array.remove(el)\" href=\"javascript:void(0)\">移除</a></td>\n                    </tr>\n                </tbody>\n            </table>\n        </div>\n    </div>\n    <div class=\"panel\" ms-visible=\"2 === @activeIndex\">\n        111\n    </div>\n</div>"
 
 /***/ },
 /* 4 */
@@ -8557,17 +8557,17 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var avalon = __webpack_require__(1)
-	avalon.parsers.card = function(a){
+	avalon.parsers.card = function(a) {
 	    return a.replace(/\s/g, '').replace(/(\d{4})/g, "$1 ").trim()
 	}
 	var vm = avalon.define({
-	    $id:"first",
-	    tabs: [111,222,333],
+	    $id: "first",
+	    tabs: [111, 222, 333],
 	    activeIndex: 0,
 	    aaa: '',
-	    panels: ["面板1","面板2",'<p>这里可以是复杂的<b>HTML</b></p>'],
-	    formatCard: function(e){
-	        var el = e.target 
+	    panels: ["面板1", "面板2", '<p>这里可以是复杂的<b>HTML</b></p>'],
+	    formatCard: function(e) {
+	        var el = e.target
 	        var caret = el.selectionStart
 	        var value = el.value
 	        var prev = value.slice(0, caret)
@@ -8576,12 +8576,46 @@
 	        var now = curr.slice(0, caret)
 	        var curSp = (now.match(/\s/) || []).length
 	        el.value = curr
-	        //同步到ms-duplex中的pos去
+	            //同步到ms-duplex中的pos去
 	        el._ms_duplex_.pos = caret + curSp - sp
 	    }
-	   
+
+	})
+	var model = avalon.define({
+	    $id: 'grid',
+	    id: "",
+	    name: "",
+	    score: 0,
+	    total: 0,
+	    array: [],
+	    add: function() {
+	        this.array.push({
+	            id: this.id,
+	            name: this.name,
+	            score: this.score
+	        })
+	    }
 	})
 
+	model.$watch("score", function(a) {
+	    var a = Number(a) || 0
+	    a = a > 100 ? 100 : a < 0 ? 0 : a //强制转换为0~100间
+	    model.score = a
+	})
+	model.$watch("array", function() {
+	    var a = 0
+	    model.array.forEach(function(el) {
+	        a += el.score //求得总数
+	    })
+	    model.total = a;
+	    model.id = ""
+	    model.name = ""
+	    model.score = 0
+	})
+	model.array = [
+	    { id: "d1", name: "李世民", score: 67 },
+	    { id: "d2", name: "赢政", score: 90 }
+	]
 	module.exports = vm
 
 /***/ },

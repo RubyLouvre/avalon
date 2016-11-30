@@ -1,32 +1,74 @@
 <div ms-important="first" class="view">
     <style>
-        .active{
+        .active {
             background: blueviolet;
         }
-        .panel{
+        
+        .panel {
             margin: 2em;
-            height:200px;
-            border:1px solid #666;
-            background: gainsboro;
+            padding:1em;
+            min-height: 200px;
+            border: 1px solid #666;
+            background: #0e97e2;
+        }
+        
+        .grid table {
+            border: 1px solid #000;
+            width: 500px;
+            border-collapse: collapse;
+        }
+        
+        .grid button {
+            width: 400px;
+            background: orange;
+        }
+        
+        .grid table th,
+        .grid table td {
+            border: 1px solid #000;
+            padding: 2px 5px;
         }
     </style>
     <p>
-        <button ms-for="(index, el) in @tabs" 
-                ms-class="{active: index === @activeIndex}"
-                ms-click="@activeIndex = index">
+        <button ms-for="(index, el) in @tabs" ms-class="{active: index === @activeIndex}" ms-click="@activeIndex = index">
             {{el}}
         </button>
     </p>
     <div class="panel" ms-visible="0 === @activeIndex">
-        <p>银行卡:<input placeholder="xxxx xxxx xxxx xxxx" 
-                  ms-duplex="@aaa | debounce(100) " 
-                  data-duplex-changed="@formatCard"/>
+        <p>银行卡:<input placeholder="xxxx xxxx xxxx xxxx" ms-duplex="@aaa | debounce(100) " data-duplex-changed="@formatCard" />
         </p>
     </div>
-     <div class="panel" ms-visible="1 === @activeIndex">
-       22
+    <div class="panel" ms-visible="1 === @activeIndex">
+        <div ms-important="grid" class="grid">
+            <div>
+                <p> <input ms-duplex="@id">
+                    <input ms-duplex="@name">
+                    <input ms-duplex="@score | change"></p>
+                <p><button ms-click="@add"> add</button></p>
+            </div>
+            <p>共{{@array.length}}条------------------合计{{@total}}分</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>姓名</th>
+                        <th>分数</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+
+                <tbody ms-for="el in @array">
+                    <tr>
+                        <td>{{el.id}}</td>
+                        <td>{{el.name}}</td>
+                        <td>{{el.score}}</td>
+                        <td align="center"><a ms-click="@array.remove(el)" href="javascript:void(0)">移除</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
-     <div class="panel" ms-visible="2 === @activeIndex">
-       111
+    <div class="panel" ms-visible="2 === @activeIndex">
+        111
     </div>
 </div>
