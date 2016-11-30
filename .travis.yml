@@ -4,6 +4,8 @@ node_js:
 cache:
   directories:
     - node_modules
+before_script:
+  - phantomjs --help
 install:
   - npm install
 script:
