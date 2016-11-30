@@ -1,5 +1,6 @@
 #avalon 2 
-
+[![npm version](https://badge.fury.io/js/avalon2.svg)](https://badge.fury.io/js/avalon2)
+[![Build Status](https://travis-ci.org/RubyLouvre/avalon.svg?branch=master)](https://travis-ci.org/RubyLouvre/avalon)
 
 ###[English tutorials](https://github.com/RubyLouvre/avalon/tree/master/tutorials)
 
