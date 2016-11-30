@@ -13,6 +13,9 @@
         "mvvm",
         "virtual dom"
     ],
+    "scripts": {
+        "test": "karma start karma.conf"
+    },
     "dependencies": {},
     "devDependencies": {
         "babel-core": "^6.17.0",
