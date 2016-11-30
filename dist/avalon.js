@@ -4180,9 +4180,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 $accessors[key] = createAccessor(key, val);
             }
         }
-        for (var key in $computed) {
-            if (key in $$skipArray) continue;
-            var val = $computed[key];
+        for (var _key in $computed) {
+            if (_key in $$skipArray) continue;
+            var val = $computed[_key];
             if (typeof val === 'function') {
                 val = {
                     get: val
@@ -4191,8 +4191,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             if (val && val.get) {
                 val.getter = val.get;
                 val.setter = val.set;
-                avalon.Array.ensure(keys, key);
-                $accessors[key] = createAccessor(key, val, true);
+                avalon.Array.ensure(keys, _key);
+                $accessors[_key] = createAccessor(_key, val, true);
             }
         }
         //将系统API以unenumerable形式加入vm,
@@ -4305,7 +4305,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         } else if (xtype === 'object') {
             if (typeof val.$track === 'string') {
                 var obj = {};
-                val.$track.split('☥').forEach(function (i) {
+                var arr = val.$track.match(/[^☥]+/g) || [];
+                arr.forEach(function (i) {
                     var value = val[i];
                     obj[i] = value && value.$events ? toJson(value) : value;
                 });
@@ -4507,13 +4508,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         }
         //为不可监听的属性或方法赋值
         for (var i = 0; i < keys.length; i++) {
-            key = keys[i];
-            if (!(key in ac)) {
-                if (avalon.msie < 9 && typeof core[key] === 'function') {
-                    vm[key] = core[key].bind(vm);
+            var _key2 = keys[i];
+            if (!(_key2 in ac)) {
+                if (avalon.msie < 9 && typeof core[_key2] === 'function') {
+                    vm[_key2] = core[_key2].bind(vm);
                     continue;
                 }
-                vm[key] = core[key];
+                vm[_key2] = core[_key2];
             }
         }
         vm.$track = keys.join('☥');

@@ -80,14 +80,14 @@ function wrapIt(str) {
 export function afterCreate(vm, core, keys) {
     var ac = vm.$accessors
     //隐藏系统属性
-    for (var key in $$skipArray) {
+    for (let key in $$skipArray) {
         if (avalon.msie < 9 && core[key] === void 0)
             continue
         hideProperty(vm, key, core[key])
     }
     //为不可监听的属性或方法赋值
-    for (var i = 0; i < keys.length; i++) {
-        key = keys[i]
+    for (let i = 0; i < keys.length; i++) {
+        let key = keys[i]
         if (!(key in ac)) {
             if (avalon.msie < 9 && typeof core[key] === 'function') {
                 vm[key] = core[key].bind(vm)

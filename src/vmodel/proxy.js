@@ -139,10 +139,7 @@ if (typeof Proxy === 'function') {
     }
 
     function updateTrack(target, name, value, isComputed) {
-        var arr = target.$track.split('☥')
-        if (arr[0] === '') {
-            arr.shift()
-        }
+        var arr = target.$track.match(/[^☥]+/g) || []
         arr.push(name)
         var Observable = isComputed ? Computed : Mutation
         target.$accessors[name] = new Observable(name, value, target)

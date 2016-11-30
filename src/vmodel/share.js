@@ -72,7 +72,7 @@ platform.modelFactory = function modelFactory(definition, dd) {
     if (modern)
         platform.hideProperty(core, '$mutations', {})
 
-    for (var key in definition) {
+    for (let key in definition) {
         if (key in $$skipArray)
             continue
         var val = definition[key]
@@ -81,7 +81,7 @@ platform.modelFactory = function modelFactory(definition, dd) {
             $accessors[key] = createAccessor(key, val)
         }
     }
-    for (var key in $computed) {
+    for (let key in $computed) {
         if (key in $$skipArray)
             continue
         var val = $computed[key]
@@ -211,7 +211,8 @@ function toJson(val) {
     } else if (xtype === 'object') {
         if (typeof val.$track === 'string') {
             var obj = {}
-            val.$track.split('☥').forEach(function(i) {
+            var arr = val.$track.match(/[^☥]+/g) || []
+            arr.forEach(function(i) {
                 var value = val[i]
                 obj[i] = value && value.$events ? toJson(value) : value
             })
