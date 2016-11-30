@@ -15,7 +15,7 @@ describe('value', function () {
     })
     if (avalon.modern) {
         it('option', function () {
-            a.innerText = ' 111 '
+            a[textProp] = ' 111 '
             expect(a.value).toBe('111')
             a.setAttribute('value', ' 222 ')
             expect(a.value).toBe(' 222 ')

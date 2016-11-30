@@ -14,7 +14,7 @@ describe('value', function () {
         f = document.createElement('input')
     })
     it('option', function () {
-        a.innerText = ' 111 '
+        a[textProp] = ' 111 '
         expect(getOption(a)).toBe('111')
         a.setAttribute('value', ' 222 ')
         expect(getOption(a)).toBe(' 222 ')
