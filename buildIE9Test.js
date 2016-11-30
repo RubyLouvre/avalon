@@ -37,7 +37,7 @@ module.exports = rollup.rollup({
     replace(/avalon\$1/g, 'avalon')
 
     result = babel.transform(code, {
-        presets: ['es2015'],
+        presets: ['avalon'],
         compact: false
     })
 

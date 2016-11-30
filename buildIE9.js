@@ -40,7 +40,7 @@ module.exports = rollup.rollup({
     replace(/avalon\$1/g, 'avalon')
 
     result = babel.transform(code, {
-        presets: ['es2015'],
+        presets: ['avalon'],
         compact: false
     })
 
@@ -49,21 +49,21 @@ module.exports = rollup.rollup({
         replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
     }
     var feather = heredoc(function() {
-/*
-https://github.com/RubyLouvre/avalon/tree/2.2.1
-添加计算属性
-添加事务
-内部所有类使用es6重写
-修正使用requirejs加载avalon2.2.0，返回空对象的BUG
-优化组件延迟定义的逻辑
-fromString进行性能优化
-fix 空字符串不生成节点的BUG
-确保onReady的执行时机，多个ms-controller套嵌，先执行里面的，再执行外面的   
-*/
+        /*
+        https://github.com/RubyLouvre/avalon/tree/2.2.1
+        添加计算属性
+        添加事务
+        内部所有类使用es6重写
+        修正使用requirejs加载avalon2.2.0，返回空对象的BUG
+        优化组件延迟定义的逻辑
+        fromString进行性能优化
+        fix 空字符串不生成节点的BUG
+        确保onReady的执行时机，多个ms-controller套嵌，先执行里面的，再执行外面的   
+        */
     })
     var now = new Date
     var snow = now.getFullYear() + '-' + (now.getMonth() + 1) +
-        '-' + now.getDate() + ':' + now.getHours()
+        '-' + now.getDate() + ':' + now.getHours() + ':' + now.getMinutes()
     var banner = '/*!\nbuilt in ' + snow + ' version ' + json.version + ' by 司徒正美\n' + feather + '\n\n*/'
     code = banner + result.code.
     replace(/\}\)\(undefined,/, '})(this,')

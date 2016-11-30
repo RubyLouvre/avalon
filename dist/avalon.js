@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-30:11 version 2.2.2 by 司徒正美
+built in 2016-11-30:15:42 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -10,9 +10,7 @@ fromString进行性能优化
 fix 空字符串不生成节点的BUG
 确保onReady的执行时机，多个ms-controller套嵌，先执行里面的，再执行外面的
 
-*/'use strict';
-
-(function (global, factory) {
+*/(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() : typeof define === 'function' && define.amd ? define(factory) : global.avalon = factory();
 })(this, function () {
     'use strict';
@@ -741,6 +739,8 @@ fix 空字符串不生成节点的BUG
             if (obj.constructor && !ohasOwn.call(obj, 'constructor') && !ohasOwn.call(obj.constructor.prototype, 'isPrototypeOf')) {
                 return false;
             }
+            obj.$vbthis = 'is it vbscript object?';
+            delete obj.$vbthis;
         } catch (e) {
             //IE8 9会在这里抛错
             return false;

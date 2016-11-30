@@ -1,25 +1,21 @@
 /*!
-built in 2016-11-30:3 version 2.2.2 by 司徒正美
+built in 2016-11-30:15:42 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
-添加计算属性
-添加事务
-内部所有类使用es6重写
-修正使用requirejs加载avalon2.2.0，返回空对象的BUG
-优化组件延迟定义的逻辑
-fromString进行性能优化
-fix 空字符串不生成节点的BUG
-确保onReady的执行时机，多个ms-controller套嵌，先执行里面的，再执行外面的
+        添加计算属性
+        添加事务
+        内部所有类使用es6重写
+        修正使用requirejs加载avalon2.2.0，返回空对象的BUG
+        优化组件延迟定义的逻辑
+        fromString进行性能优化
+        fix 空字符串不生成节点的BUG
+        确保onReady的执行时机，多个ms-controller套嵌，先执行里面的，再执行外面的
 
-*/'use strict'
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj }
-
-;(function (global, factory) {
-    ;(typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) === 'object' && typeof module !== 'undefined' ? module.exports = factory() : typeof define === 'function' && define.amd ? define(factory) : global.avalon = factory()
+*/;(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() : typeof define === 'function' && define.amd ? define(factory) : global.avalon = factory()
 })(this, function () {
     'use strict'
 
-    var win = (typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object' ? window : (typeof global === 'undefined' ? 'undefined' : _typeof(global)) === 'object' ? global : {}
+    var win = typeof window === 'object' ? window : typeof global === 'object' ? global : {}
 
     var inBrowser = !!win.location && win.navigator
     /* istanbul ignore if  */
@@ -41,7 +37,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         undefinedobject: NaN //Mobile Safari 8.0.0 (iOS 8.4.0) 
     }
     /* istanbul ignore next  */
-    var msie = document$1.documentMode || versions[_typeof(document$1.all) + (typeof XMLHttpRequest === 'undefined' ? 'undefined' : _typeof(XMLHttpRequest))]
+    var msie = document$1.documentMode || versions[typeof document$1.all + typeof XMLHttpRequest]
 
     var modern = /NaN/.test(msie) || msie > 8
 
@@ -217,7 +213,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     var ohasOwn = op.hasOwnProperty
     var ap = Array.prototype
 
-    var hasConsole = (typeof console === 'undefined' ? 'undefined' : _typeof(console)) === 'object'
+    var hasConsole = typeof console === 'object'
     avalon$2.config = { debug: true }
     function log() {
         if (hasConsole && avalon$2.config.debug) {
@@ -236,7 +232,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     }
     function noop() {}
     function isObject(a) {
-        return a !== null && (typeof a === 'undefined' ? 'undefined' : _typeof(a)) === 'object'
+        return a !== null && typeof a === 'object'
     }
 
     function range(start, end, step) {
@@ -469,7 +465,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             return String(obj)
         }
         // 早期的webkit内核浏览器实现了已废弃的ecma262v4标准，可以将正则字面量当作函数使用，因此typeof在判定正则时会返回function
-        return (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === 'object' || typeof obj === 'function' ? class2type[inspect.call(obj)] || 'object' : typeof obj === 'undefined' ? 'undefined' : _typeof(obj)
+        return typeof obj === 'object' || typeof obj === 'function' ? class2type[inspect.call(obj)] || 'object' : typeof obj
     }
 
     avalon$2._quote = JSON.stringify
@@ -509,7 +505,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         }
 
         //确保接受方为一个复杂的数据类型
-        if ((typeof target === 'undefined' ? 'undefined' : _typeof(target)) !== 'object' && typeof target !== 'function') {
+        if (typeof target !== 'object' && typeof target !== 'function') {
             target = {}
         }
 
@@ -553,7 +549,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     /*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
     function isArrayLike(obj) {
         /* istanbul ignore if*/
-        if (obj && (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === 'object') {
+        if (obj && typeof obj === 'object') {
             var n = obj.length,
                 str = inspect.call(obj)
             if (rarraylike.test(str)) {
@@ -2798,7 +2794,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     function runActions() {
         if (avalon$2.isRunningActions === true || avalon$2.inTransaction > 0) return
         avalon$2.isRunningActions = true
-        var tasks = avalon$2.pendingActions.splice(0)
+        var tasks = avalon$2.pendingActions.splice(0, avalon$2.pendingActions.length)
         for (var i = 0, task; task = tasks[i++];) {
             task.update()
         }
@@ -3464,9 +3460,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 $accessors[key] = createAccessor(key, val)
             }
         }
-        for (var key in $computed) {
-            if (key in $$skipArray) continue
-            var val = $computed[key]
+        for (var _key in $computed) {
+            if (_key in $$skipArray) continue
+            var val = $computed[_key]
             if (typeof val === 'function') {
                 val = {
                     get: val
@@ -3475,8 +3471,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             if (val && val.get) {
                 val.getter = val.get
                 val.setter = val.set
-                avalon$2.Array.ensure(keys, key)
-                $accessors[key] = createAccessor(key, val, true)
+                avalon$2.Array.ensure(keys, _key)
+                $accessors[_key] = createAccessor(_key, val, true)
             }
         }
         //将系统API以unenumerable形式加入vm,
@@ -3589,7 +3585,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         } else if (xtype === 'object') {
             if (typeof val.$track === 'string') {
                 var obj = {}
-                val.$track.split('☥').forEach(function (i) {
+                var arr = val.$track.match(/[^☥]+/g) || []
+                arr.forEach(function (i) {
                     var value = val[i]
                     obj[i] = value && value.$events ? toJson(value) : value
                 })
@@ -3799,10 +3796,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             }
 
             var updateTrack = function updateTrack(target, name, value, isComputed) {
-                var arr = target.$track.split('☥')
-                if (arr[0] === '') {
-                    arr.shift()
-                }
+                var arr = target.$track.match(/[^☥]+/g) || []
                 arr.push(name)
                 var Observable = isComputed ? Computed : Mutation
                 target.$accessors[name] = new Observable(name, value, target)
@@ -4082,7 +4076,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 }
             }
             return true
-        } else if ((typeof a === 'undefined' ? 'undefined' : _typeof(a)) === "object" && (typeof b === 'undefined' ? 'undefined' : _typeof(b)) === "object") {
+        } else if (typeof a === "object" && typeof b === "object") {
             if (a === null || b === null) return false
             if (getEnumerableKeys(a).length !== getEnumerableKeys(b).length) return false
             for (var prop in a) {
@@ -4593,7 +4587,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
             this.innerRender = avalon$2.scan('<div class="ms-html-container">' + value + '</div>', this.vm, function () {
                 var oldRoot = this.root
-                if (vdom.children) vdom.children.splice(0)
+                if (vdom.children) vdom.children.length = 0
                 vdom.children = oldRoot.children
                 this.root = vdom
                 if (vdom.dom) avalon$2.clearHTML(vdom.dom)
@@ -4795,7 +4789,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     })
 
     function getTraceKey(item) {
-        var type = typeof item === 'undefined' ? 'undefined' : _typeof(item)
+        var type = typeof item
         return item && type === 'object' ? item.$hashcode : type + ':' + item
     }
 
@@ -4992,7 +4986,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         var classes = []
         for (var i = 0; i < arguments.length; i++) {
             var arg = arguments[i]
-            var argType = typeof arg === 'undefined' ? 'undefined' : _typeof(arg)
+            var argType = typeof arg
             if (argType === 'string' || argType === 'number' || arg === true) {
                 classes.push(arg)
             } else if (Array.isArray(arg)) {
@@ -5029,7 +5023,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
             var className = classNames(newVal)
 
-            if ((typeof oldVal === 'undefined' ? 'undefined' : _typeof(oldVal)) === void 0 || oldVal !== className) {
+            if (typeof oldVal === void 0 || oldVal !== className) {
                 this.value = className
 
                 vdom['change-' + type] = className
@@ -5899,7 +5893,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
             //如果promises不为空，说明经过验证拦截器
             return Promise.all(promises).then(function (array) {
                 var reasons = array.filter(function (el) {
-                    return (typeof el === 'undefined' ? 'undefined' : _typeof(el)) === 'object'
+                    return typeof el === 'object'
                 })
                 if (!isValidateAll) {
                     var validator = field.validator

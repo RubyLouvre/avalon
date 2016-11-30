@@ -2,7 +2,7 @@ var rollup = require('rollup');
 var fs = require('fs');
 var babel = require("babel-core");
 var transform = require('es3ify').transform;
-var less = function(a){return a}//require('semicolon-less')
+var less = function(a) { return a } //require('semicolon-less')
 
 // used to track the cache for subsequent bundles
 var cache;
@@ -41,7 +41,7 @@ module.exports = rollup.rollup({
 
 
     result = babel.transform(result.code, {
-        presets: ['es2015-loose', 'stage-0'],
+        presets: ['avalon'],
         compact: false
     })
 
@@ -64,7 +64,7 @@ fix 空字符串不生成节点的BUG
     })
     var now = new Date
     var snow = now.getFullYear() + '-' + (now.getMonth() + 1) +
-        '-' + now.getDate() + ':' + now.getHours()
+        '-' + now.getDate() + ':' + now.getHours() + ':' + now.getMinutes()
     var banner = '/*!\nbuilt in ' + snow + ' version ' + json.version + ' by 司徒正美\n' + feather + '\n\n*/'
 
     var code = banner + transform(result.code).
@@ -79,4 +79,3 @@ fix 空字符串不生成节点的BUG
 }).catch(function(e) {
     console.log('error', e)
 })
-
