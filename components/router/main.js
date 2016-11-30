@@ -44,7 +44,7 @@ avalon.component('ms-view', {
             avalon.vmodels[state.vm.$id] = state.vm
             setTimeout(function() {//必须等它扫描完这个template,才能替换
                 e.vmodel.page = state.html
-            })
+            },100)
 
         },
         onDispose: function(e) {

@@ -5,7 +5,7 @@
         }
         .panel{
             margin: 2em;
-            height:300px;
+            height:200px;
             border:1px solid #666;
             background: gainsboro;
         }
@@ -17,7 +17,16 @@
             {{el}}
         </button>
     </p>
-    <div ms-for="(index,el) in @panels" class='panel' ms-visible="index === @activeIndex">
-        {{el}}
+    <div class="panel" ms-visible="0 === @activeIndex">
+        <p>银行卡:<input placeholder="xxxx xxxx xxxx xxxx" 
+                  ms-duplex="@aaa | debounce(100) " 
+                  data-duplex-changed="@formatCard"/>
+        </p>
+    </div>
+     <div class="panel" ms-visible="1 === @activeIndex">
+       22
+    </div>
+     <div class="panel" ms-visible="2 === @activeIndex">
+       111
     </div>
 </div>
