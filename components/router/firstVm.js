@@ -23,10 +23,13 @@ var vm = avalon.define({
     }
 
 })
+//成绩单
+//大家可以对比一下1.*的相同实现
+//http://www.cnblogs.com/rubylouvre/p/3213430.html
 var model = avalon.define({
-    $id: 'grid',
-    id: "",
-    name: "",
+    $id: 'transcript',
+    id:  '',
+    name: '',
     score: 0,
     total: 0,
     array: [],
