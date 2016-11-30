@@ -113,6 +113,8 @@ export function isPlainObjectCompact(obj, key) {
             !ohasOwn.call(obj.constructor.prototype, 'isPrototypeOf')) {
             return false
         }
+        obj.$vbthis = 'is it vbscript object?'
+        delete obj.$vbthis
     } catch (e) { //IE8 9会在这里抛错
         return false
     }
