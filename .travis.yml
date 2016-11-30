@@ -10,9 +10,9 @@ before_script:
   -  sh -e /etc/init.d/xvfb start
 install:
   - npm install
+  - npm run buildAvalon
 script:
   - npm run build
-  - npm run test
 branches:
   only:
     - master

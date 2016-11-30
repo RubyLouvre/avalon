@@ -14,8 +14,8 @@
         "virtual dom"
     ],
     "scripts": {
-        "test": "karma start karma.conf",
-        "build": "node build"
+        "buildAvalon": "node build",
+        "build": "karma start karma.conf"
     },
     "dependencies": {},
     "devDependencies": {
