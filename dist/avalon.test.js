@@ -2475,12 +2475,12 @@
                     avalon.log(dom.textContent, dom.innerText, dom.innerHTML, dom.text)
                     expect(dom.textContent).toMatch(' xxx ')
                 }
-                expect(dom.innerText).toMatch(/xx/)
+                expect(dom[textProp]).toMatch(/xx/)
                 expect(dom.innerHTML).toBe(' xxx ')
                 var option2 = new VElement('option', { 'value': 'eee' }, [new VText('')])
                 expect(option2.toDOM().text).toBe('')
 
-                expect(option2.toDOM().innerText).toBe('')
+                expect(option2.toDOM()[textProp]).toBe('')
 
                 expect(option2.toDOM().innerHTML).toBe('')
             })

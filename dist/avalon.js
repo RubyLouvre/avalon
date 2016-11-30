@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-30:15:54 version 2.2.2 by 司徒正美
+built in 2016-11-30:21:16 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
