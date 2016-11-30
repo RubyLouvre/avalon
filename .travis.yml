@@ -6,6 +6,8 @@ cache:
     - node_modules
 before_script:
   - phantomjs --help
+before_install:
+  - sudo apt-get install google-chrome-stable
 install:
   - npm install
 script:
