@@ -15,3 +15,11 @@ function fireClick(el) {
     }
 }
 
+  var dddDIV = document.getElementById('aaa')
+  var expect1 = function(a){
+      return {
+          toBe: function(b){
+              console.log(a, b, a=== b)
+          }
+      }
+  }
