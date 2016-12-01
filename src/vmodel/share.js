@@ -121,7 +121,7 @@ export function canHijack(key, val, $proxyItemBackdoor) {
         return false
     }
     if (val == null) {
-        avalon.warn('定义vmodel时属性值不能为null undefine')
+        avalon.warn('定义vmodel时' + key + '的属性值不能为null undefine')
         return true
     }
     if (/error|date|function|regexp/.test(avalon.type(val))) {

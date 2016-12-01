@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-1:11:37 version 2.2.2 by 司徒正美
+built in 2016-12-1:15:6 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -4223,7 +4223,7 @@ fix 空字符串不生成节点的BUG
             return false;
         }
         if (val == null) {
-            avalon.warn('定义vmodel时属性值不能为null undefine');
+            avalon.warn('定义vmodel时' + key + '的属性值不能为null undefine');
             return true;
         }
         if (/error|date|function|regexp/.test(avalon.type(val))) {
