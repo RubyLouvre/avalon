@@ -1,9 +1,14 @@
 #avalon 2 
 
 <p align="center">
-[![npm version](https://badge.fury.io/js/avalon2.svg)](https://badge.fury.io/js/avalon2)
-[![Build Status](https://travis-ci.org/RubyLouvre/avalon.svg?branch=master)](https://travis-ci.org/RubyLouvre/avalon)
-[![Coverage Status](https://coveralls.io/repos/github/RubyLouvre/avalon/badge.svg)](https://coveralls.io/github/RubyLouvre/avalon)
+<a href="https://badge.fury.io/js/avalon2">
+<img src="https://badge.fury.io/js/avalon2.svg" alt="npm version" height="18">
+</a>
+<a href="https://travis-ci.org/RubyLouvre/avalon">
+<img src="https://travis-ci.org/RubyLouvre/avalon.svg?branch=master" alt="Travis CI Status"/>
+</a>
+<a href='https://coveralls.io/github/RubyLouvre/avalon'>
+<img src='https://coveralls.io/repos/github/RubyLouvre/avalon/badge.svg' alt='Coverage Status' /></a>
 </p>
 
 ###[English tutorials](https://github.com/RubyLouvre/avalon/tree/master/tutorials)
