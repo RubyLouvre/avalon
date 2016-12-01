@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-1:22:48 version 2.2.2 by 司徒正美
+built in 2016-12-1:23:13 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -1867,21 +1867,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
     var rtagStart = /[\!\/a-z]/i //闭标签的第一个字符,开标签的第一个英文,注释节点的!
     var strCache = new Cache(100)
 
-    function fixPos(str, i) {
-        var tryCount = str.length - i
-        while (tryCount--) {
-            if (!rtagStart.test(str.charAt(i + 1))) {
-                i = str.indexOf('<', i + 1)
-            } else {
-                break
-            }
-        }
-        if (tryCount === 0) {
-            i = str.length
-        }
-        return i
-    }
-
     function from(str) {
         var cacheKey = str
         var cached = strCache.get(cacheKey)
@@ -1906,7 +1891,17 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                     i = str.length
                 } else if (!rtagStart.test(str.charAt(i + 1))) {
                     //处理`内容2 {{ (idx1 < < <  1 ? 'red' : 'blue' ) + a }} ` 的情况 
-                    i = fixPos(str, i)
+                    var tryCount = str.length - i
+                    while (tryCount--) {
+                        if (!rtagStart.test(str.charAt(i + 1))) {
+                            i = str.indexOf('<', i + 1)
+                        } else {
+                            break
+                        }
+                    }
+                    if (tryCount === 0) {
+                        i = str.length
+                    }
                 }
 
                 var nodeValue = str.slice(0, i).replace(rfill, fill)
@@ -1920,32 +1915,32 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                 }
             }
             if (!node) {
-                var _i = str.indexOf('<!--') //处理注释节点
+                var i = str.indexOf('<!--') //处理注释节点
                 /* istanbul ignore if*/
-                if (_i === 0) {
+                if (i === 0) {
                     var l = str.indexOf('-->')
                     if (l === -1) {
                         avalon$2.error('注释节点没有闭合' + str)
                     }
-                    var _nodeValue = str.slice(4, l).replace(rfill, fill)
+                    var nodeValue = str.slice(4, l).replace(rfill, fill)
                     str = str.slice(l + 3)
                     node = {
                         nodeName: '#comment',
-                        nodeValue: _nodeValue
+                        nodeValue: nodeValue
                     }
                     makeChildren(node, stack, ret)
                 }
             }
             if (!node) {
-                var _match = str.match(ropenTag) //处理元素节点开始部分
-                if (_match) {
-                    var nodeName = _match[1]
+                var match = str.match(ropenTag) //处理元素节点开始部分
+                if (match) {
+                    var nodeName = match[1]
                     var props = {}
                     if (/^[A-Z]/.test(nodeName) && avalon$2.components[nodeName]) {
                         props.is = nodeName
                     }
                     nodeName = nodeName.toLowerCase()
-                    var isVoidTag = !!voidTag[nodeName] || _match[3] === '\/'
+                    var isVoidTag = !!voidTag[nodeName] || match[3] === '\/'
                     node = {
                         nodeName: nodeName,
                         props: {},
@@ -1953,12 +1948,12 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                         isVoidTag: isVoidTag
                     }
 
-                    var attrs = _match[2]
+                    var attrs = match[2]
                     if (attrs) {
                         makeProps(attrs, node.props)
                     }
                     makeChildren(node, stack, ret)
-                    str = str.slice(_match[0].length)
+                    str = str.slice(match[0].length)
                     if (isVoidTag) {
                         node.end = true
                     } else {
@@ -2887,13 +2882,13 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             action.depsCount = curr.length
             action.deps = avalon$2.mix({}, action.mapIDs)
             action.depsVersion = {}
-            for (var _i2 in action.mapIDs) {
-                var _dep = action.mapIDs[_i2]
+            for (var _i in action.mapIDs) {
+                var _dep = action.mapIDs[_i]
                 action.depsVersion[_dep.uuid] = _dep.version
             }
         }
 
-        for (var _i3 = 0, _dep2; _dep2 = prev[_i3++];) {
+        for (var _i2 = 0, _dep2; _dep2 = prev[_i2++];) {
             if (!checked[_dep2.uuid]) {
                 avalon$2.Array.remove(_dep2.observers, action)
             }
@@ -3823,15 +3818,15 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
 
                 var vm = toProxy(proxy)
                 //先添加普通属性与监控属性
-                for (var _i4 in clone) {
-                    vm[_i4] = clone[_i4]
+                for (var _i3 in clone) {
+                    vm[_i3] = clone[_i3]
                 }
                 var $computed = clone.$computed
                 //再添加计算属性
                 if ($computed) {
                     delete clone.$computed
-                    for (var _i5 in $computed) {
-                        var val = $computed[_i5]
+                    for (var _i4 in $computed) {
+                        var val = $computed[_i4]
                         if (typeof val === 'function') {
                             var _val = val
                             val = { get: _val }
@@ -3841,14 +3836,14 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                             //在set方法中的target是IProxy，需要重写成Proxy，才能依赖收集
                             val.vm = vm
                             if (val.set) val.setter = val.set
-                            $computed[_i5] = val
-                            delete clone[_i5] //去掉重名的监控属性
+                            $computed[_i4] = val
+                            delete clone[_i4] //去掉重名的监控属性
                         } else {
-                            delete $computed[_i5]
+                            delete $computed[_i4]
                         }
                     }
-                    for (var _i6 in $computed) {
-                        vm[_i6] = $computed[_i6]
+                    for (var _i5 in $computed) {
+                        vm[_i5] = $computed[_i5]
                     }
                 }
 
@@ -4017,19 +4012,19 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                             patch[i] = newVal[i]
                         }
                     } else {
-                        for (var _i7 in newVal) {
+                        for (var _i6 in newVal) {
                             //diff差异点
-                            if (newVal[_i7] !== oldVal[_i7]) {
+                            if (newVal[_i6] !== oldVal[_i6]) {
                                 hasChange = true
                             }
-                            patch[_i7] = newVal[_i7]
+                            patch[_i6] = newVal[_i6]
                         }
                     }
 
-                    for (var _i8 in oldVal) {
-                        if (!(_i8 in patch)) {
+                    for (var _i7 in oldVal) {
+                        if (!(_i7 in patch)) {
                             hasChange = true
-                            patch[_i8] = ''
+                            patch[_i7] = ''
                         }
                     }
                 }
@@ -6160,7 +6155,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
     avalon$2.scan = function (node, vm, beforeReady) {
         return new Render(node, vm, beforeReady || avalon$2.noop)
     }
-    var viewID
+
     /**
      * avalon.scan 的内部实现
      */
@@ -6302,14 +6297,14 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                     return
                 }
                 //推算出指令类型
-                var _type = dirs['ms-important'] === $id ? 'important' : 'controller'
+                var type = dirs['ms-important'] === $id ? 'important' : 'controller'
                 //推算出用户定义时属性名,是使用ms-属性还是:属性
-                var attrName = 'ms-' + _type in attrs ? 'ms-' + _type : ':' + _type
+                var attrName = 'ms-' + type in attrs ? 'ms-' + type : ':' + type
 
                 if (inBrowser) {
                     delete attrs[attrName]
                 }
-                var dir = directives[_type]
+                var dir = directives[type]
                 scope = dir.getScope.call(this, $id, scope)
                 if (!scope) {
                     return
@@ -6496,6 +6491,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             this.getForBinding(begin, scope, parentChildren, props['data-for-rendered'])
         }
     }
+    var viewID
 
     function newUpdate() {
         var oldVal = this.beforeUpdate()
