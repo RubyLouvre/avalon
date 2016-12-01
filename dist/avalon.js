@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-30:21:49 version 2.2.2 by 司徒正美
+built in 2016-12-1:11:37 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -1694,17 +1694,18 @@ fix 空字符串不生成节点的BUG
                         continue;
                     }
                     //IE6中classNamme, htmlFor等无法检测它们为内建属性　
-                    if (msie < 8 && /[A-Z]/.test(propName)) {
+                    if (avalon.msie < 8 && /[A-Z]/.test(propName)) {
                         node[propName] = val + '';
                         continue;
                     }
                     //SVG只能使用setAttribute(xxx, yyy), VML只能使用node.xxx = yyy ,
                     //HTML的固有属性必须node.xxx = yyy
-                    var isInnate = !avalon.modern && isVML(node) ? true : isInnateProps(node.nodeName, attrName);
                     /* istanbul ignore next */
+                    var isInnate = !avalon.modern && isVML(node) ? true : isInnateProps(node.nodeName, attrName);
                     if (isInnate) {
                         if (attrName === 'href' || attrName === 'src') {
-                            if (msie < 8) {
+                            /* istanbul ignore if */
+                            if (avalon.msie < 8) {
                                 val = String(val).replace(ramp, '&'); //处理IE67自动转义的问题
                             }
                         }
@@ -1718,11 +1719,13 @@ fix 空字符串不生成节点的BUG
                 // 未知名称。\/n
                 // e.message大概这样,需要trim
                 //IE6-8,元素节点不支持其他元素节点的内置属性,如src, href, for
+                /* istanbul ignore next */
                 avalon.log(String(e.message).trim(), attrName, val);
             }
         }
     }
     var innateMap = {};
+
     function isInnateProps(nodeName, attrName) {
         var key = nodeName + ":" + attrName;
         if (key in innateMap) {
@@ -3280,11 +3283,13 @@ fix 空字符串不生成节点的BUG
                     try {
                         dom.innerHTML = template;
                     } catch (e) {
+                        /* istanbul ignore next*/
                         this.hackIE(dom, this.nodeName, template, props);
                     }
                     break;
                 case 'option':
                     //IE6-8,为option添加文本子节点,不会同步到text属性中
+                    /* istanbul ignore next */
                     if (msie < 9) dom.text = template;
                 default:
                     /* istanbul ignore next */
@@ -3297,6 +3302,8 @@ fix 空字符串不生成节点的BUG
             }
             return this.dom = dom;
         },
+
+        /* istanbul ignore next */
         hackIE: function hackIE(dom, nodeName, template) {
             switch (nodeName) {
                 case 'style':
@@ -3387,7 +3394,7 @@ fix 空字符串不生成节点的BUG
 
     function VFragment(children, key, val, index) {
         this.nodeName = '#document-fragment';
-        this.children = children || [];
+        this.children = children;
         this.key = key;
         this.val = val;
         this.index = index;
@@ -3417,7 +3424,7 @@ fix 空字符串不生成节点的BUG
             return f;
         },
         toHTML: function toHTML() {
-            var c = this.children || [];
+            var c = this.children;
             return c.map(function (el) {
                 return avalon.vdom(el, 'toHTML');
             }).join('');

@@ -1,8 +1,10 @@
-var a = require('./buildIE6')
-var b = require('./buildIE6Test')
-var c = require('./buildIE9')
-var d = require('./buildIE9Test')
-Promise.all([a,b, c,d]).then(function() {
+var array = [
+    require('./buildIE6'),
+    require('./buildIE6Test'),
+    //require('./buildIE9'),
+    // require('./buildIE9Test')
+]
+Promise.all(array).then(function() {
     console.log('build complete!!!')
 }).catch(function() {
     console.log('build error!!!')

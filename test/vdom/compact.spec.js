@@ -1,7 +1,7 @@
 import { avalon, vdom, VText, VComment, VElement, VFragment } from '../../src/vdom/compact'
-describe('vdom', function () {
-    describe('VElement', function () {
-        it('test', function () {
+describe('vdom', function() {
+    describe('VElement', function() {
+        it('test', function() {
             var el = new VElement('p', { title: '111' }, [])
             expect(el).toInstanceOf(VElement)
             expect(el).not.toHaveProperty('toDOM')
@@ -20,7 +20,7 @@ describe('vdom', function () {
 
             }
         })
-        it('xmp', function () {
+        it('xmp', function() {
 
             var xmp = new VElement('xmp', { 'for': 'eee', 'class': 'a b', style: 'border: 4px' }, [
                 new VText('111')
@@ -30,7 +30,7 @@ describe('vdom', function () {
             expect(xmp.toDOM().className).toBe('a b')
             expect(xmp.toDOM().style.borderWidth).toMatch(/4/i)
         })
-        it('noscript', function () {
+        it('noscript', function() {
             var noscript = new VElement('noscript', {}, [
                 new VText('111')
             ])
@@ -38,13 +38,13 @@ describe('vdom', function () {
             expect(noscript.toDOM().nodeName).toBe('NOSCRIPT')
             expect(noscript.toDOM().textContent).toBe('111')
         })
-        it('label for', function () {
+        it('label for', function() {
             var label = new VElement('label', { 'for': 'ddd' }, [
                 new VText('111')
             ])
             expect(label.toDOM().htmlFor).toBe('ddd')
         })
-        it('option', function () {
+        it('option', function() {
             var option = new VElement('option', { 'value': 'eee' }, [
                 new VText(' xxx ')
             ])
@@ -66,13 +66,13 @@ describe('vdom', function () {
 
             expect(option2.toDOM().innerHTML).toBe('')
         })
-        it('style', function () {
+        it('style', function() {
             var style = new VElement('style', {}, [
                 new VText('.blue{color:blue}')
             ])
             expect(style.toDOM().nodeName).toBe('STYLE')
         })
-        it('script', function () {
+        it('script', function() {
             var script = new VElement('script', {}, [
                 new VText('var a = 1')
             ])
@@ -81,7 +81,7 @@ describe('vdom', function () {
 
         })
 
-        it('input', function () {
+        it('input', function() {
 
             var input = new VElement('input', { type: 'password' }, [
 
@@ -93,10 +93,30 @@ describe('vdom', function () {
         })
 
     })
+    describe('hackIE', function() {
+        it('test', function() {
+            var hack = VElement.prototype.hackIE
+            if (VElement.prototype.hackIE) {
+                var el = document.createElement('style')
+                    //chrome下对style标签的style赋值，总是赋不上，而phantomjs则会直接抛错
+                try {
+                    hack(el, 'style', '.aaa{border:1px}')
+                    expect(el.style.cssText).toMatch(/1px/)
+                } catch (e) {}
+                var el2 = document.createElement('xmp')
+                hack(el2, 'xmp', '<p>111</p>')
+                expect(el2.textContent).toBe('<p>111</p>')
+                var el3 = document.createElement('noscript')
+                hack(el3, 'noscript', '<p>111</p>')
+                expect(el3.textContent).toBe('<p>111</p>')
+            }
 
-    describe('VComment', function () {
 
-        it('test', function () {
+        })
+    })
+    describe('VComment', function() {
+
+        it('test', function() {
             var el = new VComment('aaa')
             expect(el).toInstanceOf(VComment)
             expect(el).not.toHaveProperty('toDOM')
@@ -108,9 +128,9 @@ describe('vdom', function () {
             expect(vdom(el, 'toDOM')).toBe(el.dom)
         })
     })
-    describe('VText', function () {
+    describe('VText', function() {
 
-        it('test', function () {
+        it('test', function() {
             var el = new VText('aaa')
             expect(el).toInstanceOf(VText)
             expect(el).toHaveProperty('nodeValue')
@@ -120,9 +140,9 @@ describe('vdom', function () {
         })
     })
 
-    describe('VFragment', function () {
+    describe('VFragment', function() {
 
-        it('test', function () {
+        it('test', function() {
             var el = new VFragment([])
             expect(el).toInstanceOf(VFragment)
             expect(el).not.toHaveProperty('toDOM')
@@ -134,7 +154,7 @@ describe('vdom', function () {
             expect(el.toDOM().nodeType).toBe(11)
 
         })
-        it('test2', function () {
+        it('test2', function() {
 
             var hasChildren = new VFragment([
                 new VElement('p', {}, [
@@ -149,8 +169,8 @@ describe('vdom', function () {
 
 
 
-    describe('vdom', function () {
-        it('test', function () {
+    describe('vdom', function() {
+        it('test', function() {
             var el = vdom(null, 'toHTML')
             expect(el).toBe('')
             var el2 = vdom(null, 'toDOM')
@@ -162,9 +182,11 @@ describe('vdom', function () {
             var el3 = vdom(f, 'toHTML')
             expect(el3).toBe('')
             var el4 = vdom([{
-                nodeName: '#text', nodeValue: '333'
+                nodeName: '#text',
+                nodeValue: '333'
             }, {
-                nodeName: '#text', nodeValue: '444'
+                nodeName: '#text',
+                nodeValue: '444'
             }], 'toHTML')
             expect(el4).toBe('333444')
 

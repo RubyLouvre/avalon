@@ -42,7 +42,7 @@ VElement.prototype = {
                 dom.text = template
                 dom.type = props.type || ''
                 break
-            case 'noscript':    
+            case 'noscript':
                 dom.textContent = template
             case 'style':
             case 'xmp':
@@ -50,11 +50,13 @@ VElement.prototype = {
                 try {
                     dom.innerHTML = template
                 } catch (e) {
+                    /* istanbul ignore next*/
                     this.hackIE(dom, this.nodeName, template, props)
                 }
                 break
             case 'option':
                 //IE6-8,为option添加文本子节点,不会同步到text属性中
+                /* istanbul ignore next */
                 if (msie < 9)
                     dom.text = template
             default:
@@ -68,6 +70,7 @@ VElement.prototype = {
         }
         return this.dom = dom
     },
+    /* istanbul ignore next */
     hackIE(dom, nodeName, template) {
         switch (nodeName) {
             case 'style':

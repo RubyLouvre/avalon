@@ -92,13 +92,10 @@ module.exports = function(config) {
                 }
             },
             coverageReporter: {
-                dir: 'coverage/',
-                reporters: [{
-                    type: 'text'
-                }, {
-                    type: 'html',
-                    subdir: 'html'
-                }]
+                reporters: [
+		{type: 'text-summary', subdir: '.'},
+		{type: 'lcov', subdir: '.', dir: 'coverage/'}
+	        ]
 
             },
             // Continuous Integration mode

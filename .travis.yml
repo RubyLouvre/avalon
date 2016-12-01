@@ -16,3 +16,5 @@ script:
 branches:
   only:
     - master
+after_script:
+  - npm run coveralls

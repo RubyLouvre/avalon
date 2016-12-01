@@ -2,7 +2,7 @@ import { avalon, createFragment } from '../seed/core'
 
 export function VFragment(children, key, val, index) {
     this.nodeName = '#document-fragment'
-    this.children = children || []
+    this.children = children
     this.key = key
     this.val = val
     this.index = index
@@ -33,7 +33,7 @@ VFragment.prototype = {
         return f
     },
     toHTML() {
-        var c = this.children || []
+        var c = this.children
         return c.map(el => avalon.vdom(el, 'toHTML')).join('')
     }
 }

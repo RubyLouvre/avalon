@@ -1,5 +1,5 @@
 /*!
-built in 2016-11-30:21:49 version 2.2.2 by 司徒正美
+built in 2016-12-1:0:56 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -2669,7 +2669,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
 
     function VFragment(children, key, val, index) {
         this.nodeName = '#document-fragment'
-        this.children = children || []
+        this.children = children
         this.key = key
         this.val = val
         this.index = index
@@ -2699,7 +2699,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             return f
         },
         toHTML: function toHTML() {
-            var c = this.children || []
+            var c = this.children
             return c.map(function (el) {
                 return avalon$2.vdom(el, 'toHTML')
             }).join('')

@@ -47,7 +47,7 @@
                     }, 0) / array.length, 'ms')
                     clearInterval(id)
                 }
-            }, 50)
+            }, 500)
 
         </script>
     </head>
@@ -59,7 +59,8 @@
             <table border="1">
                 <tr><th ms-for='el in @header'>{{el}}</th></tr>
                 <tr ms-for='tr in @list'>
-                    <td ms-for='td in tr | selectBy(["name","age","sex"])' ms-attr="{align:td === 'age' ?'left':'right'}">{{td}}</td>
+                    <td ms-for="td in tr | selectBy(['name','age','sex'])" 
+                        ms-attr="{align:td === 'age' ?'left':'right'}">{{td}}</td>
                 </tr>
             </table>
         </div>
