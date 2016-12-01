@@ -10,9 +10,9 @@ var cssDir = avalon.directive('css', {
                     el && avalon.shadowCopy(b, el)
                 })
                 newVal = b
-                if(!arrayWarn[this.type]){
-                   avalon.warn('ms-'+this.type+ '指令的值不建议使用数组形式了！')
-                   arrayWarn[this.type] = 1
+                if (!arrayWarn[this.type]) {
+                    avalon.warn('ms-' + this.type + '指令的值不建议使用数组形式了！')
+                    arrayWarn[this.type] = 1
                 }
             }
 
@@ -23,8 +23,8 @@ var cssDir = avalon.directive('css', {
                 hasChange = true
             } else {
                 if (this.deep) {
-                    var deep = typeof this.deep == 'number' ? this.deep : 6
-                    for (var i in newVal) { //diff差异点  
+                    var deep = typeof this.deep === 'number' ? this.deep : 6
+                    for (let i in newVal) { //diff差异点  
                         if (!deepEquals(newVal[i], oldVal[i], 4)) {
                             this.value = newVal
                             return true
@@ -32,7 +32,7 @@ var cssDir = avalon.directive('css', {
                         patch[i] = newVal[i]
                     }
                 } else {
-                    for (var i in newVal) { //diff差异点
+                    for (let i in newVal) { //diff差异点
                         if (newVal[i] !== oldVal[i]) {
                             hasChange = true
                         }
@@ -40,7 +40,7 @@ var cssDir = avalon.directive('css', {
                     }
                 }
 
-                for (var i in oldVal) {
+                for (let i in oldVal) {
                     if (!(i in patch)) {
                         hasChange = true
                         patch[i] = ''
@@ -86,36 +86,45 @@ export function deepEquals(a, b, level) {
     if (aIsArray !== Array.isArray(b)) {
         return false
     } else if (aIsArray) {
-        if (a.length !== b.length) {
-            return false
-        }
-        for (let i = a.length - 1; i >= 0; i--) {
-            try {
-                if (!deepEquals(a[i], b[i], level - 1)) {
-                    return false
-                }
-            } catch (noThisPropError) {
-                return false
-            }
-        }
-        return true
+        return equalArray(a, b)
+
     } else if (typeof a === "object" && typeof b === "object") {
-        if (a === null || b === null)
-            return false;
-        if (getEnumerableKeys(a).length !== getEnumerableKeys(b).length)
-            return false;
-        for (let prop in a) {
-            if (!(prop in b))
-                return false
-            try {
-                if (!deepEquals(a[prop], b[prop], level - 1)) {
-                    return false
-                }
-            } catch (noThisPropError) {
-                return false
-            }
-        }
-        return true
+        return equalObject(a, b)
     }
     return a === b
+}
+
+function equalArray(a, b, level) {
+    if (a.length !== b.length) {
+        return false
+    }
+    for (let i = a.length - 1; i >= 0; i--) {
+        try {
+            if (!deepEquals(a[i], b[i], level - 1)) {
+                return false
+            }
+        } catch (noThisPropError) {
+            return false
+        }
+    }
+    return true
+}
+
+function equalObject(a, b, level) {
+    if (a === null || b === null)
+        return false;
+    if (getEnumerableKeys(a).length !== getEnumerableKeys(b).length)
+        return false;
+    for (let prop in a) {
+        if (!(prop in b))
+            return false
+        try {
+            if (!deepEquals(a[prop], b[prop], level - 1)) {
+                return false
+            }
+        } catch (noThisPropError) {
+            return false
+        }
+    }
+    return true
 }

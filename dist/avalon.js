@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-1:17:11 version 2.2.2 by 司徒正美
+built in 2016-12-1:21:47 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -739,8 +739,7 @@ fix 空字符串不生成节点的BUG
             if (obj.constructor && !ohasOwn.call(obj, 'constructor') && !ohasOwn.call(obj.constructor.prototype, 'isPrototypeOf')) {
                 return false;
             }
-            obj.$vbthis = 'is it vbscript object?';
-            delete obj.$vbthis;
+            var isVBscript = obj.$vbthis;
         } catch (e) {
             //IE8 9会在这里抛错
             return false;
@@ -752,7 +751,7 @@ fix 空字符串不生成节点的BUG
             }
         }
         for (key in obj) {}
-        return key === void 0 || ohasOwn.call(obj, key);
+        return key === undefined$1 || ohasOwn.call(obj, key);
     }
 
     /* istanbul ignore next */
@@ -763,120 +762,109 @@ fix 空字符串不生成节点的BUG
     /* istanbul ignore next */
     avalon.isPlainObject = /\[native code\]/.test(Object.getPrototypeOf) ? isPlainObjectModern : isPlainObjectCompact;
 
+    var rcanMix = /object|function/;
+
     //与jQuery.extend方法，可用于浅拷贝，深拷贝
     /* istanbul ignore next */
     avalon.mix = avalon.fn.mix = function () {
-        var options,
-            name,
-            src,
-            copy,
+        var n = arguments.length,
+            isDeep = false,
+            i = 0,
+            array = [];
+        if (arguments[0] === true) {
+            isDeep = true;
+            i = 1;
+        }
+        //将所有非空对象变成空对象
+        for (; i < n; i++) {
+            var el = arguments[i];
+            el = el && rcanMix.test(typeof el) ? el : {};
+            array.push(el);
+        }
+        if (array.length === 1) {
+            array.unshift(this);
+        }
+        return innerExtend(isDeep, array);
+    };
+    var undefined$1;
+
+    function innerExtend(isDeep, array) {
+        var target = array[0],
             copyIsArray,
-            clone,
-            target = arguments[0] || {},
-            i = 1,
-            length = arguments.length,
-            deep = false;
-
-        // 如果第一个参数为布尔,判定是否深拷贝
-        if (typeof target === 'boolean') {
-            deep = target;
-            target = arguments[1] || {};
-            i++;
-        }
-
-        //当参数为其他简单类型 ,改为空对象
-        if (typeof target !== 'object' && !avalon.isFunction(target)) {
-            target = {};
-        }
-
-        //如果只有一个参数，那么新成员添加于mix所在的对象上
-        if (i === length) {
-            target = this;
-            i--;
-        }
-
-        for (; i < length; i++) {
+            clone;
+        for (var i = 1, length = array.length; i < length; i++) {
             //只处理非空参数
-            if ((options = arguments[i]) != null) {
-                var noCloneArrayMethod = Array.isArray(options);
-                for (name in options) {
-                    if (noCloneArrayMethod && !options.hasOwnProperty(name)) {
-                        continue;
-                    }
-                    try {
-                        src = target[name];
-                        copy = options[name]; //当options为VBS对象时报错
-                    } catch (e) {
-                        continue;
+            var options = array[i];
+            var noCloneArrayMethod = Array.isArray(options);
+            for (name in options) {
+                if (noCloneArrayMethod && !options.hasOwnProperty(name)) {
+                    continue;
+                }
+                try {
+                    var src = target[name];
+                    var copy = options[name]; //当options为VBS对象时报错
+                } catch (e) {
+                    continue;
+                }
+
+                // 防止环引用
+                if (target === copy) {
+                    continue;
+                }
+                if (isDeep && copy && (avalon.isPlainObject(copy) || (copyIsArray = Array.isArray(copy)))) {
+
+                    if (copyIsArray) {
+                        copyIsArray = false;
+                        clone = src && Array.isArray(src) ? src : [];
+                    } else {
+                        clone = src && avalon.isPlainObject(src) ? src : {};
                     }
 
-                    // 防止环引用
-                    if (target === copy) {
-                        continue;
-                    }
-                    if (deep && copy && (avalon.isPlainObject(copy) || (copyIsArray = Array.isArray(copy)))) {
-
-                        if (copyIsArray) {
-                            copyIsArray = false;
-                            clone = src && Array.isArray(src) ? src : [];
-                        } else {
-                            clone = src && avalon.isPlainObject(src) ? src : {};
-                        }
-
-                        target[name] = avalon.mix(deep, clone, copy);
-                    } else if (copy !== void 0) {
-                        target[name] = copy;
-                    }
+                    target[name] = innerExtend(isDeep, [clone, copy]);
+                } else if (copy !== undefined$1) {
+                    target[name] = copy;
                 }
             }
         }
         return target;
-    };
+    }
 
     var rarraylike = /(Array|List|Collection|Map|Arguments)\]$/;
     /*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
     /* istanbul ignore next */
     function isArrayLike(obj) {
-        if (!obj) return false;
-        var n = obj.length;
-        if (n === n >>> 0) {
-            //检测length属性是否为非负整数
-            var type = inspect.call(obj).slice(8, -1);
-            if (rarraylike.test(type)) return true;
-            if (type === 'Array') return true;
-            try {
-                if ({}.propertyIsEnumerable.call(obj, 'length') === false) {
-                    //如果是原生对象
-                    return rfunction.test(obj.item || obj.callee);
-                }
+        try {
+            var n = obj.length;
+            if (n !== n >>> 0) //检测length属性是否为非负整数
+                return false;
+            if (rarraylike.test(inspect.call(obj))) {
                 return true;
-            } catch (e) {
-                //IE的NodeList直接抛错
-                return !obj.window; //IE6-8 window
             }
+            if ({}.propertyIsEnumerable.call(obj, 'length') === false) {
+                //如果是原生对象
+                return rfunction.test(obj.item || obj.callee);
+            }
+            return true; //IE6-8 Object.prototype.toString访问window的length，会直接抛“this不是一个javascript对象”的错误
+        } catch (e) {//IE的NodeList直接抛错
         }
         return false;
     }
 
     avalon.each = function (obj, fn) {
-        if (obj) {
-            //排除null, undefined
-            var i = 0;
-            if (isArrayLike(obj)) {
-                for (var n = obj.length; i < n; i++) {
-                    if (fn(i, obj[i]) === false) break;
-                }
-            } else {
-                for (i in obj) {
-                    if (obj.hasOwnProperty(i) && fn(i, obj[i]) === false) {
-                        break;
-                    }
+        //排除null, undefined
+        if (isArrayLike(obj)) {
+            for (var i = 0, n = obj.length; i < n; i++) {
+                if (fn(i, obj[i]) === false) break;
+            }
+        } else if (obj) {
+            for (var _i in obj) {
+                if (obj.hasOwnProperty(_i) && fn(_i, obj[_i]) === false) {
+                    break;
                 }
             }
         }
     };
-
-    new function welcome() {
+    (function () {
         var welcomeIntro = ["%cavalon.js %c" + avalon.version + " %cin debug mode, %cmore...", "color: rgb(114, 157, 52); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(82, 140, 224); font-weight: normal; text-decoration: underline;"];
         var welcomeMessage = "You're running avalon in debug mode - messages will be printed to the console to help you fix problems and optimise your application.\n\n" + 'To disable debug mode, add this line at the start of your app:\n\n  avalon.config({debug: false});\n\n' + 'Debug mode also automatically shut down amicably when your app is minified.\n\n' + "Get help and support:\n  https://segmentfault.com/t/avalon\n  http://avalonjs.coding.me/\n  http://www.baidu-x.com/?q=avalonjs\n  http://www.avalon.org.cn/\n\nFound a bug? Raise an issue:\n  https://github.com/RubyLouvre/avalon/issues\n\n";
         if (typeof console === 'object') {
@@ -888,7 +876,7 @@ fix 空字符串不生成节点的BUG
                 con.groupEnd(welcomeIntro);
             }
         }
-    }();
+    })();
 
     function toFixedFix(n, prec) {
         var k = Math.pow(10, prec);
@@ -1365,7 +1353,7 @@ fix 空字符串不生成节点的BUG
         right: 39,
         down: 40
     };
-    for (var name in keys) {
+    for (var name$1 in keys) {
         (function (filter, key) {
             eventFilters[filter] = function (e) {
                 if (e.which !== key) {
@@ -1373,7 +1361,7 @@ fix 空字符串不生成节点的BUG
                 }
                 return e;
             };
-        })(name, keys[name]);
+        })(name$1, keys[name$1]);
     }
 
     //https://github.com/teppeis/htmlspecialchars
@@ -3607,13 +3595,13 @@ fix 空字符串不生成节点的BUG
             action.depsCount = curr.length;
             action.deps = avalon.mix({}, action.mapIDs);
             action.depsVersion = {};
-            for (var _i in action.mapIDs) {
-                var _dep = action.mapIDs[_i];
+            for (var _i2 in action.mapIDs) {
+                var _dep = action.mapIDs[_i2];
                 action.depsVersion[_dep.uuid] = _dep.version;
             }
         }
 
-        for (var _i2 = 0, _dep2; _dep2 = prev[_i2++];) {
+        for (var _i3 = 0, _dep2; _dep2 = prev[_i3++];) {
             if (!checked[_dep2.uuid]) {
                 avalon.Array.remove(_dep2.observers, action);
             }
@@ -4718,7 +4706,7 @@ fix 空字符串不生成节点的BUG
                     hasChange = true;
                 } else {
                     if (this.deep) {
-                        var deep = typeof this.deep == 'number' ? this.deep : 6;
+                        var deep = typeof this.deep === 'number' ? this.deep : 6;
                         for (var i in newVal) {
                             //diff差异点  
                             if (!deepEquals(newVal[i], oldVal[i], 4)) {
@@ -4728,19 +4716,19 @@ fix 空字符串不生成节点的BUG
                             patch[i] = newVal[i];
                         }
                     } else {
-                        for (var i in newVal) {
+                        for (var _i4 in newVal) {
                             //diff差异点
-                            if (newVal[i] !== oldVal[i]) {
+                            if (newVal[_i4] !== oldVal[_i4]) {
                                 hasChange = true;
                             }
-                            patch[i] = newVal[i];
+                            patch[_i4] = newVal[_i4];
                         }
                     }
 
-                    for (var i in oldVal) {
-                        if (!(i in patch)) {
+                    for (var _i5 in oldVal) {
+                        if (!(_i5 in patch)) {
                             hasChange = true;
-                            patch[i] = '';
+                            patch[_i5] = '';
                         }
                     }
                 }
@@ -4780,35 +4768,43 @@ fix 空字符串不生成节点的BUG
         if (aIsArray !== Array.isArray(b)) {
             return false;
         } else if (aIsArray) {
-            if (a.length !== b.length) {
-                return false;
-            }
-            for (var i = a.length - 1; i >= 0; i--) {
-                try {
-                    if (!deepEquals(a[i], b[i], level - 1)) {
-                        return false;
-                    }
-                } catch (noThisPropError) {
-                    return false;
-                }
-            }
-            return true;
+            return equalArray(a, b);
         } else if (typeof a === "object" && typeof b === "object") {
-            if (a === null || b === null) return false;
-            if (getEnumerableKeys(a).length !== getEnumerableKeys(b).length) return false;
-            for (var prop in a) {
-                if (!(prop in b)) return false;
-                try {
-                    if (!deepEquals(a[prop], b[prop], level - 1)) {
-                        return false;
-                    }
-                } catch (noThisPropError) {
-                    return false;
-                }
-            }
-            return true;
+            return equalObject(a, b);
         }
         return a === b;
+    }
+
+    function equalArray(a, b, level) {
+        if (a.length !== b.length) {
+            return false;
+        }
+        for (var i = a.length - 1; i >= 0; i--) {
+            try {
+                if (!deepEquals(a[i], b[i], level - 1)) {
+                    return false;
+                }
+            } catch (noThisPropError) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function equalObject(a, b, level) {
+        if (a === null || b === null) return false;
+        if (getEnumerableKeys(a).length !== getEnumerableKeys(b).length) return false;
+        for (var prop in a) {
+            if (!(prop in b)) return false;
+            try {
+                if (!deepEquals(a[prop], b[prop], level - 1)) {
+                    return false;
+                }
+            } catch (noThisPropError) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -4826,21 +4822,21 @@ fix 空字符串不生成节点的BUG
     var css3 = void 0;
     var tran = void 0;
     var ani = void 0;
-    var name$1 = void 0;
+    var name$2 = void 0;
     var animationEndEvent = void 0;
     var transitionEndEvent = void 0;
     var transition = false;
     var animation = false;
     //有的浏览器同时支持私有实现与标准写法，比如webkit支持前两种，Opera支持1、3、4
-    for (name$1 in checker) {
-        if (window$1[name$1]) {
-            tran = checker[name$1];
+    for (name$2 in checker) {
+        if (window$1[name$2]) {
+            tran = checker[name$2];
             break;
         }
         /* istanbul ignore next */
         try {
-            var a = document.createEvent(name$1);
-            tran = checker[name$1];
+            var a = document.createEvent(name$2);
+            tran = checker[name$2];
             break;
         } catch (e) {}
     }
@@ -4861,9 +4857,9 @@ fix 空字符串不生成节点的BUG
         'AnimationEvent': 'animationend',
         'WebKitAnimationEvent': 'webkitAnimationEnd'
     };
-    for (name$1 in checker) {
-        if (window$1[name$1]) {
-            ani = checker[name$1];
+    for (name$2 in checker) {
+        if (window$1[name$2]) {
+            ani = checker[name$2];
             break;
         }
     }

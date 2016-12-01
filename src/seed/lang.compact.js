@@ -113,8 +113,7 @@ export function isPlainObjectCompact(obj, key) {
             !ohasOwn.call(obj.constructor.prototype, 'isPrototypeOf')) {
             return false
         }
-        obj.$vbthis = 'is it vbscript object?'
-        delete obj.$vbthis
+        var isVBscript = obj.$vbthis
     } catch (e) { //IE8 9会在这里抛错
         return false
     }
@@ -125,7 +124,7 @@ export function isPlainObjectCompact(obj, key) {
         }
     }
     for (key in obj) {}
-    return key === void 0 || ohasOwn.call(obj, key)
+    return key === undefined || ohasOwn.call(obj, key)
 }
 
 /* istanbul ignore next */
@@ -138,67 +137,67 @@ function isPlainObjectModern(obj) {
 avalon.isPlainObject = /\[native code\]/.test(Object.getPrototypeOf) ?
     isPlainObjectModern : isPlainObjectCompact
 
+var rcanMix = /object|function/
 
 //与jQuery.extend方法，可用于浅拷贝，深拷贝
 /* istanbul ignore next */
 avalon.mix = avalon.fn.mix = function() {
-    var options, name, src, copy, copyIsArray, clone,
-        target = arguments[0] || {},
-        i = 1,
-        length = arguments.length,
-        deep = false
-
-    // 如果第一个参数为布尔,判定是否深拷贝
-    if (typeof target === 'boolean') {
-        deep = target
-        target = arguments[1] || {}
-        i++
+    var n = arguments.length,
+        isDeep = false,
+        i = 0,
+        array = []
+    if (arguments[0] === true) {
+        isDeep = true
+        i = 1
     }
-
-    //当参数为其他简单类型 ,改为空对象
-    if (typeof target !== 'object' && !avalon.isFunction(target)) {
-        target = {}
+    //将所有非空对象变成空对象
+    for (; i < n; i++) {
+        var el = arguments[i]
+        el = el && rcanMix.test(typeof el) ? el : {}
+        array.push(el)
     }
-
-    //如果只有一个参数，那么新成员添加于mix所在的对象上
-    if (i === length) {
-        target = this
-        i--
+    if (array.length === 1) {
+        array.unshift(this)
     }
+    return innerExtend(isDeep, array)
+}
+var undefined
 
-    for (; i < length; i++) {
+function innerExtend(isDeep, array) {
+    var target = array[0],
+        copyIsArray, clone
+    for (var i = 1, length = array.length; i < length; i++) {
         //只处理非空参数
-        if ((options = arguments[i]) != null) {
-            var noCloneArrayMethod = Array.isArray(options)
-            for (name in options) {
-                if (noCloneArrayMethod && !options.hasOwnProperty(name)) {
-                    continue
-                }
-                try {
-                    src = target[name]
-                    copy = options[name] //当options为VBS对象时报错
-                } catch (e) {
-                    continue
+        var options = array[i]
+        var noCloneArrayMethod = Array.isArray(options)
+        for (name in options) {
+            if (noCloneArrayMethod && !options.hasOwnProperty(name)) {
+                continue
+            }
+            try {
+                var src = target[name]
+                var copy = options[name] //当options为VBS对象时报错
+            } catch (e) {
+                continue
+            }
+
+            // 防止环引用
+            if (target === copy) {
+                continue
+            }
+            if (isDeep && copy && (avalon.isPlainObject(copy) || (copyIsArray = Array.isArray(copy)))) {
+
+                if (copyIsArray) {
+                    copyIsArray = false
+                    clone = src && Array.isArray(src) ? src : []
+
+                } else {
+                    clone = src && avalon.isPlainObject(src) ? src : {}
                 }
 
-                // 防止环引用
-                if (target === copy) {
-                    continue
-                }
-                if (deep && copy && (avalon.isPlainObject(copy) || (copyIsArray = Array.isArray(copy)))) {
-
-                    if (copyIsArray) {
-                        copyIsArray = false
-                        clone = src && Array.isArray(src) ? src : []
-
-                    } else {
-                        clone = src && avalon.isPlainObject(src) ? src : {}
-                    }
-
-                    target[name] = avalon.mix(deep, clone, copy)
-                } else if (copy !== void 0) {
-                    target[name] = copy
-                }
+                target[name] = innerExtend(isDeep, [clone, copy])
+            } else if (copy !== undefined) {
+                target[name] = copy
             }
         }
     }
@@ -209,47 +208,41 @@ var rarraylike = /(Array|List|Collection|Map|Arguments)\]$/
     /*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
     /* istanbul ignore next */
 export function isArrayLike(obj) {
-    if (!obj)
-        return false
-    var n = obj.length
-    if (n === (n >>> 0)) { //检测length属性是否为非负整数
-        var type = inspect.call(obj).slice(8, -1)
-        if (rarraylike.test(type))
+    try {
+        var n = obj.length
+        if (n !== (n >>> 0)) //检测length属性是否为非负整数
+            return false
+        if (rarraylike.test(inspect.call(obj))) {
             return true
-        if (type === 'Array')
-            return true
-        try {
-            if ({}.propertyIsEnumerable.call(obj, 'length') === false) { //如果是原生对象
-                return rfunction.test(obj.item || obj.callee)
-            }
-            return true
-        } catch (e) { //IE的NodeList直接抛错
-            return !obj.window //IE6-8 window
         }
+        if ({}.propertyIsEnumerable.call(obj, 'length') === false) { //如果是原生对象
+            return rfunction.test(obj.item || obj.callee)
+        }
+        return true //IE6-8 Object.prototype.toString访问window的length，会直接抛“this不是一个javascript对象”的错误
+    } catch (e) { //IE的NodeList直接抛错
     }
     return false
 }
 
 
 avalon.each = function(obj, fn) {
-    if (obj) { //排除null, undefined
-        var i = 0
-        if (isArrayLike(obj)) {
-            for (var n = obj.length; i < n; i++) {
-                if (fn(i, obj[i]) === false)
-                    break
-            }
-        } else {
-            for (i in obj) {
-                if (obj.hasOwnProperty(i) && fn(i, obj[i]) === false) {
-                    break
-                }
+    //排除null, undefined
+    if (isArrayLike(obj)) {
+        for (let i = 0, n = obj.length; i < n; i++) {
+            if (fn(i, obj[i]) === false)
+                break
+        }
+    } else if (obj) {
+        for (let i in obj) {
+            if (obj.hasOwnProperty(i) && fn(i, obj[i]) === false) {
+                break
             }
         }
     }
 }
 
-new function welcome() {
+;
+(function() {
     var welcomeIntro = ["%cavalon.js %c" + avalon.version + " %cin debug mode, %cmore...", "color: rgb(114, 157, 52); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(82, 140, 224); font-weight: normal; text-decoration: underline;"];
     var welcomeMessage = "You're running avalon in debug mode - messages will be printed to the console to help you fix problems and optimise your application.\n\n" +
         'To disable debug mode, add this line at the start of your app:\n\n  avalon.config({debug: false});\n\n' +
@@ -264,4 +257,4 @@ new function welcome() {
             con.groupEnd(welcomeIntro);
         }
     }
-}
+})()

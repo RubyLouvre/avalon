@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-1:17:10 version 2.2.2 by 司徒正美
+built in 2016-12-1:21:47 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -4002,7 +4002,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                     hasChange = true
                 } else {
                     if (this.deep) {
-                        var deep = typeof this.deep == 'number' ? this.deep : 6
+                        var deep = typeof this.deep === 'number' ? this.deep : 6
                         for (var i in newVal) {
                             //diff差异点  
                             if (!deepEquals(newVal[i], oldVal[i], 4)) {
@@ -4012,19 +4012,19 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                             patch[i] = newVal[i]
                         }
                     } else {
-                        for (var i in newVal) {
+                        for (var _i6 in newVal) {
                             //diff差异点
-                            if (newVal[i] !== oldVal[i]) {
+                            if (newVal[_i6] !== oldVal[_i6]) {
                                 hasChange = true
                             }
-                            patch[i] = newVal[i]
+                            patch[_i6] = newVal[_i6]
                         }
                     }
 
-                    for (var i in oldVal) {
-                        if (!(i in patch)) {
+                    for (var _i7 in oldVal) {
+                        if (!(_i7 in patch)) {
                             hasChange = true
-                            patch[i] = ''
+                            patch[_i7] = ''
                         }
                     }
                 }
@@ -4064,35 +4064,43 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         if (aIsArray !== Array.isArray(b)) {
             return false
         } else if (aIsArray) {
-            if (a.length !== b.length) {
-                return false
-            }
-            for (var i = a.length - 1; i >= 0; i--) {
-                try {
-                    if (!deepEquals(a[i], b[i], level - 1)) {
-                        return false
-                    }
-                } catch (noThisPropError) {
-                    return false
-                }
-            }
-            return true
+            return equalArray(a, b)
         } else if (typeof a === "object" && typeof b === "object") {
-            if (a === null || b === null) return false
-            if (getEnumerableKeys(a).length !== getEnumerableKeys(b).length) return false
-            for (var prop in a) {
-                if (!(prop in b)) return false
-                try {
-                    if (!deepEquals(a[prop], b[prop], level - 1)) {
-                        return false
-                    }
-                } catch (noThisPropError) {
-                    return false
-                }
-            }
-            return true
+            return equalObject(a, b)
         }
         return a === b
+    }
+
+    function equalArray(a, b, level) {
+        if (a.length !== b.length) {
+            return false
+        }
+        for (var i = a.length - 1; i >= 0; i--) {
+            try {
+                if (!deepEquals(a[i], b[i], level - 1)) {
+                    return false
+                }
+            } catch (noThisPropError) {
+                return false
+            }
+        }
+        return true
+    }
+
+    function equalObject(a, b, level) {
+        if (a === null || b === null) return false
+        if (getEnumerableKeys(a).length !== getEnumerableKeys(b).length) return false
+        for (var prop in a) {
+            if (!(prop in b)) return false
+            try {
+                if (!deepEquals(a[prop], b[prop], level - 1)) {
+                    return false
+                }
+            } catch (noThisPropError) {
+                return false
+            }
+        }
+        return true
     }
 
     /**
