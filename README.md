@@ -7,9 +7,8 @@
 <a href="https://travis-ci.org/RubyLouvre/avalon">
 <img src="https://travis-ci.org/RubyLouvre/avalon.svg?branch=master" alt="Travis CI Status"/>
 </a>
-<a href="https://codeclimate.com/github/RubyLouvre/avalon/coverage">
-<img src="https://codeclimate.com/github/RubyLouvre/avalon/badges/coverage.svg" />
-</a>
+<a href="https://codeclimate.com/github/RubyLouvre/avalon"><img src="https://codeclimate.com/github/RubyLouvre/avalon/badges/gpa.svg" /></a>
+
 <a href='https://coveralls.io/github/RubyLouvre/avalon'>
 <img src='https://coveralls.io/repos/github/RubyLouvre/avalon/badge.svg' alt='Coverage Status' />
 </a>
