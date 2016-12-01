@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-1:21:47 version 2.2.2 by 司徒正美
+built in 2016-12-1:22:48 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -2440,6 +2440,21 @@ fix 空字符串不生成节点的BUG
     var rtagStart = /[\!\/a-z]/i; //闭标签的第一个字符,开标签的第一个英文,注释节点的!
     var strCache = new Cache(100);
 
+    function fixPos(str, i) {
+        var tryCount = str.length - i;
+        while (tryCount--) {
+            if (!rtagStart.test(str.charAt(i + 1))) {
+                i = str.indexOf('<', i + 1);
+            } else {
+                break;
+            }
+        }
+        if (tryCount === 0) {
+            i = str.length;
+        }
+        return i;
+    }
+
     function from(str) {
         var cacheKey = str;
         var cached = strCache.get(cacheKey);
@@ -2464,17 +2479,7 @@ fix 空字符串不生成节点的BUG
                     i = str.length;
                 } else if (!rtagStart.test(str.charAt(i + 1))) {
                     //处理`内容2 {{ (idx1 < < <  1 ? 'red' : 'blue' ) + a }} ` 的情况 
-                    var tryCount = str.length - i;
-                    while (tryCount--) {
-                        if (!rtagStart.test(str.charAt(i + 1))) {
-                            i = str.indexOf('<', i + 1);
-                        } else {
-                            break;
-                        }
-                    }
-                    if (tryCount == 0) {
-                        i = str.length;
-                    }
+                    i = fixPos(str, i);
                 }
 
                 var nodeValue = str.slice(0, i).replace(rfill, fill);
@@ -2488,32 +2493,32 @@ fix 空字符串不生成节点的BUG
                 }
             }
             if (!node) {
-                var i = str.indexOf('<!--'); //处理注释节点
+                var _i2 = str.indexOf('<!--'); //处理注释节点
                 /* istanbul ignore if*/
-                if (i === 0) {
+                if (_i2 === 0) {
                     var l = str.indexOf('-->');
                     if (l === -1) {
                         avalon.error('注释节点没有闭合' + str);
                     }
-                    var nodeValue = str.slice(4, l).replace(rfill, fill);
+                    var _nodeValue = str.slice(4, l).replace(rfill, fill);
                     str = str.slice(l + 3);
                     node = {
                         nodeName: '#comment',
-                        nodeValue: nodeValue
+                        nodeValue: _nodeValue
                     };
                     makeChildren(node, stack, ret);
                 }
             }
             if (!node) {
-                var match = str.match(ropenTag); //处理元素节点开始部分
-                if (match) {
-                    var nodeName = match[1];
+                var _match = str.match(ropenTag); //处理元素节点开始部分
+                if (_match) {
+                    var nodeName = _match[1];
                     var props = {};
                     if (/^[A-Z]/.test(nodeName) && avalon.components[nodeName]) {
                         props.is = nodeName;
                     }
                     nodeName = nodeName.toLowerCase();
-                    var isVoidTag = !!voidTag[nodeName] || match[3] === '\/';
+                    var isVoidTag = !!voidTag[nodeName] || _match[3] === '\/';
                     node = {
                         nodeName: nodeName,
                         props: {},
@@ -2521,12 +2526,12 @@ fix 空字符串不生成节点的BUG
                         isVoidTag: isVoidTag
                     };
 
-                    var attrs = match[2];
+                    var attrs = _match[2];
                     if (attrs) {
                         makeProps(attrs, node.props);
                     }
                     makeChildren(node, stack, ret);
-                    str = str.slice(match[0].length);
+                    str = str.slice(_match[0].length);
                     if (isVoidTag) {
                         node.end = true;
                     } else {
@@ -3595,13 +3600,13 @@ fix 空字符串不生成节点的BUG
             action.depsCount = curr.length;
             action.deps = avalon.mix({}, action.mapIDs);
             action.depsVersion = {};
-            for (var _i2 in action.mapIDs) {
-                var _dep = action.mapIDs[_i2];
+            for (var _i3 in action.mapIDs) {
+                var _dep = action.mapIDs[_i3];
                 action.depsVersion[_dep.uuid] = _dep.version;
             }
         }
 
-        for (var _i3 = 0, _dep2; _dep2 = prev[_i3++];) {
+        for (var _i4 = 0, _dep2; _dep2 = prev[_i4++];) {
             if (!checked[_dep2.uuid]) {
                 avalon.Array.remove(_dep2.observers, action);
             }
@@ -4716,19 +4721,19 @@ fix 空字符串不生成节点的BUG
                             patch[i] = newVal[i];
                         }
                     } else {
-                        for (var _i4 in newVal) {
+                        for (var _i5 in newVal) {
                             //diff差异点
-                            if (newVal[_i4] !== oldVal[_i4]) {
+                            if (newVal[_i5] !== oldVal[_i5]) {
                                 hasChange = true;
                             }
-                            patch[_i4] = newVal[_i4];
+                            patch[_i5] = newVal[_i5];
                         }
                     }
 
-                    for (var _i5 in oldVal) {
-                        if (!(_i5 in patch)) {
+                    for (var _i6 in oldVal) {
+                        if (!(_i6 in patch)) {
                             hasChange = true;
-                            patch[_i5] = '';
+                            patch[_i6] = '';
                         }
                     }
                 }
@@ -7129,14 +7134,14 @@ fix 空字符串不生成节点的BUG
                     return;
                 }
                 //推算出指令类型
-                var type = dirs['ms-important'] === $id ? 'important' : 'controller';
+                var _type = dirs['ms-important'] === $id ? 'important' : 'controller';
                 //推算出用户定义时属性名,是使用ms-属性还是:属性
-                var attrName = 'ms-' + type in attrs ? 'ms-' + type : ':' + type;
+                var attrName = 'ms-' + _type in attrs ? 'ms-' + _type : ':' + _type;
 
                 if (inBrowser) {
                     delete attrs[attrName];
                 }
-                var dir = directives[type];
+                var dir = directives[_type];
                 scope = dir.getScope.call(this, $id, scope);
                 if (!scope) {
                     return;
@@ -7245,33 +7250,7 @@ fix 空字符串不生成节点的BUG
         optimizeDirectives: function optimizeDirectives() {
             for (var i = 0, el; el = this.directives[i++];) {
                 el.callback = directives[el.type].update;
-                el.update = function () {
-                    var oldVal = this.beforeUpdate();
-                    var newVal = this.value = this.get();
-                    if (this.callback && this.diff(newVal, oldVal)) {
-                        this.callback(this.node, this.value);
-                        var vm = this.vm;
-                        var $render = vm.$render;
-                        var list = vm.$events['onViewChange'];
-                        /* istanbul ignore if */
-                        if (list && $render && $render.root && !avalon.viewChanging) {
-                            if (viewID) {
-                                clearTimeout(viewID);
-                                viewID = null;
-                            }
-                            viewID = setTimeout(function () {
-                                list.forEach(function (el) {
-                                    el.callback.call(vm, {
-                                        type: 'viewchange',
-                                        target: $render.root,
-                                        vmodel: vm
-                                    });
-                                });
-                            });
-                        }
-                    }
-                    this._isScheduled = false;
-                };
+                el.update = newUpdate;
                 el._isScheduled = false;
             }
         },
@@ -7349,6 +7328,34 @@ fix 空字符串不生成节点的BUG
             this.getForBinding(begin, scope, parentChildren, props['data-for-rendered']);
         }
     };
+
+    function newUpdate() {
+        var oldVal = this.beforeUpdate();
+        var newVal = this.value = this.get();
+        if (this.callback && this.diff(newVal, oldVal)) {
+            this.callback(this.node, this.value);
+            var vm = this.vm;
+            var $render = vm.$render;
+            var list = vm.$events['onViewChange'];
+            /* istanbul ignore if */
+            if (list && $render && $render.root && !avalon.viewChanging) {
+                if (viewID) {
+                    clearTimeout(viewID);
+                    viewID = null;
+                }
+                viewID = setTimeout(function () {
+                    list.forEach(function (el) {
+                        el.callback.call(vm, {
+                            type: 'viewchange',
+                            target: $render.root,
+                            vmodel: vm
+                        });
+                    });
+                });
+            }
+        }
+        this._isScheduled = false;
+    }
 
     var events = 'onInit,onReady,onViewChange,onDispose,onEnter,onLeave';
     var componentEvents = avalon.oneObject(events);

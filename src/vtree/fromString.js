@@ -26,6 +26,21 @@ avalon.lexer = fromString
 var rtagStart = /[\!\/a-z]/i //闭标签的第一个字符,开标签的第一个英文,注释节点的!
 var strCache = new Cache(100)
 
+function fixPos(str, i) {
+    let tryCount = str.length - i
+    while (tryCount--) {
+        if (!rtagStart.test(str.charAt(i + 1))) {
+            i = str.indexOf('<', i + 1)
+        } else {
+            break
+        }
+    }
+    if (tryCount === 0) {
+        i = str.length
+    }
+    return i
+}
+
 function from(str) {
     var cacheKey = str
     var cached = strCache.get(cacheKey)
@@ -44,25 +59,15 @@ function from(str) {
     do {
         var node = false
         if (str.charAt(0) !== '<') { //处理文本节点
-            var i = str.indexOf('<')
+            let i = str.indexOf('<')
             if (i === -1) {
                 i = str.length
             } else if (!rtagStart.test(str.charAt(i + 1))) {
                 //处理`内容2 {{ (idx1 < < <  1 ? 'red' : 'blue' ) + a }} ` 的情况 
-                var tryCount = str.length - i
-                while (tryCount--) {
-                    if (!rtagStart.test(str.charAt(i + 1))) {
-                        i = str.indexOf('<', i + 1)
-                    } else {
-                        break
-                    }
-                }
-                if (tryCount == 0) {
-                    i = str.length
-                }
+                i = fixPos(str, i)
             }
 
-            var nodeValue = str.slice(0, i).replace(rfill, fill)
+            let nodeValue = str.slice(0, i).replace(rfill, fill)
             str = str.slice(i)
             node = {
                 nodeName: '#text',
@@ -73,14 +78,14 @@ function from(str) {
             }
         }
         if (!node) {
-            var i = str.indexOf('<!--') //处理注释节点
+            let i = str.indexOf('<!--') //处理注释节点
                 /* istanbul ignore if*/
             if (i === 0) {
                 var l = str.indexOf('-->')
                 if (l === -1) {
                     avalon.error('注释节点没有闭合' + str)
                 }
-                var nodeValue = str.slice(4, l).replace(rfill, fill)
+                let nodeValue = str.slice(4, l).replace(rfill, fill)
                 str = str.slice(l + 3)
                 node = {
                     nodeName: '#comment',
@@ -91,7 +96,7 @@ function from(str) {
 
         }
         if (!node) {
-            var match = str.match(ropenTag) //处理元素节点开始部分
+            let match = str.match(ropenTag) //处理元素节点开始部分
             if (match) {
                 var nodeName = match[1]
                 var props = {}

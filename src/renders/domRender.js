@@ -129,7 +129,7 @@ Render.prototype = {
             }
             if (startWith(attr, 'ms-')) {
                 dirs[attr] = value
-                var type = attr.match(/\w+/g)[1]
+                let type = attr.match(/\w+/g)[1]
                 type = eventMap[type] || type
                 if (!directives[type]) {
                     avalon.warn(attr + ' has not registered!')
@@ -162,7 +162,7 @@ Render.prototype = {
 
             }
             //推算出指令类型
-            var type = dirs['ms-important'] === $id ? 'important' : 'controller'
+            let type = dirs['ms-important'] === $id ? 'important' : 'controller'
                 //推算出用户定义时属性名,是使用ms-属性还是:属性
             var attrName = ('ms-' + type) in attrs ? 'ms-' + type : ':' + type
 
@@ -281,37 +281,7 @@ Render.prototype = {
     optimizeDirectives() {
         for (var i = 0, el; el = this.directives[i++];) {
             el.callback = directives[el.type].update
-            el.update = function() {
-                var oldVal = this.beforeUpdate()
-                var newVal = this.value = this.get()
-                if (this.callback && this.diff(newVal, oldVal)) {
-                    this.callback(this.node, this.value)
-                    var vm = this.vm
-                    var $render = vm.$render
-                    var list = vm.$events['onViewChange']
-                        /* istanbul ignore if */
-                    if (list && $render &&
-                        $render.root &&
-                        !avalon.viewChanging) {
-                        if (viewID) {
-                            clearTimeout(viewID)
-                            viewID = null
-                        }
-                        viewID = setTimeout(function() {
-                            list.forEach(function(el) {
-                                el.callback.call(vm, {
-                                    type: 'viewchange',
-                                    target: $render.root,
-                                    vmodel: vm
-                                })
-                            })
-                        })
-
-                    }
-
-                }
-                this._isScheduled = false
-            }
+            el.update = newUpdate
             el._isScheduled = false
         }
     },
@@ -391,4 +361,36 @@ Render.prototype = {
 
     }
 
+}
+
+function newUpdate() {
+    var oldVal = this.beforeUpdate()
+    var newVal = this.value = this.get()
+    if (this.callback && this.diff(newVal, oldVal)) {
+        this.callback(this.node, this.value)
+        var vm = this.vm
+        var $render = vm.$render
+        var list = vm.$events['onViewChange']
+            /* istanbul ignore if */
+        if (list && $render &&
+            $render.root &&
+            !avalon.viewChanging) {
+            if (viewID) {
+                clearTimeout(viewID)
+                viewID = null
+            }
+            viewID = setTimeout(function() {
+                list.forEach(function(el) {
+                    el.callback.call(vm, {
+                        type: 'viewchange',
+                        target: $render.root,
+                        vmodel: vm
+                    })
+                })
+            })
+
+        }
+
+    }
+    this._isScheduled = false
 }
