@@ -1,8 +1,8 @@
 var array = [
     require('./buildIE6'),
     require('./buildIE6Test'),
-    //require('./buildIE9'),
-    // require('./buildIE9Test')
+    require('./buildIE9'),
+    require('./buildIE9Test')
 ]
 Promise.all(array).then(function() {
     console.log('build complete!!!')

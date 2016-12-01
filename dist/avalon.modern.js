@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-1:0:56 version 2.2.2 by 司徒正美
+built in 2016-12-1:17:10 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -1978,7 +1978,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                         avalon$2.error(match[0] + '前面缺少<' + nodeName + '>')
                         /* istanbul ignore else*/
                     } else if (last.nodeName !== nodeName) {
-                        var errMsg = ast.nodeName + '没有闭合,请注意属性的引号'
+                        var errMsg = last.nodeName + '没有闭合,请注意属性的引号'
                         avalon$2.warn(errMsg)
                         avalon$2.error(errMsg)
                     }
@@ -2016,6 +2016,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
 
     var rlineSp = /[\n\r]s*/g
     var rattrs = /([^=\s]+)(?:\s*=\s*(\S+))?/
+
     function makeProps(attrs, props) {
         while (attrs) {
             var arr = rattrs.exec(attrs)
@@ -3498,7 +3499,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             return false
         }
         if (val == null) {
-            avalon$2.warn('定义vmodel时属性值不能为null undefine')
+            avalon$2.warn('定义vmodel时' + key + '的属性值不能为null undefine')
             return true
         }
         if (/error|date|function|regexp/.test(avalon$2.type(val))) {

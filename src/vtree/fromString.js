@@ -5,7 +5,7 @@
  * 此阶段只会生成VElement,VText,VComment
  * ------------------------------------------------------------
  */
-import { avalon,Cache } from '../seed/core'
+import { avalon, Cache } from '../seed/core'
 import { clearString, stringPool, fill, rfill } from "./clearString"
 import { voidTag } from "./voidTag"
 import { orphanTag } from "./orphanTag"
@@ -16,8 +16,8 @@ import { validateDOMNesting } from "./validateDOMNesting"
 
 var ropenTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
 var rendTag = /^<\/([^>]+)>/
-//https://github.com/rviscomi/trunk8/blob/master/trunk8.js
-//判定里面有没有内容
+    //https://github.com/rviscomi/trunk8/blob/master/trunk8.js
+    //判定里面有没有内容
 var rcontent = /\S/
 export function fromString(str) {
     return from(str)
@@ -29,13 +29,13 @@ var strCache = new Cache(100)
 function from(str) {
     var cacheKey = str
     var cached = strCache.get(cacheKey)
-    if(cached){
-      return avalon.mix(true,[],cached)
+    if (cached) {
+        return avalon.mix(true, [], cached)
     }
     stringPool.map = {}
     str = clearString(str)
     var stack = []
-    stack.last = function () {
+    stack.last = function() {
         return stack[stack.length - 1]
     }
     var ret = []
@@ -43,25 +43,25 @@ function from(str) {
     var breakIndex = 100000
     do {
         var node = false
-        if (str.charAt(0) !== '<') {//处理文本节点
+        if (str.charAt(0) !== '<') { //处理文本节点
             var i = str.indexOf('<')
-            if(i === -1){
+            if (i === -1) {
                 i = str.length
-            }else if(!rtagStart.test(str.charAt(i+1))){
+            } else if (!rtagStart.test(str.charAt(i + 1))) {
                 //处理`内容2 {{ (idx1 < < <  1 ? 'red' : 'blue' ) + a }} ` 的情况 
                 var tryCount = str.length - i
-                while(tryCount--){
-                    if(!rtagStart.test(str.charAt(i+1))){
-                        i = str.indexOf('<',i+1)
-                    }else{
+                while (tryCount--) {
+                    if (!rtagStart.test(str.charAt(i + 1))) {
+                        i = str.indexOf('<', i + 1)
+                    } else {
                         break
                     }
                 }
-                if(tryCount == 0){
+                if (tryCount == 0) {
                     i = str.length
                 }
             }
-            
+
             var nodeValue = str.slice(0, i).replace(rfill, fill)
             str = str.slice(i)
             node = {
@@ -69,12 +69,12 @@ function from(str) {
                 nodeValue: nodeValue
             }
             if (rcontent.test(nodeValue)) {
-                makeChildren(node, stack, ret)//不收集空白节点
+                makeChildren(node, stack, ret) //不收集空白节点
             }
         }
         if (!node) {
-            var i = str.indexOf('<!--')//处理注释节点
-            /* istanbul ignore if*/
+            var i = str.indexOf('<!--') //处理注释节点
+                /* istanbul ignore if*/
             if (i === 0) {
                 var l = str.indexOf('-->')
                 if (l === -1) {
@@ -91,11 +91,11 @@ function from(str) {
 
         }
         if (!node) {
-            var match = str.match(ropenTag)//处理元素节点开始部分
+            var match = str.match(ropenTag) //处理元素节点开始部分
             if (match) {
                 var nodeName = match[1]
                 var props = {}
-                if(/^[A-Z]/.test(nodeName) && avalon.components[nodeName]){
+                if (/^[A-Z]/.test(nodeName) && avalon.components[nodeName]) {
                     props.is = nodeName
                 }
                 nodeName = nodeName.toLowerCase()
@@ -127,18 +127,18 @@ function from(str) {
                 }
             }
         }
-         /* istanbul ignore if*/
+        /* istanbul ignore if*/
         if (!node) {
-            var match = str.match(rendTag)//处理元素节点结束部分
+            var match = str.match(rendTag) //处理元素节点结束部分
             if (match) {
                 var nodeName = match[1].toLowerCase()
                 var last = stack.last()
-                /* istanbul ignore if*/
+                    /* istanbul ignore if*/
                 if (!last) {
                     avalon.error(match[0] + '前面缺少<' + nodeName + '>')
-                     /* istanbul ignore else*/
+                        /* istanbul ignore else*/
                 } else if (last.nodeName !== nodeName) {
-                    var errMsg = ast.nodeName + '没有闭合,请注意属性的引号'
+                    var errMsg = last.nodeName + '没有闭合,请注意属性的引号'
                     avalon.warn(errMsg)
                     avalon.error(errMsg)
                 }
@@ -147,7 +147,7 @@ function from(str) {
                 str = str.slice(match[0].length)
             }
         }
-         /* istanbul ignore if*/
+        /* istanbul ignore if*/
         if (!node || --breakIndex === 0) {
             break
         }
@@ -159,10 +159,10 @@ function from(str) {
         }
 
     } while (str.length)
-        
-    strCache.put(cacheKey, avalon.mix(true, [],ret))
+
+    strCache.put(cacheKey, avalon.mix(true, [], ret))
     return ret
-  
+
 }
 
 
@@ -179,6 +179,7 @@ function makeChildren(node, stack, ret) {
 
 var rlineSp = /[\n\r]s*/g
 var rattrs = /([^=\s]+)(?:\s*=\s*(\S+))?/
+
 function makeProps(attrs, props) {
     while (attrs) {
         var arr = rattrs.exec(attrs)
@@ -189,8 +190,8 @@ function makeProps(attrs, props) {
             if (value) {
                 if (value.indexOf('??') === 0) {
                     value = nomalString(value).
-                        replace(rlineSp, '').
-                        slice(1, -1)
+                    replace(rlineSp, '').
+                    slice(1, -1)
                 }
             }
             if (!(name in props)) {
@@ -205,4 +206,3 @@ function makeProps(attrs, props) {
 function nomalString(str) {
     return avalon.unescapeHTML(str.replace(rfill, fill))
 }
-

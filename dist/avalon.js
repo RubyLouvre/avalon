@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-1:15:6 version 2.2.2 by 司徒正美
+built in 2016-12-1:17:11 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -2563,7 +2563,7 @@ fix 空字符串不生成节点的BUG
                         avalon.error(match[0] + '前面缺少<' + nodeName + '>');
                         /* istanbul ignore else*/
                     } else if (last.nodeName !== nodeName) {
-                        var errMsg = ast.nodeName + '没有闭合,请注意属性的引号';
+                        var errMsg = last.nodeName + '没有闭合,请注意属性的引号';
                         avalon.warn(errMsg);
                         avalon.error(errMsg);
                     }
@@ -2601,6 +2601,7 @@ fix 空字符串不生成节点的BUG
 
     var rlineSp = /[\n\r]s*/g;
     var rattrs = /([^=\s]+)(?:\s*=\s*(\S+))?/;
+
     function makeProps(attrs, props) {
         while (attrs) {
             var arr = rattrs.exec(attrs);
