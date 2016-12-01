@@ -7,8 +7,15 @@
 <a href="https://travis-ci.org/RubyLouvre/avalon">
 <img src="https://travis-ci.org/RubyLouvre/avalon.svg?branch=master" alt="Travis CI Status"/>
 </a>
+<a href="https://codeclimate.com/github/RubyLouvre/avalon/coverage">
+<img src="https://codeclimate.com/github/RubyLouvre/avalon/badges/coverage.svg" />
+</a>
 <a href='https://coveralls.io/github/RubyLouvre/avalon'>
-<img src='https://coveralls.io/repos/github/RubyLouvre/avalon/badge.svg' alt='Coverage Status' /></a>
+<img src='https://coveralls.io/repos/github/RubyLouvre/avalon/badge.svg' alt='Coverage Status' />
+</a>
+
+<a href="https://github.com/RubyLouvre/avalon">
+<img src="https://camo.githubusercontent.com/fc56303af12c023343f338a762b6bfb2a5f1e4dc/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c6963656e73652d4d49542d677265656e2e7376673f7374796c653d666c6174" alt="LICENSE" data-canonical-src="https://img.shields.io/badge/license-MIT-green.svg?style=flat" style="max-width:100%;"></a>
 </p>
 
 ###[English tutorials](https://github.com/RubyLouvre/avalon/tree/master/tutorials)
