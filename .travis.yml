@@ -1,6 +1,9 @@
 language: node_js
 node_js:
   - 4
+branches:
+  only:
+    - master
 cache:
   directories:
     - node_modules
@@ -13,8 +16,6 @@ install:
   - npm run buildAvalon
 script:
   - npm run build
-branches:
-  only:
-    - master
-after_script:
+
+after_success:
   - npm run coveralls
