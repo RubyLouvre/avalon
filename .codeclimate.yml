@@ -20,3 +20,4 @@ exclude_paths:
 - tutorials/**/*
 - components/**/*
 - perf/**/*
+- dist/**/*

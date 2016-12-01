@@ -147,7 +147,7 @@ AST.prototype = {
                     node.end = true
                 } else {
                     this.stack.push(node)
-                    if (orphanTag[nodeName] || nodeName == 'option') {
+                    if (orphanTag[nodeName] || nodeName === 'option') {
                         var index = str.indexOf('</' + nodeName + '>')
                         var innerHTML = str.slice(0, index).trim()
                         str = str.slice(index)

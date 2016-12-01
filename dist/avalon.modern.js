@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-2:0:42 version 2.2.2 by 司徒正美
+built in 2016-12-2:1:45 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -1991,7 +1991,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                         node.end = true
                     } else {
                         this.stack.push(node)
-                        if (orphanTag[nodeName] || nodeName == 'option') {
+                        if (orphanTag[nodeName] || nodeName === 'option') {
                             var index = str.indexOf('</' + nodeName + '>')
                             var innerHTML = str.slice(0, index).trim()
                             str = str.slice(index)
@@ -4095,10 +4095,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         var aIsArray = Array.isArray(a)
         if (aIsArray !== Array.isArray(b)) {
             return false
-        } else if (aIsArray) {
-            return equalArray(a, b)
+        }
+        if (aIsArray) {
+            return equalArray(a, b, level)
         } else if (typeof a === "object" && typeof b === "object") {
-            return equalObject(a, b)
+            return equalObject(a, b, level)
         }
         return a === b
     }
@@ -6461,8 +6462,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                 el.dispose()
             }
             //防止其他地方的this.innerRender && this.innerRender.dispose报错
-            for (var i in this) {
-                if (i !== 'dispose') delete this[i]
+            for (var _i8 in this) {
+                if (_i8 !== 'dispose') delete this[_i8]
             }
         },
 

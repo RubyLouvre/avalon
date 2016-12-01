@@ -85,11 +85,11 @@ export function deepEquals(a, b, level) {
     const aIsArray = Array.isArray(a)
     if (aIsArray !== Array.isArray(b)) {
         return false
-    } else if (aIsArray) {
-        return equalArray(a, b)
-
+    }
+    if (aIsArray) {
+        return equalArray(a, b, level)
     } else if (typeof a === "object" && typeof b === "object") {
-        return equalObject(a, b)
+        return equalObject(a, b, level)
     }
     return a === b
 }

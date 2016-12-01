@@ -12,7 +12,7 @@ import { updateModel } from './updateDataHandle'
 
 export function updateDataEvents(dom, data) {
     var events = {}
-    //添加需要监听的事件
+        //添加需要监听的事件
     switch (data.dtype) {
         case 'radio':
         case 'checkbox':
@@ -25,7 +25,7 @@ export function updateDataEvents(dom, data) {
             /* istanbul ignore if */
             if (data.isChanged) {
                 events.blur = updateModel
-                /* istanbul ignore else */
+                    /* istanbul ignore else */
             } else {
                 /* istanbul ignore if*/
 
@@ -38,7 +38,7 @@ export function updateDataEvents(dom, data) {
                         events.DOMCharacterDataModified = updateModel
                     }
                     events.input = updateModel
-                    /* istanbul ignore else */
+                        /* istanbul ignore else */
                 } else {
                     events.keydown = updateModelKeyDown
                     events.paste = updateModelDelay
@@ -53,29 +53,29 @@ export function updateDataEvents(dom, data) {
             /* istanbul ignore if */
             if (data.isChanged) {
                 events.change = updateModel
-                /* istanbul ignore else */
+                    /* istanbul ignore else */
             } else {
                 //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
                 //http://www.matts411.com/post/internet-explorer-9-oninput/
                 if (msie < 10) {
-                    //IE6-8的propertychange有BUG,第一次用JS修改值时不会触发,而且你是全部清空value也不会触发
+                    //IE6-8的propertychange有问题,第一次用JS修改值时不会触发,而且你是全部清空value也不会触发
                     //IE9的propertychange不支持自动完成,退格,删除,复制,贴粘,剪切或点击右边的小X的清空操作
                     events.propertychange = updateModelHack
                     events.paste = updateModelDelay
                     events.cut = updateModelDelay
-                    //IE9在第一次删除字符时不会触发oninput
+                        //IE9在第一次删除字符时不会触发oninput
                     events.keyup = updateModelKeyDown
                 } else {
                     events.input = updateModel
                     events.compositionstart = openComposition
-                    //微软拼音输入法的BUG需要在compositionend事件中处理
+                        //微软拼音输入法的问题需要在compositionend事件中处理
                     events.compositionend = closeComposition
-                    //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
-                    //处理低版本的标准浏览器,通过Int8Array进行区分
+                        //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
+                        //处理低版本的标准浏览器,通过Int8Array进行区分
                     if (!/\[native code\]/.test(window.Int8Array)) {
                         events.keydown = updateModelKeyDown //safari < 5 opera < 11
-                        events.paste = updateModelDelay//safari < 5
-                        events.cut = updateModelDelay//safari < 5 
+                        events.paste = updateModelDelay //safari < 5
+                        events.cut = updateModelDelay //safari < 5 
                         if (window.netscape) {
                             // Firefox <= 3.6 doesn't fire the 'input' event when text is filled in through autocomplete
                             events.DOMAutoComplete = updateModel
@@ -107,7 +107,7 @@ function updateModelHack(e) {
 
 function updateModelDelay(e) {
     var elem = this
-    setTimeout(function () {
+    setTimeout(function() {
         updateModel.call(elem, e)
     }, 0)
 }
@@ -132,8 +132,8 @@ function closeComposition(e) {
 /* istanbul ignore next */
 function updateModelKeyDown(e) {
     var key = e.keyCode
-    // ignore
-    //    command            modifiers                   arrows
+        // ignore
+        //    command            modifiers                   arrows
     if (key === 91 || (15 < key && key < 19) || (37 <= key && key <= 40))
         return
     updateModel.call(this, e)
@@ -149,14 +149,14 @@ markID(updateModelDelay)
 markID(updateModelKeyDown)
 
 //IE6-8要处理光标时需要异步
-var mayBeAsync = function (fn) {
-    setTimeout(fn, 0)
-}
-/* istanbul ignore next */
+var mayBeAsync = function(fn) {
+        setTimeout(fn, 0)
+    }
+    /* istanbul ignore next */
 function setCaret(target, cursorPosition) {
     var range
     if (target.createTextRange) {
-        mayBeAsync(function () {
+        mayBeAsync(function() {
             target.focus()
             range = target.createTextRange()
             range.collapse(true)
@@ -171,7 +171,7 @@ function setCaret(target, cursorPosition) {
         }
     }
 }
- /* istanbul ignore next*/
+/* istanbul ignore next*/
 function getCaret(target) {
     var start = 0
     var normalizedValue
@@ -180,12 +180,12 @@ function getCaret(target) {
     var len
     var endRange
 
-    if (typeof target.selectionStart == 'number' && typeof target.selectionEnd == 'number') {
+    if (target.selectionStart + target.selectionEnd > -1) {
         start = target.selectionStart
     } else {
         range = document.selection.createRange()
 
-        if (range && range.parentElement() == target) {
+        if (range && range.parentElement() === target) {
             len = target.value.length
             normalizedValue = target.value.replace(/\r\n/g, '\n')
 
@@ -206,4 +206,3 @@ function getCaret(target) {
 
     return start
 }
-

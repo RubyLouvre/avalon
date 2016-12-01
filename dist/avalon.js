@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-2:0:42 version 2.2.2 by 司徒正美
+built in 2016-12-2:1:46 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -2564,7 +2564,7 @@ fix 空字符串不生成节点的BUG
                         node.end = true;
                     } else {
                         this.stack.push(node);
-                        if (orphanTag[nodeName] || nodeName == 'option') {
+                        if (orphanTag[nodeName] || nodeName === 'option') {
                             var index = str.indexOf('</' + nodeName + '>');
                             var innerHTML = str.slice(0, index).trim();
                             str = str.slice(index);
@@ -4799,10 +4799,11 @@ fix 空字符串不生成节点的BUG
         var aIsArray = Array.isArray(a);
         if (aIsArray !== Array.isArray(b)) {
             return false;
-        } else if (aIsArray) {
-            return equalArray(a, b);
+        }
+        if (aIsArray) {
+            return equalArray(a, b, level);
         } else if (typeof a === "object" && typeof b === "object") {
-            return equalObject(a, b);
+            return equalObject(a, b, level);
         }
         return a === b;
     }
@@ -6257,7 +6258,7 @@ fix 空字符串不生成节点的BUG
                     //http://www.cnblogs.com/rubylouvre/archive/2013/02/17/2914604.html
                     //http://www.matts411.com/post/internet-explorer-9-oninput/
                     if (msie < 10) {
-                        //IE6-8的propertychange有BUG,第一次用JS修改值时不会触发,而且你是全部清空value也不会触发
+                        //IE6-8的propertychange有问题,第一次用JS修改值时不会触发,而且你是全部清空value也不会触发
                         //IE9的propertychange不支持自动完成,退格,删除,复制,贴粘,剪切或点击右边的小X的清空操作
                         events.propertychange = updateModelHack;
                         events.paste = updateModelDelay;
@@ -6267,7 +6268,7 @@ fix 空字符串不生成节点的BUG
                     } else {
                         events.input = updateDataHandle;
                         events.compositionstart = openComposition;
-                        //微软拼音输入法的BUG需要在compositionend事件中处理
+                        //微软拼音输入法的问题需要在compositionend事件中处理
                         events.compositionend = closeComposition;
                         //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray
                         //处理低版本的标准浏览器,通过Int8Array进行区分
@@ -6376,12 +6377,12 @@ fix 空字符串不生成节点的BUG
         var len;
         var endRange;
 
-        if (typeof target.selectionStart == 'number' && typeof target.selectionEnd == 'number') {
+        if (target.selectionStart + target.selectionEnd > -1) {
             start = target.selectionStart;
         } else {
             range$$1 = document$1.selection.createRange();
 
-            if (range$$1 && range$$1.parentElement() == target) {
+            if (range$$1 && range$$1.parentElement() === target) {
                 len = target.value.length;
                 normalizedValue = target.value.replace(/\r\n/g, '\n');
 
@@ -7293,8 +7294,8 @@ fix 空字符串不生成节点的BUG
                 el.dispose();
             }
             //防止其他地方的this.innerRender && this.innerRender.dispose报错
-            for (var i in this) {
-                if (i !== 'dispose') delete this[i];
+            for (var _i6 in this) {
+                if (_i6 !== 'dispose') delete this[_i6];
             }
         },
 

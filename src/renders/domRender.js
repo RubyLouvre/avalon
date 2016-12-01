@@ -292,11 +292,11 @@ Render.prototype = {
      */
     dispose() {
         var list = this.directives || []
-        for (var i = 0, el; el = list[i++];) {
+        for (let i = 0, el; el = list[i++];) {
             el.dispose()
         }
         //防止其他地方的this.innerRender && this.innerRender.dispose报错
-        for (var i in this) {
+        for (let i in this) {
             if (i !== 'dispose')
                 delete this[i]
         }
