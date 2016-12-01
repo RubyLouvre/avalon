@@ -22,10 +22,10 @@ import { startWith, groupTree, dumpTree, getRange } from './share'
 avalon.scan = function(node, vm, beforeReady) {
     return new Render(node, vm, beforeReady || avalon.noop)
 }
-var viewID
-    /**
-     * avalon.scan 的内部实现
-     */
+
+/**
+ * avalon.scan 的内部实现
+ */
 function Render(node, vm, beforeReady) {
     this.root = node //如果传入的字符串,确保只有一个标签作为根节点
     this.vm = vm
@@ -129,7 +129,7 @@ Render.prototype = {
             }
             if (startWith(attr, 'ms-')) {
                 dirs[attr] = value
-                let type = attr.match(/\w+/g)[1]
+                var type = attr.match(/\w+/g)[1]
                 type = eventMap[type] || type
                 if (!directives[type]) {
                     avalon.warn(attr + ' has not registered!')
@@ -162,7 +162,7 @@ Render.prototype = {
 
             }
             //推算出指令类型
-            let type = dirs['ms-important'] === $id ? 'important' : 'controller'
+            var type = dirs['ms-important'] === $id ? 'important' : 'controller'
                 //推算出用户定义时属性名,是使用ms-属性还是:属性
             var attrName = ('ms-' + type) in attrs ? 'ms-' + type : ':' + type
 
@@ -362,6 +362,7 @@ Render.prototype = {
     }
 
 }
+var viewID
 
 function newUpdate() {
     var oldVal = this.beforeUpdate()
