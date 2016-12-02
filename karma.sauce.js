@@ -32,13 +32,20 @@ module.exports = function(config) {
         //      browserName: 'firefox',
         //      version: '4'
         //  }
-        //    SL_IE_7: {
-        //             base: 'SauceLabs',
-        //             browserName: 'internet explorer',
-        //             version: '7',
-        //             platform: 'Windows XP'
-        //
-        //    },
+        SL_IE_7: {
+                 base: 'SauceLabs',
+                 browserName: 'internet explorer',
+                 version: '7',
+                 platform: 'Windows XP'
+
+        },
+         SL_IE_8: {
+                 base: 'SauceLabs',
+                 browserName: 'internet explorer',
+                 version: '8',
+                 platform: 'Windows XP'
+
+        },
         'SL_IE_9': {
             base: 'SauceLabs',
             browserName: 'internet explorer',
@@ -109,6 +116,8 @@ module.exports = function(config) {
         // start these browsers
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
         browsers: Object.keys(customLaunchers),
+        // Continuous Integration mode
+            // if true, Karma captures browsers, runs the tests and exits
         singleRun: true
     });
 };
