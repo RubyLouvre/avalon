@@ -1,17 +1,18 @@
 import { avalon } from '../../src/seed/core'
 
-describe('active', function () {
-    var body = document.body, div, vm
-    beforeEach(function () {
+describe('active', function() {
+    var body = document.body,
+        div, vm
+    beforeEach(function() {
         div = document.createElement('div')
         body.appendChild(div)
     })
-    afterEach(function () {
+    afterEach(function() {
         body.removeChild(div)
         delete avalon.vmodels[vm.$id]
     })
-    it('test', function (done) {
-        div.innerHTML = heredoc(function () {
+    it('test', function(done) {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller='hover1' ms-active='@aaa' >111
              </div>
@@ -25,11 +26,11 @@ describe('active', function () {
         var el = div.getElementsByTagName('div')[0]
         var v = el.getAttribute('avalon-events')
         var map = {}
-        v.replace(/[^,]+/g, function (vv) {
+        v.replace(/[^,]+/g, function(vv) {
             var arr = vv.split(':')
             map[arr[0]] = arr[1]
         })
-        expect(Object.keys(map).sort()).toEqual(['mousedown', 'mouseleave','mouseup'])
+        expect(Object.keys(map).sort() + '').toMatch(/(mousedownmouseleavemouseup|mousedownmouseoutmouseup)/)
         var fn = avalon.eventListeners[map.mousedown]
         fn({
             type: 'mousedown',
