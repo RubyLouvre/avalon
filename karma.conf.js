@@ -131,6 +131,7 @@ module.exports = function(config) {
             options.browsers = [
                 "Chrome_travis_ci",
                 "Firefox",
+                'jsdom',
                 //"IE",
                 //"Opera",
                 "PhantomJS_custom"
