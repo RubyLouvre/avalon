@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-2:21:35 version 2.2.2 by 司徒正美
+built in 2016-12-2:22:10 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -6071,6 +6071,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         return a.priority - b.priority
     }
 
+    var rimprovePriority = /[+-\?]/
+    var rinnerValue = /__value__\)$/
     function parseInterpolate(dir) {
         var rlineSp = /\n\r?/g
         var str = dir.nodeValue.trim().replace(rlineSp, '')
@@ -6090,12 +6092,14 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                 var expr = avalon$2.unescapeHTML(value)
                 if (/\|\s*\w/.test(expr)) {
                     //如果存在过滤器，优化干掉
-                    var arr = addScope(expr, 'nodeValue')
+                    var arr = addScope(expr, 'expr')
                     if (arr[1]) {
-                        expr = arr[1].replace(/__value__\)$/, arr[0] + ')')
+                        expr = arr[1].replace(rinnerValue, arr[0] + ')')
                     }
                 }
-
+                if (rimprovePriority) {
+                    expr = '(' + expr + ')'
+                }
                 tokens.push(expr)
 
                 str = str.slice(index + config.closeTag.length)

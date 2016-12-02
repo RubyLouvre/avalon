@@ -64,6 +64,21 @@ describe('expr', function () {
         expect(div.innerHTML.replace(/DIV/g,'div')).toBe('<div>AE4D...+2016-10-31</div>')
         
     })
+    it('存在加减时的优先级问题', function () {
+      //https://github.com/RubyLouvre/avalon/issues/1839
+        div.innerHTML = heredoc(function () {
+            /*
+            <div ms-controller="text4">XXX{{@aaa + 1}}YYY</div>
+            */
+        })
+        vm = avalon.define({
+            $id: 'text4',
+            aaa: 33
+        })
+        avalon.scan(div)
+        expect(div[textProp]).toBe('XXX34YYY')
+        
+    })
     
    
 })
