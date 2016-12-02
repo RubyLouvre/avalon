@@ -208,34 +208,41 @@ var rarraylike = /(Array|List|Collection|Map|Arguments)\]$/
     /*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
     /* istanbul ignore next */
 export function isArrayLike(obj) {
-    try {
-        var n = obj.length
-        if (n !== (n >>> 0)) //检测length属性是否为非负整数
-            return false
-        if (rarraylike.test(inspect.call(obj))) {
+    if (!obj)
+        return false
+    var n = obj.length
+    if (n === (n >>> 0)) { //检测length属性是否为非负整数
+        var type = inspect.call(obj)
+        if (rarraylike.test(type))
             return true
+        if(type !== '[object Object]')
+            return false
+        try {
+            if ({}.propertyIsEnumerable.call(obj, 'length') === false) { //如果是原生对象
+                return rfunction.test(obj.item || obj.callee)
+            }
+            return true
+        } catch (e) { //IE的NodeList直接抛错
+            return !obj.window //IE6-8 window
         }
-        if ({}.propertyIsEnumerable.call(obj, 'length') === false) { //如果是原生对象
-            return rfunction.test(obj.item || obj.callee)
-        }
-        return true //IE6-8 Object.prototype.toString访问window的length，会直接抛“this不是一个javascript对象”的错误
-    } catch (e) { //IE的NodeList直接抛错
     }
     return false
 }
 
 
 avalon.each = function(obj, fn) {
-    //排除null, undefined
-    if (isArrayLike(obj)) {
-        for (let i = 0, n = obj.length; i < n; i++) {
-            if (fn(i, obj[i]) === false)
-                break
-        }
-    } else if (obj) {
-        for (let i in obj) {
-            if (obj.hasOwnProperty(i) && fn(i, obj[i]) === false) {
-                break
+    if (obj) { //排除null, undefined
+        var i = 0
+        if (isArrayLike(obj)) {
+            for (var n = obj.length; i < n; i++) {
+                if (fn(i, obj[i]) === false)
+                    break
+            }
+        } else {
+            for (i in obj) {
+                if (obj.hasOwnProperty(i) && fn(i, obj[i]) === false) {
+                    break
+                }
             }
         }
     }

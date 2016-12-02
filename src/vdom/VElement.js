@@ -39,7 +39,10 @@ VElement.prototype = {
         switch (this.nodeName) {
             case 'script':
                 dom.type = 'noexec'
-                dom.innerHTML = dom.text = template
+                 dom.text = template
+                 try{
+                     dom.innerHTML = template
+                 }catch(e){}
                 dom.type = props.type || ''
                 break
             case 'noscript':
@@ -51,7 +54,7 @@ VElement.prototype = {
                     dom.innerHTML = template
                 } catch (e) {
                     /* istanbul ignore next*/
-                    this.hackIE(dom, this.nodeName, template, props)
+                    this.hackIE(dom, this.nodeName, template)
                 }
                 break
             case 'option':
