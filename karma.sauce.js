@@ -18,10 +18,7 @@ module.exports = function(config) {
     // https://saucelabs.com/platforms
     // Browsers to run on Sauce Labs
     var customLaunchers = {
-        'SL_Chrome': {
-            base: 'SauceLabs',
-            browserName: 'chrome'
-        },
+
         'Firefox26': {
             base: 'SauceLabs',
             browserName: 'firefox',
@@ -57,6 +54,129 @@ module.exports = function(config) {
             browserName: 'internet explorer',
             platform: 'Windows 8.1',
             version: '11'
+        },
+        Edge13: {
+            base: 'SauceLabs',
+            browserName: 'MicrosoftEdge',
+            version: '13.10586',
+            platform: 'Windows 10',
+        },
+        Edge14: {
+            base: 'SauceLabs',
+            browserName: 'MicrosoftEdge',
+            version: '14.14393',
+            platform: 'Windows 10',
+        },
+        opera11: {
+            "browserName": "Opera",
+            "platform": "Windows XP",
+            "version": "11.64."
+        },
+        opera12: {
+            "browserName": "Opera",
+            "platform": "Windows XP",
+            "version": "12.12."
+        },
+        chrome: {
+            base: 'SauceLabs',
+            browserName: 'chrome',
+            platform: 'Windows 10'
+        },
+        chrome_53: {
+            base: 'SauceLabs',
+            browserName: 'chrome',
+            version: '53.0',
+            platform: 'Windows 10'
+        },
+        chrome_52: {
+            base: 'SauceLabs',
+            browserName: 'chrome',
+            version: '52.0',
+            platform: 'Windows 10'
+        },
+        chrome_51: {
+            base: 'SauceLabs',
+            browserName: 'chrome',
+            version: '51.0',
+            platform: 'Windows 10'
+        },
+        chrome50: {
+            base: 'SauceLabs',
+            browserName: 'chrome',
+            version: '50.0',
+            platform: 'Windows 10'
+        },
+        chrome40: {
+            base: 'SauceLabs',
+            browserName: 'chrome',
+            version: '40.0',
+            platform: 'Windows 10'
+        },
+        chrome30: {
+            base: 'SauceLabs',
+            browserName: 'chrome',
+            version: '30.0',
+            platform: 'Windows 10'
+        },
+        //chrome最低只支持到26
+        chrome26: {
+            base: 'SauceLabs',
+            browserName: 'chrome',
+            version: '26.0',
+            platform: 'Windows 10'
+        },
+        firefox40: {
+            "browserName": "Firefox",
+            "platform": "Windows XP",
+            "version": "40.0."
+        },
+        firefox_48: {
+            base: 'SauceLabs',
+            browserName: 'firefox',
+            version: '48.0',
+            platform: 'Windows 10',
+        },
+        // Safari (last 2 versions)
+
+        sl_safari_9: {
+            base: 'SauceLabs',
+            browserName: 'Safari',
+            version: '9.0',
+            platform: 'OS X 10.11',
+        },
+        sl_safari_8: {
+            base: 'SauceLabs',
+            browserName: 'Safari',
+            version: '8.0',
+            platform: 'OS X 10.10',
+        },
+        // iOS (last 2 major versions)
+
+        sl_ios_9: {
+            base: 'SauceLabs',
+            browserName: 'Safari',
+            appiumVersion: '1.5.3',
+            deviceName: 'iPhone Simulator',
+            deviceOrientation: 'portrait',
+            platformVersion: '9.3',
+            platformName: 'iOS',
+        },
+        sl_ios_8: {
+            base: 'SauceLabs',
+            browserName: 'Safari',
+            appiumVersion: '1.5.3',
+            deviceName: 'iPhone Simulator',
+            deviceOrientation: 'portrait',
+            platformVersion: '8.4',
+            platformName: 'iOS'
+        },
+        iphone_latest: {
+            base: 'SauceLabs',
+            browserName: 'iphone'
+        },
+        android_latest: {
+            base: 'SauceLabs',
+            browserName: 'android'
         }
     };
 
