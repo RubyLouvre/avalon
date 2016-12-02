@@ -80,7 +80,25 @@ describe('vdom', function() {
             expect(script.toDOM().text).toBe('var a = 1')
 
         })
-
+        it('script2', function() {
+            //https://github.com/RubyLouvre/avalon/issues/1842
+            var div = document.createElement('div')
+            div.innerHTML = heredoc(function(){
+                /*
+                 <p>ddd</p>
+                 <script>var a = 33</script>
+                 */
+            })
+            var vm = avaon.define({
+                $id: 'scanIt01',
+                a: 1
+            })
+            expect(div.innnerHTML).toMatch('33')
+            avalon.scan(div, vm)
+           
+            expect(div.innnerHTML).toMatch('33')
+            delete avalon.vmodels.scanIt01
+        })
         it('input', function() {
 
             var input = new VElement('input', { type: 'password' }, [
