@@ -15,15 +15,20 @@ export function groupTree(parent, children) {
             }
         }
         if ( vdom.children && vdom.children.length) {
-            groupTree(dom, vdom.children)
+            try{
+                groupTree(dom, vdom.children)
+             }catch(e){
+                 delete vdom.dom
+                 dom = avalon.vdom(vdom, 'toDOM')
+             }
         }
         //高级版本可以尝试 querySelectorAll
-        try {
-            var parentTag = parent.nodeName.toLowerCase()
-            if (!appendChildMayThrowError[parentTag]) {
-                parent.appendChild(dom)
-            }
-        } catch (e) { }
+       
+        var parentTag = parent.nodeName.toLowerCase()
+      //  if (!appendChildMayThrowError[parentTag]) {
+            parent.appendChild(dom)
+      //  }
+       
     })
 }
 
