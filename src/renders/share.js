@@ -1,34 +1,31 @@
 import { avalon, createFragment } from '../seed/core'
 
 export function groupTree(parent, children) {
-    children && children.forEach(function (vdom) {
+    children && children.forEach(function(vdom) {
         if (!vdom)
             return
+        var vlength = vdom.children && vdom.children.length
         if (vdom.nodeName === '#document-fragment') {
             var dom = createFragment()
         } else {
             dom = avalon.vdom(vdom, 'toDOM')
-            if(dom.childNodes && vdom.children){
-                if(dom.childNodes.length > vdom.children.length){
+            var domlength = dom.childNodes && dom.childNodes.length
+            if (domlength && vlength && domlength > vlength) {
+                if (!appendChildMayThrowError[dom.nodeName]) {
                     avalon.clearHTML(dom)
                 }
             }
         }
-        if ( vdom.children && vdom.children.length) {
-            try{
-                groupTree(dom, vdom.children)
-             }catch(e){
-                 delete vdom.dom
-                 dom = avalon.vdom(vdom, 'toDOM')
-             }
+        if (vlength) {
+            groupTree(dom, vdom.children)
         }
         //高级版本可以尝试 querySelectorAll
-       
-        var parentTag = parent.nodeName.toLowerCase()
-      //  if (!appendChildMayThrowError[parentTag]) {
-            parent.appendChild(dom)
-      //  }
-       
+
+        try {
+            if (!appendChildMayThrowError[parent.nodeName]) {
+                parent.appendChild(dom)
+            }
+        } catch (e) {}
     })
 }
 
@@ -44,7 +41,9 @@ export function dumpTree(elem) {
 
 export function getRange(childNodes, node) {
     var i = childNodes.indexOf(node) + 1
-    var deep = 1, nodes = [], end
+    var deep = 1,
+        nodes = [],
+        end
     nodes.start = i
     while (node = childNodes[i++]) {
         nodes.push(node)
@@ -54,7 +53,7 @@ export function getRange(childNodes, node) {
             } else if (node.nodeValue === 'ms-for-end:') {
                 deep--
                 if (deep === 0) {
-                  //  node.nodeValue = 'msfor-end:'
+                    //  node.nodeValue = 'msfor-end:'
                     end = node
                     nodes.pop()
                     break

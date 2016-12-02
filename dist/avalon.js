@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-2:16:38 version 2.2.2 by 司徒正美
+built in 2016-12-2:21:17 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -833,33 +833,40 @@ fix 空字符串不生成节点的BUG
     /*判定是否类数组，如节点集合，纯数组，arguments与拥有非负整数的length属性的纯JS对象*/
     /* istanbul ignore next */
     function isArrayLike(obj) {
-        try {
-            var n = obj.length;
-            if (n !== n >>> 0) //检测length属性是否为非负整数
-                return false;
-            if (rarraylike.test(inspect.call(obj))) {
+        if (!obj) return false;
+        var n = obj.length;
+        if (n === n >>> 0) {
+            //检测length属性是否为非负整数
+            var type = inspect.call(obj);
+            if (rarraylike.test(type)) return true;
+            if (type !== '[object Object]') return false;
+            try {
+                if ({}.propertyIsEnumerable.call(obj, 'length') === false) {
+                    //如果是原生对象
+                    return rfunction.test(obj.item || obj.callee);
+                }
                 return true;
+            } catch (e) {
+                //IE的NodeList直接抛错
+                return !obj.window; //IE6-8 window
             }
-            if ({}.propertyIsEnumerable.call(obj, 'length') === false) {
-                //如果是原生对象
-                return rfunction.test(obj.item || obj.callee);
-            }
-            return true; //IE6-8 Object.prototype.toString访问window的length，会直接抛“this不是一个javascript对象”的错误
-        } catch (e) {//IE的NodeList直接抛错
         }
         return false;
     }
 
     avalon.each = function (obj, fn) {
-        //排除null, undefined
-        if (isArrayLike(obj)) {
-            for (var i = 0, n = obj.length; i < n; i++) {
-                if (fn(i, obj[i]) === false) break;
-            }
-        } else if (obj) {
-            for (var _i in obj) {
-                if (obj.hasOwnProperty(_i) && fn(_i, obj[_i]) === false) {
-                    break;
+        if (obj) {
+            //排除null, undefined
+            var i = 0;
+            if (isArrayLike(obj)) {
+                for (var n = obj.length; i < n; i++) {
+                    if (fn(i, obj[i]) === false) break;
+                }
+            } else {
+                for (i in obj) {
+                    if (obj.hasOwnProperty(i) && fn(i, obj[i]) === false) {
+                        break;
+                    }
                 }
             }
         }
@@ -1435,7 +1442,6 @@ fix 空字符串不生成节点的BUG
         if (nodeName === "script") {
             if (dest.text !== src.text) {
                 dest.type = "noexec";
-                dest.innerHTML = src.text;
                 dest.text = src.text;
                 dest.type = src.type || "";
             }
@@ -3300,6 +3306,9 @@ fix 空字符串不生成节点的BUG
                 case 'script':
                     dom.type = 'noexec';
                     dom.text = template;
+                    try {
+                        dom.innerHTML = template;
+                    } catch (e) {}
                     dom.type = props.type || '';
                     break;
                 case 'noscript':
@@ -3311,7 +3320,7 @@ fix 空字符串不生成节点的BUG
                         dom.innerHTML = template;
                     } catch (e) {
                         /* istanbul ignore next*/
-                        this.hackIE(dom, this.nodeName, template, props);
+                        this.hackIE(dom, this.nodeName, template);
                     }
                     break;
                 case 'option':
@@ -3633,13 +3642,13 @@ fix 空字符串不生成节点的BUG
             action.depsCount = curr.length;
             action.deps = avalon.mix({}, action.mapIDs);
             action.depsVersion = {};
-            for (var _i2 in action.mapIDs) {
-                var _dep = action.mapIDs[_i2];
+            for (var _i in action.mapIDs) {
+                var _dep = action.mapIDs[_i];
                 action.depsVersion[_dep.uuid] = _dep.version;
             }
         }
 
-        for (var _i3 = 0, _dep2; _dep2 = prev[_i3++];) {
+        for (var _i2 = 0, _dep2; _dep2 = prev[_i2++];) {
             if (!checked[_dep2.uuid]) {
                 avalon.Array.remove(_dep2.observers, action);
             }
@@ -4754,19 +4763,19 @@ fix 空字符串不生成节点的BUG
                             patch[i] = newVal[i];
                         }
                     } else {
-                        for (var _i4 in newVal) {
+                        for (var _i3 in newVal) {
                             //diff差异点
-                            if (newVal[_i4] !== oldVal[_i4]) {
+                            if (newVal[_i3] !== oldVal[_i3]) {
                                 hasChange = true;
                             }
-                            patch[_i4] = newVal[_i4];
+                            patch[_i3] = newVal[_i3];
                         }
                     }
 
-                    for (var _i5 in oldVal) {
-                        if (!(_i5 in patch)) {
+                    for (var _i4 in oldVal) {
+                        if (!(_i4 in patch)) {
                             hasChange = true;
-                            patch[_i5] = '';
+                            patch[_i4] = '';
                         }
                     }
                 }
@@ -6945,23 +6954,25 @@ fix 空字符串不生成节点的BUG
     function groupTree(parent, children) {
         children && children.forEach(function (vdom) {
             if (!vdom) return;
+            var vlength = vdom.children && vdom.children.length;
             if (vdom.nodeName === '#document-fragment') {
                 var dom = createFragment();
             } else {
                 dom = avalon.vdom(vdom, 'toDOM');
-                if (dom.childNodes && vdom.children) {
-                    if (dom.childNodes.length > vdom.children.length) {
+                var domlength = dom.childNodes && dom.childNodes.length;
+                if (domlength && vlength && domlength > vlength) {
+                    if (!appendChildMayThrowError[dom.nodeName]) {
                         avalon.clearHTML(dom);
                     }
                 }
             }
-            if (vdom.children && vdom.children.length) {
+            if (vlength) {
                 groupTree(dom, vdom.children);
             }
             //高级版本可以尝试 querySelectorAll
+
             try {
-                var parentTag = parent.nodeName.toLowerCase();
-                if (!appendChildMayThrowError[parentTag]) {
+                if (!appendChildMayThrowError[parent.nodeName]) {
                     parent.appendChild(dom);
                 }
             } catch (e) {}
@@ -7300,8 +7311,8 @@ fix 空字符串不生成节点的BUG
                 el.dispose();
             }
             //防止其他地方的this.innerRender && this.innerRender.dispose报错
-            for (var _i6 in this) {
-                if (_i6 !== 'dispose') delete this[_i6];
+            for (var _i5 in this) {
+                if (_i5 !== 'dispose') delete this[_i5];
             }
         },
 

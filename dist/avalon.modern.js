@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-2:16:37 version 2.2.2 by 司徒正美
+built in 2016-12-2:21:16 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -6111,23 +6111,25 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
     function groupTree(parent, children) {
         children && children.forEach(function (vdom) {
             if (!vdom) return
+            var vlength = vdom.children && vdom.children.length
             if (vdom.nodeName === '#document-fragment') {
                 var dom = createFragment()
             } else {
                 dom = avalon$2.vdom(vdom, 'toDOM')
-                if (dom.childNodes && vdom.children) {
-                    if (dom.childNodes.length > vdom.children.length) {
+                var domlength = dom.childNodes && dom.childNodes.length
+                if (domlength && vlength && domlength > vlength) {
+                    if (!appendChildMayThrowError[dom.nodeName]) {
                         avalon$2.clearHTML(dom)
                     }
                 }
             }
-            if (vdom.children && vdom.children.length) {
+            if (vlength) {
                 groupTree(dom, vdom.children)
             }
             //高级版本可以尝试 querySelectorAll
+
             try {
-                var parentTag = parent.nodeName.toLowerCase()
-                if (!appendChildMayThrowError[parentTag]) {
+                if (!appendChildMayThrowError[parent.nodeName]) {
                     parent.appendChild(dom)
                 }
             } catch (e) {}
