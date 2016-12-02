@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-2:11:42 version 2.2.2 by 司徒正美
+built in 2016-12-2:14:32 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -2336,7 +2336,7 @@ fix 空字符串不生成节点的BUG
         for (var i = 0; i < n; i++) {
             var node = nodes[i];
             if (!tbody) {
-                if ((node.type || node.nodeName) === 'tr') {
+                if (node.nodeName === 'tr') {
                     //收集tr及tr两旁的注释节点
                     tbody = {
                         nodeName: 'tbody',

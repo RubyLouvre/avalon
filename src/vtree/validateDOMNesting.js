@@ -52,5 +52,5 @@ var nestObject = {
     // https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inhead
     head: makeObject('base,basefont,bgsound,link,style,script,meta,title,noscript,noframes'),
     // https://html.spec.whatwg.org/multipage/semantics.html#the-html-element
-    html: oneObject('head,body'),
+    html: oneObject('head,body')
 }
