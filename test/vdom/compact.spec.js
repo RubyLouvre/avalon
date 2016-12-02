@@ -101,7 +101,7 @@ describe('vdom', function() {
                     //chrome下对style标签的style赋值，总是赋不上，而phantomjs则会直接抛错
                 try {
                     hack(el, 'style', '.aaa{border:1px}')
-                    expect(el.style.cssText).toMatch(/1px/)
+                    expect(el.styleSheet.cssText).toMatch(/1px/)
                 } catch (e) {}
                 var el2 = document.createElement('xmp')
                 hack(el2, 'xmp', '<p>111</p>')
