@@ -56,7 +56,7 @@ module.exports = function(config) {
 
             // start these browsers
             // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-            browsers: ['Chrome', 'PhantomJS_custom'], //'PhantomJS''IE', 'IE7','Chrome'
+            browsers: ['Chrome', 'PhantomJS_custom', 'jsdom'], //'PhantomJS''IE', 'IE7','Chrome'
 
             customLaunchers: {
                 IE6: {
@@ -93,16 +93,16 @@ module.exports = function(config) {
             },
             coverageReporter: {
                 reporters: [
-		{type: 'text-summary', subdir: '.'},
-		{type: 'lcov', subdir: '.', dir: 'coverage/'}
-	        ]
+                    { type: 'text-summary', subdir: '.' },
+                    { type: 'lcov', subdir: '.', dir: 'coverage/' }
+                ]
 
             },
             // Continuous Integration mode
             // if true, Karma captures browsers, runs the tests and exits
             singleRun: true,
 
-            
+
             // webpack: require('./webpack.config.js'),
 
             webpackServer: {
