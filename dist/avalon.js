@@ -1435,6 +1435,7 @@ fix 空字符串不生成节点的BUG
         if (nodeName === "script") {
             if (dest.text !== src.text) {
                 dest.type = "noexec";
+                dest.innerHTML = src.text;
                 dest.text = src.text;
                 dest.type = src.type || "";
             }

@@ -39,7 +39,7 @@ VElement.prototype = {
         switch (this.nodeName) {
             case 'script':
                 dom.type = 'noexec'
-                dom.text = template
+                dom.innerHTML = dom.text = template
                 dom.type = props.type || ''
                 break
             case 'noscript':
