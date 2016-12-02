@@ -89,7 +89,7 @@ describe('vdom', function() {
                  <script>var a = 33</script>
                  */
             })
-            var vm = avaon.define({
+            var vm = avalon.define({
                 $id: 'scanIt01',
                 a: 1
             })
