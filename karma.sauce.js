@@ -72,7 +72,7 @@ module.exports = function(config) {
             './test/promise.js',
             './test/matchers.js',
             './test/beforeIt.js',
-            './dist/avalon.test.js'
+            './dist/avalon.sauce.js'
         ],
 
 
