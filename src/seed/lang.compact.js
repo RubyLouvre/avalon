@@ -165,7 +165,7 @@ var undefined
 
 function innerExtend(isDeep, array) {
     var target = array[0],
-        copyIsArray, clone
+        copyIsArray, clone, name
     for (var i = 1, length = array.length; i < length; i++) {
         //只处理非空参数
         var options = array[i]

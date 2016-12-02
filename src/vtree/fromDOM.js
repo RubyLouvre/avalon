@@ -21,9 +21,9 @@ export function from(node) {
                 nodeName: type,
                 dom: node,
                 isVoidTag: !!voidTag[type],
-                props: markProps(node, node.attributes||[])
+                props: markProps(node, node.attributes || [])
             }
-            if (orphanTag[type] || type == 'option') {
+            if (orphanTag[type] || type === 'option') {
                 makeOrphan(vnode, type, node.text || node.innerHTML)
                 if (node.childNodes.length === 1) {
                     vnode.children[0].dom = node.firstChild
@@ -42,6 +42,7 @@ export function from(node) {
 }
 
 var rformElement = /input|textarea|select/i
+
 function markProps(node, attrs) {
     var ret = {}
     for (var i = 0, n = attrs.length; i < n; i++) {
@@ -54,10 +55,10 @@ function markProps(node, attrs) {
     if (rformElement.test(node.nodeName)) {
         ret.type = node.type
         var a = node.getAttributeNode('value')
-        if(a && /\S/.test(a.value)){//IE6,7中无法取得checkbox,radio的value
+        if (a && /\S/.test(a.value)) { //IE6,7中无法取得checkbox,radio的value
             ret.value = a.value
         }
-      
+
     }
     var style = node.style.cssText
     if (style) {

@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-2:14:31 version 2.2.2 by 司徒正美
+built in 2016-12-2:16:26 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -34,12 +34,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         objectobject: 7, //IE7-8
         objectundefined: 6, //IE6
         undefinedfunction: NaN, // other modern browsers
-        undefinedobject: NaN //Mobile Safari 8.0.0 (iOS 8.4.0) 
-    }
+        undefinedobject: NaN }
     /* istanbul ignore next  */
     var msie = document$1.documentMode || versions[typeof document$1.all + typeof XMLHttpRequest]
 
-    var modern = /NaN/.test(msie) || msie > 8
+    var modern = /NaN|undefined/.test(msie) || msie > 8
 
     /*
      https://github.com/rsms/js-lru
@@ -2534,7 +2533,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                     isVoidTag: !!voidTag[type],
                     props: markProps(node, node.attributes || [])
                 }
-                if (orphanTag[type] || type == 'option') {
+                if (orphanTag[type] || type === 'option') {
                     makeOrphan(vnode, type, node.text || node.innerHTML)
                     if (node.childNodes.length === 1) {
                         vnode.children[0].dom = node.firstChild
@@ -2553,6 +2552,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
     }
 
     var rformElement = /input|textarea|select/i
+
     function markProps(node, attrs) {
         var ret = {}
         for (var i = 0, n = attrs.length; i < n; i++) {

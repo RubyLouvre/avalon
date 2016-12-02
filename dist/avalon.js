@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-2:14:32 version 2.2.2 by 司徒正美
+built in 2016-12-2:16:26 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -34,12 +34,11 @@ fix 空字符串不生成节点的BUG
         objectobject: 7, //IE7-8
         objectundefined: 6, //IE6
         undefinedfunction: NaN, // other modern browsers
-        undefinedobject: NaN //Mobile Safari 8.0.0 (iOS 8.4.0) 
-    };
+        undefinedobject: NaN };
     /* istanbul ignore next  */
     var msie = document$1.documentMode || versions[typeof document$1.all + typeof XMLHttpRequest];
 
-    var modern = /NaN/.test(msie) || msie > 8;
+    var modern = /NaN|undefined/.test(msie) || msie > 8;
 
     /*
      https://github.com/rsms/js-lru
@@ -791,7 +790,8 @@ fix 空字符串不生成节点的BUG
     function innerExtend(isDeep, array) {
         var target = array[0],
             copyIsArray,
-            clone;
+            clone,
+            name;
         for (var i = 1, length = array.length; i < length; i++) {
             //只处理非空参数
             var options = array[i];
@@ -1353,7 +1353,7 @@ fix 空字符串不生成节点的BUG
         right: 39,
         down: 40
     };
-    for (var name$1 in keys) {
+    for (var name in keys) {
         (function (filter, key) {
             eventFilters[filter] = function (e) {
                 if (e.which !== key) {
@@ -1361,7 +1361,7 @@ fix 空字符串不生成节点的BUG
                 }
                 return e;
             };
-        })(name$1, keys[name$1]);
+        })(name, keys[name]);
     }
 
     //https://github.com/teppeis/htmlspecialchars
@@ -3178,7 +3178,7 @@ fix 空字符串不生成节点的BUG
                     isVoidTag: !!voidTag[type],
                     props: markProps(node, node.attributes || [])
                 };
-                if (orphanTag[type] || type == 'option') {
+                if (orphanTag[type] || type === 'option') {
                     makeOrphan(vnode, type, node.text || node.innerHTML);
                     if (node.childNodes.length === 1) {
                         vnode.children[0].dom = node.firstChild;
@@ -3197,6 +3197,7 @@ fix 空字符串不生成节点的BUG
     }
 
     var rformElement = /input|textarea|select/i;
+
     function markProps(node, attrs) {
         var ret = {};
         for (var i = 0, n = attrs.length; i < n; i++) {
@@ -4859,21 +4860,21 @@ fix 空字符串不生成节点的BUG
     var css3 = void 0;
     var tran = void 0;
     var ani = void 0;
-    var name$2 = void 0;
+    var name$1 = void 0;
     var animationEndEvent = void 0;
     var transitionEndEvent = void 0;
     var transition = false;
     var animation = false;
     //有的浏览器同时支持私有实现与标准写法，比如webkit支持前两种，Opera支持1、3、4
-    for (name$2 in checker) {
-        if (window$1[name$2]) {
-            tran = checker[name$2];
+    for (name$1 in checker) {
+        if (window$1[name$1]) {
+            tran = checker[name$1];
             break;
         }
         /* istanbul ignore next */
         try {
-            var a = document.createEvent(name$2);
-            tran = checker[name$2];
+            var a = document.createEvent(name$1);
+            tran = checker[name$1];
             break;
         } catch (e) {}
     }
@@ -4894,9 +4895,9 @@ fix 空字符串不生成节点的BUG
         'AnimationEvent': 'animationend',
         'WebKitAnimationEvent': 'webkitAnimationEnd'
     };
-    for (name$2 in checker) {
-        if (window$1[name$2]) {
-            ani = checker[name$2];
+    for (name$1 in checker) {
+        if (window$1[name$1]) {
+            ani = checker[name$1];
             break;
         }
     }
