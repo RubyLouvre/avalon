@@ -30,7 +30,7 @@ describe('hover', function() {
             var arr = vv.split(':')
             map[arr[0]] = arr[1]
         })
-        expect(Object.keys(map).sort() + '').toMatch(/(mouseentermouseleave|mouseout|mouseover)/)
+        expect(Object.keys(map).sort().join('')).toMatch(/(mouseentermouseleave|mouseout|mouseover)/)
         var fn = avalon.eventListeners[map.mouseenter]
         fn({
             type: 'mouseenter',

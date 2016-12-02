@@ -30,7 +30,7 @@ describe('active', function() {
             var arr = vv.split(':')
             map[arr[0]] = arr[1]
         })
-        expect(Object.keys(map).sort() + '').toMatch(/(mousedownmouseleavemouseup|mousedownmouseoutmouseup)/)
+        expect(Object.keys(map).sort().join('')).toMatch(/(mousedownmouseleavemouseup|mousedownmouseoutmouseup)/)
         var fn = avalon.eventListeners[map.mousedown]
         fn({
             type: 'mousedown',
