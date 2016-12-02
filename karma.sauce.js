@@ -32,18 +32,12 @@ module.exports = function(config) {
         //      browserName: 'firefox',
         //      version: '4'
         //  }
-        SL_IE_7: {
-                 base: 'SauceLabs',
-                 browserName: 'internet explorer',
-                 version: '7',
-                 platform: 'Windows XP'
 
-        },
-         SL_IE_8: {
-                 base: 'SauceLabs',
-                 browserName: 'internet explorer',
-                 version: '8',
-                 platform: 'Windows XP'
+        SL_IE_8: {
+            base: 'SauceLabs',
+            browserName: 'internet explorer',
+            version: '8',
+            platform: 'Windows XP'
 
         },
         'SL_IE_9': {
@@ -102,7 +96,7 @@ module.exports = function(config) {
         logLevel: config.LOG_INFO,
 
         sauceLabs: {
-            testName: 'ie7-11',
+            testName: 'ie8-11',
             //recordScreenshots: false,
             connectOptions: {
                 port: 5757,
@@ -117,7 +111,7 @@ module.exports = function(config) {
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
         browsers: Object.keys(customLaunchers),
         // Continuous Integration mode
-            // if true, Karma captures browsers, runs the tests and exits
+        // if true, Karma captures browsers, runs the tests and exits
         singleRun: true
     });
 };
