@@ -93,10 +93,10 @@ describe('vdom', function() {
                 $id: 'scanIt01',
                 a: 1
             })
-            expect(div.innnerHTML).toMatch('33')
+            expect(div.innnerHTML).toMatch(/33/)
             avalon.scan(div, vm)
            
-            expect(div.innnerHTML).toMatch('33')
+            expect(div.innnerHTML).toMatch(/33/)
             delete avalon.vmodels.scanIt01
         })
         it('input', function() {
