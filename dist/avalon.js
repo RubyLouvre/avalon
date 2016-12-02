@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-2:1:46 version 2.2.2 by 司徒正美
+built in 2016-12-2:11:42 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -2391,32 +2391,36 @@ fix 空字符串不生成节点的BUG
         }
         return true;
     }
+
+    function makeObject(str) {
+        return oneObject(str + ',template,#document-fragment,#comment');
+    }
     var pNestChild = oneObject('div,ul,ol,dl,table,h1,h2,h3,h4,h5,h6,form,fieldset');
-    var tNestChild = oneObject('tr,style,script,template,#document-fragment');
+    var tNestChild = makeObject('tr,style,script');
     var nestObject = {
         p: pNestChild,
         // https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inselect
-        select: oneObject('option,optgroup,#text,#document-fragment'),
-        optgroup: oneObject('option,#text,#document-fragment'),
-        option: oneObject('#text,#document-fragment'),
+        select: makeObject('option,optgroup,#text'),
+        optgroup: makeObject('option,#text'),
+        option: makeObject('#text'),
         // https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intd
         // https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incaption
         // No special behavior since these rules fall back to "in body" mode for
         // all except special table nodes which cause bad parsing behavior anyway.
 
         // https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intr
-        tr: oneObject('th,td,style,script,template,#document-fragment'),
+        tr: makeObject('th,td,style,script'),
 
         // https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intbody
         tbody: tNestChild,
         tfoot: tNestChild,
         thead: tNestChild,
         // https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-incolgroup
-        colgroup: oneObject('col,template,#document-fragment'),
+        colgroup: makeObject('col'),
         // https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-intable
         // table: oneObject('caption,colgroup,tbody,thead,tfoot,style,script,template,#document-fragment'),
         // https://html.spec.whatwg.org/multipage/syntax.html#parsing-main-inhead
-        head: oneObject('base,basefont,bgsound,link,style,script,meta,title,noscript,noframes,template,#document-fragment'),
+        head: makeObject('base,basefont,bgsound,link,style,script,meta,title,noscript,noframes'),
         // https://html.spec.whatwg.org/multipage/semantics.html#the-html-element
         html: oneObject('head,body')
     };
