@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-2:22:10 version 2.2.2 by 司徒正美
+built in 2016-12-2:23:25 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -1565,6 +1565,9 @@ fix 空字符串不生成节点的BUG
                 node.setAttribute('class', cls);
             } else {
                 node.className = cls;
+            }
+            if (!cls) {
+                node.removeAttribute('class');
             }
             //toggle存在版本差异，因此不使用它
         }

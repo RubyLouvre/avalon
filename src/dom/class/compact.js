@@ -32,6 +32,9 @@ ClassList.prototype = {
         } else {
             node.className = cls
         }
+        if (!cls) {
+            node.removeAttribute('class')
+        }
         //toggle存在版本差异，因此不使用它
     }
 }
