@@ -33,7 +33,7 @@ export function runActions() {
     if (avalon.isRunningActions === true || avalon.inTransaction > 0)
         return
     avalon.isRunningActions = true
-    var tasks = avalon.pendingActions.splice(0, avalon.pendingActions.length )
+    var tasks = avalon.pendingActions.splice(0, avalon.pendingActions.length)
     for (var i = 0, task; task = tasks[i++];) {
         task.update()
     }
@@ -70,7 +70,8 @@ function addToQueue(observer) {
 var targetStack = []
 
 export function collectDeps(action, getter) {
-
+    if (!action.observers)
+        return
     var preAction = avalon.trackingAction
     if (preAction) {
         targetStack.push(preAction)
@@ -86,7 +87,7 @@ export function collectDeps(action, getter) {
         hasError = false
     } finally {
         if (hasError) {
-            avalon.warn('collectDeps fail', getter +'')
+            avalon.warn('collectDeps fail', getter + '')
             action.mapIDs = {}
             avalon.trackingAction = preAction
         } else {
@@ -111,6 +112,10 @@ function resetDeps(action) {
     for (let i in action.mapIDs) {
         let dep = action.mapIDs[i]
         if (!dep.isAction) {
+            if (!dep.observers) { //如果它已经被销毁
+                delete action.mapIDs[i]
+                continue
+            }
             curr.push(dep)
             dep.isCollected = false
             checked[dep.uuid] = 1

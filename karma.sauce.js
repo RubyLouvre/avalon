@@ -56,12 +56,12 @@ module.exports = function(config) {
             version: '14.14393',
             platform: 'Windows 10',
         },
-        opera11: {
+        sl_opera11_win7: {
             "browserName": "Opera",
             "platform": "Windows 7",
             "version": "11"
         },
-        opera12: {
+        sl_opera12_win7: {
             "browserName": "Opera",
             "platform": "Windows 7",
             "version": "12"
@@ -109,12 +109,7 @@ module.exports = function(config) {
             platform: 'Windows 10'
         },
         //chrome最低只支持到26
-        chrome26: {
-            base: 'SauceLabs',
-            browserName: 'chrome',
-            version: '26.0',
-            platform: 'Windows 10'
-        },
+
         'Firefox26': {
             base: 'SauceLabs',
             browserName: 'firefox',

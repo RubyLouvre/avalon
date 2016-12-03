@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-2:23:38 version 2.2.2 by 司徒正美
+built in 2016-12-3:12:57 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -3633,6 +3633,11 @@ fix 空字符串不生成节点的BUG
         for (var i in action.mapIDs) {
             var dep = action.mapIDs[i];
             if (!dep.isAction) {
+                if (!dep.observers) {
+                    //如果它已经被销毁
+                    delete action.mapIDs[i];
+                    continue;
+                }
                 curr.push(dep);
                 dep.isCollected = false;
                 checked[dep.uuid] = 1;
