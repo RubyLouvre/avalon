@@ -113,12 +113,14 @@ module.exports = function(config) {
         'Firefox26': {
             base: 'SauceLabs',
             browserName: 'firefox',
-            version: '26'
+            version: '26',
+            platform: 'Windows 10',
         },
         firefox40: {
-            "browserName": "Firefox",
-            "platform": "Windows XP",
-            "version": "40.0."
+            base: 'SauceLabs',
+            browserName: 'firefox',
+            version: '40.0',
+            platform: 'Windows 10',
         },
         firefox_48: {
             base: 'SauceLabs',
@@ -206,7 +208,7 @@ module.exports = function(config) {
         logLevel: config.LOG_INFO,
 
         sauceLabs: {
-            testName: 'ie8-11',
+            testName: 'avalon2.2.2',
             //recordScreenshots: false,
             connectOptions: {
                 port: 5757,
