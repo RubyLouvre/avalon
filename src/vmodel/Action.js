@@ -15,7 +15,7 @@ import {
 } from "../parser/index"
 
 var actionUUID = 1
-
+    //需要重构
 export function Action(vm, options, callback) {
     for (var i in options) {
         if (protectedMenbers[i] !== 1) {

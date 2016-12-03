@@ -54,7 +54,6 @@ export function reportObserved(observer) {
     if (action !== null) {
         avalon.track('征收到', observer.expr)
         action.mapIDs[observer.uuid] = observer;
-        observer.isCollected = 1
     } else if (observer.observers.length === 0) {
         addToQueue(observer);
     }
@@ -117,7 +116,6 @@ function resetDeps(action) {
                 continue
             }
             curr.push(dep)
-            dep.isCollected = false
             checked[dep.uuid] = 1
             avalon.Array.ensure(dep.observers, action)
         }
