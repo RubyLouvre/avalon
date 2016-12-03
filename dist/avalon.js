@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-3:13:5 version 2.2.2 by 司徒正美
+built in 2016-12-3:17:49 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -3578,7 +3578,6 @@ fix 空字符串不生成节点的BUG
         if (action !== null) {
             avalon.track('征收到', observer.expr);
             action.mapIDs[observer.uuid] = observer;
-            observer.isCollected = 1;
         } else if (observer.observers.length === 0) {
             addToQueue(observer);
         }
@@ -3639,7 +3638,6 @@ fix 空字符串不生成节点的BUG
                     continue;
                 }
                 curr.push(dep);
-                dep.isCollected = false;
                 checked[dep.uuid] = 1;
                 avalon.Array.ensure(dep.observers, action);
             }
@@ -3816,7 +3814,7 @@ fix 空字符串不生成节点的BUG
     }
 
     var actionUUID = 1;
-
+    //需要重构
     function Action(vm, options, callback) {
         for (var i in options) {
             if (protectedMenbers[i] !== 1) {
