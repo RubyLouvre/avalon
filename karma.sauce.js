@@ -81,12 +81,7 @@ module.exports = function(config) {
             version: '30.0',
             platform: 'Windows 7'
         },
-         IE6: {
-            base: 'SauceLabs',
-            browserName: 'internet explorer',
-            version: '6',
-            platform: 'Windows XP'
-        },
+        
         //chrome最低只支持到26
 
         'Firefox26': {
