@@ -21,7 +21,7 @@ function nomalString(str) {
 var ropenTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
 var rendTag = /^<\/([^>]+)>/
 var rtagStart = /[\!\/a-z]/i //闭标签的第一个字符,开标签的第一个英文,注释节点的!
-var rlineSp = /[\n\r]s*/g
+var rlineSp = /\\n\s*/g
 var rattrs = /([^=\s]+)(?:\s*=\s*(\S+))?/
 
 var rcontent = /\S/ //判定里面有没有内容
@@ -192,17 +192,22 @@ AST.prototype = {
         }
     },
     genProps(attrs, props) {
+        
         while (attrs) {
             var arr = rattrs.exec(attrs)
+   
             if (arr) {
                 var name = arr[1]
                 var value = arr[2] || ''
                 attrs = attrs.replace(arr[0], '')
                 if (value) {
+                    //https://github.com/RubyLouvre/avalon/issues/1844
                     if (value.indexOf('??') === 0) {
                         value = nomalString(value).
                         replace(rlineSp, '').
+                        
                         slice(1, -1)
+                       
                     }
                 }
                 if (!(name in props)) {
