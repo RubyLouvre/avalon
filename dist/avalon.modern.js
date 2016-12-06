@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-6:14:25 version 2.2.2 by 司徒正美
+built in 2016-12-6:15:13 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -4816,7 +4816,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                 this.fragments = this.fragments || []
                 mountList(this)
             } else {
-                collectInFor(this)
+                //  collectInFor(this)
                 diffList(this)
                 updateList(this)
             }

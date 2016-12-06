@@ -12,7 +12,7 @@ import {
     createSetter
 } from "../parser/index"
 
-var actionUUID = 1
+export var actionUUID = 1
     //需要重构
 export function Action(vm, options, callback) {
     for (var i in options) {
@@ -20,7 +20,7 @@ export function Action(vm, options, callback) {
             this[i] = options[i]
         }
     }
-    
+
     this.vm = vm
     this.observers = []
     this.callback = callback
@@ -69,7 +69,7 @@ Action.prototype = {
         if (this.deep) {
             avalon.deepCollect = true
         }
-       
+
         var value = collectDeps(this, this.getValue)
         if (this.deep && avalon.deepCollect) {
             avalon.deepCollect = false
@@ -99,11 +99,14 @@ Action.prototype = {
     schedule() {
         if (!this._isScheduled) {
             this._isScheduled = true
-            avalon.Array.ensure(avalon.pendingActions, this);
-           // setTimeout(function(){
-                   runActions() //这里会还原_isScheduled
-           // })
-         
+            if (!avalon.uniqActions[this.uuid]) {
+                avalon.uniqActions[this.uuid] = 1
+                avalon.pendingActions.push(this)
+            }
+
+            runActions() //这里会还原_isScheduled
+
+
         }
     },
     removeDepends() {

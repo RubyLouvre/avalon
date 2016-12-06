@@ -52,13 +52,14 @@ avalon.directive('for', {
         this.cache = {}
         var me = this
         this.innerAction = {
+            uuid: Math.random(),
             schedule: function() {
-                // setTimeout(function(){
+               
                 me.fragments && me.fragments.forEach(function(el) {
                     updateItemVm(el.vm, me.vm)
-                    el.innerRender.update()
-                })
 
+                        el.innerRender.update()
+                })
                 this._isScheduled = false
             }
         }
@@ -88,7 +89,7 @@ avalon.directive('for', {
             this.fragments = this.fragments || []
             mountList(this)
         } else {
-            collectInFor(this)
+            //  collectInFor(this)
             diffList(this)
             updateList(this)
         }

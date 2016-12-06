@@ -1,10 +1,21 @@
 import { avalon, createFragment } from '../seed/core'
 
+function getChildren(arr) {
+    var count = 0
+    for (var i = 0, el; el = arr[i++];) {
+        if (el.nodeName === '#document-fragment') {
+            count += getChildren(el.children)
+        } else {
+            count += 1
+        }
+    }
+    return count
+}
 export function groupTree(parent, children) {
     children && children.forEach(function(vdom) {
         if (!vdom)
             return
-        var vlength = vdom.children && vdom.children.length
+        var vlength = vdom.children && getChildren(vdom.children)
         if (vdom.nodeName === '#document-fragment') {
             var dom = createFragment()
         } else {

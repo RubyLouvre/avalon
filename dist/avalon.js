@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-6:14:25 version 2.2.2 by 司徒正美
+built in 2016-12-6:16:44 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -3528,6 +3528,7 @@ fix 空字符串不生成节点的BUG
     };
 
     avalon.pendingActions = [];
+    avalon.uniqActions = {};
     avalon.inTransaction = 0;
     config.trackDeps = false;
     avalon.track = function () {
@@ -3548,6 +3549,7 @@ fix 空字符串不生成节点的BUG
         var tasks = avalon.pendingActions.splice(0, avalon.pendingActions.length);
         for (var i = 0, task; task = tasks[i++];) {
             task.update();
+            delete avalon.uniqActions[task.uuid];
         }
         avalon.isRunningActions = false;
     }
@@ -3887,10 +3889,13 @@ fix 空字符串不生成节点的BUG
         schedule: function schedule() {
             if (!this._isScheduled) {
                 this._isScheduled = true;
-                avalon.Array.ensure(avalon.pendingActions, this);
-                // setTimeout(function(){
+                if (!avalon.uniqActions[this.uuid]) {
+                    avalon.uniqActions[this.uuid] = 1;
+                    avalon.pendingActions.push(this);
+                }
+
                 runActions(); //这里会还原_isScheduled
-                // })
+
             }
         },
         removeDepends: function removeDepends() {
@@ -5492,13 +5497,14 @@ fix 空字符串不生成节点的BUG
             this.cache = {};
             var me = this;
             this.innerAction = {
+                uuid: Math.random(),
                 schedule: function schedule() {
-                    // setTimeout(function(){
+
                     me.fragments && me.fragments.forEach(function (el) {
                         updateItemVm(el.vm, me.vm);
+
                         el.innerRender.update();
                     });
-
                     this._isScheduled = false;
                 }
             };
@@ -5526,7 +5532,7 @@ fix 空字符串不生成节点的BUG
                 this.fragments = this.fragments || [];
                 mountList(this);
             } else {
-                collectInFor(this);
+                //  collectInFor(this)
                 diffList(this);
                 updateList(this);
             }
@@ -6991,10 +6997,21 @@ fix 空字符串不生成节点的BUG
         }];
     }
 
+    function getChildren(arr) {
+        var count = 0;
+        for (var i = 0, el; el = arr[i++];) {
+            if (el.nodeName === '#document-fragment') {
+                count += getChildren(el.children);
+            } else {
+                count += 1;
+            }
+        }
+        return count;
+    }
     function groupTree(parent, children) {
         children && children.forEach(function (vdom) {
             if (!vdom) return;
-            var vlength = vdom.children && vdom.children.length;
+            var vlength = vdom.children && getChildren(vdom.children);
             if (vdom.nodeName === '#document-fragment') {
                 var dom = createFragment();
             } else {

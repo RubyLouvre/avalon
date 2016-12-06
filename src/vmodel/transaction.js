@@ -1,6 +1,7 @@
 import { avalon, config } from '../seed/core'
 
 avalon.pendingActions = []
+avalon.uniqActions = {}
 avalon.inTransaction = 0
 config.trackDeps = false
 avalon.track = function() {
@@ -23,6 +24,7 @@ export function runActions() {
     var tasks = avalon.pendingActions.splice(0, avalon.pendingActions.length)
     for (var i = 0, task; task = tasks[i++];) {
         task.update()
+        delete avalon.uniqActions[task.uuid]
     }
     avalon.isRunningActions = false
 }
@@ -39,7 +41,7 @@ export function propagateChanged(target) {
 export function reportObserved(target) {
     var action = avalon.trackingAction || null
     if (action !== null) {
-      
+
         avalon.track('征收到', target.expr)
         action.mapIDs[target.uuid] = target;
     }

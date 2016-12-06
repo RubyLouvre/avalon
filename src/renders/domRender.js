@@ -285,7 +285,7 @@ Render.prototype = {
             el._isScheduled = false
         }
     },
-    update: function(){
+    update: function() {
         for (var i = 0, el; el = this.directives[i++];) {
             el.update()
         }
