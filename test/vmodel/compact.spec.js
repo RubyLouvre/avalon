@@ -191,7 +191,7 @@ describe('vmodel', function () {
             c: 88,
             $track: 'arr☥obj☥c'
         }
-        var method = avalon.modern ? platform.toJson : platform.toModel
+        var method =  platform.toJson
         method(testA)
         var $model = method(testA)
         expect($model).toA('object')

@@ -95,12 +95,16 @@ describe('widget', function() {
         })
         avalon.scan(div)
 
-        function getDiv(el) {
+         function getDiv(el) {
             if (el.querySelector) {
                 return el.querySelector('.body')
             } else {
-                return el.getElementsByTagName('div')[0].
-                getElementsByTagName('div')[0]
+                var els = el.getElementsByTagName('div')
+                for(var i = 0, l = els.length; i < l; i++){
+                    if(els[i].className === 'body'){
+                        return els[i]
+                    }
+                }
             }
         }
         setTimeout(function() {

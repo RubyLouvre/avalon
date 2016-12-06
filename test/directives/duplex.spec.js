@@ -102,7 +102,7 @@ describe('duplex', function () {
                 expect(vm.aaa.concat()).toEqual([111, 222])
                 done()
             }, 100)
-        })
+        },300)//必须给够时间
     })
 
     it('select', function (done) {

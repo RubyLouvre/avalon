@@ -30,7 +30,7 @@ describe('attr', function () {
         setTimeout(function () {
             expect(el.checked).toBe(false)
 
-            fireClick(div.children[0])
+            vm.a = true
             setTimeout(function () {
                 expect(el.checked + '1').toBe('true1')
                 done()
