@@ -61,7 +61,7 @@ module.exports = function(config) {
             version: '14.14393',
             platform: 'Windows 10',
         },
-  
+
         chrome_54: {
             base: 'SauceLabs',
             browserName: 'chrome',
@@ -150,12 +150,12 @@ module.exports = function(config) {
             base: 'SauceLabs',
             browserName: 'iphone'
         },
-        sl_android_4_4: {
+        /*   sl_android_4_4: {
             base: "SauceLabs",
             browserName: "android",
             version: "4.4"
         },
-
+*/
         android_latest: {
             base: 'SauceLabs',
             browserName: 'android'
