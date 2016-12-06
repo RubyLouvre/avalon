@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-6:17:27 version 2.2.2 by 司徒正美
+built in 2016-12-6:17:41 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -3894,10 +3894,8 @@ fix 空字符串不生成节点的BUG
                     avalon.pendingActions.push(this);
                 }
 
-                setTimeout(function () {
+                runActions(); //这里会还原_isScheduled
 
-                    runActions(); //这里会还原_isScheduled
-                });
             }
         },
         removeDepends: function removeDepends() {

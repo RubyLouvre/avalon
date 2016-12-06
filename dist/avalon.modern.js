@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-6:17:26 version 2.2.2 by 司徒正美
+built in 2016-12-6:17:41 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -3167,10 +3167,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                     avalon$2.pendingActions.push(this)
                 }
 
-                setTimeout(function () {
+                runActions() //这里会还原_isScheduled
 
-                    runActions() //这里会还原_isScheduled
-                })
             }
         },
         removeDepends: function removeDepends() {

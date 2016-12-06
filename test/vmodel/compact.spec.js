@@ -261,6 +261,16 @@ describe('Computed', function () {
             $computed: {
                 c: function(){
                     return this.a+ this.b
+                },
+                d: {
+                    get:function(){
+                        return this.a+' '+this.b
+                    },
+                    set:function(arr){
+                        arr = arr.split(' ')
+                        this.a = ~~arr[0]
+                        this.b = ~~arr[1]
+                    }
                 }
             },
             a: 1,
@@ -271,6 +281,12 @@ describe('Computed', function () {
         expect(vm.c).toBe(12)
         vm.b = 10
         expect(vm.c).toBe(20)
+        expect(vm.d).toBe('10 10')
+        vm.d = '12 13'
+        expect(vm.a).toBe(12)
+      
+        expect(vm.b).toBe(13)
+        expect(vm.c).toBe(25)
         delete avalon.vmodels.computed01
     })
 })
