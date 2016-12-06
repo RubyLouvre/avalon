@@ -84,23 +84,23 @@ module.exports = function(config) {
         
         //chrome最低只支持到26
 
-        'Firefox26': {
+        firefox20: {
             base: 'SauceLabs',
             browserName: 'firefox',
-            version: '26',
+            version: '20',
             platform: 'Windows 7'
         },
-        'Firefox30': {
+        firefox30: {
             base: 'SauceLabs',
             browserName: 'firefox',
             version: '30',
-            platform: 'Windows 8',
+            platform: 'Windows 8'
         },
         firefox40: {
             base: 'SauceLabs',
             browserName: 'firefox',
             version: '40',
-            platform: 'Windows 10'
+            platform: 'Windows 8.1'
         },
         firefox48: {
             base: 'SauceLabs',

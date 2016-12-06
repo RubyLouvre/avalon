@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-7:0:55 version 2.2.2 by 司徒正美
+built in 2016-12-7:2:5 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -1521,12 +1521,25 @@ fix 空字符串不生成节点的BUG
         }
 
         //firefox 到11时才有outerHTML
-        if (window$1.HTMLElement && !avalon.root.outerHTML) {
-            HTMLElement.prototype.__defineGetter__('outerHTML', function () {
-                var div = document$1.createElement('div');
-                div.appendChild(this);
-                return div.innerHTML;
-            });
+        if (window$1.HTMLElement) {
+            if (!root.outerHTML) {
+                HTMLElement.prototype.__defineGetter__('outerHTML', function () {
+                    var div = document$1.createElement('div');
+                    div.appendChild(this);
+                    return div.innerHTML;
+                });
+            }
+            if (!root.children) {
+                HTMLElement.prototype.__defineGetter__('children', function () {
+                    var children = [];
+                    for (var i = 0, el; el = this.childNodes[i++];) {
+                        if (el.nodeType === 1) {
+                            children.push(el);
+                        }
+                    }
+                    return children;
+                });
+            }
         }
     }
 
