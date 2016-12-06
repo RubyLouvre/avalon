@@ -250,7 +250,14 @@ describe('duplex', function () {
             options[1].selected = true
             options[2].selected = true
             options[3].selected = false
-            avalon.fireDom(div.getElementsByTagName('select')[0], 'change')
+            var element = div.getElementsByTagName('select')[0]
+            if(avalon.modern){
+                var evt = document.createEvent("HTMLEvents");
+                evt.initEvent("change", false, true);
+                element.dispatchEvent(evt);
+            }else{
+                avalon.fireDom(element, 'change')
+            }
             setTimeout(function () {
                 expect(vm.arr.concat()).toEqual([222, 333])
                 expect(ps[0].innerHTML).toEqual([222, 333] + "")
