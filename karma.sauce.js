@@ -18,7 +18,12 @@ module.exports = function(config) {
     // https://saucelabs.com/platforms
     // Browsers to run on Sauce Labs
     var customLaunchers = {
-
+        SL_IE_7: {
+            base: 'SauceLabs',
+            browserName: 'internet explorer',
+            version: '7',
+            platform: 'Windows XP'
+        },
         SL_IE_8: {
             base: 'SauceLabs',
             browserName: 'internet explorer',
@@ -73,13 +78,13 @@ module.exports = function(config) {
             base: 'SauceLabs',
             browserName: 'chrome',
             version: '40.0',
-            platform: 'Windows 10'
+            platform: 'Windows 8'
         },
         chrome30: {
             base: 'SauceLabs',
             browserName: 'chrome',
             version: '30.0',
-            platform: 'Windows 10'
+            platform: 'Windows 7'
         },
         //chrome最低只支持到26
 

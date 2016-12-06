@@ -260,7 +260,7 @@ describe('duplex', function () {
                 expect(ps[0].innerHTML).toEqual([222, 333] + "")
                 done()
             },130)
-        }, 100)
+        }, 130)
     })
 
     it('通过更新修改checkbox中的ms-duplex', function (done) {
