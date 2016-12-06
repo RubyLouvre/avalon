@@ -4,6 +4,8 @@ import { Mutation } from
     '../../src/vmodel/Mutation'
 import { Action } from
     '../../src/vmodel/Action'
+import { Computed } from
+    '../../src/vmodel/Computed'
 import { canHijack as isObservable } from
     '../../src/vmodel/share'
 describe('vmodel', function () {
@@ -249,7 +251,27 @@ describe('itemFactory', function () {
 
 describe('Mutation', function () {
     it('test', function () {
-       
+        
+    })
+})
+describe('Computed', function () {
+    it('test', function () {
+      var vm =  avalon.define({
+            $id: 'computed01',
+            $computed: {
+                c: function(){
+                    return this.a+ this.b
+                }
+            },
+            a: 1,
+            b: 2
+        })
+        expect(vm.c).toBe(3)
+        vm.a = 10
+        expect(vm.c).toBe(12)
+        vm.b = 10
+        expect(vm.c).toBe(20)
+        delete avalon.vmodels.computed01
     })
 })
 

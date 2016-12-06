@@ -102,5 +102,5 @@ export var Computed = (function(_super) {
         //下面这一行好像没用
         return this.value
     }
-
+    return Computed
 }(Mutation));

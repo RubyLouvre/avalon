@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-6:15:13 version 2.2.2 by 司徒正美
+built in 2016-12-6:17:26 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -2801,6 +2801,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
     }
 
     avalon$2.pendingActions = []
+    avalon$2.uniqActions = {}
     avalon$2.inTransaction = 0
     config.trackDeps = false
     avalon$2.track = function () {
@@ -2821,6 +2822,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         var tasks = avalon$2.pendingActions.splice(0, avalon$2.pendingActions.length)
         for (var i = 0, task; task = tasks[i++];) {
             task.update()
+            delete avalon$2.uniqActions[task.uuid]
         }
         avalon$2.isRunningActions = false
     }
@@ -3160,10 +3162,15 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         schedule: function schedule() {
             if (!this._isScheduled) {
                 this._isScheduled = true
-                avalon$2.Array.ensure(avalon$2.pendingActions, this)
-                // setTimeout(function(){
-                runActions() //这里会还原_isScheduled
-                // })
+                if (!avalon$2.uniqActions[this.uuid]) {
+                    avalon$2.uniqActions[this.uuid] = 1
+                    avalon$2.pendingActions.push(this)
+                }
+
+                setTimeout(function () {
+
+                    runActions() //这里会还原_isScheduled
+                })
             }
         },
         removeDepends: function removeDepends() {
@@ -3404,6 +3411,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             //下面这一行好像没用
             return this.value
         }
+        return Computed
     }(Mutation)
 
     /**
@@ -4782,13 +4790,14 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             this.cache = {}
             var me = this
             this.innerAction = {
+                uuid: Math.random(),
                 schedule: function schedule() {
-                    // setTimeout(function(){
+
                     me.fragments && me.fragments.forEach(function (el) {
                         updateItemVm(el.vm, me.vm)
+
                         el.innerRender.update()
                     })
-
                     this._isScheduled = false
                 }
             }
@@ -6153,10 +6162,21 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         }]
     }
 
+    function getChildren(arr) {
+        var count = 0
+        for (var i = 0, el; el = arr[i++];) {
+            if (el.nodeName === '#document-fragment') {
+                count += getChildren(el.children)
+            } else {
+                count += 1
+            }
+        }
+        return count
+    }
     function groupTree(parent, children) {
         children && children.forEach(function (vdom) {
             if (!vdom) return
-            var vlength = vdom.children && vdom.children.length
+            var vlength = vdom.children && getChildren(vdom.children)
             if (vdom.nodeName === '#document-fragment') {
                 var dom = createFragment()
             } else {
