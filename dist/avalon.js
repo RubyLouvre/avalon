@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-6:18:46 version 2.2.2 by 司徒正美
+built in 2016-12-7:0:47 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -1680,6 +1680,9 @@ fix 空字符串不生成节点的BUG
                     var propName = propMap[attrName] || attrName;
                     /* istanbul ignore if */
                     if (typeof node[propName] === 'boolean') {
+                        if (propName === 'checked') {
+                            node.defaultChecked = !!val;
+                        }
                         node[propName] = !!val;
                         //布尔属性必须使用el.xxx = true|false方式设值
                         //如果为false, IE全系列下相当于setAttribute(xxx,''),

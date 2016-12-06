@@ -19,6 +19,9 @@ export function updateAttrs(node, attrs) {
                 var propName = propMap[attrName] || attrName
                     /* istanbul ignore if */
                 if (typeof node[propName] === 'boolean') {
+                    if(propName === 'checked'){
+                        node.defaultChecked = !!val
+                    }
                     node[propName] = !!val
                         //布尔属性必须使用el.xxx = true|false方式设值
                         //如果为false, IE全系列下相当于setAttribute(xxx,''),
