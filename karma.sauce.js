@@ -98,27 +98,27 @@ module.exports = function(config) {
         firefox40: {
             base: 'SauceLabs',
             browserName: 'firefox',
-            version: '40.0',
+            version: '40',
             platform: 'Windows 10'
         },
-        firefox_48: {
+        firefox48: {
             base: 'SauceLabs',
             browserName: 'firefox',
-            version: '48.0',
-            platform: 'Windows 10',
+            version: '48',
+            platform: 'Windows 10'
         },
         // Safari (last 2 versions)
 
         sl_safari_9: {
             base: 'SauceLabs',
             browserName: 'Safari',
-            version: '9.0',
+            version: '9',
             platform: 'OS X 10.11'
         },
         sl_safari_8: {
             base: 'SauceLabs',
             browserName: 'Safari',
-            version: '8.0',
+            version: '8',
             platform: 'OS X 10.10'
         },
         // iOS (last 2 major versions)
@@ -130,7 +130,7 @@ module.exports = function(config) {
             deviceName: 'iPhone Simulator',
             deviceOrientation: 'portrait',
             platformVersion: '9.3',
-            platformName: 'iOS',
+            platformName: 'iOS'
         },
         sl_ios_8: {
             base: 'SauceLabs',
@@ -149,8 +149,14 @@ module.exports = function(config) {
             base: "SauceLabs",
             browserName: "android",
             version: "4.4"
+        },*/ 
+        IE6: {
+            base: 'SauceLabs',
+            browserName: 'internet explorer',
+            version: '6',
+            platform: 'Windows XP'
         },
-*/      SL_IE_7: {
+        IE7: {
             base: 'SauceLabs',
             browserName: 'internet explorer',
             version: '7',
