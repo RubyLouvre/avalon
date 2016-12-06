@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-6:18:44 version 2.2.2 by 司徒正美
+built in 2016-12-6:18:46 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -5363,7 +5363,6 @@ fix 空字符串不生成节点的BUG
             delete props['ms-if'];
             delete props[':if'];
             this.fragment = avalon.vdom(this.node, 'toHTML');
-            console.log(this.fragment);
         },
         diff: function diff(newVal, oldVal) {
             var n = !!newVal;
