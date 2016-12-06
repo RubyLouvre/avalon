@@ -255,7 +255,7 @@ describe('duplex', function () {
                 expect(vm.arr.concat()).toEqual([222, 333])
                 expect(ps[0].innerHTML).toEqual([222, 333] + "")
                 done()
-            })
+            },130)
         }, 100)
     })
 
