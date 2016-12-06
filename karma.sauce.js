@@ -87,19 +87,19 @@ module.exports = function(config) {
             base: 'SauceLabs',
             browserName: 'firefox',
             version: '26',
-            platform: 'Windows 10',
+            platform: 'Windows 7'
         },
         'Firefox30': {
             base: 'SauceLabs',
             browserName: 'firefox',
             version: '30',
-            platform: 'Windows 10',
+            platform: 'Windows 8',
         },
         firefox40: {
             base: 'SauceLabs',
             browserName: 'firefox',
             version: '40.0',
-            platform: 'Windows 10',
+            platform: 'Windows 10'
         },
         firefox_48: {
             base: 'SauceLabs',
@@ -113,13 +113,13 @@ module.exports = function(config) {
             base: 'SauceLabs',
             browserName: 'Safari',
             version: '9.0',
-            platform: 'OS X 10.11',
+            platform: 'OS X 10.11'
         },
         sl_safari_8: {
             base: 'SauceLabs',
             browserName: 'Safari',
             version: '8.0',
-            platform: 'OS X 10.10',
+            platform: 'OS X 10.10'
         },
         // iOS (last 2 major versions)
 
