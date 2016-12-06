@@ -285,6 +285,11 @@ Render.prototype = {
             el._isScheduled = false
         }
     },
+    update: function(){
+        for (var i = 0, el; el = this.directives[i++];) {
+            el.update()
+        }
+    },
 
     /**
      * 销毁所有指令

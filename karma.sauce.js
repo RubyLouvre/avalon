@@ -72,24 +72,6 @@ module.exports = function(config) {
             version: '54.0',
             platform: 'Windows 10'
         },
-        chrome_53: {
-            base: 'SauceLabs',
-            browserName: 'chrome',
-            version: '53.0',
-            platform: 'Windows 10'
-        },
-        chrome_52: {
-            base: 'SauceLabs',
-            browserName: 'chrome',
-            version: '52.0',
-            platform: 'Windows 10'
-        },
-        chrome_51: {
-            base: 'SauceLabs',
-            browserName: 'chrome',
-            version: '51.0',
-            platform: 'Windows 10'
-        },
         chrome50: {
             base: 'SauceLabs',
             browserName: 'chrome',
@@ -114,6 +96,12 @@ module.exports = function(config) {
             base: 'SauceLabs',
             browserName: 'firefox',
             version: '26',
+            platform: 'Windows 10',
+        },
+        'Firefox30': {
+            base: 'SauceLabs',
+            browserName: 'firefox',
+            version: '30',
             platform: 'Windows 10',
         },
         firefox40: {
@@ -166,6 +154,12 @@ module.exports = function(config) {
             base: 'SauceLabs',
             browserName: 'iphone'
         },
+        sl_android_4_4: {
+            base: "SauceLabs",
+            browserName: "android",
+            version: "4.4"
+        },
+
         android_latest: {
             base: 'SauceLabs',
             browserName: 'android'

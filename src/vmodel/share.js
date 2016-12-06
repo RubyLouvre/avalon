@@ -3,9 +3,6 @@ import { $$skipArray } from './reserved'
 import { Mutation } from './Mutation'
 import { Computed } from './Computed'
 
-if (modern) {
-    $$skipArray.$mutations = false
-}
 
 /**
  * 这里放置ViewModel模块的共用方法
@@ -69,8 +66,8 @@ platform.modelFactory = function modelFactory(definition, dd) {
     var core = new IProxy(definition, dd)
     var $accessors = core.$accessors
     var keys = []
-    if (modern)
-        platform.hideProperty(core, '$mutations', {})
+  
+    platform.hideProperty(core, '$mutations', {})
 
     for (let key in definition) {
         if (key in $$skipArray)

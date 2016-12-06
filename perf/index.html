@@ -32,7 +32,8 @@
             var array = []
             var id = setInterval(function () {
                 var t1 = Date.now()
-                vm.list = genData(1000)
+                vm.list = genData(500)
+                
                 var cost = Date.now() - t1
                 array.push(cost)
 
@@ -47,7 +48,7 @@
                     }, 0) / array.length, 'ms')
                     clearInterval(id)
                 }
-            }, 500)
+            }, 100)
 
         </script>
     </head>

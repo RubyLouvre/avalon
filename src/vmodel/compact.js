@@ -89,7 +89,7 @@ export function afterCreate(vm, core, keys) {
     for (let i = 0; i < keys.length; i++) {
         let key = keys[i]
         if (!(key in ac)) {
-            if (avalon.msie < 9 && typeof core[key] === 'function') {
+            if (typeof core[key] === 'function') {
                 vm[key] = core[key].bind(vm)
                 continue
             }
@@ -111,11 +111,7 @@ platform.hideProperty = hideProperty
 platform.fireFactory = fireFactory
 platform.watchFactory = watchFactory
 platform.afterCreate = afterCreate
-platform.toModel = function (obj) {
-    if (avalon.msie < 9) {
-        return obj.$model = platform.toJson(obj)
-    }
-}
+
 
 
 var createViewModel = Object.defineProperties

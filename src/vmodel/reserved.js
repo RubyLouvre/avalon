@@ -17,6 +17,7 @@ export var $$skipArray = {
     $events: falsy,
     $accessors: falsy,
     $hashcode: falsy,
+    $mutations: falsy,
     $vbthis:falsy,
     $vbsetter: falsy
 }

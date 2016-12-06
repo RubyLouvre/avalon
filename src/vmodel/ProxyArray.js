@@ -11,6 +11,10 @@ var __array__ = {
             this.splice(index, 1, val)
         }
     },
+    toJSON: function() {
+        //为了解决IE6-8的解决,通过此方法显式地求取数组的$model
+        return this.$model = platform.toJson(this)
+    },
     contains: function(el) { //判定是否包含
         return this.indexOf(el) !== -1
     },
@@ -54,7 +58,7 @@ var __array__ = {
         } else {
             _splice.call(this, 0, this.length)
         }
-        platform.toModel(this)
+        this.toJSON()
         this.$events.__dep__.notify()
     }
 }
@@ -74,7 +78,7 @@ __method__.forEach(function(method) {
         var args = platform.listFactory(arguments, true, core.__dep__)
         var result = original.apply(this, args)
 
-        platform.toModel(this)
+        this.toJSON()
         core.__dep__.notify(method)
         return result
     }
@@ -87,7 +91,7 @@ export function listFactory(array, stop, dd) {
             Object.defineProperty(array, '$model', platform.modelAccessor)
         }
         platform.hideProperty(array, '$hashcode', avalon.makeHashCode('$'))
-        platform.hideProperty(array, '$events', { __dep__: dd || new Depend })
+        platform.hideProperty(array, '$events', { __dep__: dd || new Mutation })
     }
     var _dd = array.$events && array.$events.__dep__
     for (var i = 0, n = array.length; i < n; i++) {

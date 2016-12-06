@@ -88,29 +88,18 @@ export var Computed = (function(_super) {
         }
     }
     cp.get = function() {
-        //下面这一行好像没用
-        //  startBatch('computed '+ this.key)
+       
         //当被设置了就不稳定,当它被访问了一次就是稳定
         this.collect()
-        if (avalon.inBatch === 1) {
-
-            if (this.shouldCompute()) {
-                this.getValue()
-                this.updateVersion()
-                this.isJustChange = true
-                    //console.log('computed 1 分支')
-                    // this.reportChanged()
-            }
-        } else {
-            if (this.shouldCompute()) {
-                this.trackAndCompute()
-                    // console.log('computed 2 分支')
-                this.updateVersion()
-                    //  this.reportChanged()
-            }
+      
+        if (this.shouldCompute()) {
+            this.trackAndCompute()
+                // console.log('computed 2 分支')
+            this.updateVersion()
+                //  this.reportChanged()
         }
+
         //下面这一行好像没用
-        //  endBatch('computed '+ this.key)
         return this.value
     }
 

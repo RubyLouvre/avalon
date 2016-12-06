@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-2:22:10 version 2.2.2 by 司徒正美
+built in 2016-12-6:14:25 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -1065,7 +1065,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         right: 39,
         down: 40
     }
-    for (var name in keys) {
+    for (var name$1 in keys) {
         ;(function (filter, key) {
             eventFilters[filter] = function (e) {
                 if (e.which !== key) {
@@ -1073,7 +1073,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                 }
                 return e
             }
-        })(name, keys[name])
+        })(name$1, keys[name$1])
     }
 
     //https://github.com/teppeis/htmlspecialchars
@@ -2795,14 +2795,13 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         $events: falsy,
         $accessors: falsy,
         $hashcode: falsy,
+        $mutations: falsy,
         $vbthis: falsy,
         $vbsetter: falsy
     }
 
     avalon$2.pendingActions = []
     avalon$2.inTransaction = 0
-    avalon$2.inBatch = 0
-    avalon$2.observerQueue = []
     config.trackDeps = false
     avalon$2.track = function () {
         if (config.trackDeps) {
@@ -2815,18 +2814,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
      * During a batch `onBecomeUnobserved` will be called at most once per observable.
      * Avoids unnecessary recalculations.
      */
-    function startBatch(name) {
-        avalon$2.inBatch++
-    }
-    function endBatch(name) {
-        if (avalon$2.inBatch === 1) {
-            avalon$2.observerQueue.forEach(function (el) {
-                el.isAddToQueue = false
-            })
-            avalon$2.observerQueue = []
-        }
-        avalon$2.inBatch--
-    }
 
     function runActions() {
         if (avalon$2.isRunningActions === true || avalon$2.inTransaction > 0) return
@@ -2846,28 +2833,19 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
     }
 
     //将自己抛到市场上卖
-    function reportObserved(observer) {
+    function reportObserved(target) {
         var action = avalon$2.trackingAction || null
         if (action !== null) {
-            avalon$2.track('征收到', observer.expr)
-            action.mapIDs[observer.uuid] = observer
-            observer.isCollected = 1
-        } else if (observer.observers.length === 0) {
-            addToQueue(observer)
-        }
-    }
 
-    function addToQueue(observer) {
-        if (!observer.isAddToQueue) {
-            observer.isAddToQueue = true
-            avalon$2.observerQueue.push(observer)
+            avalon$2.track('征收到', target.expr)
+            action.mapIDs[target.uuid] = target
         }
     }
 
     var targetStack = []
 
     function collectDeps(action, getter) {
-
+        if (!action.observers) return
         var preAction = avalon$2.trackingAction
         if (preAction) {
             targetStack.push(preAction)
@@ -2902,16 +2880,31 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
     function resetDeps(action) {
         var prev = action.observers,
             curr = [],
-            checked = {}
+            checked = {},
+            ids = []
         for (var i in action.mapIDs) {
             var dep = action.mapIDs[i]
             if (!dep.isAction) {
+                if (!dep.observers) {
+                    //如果它已经被销毁
+                    delete action.mapIDs[i]
+                    continue
+                }
+                ids.push(dep.uuid)
                 curr.push(dep)
-                dep.isCollected = false
                 checked[dep.uuid] = 1
+                if (dep.lastAccessedBy === action.uuid) {
+                    continue
+                }
+                dep.lastAccessedBy = action.uuid
                 avalon$2.Array.ensure(dep.observers, action)
             }
         }
+        var ids = ids.sort().join(',')
+        if (ids === action.ids) {
+            return
+        }
+        action.ids = ids
         if (!action.isComputed) {
             action.observers = curr
         } else {
@@ -2942,7 +2935,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
     avalon$2.transaction = transaction
 
     function transactionStart(name) {
-        startBatch(name)
         avalon$2.inTransaction += 1
     }
 
@@ -2951,7 +2943,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             avalon$2.isRunningActions = false
             runActions()
         }
-        endBatch(name)
     }
 
     var keyMap = avalon$2.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false," + "finally,for,function,if,in,instanceof,new,null,return,switch,this," + "throw,true,try,typeof,var,void,while,with," + /* 关键字*/
@@ -3084,17 +3075,19 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
     }
 
     var actionUUID = 1
-
+    //需要重构
     function Action(vm, options, callback) {
         for (var i in options) {
             if (protectedMenbers[i] !== 1) {
                 this[i] = options[i]
             }
         }
+
         this.vm = vm
         this.observers = []
         this.callback = callback
         this.uuid = ++actionUUID
+        this.ids = ''
         this.mapIDs = {} //这个用于去重
         this.isAction = true
         var expr = this.expr
@@ -3138,9 +3131,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             if (this.deep) {
                 avalon$2.deepCollect = true
             }
-            startBatch(name)
+
             var value = collectDeps(this, this.getValue)
-            endBatch(name)
             if (this.deep && avalon$2.deepCollect) {
                 avalon$2.deepCollect = false
             }
@@ -3169,9 +3161,9 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             if (!this._isScheduled) {
                 this._isScheduled = true
                 avalon$2.Array.ensure(avalon$2.pendingActions, this)
-                startBatch('schedule ' + this.expr)
+                // setTimeout(function(){
                 runActions() //这里会还原_isScheduled
-                endBatch('schedule ' + this.expr)
+                // })
             }
         },
         removeDepends: function removeDepends() {
@@ -3259,19 +3251,21 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
 
     Mutation.prototype = {
         get: function get() {
-            this.collect()
-            var childOb = this.value
-            if (childOb && childOb.$events) {
-                if (Array.isArray(childOb)) {
-                    childOb.forEach(function (item) {
-                        if (item && item.$events) {
-                            item.$events.__dep__.collect()
-                        }
-                    })
-                } else if (avalon.deepCollect) {
-                    for (var key in childOb) {
-                        if (childOb.hasOwnProperty(key)) {
-                            var collectIt = childOb[key]
+            if (avalon$2.trackingAction) {
+                this.collect() //被收集
+                var childOb = this.value
+                if (childOb && childOb.$events) {
+                    if (Array.isArray(childOb)) {
+                        childOb.forEach(function (item) {
+                            if (item && item.$events) {
+                                item.$events.__dep__.collect()
+                            }
+                        })
+                    } else if (avalon$2.deepCollect) {
+                        for (var key in childOb) {
+                            if (childOb.hasOwnProperty(key)) {
+                                var collectIt = childOb[key]
+                            }
                         }
                     }
                 }
@@ -3279,11 +3273,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             return this.value
         },
         collect: function collect() {
-            var name = 'mutation ' + this.expr
-            startBatch(name)
-            avalon.track(name, '要被上交了')
+            avalon$2.track(name, '被收集')
             reportObserved(this)
-            endBatch(name)
         },
         updateVersion: function updateVersion() {
             this.version = Math.random() + Math.random()
@@ -3296,7 +3287,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         set: function set(newValue) {
             var oldValue = this.value
             if (newValue !== oldValue) {
-                if (newValue) {
+                if (Array.isArray(newValue) && oldValue && oldValue.pushArray) {
+                    oldValue.length = 0
+                    oldValue.pushArray(newValue)
+                    newValue = oldValue
+                } else if (avalon$2.isObject(newValue)) {
                     var hash = oldValue && oldValue.$hashcode
                     var childVM = platform.createProxy(newValue, this)
                     if (childVM) {
@@ -3395,36 +3390,21 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             }
         }
         cp.get = function () {
-            //下面这一行好像没用
-            //  startBatch('computed '+ this.key)
+
             //当被设置了就不稳定,当它被访问了一次就是稳定
             this.collect()
-            if (avalon$2.inBatch === 1) {
 
-                if (this.shouldCompute()) {
-                    this.getValue()
-                    this.updateVersion()
-                    this.isJustChange = true
-                    //console.log('computed 1 分支')
-                    // this.reportChanged()
-                }
-            } else {
-                if (this.shouldCompute()) {
-                    this.trackAndCompute()
-                    // console.log('computed 2 分支')
-                    this.updateVersion()
-                    //  this.reportChanged()
-                }
+            if (this.shouldCompute()) {
+                this.trackAndCompute()
+                // console.log('computed 2 分支')
+                this.updateVersion()
+                //  this.reportChanged()
             }
+
             //下面这一行好像没用
-            //  endBatch('computed '+ this.key)
             return this.value
         }
     }(Mutation)
-
-    if (modern) {
-        $$skipArray.$mutations = false
-    }
 
     /**
      * 这里放置ViewModel模块的共用方法
@@ -3487,7 +3467,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         var core = new IProxy(definition, dd)
         var $accessors = core.$accessors
         var keys = []
-        if (modern) platform.hideProperty(core, '$mutations', {})
+
+        platform.hideProperty(core, '$mutations', {})
 
         for (var key in definition) {
             if (key in $$skipArray) continue
@@ -3655,6 +3636,10 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                 this.splice(index, 1, val)
             }
         },
+        toJSON: function toJSON() {
+            //为了解决IE6-8的解决,通过此方法显式地求取数组的$model
+            return this.$model = platform.toJson(this)
+        },
         contains: function contains(el) {
             //判定是否包含
             return this.indexOf(el) !== -1
@@ -3701,7 +3686,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             } else {
                 _splice.call(this, 0, this.length)
             }
-            platform.toModel(this)
+            this.toJSON()
             this.$events.__dep__.notify()
         }
     }
@@ -3721,7 +3706,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             var args = platform.listFactory(arguments, true, core.__dep__)
             var result = original.apply(this, args)
 
-            platform.toModel(this)
+            this.toJSON()
             core.__dep__.notify(method)
             return result
         }
@@ -3734,7 +3719,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                 Object.defineProperty(array, '$model', platform.modelAccessor)
             }
             platform.hideProperty(array, '$hashcode', avalon$2.makeHashCode('$'))
-            platform.hideProperty(array, '$events', { __dep__: dd || new Depend() })
+            platform.hideProperty(array, '$events', { __dep__: dd || new Mutation() })
         }
         var _dd = array.$events && array.$events.__dep__
         for (var i = 0, n = array.length; i < n; i++) {
@@ -3795,16 +3780,20 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
     }
 
     function afterCreate(vm, core, keys) {
-        var $accessors = vm.$accessors
+        var ac = vm.$accessors
         //隐藏系统属性
         for (var key in $$skipArray) {
             hideProperty(vm, key, vm[key])
         }
         //为不可监听的属性或方法赋值
         for (var i = 0; i < keys.length; i++) {
-            key = keys[i]
-            if (!(key in $accessors)) {
-                vm[key] = core[key]
+            var _key2 = keys[i]
+            if (!(_key2 in ac)) {
+                if (typeof core[_key2] === 'function') {
+                    vm[_key2] = core[_key2].bind(vm)
+                    continue
+                }
+                vm[_key2] = core[_key2]
             }
         }
         vm.$track = keys.join('☥')
@@ -3815,7 +3804,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
     platform.watchFactory = watchFactory
     platform.afterCreate = afterCreate
     platform.hideProperty = hideProperty
-    platform.toModel = function () {}
     platform.createViewModel = Object.defineProperties
 
     if (typeof Proxy === 'function') {
@@ -3998,7 +3986,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             var v = avalon$2.vmodels[name]
             if (v) {
                 v.$render = this
-                if (scope) {
+                if (scope && scope !== v) {
                     return platform.fuseFactory(scope, v)
                 }
                 return v
@@ -4155,21 +4143,21 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
     var css3 = void 0
     var tran = void 0
     var ani = void 0
-    var name$1 = void 0
+    var name$2 = void 0
     var animationEndEvent = void 0
     var transitionEndEvent = void 0
     var transition = false
     var animation = false
     //有的浏览器同时支持私有实现与标准写法，比如webkit支持前两种，Opera支持1、3、4
-    for (name$1 in checker) {
-        if (window$1[name$1]) {
-            tran = checker[name$1]
+    for (name$2 in checker) {
+        if (window$1[name$2]) {
+            tran = checker[name$2]
             break
         }
         /* istanbul ignore next */
         try {
-            var a = document.createEvent(name$1)
-            tran = checker[name$1]
+            var a = document.createEvent(name$2)
+            tran = checker[name$2]
             break
         } catch (e) {}
     }
@@ -4190,9 +4178,9 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         'AnimationEvent': 'animationend',
         'WebKitAnimationEvent': 'webkitAnimationEnd'
     }
-    for (name$1 in checker) {
-        if (window$1[name$1]) {
-            ani = checker[name$1]
+    for (name$2 in checker) {
+        if (window$1[name$2]) {
+            ani = checker[name$2]
             break
         }
     }
@@ -4783,7 +4771,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             delete this.param
         },
         init: function init() {
-
             var cb = this.userCb
             if (typeof cb === 'string' && cb) {
                 var arr = addScope(cb, 'for')
@@ -4793,12 +4780,26 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             this.node.forDir = this //暴露给component/index.js中的resetParentChildren方法使用
             this.fragment = ['<div>', this.fragment, '<!--', this.signature, '--></div>'].join('')
             this.cache = {}
+            var me = this
+            this.innerAction = {
+                schedule: function schedule() {
+                    // setTimeout(function(){
+                    me.fragments && me.fragments.forEach(function (el) {
+                        updateItemVm(el.vm, me.vm)
+                        el.innerRender.update()
+                    })
+
+                    this._isScheduled = false
+                }
+            }
+            collectInFor(this)
         },
         diff: function diff(newVal, oldVal) {
             /* istanbul ignore if */
             if (this.updating) {
                 return
             }
+
             this.updating = true
             var traceIds = createFragments(this, newVal)
 
@@ -4810,10 +4811,12 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             }
         },
         update: function update() {
+
             if (!this.preFragments) {
                 this.fragments = this.fragments || []
                 mountList(this)
             } else {
+                collectInFor(this)
                 diffList(this)
                 updateList(this)
             }
@@ -4829,7 +4832,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         },
         beforeDispose: function beforeDispose() {
             this.fragments.forEach(function (el) {
-                el.dispose
+                el.dispose()
             })
         }
     })
@@ -4846,16 +4849,26 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             var ids = []
             var fragments = [],
                 i = 0
-            avalon$2.each(obj, function (key, value) {
-                var k = array ? getTraceKey(value) : key
-                fragments.push(new VFragment([], k, value, i++))
-                ids.push(k)
-            })
+
             instance.isArray = array
             if (instance.fragments) {
                 instance.preFragments = instance.fragments
+                avalon$2.each(obj, function (key, value) {
+                    var k = array ? getTraceKey(value) : key
+                    fragments.push({
+                        key: k,
+                        val: value,
+                        index: i++
+                    })
+                    ids.push(k)
+                })
                 instance.fragments = fragments
             } else {
+                avalon$2.each(obj, function (key, value) {
+                    var k = array ? getTraceKey(value) : key
+                    fragments.push(new VFragment([], k, value, i++))
+                    ids.push(k)
+                })
                 instance.fragments = fragments
             }
             return ids.join(';;')
@@ -4884,6 +4897,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         list.forEach(function (el) {
             el._dispose = true
         })
+
         instance.fragments.forEach(function (c, index) {
             var fragment = isInCache(cache, c.key)
             //取出之前的文档碎片
@@ -4893,6 +4907,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                 fragment.index = index // 相当于 c.index
                 fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
                 saveInCache(newCache, fragment)
+                fragment.innerRender.update()
             } else {
                 //如果找不到就进行模糊搜索
                 fuzzy.push(c)
@@ -4909,12 +4924,14 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
 
                 fragment.vm[instance.valName] = val
                 fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
+                fragment.innerRender.update()
                 delete fragment._dispose
             } else {
-                fragment = FragmentDecorator(c, instance, c.index)
+                //new VFragment([], k, value, i++
+                fragment = new VFragment([], c.key, c.val, c.index)
+                fragment = FragmentDecorator(fragment, instance, c.index)
                 list.push(fragment)
             }
-
             saveInCache(newCache, fragment)
         })
 
@@ -4923,6 +4940,27 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             return a.index - b.index
         })
         instance.cache = newCache
+    }
+
+    function updateItemVm(vm, top) {
+        for (var i in top) {
+            if (top.hasOwnProperty(i)) {
+                vm[i] = top[i]
+            }
+        }
+    }
+
+    function collectInFor(instance) {
+        var top = instance.vm
+
+        if (!top) return
+        var deps = top.$mutations || {}
+        for (var i in top) {
+            try {
+                var created = top[i]
+                avalon$2.Array.ensure(deps[i].observers, instance.innerAction)
+            } catch (e) {}
+        }
     }
 
     function updateList(instance) {
@@ -4958,28 +4996,32 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
      * @returns { key, val, index, oldIndex, this, dom, split, vm}
      */
     function FragmentDecorator(fragment, instance, index) {
-        var data = {}
+        var top = instance.vm,
+            data = {}
+        updateItemVm(data, top)
+
+        data.$events = {}
         data[instance.keyName] = instance.isArray ? index : fragment.key
         data[instance.valName] = fragment.val
         if (instance.asName) {
             data[instance.asName] = instance.value
         }
-        var vm = fragment.vm = platform.itemFactory(instance.vm, {
-            data: data
-        })
-        if (instance.isArray) {
-            vm.$watch(instance.valName, function (a) {
-                if (instance.value && instance.value.set) {
-                    instance.value.set(vm[instance.keyName], a)
-                }
-            })
-        } else {
-            vm.$watch(instance.valName, function (a) {
-                instance.value[fragment.key] = a
-            })
-        }
+
+        //    if(instance.isArray){
+        //        vm.$watch(instance.valName, function(a){
+        //            if(instance.value && instance.value.set){
+        //                instance.value.set(vm[instance.keyName], a)
+        //            }
+        //        })
+        //    }else{
+        //        vm.$watch(instance.valName, function(a){
+        //            instance.value[fragment.key] = a
+        //        })
+        //    }
+
+        fragment.vm = data
         fragment.index = index
-        fragment.innerRender = avalon$2.scan(instance.fragment, vm, function () {
+        data.$render = fragment.innerRender = avalon$2.scan(instance.fragment, data, function () {
             var oldRoot = this.root
             ap.push.apply(fragment.children, oldRoot.children)
             this.root = fragment
@@ -5248,7 +5290,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         }
     }
     function duplexDiff(newVal, oldVal) {
-
         if (Array.isArray(newVal)) {
             if (newVal + '' !== this.compareVal) {
                 this.compareVal = newVal + ''
@@ -6461,6 +6502,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             }
         },
 
+        update: function update() {
+            for (var i = 0, el; el = this.directives[i++];) {
+                el.update()
+            }
+        },
 
         /**
          * 销毁所有指令

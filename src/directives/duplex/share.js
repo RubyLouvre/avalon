@@ -74,7 +74,6 @@ export function duplexInit() {
 
 }
 export function duplexDiff(newVal, oldVal) {
-
     if (Array.isArray(newVal)) {
         if (newVal + '' !== this.compareVal) {
             this.compareVal = newVal + ''

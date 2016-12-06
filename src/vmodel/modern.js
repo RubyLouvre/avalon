@@ -54,15 +54,19 @@ export function fireFactory(core) {
 
 
 export function afterCreate(vm, core, keys) {
-    var $accessors = vm.$accessors
+    var ac = vm.$accessors
         //隐藏系统属性
     for (var key in $$skipArray) {
         hideProperty(vm, key, vm[key])
     }
     //为不可监听的属性或方法赋值
-    for (var i = 0; i < keys.length; i++) {
-        key = keys[i]
-        if (!(key in $accessors)) {
+    for (let i = 0; i < keys.length; i++) {
+        let key = keys[i]
+        if (!(key in ac)) {
+            if (typeof core[key] === 'function') {
+                vm[key] = core[key].bind(vm)
+                continue
+            }
             vm[key] = core[key]
         }
     }
@@ -74,5 +78,4 @@ platform.fireFactory = fireFactory
 platform.watchFactory = watchFactory
 platform.afterCreate = afterCreate
 platform.hideProperty = hideProperty
-platform.toModel = function() {}
 platform.createViewModel = Object.defineProperties

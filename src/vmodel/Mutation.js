@@ -1,12 +1,11 @@
 import {
-    startBatch,
-    endBatch,
     transactionStart,
     transactionEnd,
     reportObserved,
     propagateChanged
 } from './transaction'
 import {
+    avalon,
     platform
 } from '../seed/core'
 /**
@@ -35,33 +34,32 @@ export function Mutation(expr, value, vm) { //构造函数
 
 Mutation.prototype = {
     get() {
-        this.collect()
-        var childOb = this.value
-        if (childOb && childOb.$events) {
-            if (Array.isArray(childOb)) {
-                childOb.forEach(function(item) {
-                    if (item && item.$events) {
-                        item.$events.__dep__.collect()
-                    }
-                })
-            } else if (avalon.deepCollect) {
-                for (var key in childOb) {
-                    if (childOb.hasOwnProperty(key)) {
-                        var collectIt = childOb[key]
+        if (avalon.trackingAction) {
+            this.collect() //被收集
+            var childOb = this.value
+            if (childOb && childOb.$events) {
+                if (Array.isArray(childOb)) {
+                    childOb.forEach(function(item) {
+                        if (item && item.$events) {
+                            item.$events.__dep__.collect()
+                        }
+                    })
+                } else if (avalon.deepCollect) {
+                    for (var key in childOb) {
+                        if (childOb.hasOwnProperty(key)) {
+                            var collectIt = childOb[key]
+                        }
                     }
                 }
-            }
 
+            }
         }
         return this.value
     },
 
     collect() {
-        var name = 'mutation ' + this.expr
-        startBatch(name)
-        avalon.track(name, '要被上交了')
+        avalon.track(name, '被收集')
         reportObserved(this)
-        endBatch(name)
     },
 
     updateVersion() {
@@ -77,7 +75,12 @@ Mutation.prototype = {
     set(newValue) {
         var oldValue = this.value
         if (newValue !== oldValue) {
-            if (newValue) {
+            if (Array.isArray(newValue) &&
+                oldValue && oldValue.pushArray) {
+                oldValue.length = 0
+                oldValue.pushArray(newValue)
+                newValue = oldValue
+            } else if (avalon.isObject(newValue)) {
                 var hash = oldValue && oldValue.$hashcode
                 var childVM = platform.createProxy(newValue, this)
                 if (childVM) {

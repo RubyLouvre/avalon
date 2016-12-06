@@ -6,7 +6,7 @@ avalon.directive('controller', {
         var v = avalon.vmodels[name]
         if (v){
             v.$render = this
-            if(scope){
+            if(scope && scope !== v){
                return platform.fuseFactory(scope, v) 
             }
             return v

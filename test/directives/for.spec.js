@@ -198,9 +198,11 @@ describe('for', function() {
     it('ms-if与ms-for并用', function(done) {
         div.innerHTML = heredoc(function() {
             /*
-             <ul ms-controller='for4'>
-             <div class='panel' ms-for='(jj, el) in @panels' ms-if='jj === @curIndex' ms-html='el'></div>
-             </ul>
+             <div ms-controller='for4'>
+             <div class='panel' ms-for='(jj, el) in @panels' 
+             ms-if='jj === @curIndex' 
+             ms-html='el'></div>
+             </div>
              */
         })
         vm = avalon.define({

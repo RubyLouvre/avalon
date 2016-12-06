@@ -3,8 +3,6 @@ import {
 } from '../seed/core'
 
 import {
-    startBatch,
-    endBatch,
     runActions,
     collectDeps
 } from './transaction'
@@ -22,10 +20,12 @@ export function Action(vm, options, callback) {
             this[i] = options[i]
         }
     }
+    
     this.vm = vm
     this.observers = []
     this.callback = callback
     this.uuid = ++actionUUID
+    this.ids = ''
     this.mapIDs = {} //这个用于去重
     this.isAction = true
     var expr = this.expr
@@ -69,9 +69,8 @@ Action.prototype = {
         if (this.deep) {
             avalon.deepCollect = true
         }
-        startBatch(name)
+       
         var value = collectDeps(this, this.getValue)
-        endBatch(name)
         if (this.deep && avalon.deepCollect) {
             avalon.deepCollect = false
         }
@@ -101,9 +100,10 @@ Action.prototype = {
         if (!this._isScheduled) {
             this._isScheduled = true
             avalon.Array.ensure(avalon.pendingActions, this);
-            startBatch('schedule ' + this.expr)
-            runActions() //这里会还原_isScheduled
-            endBatch('schedule ' + this.expr)
+           // setTimeout(function(){
+                   runActions() //这里会还原_isScheduled
+           // })
+         
         }
     },
     removeDepends() {
