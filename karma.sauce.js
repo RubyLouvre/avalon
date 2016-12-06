@@ -56,16 +56,7 @@ module.exports = function(config) {
             version: '14.14393',
             platform: 'Windows 10',
         },
-        sl_opera11_win7: {
-            "browserName": "Opera",
-            "platform": "Windows 7",
-            "version": "11"
-        },
-        sl_opera12_win7: {
-            "browserName": "Opera",
-            "platform": "Windows 7",
-            "version": "12"
-        },
+  
         chrome_54: {
             base: 'SauceLabs',
             browserName: 'chrome',
