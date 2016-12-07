@@ -9,6 +9,9 @@ avalon.directive('text', {
         if (node.isVoidTag) {
             avalon.error('自闭合元素不能使用ms-text')
         }
+        if (!node.children) {
+           return
+        }
         var child = { nodeName: '#text', nodeValue: this.getValue() }
         node.children.splice(0, node.children.length, child)
         if(inBrowser){

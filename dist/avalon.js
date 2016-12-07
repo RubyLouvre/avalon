@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-7:2:5 version 2.2.2 by 司徒正美
+built in 2016-12-7:11:32 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 添加计算属性
 添加事务
@@ -5304,6 +5304,9 @@ fix 空字符串不生成节点的BUG
             var node = this.node;
             if (node.isVoidTag) {
                 avalon.error('自闭合元素不能使用ms-text');
+            }
+            if (!node.children) {
+                return;
             }
             var child = { nodeName: '#text', nodeValue: this.getValue() };
             node.children.splice(0, node.children.length, child);

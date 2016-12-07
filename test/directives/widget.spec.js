@@ -27,18 +27,19 @@ avalon.component('ms-panel', {
     },
     soleSlot: 'body'
 })
-       function getDiv(el) {
-            if (el.querySelector) {
-                return el.querySelector('.body')
-            } else {
-                var els = el.getElementsByTagName('div')
-                for(var i = 0, l = els.length; i < l; i++){
-                    if(els[i].className === 'body'){
-                        return els[i]
-                    }
-                }
+
+function getDiv(el) {
+    if (el.querySelector) {
+        return el.querySelector('.body')
+    } else {
+        var els = el.getElementsByTagName('div')
+        for (var i = 0, l = els.length; i < l; i++) {
+            if (els[i].className === 'body') {
+                return els[i]
             }
         }
+    }
+}
 describe('widget', function() {
 
     var body = document.body,
@@ -106,7 +107,7 @@ describe('widget', function() {
         })
         avalon.scan(div)
 
-      
+
         setTimeout(function() {
             var div2 = getDiv(div)
             var span = div.getElementsByTagName('span')[0]
@@ -148,7 +149,7 @@ describe('widget', function() {
         })
         avalon.scan(div)
 
-  
+
         setTimeout(function() {
             var div2 = getDiv(div)
             var span = div.getElementsByTagName('span')[0]
@@ -191,7 +192,7 @@ describe('widget', function() {
         })
         avalon.scan(div)
 
-  
+
         setTimeout(function() {
             var div2 = getDiv(div)
             var span = div.getElementsByTagName('span')[0]
@@ -1020,6 +1021,32 @@ describe('widget', function() {
 
     })
 
+    it('根节点出现ms-if=false', function(done) {
+        div.innerHTML = heredoc(function() {
+            /*
+        <div ms-controller='widget17'>
+          <wbr is="ms-iff1" ms-widget='{aaa: 111, toggle: true}'/>
+          <wbr is="ms-iff1" ms-widget='{aaa: 222, toggle: false}'/>
+        </div>
+              */
+        })
 
+        avalon.component('ms-iff1', {
+            template: '<p ms-if="@toggle" ms-text="@aaa"></p>',
+            defaults: {
+                toggle: true,
+                aaa: 333
+            }
+        })
+        vm = avalon.define({
+            $id: 'widget17'
+        })
+        avalon.scan(div, vm)
+        setTimeout(function() {
+            expect(div[textProp]).toBe('111')
+            done()
+        }, 100)
+
+    })
 
 })
