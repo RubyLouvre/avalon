@@ -9,8 +9,8 @@
 </a>
 <a href="https://codeclimate.com/github/RubyLouvre/avalon"><img src="https://codeclimate.com/github/RubyLouvre/avalon/badges/gpa.svg" /></a>
 
-<a href='https://coveralls.io/github/RubyLouvre/avalon'>
-<img src='https://coveralls.io/repos/github/RubyLouvre/avalon/badge.svg' alt='Coverage Status' />
+<a href="https://codecov.io/gh/RubyLouvre/avalon">
+  <img src="https://codecov.io/gh/RubyLouvre/avalon/branch/master/graph/badge.svg" alt="Codecov" />
 </a>
 
 <a href="https://github.com/RubyLouvre/avalon">
