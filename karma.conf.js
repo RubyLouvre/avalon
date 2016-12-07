@@ -19,7 +19,7 @@ module.exports = function(config) {
                 './test/matchers.js',
                 './test/beforeIt.js',
                 './test/jquery.js',
-                './dist/avalon.modern.test.js'
+                './dist/avalon.test.js'
             ],
 
 
