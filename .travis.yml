@@ -21,7 +21,7 @@ addons:
     repo_token: cecb8ec105dc8e4b3f298312502f078a646f46ff
 after_success:
 - bash <(curl -s https://codecov.io/bash)
-
+- codeclimate-test-reporter < lcov.info
 env:
   global:
   - CODECOV_TOKEN: 31e8c855-5499-473e-b2b6-ba1d142fbb9e
