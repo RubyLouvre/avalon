@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-7:11:31 version 2.2.2 by 司徒正美
+built in 2016-12-7:14:50 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -4402,10 +4402,10 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         }
     }
 
-    avalon$2.applyEffect = function (node, vdom, opts) {
+    avalon$2.applyEffect = function (dom, vdom, opts) {
         var cb = opts.cb
         var curEffect = vdom.effect
-        if (curEffect && node && node.nodeType === 1) {
+        if (curEffect && dom && dom.nodeType === 1) {
             var hook = opts.hook
             var old = curEffect[hook]
             if (cb) {
@@ -4418,9 +4418,9 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                 }
             }
             getAction(opts)
-            avalon$2.directives.effect.update(vnode, curEffect, avalon$2.shadowCopy({}, opts))
+            avalon$2.directives.effect.update(vdom, curEffect, avalon$2.shadowCopy({}, opts))
         } else if (cb) {
-            cb(node)
+            cb(dom)
         }
     }
     /**

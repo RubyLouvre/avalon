@@ -1,14 +1,15 @@
 /*!
-built in 2016-12-7:11:32 version 2.2.2 by 司徒正美
+built in 2016-12-7:14:51 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
-添加计算属性
-添加事务
-内部所有类使用es6重写
-修正使用requirejs加载avalon2.2.0，返回空对象的BUG
-优化组件延迟定义的逻辑
-fromString进行性能优化
-fix 空字符串不生成节点的BUG
-确保onReady的执行时机，多个ms-controller套嵌，先执行里面的，再执行外面的
+
+
+fix ms-controller BUG, 上下VM相同时,不会进行合并
+ms-for不再生成代理VM
+为监听数组添加toJSON方法
+IE7的checked属性应该使用defaultChecked来设置
+对旧版firefox的children进行polyfill
+修正ms-if,ms-text同在一个元素时出BUG的情况 
+修正ms-visible,ms-effect同在一个元素时出BUG的情况
 
 */(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() : typeof define === 'function' && define.amd ? define(factory) : global.avalon = factory();
@@ -5128,10 +5129,10 @@ fix 空字符串不生成节点的BUG
         };
     }
 
-    avalon.applyEffect = function (node, vdom, opts) {
+    avalon.applyEffect = function (dom, vdom, opts) {
         var cb = opts.cb;
         var curEffect = vdom.effect;
-        if (curEffect && node && node.nodeType === 1) {
+        if (curEffect && dom && dom.nodeType === 1) {
             var hook = opts.hook;
             var old = curEffect[hook];
             if (cb) {
@@ -5144,9 +5145,9 @@ fix 空字符串不生成节点的BUG
                 }
             }
             getAction(opts);
-            avalon.directives.effect.update(vnode, curEffect, avalon.shadowCopy({}, opts));
+            avalon.directives.effect.update(vdom, curEffect, avalon.shadowCopy({}, opts));
         } else if (cb) {
-            cb(node);
+            cb(dom);
         }
     };
     /**

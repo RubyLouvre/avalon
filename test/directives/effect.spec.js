@@ -11,17 +11,18 @@ import {
     getAnimationTime
 } from '../../src/effect/index'
 
-describe('effect', function () {
-    var body = document.body, div, vm
-    beforeEach(function () {
+describe('effect', function() {
+    var body = document.body,
+        div, vm
+    beforeEach(function() {
         div = document.createElement('div')
         body.appendChild(div)
     })
-    afterEach(function () {
+    afterEach(function() {
         body.removeChild(div)
         delete avalon.vmodels[vm && vm.$id]
     })
-    it('type', function () {
+    it('type', function() {
         if (!avalon.msie || avalon.msie > 9) {
             console.log({
                 css3,
@@ -37,11 +38,11 @@ describe('effect', function () {
             expect(typeof transitionEndEvent).toMatch(/undefined|string/)
         }
     })
-    it('getAction', function () {
+    it('getAction', function() {
         expect(getAction({ hook: 'onEnterDone' })).toBe('enter')
         expect(getAction({ hook: 'onLeaveDone' })).toBe('leave')
     })
-    it('diff', function () {
+    it('diff', function() {
         var diff = avalon.directives.effect.diff
         expect(diff.call({
             node: {
@@ -56,11 +57,10 @@ describe('effect', function () {
                 props: {}
             }
         }, {
-                color: 'green'
-            }
-        )).toBe(false)
+            color: 'green'
+        })).toBe(false)
     })
-    it('avalon.effect', function () {
+    it('avalon.effect', function() {
         avalon.effect('fade')
         var fade = avalon.effects.fade
         if (!avalon.msie || avalon.msie > 9)
@@ -74,7 +74,7 @@ describe('effect', function () {
     })
 
 
-    it('avalon.effect#update', function (done) {
+    it('avalon.effect#update', function(done) {
         avalon.effect('fade')
         var update = avalon.directives.effect.update
         var vdom = {
@@ -87,12 +87,12 @@ describe('effect', function () {
         var effectProto = avalon.Effect.prototype
         var old = effectProto.enter
         var called = false
-        effectProto.enter = function () {
+        effectProto.enter = function() {
             called = true
         }
         expect(update(vdom, { is: 'fade', action: true })).toBe(true)
         expect(update(vdom, { is: 'fade', action: true, queue: true })).toBe(true)
-        setTimeout(function () {
+        setTimeout(function() {
             expect(called).toBe(true)
             effectProto.enter = old
             delete avalon.effects.fade
@@ -100,7 +100,7 @@ describe('effect', function () {
         }, 100)
     })
 
-    it('getAnimationTime', function () {
+    it('getAnimationTime', function() {
         if (!avalon.msie || avalon.msie > 9) {
             var el = document.createElement('div')
             el.style.cssText = 'color:red;transition:all 2s; -moz-transition: all 2s; -webkit-transition: all 2s; -o-transition:all 2s;'
@@ -117,30 +117,29 @@ describe('effect', function () {
         }
     })
 
-    it('enter action', function (done) {
+    it('enter action', function(done) {
         var enter = avalon.Effect.prototype.enter
         var count = 0
         var doneCalled = false
         enter.call({
             dom: document.createElement('div')
-        },
-            {
-                enter: function (el, fn) {
-                    ++count
-                    fn(false)
-                },
-                stagger: 100,
-                onBeforeEnter: function () {
-                    ++count
-                },
-                onEnterDone: function () {
-                    doneCalled = true
-                },
-                onEnterAbort: function () {
-                    ++count
-                }
-            })
-        setTimeout(function () {
+        }, {
+            enter: function(el, fn) {
+                ++count
+                fn(false)
+            },
+            stagger: 100,
+            onBeforeEnter: function() {
+                ++count
+            },
+            onEnterDone: function() {
+                doneCalled = true
+            },
+            onEnterAbort: function() {
+                ++count
+            }
+        })
+        setTimeout(function() {
             expect(count).toBe(3)
             expect(doneCalled).toBe(false)
             done()
@@ -149,9 +148,9 @@ describe('effect', function () {
     })
 
 
-    it('effect1', function (done) {
+    it('effect1', function(done) {
 
-        div.innerHTML = heredoc(function () {
+        div.innerHTML = heredoc(function() {
             /*
              <style>
              .animate-enter, .animate-leave{
@@ -182,7 +181,7 @@ describe('effect', function () {
             defaults: {
                 //这里不会报错
                 data: [{ action: 'enter' }],
-                add: function () {
+                add: function() {
                     //push的时候报错
                     this.data.push({
                         action: "enter"
@@ -193,23 +192,64 @@ describe('effect', function () {
         });
         vm = avalon.define({
             $id: "effect1",
-            show: function () {
+            show: function() {
                 avalon.vmodels.effxx.add();
             }
         });
         avalon.scan(div)
-        setTimeout(function () {
+        setTimeout(function() {
             expect(div.getElementsByTagName('p').length).toBe(1)
             vm.show()
-            setTimeout(function () {
+            setTimeout(function() {
                 expect(div.getElementsByTagName('p').length).toBe(2)
                 done()
-                setTimeout(function () {
+                setTimeout(function() {
                     delete avalon.vmodels['effxx']
 
                     delete avalon.component['ms-test']
                 })
             }, 500)
         }, 500)
+    })
+
+    it('effect2', function(done) {
+        div.innerHTML = heredoc(function() {
+            /*
+     <div ms-controller='effect2'>
+     <div ms-visible='@aaa' class='aaa' ms-effect="{is: 'scale',action:@aaa}">111</div>
+     <p ms-click='@aaa = !@aaa'>xxx</p>
+      <style>
+          .aaa{
+              width:200px;
+              height:200px;
+              background: red;
+          }
+      </style>
+      </div>
+              */
+        })
+        avalon.effect('scale', {
+            enter: function(el) {
+                $(el).show(300)
+            },
+            leave: function(el) {
+                $(el).hide(300)
+            }
+        })
+        vm = avalon.define({
+            $id: 'effect2',
+            aaa: true
+        })
+        avalon.scan(div)
+        setTimeout(function() {
+            vm.aaa = false
+            setTimeout(function() {
+                vm.aaa = true
+                setTimeout(function() {
+                    delete avalon.effects.scale
+                    done()
+                }, 310)
+            }, 310)
+        }, 100)
     })
 })

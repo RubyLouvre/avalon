@@ -215,10 +215,10 @@ function createAction(action) {
     }
 }
 
-avalon.applyEffect = function (node, vdom, opts) {
+avalon.applyEffect = function (dom, vdom, opts) {
     var cb = opts.cb
     var curEffect = vdom.effect
-    if (curEffect && node && node.nodeType === 1) {
+    if (curEffect && dom && dom.nodeType === 1) {
         var hook = opts.hook
         var old = curEffect[hook]
         if (cb) {
@@ -231,10 +231,10 @@ avalon.applyEffect = function (node, vdom, opts) {
             }
         }
         getAction(opts)
-        avalon.directives.effect.update(vnode, curEffect, avalon.shadowCopy({}, opts))
+        avalon.directives.effect.update(vdom, curEffect, avalon.shadowCopy({}, opts))
 
     } else if (cb) {
-        cb(node)
+        cb(dom)
     }
 }
 /**

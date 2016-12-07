@@ -18,7 +18,7 @@ module.exports = function(config) {
     // https://saucelabs.com/platforms
     // Browsers to run on Sauce Labs
     var customLaunchers = {
-       
+
         SL_IE_8: {
             base: 'SauceLabs',
             browserName: 'internet explorer',
@@ -81,7 +81,7 @@ module.exports = function(config) {
             version: '30.0',
             platform: 'Windows 7'
         },
-        
+
         //chrome最低只支持到26
 
         firefox20: {
@@ -150,8 +150,8 @@ module.exports = function(config) {
             base: "SauceLabs",
             browserName: "android",
             version: "4.4"
-        },*/ 
-       
+        },*/
+
         IE7: {
             base: 'SauceLabs',
             browserName: 'internet explorer',
@@ -180,6 +180,7 @@ module.exports = function(config) {
             './test/promise.js',
             './test/matchers.js',
             './test/beforeIt.js',
+            './test/jquery.js',
             './dist/avalon.sauce.js'
         ],
 
