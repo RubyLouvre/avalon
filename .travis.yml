@@ -16,12 +16,11 @@ install:
 - npm run buildAvalon
 script:
 - npm run build
-- npm run sauce
 addons:
   code_climate:
     repo_token: cecb8ec105dc8e4b3f298312502f078a646f46ff
 after_success:
-- npm run coveralls &  codeclimate-test-reporter < lcov.info
+- npm run coveralls 
 env:
   global:
   - secure: oteqj2CHMOma5RCv4YM/QPhqMfEzDtoibgsCT+ABjTUoj36T7HDxQfgiUspv0Iv33i7TmqHBHAPFVSsF+vz00NOTejMaaFfELUuRn4BTZ5zDuz6e6VXy0jgF/7is7dVAf6cqVaQ0Fo+X+XCLg63/CaX23S3IlqS1jyfuX+fpNh8QfaIOIXlaZ8yy6pyfqb+lMfOj4TTwpyFIoyono0qSGLdaSG9BDdZK0skBPeBP3sFiwtptMmY8Mhn7lLiulU0NHl0WSfJMH9FMe9mHdhqsSrFwACKT58JbXCkKdTLjszpMv1gkl+gynzyLOV3f1WqBv/calW65PBWu7uNKNgBILGW5L3THL4Qs6unvzVngeFcZ6jf9B4dtxpS22K3Pq7SkhJOgXNiEa6RavFQm6OFSjBjILiQvMSkWA2PcAxbqDr9oEbe/snUoeK+BbYli2kV3b5TR+wyKBgn6Wms8+QbTr2N8OnAMwhgmPS4if7uqyKNPCfMy4J2HZ3OEbAPTUUYtSSWaEhXAtV5aAXI0/LWTsXsVtvnxcHGdPtN6GKJyKDqAxKWECdCU9Je6fxGcXaEzU3VTlm9HmXuC3UpTERU7Pq9vrpqxYaWtt/M1r0WAeBrPPdZ+XOpL1Qn4fWV9B259+jKI8GNg5+07H54crDBXaV04kLZODPmTe+n8Sq7PsS8=
