@@ -54,7 +54,7 @@ describe('vdom', function () {
 
                 expect(dom.textContent).toMatch(' xxx ')
             }
-            expect(dom.innerText).toMatch(/xx/)
+            expect(dom[textProp]).toMatch(/xx/)
             expect(dom.innerHTML).toBe(' xxx ')
             var option2 = new VElement('option', { 'value': 'eee' }, [
                 new VText('')

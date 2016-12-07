@@ -19,34 +19,36 @@ function shimHack() {
             return fixContains(document, b)
         }
     }
-
-    if (window.Node && !document.createTextNode('x').contains) {
-        Node.prototype.contains = function(child) { //IE6-8没有Node对象
-            return fixContains(this, child)
+    if (avalon.modern) {
+        if (!document.createTextNode('x').contains) {
+            Node.prototype.contains = function(child) { //IE6-8没有Node对象
+                return fixContains(this, child)
+            }
         }
     }
-
-    //firefox 到11时才有outerHTML
-    if (window.HTMLElement) {
-        if (!root.outerHTML) {
-            HTMLElement.prototype.__defineGetter__('outerHTML', function() {
-                var div = document.createElement('div')
-                div.appendChild(this)
-                return div.innerHTML
-            })
-        }
-        if (!root.children) {
-            HTMLElement.prototype.__defineGetter__('children', function() {
-                var children = []
-                for (var i = 0, el; el = this.childNodes[i++];) {
-                    if (el.nodeType === 1) {
-                        children.push(el)
-                    }
-                }
-                return children
-            })
+    function fixFF(prop, cb) {
+        if (!(prop in root)) {
+            HTMLElement.prototype.__defineGetter__(prop, cb)
         }
     }
+    fixFF('outerHTML', function() {//firefox12 http://caniuse.com/#search=outerHTML
+        var div = document.createElement('div')
+        div.appendChild(this)
+        return div.innerHTML
+    })
+    fixFF('children', function() {
+        var children = []
+        for (var i = 0, el; el = this.childNodes[i++];) {
+            if (el.nodeType === 1) {
+                children.push(el)
+            }
+        }
+        return children
+    })
+    fixFF('innerText', function() {//firefox45
+        return this.textContent
+    })
+
 }
 
 if (inBrowser) {

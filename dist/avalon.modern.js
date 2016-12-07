@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-7:14:50 version 2.2.2 by 司徒正美
+built in 2016-12-7:15:15 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -1153,12 +1153,37 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         return a.cloneNode(true)
     }
 
-    /* istanbul ignore if */
-    if (window$1.Node && !document$1.contains) {
-        /* istanbul ignore next */
-        window$1.Node.prototype.contains = function (child) {
-            return fixContains(this, child)
+    if (avalon$2.modern) {
+        //firefox 到11时才有outerHTML
+        var fixFF = function fixFF(prop, cb) {
+            if (!(prop in root)) {
+                HTMLElement.prototype.__defineGetter__(prop, cb)
+            }
         }
+
+        if (!document$1.contains) {
+            Node.prototype.contains = function (child) {
+                //IE6-8没有Node对象
+                return fixContains(this, child)
+            }
+        }
+        fixFF('outerHTML', function () {
+            var div = document$1.createElement('div')
+            div.appendChild(this)
+            return div.innerHTML
+        })
+        fixFF('children', function () {
+            var children = []
+            for (var i = 0, el; el = this.childNodes[i++];) {
+                if (el.nodeType === 1) {
+                    children.push(el)
+                }
+            }
+            return children
+        })
+        fixFF('innerText', function () {
+            return this.textContent
+        })
     }
 
     'add,remove'.replace(rword, function (method) {
