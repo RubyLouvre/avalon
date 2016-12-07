@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-7:18:22 version 2.2.2 by 司徒正美
+built in 2016-12-7:19:43 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -1523,7 +1523,7 @@ IE7的checked属性应该使用defaultChecked来设置
         }
         //firefox 到11时才有outerHTML
         function fixFF(prop, cb) {
-            if (!(prop in root)) {
+            if (!(prop in root) && HTMLElement.prototype.__defineGetter__) {
                 HTMLElement.prototype.__defineGetter__(prop, cb);
             }
         }

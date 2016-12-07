@@ -28,7 +28,7 @@ function shimHack() {
     }
     //firefox 到11时才有outerHTML
     function fixFF(prop, cb) {
-        if (!(prop in root)) {
+        if (!(prop in root) && HTMLElement.prototype.__defineGetter__) {
             HTMLElement.prototype.__defineGetter__(prop, cb)
         }
     }
