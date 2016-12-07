@@ -23,6 +23,7 @@
   "devDependencies": {
     "babel-core": "^6.17.0",
     "babel-preset-avalon": "^1.0.0",
+    "codecov": "^1.0.1",
     "coveralls": "^2.11.15",
     "es3ify": "^0.2.2",
     "karma": "^0.12.0",

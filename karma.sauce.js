@@ -161,6 +161,7 @@ module.exports = function(config) {
         android_latest: {
             base: 'SauceLabs',
             browserName: 'android',
+            platform: 'Linux',
             version: '5.0'
         }
     };
