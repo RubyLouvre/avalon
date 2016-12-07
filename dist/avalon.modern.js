@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-7:15:15 version 2.2.2 by 司徒正美
+built in 2016-12-7:18:21 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -1154,8 +1154,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
     }
 
     if (avalon$2.modern) {
-        //firefox 到11时才有outerHTML
         var fixFF = function fixFF(prop, cb) {
+            //firefox12 http://caniuse.com/#search=outerHTML
             if (!(prop in root)) {
                 HTMLElement.prototype.__defineGetter__(prop, cb)
             }
@@ -1167,7 +1167,9 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                 return fixContains(this, child)
             }
         }
+
         fixFF('outerHTML', function () {
+            //https://developer.mozilla.org/en-US/docs/Web/API/ParentNode/children
             var div = document$1.createElement('div')
             div.appendChild(this)
             return div.innerHTML
@@ -3532,7 +3534,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         //重写$track
         //并在IE6-8中增添加不存在的hasOwnPropert方法
         var vm = platform.createViewModel(core, $accessors, core)
-        platform.afterCreate(vm, core, keys)
+        platform.afterCreate(vm, core, keys, !dd)
         return vm
     }
     var $proxyItemBackdoorMap = {}
@@ -3595,23 +3597,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         }
     }
 
-    platform.itemFactory = function itemFactory(before, after) {
-        var keyMap = before.$model
-        var core = new IProxy(keyMap)
-        var state = avalon$2.shadowCopy(core.$accessors, before.$accessors) //防止互相污染
-        var data = after.data
-        //core是包含系统属性的对象
-        //keyMap是不包含系统属性的对象, keys
-        for (var key in data) {
-            var val = keyMap[key] = core[key] = data[key]
-            state[key] = createAccessor(key, val)
-        }
-        var keys = Object.keys(keyMap)
-        var vm = platform.createViewModel(core, state, core)
-        platform.afterCreate(vm, core, keys)
-        return vm
-    }
-
     platform.fuseFactory = function fuseFactory(before, after) {
         var keyMap = avalon$2.mix(before.$model, after.$model)
         var core = new IProxy(avalon$2.mix(keyMap, {
@@ -3622,7 +3607,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         var keys = Object.keys(keyMap)
         //将系统API以unenumerable形式加入vm,并在IE6-8中添加hasOwnPropert方法
         var vm = platform.createViewModel(core, state, core)
-        platform.afterCreate(vm, core, keys)
+        platform.afterCreate(vm, core, keys, false)
         return vm
     }
 
@@ -3813,7 +3798,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         return $fire
     }
 
-    function afterCreate(vm, core, keys) {
+    function afterCreate(vm, core, keys, bindThis) {
         var ac = vm.$accessors
         //隐藏系统属性
         for (var key in $$skipArray) {
@@ -3823,7 +3808,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         for (var i = 0; i < keys.length; i++) {
             var _key2 = keys[i]
             if (!(_key2 in ac)) {
-                if (typeof core[_key2] === 'function') {
+                if (bindThis && typeof core[_key2] === 'function') {
                     vm[_key2] = core[_key2].bind(vm)
                     continue
                 }
@@ -3861,6 +3846,18 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                 target.$accessors[name] = new Observable(name, value, target)
                 target.$track = arr.sort().join('☥')
             }
+            //    platform.itemFactory = function itemFactory(before, after) {
+            //        var definition = before.$model
+            //        definition.$proxyItemBackdoor = true
+            //        definition.$id = before.$hashcode +
+            //            String(after.hashcode || Math.random()).slice(6)
+            //        definition.$accessors = avalon.mix({}, before.$accessors)
+            //        var vm = platform.modelFactory(definition)
+            //        for (var i in after.data) {
+            //            vm[i] = after.data[i]
+            //        }
+            //        return vm
+            //    }
 
             avalon$2.config.inProxyMode = true
 
@@ -3966,19 +3963,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                     return target.hasOwnProperty(name)
                 }
             }
-
-            platform.itemFactory = function itemFactory(before, after) {
-                var definition = before.$model
-                definition.$proxyItemBackdoor = true
-                definition.$id = before.$hashcode + String(after.hashcode || Math.random()).slice(6)
-                definition.$accessors = avalon$2.mix({}, before.$accessors)
-                var vm = platform.modelFactory(definition)
-                for (var i in after.data) {
-                    vm[i] = after.data[i]
-                }
-                return vm
-            }
-
             platform.fuseFactory = function fuseFactory(before, after) {
                 var definition = avalon$2.mix(before.$model, after.$model)
                 definition.$id = before.$hashcode + after.$hashcode

@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-7:15:16 version 2.2.2 by 司徒正美
+built in 2016-12-7:18:22 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -1542,6 +1542,7 @@ IE7的checked属性应该使用defaultChecked来设置
             return children;
         });
         fixFF('innerText', function () {
+            //firefox45+, chrome4+ http://caniuse.com/#feat=innertext
             return this.textContent;
         });
     }
@@ -4253,7 +4254,7 @@ IE7的checked属性应该使用defaultChecked来设置
         //重写$track
         //并在IE6-8中增添加不存在的hasOwnPropert方法
         var vm = platform.createViewModel(core, $accessors, core);
-        platform.afterCreate(vm, core, keys);
+        platform.afterCreate(vm, core, keys, !dd);
         return vm;
     };
     var $proxyItemBackdoorMap = {};
@@ -4316,23 +4317,6 @@ IE7的checked属性应该使用defaultChecked来设置
         };
     }
 
-    platform.itemFactory = function itemFactory(before, after) {
-        var keyMap = before.$model;
-        var core = new IProxy(keyMap);
-        var state = avalon.shadowCopy(core.$accessors, before.$accessors); //防止互相污染
-        var data = after.data;
-        //core是包含系统属性的对象
-        //keyMap是不包含系统属性的对象, keys
-        for (var key in data) {
-            var val = keyMap[key] = core[key] = data[key];
-            state[key] = createAccessor(key, val);
-        }
-        var keys = Object.keys(keyMap);
-        var vm = platform.createViewModel(core, state, core);
-        platform.afterCreate(vm, core, keys);
-        return vm;
-    };
-
     platform.fuseFactory = function fuseFactory(before, after) {
         var keyMap = avalon.mix(before.$model, after.$model);
         var core = new IProxy(avalon.mix(keyMap, {
@@ -4343,7 +4327,7 @@ IE7的checked属性应该使用defaultChecked来设置
         var keys = Object.keys(keyMap);
         //将系统API以unenumerable形式加入vm,并在IE6-8中添加hasOwnPropert方法
         var vm = platform.createViewModel(core, state, core);
-        platform.afterCreate(vm, core, keys);
+        platform.afterCreate(vm, core, keys, false);
         return vm;
     };
 
@@ -4556,7 +4540,7 @@ IE7的checked属性应该使用defaultChecked来设置
         return '☥' + str + '☥';
     }
 
-    function afterCreate(vm, core, keys) {
+    function afterCreate(vm, core, keys, bindThis) {
         var ac = vm.$accessors;
         //隐藏系统属性
         for (var key in $$skipArray) {
@@ -4567,7 +4551,7 @@ IE7的checked属性应该使用defaultChecked来设置
         for (var i = 0; i < keys.length; i++) {
             var _key2 = keys[i];
             if (!(_key2 in ac)) {
-                if (typeof core[_key2] === 'function') {
+                if (bindThis && typeof core[_key2] === 'function') {
                     vm[_key2] = core[_key2].bind(vm);
                     continue;
                 }

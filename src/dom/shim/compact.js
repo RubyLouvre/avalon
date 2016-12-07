@@ -26,12 +26,13 @@ function shimHack() {
             }
         }
     }
+    //firefox 到11时才有outerHTML
     function fixFF(prop, cb) {
         if (!(prop in root)) {
             HTMLElement.prototype.__defineGetter__(prop, cb)
         }
     }
-    fixFF('outerHTML', function() {//firefox12 http://caniuse.com/#search=outerHTML
+    fixFF('outerHTML', function() {
         var div = document.createElement('div')
         div.appendChild(this)
         return div.innerHTML
@@ -45,7 +46,7 @@ function shimHack() {
         }
         return children
     })
-    fixFF('innerText', function() {//firefox45
+    fixFF('innerText', function() { //firefox45+, chrome4+ http://caniuse.com/#feat=innertext
         return this.textContent
     })
 

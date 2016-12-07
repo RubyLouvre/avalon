@@ -205,49 +205,49 @@ describe('vmodel', function () {
 })
 
 
-describe('itemFactory', function () {
-    it('test', function () {
-        var vm = avalon.define({
-            $id: 'xcvdsfdsf',
-            a: 1,
-            b: '2',
-
-            c: new Date,
-            d: function () { },
-            $e: 33
-        })
-        var vm2 = platform.itemFactory(vm, {
-            data: {
-                dd: 11,
-                $cc: 22
-            }
-        })
-        expect(vm2.d).toA('function')
-        delete avalon.vmodels.xcvdsfdsf
-    })
-    it('不会互相干扰', function () {
-        var vm = avalon.define({
-            $id: 'xxx32',
-            kkk: 232
-        })
-        var vm2 = platform.itemFactory(vm, {
-            data: {
-                value: 111
-            }
-        })
-        var vm3 = platform.itemFactory(vm, {
-            data: {
-                value: 444
-            }
-        })
-        expect(vm2.value).toBe(111)
-        expect(vm3.value).toBe(444)
-        vm3.value = 888
-        expect(vm2.value).toBe(111)
-        expect(vm3.value).toBe(888)
-        delete avalon.vmodels.xxx32
-    })
-})
+//describe('itemFactory', function () {
+//    it('test', function () {
+//        var vm = avalon.define({
+//            $id: 'xcvdsfdsf',
+//            a: 1,
+//            b: '2',
+//
+//            c: new Date,
+//            d: function () { },
+//            $e: 33
+//        })
+//        var vm2 = platform.itemFactory(vm, {
+//            data: {
+//                dd: 11,
+//                $cc: 22
+//            }
+//        })
+//        expect(vm2.d).toA('function')
+//        delete avalon.vmodels.xcvdsfdsf
+//    })
+//    it('不会互相干扰', function () {
+//        var vm = avalon.define({
+//            $id: 'xxx32',
+//            kkk: 232
+//        })
+//        var vm2 = platform.itemFactory(vm, {
+//            data: {
+//                value: 111
+//            }
+//        })
+//        var vm3 = platform.itemFactory(vm, {
+//            data: {
+//                value: 444
+//            }
+//        })
+//        expect(vm2.value).toBe(111)
+//        expect(vm3.value).toBe(444)
+//        vm3.value = 888
+//        expect(vm2.value).toBe(111)
+//        expect(vm3.value).toBe(888)
+//        delete avalon.vmodels.xxx32
+//    })
+//})
 
 describe('Mutation', function () {
     it('test', function () {

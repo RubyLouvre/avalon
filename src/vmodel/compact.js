@@ -77,7 +77,7 @@ function wrapIt(str) {
     return '☥' + str + '☥'
 }
 
-export function afterCreate(vm, core, keys) {
+export function afterCreate(vm, core, keys, bindThis) {
     var ac = vm.$accessors
     //隐藏系统属性
     for (let key in $$skipArray) {
@@ -89,7 +89,7 @@ export function afterCreate(vm, core, keys) {
     for (let i = 0; i < keys.length; i++) {
         let key = keys[i]
         if (!(key in ac)) {
-            if (typeof core[key] === 'function') {
+            if (bindThis && typeof core[key] === 'function') {
                 vm[key] = core[key].bind(vm)
                 continue
             }

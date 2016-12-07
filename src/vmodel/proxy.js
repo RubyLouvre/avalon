@@ -145,18 +145,18 @@ if (typeof Proxy === 'function') {
         target.$accessors[name] = new Observable(name, value, target)
         target.$track = arr.sort().join('☥')
     }
-    platform.itemFactory = function itemFactory(before, after) {
-        var definition = before.$model
-        definition.$proxyItemBackdoor = true
-        definition.$id = before.$hashcode +
-            String(after.hashcode || Math.random()).slice(6)
-        definition.$accessors = avalon.mix({}, before.$accessors)
-        var vm = platform.modelFactory(definition)
-        for (var i in after.data) {
-            vm[i] = after.data[i]
-        }
-        return vm
-    }
+//    platform.itemFactory = function itemFactory(before, after) {
+//        var definition = before.$model
+//        definition.$proxyItemBackdoor = true
+//        definition.$id = before.$hashcode +
+//            String(after.hashcode || Math.random()).slice(6)
+//        definition.$accessors = avalon.mix({}, before.$accessors)
+//        var vm = platform.modelFactory(definition)
+//        for (var i in after.data) {
+//            vm[i] = after.data[i]
+//        }
+//        return vm
+//    }
 
     platform.fuseFactory = function fuseFactory(before, after) {
         var definition = avalon.mix(before.$model, after.$model)
