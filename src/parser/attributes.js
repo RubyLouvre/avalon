@@ -58,7 +58,7 @@ export function parseAttributes(dirs, tuple ) {
         var ret = []
         for(var i = 0, el; el = bindings[i++];){
             ret.push(el)
-            if(el.type == 'if'){
+            if(el.type === 'if'){
                 return ret
             }
         }
