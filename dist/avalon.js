@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-7:19:43 version 2.2.2 by 司徒正美
+built in 2016-12-8:15:12 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -3739,20 +3739,22 @@ IE7的checked属性应该使用defaultChecked来设置
         }
 
         stringPool.map = {};
-
-        var input = expr.replace(rregexp, dig); //移除所有正则
+        //https://github.com/RubyLouvre/avalon/issues/1849
+        var input = expr.replace(rregexp, function (a, b) {
+            return b + dig(a.slice(b.length));
+        }); //移除所有正则
         input = clearString(input); //移除所有字符串
         input = input.replace(rshortCircuit, dig). //移除所有短路运算符
         replace(ruselessSp, '$1'). //移除.|两端空白
-        replace(rvmKey, '$1__vmodel__.'). //转换@与##为__vmodel__
+
         replace(robjectKey, function (_, a, b) {
             //移除所有键名
             return a + dig(b) + ':'; //比如 ms-widget="[{is:'ms-address-wrap', $id:'address'}]"这样极端的情况 
-        }).replace(rfilterName, function (a, b) {
+        }).replace(rvmKey, '$1__vmodel__.'). //转换@与##为__vmodel__
+        replace(rfilterName, function (a, b) {
             //移除所有过滤器的名字
             return '|' + dig(b);
         });
-
         input = addScopeForLocal(input); //在本地变量前添加__vmodel__
 
         var filters = input.split(rpipeline); //根据管道符切割表达式

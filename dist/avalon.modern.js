@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-7:19:43 version 2.2.2 by 司徒正美
+built in 2016-12-8:14:16 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -3081,6 +3081,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         } else {
             body = arr[1].replace(/__value__\)$/, arr[0] + ')')
         }
+        console.log(body + "")
         try {
             return new Function('__vmodel__', 'return ' + body + ';')
             /* istanbul ignore next */
