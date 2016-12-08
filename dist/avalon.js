@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-8:17:20 version 2.2.2 by 司徒正美
+built in 2016-12-8:20:35 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -6967,7 +6967,7 @@ IE7的checked属性应该使用defaultChecked来设置
             var ret = [];
             for (var i = 0, el; el = bindings[i++];) {
                 ret.push(el);
-                if (el.type == 'if') {
+                if (el.type === 'if') {
                     return ret;
                 }
             }

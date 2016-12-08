@@ -16,8 +16,7 @@
     "scripts": {
         "buildAvalon": "node build",
         "build": "karma start karma.conf",
-        "sauce": "karma start karma.sauce",
-        "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls"
+        "sauce": "karma start karma.sauce"
     },
     "dependencies": {},
     "devDependencies": {
