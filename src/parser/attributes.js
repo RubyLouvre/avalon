@@ -5,7 +5,7 @@ export var eventMap = avalon.oneObject('animationend,blur,change,input,'+
         'mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit','on')
 export function parseAttributes(dirs, tuple ) {
     var node = tuple[0], uniq = {}, bindings = []
-   
+    var hasIf = false
     for (var name in dirs) {
         var value = dirs[name]
         var arr = name.split('-')
@@ -36,6 +36,9 @@ export function parseAttributes(dirs, tuple ) {
                 expr: value,
                 priority: directives[type].priority || type.charCodeAt(0) * 100
             }
+            if(type === 'if'){
+                hasIf = true
+            }
             if (type === 'on') {
                 binding.priority += arr[3]
             }
@@ -43,14 +46,24 @@ export function parseAttributes(dirs, tuple ) {
                 uniq[binding.name] = value
                 bindings.push(binding)
                 if (type === 'for') {
-                    bindings = [avalon.mix(binding, tuple[3])]
-                    break
+                    return [avalon.mix(binding, tuple[3])]
                 }
             }
 
         }
     }
-    return bindings.sort(byPriority)
+     bindings.sort(byPriority)
+      
+     if(hasIf){
+        var ret = []
+        for(var i = 0, el; el = bindings[i++];){
+            ret.push(el)
+            if(el.type == 'if'){
+                return ret
+            }
+        }
+     }
+     return bindings
 }
 export function byPriority(a, b) {
     return a.priority - b.priority

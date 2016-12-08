@@ -113,4 +113,29 @@ describe('if', function() {
            done()
         }, 100)
     })
+    //https://github.com/RubyLouvre/avalon/issues/1851
+     it('ms-duplex+ms-if',function(done){
+           div.innerHTML = heredoc(function() {
+            /*
+             <div ms-controller='if4' >
+              <input ms-duplex='@aaa' ms-if='false'>
+                  
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'if4',
+            aaa:'11'
+        })
+        var a = 1
+        try{
+        avalon.scan(div)
+        }catch(e){
+            ++a
+        }
+        setTimeout(function() {
+           expect(a).toBe(1)
+           done()
+        }, 100)
+    })
 })

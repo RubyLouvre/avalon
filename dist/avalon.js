@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-8:15:12 version 2.2.2 by 司徒正美
+built in 2016-12-8:17:20 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -5294,9 +5294,6 @@ IE7的checked属性应该使用defaultChecked来设置
             if (node.isVoidTag) {
                 avalon.error('自闭合元素不能使用ms-text');
             }
-            if (!node.children) {
-                return;
-            }
             var child = { nodeName: '#text', nodeValue: this.getValue() };
             node.children.splice(0, node.children.length, child);
             if (inBrowser) {
@@ -6919,7 +6916,7 @@ IE7的checked属性应该使用defaultChecked来设置
         var node = tuple[0],
             uniq = {},
             bindings = [];
-
+        var hasIf = false;
         for (var name in dirs) {
             var value = dirs[name];
             var arr = name.split('-');
@@ -6949,6 +6946,9 @@ IE7的checked属性应该使用defaultChecked来设置
                     expr: value,
                     priority: directives[type].priority || type.charCodeAt(0) * 100
                 };
+                if (type === 'if') {
+                    hasIf = true;
+                }
                 if (type === 'on') {
                     binding.priority += arr[3];
                 }
@@ -6956,13 +6956,23 @@ IE7的checked属性应该使用defaultChecked来设置
                     uniq[binding.name] = value;
                     bindings.push(binding);
                     if (type === 'for') {
-                        bindings = [avalon.mix(binding, tuple[3])];
-                        break;
+                        return [avalon.mix(binding, tuple[3])];
                     }
                 }
             }
         }
-        return bindings.sort(byPriority);
+        bindings.sort(byPriority);
+
+        if (hasIf) {
+            var ret = [];
+            for (var i = 0, el; el = bindings[i++];) {
+                ret.push(el);
+                if (el.type == 'if') {
+                    return ret;
+                }
+            }
+        }
+        return bindings;
     }
     function byPriority(a, b) {
         return a.priority - b.priority;

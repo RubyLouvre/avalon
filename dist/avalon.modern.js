@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-8:14:16 version 2.2.2 by 司徒正美
+built in 2016-12-8:17:20 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
         添加计算属性
         添加事务
@@ -3019,20 +3019,22 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         }
 
         stringPool.map = {}
-
-        var input = expr.replace(rregexp, dig) //移除所有正则
+        //https://github.com/RubyLouvre/avalon/issues/1849
+        var input = expr.replace(rregexp, function (a, b) {
+            return b + dig(a.slice(b.length))
+        }) //移除所有正则
         input = clearString(input) //移除所有字符串
         input = input.replace(rshortCircuit, dig). //移除所有短路运算符
         replace(ruselessSp, '$1'). //移除.|两端空白
-        replace(rvmKey, '$1__vmodel__.'). //转换@与##为__vmodel__
+
         replace(robjectKey, function (_, a, b) {
             //移除所有键名
             return a + dig(b) + ':' //比如 ms-widget="[{is:'ms-address-wrap', $id:'address'}]"这样极端的情况 
-        }).replace(rfilterName, function (a, b) {
+        }).replace(rvmKey, '$1__vmodel__.'). //转换@与##为__vmodel__
+        replace(rfilterName, function (a, b) {
             //移除所有过滤器的名字
             return '|' + dig(b)
         })
-
         input = addScopeForLocal(input) //在本地变量前添加__vmodel__
 
         var filters = input.split(rpipeline) //根据管道符切割表达式
@@ -3081,7 +3083,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         } else {
             body = arr[1].replace(/__value__\)$/, arr[0] + ')')
         }
-        console.log(body + "")
         try {
             return new Function('__vmodel__', 'return ' + body + ';')
             /* istanbul ignore next */
@@ -4589,9 +4590,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             if (node.isVoidTag) {
                 avalon$2.error('自闭合元素不能使用ms-text')
             }
-            if (!node.children) {
-                return
-            }
             var child = { nodeName: '#text', nodeValue: this.getValue() }
             node.children.splice(0, node.children.length, child)
             if (inBrowser) {
@@ -6086,7 +6084,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
         var node = tuple[0],
             uniq = {},
             bindings = []
-
+        var hasIf = false
         for (var name in dirs) {
             var value = dirs[name]
             var arr = name.split('-')
@@ -6116,6 +6114,9 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                     expr: value,
                     priority: directives[type].priority || type.charCodeAt(0) * 100
                 }
+                if (type === 'if') {
+                    hasIf = true
+                }
                 if (type === 'on') {
                     binding.priority += arr[3]
                 }
@@ -6123,13 +6124,23 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                     uniq[binding.name] = value
                     bindings.push(binding)
                     if (type === 'for') {
-                        bindings = [avalon$2.mix(binding, tuple[3])]
-                        break
+                        return [avalon$2.mix(binding, tuple[3])]
                     }
                 }
             }
         }
-        return bindings.sort(byPriority)
+        bindings.sort(byPriority)
+
+        if (hasIf) {
+            var ret = []
+            for (var i = 0, el; el = bindings[i++];) {
+                ret.push(el)
+                if (el.type == 'if') {
+                    return ret
+                }
+            }
+        }
+        return bindings
     }
     function byPriority(a, b) {
         return a.priority - b.priority
