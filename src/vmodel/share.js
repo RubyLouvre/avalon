@@ -142,7 +142,22 @@ export function createProxy(target, dd) {
 
 platform.createProxy = createProxy
 
-
+platform.itemFactory = function itemFactory(before, after) {
+    var keyMap = before.$model
+    var core = new IProxy(keyMap)
+    var state = avalon.shadowCopy(core.$accessors, before.$accessors) //防止互相污染
+    var data = after.data
+        //core是包含系统属性的对象
+        //keyMap是不包含系统属性的对象, keys
+    for (var key in data) {
+        var val = keyMap[key] = core[key] = data[key]
+        state[key] = createAccessor(key, val)
+    }
+    var keys = Object.keys(keyMap)
+    var vm = platform.createViewModel(core, state, core)
+    platform.afterCreate(vm, core, keys)
+    return vm
+}
 function createAccessor(key, val, isComputed) {
     var mutation = null
     var Accessor = isComputed ? Computed : Mutation

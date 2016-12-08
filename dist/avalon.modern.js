@@ -1,14 +1,13 @@
 /*!
-built in 2016-12-8:20:34 version 2.2.2 by 司徒正美
+built in 2016-12-9:0:8 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
-        添加计算属性
-        添加事务
-        内部所有类使用es6重写
-        修正使用requirejs加载avalon2.2.0，返回空对象的BUG
-        优化组件延迟定义的逻辑
-        fromString进行性能优化
-        fix 空字符串不生成节点的BUG
-        确保onReady的执行时机，多个ms-controller套嵌，先执行里面的，再执行外面的
+      fix ms-controller BUG, 上下VM相同时,不会进行合并
+ms-for不再生成代理VM
+为监听数组添加toJSON方法
+IE7的checked属性应该使用defaultChecked来设置
+对旧版firefox的children进行polyfill
+修正ms-if,ms-text同在一个元素时出BUG的情况 
+修正ms-visible,ms-effect同在一个元素时出BUG的情况
 
 */;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() : typeof define === 'function' && define.amd ? define(factory) : global.avalon = factory()
@@ -3578,6 +3577,22 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
 
     platform.createProxy = createProxy
 
+    platform.itemFactory = function itemFactory(before, after) {
+        var keyMap = before.$model
+        var core = new IProxy(keyMap)
+        var state = avalon$2.shadowCopy(core.$accessors, before.$accessors) //防止互相污染
+        var data = after.data
+        //core是包含系统属性的对象
+        //keyMap是不包含系统属性的对象, keys
+        for (var key in data) {
+            var val = keyMap[key] = core[key] = data[key]
+            state[key] = createAccessor(key, val)
+        }
+        var keys = Object.keys(keyMap)
+        var vm = platform.createViewModel(core, state, core)
+        platform.afterCreate(vm, core, keys)
+        return vm
+    }
     function createAccessor(key, val, isComputed) {
         var mutation = null
         var Accessor = isComputed ? Computed : Mutation
@@ -3848,18 +3863,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                 target.$accessors[name] = new Observable(name, value, target)
                 target.$track = arr.sort().join('☥')
             }
-            //    platform.itemFactory = function itemFactory(before, after) {
-            //        var definition = before.$model
-            //        definition.$proxyItemBackdoor = true
-            //        definition.$id = before.$hashcode +
-            //            String(after.hashcode || Math.random()).slice(6)
-            //        definition.$accessors = avalon.mix({}, before.$accessors)
-            //        var vm = platform.modelFactory(definition)
-            //        for (var i in after.data) {
-            //            vm[i] = after.data[i]
-            //        }
-            //        return vm
-            //    }
 
             avalon$2.config.inProxyMode = true
 
@@ -3900,6 +3903,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                         }
                     }
                     for (var _i5 in $computed) {
+
                         vm[_i5] = $computed[_i5]
                     }
                 }
@@ -3922,11 +3926,13 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                     if (name === '$model') {
                         return platform.toJson(target)
                     }
-
                     //收集依赖
-                    var mutation = target.$accessors[name]
-                    var childObj = target[name]
-                    return mutation ? mutation.get() : childObj
+                    var m = target.$accessors[name]
+                    if (m && m.get) {
+                        return m.get()
+                    }
+
+                    return target[name]
                 },
                 set: function set(target, name, value) {
                     if (name === '$model') {
@@ -3965,6 +3971,19 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                     return target.hasOwnProperty(name)
                 }
             }
+
+            platform.itemFactory = function itemFactory(before, after) {
+                var definition = before.$model
+                definition.$proxyItemBackdoor = true
+                definition.$id = before.$hashcode + String(after.hashcode || Math.random()).slice(6)
+                definition.$accessors = avalon$2.mix({}, before.$accessors)
+                var vm = platform.modelFactory(definition)
+                for (var i in after.data) {
+                    vm[i] = after.data[i]
+                }
+                return vm
+            }
+
             platform.fuseFactory = function fuseFactory(before, after) {
                 var definition = avalon$2.mix(before.$model, after.$model)
                 definition.$id = before.$hashcode + after.$hashcode
@@ -4800,20 +4819,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             this.node.forDir = this //暴露给component/index.js中的resetParentChildren方法使用
             this.fragment = ['<div>', this.fragment, '<!--', this.signature, '--></div>'].join('')
             this.cache = {}
-            var me = this
-            this.innerAction = {
-                uuid: Math.random(),
-                schedule: function schedule() {
-
-                    me.fragments && me.fragments.forEach(function (el) {
-                        updateItemVm(el.vm, me.vm)
-
-                        el.innerRender.update()
-                    })
-                    this._isScheduled = false
-                }
-            }
-            collectInFor(this)
         },
         diff: function diff(newVal, oldVal) {
             /* istanbul ignore if */
@@ -4928,7 +4933,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
                 fragment.index = index // 相当于 c.index
                 fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
                 saveInCache(newCache, fragment)
-                fragment.innerRender.update()
             } else {
                 //如果找不到就进行模糊搜索
                 fuzzy.push(c)
@@ -4945,12 +4949,12 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
 
                 fragment.vm[instance.valName] = val
                 fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
-                fragment.innerRender.update()
                 delete fragment._dispose
             } else {
-                //new VFragment([], k, value, i++
-                fragment = new VFragment([], c.key, c.val, c.index)
-                fragment = FragmentDecorator(fragment, instance, c.index)
+
+                c = new VFragment([], c.key, c.val, c.index)
+
+                fragment = FragmentDecorator(c, instance, c.index)
                 list.push(fragment)
             }
             saveInCache(newCache, fragment)
@@ -4961,27 +4965,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
             return a.index - b.index
         })
         instance.cache = newCache
-    }
-
-    function updateItemVm(vm, top) {
-        for (var i in top) {
-            if (top.hasOwnProperty(i)) {
-                vm[i] = top[i]
-            }
-        }
-    }
-
-    function collectInFor(instance) {
-        var top = instance.vm
-
-        if (!top) return
-        var deps = top.$mutations || {}
-        for (var i in top) {
-            try {
-                var created = top[i]
-                avalon$2.Array.ensure(deps[i].observers, instance.innerAction)
-            } catch (e) {}
-        }
     }
 
     function updateList(instance) {
@@ -5017,32 +5000,28 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
      * @returns { key, val, index, oldIndex, this, dom, split, vm}
      */
     function FragmentDecorator(fragment, instance, index) {
-        var top = instance.vm,
-            data = {}
-        updateItemVm(data, top)
-
-        data.$events = {}
+        var data = {}
         data[instance.keyName] = instance.isArray ? index : fragment.key
         data[instance.valName] = fragment.val
         if (instance.asName) {
             data[instance.asName] = instance.value
         }
-
-        //    if(instance.isArray){
-        //        vm.$watch(instance.valName, function(a){
-        //            if(instance.value && instance.value.set){
-        //                instance.value.set(vm[instance.keyName], a)
-        //            }
-        //        })
-        //    }else{
-        //        vm.$watch(instance.valName, function(a){
-        //            instance.value[fragment.key] = a
-        //        })
-        //    }
-
-        fragment.vm = data
+        var vm = fragment.vm = platform.itemFactory(instance.vm, {
+            data: data
+        })
+        if (instance.isArray) {
+            vm.$watch(instance.valName, function (a) {
+                if (instance.value && instance.value.set) {
+                    instance.value.set(vm[instance.keyName], a)
+                }
+            })
+        } else {
+            vm.$watch(instance.valName, function (a) {
+                instance.value[fragment.key] = a
+            })
+        }
         fragment.index = index
-        data.$render = fragment.innerRender = avalon$2.scan(instance.fragment, data, function () {
+        fragment.innerRender = avalon$2.scan(instance.fragment, vm, function () {
             var oldRoot = this.root
             ap.push.apply(fragment.children, oldRoot.children)
             this.root = fragment

@@ -53,6 +53,8 @@ describe('vmodel', function () {
 
         })
         expect(vm.$id).toBe("aaa")
+        expect(vm.hasOwnProperty).toA("function")
+
         expect(vm.$model).toEqual({
             aaa: 1
         })

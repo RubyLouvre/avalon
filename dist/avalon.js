@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-8:20:35 version 2.2.2 by 司徒正美
+built in 2016-12-9:0:9 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -4298,6 +4298,22 @@ IE7的checked属性应该使用defaultChecked来设置
 
     platform.createProxy = createProxy;
 
+    platform.itemFactory = function itemFactory(before, after) {
+        var keyMap = before.$model;
+        var core = new IProxy(keyMap);
+        var state = avalon.shadowCopy(core.$accessors, before.$accessors); //防止互相污染
+        var data = after.data;
+        //core是包含系统属性的对象
+        //keyMap是不包含系统属性的对象, keys
+        for (var key in data) {
+            var val = keyMap[key] = core[key] = data[key];
+            state[key] = createAccessor(key, val);
+        }
+        var keys = Object.keys(keyMap);
+        var vm = platform.createViewModel(core, state, core);
+        platform.afterCreate(vm, core, keys);
+        return vm;
+    };
     function createAccessor(key, val, isComputed) {
         var mutation = null;
         var Accessor = isComputed ? Computed : Mutation;
@@ -5504,20 +5520,6 @@ IE7的checked属性应该使用defaultChecked来设置
             this.node.forDir = this; //暴露给component/index.js中的resetParentChildren方法使用
             this.fragment = ['<div>', this.fragment, '<!--', this.signature, '--></div>'].join('');
             this.cache = {};
-            var me = this;
-            this.innerAction = {
-                uuid: Math.random(),
-                schedule: function schedule() {
-
-                    me.fragments && me.fragments.forEach(function (el) {
-                        updateItemVm(el.vm, me.vm);
-
-                        el.innerRender.update();
-                    });
-                    this._isScheduled = false;
-                }
-            };
-            collectInFor(this);
         },
         diff: function diff(newVal, oldVal) {
             /* istanbul ignore if */
@@ -5632,7 +5634,6 @@ IE7的checked属性应该使用defaultChecked来设置
                 fragment.index = index; // 相当于 c.index
                 fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key;
                 saveInCache(newCache, fragment);
-                fragment.innerRender.update();
             } else {
                 //如果找不到就进行模糊搜索
                 fuzzy.push(c);
@@ -5649,12 +5650,12 @@ IE7的checked属性应该使用defaultChecked来设置
 
                 fragment.vm[instance.valName] = val;
                 fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key;
-                fragment.innerRender.update();
                 delete fragment._dispose;
             } else {
-                //new VFragment([], k, value, i++
-                fragment = new VFragment([], c.key, c.val, c.index);
-                fragment = FragmentDecorator(fragment, instance, c.index);
+
+                c = new VFragment([], c.key, c.val, c.index);
+
+                fragment = FragmentDecorator(c, instance, c.index);
                 list.push(fragment);
             }
             saveInCache(newCache, fragment);
@@ -5665,27 +5666,6 @@ IE7的checked属性应该使用defaultChecked来设置
             return a.index - b.index;
         });
         instance.cache = newCache;
-    }
-
-    function updateItemVm(vm, top) {
-        for (var i in top) {
-            if (top.hasOwnProperty(i)) {
-                vm[i] = top[i];
-            }
-        }
-    }
-
-    function collectInFor(instance) {
-        var top = instance.vm;
-
-        if (!top) return;
-        var deps = top.$mutations || {};
-        for (var i in top) {
-            try {
-                var created = top[i];
-                avalon.Array.ensure(deps[i].observers, instance.innerAction);
-            } catch (e) {}
-        }
     }
 
     function updateList(instance) {
@@ -5721,32 +5701,28 @@ IE7的checked属性应该使用defaultChecked来设置
      * @returns { key, val, index, oldIndex, this, dom, split, vm}
      */
     function FragmentDecorator(fragment, instance, index) {
-        var top = instance.vm,
-            data = {};
-        updateItemVm(data, top);
-
-        data.$events = {};
+        var data = {};
         data[instance.keyName] = instance.isArray ? index : fragment.key;
         data[instance.valName] = fragment.val;
         if (instance.asName) {
             data[instance.asName] = instance.value;
         }
-
-        //    if(instance.isArray){
-        //        vm.$watch(instance.valName, function(a){
-        //            if(instance.value && instance.value.set){
-        //                instance.value.set(vm[instance.keyName], a)
-        //            }
-        //        })
-        //    }else{
-        //        vm.$watch(instance.valName, function(a){
-        //            instance.value[fragment.key] = a
-        //        })
-        //    }
-
-        fragment.vm = data;
+        var vm = fragment.vm = platform.itemFactory(instance.vm, {
+            data: data
+        });
+        if (instance.isArray) {
+            vm.$watch(instance.valName, function (a) {
+                if (instance.value && instance.value.set) {
+                    instance.value.set(vm[instance.keyName], a);
+                }
+            });
+        } else {
+            vm.$watch(instance.valName, function (a) {
+                instance.value[fragment.key] = a;
+            });
+        }
         fragment.index = index;
-        data.$render = fragment.innerRender = avalon.scan(instance.fragment, data, function () {
+        fragment.innerRender = avalon.scan(instance.fragment, vm, function () {
             var oldRoot = this.root;
             ap.push.apply(fragment.children, oldRoot.children);
             this.root = fragment;

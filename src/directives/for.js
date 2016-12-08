@@ -50,20 +50,7 @@ avalon.directive('for', {
         this.node.forDir = this //暴露给component/index.js中的resetParentChildren方法使用
         this.fragment = ['<div>', this.fragment, '<!--', this.signature, '--></div>'].join('')
         this.cache = {}
-        var me = this
-        this.innerAction = {
-            uuid: Math.random(),
-            schedule: function() {
-               
-                me.fragments && me.fragments.forEach(function(el) {
-                    updateItemVm(el.vm, me.vm)
 
-                        el.innerRender.update()
-                })
-                this._isScheduled = false
-            }
-        }
-        collectInFor(this)
     },
     diff: function(newVal, oldVal) {
         /* istanbul ignore if */
@@ -173,7 +160,7 @@ function diffList(instance) {
     })
 
     instance.fragments.forEach(function(c, index) {
-        var fragment = isInCache(cache, c.key)
+         var fragment = isInCache(cache, c.key)
             //取出之前的文档碎片
         if (fragment) {
             delete fragment._dispose
@@ -181,7 +168,6 @@ function diffList(instance) {
             fragment.index = index // 相当于 c.index
             fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
             saveInCache(newCache, fragment)
-            fragment.innerRender.update()
         } else {
             //如果找不到就进行模糊搜索
             fuzzy.push(c)
@@ -197,12 +183,12 @@ function diffList(instance) {
 
             fragment.vm[instance.valName] = val
             fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
-            fragment.innerRender.update()
             delete fragment._dispose
         } else {
-            //new VFragment([], k, value, i++
-            fragment = new VFragment([], c.key, c.val, c.index)
-            fragment = FragmentDecorator(fragment, instance, c.index)
+          
+            c = new VFragment([], c.key, c.val, c.index)
+            
+            fragment = FragmentDecorator(c, instance, c.index)
             list.push(fragment)
         }
         saveInCache(newCache, fragment)
@@ -223,20 +209,7 @@ function updateItemVm(vm, top) {
     }
 }
 
-function collectInFor(instance) {
-    var top = instance.vm
 
-    if (!top)
-        return
-    var deps = top.$mutations || {}
-    for (var i in top) {
-        try {
-            var created = top[i]
-            avalon.Array.ensure(deps[i].observers,
-                instance.innerAction)
-        } catch (e) {}
-    }
-}
 
 function updateList(instance) {
     var before = instance.begin.dom
@@ -272,32 +245,28 @@ function updateList(instance) {
  * @returns { key, val, index, oldIndex, this, dom, split, vm}
  */
 function FragmentDecorator(fragment, instance, index) {
-    var top = instance.vm,
-        data = {}
-    updateItemVm(data, top)
-
-    data.$events = {}
+    var data = {}
     data[instance.keyName] = instance.isArray ? index : fragment.key
     data[instance.valName] = fragment.val
     if (instance.asName) {
         data[instance.asName] = instance.value
     }
-
-    //    if(instance.isArray){
-    //        vm.$watch(instance.valName, function(a){
-    //            if(instance.value && instance.value.set){
-    //                instance.value.set(vm[instance.keyName], a)
-    //            }
-    //        })
-    //    }else{
-    //        vm.$watch(instance.valName, function(a){
-    //            instance.value[fragment.key] = a
-    //        })
-    //    }
-
-    fragment.vm = data
+    var vm = fragment.vm = platform.itemFactory(instance.vm, {
+        data: data
+    })
+    if(instance.isArray){
+        vm.$watch(instance.valName, function(a){
+            if(instance.value && instance.value.set){
+                instance.value.set(vm[instance.keyName], a)
+            }
+        })
+    }else{
+        vm.$watch(instance.valName, function(a){
+            instance.value[fragment.key] = a
+        })
+    }
     fragment.index = index
-    data.$render = fragment.innerRender = avalon.scan(instance.fragment, data, function() {
+    fragment.innerRender = avalon.scan(instance.fragment, vm, function() {
         var oldRoot = this.root
         ap.push.apply(fragment.children, oldRoot.children)
         this.root = fragment
