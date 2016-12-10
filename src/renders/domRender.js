@@ -4,6 +4,7 @@ import { fromString } from '../vtree/fromString'
 
 import { VFragment } from '../vdom/VFragment'
 import { Directive } from './Directive'
+import { optimize } from '../vtree/optimize'
 
 import { orphanTag } from '../vtree/orphanTag'
 import { parseAttributes, eventMap } from '../parser/attributes'
@@ -34,6 +35,7 @@ function Render(node, vm, beforeReady) {
     this.callbacks = []
     this.directives = []
     this.init()
+    this._scope = !!vm
 }
 
 Render.prototype = {
@@ -46,6 +48,7 @@ Render.prototype = {
         var vnodes
         if (this.root && this.root.nodeType > 0) {
             vnodes = fromDOM(this.root) //转换虚拟DOM
+           
                 //将扫描区域的每一个节点与其父节点分离,更少指令对DOM操作时,对首屏输出造成的频繁重绘
             dumpTree(this.root)
         } else if (typeof this.root === 'string') {
@@ -64,14 +67,13 @@ Render.prototype = {
             var vdom = children[i]
             switch (vdom.nodeName) {
                 case '#text':
-                    scope && this.scanText(vdom, scope)
+                     this.scanText(vdom, scope)
                     break
                 case '#comment':
-                    scope && this.scanComment(vdom, scope, children)
+                     this.scanComment(vdom, scope, children)
                     break
-                case '#document-fragment':
-                    this.scanChildren(vdom.children, scope, false)
-                    break
+          
+                   
                 default:
                     this.scanTag(vdom, scope, children, false)
                     break
@@ -90,9 +92,8 @@ Render.prototype = {
      */
     scanText(vdom, scope) {
         if (config.rexpr.test(vdom.nodeValue)) {
-            this.bindings.push([vdom, scope, {
-                nodeValue: vdom.nodeValue
-            }])
+            vdom.dynamic = true
+           
         }
     },
 
@@ -105,6 +106,7 @@ Render.prototype = {
      */
     scanComment(vdom, scope, parentChildren) {
         if (startWith(vdom.nodeValue, 'ms-for:')) {
+            vdom.dynamic = true
             this.getForBinding(vdom, scope, parentChildren)
         }
     },
@@ -148,19 +150,7 @@ Render.prototype = {
              * serverTemplates后端给avalon添加的对象,里面都是模板,
              * 将原来后端渲染好的区域再还原成原始样子,再被扫描
              */
-            var templateCaches = avalon.serverTemplates
-            var temp = templateCaches && templateCaches[$id]
-            if (temp) {
-                avalon.log('前端再次渲染后端传过来的模板')
-                var node = fromString(tmpl)[0]
-                for (var i in node) {
-                    vdom[i] = node[i]
-                }
-                delete templateCaches[$id]
-                this.scanTag(vdom, scope, parentChildren, isRoot)
-                return
-
-            }
+       
             //推算出指令类型
             var type = dirs['ms-important'] === $id ? 'important' : 'controller'
                 //推算出用户定义时属性名,是使用ms-属性还是:属性
@@ -171,9 +161,12 @@ Render.prototype = {
             }
             var dir = directives[type]
             scope = dir.getScope.call(this, $id, scope)
+            
             if (!scope) {
                 return
             } else {
+                this._scope = true
+                 vdom.dynamic = true 
                 var clazz = attrs['class']
                 if (clazz) {
                     attrs['class'] = (' ' + clazz + ' ').replace(' ms-controller ', '').trim()
@@ -181,17 +174,17 @@ Render.prototype = {
             }
             var render = this
             scope.$render = render
-            this.callbacks.push(function() {
-                //用于删除ms-controller
-                dir.update.call(render, vdom, attrName, $id)
-            })
+//            this.callbacks.push(function() {
+//                //用于删除ms-controller
+//                dir.update.call(render, vdom, attrName, $id)
+//            })
 
         }
         if (hasFor) {
             if (vdom.dom) {
                 vdom.dom.removeAttribute(oldName)
             }
-            return this.getForBindingByElement(vdom, scope, parentChildren, hasFor)
+          //  return this.getForBindingByElement(vdom, scope, parentChildren, hasFor)
         }
 
         if (/^ms\-/.test(vdom.nodeName)) {
@@ -205,7 +198,9 @@ Render.prototype = {
             hasDir = true
         }
         if (hasDir) {
-            this.bindings.push([vdom, scope, dirs])
+            vdom.dirs = dirs
+            vdom.dynamic = true 
+          //  this.bindings.push([vdom, scope, dirs])
         }
         var children = vdom.children
             //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
@@ -225,22 +220,24 @@ Render.prototype = {
      * @returns {undefined}
      */
     complete() {
-        this.yieldDirectives()
-        this.beforeReady()
-        if (inBrowser) {
-            var root = this.root
-            if (inBrowser) {
-                var rootDom = avalon.vdom(root, 'toDOM')
-                groupTree(rootDom, root.children)
-            }
-        }
-
-        this.mount = true
-        var fn
-        while (fn = this.callbacks.pop()) {
-            fn()
-        }
-        this.optimizeDirectives()
+        optimize(this.root)
+        console.log(this.root)
+//        this.yieldDirectives()
+//        this.beforeReady()
+//        if (inBrowser) {
+//            var root = this.root
+//            if (inBrowser) {
+//                var rootDom = avalon.vdom(root, 'toDOM')
+//                groupTree(rootDom, root.children)
+//            }
+//        }
+//
+//        this.mount = true
+//        var fn
+//        while (fn = this.callbacks.pop()) {
+//            fn()
+//        }
+//        this.optimizeDirectives()
     },
 
     /**

@@ -10,14 +10,17 @@ export function from(node) {
     var type = node.nodeName.toLowerCase()
     switch (type) {
         case '#text':
+
         case '#comment':
             return {
                 nodeName: type,
                 dom: node,
+                vtype: node.nodeType,
                 nodeValue: node.nodeValue
             }
         default:
             var vnode = {
+                vtype: 1,
                 nodeName: type,
                 dom: node,
                 isVoidTag: !!voidTag[type],

@@ -92,7 +92,8 @@ AST.prototype = {
             this.str = str.slice(i)
             this.node = {
                 nodeName: '#text',
-                nodeValue: nodeValue
+                nodeValue: nodeValue,
+                vtype: 3,
             }
             if (rcontent.test(nodeValue)) {
                 this.tryGenChildren() //不收集空白节点
@@ -113,6 +114,7 @@ AST.prototype = {
                 this.str = str.slice(l + 3)
                 this.node = {
                     nodeName: '#comment',
+                    vtype: 8,
                     nodeValue: nodeValue
                 }
                 this.tryGenChildren()
@@ -135,6 +137,7 @@ AST.prototype = {
                     nodeName: nodeName,
                     props: {},
                     children: [],
+                    vtype: 1,
                     isVoidTag: isVoidTag
                 }
                 var attrs = match[2]
@@ -192,10 +195,10 @@ AST.prototype = {
         }
     },
     genProps(attrs, props) {
-        
+
         while (attrs) {
             var arr = rattrs.exec(attrs)
-   
+
             if (arr) {
                 var name = arr[1]
                 var value = arr[2] || ''
@@ -205,9 +208,9 @@ AST.prototype = {
                     if (value.indexOf('??') === 0) {
                         value = nomalString(value).
                         replace(rlineSp, '').
-                        
+
                         slice(1, -1)
-                       
+
                     }
                 }
                 if (!(name in props)) {
