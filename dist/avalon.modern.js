@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-9:0:8 version 2.2.2 by 司徒正美
+built in 2016-12-10:21:16 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
       fix ms-controller BUG, 上下VM相同时,不会进行合并
 ms-for不再生成代理VM
@@ -2374,6 +2374,7 @@ IE7的checked属性应该使用defaultChecked来设置
     var eventProto = {
         webkitMovementY: 1,
         webkitMovementX: 1,
+        keyLocation: 1,
         fixEvent: function fixEvent() {},
         preventDefault: function preventDefault() {
             var e = this.originalEvent || {}
@@ -5942,33 +5943,36 @@ IE7的checked属性应该使用defaultChecked来设置
             /* istanbul ignore if */
             if (typeof Promise !== 'function') {
                 //avalon-promise不支持phantomjs
-                avalon$2.error('please npm install es6-promise or bluebird')
+                avalon$2.wain('please npm install es6-promise or bluebird')
             }
             /* istanbul ignore if */
             if (elem.disabled) return
             var rules = field.rules
+            var ngs = [],
+                isOk = true
             if (!(rules.norequired && value === '')) {
                 for (var ruleName in rules) {
                     var ruleValue = rules[ruleName]
                     if (ruleValue === false) continue
                     var hook = avalon$2.validators[ruleName]
-                    var resolve, reject
+                    var resolve
                     promises.push(new Promise(function (a, b) {
                         resolve = a
-                        reject = b
                     }))
                     var next = function next(a) {
+                        var reason = {
+                            element: elem,
+                            data: field.data,
+                            message: elem.getAttribute('data-' + ruleName + '-message') || elem.getAttribute('data-message') || hook.message,
+                            validateRule: ruleName,
+                            getMessage: getMessage
+                        }
                         if (a) {
                             resolve(true)
                         } else {
-                            var reason = {
-                                element: elem,
-                                data: field.data,
-                                message: elem.getAttribute('data-' + ruleName + '-message') || elem.getAttribute('data-message') || hook.message,
-                                validateRule: ruleName,
-                                getMessage: getMessage
-                            }
-                            resolve(reason)
+                            isOk = false
+                            ngs.push(reason)
+                            resolve(false)
                         }
                     }
                     field.data = {}
@@ -5979,19 +5983,19 @@ IE7的checked属性应该使用defaultChecked来设置
 
             //如果promises不为空，说明经过验证拦截器
             return Promise.all(promises).then(function (array) {
-                var reasons = array.filter(function (el) {
-                    return typeof el === 'object'
-                })
                 if (!isValidateAll) {
                     var validator = field.validator
-                    if (reasons.length) {
-                        validator.onError.call(elem, reasons, event)
+                    if (isOk) {
+                        validator.onSuccess.call(elem, [{
+                            data: field.data,
+                            element: elem
+                        }], event)
                     } else {
-                        validator.onSuccess.call(elem, reasons, event)
+                        validator.onError.call(elem, ngs, event)
                     }
-                    validator.onComplete.call(elem, reasons, event)
+                    validator.onComplete.call(elem, ngs, event)
                 }
-                return reasons
+                return ngs
             })
         }
     })
@@ -6785,7 +6789,8 @@ IE7的checked属性应该使用defaultChecked来设置
         },
 
         update: function update(vdom, value) {
-            this.oldValue = value //★★防止递归
+            // this.oldValue = value //★★防止递归
+            this.value = avalon$2.mix(true, {}, value)
             switch (this.readyState) {
                 case 0:
                     if (this.reInit) {

@@ -114,35 +114,37 @@ var valiDir = avalon.directive('validate', {
        
         /* istanbul ignore if */
         if (typeof Promise !== 'function') {//avalon-promise不支持phantomjs
-            avalon.error('please npm install es6-promise or bluebird')
+            avalon.wain('please npm install es6-promise or bluebird')
         }
         /* istanbul ignore if */
         if (elem.disabled)
             return
         var rules = field.rules
+        var ngs = [], isOk = true
         if (!(rules.norequired && value === '')) {
             for (var ruleName in rules) {
                 var ruleValue = rules[ruleName]
                 if (ruleValue === false)
                     continue
                 var hook = avalon.validators[ruleName]
-                var resolve, reject
+                var resolve
                 promises.push(new Promise(function (a, b) {
                     resolve = a
-                    reject = b
                 }))
                 var next = function (a) {
-                    if (a) {
-                        resolve(true)
-                    } else {
-                        var reason = {
+                     var reason = {
                             element: elem,
                             data: field.data,
                             message: elem.getAttribute('data-' + ruleName + '-message') || elem.getAttribute('data-message') || hook.message,
                             validateRule: ruleName,
                             getMessage: getMessage
                         }
-                        resolve(reason)
+                    if (a) {
+                        resolve(true)
+                    } else {
+                        isOk = false
+                        ngs.push(reason)
+                        resolve(false)
                     }
                 }
                 field.data = {}
@@ -153,19 +155,19 @@ var valiDir = avalon.directive('validate', {
 
         //如果promises不为空，说明经过验证拦截器
         return Promise.all(promises).then(function (array) {
-            var reasons = array.filter(function (el) {
-                return typeof el === 'object'
-            })
             if (!isValidateAll) {
                 var validator = field.validator
-                if (reasons.length) {
-                    validator.onError.call(elem, reasons, event)
+                if (isOk) {
+                    validator.onSuccess.call(elem, [{
+                           data: field.data,
+                           element: elem
+                    }], event)
                 } else {
-                    validator.onSuccess.call(elem, reasons, event)
+                    validator.onError.call(elem, ngs, event)
                 }
-                validator.onComplete.call(elem, reasons, event)
+                validator.onComplete.call(elem, ngs, event)
             }
-            return reasons
+            return ngs
         })
     }
 })

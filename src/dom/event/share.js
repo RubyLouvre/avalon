@@ -177,6 +177,7 @@ function delegateEvent(type) {
 var eventProto = {
     webkitMovementY:1,
     webkitMovementX: 1,
+    keyLocation:1,
     fixEvent: function () { },
     preventDefault: function () {
         var e = this.originalEvent || {}

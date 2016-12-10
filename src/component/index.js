@@ -152,7 +152,8 @@ avalon.directive('widget', {
     },
 
     update: function(vdom, value) {
-        this.oldValue = value //★★防止递归
+       // this.oldValue = value //★★防止递归
+        this.value = avalon.mix(true, {}, value)
         switch (this.readyState) {
             case 0:
                 if (this.reInit) {
