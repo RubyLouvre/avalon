@@ -75,12 +75,7 @@ Mutation.prototype = {
     set(newValue) {
         var oldValue = this.value
         if (newValue !== oldValue) {
-            if (Array.isArray(newValue) &&
-                oldValue && oldValue.pushArray) {
-                oldValue.length = 0
-                oldValue.pushArray(newValue)
-                newValue = oldValue
-            } else if (avalon.isObject(newValue)) {
+            if (avalon.isObject(newValue)) {
                 var hash = oldValue && oldValue.$hashcode
                 var childVM = platform.createProxy(newValue, this)
                 if (childVM) {

@@ -963,7 +963,7 @@ describe('widget', function() {
         }, 100)
     })
 
-    it('onViewChange', function() {
+    it('onViewChange', function(done) {
         var onViewChangeCount = 0
         avalon.component('ms-select', {
             template: heredoc(function() {
@@ -1048,5 +1048,40 @@ describe('widget', function() {
         }, 100)
 
     })
+    it('avalon2.2.2 组件只传递数组多次更新只有第一次可以更新到组件', function(done) {
+        //https://github.com/RubyLouvre/avalon/issues/1856
+        div.innerHTML = heredoc(function() {
+            /*
+        <div ms-controller='widget18'>
+          <xmp ms-widget="{is:'vip-test', id:'vip',data:@data}"></xmp>
+        </div>
+              */
+        })
 
+        avalon.component('vip-test', {
+            template: '<p><span ms-for="(index,value) in @data">{{value}}|</span></p>',
+            defaults: {
+                data: [],
+                obj: {}
+            }
+        })
+        vm = avalon.define({
+            $id: 'widget18',
+            data: []
+        })
+        avalon.scan(div, vm)
+        setTimeout(function() {
+            vm.data = [1, 2, 3, 4, 5, 6]
+            setTimeout(function() {
+                vm.data.pushArray([7, 8])
+                setTimeout(function() {
+                    vm.data.pushArray([100, 200])
+                    expect(div[textProp]).toBe('1|2|3|4|5|6|7|8|100|200|')
+                    delete avalon.components['vip-test']
+                    done()
+                }, 100)
+            }, 100)
+        }, 100)
+
+    })
 })

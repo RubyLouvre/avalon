@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-10:21:16 version 2.2.2 by 司徒正美
+built in 2016-12-12:0:49 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
       fix ms-controller BUG, 上下VM相同时,不会进行合并
 ms-for不再生成代理VM
@@ -3324,11 +3324,7 @@ IE7的checked属性应该使用defaultChecked来设置
         set: function set(newValue) {
             var oldValue = this.value
             if (newValue !== oldValue) {
-                if (Array.isArray(newValue) && oldValue && oldValue.pushArray) {
-                    oldValue.length = 0
-                    oldValue.pushArray(newValue)
-                    newValue = oldValue
-                } else if (avalon$2.isObject(newValue)) {
+                if (avalon$2.isObject(newValue)) {
                     var hash = oldValue && oldValue.$hashcode
                     var childVM = platform.createProxy(newValue, this)
                     if (childVM) {
@@ -6789,8 +6785,8 @@ IE7的checked属性应该使用defaultChecked来设置
         },
 
         update: function update(vdom, value) {
-            // this.oldValue = value //★★防止递归
-            this.value = avalon$2.mix(true, {}, value)
+            //this.oldValue = value //★★防止递归
+
             switch (this.readyState) {
                 case 0:
                     if (this.reInit) {
@@ -6807,7 +6803,11 @@ IE7的checked属性应该使用defaultChecked来设置
                     avalon$2.transaction(function () {
                         for (var i in value) {
                             if (comVm.hasOwnProperty(i)) {
-                                comVm[i] = value[i]
+                                if (Array.isArray(value[i])) {
+                                    comVm[i] = value[i].concat()
+                                } else {
+                                    comVm[i] = value[i]
+                                }
                             }
                         }
                     })
@@ -6817,6 +6817,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     delete avalon$2.viewChanging
                     break
             }
+            this.value = avalon$2.mix(true, {}, value)
         },
         beforeDispose: function beforeDispose() {
             var comVm = this.comVm

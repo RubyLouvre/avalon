@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-10:21:17 version 2.2.2 by 司徒正美
+built in 2016-12-12:0:48 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -4045,11 +4045,7 @@ IE7的checked属性应该使用defaultChecked来设置
         set: function set(newValue) {
             var oldValue = this.value;
             if (newValue !== oldValue) {
-                if (Array.isArray(newValue) && oldValue && oldValue.pushArray) {
-                    oldValue.length = 0;
-                    oldValue.pushArray(newValue);
-                    newValue = oldValue;
-                } else if (avalon.isObject(newValue)) {
+                if (avalon.isObject(newValue)) {
                     var hash = oldValue && oldValue.$hashcode;
                     var childVM = platform.createProxy(newValue, this);
                     if (childVM) {
@@ -7618,8 +7614,8 @@ IE7的checked属性应该使用defaultChecked来设置
         },
 
         update: function update(vdom, value) {
-            // this.oldValue = value //★★防止递归
-            this.value = avalon.mix(true, {}, value);
+            //this.oldValue = value //★★防止递归
+
             switch (this.readyState) {
                 case 0:
                     if (this.reInit) {
@@ -7636,7 +7632,11 @@ IE7的checked属性应该使用defaultChecked来设置
                     avalon.transaction(function () {
                         for (var i in value) {
                             if (comVm.hasOwnProperty(i)) {
-                                comVm[i] = value[i];
+                                if (Array.isArray(value[i])) {
+                                    comVm[i] = value[i].concat();
+                                } else {
+                                    comVm[i] = value[i];
+                                }
                             }
                         }
                     });
@@ -7646,6 +7646,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     delete avalon.viewChanging;
                     break;
             }
+            this.value = avalon.mix(true, {}, value);
         },
         beforeDispose: function beforeDispose() {
             var comVm = this.comVm;

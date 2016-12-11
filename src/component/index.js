@@ -87,7 +87,7 @@ avalon.directive('widget', {
                     nodesWithSlot = this.root.children
                 })
                 directives = childBoss.directives
-                this.childBoss= childBoss
+                this.childBoss = childBoss
                 for (var i in childBoss) {
                     delete childBoss[i]
                 }
@@ -135,7 +135,7 @@ avalon.directive('widget', {
         }
 
         //处理DOM节点
-      
+
         dumpTree(vdom.dom)
         comVm.$element = vdom.dom
         groupTree(vdom.dom, vdom.children)
@@ -152,8 +152,8 @@ avalon.directive('widget', {
     },
 
     update: function(vdom, value) {
-       // this.oldValue = value //★★防止递归
-        this.value = avalon.mix(true, {}, value)
+        //this.oldValue = value //★★防止递归
+
         switch (this.readyState) {
             case 0:
                 if (this.reInit) {
@@ -170,7 +170,11 @@ avalon.directive('widget', {
                 avalon.transaction(function() {
                     for (var i in value) {
                         if (comVm.hasOwnProperty(i)) {
-                            comVm[i] = value[i]
+                            if (Array.isArray(value[i])) {
+                                comVm[i] = value[i].concat()
+                            } else {
+                                comVm[i] = value[i]
+                            }
                         }
                     }
                 })
@@ -180,6 +184,7 @@ avalon.directive('widget', {
                 delete avalon.viewChanging
                 break
         }
+        this.value = avalon.mix(true, {}, value)
     },
     beforeDispose: function() {
         var comVm = this.comVm
@@ -202,7 +207,7 @@ function replaceRoot(instance, innerRender) {
     for (var i in root) {
         vdom[i] = root[i]
     }
-    if(vdom.props && slot){
+    if (vdom.props && slot) {
         vdom.props.slot = slot
     }
     innerRender.root = vdom
