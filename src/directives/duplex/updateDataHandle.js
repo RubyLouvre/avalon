@@ -10,25 +10,25 @@ export function updateDataHandle(event) {
     if (elem.value === field.value) {
         return
     }
+    /* istanbul ignore if*/
     if (elem.caret) {
         try {
             var pos = field.getCaret(elem)
             field.pos = pos
-        } catch (e) {
-        }
+        } catch (e) {}
     }
-
+    /* istanbul ignore if*/
     if (field.debounceTime > 4) {
         var timestamp = new Date()
         var left = timestamp - field.time || 0
         field.time = timestamp
-        /* istanbul ignore if*/
+            /* istanbul ignore if*/
         if (left >= field.debounceTime) {
             updateDataActions[field.dtype].call(field)
-         /* istanbul ignore else*/
+                /* istanbul ignore else*/
         } else {
             clearTimeout(field.debounceID)
-            field.debounceID = setTimeout(function () {
+            field.debounceID = setTimeout(function() {
                 updateDataActions[field.dtype].call(field)
             }, left)
         }
