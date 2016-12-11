@@ -5,6 +5,7 @@ import { fromString } from '../vtree/fromString'
 import { VFragment } from '../vdom/VFragment'
 import { Directive } from './Directive'
 import { optimize } from '../vtree/optimize'
+import { toTemplate } from '../vtree/toTemplate'
 
 import { orphanTag } from '../vtree/orphanTag'
 import { parseAttributes, eventMap } from '../parser/attributes'
@@ -33,8 +34,11 @@ function Render(node, vm, beforeReady) {
     this.beforeReady = beforeReady
     this.bindings = [] //收集待加工的绑定属性
     this.callbacks = []
+     this.staticIndex = 0
+    this.staticTree = {}
     this.directives = []
     this.init()
+   
     this._scope = !!vm
 }
 
@@ -48,8 +52,7 @@ Render.prototype = {
         var vnodes
         if (this.root && this.root.nodeType > 0) {
             vnodes = fromDOM(this.root) //转换虚拟DOM
-           
-                //将扫描区域的每一个节点与其父节点分离,更少指令对DOM操作时,对首屏输出造成的频繁重绘
+            //将扫描区域的每一个节点与其父节点分离,更少指令对DOM操作时,对首屏输出造成的频繁重绘
             dumpTree(this.root)
         } else if (typeof this.root === 'string') {
             vnodes = fromString(this.root) //转换虚拟DOM
@@ -221,7 +224,9 @@ Render.prototype = {
      */
     complete() {
         optimize(this.root)
+       var a = toTemplate([this.root], this)
         console.log(this.root)
+        console.log(a)
 //        this.yieldDirectives()
 //        this.beforeReady()
 //        if (inBrowser) {

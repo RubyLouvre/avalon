@@ -1,4 +1,4 @@
-var avalon = require('../../dist/avalon')
+var avalon = require('avalon')
 var mmRouter = require('./mmRouter')
 var html1 = require('./first.html')
 var html2 = require('./second.html')
@@ -8,7 +8,7 @@ var vm2 = require('./secondVm')
 
 var root = avalon.define({
     $id: 'main',
-    currPath: 'aaa',//只是用于测试
+    currPath: 'aaa', //只是用于测试
     currPage: 'aaa' //这是有用的
 })
 
@@ -37,14 +37,14 @@ avalon.component('ms-view', {
     defaults: {
         page: '&nbsp;',
         path: 'no',
-       
+
         onReady: function(e) {
             var path = e.vmodel.path
             var state = states[path]
             avalon.vmodels[state.vm.$id] = state.vm
-            setTimeout(function() {//必须等它扫描完这个template,才能替换
+            setTimeout(function() { //必须等它扫描完这个template,才能替换
                 e.vmodel.page = state.html
-            },100)
+            }, 100)
 
         },
         onDispose: function(e) {

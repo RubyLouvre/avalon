@@ -30,7 +30,9 @@
         }
     </style>
     <p>
-        <button ms-for="(index, el) in @tabs" ms-class="{active: index === @activeIndex}" ms-click="@activeIndex = index">
+        <button ms-for="(index, el) in @tabs" 
+                ms-class="{active: index === @activeIndex}" 
+                ms-click="@activeIndex = index">
             {{el}}
         </button>
     </p>
