@@ -121,6 +121,19 @@ export function createGetter(expr, type) {
         return avalon.noop
     }
 }
+export function createExpr(expr, type) {
+    var arr = addScope(expr, type),
+        body
+    if (!arr[1]) {
+        body = arr[0]
+    } else {
+        body = arr[1].replace(/__value__\)$/, arr[0] + ')')
+    }
+    if (avalon.modern)
+        return body
+    return `(function(){ try{return ${body} }catch(e){} })()`
+
+}
 
 /**
  * 生成表达式设值函数
