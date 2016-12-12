@@ -2,8 +2,6 @@ import { avalon, config, inBrowser, delayCompileNodes, directives } from '../see
 import { fromDOM } from '../vtree/fromDOM'
 import { fromString } from '../vtree/fromString'
 
-import { VFragment } from '../vdom/VFragment'
-import { Directive } from './Directive'
 import { optimize } from '../vtree/optimize'
 import { Yield } from '../vtree/toTemplate'
 
@@ -32,14 +30,10 @@ function Render(node, vm, noexe) {
     this.root = node //如果传入的字符串,确保只有一个标签作为根节点
     this.vm = vm
     this.exe = noexe === undefined
-    console.log(this.exe, 'PPPP', noexe)
-    this.bindings = [] //收集待加工的绑定属性
     this.callbacks = []
     this.staticIndex = 0
     this.staticTree = {}
-    this.directives = []
     this.init()
-
     this._scope = vm
 }
 
@@ -75,6 +69,11 @@ Render.prototype = {
         var a = new Render(html, vm, true)
         return a.tmpl.exec(vm, this)
     },
+    ctrl: function(id, scope, cb) {
+        var dir = directives['controller']
+        scope = dir.getScope.call(this, id, scope)
+        return cb(scope)
+    },
     scanChildren(children, scope, isRoot) {
         for (var i = 0; i < children.length; i++) {
             var vdom = children[i]
@@ -94,11 +93,7 @@ Render.prototype = {
             this.complete()
         }
     },
-    ctrl: function(id, scope, cb) {
-        var dir = directives['controller']
-        scope = dir.getScope.call(this, id, scope)
-        return cb(scope)
-    },
+   
     /**
      * 从文本节点获取指令
      * @param {type} vdom 
@@ -190,17 +185,13 @@ Render.prototype = {
             }
             var render = this
             scope.$render = render
-                //            this.callbacks.push(function() {
-                //                //用于删除ms-controller
-                //                dir.update.call(render, vdom, attrName, $id)
-                //            })
 
         }
         if (hasFor) {
             if (vdom.dom) {
                 vdom.dom.removeAttribute(oldName)
             }
-            //  return this.getForBindingByElement(vdom, scope, parentChildren, hasFor)
+            return this.getForBindingByElement(vdom, scope, parentChildren, hasFor)
         }
 
         if (/^ms\-/.test(vdom.nodeName)) {
@@ -216,7 +207,6 @@ Render.prototype = {
         if (hasDir) {
             vdom.dirs = dirs
             vdom.dynamic = true
-                //  this.bindings.push([vdom, scope, dirs])
         }
         var children = vdom.children
             //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
@@ -247,43 +237,11 @@ Render.prototype = {
 
 
 
-        //        this.yieldDirectives()
-        //        this.beforeReady()
-        //        if (inBrowser) {
-        //            var root = this.root
-        //            if (inBrowser) {
-        //                var rootDom = avalon.vdom(root, 'toDOM')
-        //                groupTree(rootDom, root.children)
-        //            }
-        //        }
-        //
-        //        this.mount = true
-        //        var fn
-        //        while (fn = this.callbacks.pop()) {
-        //            fn()
-        //        }
-        //        this.optimizeDirectives()
+     
     },
 
-    /**
-     * 将收集到的绑定属性进行深加工,最后转换指令
-     * @returns {Array<tuple>}
-     */
-    yieldDirectives() {
-        
-    },
+ 
 
-    /**
-     * 修改指令的update与callback方法,让它们以后执行时更加高效
-     * @returns {undefined}
-     */
-    optimizeDirectives() {
-        for (var i = 0, el; el = this.directives[i++];) {
-            el.callback = directives[el.type].update
-            el.update = newUpdate
-            el._isScheduled = false
-        }
-    },
     update: function() {
         for (var i = 0, el; el = this.directives[i++];) {
             el.update()
@@ -365,37 +323,4 @@ Render.prototype = {
 
     }
 
-}
-var viewID
-
-function newUpdate() {
-    var oldVal = this.beforeUpdate()
-    var newVal = this.value = this.get()
-    if (this.callback && this.diff(newVal, oldVal)) {
-        this.callback(this.node, this.value)
-        var vm = this.vm
-        var $render = vm.$render
-        var list = vm.$events['onViewChange']
-            /* istanbul ignore if */
-        if (list && $render &&
-            $render.root &&
-            !avalon.viewChanging) {
-            if (viewID) {
-                clearTimeout(viewID)
-                viewID = null
-            }
-            viewID = setTimeout(function() {
-                list.forEach(function(el) {
-                    el.callback.call(vm, {
-                        type: 'viewchange',
-                        target: $render.root,
-                        vmodel: vm
-                    })
-                })
-            })
-
-        }
-
-    }
-    this._isScheduled = false
 }
