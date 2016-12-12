@@ -76,7 +76,6 @@ avalon.directive('for', {
             this.fragments = this.fragments || []
             mountList(this)
         } else {
-            //  collectInFor(this)
             diffList(this)
             updateList(this)
         }
@@ -115,6 +114,7 @@ function createFragments(instance, obj) {
             instance.preFragments = instance.fragments
             avalon.each(obj, function(key, value) {
                 var k = array ? getTraceKey(value) : key
+
                 fragments.push({
                     key: k,
                     val: value,
@@ -160,14 +160,16 @@ function diffList(instance) {
     })
 
     instance.fragments.forEach(function(c, index) {
-         var fragment = isInCache(cache, c.key)
+        var fragment = isInCache(cache, c.key)
             //取出之前的文档碎片
         if (fragment) {
             delete fragment._dispose
             fragment.oldIndex = fragment.index
             fragment.index = index // 相当于 c.index
+            resetVM(fragment.vm, instance.keyName)
             fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
             saveInCache(newCache, fragment)
+
         } else {
             //如果找不到就进行模糊搜索
             fuzzy.push(c)
@@ -185,9 +187,8 @@ function diffList(instance) {
             fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
             delete fragment._dispose
         } else {
-          
+
             c = new VFragment([], c.key, c.val, c.index)
-            
             fragment = FragmentDecorator(c, instance, c.index)
             list.push(fragment)
         }
@@ -209,6 +210,9 @@ function updateItemVm(vm, top) {
     }
 }
 
+function resetVM(vm, a, b) {
+    vm.$accessors[a].value = NaN
+}
 
 
 function updateList(instance) {
@@ -225,7 +229,11 @@ function updateList(instance) {
         }
         if (item.oldIndex !== item.index) {
             var f = item.toFragment()
-            parent.insertBefore(f, before.nextSibling || end)
+            var isEnd = before.nextSibling === null
+            parent.insertBefore(f, before.nextSibling);
+            if (isEnd && !parent.contains(end)) {
+                parent.insertBefore(end, before.nextSibling)
+            }
         }
         before = item.split
     }
@@ -254,14 +262,15 @@ function FragmentDecorator(fragment, instance, index) {
     var vm = fragment.vm = platform.itemFactory(instance.vm, {
         data: data
     })
-    if(instance.isArray){
-        vm.$watch(instance.valName, function(a){
-            if(instance.value && instance.value.set){
+
+    if (instance.isArray) {
+        vm.$watch(instance.valName, function(a) {
+            if (instance.value && instance.value.set) {
                 instance.value.set(vm[instance.keyName], a)
             }
         })
-    }else{
-        vm.$watch(instance.valName, function(a){
+    } else {
+        vm.$watch(instance.valName, function(a) {
             instance.value[fragment.key] = a
         })
     }

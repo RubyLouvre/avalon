@@ -66,7 +66,7 @@ platform.modelFactory = function modelFactory(definition, dd) {
     var core = new IProxy(definition, dd)
     var $accessors = core.$accessors
     var keys = []
-  
+
     platform.hideProperty(core, '$mutations', {})
 
     for (let key in definition) {
@@ -111,7 +111,7 @@ export function canHijack(key, val, $proxyItemBackdoor) {
         if ($proxyItemBackdoor) {
             if (!$proxyItemBackdoorMap[key]) {
                 $proxyItemBackdoorMap[key] = 1
-                avalon.warn('ms-for中的变量不再建议以$为前缀')
+                avalon.warn(`ms-for中的变量${key}不再建议以$为前缀`)
             }
             return true
         }
@@ -158,6 +158,7 @@ platform.itemFactory = function itemFactory(before, after) {
     platform.afterCreate(vm, core, keys)
     return vm
 }
+
 function createAccessor(key, val, isComputed) {
     var mutation = null
     var Accessor = isComputed ? Computed : Mutation
@@ -178,8 +179,6 @@ function createAccessor(key, val, isComputed) {
         configurable: true
     }
 }
-
-
 
 
 platform.fuseFactory = function fuseFactory(before, after) {

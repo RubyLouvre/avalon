@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-12:0:48 version 2.2.2 by 司徒正美
+built in 2016-12-12:21:56 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -4264,7 +4264,7 @@ IE7的checked属性应该使用defaultChecked来设置
             if ($proxyItemBackdoor) {
                 if (!$proxyItemBackdoorMap[key]) {
                     $proxyItemBackdoorMap[key] = 1;
-                    avalon.warn('ms-for中的变量不再建议以$为前缀');
+                    avalon.warn('ms-for\u4E2D\u7684\u53D8\u91CF' + key + '\u4E0D\u518D\u5EFA\u8BAE\u4EE5$\u4E3A\u524D\u7F00');
                 }
                 return true;
             }
@@ -4311,6 +4311,7 @@ IE7的checked属性应该使用defaultChecked来设置
         platform.afterCreate(vm, core, keys);
         return vm;
     };
+
     function createAccessor(key, val, isComputed) {
         var mutation = null;
         var Accessor = isComputed ? Computed : Mutation;
@@ -5540,7 +5541,6 @@ IE7的checked属性应该使用defaultChecked来设置
                 this.fragments = this.fragments || [];
                 mountList(this);
             } else {
-                //  collectInFor(this)
                 diffList(this);
                 updateList(this);
             }
@@ -5579,6 +5579,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 instance.preFragments = instance.fragments;
                 avalon.each(obj, function (key, value) {
                     var k = array ? getTraceKey(value) : key;
+
                     fragments.push({
                         key: k,
                         val: value,
@@ -5629,6 +5630,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 delete fragment._dispose;
                 fragment.oldIndex = fragment.index;
                 fragment.index = index; // 相当于 c.index
+                resetVM(fragment.vm, instance.keyName);
                 fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key;
                 saveInCache(newCache, fragment);
             } else {
@@ -5651,7 +5653,6 @@ IE7的checked属性应该使用defaultChecked来设置
             } else {
 
                 c = new VFragment([], c.key, c.val, c.index);
-
                 fragment = FragmentDecorator(c, instance, c.index);
                 list.push(fragment);
             }
@@ -5663,6 +5664,10 @@ IE7的checked属性应该使用defaultChecked来设置
             return a.index - b.index;
         });
         instance.cache = newCache;
+    }
+
+    function resetVM(vm, a, b) {
+        vm.$accessors[a].value = NaN;
     }
 
     function updateList(instance) {
@@ -5679,7 +5684,11 @@ IE7的checked属性应该使用defaultChecked来设置
             }
             if (item.oldIndex !== item.index) {
                 var f = item.toFragment();
-                parent.insertBefore(f, before.nextSibling || end);
+                var isEnd = before.nextSibling === null;
+                parent.insertBefore(f, before.nextSibling);
+                if (isEnd && !parent.contains(end)) {
+                    parent.insertBefore(end, before.nextSibling);
+                }
             }
             before = item.split;
         }
@@ -5707,6 +5716,7 @@ IE7的checked属性应该使用defaultChecked来设置
         var vm = fragment.vm = platform.itemFactory(instance.vm, {
             data: data
         });
+
         if (instance.isArray) {
             vm.$watch(instance.valName, function (a) {
                 if (instance.value && instance.value.set) {
@@ -6216,13 +6226,14 @@ IE7的checked属性应该使用defaultChecked来设置
         if (elem.value === field.value) {
             return;
         }
+        /* istanbul ignore if*/
         if (elem.caret) {
             try {
                 var pos = field.getCaret(elem);
                 field.pos = pos;
             } catch (e) {}
         }
-
+        /* istanbul ignore if*/
         if (field.debounceTime > 4) {
             var timestamp = new Date();
             var left = timestamp - field.time || 0;

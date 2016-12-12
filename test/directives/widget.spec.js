@@ -1084,4 +1084,110 @@ describe('widget', function() {
         }, 100)
 
     })
+
+    it('处理数组', function(done) {
+        avalon.component("ms-pager2", {
+            template: heredoc(function() {
+                /*
+                 <div class="pagination">
+                 <ul>
+                 <li :for="el in @pages" 
+                 :class="[ el == @currentPage && 'active' ]">
+                 <a href="javascript:void(0)" :click="@gotoPage(el, $event)">{{el}}</a>
+                 </li>
+                 </ul>
+                 </div>
+                 */
+            }),
+            defaults: {
+                totalPage: 25,
+                currentPage: 1,
+                showPage: 5,
+                pages: [1, 2, 3, 4, 5],
+                gotoPage: function(page, e) {
+                    this.currentPage = page;
+                    this.pages = this.getPages();
+                },
+                getPages: function() {
+                    var pages = [];
+                    var s = this.showPage,
+                        l = this.currentPage,
+                        r = this.currentPage,
+                        c = this.totalPage;
+                    pages.push(l);
+                    while (true) {
+                        if (pages.length >= s) {
+                            break;
+                        }
+                        if (l > 1) {
+                            pages.unshift(--l);
+                        }
+                        if (pages.length >= s) {
+                            break;
+                        }
+                        if (r < c) {
+                            pages.push(++r);
+                        }
+                    }
+
+                    return pages;
+                }
+            }
+        });
+        div.innerHTML = heredoc(function() {
+            /*
+             <div ms-controller="widget19">
+             <wbr is="ms-pager2" />
+            <style>
+    .pagination ul{
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    .pagination li{
+        float: left;
+    }
+    .pagination li a{
+        text-decoration: none;
+        display: inline-block;
+        width:40px;
+        height: 30px;
+        line-height: 30px;
+        text-align: center;
+        background: #fafafa;
+        color:#000;
+
+    }
+    .pagination .active a{
+        background: #009a61;
+        color:#fff;
+    }
+            </style>
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'widget19'
+        })
+        avalon.scan(div)
+        setTimeout(function() {
+            var ul = div.getElementsByTagName('ul')[0]
+            expect(ul[textProp]).toBe('12345')
+            var lis = ul.getElementsByTagName('a')
+            fireClick(lis[3])
+            setTimeout(function() {
+                expect(ul[textProp]).toBe('23456')
+                fireClick(lis[3])
+                setTimeout(function() {
+                    expect(ul[textProp]).toBe('34567')
+                    fireClick(lis[0])
+                    setTimeout(function() {
+                        expect(ul[textProp]).toBe('12345')
+                        delete avalon.components['ms-pager2']
+                        done()
+                    }, 120)
+                }, 120)
+            }, 120)
+        }, 100)
+    })
 })

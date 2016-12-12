@@ -60,11 +60,9 @@ if (typeof Proxy === 'function') {
                 }
             }
             for (let i in $computed) {
-                
                 vm[i] = $computed[i]
             }
         }
-
 
         return vm
     }
@@ -97,64 +95,68 @@ if (typeof Proxy === 'function') {
             }
             //收集依赖
             var m = target.$accessors[name]
-            if(m && m.get){
+            if (m && m.get) {
                 return m.get()
             }
-            
+
             return target[name]
         },
         set(target, name, value) {
-            if (name === '$model') {
-                return true
-            }
-            if (name === '$computed') {
-                target[name] = value
-                return true
-            }
-
-            var oldValue = target[name]
-            if (oldValue !== value) {
-                if (canHijack(name, value, target.$proxyItemBackdoor)) {
-                    var mutations = target.$accessors
-                    var $computed = target.$computed || {}
-                        //如果是新属性
-                    if (!(name in $$skipArray) && !mutations[name]) {
-                        updateTrack(target, name, value, !!$computed[name])
-                            //   var a = mutations[name].get()
-                        return true
-                    }
-                    var mutation = mutations[name]
-                        //创建子对象
-
-                    mutation.set(value)
-                    target[name] = mutation.value
-                } else {
-                    target[name] = value
+                if (name === '$model') {
+                    return true
                 }
+                if (name === '$computed') {
+                    target[name] = value
+                    return true
+                }
+               
+                var ac = target.$accessors
+                var oldValue = ac[name] ? ac[name].value : target[name]
+      
+                if (oldValue !== value) {
+                    if (!(name in $$skipArray) && !target.hasOwnProperty(name)){
+                       updateTrack(target, name)
+                    }
+                    if (canHijack(name, value, target.$proxyItemBackdoor)) {
+                        var $computed = target.$computed || {}
+                            //如果是新属性
+                        if (!ac[name]) {
+                            target[name] = value //必须设置，用于hasOwnProperty
+                            var isComputed = !!$computed[name]
+                            var Observable = isComputed ? Computed : Mutation
+                            ac[name] = new Observable(name, value, target)
+                            return true
+                        }
+                        var mutation = ac[name]
+                            //创建子对象
+                        mutation.set(value)
+                        target[name] = mutation.value
+                    } else {
+                        target[name] = value
+                    }
+                }
+                // set方法必须返回true, 告诉Proxy已经成功修改了这个值,否则会抛
+                //'set' on proxy: trap returned falsish for property xxx 错误
+                return true
             }
-            // set方法必须返回true, 告诉Proxy已经成功修改了这个值,否则会抛
-            //'set' on proxy: trap returned falsish for property xxx 错误
-            return true
-        },
-        has(target, name) {
-            return target.hasOwnProperty(name)
-        }
+            //has 只能用于 in 操作符，没什么用删去
     }
 
-    function updateTrack(target, name, value, isComputed) {
+    function updateTrack(target, name) {
         var arr = target.$track.match(/[^☥]+/g) || []
         arr.push(name)
-        var Observable = isComputed ? Computed : Mutation
-        target.$accessors[name] = new Observable(name, value, target)
         target.$track = arr.sort().join('☥')
     }
-    platform.itemFactory = function itemFactory(before, after) {
+
+
+    avalon.itemFactory = platform.itemFactory = function itemFactory(before, after) {
         var definition = before.$model
         definition.$proxyItemBackdoor = true
         definition.$id = before.$hashcode +
             String(after.hashcode || Math.random()).slice(6)
         definition.$accessors = avalon.mix({}, before.$accessors)
         var vm = platform.modelFactory(definition)
+        vm.$track = before.$track
         for (var i in after.data) {
             vm[i] = after.data[i]
         }
