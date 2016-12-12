@@ -2,9 +2,9 @@ import { avalon, config } from '../seed/core'
 import { addScope } from './index'
 var rimprovePriority = /[+-\?]/
 var rinnerValue = /__value__\)$/
-export function parseInterpolate(dir) {
+export function parseInterpolate(expr) {
     var rlineSp = /\n\r?/g
-    var str = dir.nodeValue.trim().replace(rlineSp, '')
+    var str = String(expr).trim().replace(rlineSp, '')
     var tokens = []
     do { //aaa{{@bbb}}ccc
         var index = str.indexOf(config.openTag)

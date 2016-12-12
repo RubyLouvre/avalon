@@ -1,14 +1,15 @@
 import { parseAttributes } from '../parser/attributes'
 import { parseInterpolate } from '../parser/interpolate'
 import { keyMap, createExpr } from '../parser/index'
+import { avalon, config } from '../seed/core'
 
 
 
 export function Yield(nodes, render) {
     this.render = render
     var body = this.genChildren(nodes)
-    this.templateBody = body
-    this.templateFn = Function('__vmodel__', 'Ʃ', 'return ' + body)
+    this.body = body
+    this.exec = Function('__vmodel__', 'Ʃ', 'return ' + body)
 }
 Yield.prototype = {
     genChildren(nodes) {
@@ -32,7 +33,7 @@ Yield.prototype = {
     },
     genText(node) {
         if (node.dynamic) {
-            return `Ʃ.text( ${ createExpr( parseInterpolate(node) ) } )`
+            return `Ʃ.text( ${ createExpr( parseInterpolate(node.nodeValue) ) } )`
         }
         return 'Ʃ.text(${avalon.quote(node.nodeValue)})'
     },
@@ -50,15 +51,16 @@ Yield.prototype = {
             var hasCtrl = dirs['ms-controller']
             delete dirs['ms-controller']
             if (dirs['ms-text']) {
-                node.template = `[Ʃ.text( ${ createExpr(parseInterpolate({nodeValue:dirs['ms-text']})) } )]`
+                var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag)
+                var code = createExpr(expr, 'text')
+                node.template = `[Ʃ.text( ${code} )]`
                 delete dirs['ms-text']
-
                 delete dirs['ms-html']
             }
 
             if (dirs['ms-html']) {
                 //变成可以传参的东西
-                node.template = `(new Ʃ(${ createExpr(dirs['ms-html'])}, __vmodel__, true)).templateBody`
+                node.template = `Ʃ.html( ${ createExpr(dirs['ms-html'])}, __vmodel__ )`
 
                 delete dirs['ms-html']
             }

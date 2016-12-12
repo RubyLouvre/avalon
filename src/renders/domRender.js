@@ -21,8 +21,8 @@ import { startWith, groupTree, dumpTree, getRange } from './share'
  * @param {Function|Undefined} beforeReady
  * @returns {Render}
  */
-avalon.scan = function(node, vm, beforeReady) {
-    return new Render(node, vm, beforeReady || avalon.noop)
+avalon.scan = function(node, vm) {
+    return new Render(node, vm)
 }
 
 /**
@@ -31,7 +31,8 @@ avalon.scan = function(node, vm, beforeReady) {
 function Render(node, vm, noexe) {
     this.root = node //如果传入的字符串,确保只有一个标签作为根节点
     this.vm = vm
-    this.noexe = !noexe
+    this.exe = noexe === undefined
+    console.log(this.exe, 'PPPP', noexe)
     this.bindings = [] //收集待加工的绑定属性
     this.callbacks = []
     this.staticIndex = 0
@@ -69,6 +70,10 @@ Render.prototype = {
     },
     text: function(a) {
         return a + ''
+    },
+    html: function(html, vm) {
+        var a = new Render(html, vm, true)
+        return a.tmpl.exec(vm, this)
     },
     scanChildren(children, scope, isRoot) {
         for (var i = 0; i < children.length; i++) {
@@ -234,9 +239,9 @@ Render.prototype = {
         optimize(this.root)
         this.Yield = Yield
         var fn = new Yield(this.vnodes, this)
-        this.templateBody = fn.templateBody
-        if (this.noexe) {
-            var nodes = fn.templateFn(this._scope, this)
+        this.tmpl = fn
+        if (this.exe) {
+            var nodes = fn.exec(this._scope, this)
             console.log(nodes)
         }
 
@@ -265,30 +270,7 @@ Render.prototype = {
      * @returns {Array<tuple>}
      */
     yieldDirectives() {
-        var tuple
-        while (tuple = this.bindings.shift()) {
-            var vdom = tuple[0],
-                scope = tuple[1],
-                dirs = tuple[2],
-                bindings = []
-            if ('nodeValue' in dirs) {
-                bindings = parseInterpolate(dirs)
-            } else if (!('ms-skip' in dirs)) {
-                bindings = parseAttributes(dirs, tuple)
-            }
-            for (var i = 0, binding; binding = bindings[i++];) {
-                var dir = directives[binding.type]
-                if (!inBrowser && /on|duplex|active|hover/.test(binding.type)) {
-                    continue
-                }
-                if (dir.beforeInit) {
-                    dir.beforeInit.call(binding)
-                }
-
-                var directive = new Directive(scope, binding, vdom, this)
-                this.directives.push(directive)
-            }
-        }
+        
     },
 
     /**
