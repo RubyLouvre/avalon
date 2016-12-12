@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-12:21:54 version 2.2.2 by 司徒正美
+built in 2016-12-12:22:51 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
       fix ms-controller BUG, 上下VM相同时,不会进行合并
 ms-for不再生成代理VM
@@ -3930,10 +3930,10 @@ IE7的checked属性应该使用defaultChecked来设置
                     return target[name]
                 },
                 set: function set(target, name, value) {
-                    if (name === '$model') {
+                    if (name === '$model' || name === '$track') {
                         return true
                     }
-                    if (name === '$computed') {
+                    if (name in $$skipArray) {
                         target[name] = value
                         return true
                     }
@@ -3942,7 +3942,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     var oldValue = ac[name] ? ac[name].value : target[name]
 
                     if (oldValue !== value) {
-                        if (!(name in $$skipArray) && !target.hasOwnProperty(name)) {
+                        if (!target.hasOwnProperty(name)) {
                             updateTrack(target, name)
                         }
                         if (canHijack(name, value, target.$proxyItemBackdoor)) {

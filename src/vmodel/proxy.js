@@ -102,10 +102,10 @@ if (typeof Proxy === 'function') {
             return target[name]
         },
         set(target, name, value) {
-                if (name === '$model') {
+                if (name === '$model' || name === '$track') {
                     return true
                 }
-                if (name === '$computed') {
+                if (name in $$skipArray) {
                     target[name] = value
                     return true
                 }
@@ -114,7 +114,7 @@ if (typeof Proxy === 'function') {
                 var oldValue = ac[name] ? ac[name].value : target[name]
       
                 if (oldValue !== value) {
-                    if (!(name in $$skipArray) && !target.hasOwnProperty(name)){
+                    if (!target.hasOwnProperty(name)){
                        updateTrack(target, name)
                     }
                     if (canHijack(name, value, target.$proxyItemBackdoor)) {
