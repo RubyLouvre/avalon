@@ -38,6 +38,20 @@ Yield.prototype = {
         return 'Ʃ.text(${avalon.quote(node.nodeValue)})'
     },
     genComment(node) {
+        if (node.dynamic) {
+            var dir = node.for
+            avalon.directives['for'].beforeInit.call(dir)
+            console.log(dir.nodes,this.genChildren(dir.nodes))
+            return `Ʃ.repeat(${ createExpr(dir.expr) }, function(
+                    ${dir.valName},
+                    ${dir.keyName},
+                    ${dir.asName || 'a'}){
+                return ${this.genChildren(dir.nodes)}
+            })`
+        }
+
+
+
         return `{nodeName:"#comment",vtype: 8, nodeValue: ${ avalon.quote(node.nodeValue.trim()) } }`
     },
     genElement(node) {
@@ -64,7 +78,7 @@ Yield.prototype = {
 
                 delete dirs['ms-html']
             }
-
+            
             if (!Object.keys(dirs).length) {
                 dirs = null
             }

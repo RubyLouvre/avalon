@@ -74,6 +74,21 @@ Render.prototype = {
         scope = dir.getScope.call(this, id, scope)
         return cb(scope)
     },
+    repeat: function(obj, fn) {
+        var arr = []
+        if (Array.isArray(obj)) {
+            for (var i = 0, n = obj.length; i < n; i++) {
+                avalon.Array.merge(arr, fn(obj[i], i, obj))
+            }
+        } else if (avalon.isObject(obj)) {
+            for (var i in obj) {
+                if (obj.hasOwnProperty(i)) {
+                    avalon.Array.merge(arr, fn(obj[i], i, obj))
+                }
+            }
+        }
+        return arr
+    },
     scanChildren(children, scope, isRoot) {
         for (var i = 0; i < children.length; i++) {
             var vdom = children[i]
@@ -93,7 +108,7 @@ Render.prototype = {
             this.complete()
         }
     },
-   
+
     /**
      * 从文本节点获取指令
      * @param {type} vdom 
@@ -115,7 +130,6 @@ Render.prototype = {
      */
     scanComment(vdom, scope, parentChildren) {
         if (startWith(vdom.nodeValue, 'ms-for:')) {
-            vdom.dynamic = true
             this.getForBinding(vdom, scope, parentChildren)
         }
     },
@@ -235,12 +249,9 @@ Render.prototype = {
             console.log(nodes)
         }
 
-
-
-     
     },
 
- 
+
 
     update: function() {
         for (var i = 0, el; el = this.directives[i++];) {
@@ -276,22 +287,22 @@ Render.prototype = {
         var expr = begin.nodeValue.replace('ms-for:', '').trim()
         begin.nodeValue = 'ms-for:' + expr
         var nodes = getRange(parentChildren, begin)
+        this.scanChildren(nodes, scope, false)
         var end = nodes.end
-        var fragment = avalon.vdom(nodes, 'toHTML')
+        begin.dynamic = true
+            //   var fragment = avalon.vdom(nodes, 'toHTML')
         parentChildren.splice(nodes.start, nodes.length)
         begin.props = {}
-        this.bindings.push([
-            begin, scope, {
-                'ms-for': expr
-            }, {
-                begin,
-                end,
-                expr,
-                userCb,
-                fragment,
-                parentChildren
-            }
-        ])
+        begin.for = {
+            begin,
+            end,
+            expr,
+            nodes,
+            userCb
+
+            // parentChildren
+        }
+
     },
 
 
@@ -308,6 +319,7 @@ Render.prototype = {
         var props = vdom.props
         var begin = {
             nodeName: '#comment',
+            vtype: 8,
             nodeValue: 'ms-for:' + expr
         }
         if (props.slot) {
@@ -315,6 +327,7 @@ Render.prototype = {
             delete props.slot
         }
         var end = {
+            vtype: 8,
             nodeName: '#comment',
             nodeValue: 'ms-for-end:'
         }
