@@ -1,13 +1,14 @@
 /*!
-built in 2016-12-12:22:51 version 2.2.2 by 司徒正美
+built in 2016-12-13:18:13 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
-      fix ms-controller BUG, 上下VM相同时,不会进行合并
-ms-for不再生成代理VM
+fix ms-controller BUG, 上下VM相同时,不会进行合并
 为监听数组添加toJSON方法
 IE7的checked属性应该使用defaultChecked来设置
 对旧版firefox的children进行polyfill
 修正ms-if,ms-text同在一个元素时出BUG的情况 
 修正ms-visible,ms-effect同在一个元素时出BUG的情况
+修正selected属性同步问题
+重构Proxy形态的vm
 
 */;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() : typeof define === 'function' && define.amd ? define(factory) : global.avalon = factory()
@@ -2557,11 +2558,17 @@ IE7的checked属性应该使用defaultChecked来设置
                     nodeValue: node.nodeValue
                 }
             default:
+                var props = markProps(node, node.attributes || [])
                 var vnode = {
                     nodeName: type,
                     dom: node,
                     isVoidTag: !!voidTag[type],
-                    props: markProps(node, node.attributes || [])
+                    props: props
+                }
+                if (type === 'option') {
+                    //即便你设置了option.selected = true,
+                    //option.attributes也找不到selected属性
+                    props.selected = node.selected
                 }
                 if (orphanTag[type] || type === 'option') {
                     makeOrphan(vnode, type, node.text || node.innerHTML)
@@ -5233,6 +5240,17 @@ IE7的checked属性应该使用defaultChecked来设置
         return arr.join('')
     }
 
+    function getSelectedValue(vdom, arr) {
+        vdom.children.forEach(function (el) {
+            if (el.nodeName === 'option') {
+                if (el.props.selected === true) arr.push(getOptionValue(el, el.props))
+            } else if (el.children) {
+                getSelectedValue(el, arr)
+            }
+        })
+        return arr
+    }
+
     var rchangeFilter = /\|\s*change\b/
     var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/
     function duplexBeforeInit() {
@@ -6208,6 +6226,11 @@ IE7的checked属性应该使用defaultChecked来设置
             }
             if (vlength) {
                 groupTree(dom, vdom.children)
+                if (vdom.nodeName === 'select') {
+                    var values = []
+                    getSelectedValue(vdom, values)
+                    lookupOption(vdom, values)
+                }
             }
             //高级版本可以尝试 querySelectorAll
 
@@ -6243,7 +6266,6 @@ IE7的checked属性应该使用defaultChecked来设置
                 } else if (node.nodeValue === 'ms-for-end:') {
                     deep--
                     if (deep === 0) {
-                        //  node.nodeValue = 'msfor-end:'
                         end = node
                         nodes.pop()
                         break
@@ -6865,11 +6887,13 @@ IE7的checked属性应该使用defaultChecked来设置
         var list = vm.$events['on' + name]
         if (list) {
             list.forEach(function (el) {
-                el.callback.call(vm, {
-                    type: name.toLowerCase(),
-                    target: vdom.dom,
-                    vmodel: vm
-                })
+                setTimeout(function () {
+                    el.callback.call(vm, {
+                        type: name.toLowerCase(),
+                        target: vdom.dom,
+                        vmodel: vm
+                    })
+                }, 0)
             })
         }
     }

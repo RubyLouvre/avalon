@@ -162,10 +162,10 @@ avalon.directive('widget', {
                 break
             case 1:
                 this.readyState++
-                    break
+                break
             default:
                 this.readyState++
-                    var comVm = this.comVm
+                var comVm = this.comVm
                 avalon.viewChanging = true
                 avalon.transaction(function() {
                     for (var i in value) {
@@ -218,11 +218,14 @@ function fireComponentHook(vm, vdom, name) {
     var list = vm.$events['on' + name]
     if (list) {
         list.forEach(function(el) {
-            el.callback.call(vm, {
-                type: name.toLowerCase(),
-                target: vdom.dom,
-                vmodel: vm
-            })
+            setTimeout(function(){
+                el.callback.call(vm, {
+                    type: name.toLowerCase(),
+                    target: vdom.dom,
+                    vmodel: vm
+                })
+            },0)
+            
         })
     }
 }

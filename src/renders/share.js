@@ -1,4 +1,5 @@
 import { avalon, createFragment } from '../seed/core'
+import { lookupOption,getSelectedValue } from '../directives/duplex/option'
 
 function getChildren(arr) {
     var count = 0
@@ -29,6 +30,11 @@ export function groupTree(parent, children) {
         }
         if (vlength) {
             groupTree(dom, vdom.children)
+            if(vdom.nodeName === 'select'){
+                var values = []
+                getSelectedValue(vdom, values)
+                lookupOption(vdom, values)
+            }
         }
         //高级版本可以尝试 querySelectorAll
 
@@ -64,7 +70,6 @@ export function getRange(childNodes, node) {
             } else if (node.nodeValue === 'ms-for-end:') {
                 deep--
                 if (deep === 0) {
-                    //  node.nodeValue = 'msfor-end:'
                     end = node
                     nodes.pop()
                     break

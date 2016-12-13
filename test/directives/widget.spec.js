@@ -1190,4 +1190,40 @@ describe('widget', function() {
             }, 120)
         }, 100)
     })
+    //有空加上这个测试 https://github.com/RubyLouvre/avalon/issues/1862
+  it("修正selected同步BUG", function(done){
+      div.innerHTML = heredoc(function(){
+          /*
+    <div ms-controller="widget20">
+        <div class="panel panel-default ms-controller" >
+            <xmp ms-widget="{is:'ms-pager3'}"></xmp>
+        </div>
+
+    </div>
+          */
+      })
+      avalon.component('ms-pager3', {
+            template: heredoc(function(){
+                /*
+                <select ms-duplex="@countPerPage">
+                <option role="option" value="5">5</option>     
+               <option role="option" value="10">10</option>
+               <option role="option" value="20">20</option></select>
+                 */
+            }),
+            defaults: {
+                countPerPage: 10
+            }
+        });
+         vm = avalon.define({
+            $id: 'widget20'
+        })
+        avalon.scan(div, vm)
+        setTimeout(function(){
+           var op = div.getElementsByTagName('option')
+           expect(op[1].selected).toBe(true)
+           delete avalon.components['ms-pager3']
+           done()
+        })
+  })
 })

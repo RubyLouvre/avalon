@@ -17,11 +17,17 @@ export function from(node) {
                 nodeValue: node.nodeValue
             }
         default:
+            var props = markProps(node, node.attributes || [])
             var vnode = {
                 nodeName: type,
                 dom: node,
                 isVoidTag: !!voidTag[type],
-                props: markProps(node, node.attributes || [])
+                props: props
+            }
+            if(type === 'option'){
+                //即便你设置了option.selected = true,
+                //option.attributes也找不到selected属性
+               props.selected = node.selected
             }
             if (orphanTag[type] || type === 'option') {
                 makeOrphan(vnode, type, node.text || node.innerHTML)

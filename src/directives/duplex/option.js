@@ -33,3 +33,15 @@ function getOptionValue(vdom, props) {
     })
     return arr.join('')
 }
+
+export function getSelectedValue(vdom, arr) {
+    vdom.children.forEach(function (el) {
+        if (el.nodeName === 'option') {
+            if(el.props.selected === true)
+               arr.push(getOptionValue(el, el.props))
+        } else if (el.children) {
+            getSelectedValue(el,arr)
+        }
+    })
+    return arr
+}
