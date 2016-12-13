@@ -55,12 +55,13 @@ https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
 fix ms-controller BUG, 上下VM相同时,不会进行合并
-ms-for不再生成代理VM
 为监听数组添加toJSON方法
 IE7的checked属性应该使用defaultChecked来设置
 对旧版firefox的children进行polyfill
 修正ms-if,ms-text同在一个元素时出BUG的情况 
 修正ms-visible,ms-effect同在一个元素时出BUG的情况
+修正selected属性同步问题
+
 */
     })
     var now = new Date

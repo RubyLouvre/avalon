@@ -1,5 +1,7 @@
 #avalon 2 
 
+![](./components/logo.png)
+
 <p align="center">
 <a href="https://badge.fury.io/js/avalon2">
 <img src="https://badge.fury.io/js/avalon2.svg" alt="npm version" height="18">
