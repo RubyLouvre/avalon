@@ -1,6 +1,6 @@
 /*!
-built in 2016-12-13:18:14 version 2.2.2 by 司徒正美
-https://github.com/RubyLouvre/avalon/tree/2.2.1
+built in 2016-12-13:18:38 version 2.2.3 by 司徒正美
+https://github.com/RubyLouvre/avalon/tree/2.2.2
 
 
 fix ms-controller BUG, 上下VM相同时,不会进行合并
@@ -413,7 +413,7 @@ IE7的checked属性应该使用defaultChecked来设置
         inspect: inspect,
         ohasOwn: ohasOwn,
         rword: rword,
-        version: "2.2.2",
+        version: "2.2.3",
         vmodels: {},
 
         directives: directives,

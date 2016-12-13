@@ -50,7 +50,7 @@ module.exports = rollup.rollup({
     }
     var feather = heredoc(function() {
         /*
-        https://github.com/RubyLouvre/avalon/tree/2.2.1
+        https://github.com/RubyLouvre/avalon/tree/2.2.2
 fix ms-controller BUG, 上下VM相同时,不会进行合并
 为监听数组添加toJSON方法
 IE7的checked属性应该使用defaultChecked来设置
