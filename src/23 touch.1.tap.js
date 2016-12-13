@@ -207,7 +207,7 @@ var tapRecognizer = {
     var startTime = tapRecognizer.startTime
     tapRecognizer.status = tapRecognizer.startTime = 0
 
-    targetTagName = targetElement.tagName.toLowerCase()
+    var targetTagName = targetElement.tagName.toLowerCase()
     if (targetTagName === 'label') {
       //尝试触发label上可能绑定的tap事件
       Recognizer.fire(targetElement, 'tap', {
