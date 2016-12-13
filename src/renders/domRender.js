@@ -62,6 +62,9 @@ Render.prototype = {
     static: function(i) {
         return this.staticTree[i]
     },
+    comment: function(value) {
+        return { nodeName: '#comment', vtype: 8, nodeValue:value }
+    },
     text: function(a) {
         return a + ''
     },
@@ -74,20 +77,22 @@ Render.prototype = {
         scope = dir.getScope.call(this, id, scope)
         return cb(scope)
     },
-    repeat: function(obj, fn) {
-        var arr = []
+    repeat: function(obj, str, cb) {
+        var nodes = []
+        var keys = str.split(',')
+        console.log(keys)
         if (Array.isArray(obj)) {
             for (var i = 0, n = obj.length; i < n; i++) {
-                avalon.Array.merge(arr, fn(obj[i], i, obj))
+                repeatCb(obj, obj[i], i, keys, nodes, cb)
             }
         } else if (avalon.isObject(obj)) {
             for (var i in obj) {
                 if (obj.hasOwnProperty(i)) {
-                    avalon.Array.merge(arr, fn(obj[i], i, obj))
+                    repeatCb(obj, obj[i], i, keys, nodes, cb)
                 }
             }
         }
-        return arr
+        return nodes
     },
     scanChildren(children, scope, isRoot) {
         for (var i = 0; i < children.length; i++) {
@@ -108,7 +113,6 @@ Render.prototype = {
             this.complete()
         }
     },
-
     /**
      * 从文本节点获取指令
      * @param {type} vdom 
@@ -120,7 +124,6 @@ Render.prototype = {
             vdom.dynamic = true
         }
     },
-
     /**
      * 从注释节点获取指令
      * @param {type} vdom 
@@ -133,7 +136,6 @@ Render.prototype = {
             this.getForBinding(vdom, scope, parentChildren)
         }
     },
-
     /**
      * 从元素节点的nodeName与属性中获取指令
      * @param {type} vdom 
@@ -232,8 +234,6 @@ Render.prototype = {
             this.scanChildren(children, scope, false)
         }
     },
-
-
     /**
      * 将绑定属性转换为指令
      * 执行各种回调与优化指令
@@ -245,20 +245,18 @@ Render.prototype = {
         var fn = new Yield(this.vnodes, this)
         this.tmpl = fn
         if (this.exe) {
+            console.log('------------------')
+            console.log(fn.body)
             var nodes = fn.exec(this._scope, this)
             console.log(nodes)
         }
 
     },
-
-
-
     update: function() {
         for (var i = 0, el; el = this.directives[i++];) {
             el.update()
         }
     },
-
     /**
      * 销毁所有指令
      * @returns {undefined}
@@ -274,7 +272,6 @@ Render.prototype = {
                 delete this[i]
         }
     },
-
     /**
      * 将循环区域转换为for指令
      * @param {type} begin 注释节点
@@ -304,8 +301,6 @@ Render.prototype = {
         }
 
     },
-
-
     /**
      * 在带ms-for元素节点旁添加两个注释节点,组成循环区域
      * @param {type} vdom
@@ -336,4 +331,14 @@ Render.prototype = {
 
     }
 
+}
+
+function repeatCb(obj, el, index, keys, nodes, cb) {
+    let local = {}
+    local[keys[0]] = el
+    if (keys[1])
+        local[keys[1]] = index
+    if (keys[2])
+        local[keys[1]] = obj
+    avalon.Array.merge(nodes, cb(local))
 }

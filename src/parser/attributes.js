@@ -4,13 +4,14 @@ export var eventMap = avalon.oneObject('animationend,blur,change,input,' +
     'mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit', 'on')
 export function parseAttributes(dirs, node) {
     var uniq = {},
-        bindings = []
-    var hasIf = false
+        bindings = [],
+        props = node.props,
+        hasIf = false
     for (var name in dirs) {
         var value = dirs[name]
         var arr = name.split('-')
             // ms-click
-        if (name in node.props) {
+        if (name in props) {
             var attrName = name
         } else {
             attrName = ':' + name.slice(3)
@@ -27,7 +28,7 @@ export function parseAttributes(dirs, node) {
         if (type === 'controller' || type === 'important')
             continue
         if (directives[type]) {
-
+            delete props[attrName]
             var binding = {
                 type: type,
                 param: arr[2],
@@ -36,9 +37,9 @@ export function parseAttributes(dirs, node) {
                 expr: value,
                 priority: directives[type].priority || type.charCodeAt(0) * 100
             }
-            if (type === 'if') {
-                hasIf = true
-            }
+//            if (type === 'if') {
+//                hasIf = true
+//            }
             if (type === 'on') {
                 binding.priority += arr[3]
             }
@@ -54,15 +55,15 @@ export function parseAttributes(dirs, node) {
     }
     bindings.sort(byPriority)
 
-    if (hasIf) {
-        var ret = []
-        for (var i = 0, el; el = bindings[i++];) {
-            ret.push(el)
-            if (el.type === 'if') {
-                return ret
-            }
-        }
-    }
+//    if (hasIf) {
+//        var ret = []
+//        for (var i = 0, el; el = bindings[i++];) {
+//            ret.push(el)
+//            if (el.type === 'if') {
+//                return ret
+//            }
+//        }
+//    }
     return bindings
 }
 export function byPriority(a, b) {

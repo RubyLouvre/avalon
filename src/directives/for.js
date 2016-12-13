@@ -28,15 +28,15 @@ avalon.directive('for', {
         var arr = str.split(' in ')
         var kv = arr[0].match(rargs)
         if (kv.length === 1) { //确保avalon._each的回调有三个参数
-            kv.unshift('$key')
+            kv.unshift('')
         }
         this.expr = arr[1]
         this.keyName = kv[0]
         this.valName = kv[1]
         this.signature = avalon.makeHashCode('for')
-        if (asName) {
-            this.asName = asName
-        }
+       
+        this.asName = asName || ''
+       
 
         delete this.param
     },

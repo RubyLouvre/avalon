@@ -35,7 +35,7 @@ function addScopeForLocal(str) {
     return str.replace(robjectProp, dig).
     replace(rlocalVar, function(el) {
         if (!skipMap[el]) {
-            return "__vmodel__." + el
+            return "__local__." + el
         }
         return el
     })

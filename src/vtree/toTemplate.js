@@ -16,7 +16,7 @@ Yield.prototype = {
         if (nodes.length) {
             return '[' + nodes.map(function(node) {
                 return this.genNode(node)
-            }, this) + ']'
+            }, this).join(',\n') + ']'
         } else {
             return '[]'
         }
@@ -41,18 +41,15 @@ Yield.prototype = {
         if (node.dynamic) {
             var dir = node.for
             avalon.directives['for'].beforeInit.call(dir)
-            console.log(dir.nodes,this.genChildren(dir.nodes))
-            return `Ʃ.repeat(${ createExpr(dir.expr) }, function(
-                    ${dir.valName},
-                    ${dir.keyName},
-                    ${dir.asName || 'a'}){
+            var keys = `'${dir.valName},${dir.keyName},${dir.asName}'`
+            return `Ʃ.comment('ms-for:${dir.expr}'),
+                    Ʃ.repeat(${ createExpr(dir.expr) }, ${keys}, function(__local__){
                 return ${this.genChildren(dir.nodes)}
             })`
         }
 
 
-
-        return `{nodeName:"#comment",vtype: 8, nodeValue: ${ avalon.quote(node.nodeValue.trim()) } }`
+        return `Ʃ.comment(${avalon.quote(node.nodeValue)})`
     },
     genElement(node) {
         if (node.staticRoot) {
@@ -60,7 +57,8 @@ Yield.prototype = {
                 this.render.staticTree[index] = node
             return `Ʃ.static(${index})`
         }
-        var dirs = node.dirs
+        var dirs = node.dirs,
+            props = node.props
         if (dirs) {
             var hasCtrl = dirs['ms-controller']
             delete dirs['ms-controller']
@@ -70,21 +68,28 @@ Yield.prototype = {
                 node.template = `[Ʃ.text( ${code} )]`
                 delete dirs['ms-text']
                 delete dirs['ms-html']
+                // removeDir('text', dirs, props)
+                // removeDir('html', dirs, props)
+
             }
 
             if (dirs['ms-html']) {
                 //变成可以传参的东西
                 node.template = `Ʃ.html( ${ createExpr(dirs['ms-html'])}, __vmodel__ )`
-
+                //removeDir('html', dirs, props)
                 delete dirs['ms-html']
             }
-            
+            if (dirs['ms-if']) {
+                //变成可以传参的东西
+                var hasIf = createExpr(dirs['ms-if'])
+                delete dirs['ms-if']
+            }
             if (!Object.keys(dirs).length) {
                 dirs = null
             }
         }
         var json = toJSONByArray(
-            `nodeName: "${node.nodeName}"`,
+            `nodeName: '${node.nodeName}'`,
             `vtype: ${node.vtype}`,
             node.isVoidTag ? 'isVoidTag:true' : '',
             node.static ? 'static:true' : '',
@@ -93,6 +98,9 @@ Yield.prototype = {
             `children: ${ node.template || this.genChildren(node.children)}`
 
         )
+        if (hasIf) {
+            json = `${hasIf}? ${json}: Ʃ.comment('if')`
+        }
         if (hasCtrl) {
             return `Ʃ.ctrl(${avalon.quote(hasCtrl)}, __vmodel__,function(__vmodel__){ 
                  return ${json}

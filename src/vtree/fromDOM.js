@@ -19,13 +19,23 @@ export function from(node) {
                 nodeValue: node.nodeValue
             }
         default:
+            var props = markProps(node, node.attributes || [])
             var vnode = {
                 vtype: 1,
                 nodeName: type,
                 dom: node,
                 isVoidTag: !!voidTag[type],
-                props: markProps(node, node.attributes || [])
+                props: props
             }
+            if(type === 'option'){
+                if(option.selected){
+                    props.selected = true
+                }
+                if(option.disabled){
+                    props.disabled = true
+                }
+            }
+            
             if (orphanTag[type] || type === 'option') {
                 makeOrphan(vnode, type, node.text || node.innerHTML)
                 if (node.childNodes.length === 1) {
