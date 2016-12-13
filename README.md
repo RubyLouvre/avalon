@@ -1,6 +1,5 @@
-#avalon 2 
-
 ![](./components/logo.png)
+-------
 
 <p align="center">
 <a href="https://badge.fury.io/js/avalon2">
