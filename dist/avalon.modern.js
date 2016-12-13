@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-10:22:4 version 2.2.2 by 司徒正美
+built in 2016-12-12:23:5 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
       fix ms-controller BUG, 上下VM相同时,不会进行合并
 ms-for不再生成代理VM
@@ -1793,6 +1793,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     tbody = {
                         nodeName: 'tbody',
                         props: {},
+                        vtype: 1,
                         children: []
                     }
                     tbody.children.push(node)
@@ -1965,7 +1966,8 @@ IE7的checked属性应该使用defaultChecked来设置
                 this.str = str.slice(i)
                 this.node = {
                     nodeName: '#text',
-                    nodeValue: nodeValue
+                    nodeValue: nodeValue,
+                    vtype: 3
                 }
                 if (rcontent.test(nodeValue)) {
                     this.tryGenChildren() //不收集空白节点
@@ -1986,6 +1988,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     this.str = str.slice(l + 3)
                     this.node = {
                         nodeName: '#comment',
+                        vtype: 8,
                         nodeValue: nodeValue
                     }
                     this.tryGenChildren()
@@ -2008,6 +2011,7 @@ IE7的checked属性应该使用defaultChecked来设置
                         nodeName: nodeName,
                         props: {},
                         children: [],
+                        vtype: 1,
                         isVoidTag: isVoidTag
                     }
                     var attrs = match[2]
@@ -2555,10 +2559,12 @@ IE7的checked属性应该使用defaultChecked来设置
                 return {
                     nodeName: type,
                     dom: node,
+                    vtype: node.nodeType,
                     nodeValue: node.nodeValue
                 }
             default:
                 var vnode = {
+                    vtype: 1,
                     nodeName: type,
                     dom: node,
                     isVoidTag: !!voidTag[type],
@@ -3091,6 +3097,17 @@ IE7的checked属性应该使用defaultChecked来设置
             avalon$2.log('parse getter: [', expr, body, ']error')
             return avalon$2.noop
         }
+    }
+    function createExpr(expr, type) {
+        var arr = addScope(expr, type),
+            body
+        if (!arr[1]) {
+            body = arr[0]
+        } else {
+            body = arr[1].replace(/__value__\)$/, arr[0] + ')')
+        }
+        if (avalon$2.modern) return body
+        return '(function(){ try{return ' + body + ' }catch(e){} })()'
     }
 
     /**
@@ -6063,10 +6080,59 @@ IE7的checked属性应该使用defaultChecked来设置
         return directive$$1
     }
 
+    function optimize(node) {
+        markStatic(node)
+        // second pass: mark static roots.
+        isStaticRoot(node, false)
+        return node
+    }
+
+    function markStatic(node) {
+        node.static = isStatic(node)
+        if (node.vtype === 1 && !node.isVoidTag) {
+            // do not make component slot content static. this avoids
+            // 1. components not able to mutate slot nodes
+            // 2. static slot content fails for hot-reloading
+            if (node.nodeName === 'slot') {
+                node.static = false
+                return
+            }
+            if (node.props['ms-skip'] || node.props[':skip']) {
+                node.static = false
+                return
+            }
+
+            for (var i = 0, l = node.children.length; i < l; i++) {
+                var child = node.children[i]
+                markStatic(child)
+                if (!child.static) {
+                    node.static = false
+                }
+            }
+        }
+    }
+
+    function isStaticRoot(node) {
+        var ret = true
+        if (node.children) {
+            node.children.forEach(function (el) {
+                ret = ret & isStaticRoot(el)
+            })
+            if (ret && node.static) {
+                node.staticRoot = true
+            }
+        }
+
+        return ret
+    }
+
+    function isStatic(node) {
+        return !node.dynamic
+    }
+
     var eventMap = avalon$2.oneObject('animationend,blur,change,input,' + 'click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,' + 'mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit', 'on')
-    function parseAttributes(dirs, tuple) {
-        var node = tuple[0],
-            uniq = {},
+    function parseAttributes(dirs, node) {
+        var uniq = {},
             bindings = []
         var hasIf = false
         for (var name in dirs) {
@@ -6164,11 +6230,108 @@ IE7的checked属性应该使用defaultChecked来设置
                 str = str.slice(index + config.closeTag.length)
             }
         } while (str.length)
-        return [{
-            expr: tokens.join('+'),
-            name: 'expr',
-            type: 'expr'
-        }]
+        return tokens.join('+')
+    }
+
+    function Yield(nodes, render) {
+        this.render = render
+        var body = this.genChildren(nodes)
+        this.templateBody = body
+        this.templateFn = Function('__vmodel__', 'Ʃ', 'return ' + body)
+    }
+    Yield.prototype = {
+        genChildren: function genChildren(nodes) {
+            if (nodes.length) {
+                return '[' + nodes.map(function (node) {
+                    return this.genNode(node)
+                }, this) + ']'
+            } else {
+                return '[]'
+            }
+        },
+        genNode: function genNode(node) {
+            if (node.vtype === 1) {
+                return this.genElement(node)
+            } else if (node.vtype === 8) {
+                return this.genComment(node)
+            } else {
+                return this.genText(node)
+            }
+        },
+        genText: function genText(node) {
+            if (node.dynamic) {
+                return '\u01A9.text( ' + createExpr(parseInterpolate(node)) + ' )'
+            }
+            return 'Ʃ.text(${avalon.quote(node.nodeValue)})'
+        },
+        genComment: function genComment(node) {
+            return '{nodeName:"#comment",vtype: 8, nodeValue: ' + avalon.quote(node.nodeValue.trim()) + ' }'
+        },
+        genElement: function genElement(node) {
+            if (node.staticRoot) {
+                var index = this.render.staticIndex++
+                this.render.staticTree[index] = node
+                return '\u01A9.static(' + index + ')'
+            }
+            var dirs = node.dirs
+            if (dirs) {
+                var hasCtrl = dirs['ms-controller']
+                delete dirs['ms-controller']
+                if (dirs['ms-text']) {
+                    node.template = '[\u01A9.text( ' + createExpr(parseInterpolate({ nodeValue: dirs['ms-text'] })) + ' )]'
+                    delete dirs['ms-text']
+
+                    delete dirs['ms-html']
+                }
+
+                if (dirs['ms-html']) {
+                    //变成可以传参的东西
+                    node.template = '(new \u01A9(' + createExpr(dirs['ms-html']) + ', __vmodel__, true)).templateBody'
+
+                    delete dirs['ms-html']
+                }
+
+                if (!Object.keys(dirs).length) {
+                    dirs = null
+                }
+            }
+            var json = toJSONByArray('nodeName: "' + node.nodeName + '"', 'vtype: ' + node.vtype, node.isVoidTag ? 'isVoidTag:true' : '', node.static ? 'static:true' : '', dirs ? this.genDirs(dirs, node) : '', 'props: ' + toJSONByObject(node.props), 'children: ' + (node.template || this.genChildren(node.children)))
+            if (hasCtrl) {
+                return '\u01A9.ctrl(' + avalon.quote(hasCtrl) + ', __vmodel__,function(__vmodel__){ \n                 return ' + json + '\n             })'
+            } else {
+                return json
+            }
+        },
+        genDirs: function genDirs(dirs, node) {
+            var arr = parseAttributes(dirs, node)
+            if (arr.length) {
+                return 'dirs:[' + arr.map(function (dir) {
+                    return toJSONByArray('type: ' + avalon.quote(dir.type), 'attrName:' + avalon.quote(dir.attrName), dir.param ? 'param:' + avalon.quote(dir.param) : '', 'expr:' + createExpr(dir.expr))
+                }) + ']'
+            }
+            return ''
+        }
+    }
+
+    var rneedQuote = /[W\:-]/
+
+    function fixKey(k) {
+        return rneedQuote.test(k) || keyMap[k] ? avalon.quote(k) : k
+    }
+
+    function toJSONByArray() {
+        return '{' + avalon.slice(arguments, 0).filter(function (el) {
+            return el
+        }).join(',') + '}'
+    }
+
+    function toJSONByObject(obj) {
+        var arr = []
+        for (var i in obj) {
+            if (obj[i] === undefined || obj[i] === '') continue
+            arr.push(fixKey(i) + ':' + avalon.quote(obj[i]))
+        }
+        return '{' + arr + '}'
     }
 
     function getChildren(arr) {
@@ -6272,15 +6435,18 @@ IE7的checked属性应该使用defaultChecked来设置
     /**
      * avalon.scan 的内部实现
      */
-    function Render(node, vm, beforeReady) {
+    function Render(node, vm, noexe) {
         this.root = node //如果传入的字符串,确保只有一个标签作为根节点
         this.vm = vm
-        this.beforeReady = beforeReady
+        this.noexe = !noexe
         this.bindings = [] //收集待加工的绑定属性
         this.callbacks = []
+        this.staticIndex = 0
+        this.staticTree = {}
         this.directives = []
         this.init()
-        this._scope = !!vm
+
+        this._scope = vm
     }
 
     Render.prototype = {
@@ -6293,7 +6459,6 @@ IE7的checked属性应该使用defaultChecked来设置
             var vnodes
             if (this.root && this.root.nodeType > 0) {
                 vnodes = fromDOM(this.root) //转换虚拟DOM
-
                 //将扫描区域的每一个节点与其父节点分离,更少指令对DOM操作时,对首屏输出造成的频繁重绘
                 dumpTree(this.root)
             } else if (typeof this.root === 'string') {
@@ -6306,6 +6471,13 @@ IE7的checked属性应该使用defaultChecked来设置
             this.vnodes = vnodes
             this.scanChildren(vnodes, this.vm, true)
         },
+
+        static: function _static(i) {
+            return this.staticTree[i]
+        },
+        text: function text(a) {
+            return a + ''
+        },
         scanChildren: function scanChildren(children, scope, isRoot) {
             for (var i = 0; i < children.length; i++) {
                 var vdom = children[i]
@@ -6316,7 +6488,6 @@ IE7的checked属性应该使用defaultChecked来设置
                     case '#comment':
                         this.scanComment(vdom, scope, children)
                         break
-
                     default:
                         this.scanTag(vdom, scope, children, false)
                         break
@@ -6327,7 +6498,11 @@ IE7的checked属性应该使用defaultChecked来设置
             }
         },
 
-
+        ctrl: function ctrl(id, scope, cb) {
+            var dir = directives['controller']
+            scope = dir.getScope.call(this, id, scope)
+            return cb(scope)
+        },
         /**
          * 从文本节点获取指令
          * @param {type} vdom 
@@ -6337,9 +6512,6 @@ IE7的checked属性应该使用defaultChecked来设置
         scanText: function scanText(vdom, scope) {
             if (config.rexpr.test(vdom.nodeValue)) {
                 vdom.dynamic = true
-                this.bindings.push([vdom, scope, {
-                    nodeValue: vdom.nodeValue
-                }])
             }
         },
 
@@ -6414,7 +6586,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 if (!scope) {
                     return
                 } else {
-                    this._scope = true
+                    if (!this._scope) this._scope = scope
                     vdom.dynamic = true
                     var clazz = attrs['class']
                     if (clazz) {
@@ -6446,8 +6618,9 @@ IE7的checked属性应该使用defaultChecked来设置
                 hasDir = true
             }
             if (hasDir) {
+                vdom.dirs = dirs
                 vdom.dynamic = true
-                this.bindings.push([vdom, scope, dirs])
+                //  this.bindings.push([vdom, scope, dirs])
             }
             var children = vdom.children
             //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
@@ -6463,6 +6636,15 @@ IE7的checked属性应该使用defaultChecked来设置
          * @returns {undefined}
          */
         complete: function complete() {
+            optimize(this.root)
+            this.Yield = Yield
+            var fn = new Yield(this.vnodes, this)
+            this.templateBody = fn.templateBody
+            if (this.noexe) {
+                var nodes = fn.templateFn(this._scope, this)
+                console.log(nodes)
+            }
+
             //        this.yieldDirectives()
             //        this.beforeReady()
             //        if (inBrowser) {

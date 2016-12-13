@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-11:23:55 version 2.2.2 by 司徒正美
+built in 2016-12-13:1:39 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -3819,6 +3819,17 @@ IE7的checked属性应该使用defaultChecked来设置
             return avalon.noop;
         }
     }
+    function createExpr(expr, type) {
+        var arr = addScope(expr, type),
+            body;
+        if (!arr[1]) {
+            body = arr[0];
+        } else {
+            body = arr[1].replace(/__value__\)$/, arr[0] + ')');
+        }
+        if (avalon.modern) return body;
+        return '(function(){ try{return ' + body + ' }catch(e){} })()';
+    }
 
     /**
      * 生成表达式设值函数
@@ -6860,44 +6871,6 @@ IE7的checked属性应该使用defaultChecked来设置
         deduplicateInValidateAll: false //@config {Boolean} false，在validateAll回调中对reason数组根据元素节点进行去重
     };
 
-    /**
-     * 一个directive装饰器
-     * @returns {directive}
-     */
-    // DirectiveDecorator(scope, binding, vdom, this)
-    // Decorator(vm, options, callback)
-    function Directive(vm, binding, vdom, render) {
-        var type = binding.type;
-        var decorator = avalon.directives[type];
-        if (inBrowser) {
-            var dom = avalon.vdom(vdom, 'toDOM');
-            if (dom.nodeType === 1) {
-                dom.removeAttribute(binding.attrName);
-            }
-            vdom.dom = dom;
-        }
-        var callback = decorator.update ? function (value) {
-            if (!render.mount && /css|visible|duplex/.test(type)) {
-                render.callbacks.push(function () {
-                    decorator.update.call(directive$$1, directive$$1.node, value);
-                });
-            } else {
-                decorator.update.call(directive$$1, directive$$1.node, value);
-            }
-        } : avalon.noop;
-        for (var key in decorator) {
-            binding[key] = decorator[key];
-        }
-        binding.node = vdom;
-        var directive$$1 = new Action(vm, binding, callback);
-        if (directive$$1.init) {
-            //这里可能会重写node, callback, type, name
-            directive$$1.init();
-        }
-        directive$$1.update();
-        return directive$$1;
-    }
-
     function optimize(node) {
         markStatic(node);
         // second pass: mark static roots.
@@ -7016,9 +6989,9 @@ IE7的checked属性应该使用defaultChecked来设置
 
     var rimprovePriority = /[+-\?]/;
     var rinnerValue = /__value__\)$/;
-    function parseInterpolate(dir) {
+    function parseInterpolate(expr) {
         var rlineSp = /\n\r?/g;
-        var str = dir.nodeValue.trim().replace(rlineSp, '');
+        var str = String(expr).trim().replace(rlineSp, '');
         var tokens = [];
         do {
             //aaa{{@bbb}}ccc
@@ -7051,56 +7024,99 @@ IE7的checked属性应该使用defaultChecked来设置
         return tokens.join('+');
     }
 
-    function toTemplate(nodes, render) {
-        return genChildren(nodes, render);
+    function Yield(nodes, render) {
+        this.render = render;
+        var body = this.genChildren(nodes);
+        this.body = body;
+        console.log(body, '0000');
+        this.exec = Function('__vmodel__', 'Ʃ', 'return ' + body);
     }
-
-    function genChildren(nodes, render) {
-        if (nodes.length) {
-            return '[' + nodes.map(function (node) {
-                return genNode(node, render);
-            }) + ']';
-        } else {
-            return '[]';
-        }
-    }
-
-    function genNode(node, render) {
-        if (node.vtype === 1) {
-            return genElement(node, render);
-        } else {
-            return genText(node);
-        }
-    }
-
-    function genText(node) {
-        if (node.dynamic) {
-            console.log(parseInterpolate(node));
-            return '__render__.s( ' + parseInterpolate(node) + ' )';
-        }
-        return '__render__.s(${avalon.quote(node.nodeValue)})';
-    }
-
-    function genElement(node, render) {
-        if (node.staticRoot) {
-            var index = render.staticIndex++;
-            render.staticTree[index] = node;
-            return '__render__.s(' + index + ')';
-        }
-        var dirs = node.dirs;
-        if (dirs) {
-            var hasCtrl = dirs['ms-controller'];
-            delete dirs['ms-controller'];
-            if (!Object.keys(dirs).length) {
-                dirs = null;
+    Yield.prototype = {
+        genChildren: function genChildren(nodes) {
+            if (nodes.length) {
+                return '[' + nodes.map(function (node) {
+                    return this.genNode(node);
+                }, this) + ']';
+            } else {
+                return '[]';
             }
+        },
+        genNode: function genNode(node) {
+            if (node.vtype === 1) {
+                return this.genElement(node);
+            } else if (node.vtype === 8) {
+                return this.genComment(node);
+            } else {
+                return this.genText(node);
+            }
+        },
+        genText: function genText(node) {
+            if (node.dynamic) {
+                return '\u01A9.text( ' + createExpr(parseInterpolate(node.nodeValue)) + ' )';
+            }
+            return 'Ʃ.text(${avalon.quote(node.nodeValue)})';
+        },
+        genComment: function genComment(node) {
+            if (node.dynamic) {
+                var dir = node["for"];
+                avalon.directives['for'].beforeInit.call(dir);
+                console.log(dir.nodes, this.genChildren(dir.nodes));
+                return '\u01A9.repeat(' + createExpr(dir.expr) + ', function(\n                    ' + dir.valName + ',\n                    ' + dir.keyName + ',\n                    ' + (dir.asName || 'a') + '){\n                return ' + this.genChildren(dir.nodes) + '\n            })';
+            }
+
+            return '{nodeName:"#comment",vtype: 8, nodeValue: ' + avalon.quote(node.nodeValue.trim()) + ' }';
+        },
+        genElement: function genElement(node) {
+            if (node.staticRoot) {
+                var index = this.render.staticIndex++;
+                this.render.staticTree[index] = node;
+                return '\u01A9.static(' + index + ')';
+            }
+            var dirs = node.dirs;
+            if (dirs) {
+                var hasCtrl = dirs['ms-controller'];
+                delete dirs['ms-controller'];
+                if (dirs['ms-text']) {
+                    var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag);
+                    var code = createExpr(expr, 'text');
+                    node.template = '[\u01A9.text( ' + code + ' )]';
+                    delete dirs['ms-text'];
+                    delete dirs['ms-html'];
+                }
+
+                if (dirs['ms-html']) {
+                    //变成可以传参的东西
+                    node.template = '\u01A9.html( ' + createExpr(dirs['ms-html']) + ', __vmodel__ )';
+
+                    delete dirs['ms-html'];
+                }
+
+                if (!Object.keys(dirs).length) {
+                    dirs = null;
+                }
+            }
+            var json = toJSONByArray('nodeName: "' + node.nodeName + '"', 'vtype: ' + node.vtype, node.isVoidTag ? 'isVoidTag:true' : '', node["static"] ? 'static:true' : '', dirs ? this.genDirs(dirs, node) : '', 'props: ' + toJSONByObject(node.props), 'children: ' + (node.template || this.genChildren(node.children)));
+            if (hasCtrl) {
+                return '\u01A9.ctrl(' + avalon.quote(hasCtrl) + ', __vmodel__,function(__vmodel__){ \n                 return ' + json + '\n             })';
+            } else {
+                return json;
+            }
+        },
+        genDirs: function genDirs(dirs, node) {
+            var arr = parseAttributes(dirs, node);
+            if (arr.length) {
+                return 'dirs:[' + arr.map(function (dir) {
+                    return toJSONByArray('type: ' + avalon.quote(dir.type), 'attrName:' + avalon.quote(dir.attrName), dir.param ? 'param:' + avalon.quote(dir.param) : '', 'expr:' + createExpr(dir.expr));
+                }) + ']';
+            }
+            return '';
         }
-        var json = toJSONByArray('nodeName: "' + node.nodeName + '"', 'vtype: ' + node.vtype, node.isVoidTag ? 'isVoidTag:true' : '', node["static"] ? 'static:true' : '', dirs ? genDirs(dirs, node) : '', node.props ? 'props: ' + toJSONByObject(node.props) : '', node.children ? 'children: ' + genChildren(node.children, render) : '');
-        if (hasCtrl) {
-            return '__render__.ctrl(' + avalon.quote(hasCtrl) + ', __vmodel__,function(__vmodel__){ \n                 return ' + json + '\n             })';
-        } else {
-            return json;
-        }
+    };
+
+    var rneedQuote = /[W\:-]/;
+
+    function fixKey(k) {
+        return rneedQuote.test(k) || keyMap[k] ? avalon.quote(k) : k;
     }
 
     function toJSONByArray() {
@@ -7113,20 +7129,9 @@ IE7的checked属性应该使用defaultChecked来设置
         var arr = [];
         for (var i in obj) {
             if (obj[i] === undefined || obj[i] === '') continue;
-            arr.push((i in keyMap ? avalon.quote(i) : i) + ':' + avalon.quote(obj[i]));
+            arr.push(fixKey(i) + ':' + avalon.quote(obj[i]));
         }
         return '{' + arr + '}';
-    }
-
-    function genDirs(dirs, node) {
-        var arr = parseAttributes(dirs, node);
-        if (arr.length) {
-            return '{dirs:[' + arr.forEach(function (dir) {
-                delete dir.priority;
-                return toJSONByObject(dir);
-            }) + ']}';
-        }
-        return '';
     }
 
     function getChildren(arr) {
@@ -7223,25 +7228,22 @@ IE7的checked属性应该使用defaultChecked来设置
      * @param {Function|Undefined} beforeReady
      * @returns {Render}
      */
-    avalon.scan = function (node, vm, beforeReady) {
-        return new Render(node, vm, beforeReady || avalon.noop);
+    avalon.scan = function (node, vm) {
+        return new Render(node, vm);
     };
 
     /**
      * avalon.scan 的内部实现
      */
-    function Render(node, vm, beforeReady) {
+    function Render(node, vm, noexe) {
         this.root = node; //如果传入的字符串,确保只有一个标签作为根节点
         this.vm = vm;
-        this.beforeReady = beforeReady;
-        this.bindings = []; //收集待加工的绑定属性
+        this.exe = noexe === undefined;
         this.callbacks = [];
         this.staticIndex = 0;
         this.staticTree = {};
-        this.directives = [];
         this.init();
-
-        this._scope = !!vm;
+        this._scope = vm;
     }
 
     Render.prototype = {
@@ -7266,6 +7268,37 @@ IE7的checked属性应该使用defaultChecked来设置
             this.vnodes = vnodes;
             this.scanChildren(vnodes, this.vm, true);
         },
+
+        "static": function _static(i) {
+            return this.staticTree[i];
+        },
+        text: function text(a) {
+            return a + '';
+        },
+        html: function html(_html, vm) {
+            var a = new Render(_html, vm, true);
+            return a.tmpl.exec(vm, this);
+        },
+        ctrl: function ctrl(id, scope, cb) {
+            var dir = directives['controller'];
+            scope = dir.getScope.call(this, id, scope);
+            return cb(scope);
+        },
+        repeat: function repeat(obj, fn) {
+            var arr = [];
+            if (Array.isArray(obj)) {
+                for (var i = 0, n = obj.length; i < n; i++) {
+                    avalon.Array.merge(arr, fn(obj[i], i, obj));
+                }
+            } else if (avalon.isObject(obj)) {
+                for (var i in obj) {
+                    if (obj.hasOwnProperty(i)) {
+                        avalon.Array.merge(arr, fn(obj[i], i, obj));
+                    }
+                }
+            }
+            return arr;
+        },
         scanChildren: function scanChildren(children, scope, isRoot) {
             for (var i = 0; i < children.length; i++) {
                 var vdom = children[i];
@@ -7276,7 +7309,6 @@ IE7的checked属性应该使用defaultChecked来设置
                     case '#comment':
                         this.scanComment(vdom, scope, children);
                         break;
-
                     default:
                         this.scanTag(vdom, scope, children, false);
                         break;
@@ -7310,7 +7342,6 @@ IE7的checked属性应该使用defaultChecked来设置
          */
         scanComment: function scanComment(vdom, scope, parentChildren) {
             if (startWith(vdom.nodeValue, 'ms-for:')) {
-                vdom.dynamic = true;
                 this.getForBinding(vdom, scope, parentChildren);
             }
         },
@@ -7371,7 +7402,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 if (!scope) {
                     return;
                 } else {
-                    this._scope = true;
+                    if (!this._scope) this._scope = scope;
                     vdom.dynamic = true;
                     var clazz = attrs['class'];
                     if (clazz) {
@@ -7380,16 +7411,12 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
                 var render = this;
                 scope.$render = render;
-                //            this.callbacks.push(function() {
-                //                //用于删除ms-controller
-                //                dir.update.call(render, vdom, attrName, $id)
-                //            })
             }
             if (hasFor) {
                 if (vdom.dom) {
                     vdom.dom.removeAttribute(oldName);
                 }
-                //  return this.getForBindingByElement(vdom, scope, parentChildren, hasFor)
+                return this.getForBindingByElement(vdom, scope, parentChildren, hasFor);
             }
 
             if (/^ms\-/.test(vdom.nodeName)) {
@@ -7405,7 +7432,6 @@ IE7的checked属性应该使用defaultChecked来设置
             if (hasDir) {
                 vdom.dirs = dirs;
                 vdom.dynamic = true;
-                //  this.bindings.push([vdom, scope, dirs])
             }
             var children = vdom.children;
             //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
@@ -7422,71 +7448,15 @@ IE7的checked属性应该使用defaultChecked来设置
          */
         complete: function complete() {
             optimize(this.root);
-            var a = toTemplate([this.root], this);
-            console.log(this.root);
-            console.log(a);
-            //        this.yieldDirectives()
-            //        this.beforeReady()
-            //        if (inBrowser) {
-            //            var root = this.root
-            //            if (inBrowser) {
-            //                var rootDom = avalon.vdom(root, 'toDOM')
-            //                groupTree(rootDom, root.children)
-            //            }
-            //        }
-            //
-            //        this.mount = true
-            //        var fn
-            //        while (fn = this.callbacks.pop()) {
-            //            fn()
-            //        }
-            //        this.optimizeDirectives()
-        },
-
-
-        /**
-         * 将收集到的绑定属性进行深加工,最后转换指令
-         * @returns {Array<tuple>}
-         */
-        yieldDirectives: function yieldDirectives() {
-            var tuple;
-            while (tuple = this.bindings.shift()) {
-                var vdom = tuple[0],
-                    scope = tuple[1],
-                    dirs = tuple[2],
-                    bindings = [];
-                if ('nodeValue' in dirs) {
-                    bindings = parseInterpolate(dirs);
-                } else if (!('ms-skip' in dirs)) {
-                    bindings = parseAttributes(dirs, tuple);
-                }
-                for (var i = 0, binding; binding = bindings[i++];) {
-                    var dir = directives[binding.type];
-                    if (!inBrowser && /on|duplex|active|hover/.test(binding.type)) {
-                        continue;
-                    }
-                    if (dir.beforeInit) {
-                        dir.beforeInit.call(binding);
-                    }
-
-                    var directive$$1 = new Directive(scope, binding, vdom, this);
-                    this.directives.push(directive$$1);
-                }
+            this.Yield = Yield;
+            var fn = new Yield(this.vnodes, this);
+            this.tmpl = fn;
+            if (this.exe) {
+                var nodes = fn.exec(this._scope, this);
+                console.log(nodes);
             }
         },
 
-
-        /**
-         * 修改指令的update与callback方法,让它们以后执行时更加高效
-         * @returns {undefined}
-         */
-        optimizeDirectives: function optimizeDirectives() {
-            for (var i = 0, el; el = this.directives[i++];) {
-                el.callback = directives[el.type].update;
-                el.update = newUpdate;
-                el._isScheduled = false;
-            }
-        },
 
         update: function update() {
             for (var i = 0, el; el = this.directives[i++];) {
@@ -7522,20 +7492,21 @@ IE7的checked属性应该使用defaultChecked来设置
             var expr = begin.nodeValue.replace('ms-for:', '').trim();
             begin.nodeValue = 'ms-for:' + expr;
             var nodes = getRange(parentChildren, begin);
+            this.scanChildren(nodes, scope, false);
             var end = nodes.end;
-            var fragment = avalon.vdom(nodes, 'toHTML');
+            begin.dynamic = true;
+            //   var fragment = avalon.vdom(nodes, 'toHTML')
             parentChildren.splice(nodes.start, nodes.length);
             begin.props = {};
-            this.bindings.push([begin, scope, {
-                'ms-for': expr
-            }, {
+            begin["for"] = {
                 begin: begin,
                 end: end,
                 expr: expr,
-                userCb: userCb,
-                fragment: fragment,
-                parentChildren: parentChildren
-            }]);
+                nodes: nodes,
+                userCb: userCb
+
+                // parentChildren
+            };
         },
 
 
@@ -7552,6 +7523,7 @@ IE7的checked属性应该使用defaultChecked来设置
             var props = vdom.props;
             var begin = {
                 nodeName: '#comment',
+                vtype: 8,
                 nodeValue: 'ms-for:' + expr
             };
             if (props.slot) {
@@ -7559,6 +7531,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 delete props.slot;
             }
             var end = {
+                vtype: 8,
                 nodeName: '#comment',
                 nodeValue: 'ms-for-end:'
             };
@@ -7566,35 +7539,6 @@ IE7的checked属性应该使用defaultChecked来设置
             this.getForBinding(begin, scope, parentChildren, props['data-for-rendered']);
         }
     };
-    var viewID;
-
-    function newUpdate() {
-        var oldVal = this.beforeUpdate();
-        var newVal = this.value = this.get();
-        if (this.callback && this.diff(newVal, oldVal)) {
-            this.callback(this.node, this.value);
-            var vm = this.vm;
-            var $render = vm.$render;
-            var list = vm.$events['onViewChange'];
-            /* istanbul ignore if */
-            if (list && $render && $render.root && !avalon.viewChanging) {
-                if (viewID) {
-                    clearTimeout(viewID);
-                    viewID = null;
-                }
-                viewID = setTimeout(function () {
-                    list.forEach(function (el) {
-                        el.callback.call(vm, {
-                            type: 'viewchange',
-                            target: $render.root,
-                            vmodel: vm
-                        });
-                    });
-                });
-            }
-        }
-        this._isScheduled = false;
-    }
 
     var events = 'onInit,onReady,onViewChange,onDispose,onEnter,onLeave';
     var componentEvents = avalon.oneObject(events);
