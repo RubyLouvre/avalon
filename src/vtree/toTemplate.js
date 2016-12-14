@@ -66,23 +66,21 @@ Yield.prototype = {
                 var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag)
                 var code = createExpr(expr, 'text')
                 node.template = `[Ʃ.text( ${code} )]`
-                delete dirs['ms-text']
-                delete dirs['ms-html']
-                // removeDir('text', dirs, props)
-                // removeDir('html', dirs, props)
+
+                removeDir('text', dirs, props)
+                removeDir('html', dirs, props)
 
             }
 
             if (dirs['ms-html']) {
                 //变成可以传参的东西
                 node.template = `Ʃ.html( ${ createExpr(dirs['ms-html'])}, __vmodel__ )`
-                //removeDir('html', dirs, props)
-                delete dirs['ms-html']
+                removeDir('html', dirs, props)
             }
             if (dirs['ms-if']) {
                 //变成可以传参的东西
                 var hasIf = createExpr(dirs['ms-if'])
-                delete dirs['ms-if']
+                removeDir('if', dirs, props)
             }
             if (!Object.keys(dirs).length) {
                 dirs = null
@@ -90,9 +88,9 @@ Yield.prototype = {
         }
         var json = toJSONByArray(
             `nodeName: '${node.nodeName}'`,
-            `vtype: ${node.vtype}`,
-            node.isVoidTag ? 'isVoidTag:true' : '',
-            node.static ? 'static:true' : '',
+            ` vtype: ${node.vtype}`,
+            node.isVoidTag ? 'isVoidTag: true' : '',
+            node.static ? 'static: true' : '',
             dirs ? this.genDirs(dirs, node) : '',
             `props: ${toJSONByObject(node.props)}`,
             `children: ${ node.template || this.genChildren(node.children)}`
@@ -116,15 +114,21 @@ Yield.prototype = {
             return 'dirs:[' + arr.map(function(dir) {
                 return toJSONByArray(
                     `type: ${avalon.quote(dir.type)}`,
-                    `attrName:${avalon.quote(dir.attrName)}`,
-                    dir.param ? `param:${avalon.quote(dir.param)}` : '',
-                    `expr:${createExpr(dir.expr)}`
+                    `name: ${avalon.quote(dir.attrName)}`,
+                    dir.param ? `param: ${avalon.quote(dir.param)}` : '',
+                    `value: ${createExpr(dir.expr)}`
                 )
             }) + ']'
         }
         return ''
     }
 
+}
+
+function removeDir(name, dirs, props) {
+    delete dirs['ms-' + name]
+    delete props['ms-' + name]
+    delete props[':' + name]
 }
 
 var rneedQuote = /[W\:-]/
@@ -145,7 +149,7 @@ function toJSONByObject(obj) {
     for (var i in obj) {
         if (obj[i] === undefined || obj[i] === '')
             continue
-        arr.push(`${ fixKey(i)   }:${avalon.quote(obj[i])}`)
+        arr.push(`${ fixKey(i) }: ${avalon.quote(obj[i])}`)
     }
     return '{' + arr + '}'
 }

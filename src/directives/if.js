@@ -1,7 +1,7 @@
 import { avalon, createAnchor } from '../seed/core'
 
 avalon.directive('if', {
-    delay: true,
+  
     priority: 5,
     init: function() {
         this.placeholder = createAnchor('if')

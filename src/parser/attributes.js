@@ -28,18 +28,19 @@ export function parseAttributes(dirs, node) {
         if (type === 'controller' || type === 'important')
             continue
         if (directives[type]) {
+            console.log(attrName, 'ppp')
             delete props[attrName]
             var binding = {
-                type: type,
-                param: arr[2],
-                attrName: attrName,
-                name: arr.join('-'),
-                expr: value,
-                priority: directives[type].priority || type.charCodeAt(0) * 100
-            }
-//            if (type === 'if') {
-//                hasIf = true
-//            }
+                    type: type,
+                    param: arr[2],
+                    attrName: attrName,
+                    name: arr.join('-'),
+                    expr: value,
+                    priority: directives[type].priority || type.charCodeAt(0) * 100
+                }
+                //            if (type === 'if') {
+                //                hasIf = true
+                //            }
             if (type === 'on') {
                 binding.priority += arr[3]
             }
@@ -55,15 +56,15 @@ export function parseAttributes(dirs, node) {
     }
     bindings.sort(byPriority)
 
-//    if (hasIf) {
-//        var ret = []
-//        for (var i = 0, el; el = bindings[i++];) {
-//            ret.push(el)
-//            if (el.type === 'if') {
-//                return ret
-//            }
-//        }
-//    }
+    //    if (hasIf) {
+    //        var ret = []
+    //        for (var i = 0, el; el = bindings[i++];) {
+    //            ret.push(el)
+    //            if (el.type === 'if') {
+    //                return ret
+    //            }
+    //        }
+    //    }
     return bindings
 }
 export function byPriority(a, b) {

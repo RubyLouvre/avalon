@@ -304,6 +304,10 @@ avalon.component = function(name, component) {
      * soleSlot: string
      */
     avalon.components[name] = component
+    component.extend = function(child){
+        var obj =  avalon.mix(true, {}, this.defaults, child)
+        return avalon.component(name, obj)
+    }
     for (var el, i = 0; el = componentQueue[i]; i++) {
         if (el.is === name) {
             componentQueue.splice(i, 1)
@@ -313,4 +317,5 @@ avalon.component = function(name, component) {
             i--;
         }
     }
+    return component
 }

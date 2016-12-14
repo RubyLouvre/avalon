@@ -190,9 +190,9 @@ Render.prototype = {
             if (!scope) {
                 return
             } else {
-                if (!this._scope)
-
+                if (!this._scope){
                     this._scope = scope
+                }
                 vdom.dynamic = true
                 var clazz = attrs['class']
                 if (clazz) {
@@ -245,7 +245,6 @@ Render.prototype = {
         var fn = new Yield(this.vnodes, this)
         this.tmpl = fn
         if (this.exe) {
-            console.log('------------------')
             console.log(fn.body)
             var nodes = fn.exec(this._scope, this)
             console.log(nodes)
