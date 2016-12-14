@@ -1,6 +1,6 @@
 /*!
-built in 2016-12-13:18:38 version 2.2.3 by 司徒正美
-https://github.com/RubyLouvre/avalon/tree/2.2.2
+built in 2016-12-14:14:56 version 2.2.3 by 司徒正美
+https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
 fix ms-controller BUG, 上下VM相同时,不会进行合并
@@ -7795,11 +7795,11 @@ IE7的checked属性应该使用defaultChecked来设置
 
     avalon.components = {};
     avalon.component = function (name, component) {
-        /**
-         * template: string
-         * defaults: object
-         * soleSlot: string
-         */
+
+        component.extend = componentExtend;
+        return addToQueue(name, component);
+    };
+    function addToQueue(name, component) {
         avalon.components[name] = component;
         for (var el, i = 0; el = componentQueue[i]; i++) {
             if (el.is === name) {
@@ -7810,7 +7810,21 @@ IE7的checked属性应该使用defaultChecked来设置
                 i--;
             }
         }
-    };
+        return component;
+    }
+
+    function componentExtend(child) {
+        var name = child.displayName;
+        delete child.displayName;
+        var obj = { defaults: avalon.mix(true, {}, this.defaults, child.defaults) };
+        if (child.soleSlot) {
+            obj.soleSlot = child.soleSlot;
+        }
+        if (child.template) {
+            obj.template = child.template;
+        }
+        return avalon.component(name, obj);
+    }
 
     return avalon;
 });

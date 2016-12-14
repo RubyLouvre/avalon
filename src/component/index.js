@@ -289,8 +289,6 @@ function insertArraySlot(nodes, arr) {
     }
 }
 
-
-
 function insertObjectSlot(nodes, obj) {
     for (var i = 0, el; el = nodes[i]; i++) {
         if (el.nodeName === 'slot') {
@@ -306,11 +304,13 @@ function insertObjectSlot(nodes, obj) {
 
 avalon.components = {}
 avalon.component = function(name, component) {
-    /**
-     * template: string
-     * defaults: object
-     * soleSlot: string
-     */
+
+    component.extend = componentExtend
+    return addToQueue(name, component)
+    
+   
+}
+function addToQueue(name, component){
     avalon.components[name] = component
     for (var el, i = 0; el = componentQueue[i]; i++) {
         if (el.is === name) {
@@ -321,4 +321,21 @@ avalon.component = function(name, component) {
             i--;
         }
     }
+    return component
 }
+
+
+function componentExtend(child){
+    var name = child.displayName
+    delete child.displayName
+    var obj = {defaults: avalon.mix(true, {}, this.defaults, child.defaults)}
+    if( child.soleSlot){
+        obj.soleSlot = child.soleSlot
+    }
+    if( child.template){
+        obj.template = child.template
+    }
+    return avalon.component(name, obj)
+}
+
+

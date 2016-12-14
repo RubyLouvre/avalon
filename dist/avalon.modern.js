@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-13:18:37 version 2.2.3 by 司徒正美
+built in 2016-12-14:14:55 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.2
 fix ms-controller BUG, 上下VM相同时,不会进行合并
 为监听数组添加toJSON方法
@@ -6970,11 +6970,11 @@ IE7的checked属性应该使用defaultChecked来设置
 
     avalon$2.components = {}
     avalon$2.component = function (name, component) {
-        /**
-         * template: string
-         * defaults: object
-         * soleSlot: string
-         */
+
+        component.extend = componentExtend
+        return addToQueue(name, component)
+    }
+    function addToQueue(name, component) {
         avalon$2.components[name] = component
         for (var el, i = 0; el = componentQueue[i]; i++) {
             if (el.is === name) {
@@ -6985,6 +6985,20 @@ IE7的checked属性应该使用defaultChecked来设置
                 i--
             }
         }
+        return component
+    }
+
+    function componentExtend(child) {
+        var name = child.displayName
+        delete child.displayName
+        var obj = { defaults: avalon$2.mix(true, {}, this.defaults, child.defaults) }
+        if (child.soleSlot) {
+            obj.soleSlot = child.soleSlot
+        }
+        if (child.template) {
+            obj.template = child.template
+        }
+        return avalon$2.component(name, obj)
     }
 
     return avalon$2
