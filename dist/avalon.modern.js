@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-14:15:15 version 2.2.3 by 司徒正美
+built in 2016-12-15:1:11 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.2
 fix ms-controller BUG, 上下VM相同时,不会进行合并
 为监听数组添加toJSON方法
@@ -6995,9 +6995,7 @@ IE7的checked属性应该使用defaultChecked来设置
         if (child.soleSlot) {
             obj.soleSlot = child.soleSlot
         }
-        if (child.template) {
-            obj.template = child.template
-        }
+        obj.template = child.template || this.template
         return avalon$2.component(name, obj)
     }
 

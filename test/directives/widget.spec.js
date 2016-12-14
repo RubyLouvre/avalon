@@ -1238,10 +1238,13 @@ describe('widget', function() {
             displayName:'bbb',
             template: '<em><strong>{{@aaa}}</strong></em>'
         })
+        var ccc = aaa.extend({
+            displayName:'ccc'
+        })
         div.innerHTML = heredoc(function(){
             /*
              <div ms-controller='widget21'>
-             <wbr is='aaa' /><wbr is='bbb' />
+             <wbr is='aaa' /><wbr is='bbb' /><wbr is='ccc' />
              </div>
              */
         })
@@ -1250,10 +1253,11 @@ describe('widget', function() {
         })
         avalon.scan(div, vm)
         setTimeout(function(){
-            expect(div.getElementsByTagName('strong').length).toBe(2)
+            expect(div.getElementsByTagName('strong').length).toBe(3)
             expect(div.getElementsByTagName('em').length).toBe(1)
             delete avalon.components.aaa
             delete avalon.components.bbb
+            delete avalon.components.ccc
             done()
         },100)
         
