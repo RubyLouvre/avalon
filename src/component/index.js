@@ -332,9 +332,7 @@ function componentExtend(child){
     if( child.soleSlot){
         obj.soleSlot = child.soleSlot
     }
-    if( child.template){
-        obj.template = child.template
-    }
+    obj.template=child.template||this.template;
     return avalon.component(name, obj)
 }
 
