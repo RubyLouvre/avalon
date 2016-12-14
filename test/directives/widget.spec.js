@@ -1225,5 +1225,38 @@ describe('widget', function() {
            delete avalon.components['ms-pager3']
            done()
         })
-  })
+   })
+    it("组件继承功能", function(done){
+         var aaa = avalon.component('aaa', {
+            defaults: {
+                aaa:11,
+                bbb:22
+            },
+            template: '<strong>{{@aaa}}</strong>'
+        })
+        var bbb = aaa.extend({
+            displayName:'bbb',
+            template: '<em><strong>{{@aaa}}</strong></em>'
+        })
+        div.innerHTML = heredoc(function(){
+            /*
+             <div ms-controller='widget21'>
+             <wbr is='aaa' /><wbr is='bbb' />
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'widget21'
+        })
+        avalon.scan(div, vm)
+        setTimeout(function(){
+            expect(div.getElementsByTagName('strong').length).toBe(2)
+            expect(div.getElementsByTagName('em').length).toBe(1)
+            delete avalon.components.aaa
+            delete avalon.components.bbb
+            done()
+        },100)
+        
+        
+    })
 })
