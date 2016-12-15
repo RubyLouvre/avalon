@@ -4,6 +4,7 @@ import { fromString } from '../vtree/fromString'
 
 import { optimize } from '../vtree/optimize'
 import { Yield } from '../vtree/toTemplate'
+import { collectDeps } from '../vmodel/transaction'
 
 import { orphanTag } from '../vtree/orphanTag'
 import { parseAttributes, eventMap } from '../parser/attributes'
@@ -33,8 +34,9 @@ function Render(node, vm, noexe) {
     this.callbacks = []
     this.staticIndex = 0
     this.staticTree = {}
+    this.uuid = Math.random()
     this.init()
-    this._scope = vm
+
 }
 
 Render.prototype = {
@@ -54,7 +56,6 @@ Render.prototype = {
         } else {
             return avalon.warn('avalon.scan first argument must element or HTML string')
         }
-
         this.root = vnodes[0]
         this.vnodes = vnodes
         this.scanChildren(vnodes, this.vm, true)
@@ -63,7 +64,7 @@ Render.prototype = {
         return this.staticTree[i]
     },
     comment: function(value) {
-        return { nodeName: '#comment', vtype: 8, nodeValue:value }
+        return { nodeName: '#comment', vtype: 8, nodeValue: value }
     },
     text: function(a) {
         return a + ''
@@ -190,8 +191,8 @@ Render.prototype = {
             if (!scope) {
                 return
             } else {
-                if (!this._scope){
-                    this._scope = scope
+                if (!this.vm) {
+                    this.vm = scope
                 }
                 vdom.dynamic = true
                 var clazz = attrs['class']
@@ -245,16 +246,33 @@ Render.prototype = {
         var fn = new Yield(this.vnodes, this)
         this.tmpl = fn
         if (this.exe) {
-            console.log(fn.body)
-            var nodes = fn.exec(this._scope, this)
-            console.log(nodes)
+            var me = this
+            collectDeps(this, this.update)
+
         }
 
     },
-    update: function() {
-        for (var i = 0, el; el = this.directives[i++];) {
-            el.update()
+    insert: function(nodes) {
+        var dom = []
+        for(var i = 0, el; el = nodes[i++];){
+            if(el.vtype === 1){
+               dom.push( avalon.vdom(el,'toDOM') )
+            }else if(el.vtype === 8){
+                
+            }else if(el.slice) {
+                
+            }
         }
+    },
+    update: function() {
+        var nodes = this.tmpl.exec(this.vm, this)
+        console.log(nodes,this.tmpl.body)
+        if (!this.vm.$element) {
+            this.vm.$element = this.insert(nodes)
+        } else {
+            this.patch(this.nodes, nodes)
+        }
+        this.nodes = nodes
     },
     /**
      * 销毁所有指令
@@ -340,4 +358,22 @@ function repeatCb(obj, el, index, keys, nodes, cb) {
     if (keys[2])
         local[keys[1]] = obj
     avalon.Array.merge(nodes, cb(local))
+}
+
+function toDOM(el){
+    if(el.dom && !el.dirs){
+        return el.dom
+    }
+    if(el.vtype === 1){
+        if(!el.dom){
+            el.dom = document.createElement(el.nodeName)
+        }
+        for(var i in el.props){
+            el.dom.setAttribute(i, el.props[i])
+        }
+        return el.dom
+    }else if(el.vtype === 8){
+         return el.dom || el.dom = document.createComment(el.nodeValue)
+    }
+   // if(el)
 }

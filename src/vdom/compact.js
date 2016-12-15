@@ -25,6 +25,9 @@ var vdom = avalon.vdomAdaptor = avalon.vdom = function(obj, method) {
     if (!obj) { //obj在ms-for循环里面可能是null
         return method === "toHTML" ? '' : createFragment()
     }
+    if(typeof obj === 'string'){
+        return document.createTextNode(obj)
+    }
     var nodeName = obj.nodeName
     if (!nodeName) {
         return (new avalon.VFragment(obj))[method]()

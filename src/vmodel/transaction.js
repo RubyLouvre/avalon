@@ -53,8 +53,7 @@ export function reportObserved(target) {
 var targetStack = []
 
 export function collectDeps(action, getter) {
-    if (!action.observers)
-        return
+   
     var preAction = avalon.trackingAction
     if (preAction) {
         targetStack.push(preAction)
@@ -106,6 +105,7 @@ function resetDeps(action) {
             if (dep.lastAccessedBy === action.uuid) {
                 continue
             }
+           
             dep.lastAccessedBy = action.uuid
             avalon.Array.ensure(dep.observers, action)
         }
@@ -116,7 +116,9 @@ function resetDeps(action) {
     }
     action.ids = ids
     if (!action.isComputed) {
-        action.observers = curr
+        if( action.observers){
+          action.observers = curr
+       }
     } else {
         action.depsCount = curr.length
         action.deps = avalon.mix({}, action.mapIDs)
@@ -127,11 +129,11 @@ function resetDeps(action) {
         }
     }
 
-    for (let i = 0, dep; dep = prev[i++];) {
-        if (!checked[dep.uuid]) {
-            avalon.Array.remove(dep.observers, action)
-        }
-    }
+//    for (let i = 0, dep; dep = prev[i++];) {
+//        if (!checked[dep.uuid]) {
+//            avalon.Array.remove(dep.observers, action)
+//        }
+//    }
 
 }
 
