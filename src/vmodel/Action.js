@@ -38,7 +38,7 @@ export function Action(vm, options, callback) {
         this.setter = createSetter(expr, this.type)
     }
     // 缓存表达式旧值
-    this.oldValue = null
+    this.value = NaN
         // 表达式初始值 & 提取依赖
     if (!(this.node)) {
         this.value = this.get()

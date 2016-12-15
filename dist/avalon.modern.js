@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-15:1:11 version 2.2.3 by 司徒正美
+built in 2016-12-15:15:7 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.2
 fix ms-controller BUG, 上下VM相同时,不会进行合并
 为监听数组添加toJSON方法
@@ -3133,6 +3133,7 @@ IE7的checked属性应该使用defaultChecked来设置
         this.isAction = true
         var expr = this.expr
         // 缓存取值函数
+        console.log(this.type)
         if (typeof this.getter !== 'function') {
             this.getter = createGetter(expr, this.type)
         }
@@ -4636,6 +4637,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
     avalon$2.directive('expr', {
         update: function update(vdom, value) {
+            console.log(value, '111')
             vdom.nodeValue = value
             //https://github.com/RubyLouvre/avalon/issues/1834
             if (vdom.dom) if (value === '') value = '\u200B'
@@ -6340,6 +6342,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 var vdom = children[i]
                 switch (vdom.nodeName) {
                     case '#text':
+                        console.log(vdom)
                         scope && this.scanText(vdom, scope)
                         break
                     case '#comment':

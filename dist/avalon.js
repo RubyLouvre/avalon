@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-15:1:11 version 2.2.3 by 司徒正美
+built in 2016-12-15:15:22 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -3861,7 +3861,7 @@ IE7的checked属性应该使用defaultChecked来设置
             this.setter = createSetter(expr, this.type);
         }
         // 缓存表达式旧值
-        this.oldValue = null;
+        this.value = NaN;
         // 表达式初始值 & 提取依赖
         if (!this.node) {
             this.value = this.get();
@@ -5333,10 +5333,10 @@ IE7的checked属性应该使用defaultChecked来设置
 
     avalon.directive('expr', {
         update: function update(vdom, value) {
+            value = value === null ? '\u200B' : value === '' ? '\u200B' : value;
             vdom.nodeValue = value;
             //https://github.com/RubyLouvre/avalon/issues/1834
-            if (vdom.dom) if (value === '') value = '\u200B';
-            vdom.dom.data = value;
+            if (vdom.dom) vdom.dom.data = value;
         }
     });
 
