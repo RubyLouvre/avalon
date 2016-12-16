@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-15:11:26 version 2.2.2 by 司徒正美
+built in 2016-12-16:18:45 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -3532,6 +3532,9 @@ IE7的checked属性应该使用defaultChecked来设置
             //obj在ms-for循环里面可能是null
             return method === "toHTML" ? '' : createFragment();
         }
+        if (typeof obj === 'string') {
+            return document.createTextNode(obj);
+        }
         var nodeName = obj.nodeName;
         if (!nodeName) {
             return new avalon.VFragment(obj)[method]();
@@ -6959,19 +6962,15 @@ IE7的checked属性应该使用defaultChecked来设置
             var type = arr[1];
             if (type === 'controller' || type === 'important') continue;
             if (directives[type]) {
-                console.log(attrName, 'ppp');
+                var _binding;
+
                 delete props[attrName];
-                var binding = {
+                var binding = (_binding = {
                     type: type,
                     param: arr[2],
-                    attrName: attrName,
-                    name: arr.join('-'),
-                    expr: value,
-                    priority: directives[type].priority || type.charCodeAt(0) * 100
-                };
-                //            if (type === 'if') {
-                //                hasIf = true
-                //            }
+                    name: attrName
+                }, _binding['name'] = arr.join('-'), _binding.value = value, _binding.priority = directives[type].priority || type.charCodeAt(0) * 100, _binding);
+
                 if (type === 'on') {
                     binding.priority += arr[3];
                 }
@@ -7065,9 +7064,9 @@ IE7的checked属性应该使用defaultChecked来设置
         },
         genText: function genText(node) {
             if (node.dynamic) {
-                return '\u01A9.text( ' + createExpr(parseInterpolate(node.nodeValue)) + ' )';
+                return '\u01A9.text( ' + createExpr(parseInterpolate(node.nodeValue)) + ')';
             }
-            return 'Ʃ.text(${avalon.quote(node.nodeValue)})';
+            return '\u01A9.text(' + avalon.quote(node.nodeValue) + ')';
         },
         genComment: function genComment(node) {
             if (node.dynamic) {
@@ -7126,8 +7125,9 @@ IE7的checked属性应该使用defaultChecked来设置
         genDirs: function genDirs(dirs, node) {
             var arr = parseAttributes(dirs, node);
             if (arr.length) {
+                node.dirs = dirs;
                 return 'dirs:[' + arr.map(function (dir) {
-                    return toJSONByArray('type: ' + avalon.quote(dir.type), 'name: ' + avalon.quote(dir.attrName), dir.param ? 'param: ' + avalon.quote(dir.param) : '', 'value: ' + createExpr(dir.expr));
+                    return toJSONByArray('type: ' + avalon.quote(dir.type), 'name: ' + avalon.quote(dir.name), dir.param ? 'param: ' + avalon.quote(dir.param) : '', 'value: ' + createExpr(dir.value));
                 }) + ']';
             }
             return '';
@@ -7285,6 +7285,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 vnodes = fromDOM(this.root); //转换虚拟DOM
                 //将扫描区域的每一个节点与其父节点分离,更少指令对DOM操作时,对首屏输出造成的频繁重绘
                 dumpTree(this.root);
+                console.log('000000');
             } else if (typeof this.root === 'string') {
                 vnodes = fromString(this.root); //转换虚拟DOM
             } else {
@@ -7302,7 +7303,7 @@ IE7的checked属性应该使用defaultChecked来设置
             return { nodeName: '#comment', vtype: 8, nodeValue: value };
         },
         text: function text(a) {
-            return a + '';
+            return { nodeName: '#text', vtype: 3, nodeValue: a || '' };
         },
         html: function html(_html, vm) {
             var a = new Render(_html, vm, true);
@@ -7316,10 +7317,10 @@ IE7的checked属性应该使用defaultChecked来设置
         repeat: function repeat(obj, str, cb) {
             var nodes = [];
             var keys = str.split(',');
-            console.log(keys);
+
             if (Array.isArray(obj)) {
                 for (var i = 0, n = obj.length; i < n; i++) {
-                    repeatCb(obj, obj[i], i, keys, nodes, cb);
+                    repeatCb(obj, obj[i], i, keys, nodes, cb, true);
                 }
             } else if (avalon.isObject(obj)) {
                 for (var i in obj) {
@@ -7486,12 +7487,25 @@ IE7的checked属性应该使用defaultChecked来设置
             }
         },
 
-        insert: function insert(nodes) {},
+        insert: function insert(nodes) {
+            toDOM(nodes, true);
+        },
         update: function update() {
             var nodes = this.tmpl.exec(this.vm, this);
             console.log(nodes, this.tmpl.body);
             if (!this.vm.$element) {
-                this.vm.$element = this.insert(nodes);
+
+                diff(this.vnodes[0], nodes[0]);
+                toDOM(this.vnodes);
+                //            var a = nodes[0].dom
+                //            if (a !== document.body) {
+                //                while (a.firstChild) {
+                //                    document.body.appendChild(a.firstChild)
+                //                }
+                //                nodes[0].dom = document.body
+                //                a = document.body
+                //            }
+                this.vm.$element = this.vnodes[0];
             } else {
                 this.patch(this.nodes, nodes);
             }
@@ -7503,8 +7517,8 @@ IE7的checked属性应该使用defaultChecked来设置
          */
         dispose: function dispose() {
             var list = this.directives || [];
-            for (var i = 0, el; el = list[i++];) {
-                el.dispose();
+            for (var i = 0, _el; _el = list[i++];) {
+                _el.dispose();
             }
             //防止其他地方的this.innerRender && this.innerRender.dispose报错
             for (var _i4 in this) {
@@ -7570,13 +7584,148 @@ IE7的checked属性应该使用defaultChecked来设置
             this.getForBinding(begin, scope, parentChildren, props['data-for-rendered']);
         }
     };
-
-    function repeatCb(obj, el, index, keys, nodes, cb) {
+    function getTraceKey$1(item) {
+        var type = typeof item;
+        return item && type === 'object' ? item.$hashcode : type + ':' + item;
+    }
+    function repeatCb(obj, el, index, keys, nodes, cb, isArray$$1) {
         var local = {};
         local[keys[0]] = el;
         if (keys[1]) local[keys[1]] = index;
         if (keys[2]) local[keys[1]] = obj;
-        avalon.Array.merge(nodes, cb(local));
+        var arr = cb(local),
+            obj;
+        arr.push({
+            nodeName: '#text',
+            nodeValue: ' '
+        });
+        obj = {
+            key: isArray$$1 ? getTraceKey$1(el) : index,
+            nodeName: '#document-fragment',
+            children: arr
+        };
+
+        nodes.push(obj);
+    }
+    var container = {
+        script: function script(node) {
+            try {
+                node.dom.text = node.children[0].nodeValue;
+            } catch (e) {
+                console.log(node);
+            }
+        },
+        style: function style(node) {
+            try {
+                node.dom.textContext = node.children[0].nodeValue;
+            } catch (e) {
+                console.log(node);
+            }
+        }
+    };
+    // 以后要废掉vdom系列,action
+    function diff(a, b) {
+        switch (a.nodeName) {
+            case '#text':
+                if (a.dynamic && a.nodeValue !== b.nodeValue) {
+                    console.log('888');
+                    a.dom.nodeValue = b.nodeValue;
+                }
+                break;
+            case '#comment':
+                break;
+            case '#document-fragment':
+                diff(a.children, b.children);
+                break;
+            case void 0:
+                break;
+            default:
+                if (a.staticRoot) {
+                    toDOM(el);
+                    return;
+                }
+                if (b.dirs) {
+                    for (var i = 0, dir; dir = b.dirs[i++];) {
+                        var d = avalon.directives[dir.type];
+                        if (!a['_' + dir.name]) {
+                            a['_' + dir.name] = {};
+                        }
+                        var bb = a['_' + dir.name];
+                        d.diff.call(d, bb, dir.value);
+                    }
+                }
+                if (!a.isVoidTag) {
+                    for (var i = 0, n = a.children.length; i < n; i++) {
+                        diff(a.children[i], b.children[i]);
+                    }
+                }
+                break;
+        }
+    }
+    function toDOM(el) {
+
+        if (el.props) {
+            if (!el.dom) {
+                console.log(el.dom, el);
+                el.dom = document.createElement(el.nodeName);
+            }
+            for (var i in el.props) {
+                if (typeof el.dom[i] === 'boolean') {
+                    el.dom[i] = !!el.props[i];
+                } else {
+                    el.dom.setAttribute(i, el.props[i]);
+                }
+            }
+            if (container[el.nodeName]) {
+                container[el.nodeName](el);
+            } else if (el.children && !el.isVoidTag) {
+                appendChild(el.dom, el.children);
+            }
+            return el.dom;
+        } else if (el.nodeName === '#comment') {
+            return el.dom || (el.dom = document.createComment(el.nodeValue));
+        } else if (el.nodeName === '#document-fragment') {
+            var dom = document.createDocumentFragment();
+            appendChild(dom, el.children);
+            el.split = dom.lastChild;
+            el.dom = dom;
+            return dom;
+        } else if (el.nodeName === '#text') {
+            if (el.dom) return el.dom;
+            return document.createTextNode(el.nodeValue);
+        } else if (Array.isArray(el)) {
+            el = flatten(el);
+            if (el.length === 1) {
+                console.log(el[0]);
+                return toDOM(el[0]);
+            } else {
+                var a = document.createDocumentFragment();
+                appendChild(a, el);
+                return a;
+            }
+        }
+    }
+
+    function appendChild(parent, children) {
+        for (var i = 0, n = children.length; i < n; i++) {
+            var b = toDOM(children[i]);
+            if (b) {
+                parent.appendChild(b);
+            }
+        }
+    }
+
+    function flatten(array) {
+        var ret = [];
+        for (var i = 0, n = array.length; i < n; i++) {
+            var el = array[i];
+            if (Array.isArray(el)) {
+                ret.push.apply(ret, el);
+            } else {
+                ret.push(el);
+            }
+        }
+        return ret;
     }
 
     var events = 'onInit,onReady,onViewChange,onDispose,onEnter,onLeave';

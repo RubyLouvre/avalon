@@ -33,9 +33,9 @@ Yield.prototype = {
     },
     genText(node) {
         if (node.dynamic) {
-            return `Ʃ.text( ${ createExpr( parseInterpolate(node.nodeValue) ) } )`
+            return `Ʃ.text( ${ createExpr( parseInterpolate(node.nodeValue) ) })`
         }
-        return 'Ʃ.text(${avalon.quote(node.nodeValue)})'
+        return `Ʃ.text(${avalon.quote(node.nodeValue)})`
     },
     genComment(node) {
         if (node.dynamic) {
@@ -111,12 +111,13 @@ Yield.prototype = {
     genDirs(dirs, node) {
         var arr = parseAttributes(dirs, node)
         if (arr.length) {
+            node.dirs = dirs
             return 'dirs:[' + arr.map(function(dir) {
                 return toJSONByArray(
                     `type: ${avalon.quote(dir.type)}`,
-                    `name: ${avalon.quote(dir.attrName)}`,
+                    `name: ${avalon.quote(dir.name)}`,
                     dir.param ? `param: ${avalon.quote(dir.param)}` : '',
-                    `value: ${createExpr(dir.expr)}`
+                    `value: ${createExpr(dir.value)}`
                 )
             }) + ']'
         }

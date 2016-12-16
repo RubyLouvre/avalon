@@ -51,6 +51,7 @@ Render.prototype = {
             vnodes = fromDOM(this.root) //转换虚拟DOM
                 //将扫描区域的每一个节点与其父节点分离,更少指令对DOM操作时,对首屏输出造成的频繁重绘
             dumpTree(this.root)
+            console.log('000000')
         } else if (typeof this.root === 'string') {
             vnodes = fromString(this.root) //转换虚拟DOM
         } else {
@@ -67,7 +68,7 @@ Render.prototype = {
         return { nodeName: '#comment', vtype: 8, nodeValue: value }
     },
     text: function(a) {
-        return a + ''
+        return { nodeName: '#text', vtype: 3, nodeValue: a || '' }
     },
     html: function(html, vm) {
         var a = new Render(html, vm, true)
@@ -81,10 +82,10 @@ Render.prototype = {
     repeat: function(obj, str, cb) {
         var nodes = []
         var keys = str.split(',')
-        console.log(keys)
+       
         if (Array.isArray(obj)) {
             for (var i = 0, n = obj.length; i < n; i++) {
-                repeatCb(obj, obj[i], i, keys, nodes, cb)
+                repeatCb(obj, obj[i], i, keys, nodes, cb, true)
             }
         } else if (avalon.isObject(obj)) {
             for (var i in obj) {
@@ -250,25 +251,27 @@ Render.prototype = {
             collectDeps(this, this.update)
 
         }
-
     },
     insert: function(nodes) {
-        var dom = []
-        for(var i = 0, el; el = nodes[i++];){
-            if(el.vtype === 1){
-               dom.push( avalon.vdom(el,'toDOM') )
-            }else if(el.vtype === 8){
-                
-            }else if(el.slice) {
-                
-            }
-        }
+        toDOM(nodes, true)
+
     },
     update: function() {
         var nodes = this.tmpl.exec(this.vm, this)
-        console.log(nodes,this.tmpl.body)
+        console.log(nodes, this.tmpl.body)
         if (!this.vm.$element) {
-            this.vm.$element = this.insert(nodes)
+          
+         diff(this.vnodes[0], nodes[0])
+        toDOM(this.vnodes)
+//            var a = nodes[0].dom
+//            if (a !== document.body) {
+//                while (a.firstChild) {
+//                    document.body.appendChild(a.firstChild)
+//                }
+//                nodes[0].dom = document.body
+//                a = document.body
+//            }
+            this.vm.$element = this.vnodes[0]
         } else {
             this.patch(this.nodes, nodes)
         }
@@ -349,31 +352,147 @@ Render.prototype = {
     }
 
 }
-
-function repeatCb(obj, el, index, keys, nodes, cb) {
+function getTraceKey(item) {
+    var type = typeof item
+    return item && type === 'object' ? item.$hashcode : type + ':' + item
+}
+function repeatCb(obj, el, index, keys, nodes, cb, isArray) {
     let local = {}
     local[keys[0]] = el
     if (keys[1])
         local[keys[1]] = index
     if (keys[2])
         local[keys[1]] = obj
-    avalon.Array.merge(nodes, cb(local))
-}
-
-function toDOM(el){
-    if(el.dom && !el.dirs){
-        return el.dom
+    var arr = cb(local), obj
+    arr.push({
+        nodeName: '#text',
+        nodeValue: ' '
+    })
+    obj = {
+        key: isArray ? getTraceKey(el): index,
+        nodeName: '#document-fragment',
+        children: arr
     }
-    if(el.vtype === 1){
-        if(!el.dom){
+    
+   nodes.push(obj)
+}
+var container = {
+        script: function(node) {
+            try {
+                node.dom.text = node.children[0].nodeValue
+            } catch (e) {
+                console.log(node)
+            }
+        },
+        style: function(node) {
+            try {
+                node.dom.textContext = node.children[0].nodeValue
+            } catch (e) { console.log(node) }
+        }
+    }
+    // 以后要废掉vdom系列,action
+function diff(a, b){
+    switch(a.nodeName){
+        case '#text':
+            if(a.dynamic && a.nodeValue !== b.nodeValue){
+                console.log('888')
+                a.dom.nodeValue = b.nodeValue
+            }
+            break
+        case '#comment':
+            break
+        case '#document-fragment':
+            diff(a.children, b.children)
+            break
+        case void(0):
+            break
+        default: 
+           if(a.staticRoot){
+               toDOM(el)
+               return
+           }
+           if(b.dirs){
+               for(var i = 0, dir; dir = b.dirs[i++];){
+                  var d = avalon.directives[dir.type]
+                 if(!a['_'+dir.name]){
+                     a['_'+dir.name] = {}
+                 }
+                 var bb =  a['_'+dir.name]
+                 d.diff.call(d, bb, dir.value)
+               }
+           }
+           if(!a.isVoidTag){
+               for(var i = 0, n = a.children.length; i < n; i++){
+                     diff(a.children[i], b.children[i])
+               }
+           }
+           break
+    }
+}
+function toDOM(el) {
+
+    if (el.props) {
+        if (!el.dom) {
+            console.log(el.dom, el)
             el.dom = document.createElement(el.nodeName)
         }
-        for(var i in el.props){
-            el.dom.setAttribute(i, el.props[i])
+        for (var i in el.props) {
+            if (typeof el.dom[i] === 'boolean') {
+                el.dom[i] = !!el.props[i]
+            } else {
+                el.dom.setAttribute(i, el.props[i])
+            }
+
+        }
+        if (container[el.nodeName]) {
+            container[el.nodeName](el)
+        } else if (el.children && !el.isVoidTag) {
+            appendChild(el.dom, el.children)
         }
         return el.dom
-    }else if(el.vtype === 8){
-         return el.dom || el.dom = document.createComment(el.nodeValue)
+    } else if (el.nodeName === '#comment') {
+        return el.dom || (el.dom = document.createComment(el.nodeValue))
+   } else if (el.nodeName === '#document-fragment') {
+        var dom = document.createDocumentFragment()
+        appendChild(dom, el.children)
+        el.split = dom.lastChild
+        el.dom = dom
+        return dom
+    } else if (el.nodeName === '#text') {
+        if (el.dom)
+            return el.dom
+        return document.createTextNode(el.nodeValue)
+    } else if (Array.isArray(el)) {
+        el = flatten(el)
+        if (el.length === 1) {
+            console.log(el[0])
+            return toDOM(el[0])
+        } else {
+            var a = document.createDocumentFragment()
+            appendChild(a, el)
+            return a
+        }
     }
-   // if(el)
+}
+
+function appendChild(parent, children){
+    for (var i = 0, n = children.length; i < n; i++) {
+        var b = toDOM(children[i])
+        if (b) {
+            parent.appendChild(b)
+        }
+    }
+}
+
+function flatten(array) {
+    var ret = []
+    for (var i = 0, n = array.length; i < n; i++) {
+        var el = array[i]
+        if (Array.isArray(el)) {
+            ret.push.apply(ret, el)
+        } else {
+            ret.push(el)
+        }
+    }
+    return ret
 }
