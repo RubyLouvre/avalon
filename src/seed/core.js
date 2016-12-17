@@ -65,7 +65,7 @@ export function warn() {
                 Function.apply.call(method, console, arguments)
         }
 }
-export function error(e, str) {
+export function error(str ,e) {
         throw (e || Error)(str)
 }
 export function noop() { }
