@@ -111,13 +111,13 @@ Yield.prototype = {
     genDirs(dirs, node) {
         var arr = parseAttributes(dirs, node)
         if (arr.length) {
-            node.dirs = dirs
+            node.dirs = arr
             return 'dirs:[' + arr.map(function(dir) {
                 return toJSONByArray(
                     `type: ${avalon.quote(dir.type)}`,
                     `name: ${avalon.quote(dir.name)}`,
                     dir.param ? `param: ${avalon.quote(dir.param)}` : '',
-                    `value: ${createExpr(dir.value)}`
+                    `value: ${createExpr(dir.expr)}`
                 )
             }) + ']'
         }

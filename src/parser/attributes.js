@@ -30,14 +30,15 @@ export function parseAttributes(dirs, node) {
         if (directives[type]) {
             delete props[attrName]
             var binding = {
-                    type: type,
-                    param: arr[2],
-                    name: attrName,
-                    name: arr.join('-'),
-                    value: value,
-                    priority: directives[type].priority || type.charCodeAt(0) * 100
-                }
-  
+                type: type,
+                param: arr[2],
+                name: attrName,
+                name: arr.join('-'),
+                expr: value,
+                priority: directives[type].priority || type.charCodeAt(0) * 100
+            }
+            avalon.mix(binding, directives[type])
+
             if (type === 'on') {
                 binding.priority += arr[3]
             }
@@ -52,16 +53,6 @@ export function parseAttributes(dirs, node) {
         }
     }
     bindings.sort(byPriority)
-
-    //    if (hasIf) {
-    //        var ret = []
-    //        for (var i = 0, el; el = bindings[i++];) {
-    //            ret.push(el)
-    //            if (el.type === 'if') {
-    //                return ret
-    //            }
-    //        }
-    //    }
     return bindings
 }
 export function byPriority(a, b) {

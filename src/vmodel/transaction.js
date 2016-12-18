@@ -67,9 +67,11 @@ export function collectDeps(action, getter) {
     try {
         result = getter.call(action)
         hasError = false
+    } catch(e){
+        avalon.log(e)
     } finally {
         if (hasError) {
-            avalon.warn('collectDeps fail', getter + '')
+            avalon.warn('collectDeps fail')
             action.mapIDs = {}
             avalon.trackingAction = preAction
         } else {

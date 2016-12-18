@@ -59,12 +59,16 @@ avalon.bind = function(elem, type, fn) {
             setEventId(elem, keys.join(','))
                 //将令牌放进avalon-events属性中
         }
-
+        return fn //兼容之前的版本
     } else {
         /* istanbul ignore next */
-        avalon._nativeBind(elem, type, fn)
+        function cb(e){
+            return fn.call(elem, new avEvent(e))
+        }
+        avalon._nativeBind(elem, type, cb)
+        return cb
     }
-    return fn //兼容之前的版本
+   
 }
 
 function setEventId(node, value) {

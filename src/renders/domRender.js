@@ -51,7 +51,6 @@ Render.prototype = {
             vnodes = fromDOM(this.root) //转换虚拟DOM
                 //将扫描区域的每一个节点与其父节点分离,更少指令对DOM操作时,对首屏输出造成的频繁重绘
             dumpTree(this.root)
-            console.log('000000')
         } else if (typeof this.root === 'string') {
             vnodes = fromString(this.root) //转换虚拟DOM
         } else {
@@ -398,7 +397,6 @@ function diff(a, b) {
     switch (a.nodeName) {
         case '#text':
             if (a.dynamic && a.nodeValue !== b.nodeValue) {
-                console.log('888')
                 a.dom.nodeValue = b.nodeValue
             }
             break
@@ -411,17 +409,18 @@ function diff(a, b) {
             break
         default:
             if (a.staticRoot) {
-                toDOM(el)
+                toDOM(a)
                 return
             }
             if (b.dirs) {
                 for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                     var adir = a.dirs[i]
+                    if (adir.diff(bdir.value, adir.value, a)) {
+                        if (adir.after) {
 
-                    var d = avalon.directives[bdir.type]
-
-                    if (d.diff.call(d, adir.value, bdir.value, adir)) {
-                        d.update(a, adir.value)
+                        } else {
+                            adir.update(a, adir.value)
+                        }
                     }
                 }
             }

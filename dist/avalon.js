@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-16:18:45 version 2.2.2 by 司徒正美
+built in 2016-12-18:23:4 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -3632,9 +3632,11 @@ IE7的checked属性应该使用defaultChecked来设置
         try {
             result = getter.call(action);
             hasError = false;
+        } catch (e) {
+            avalon.log(e);
         } finally {
             if (hasError) {
-                avalon.warn('collectDeps fail', getter + '');
+                avalon.warn('collectDeps fail');
                 action.mapIDs = {};
                 avalon.trackingAction = preAction;
             } else {
@@ -5803,6 +5805,8 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     }
 
+    //https://github.com/youngwind/bue/tree/master/src/directives
+
     //根据VM的属性值或表达式的值切换类名，ms-class='xxx yyy zzz:flag'
     //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
     function classNames() {
@@ -6969,7 +6973,8 @@ IE7的checked属性应该使用defaultChecked来设置
                     type: type,
                     param: arr[2],
                     name: attrName
-                }, _binding['name'] = arr.join('-'), _binding.value = value, _binding.priority = directives[type].priority || type.charCodeAt(0) * 100, _binding);
+                }, _binding['name'] = arr.join('-'), _binding.expr = value, _binding.priority = directives[type].priority || type.charCodeAt(0) * 100, _binding);
+                avalon.mix(binding, directives[type]);
 
                 if (type === 'on') {
                     binding.priority += arr[3];
@@ -6984,16 +6989,6 @@ IE7的checked属性应该使用defaultChecked来设置
             }
         }
         bindings.sort(byPriority);
-
-        //    if (hasIf) {
-        //        var ret = []
-        //        for (var i = 0, el; el = bindings[i++];) {
-        //            ret.push(el)
-        //            if (el.type === 'if') {
-        //                return ret
-        //            }
-        //        }
-        //    }
         return bindings;
     }
     function byPriority(a, b) {
@@ -7125,9 +7120,9 @@ IE7的checked属性应该使用defaultChecked来设置
         genDirs: function genDirs(dirs, node) {
             var arr = parseAttributes(dirs, node);
             if (arr.length) {
-                node.dirs = dirs;
+                node.dirs = arr;
                 return 'dirs:[' + arr.map(function (dir) {
-                    return toJSONByArray('type: ' + avalon.quote(dir.type), 'name: ' + avalon.quote(dir.name), dir.param ? 'param: ' + avalon.quote(dir.param) : '', 'value: ' + createExpr(dir.value));
+                    return toJSONByArray('type: ' + avalon.quote(dir.type), 'name: ' + avalon.quote(dir.name), dir.param ? 'param: ' + avalon.quote(dir.param) : '', 'value: ' + createExpr(dir.expr));
                 }) + ']';
             }
             return '';
@@ -7285,7 +7280,6 @@ IE7的checked属性应该使用defaultChecked来设置
                 vnodes = fromDOM(this.root); //转换虚拟DOM
                 //将扫描区域的每一个节点与其父节点分离,更少指令对DOM操作时,对首屏输出造成的频繁重绘
                 dumpTree(this.root);
-                console.log('000000');
             } else if (typeof this.root === 'string') {
                 vnodes = fromString(this.root); //转换虚拟DOM
             } else {
@@ -7517,8 +7511,8 @@ IE7的checked属性应该使用defaultChecked来设置
          */
         dispose: function dispose() {
             var list = this.directives || [];
-            for (var i = 0, _el; _el = list[i++];) {
-                _el.dispose();
+            for (var i = 0, el; el = list[i++];) {
+                el.dispose();
             }
             //防止其他地方的this.innerRender && this.innerRender.dispose报错
             for (var _i4 in this) {
@@ -7584,10 +7578,12 @@ IE7的checked属性应该使用defaultChecked来设置
             this.getForBinding(begin, scope, parentChildren, props['data-for-rendered']);
         }
     };
+
     function getTraceKey$1(item) {
         var type = typeof item;
         return item && type === 'object' ? item.$hashcode : type + ':' + item;
     }
+
     function repeatCb(obj, el, index, keys, nodes, cb, isArray$$1) {
         var local = {};
         local[keys[0]] = el;
@@ -7628,7 +7624,6 @@ IE7的checked属性应该使用defaultChecked来设置
         switch (a.nodeName) {
             case '#text':
                 if (a.dynamic && a.nodeValue !== b.nodeValue) {
-                    console.log('888');
                     a.dom.nodeValue = b.nodeValue;
                 }
                 break;
@@ -7641,17 +7636,17 @@ IE7的checked属性应该使用defaultChecked来设置
                 break;
             default:
                 if (a.staticRoot) {
-                    toDOM(el);
+                    toDOM(a);
                     return;
                 }
                 if (b.dirs) {
-                    for (var i = 0, dir; dir = b.dirs[i++];) {
-                        var d = avalon.directives[dir.type];
-                        if (!a['_' + dir.name]) {
-                            a['_' + dir.name] = {};
+                    for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
+                        var adir = a.dirs[i];
+                        if (adir.diff(bdir.value, adir.value, a)) {
+                            if (adir.after) {} else {
+                                adir.update(a, adir.value);
+                            }
                         }
-                        var bb = a['_' + dir.name];
-                        d.diff.call(d, bb, dir.value);
                     }
                 }
                 if (!a.isVoidTag) {
@@ -7662,6 +7657,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 break;
         }
     }
+
     function toDOM(el) {
 
         if (el.props) {
