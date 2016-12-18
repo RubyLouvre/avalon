@@ -82,7 +82,7 @@ Render.prototype = {
     repeat: function(obj, str, cb) {
         var nodes = []
         var keys = str.split(',')
-       
+
         if (Array.isArray(obj)) {
             for (var i = 0, n = obj.length; i < n; i++) {
                 repeatCb(obj, obj[i], i, keys, nodes, cb, true)
@@ -260,17 +260,17 @@ Render.prototype = {
         var nodes = this.tmpl.exec(this.vm, this)
         console.log(nodes, this.tmpl.body)
         if (!this.vm.$element) {
-          
-         diff(this.vnodes[0], nodes[0])
-        toDOM(this.vnodes)
-//            var a = nodes[0].dom
-//            if (a !== document.body) {
-//                while (a.firstChild) {
-//                    document.body.appendChild(a.firstChild)
-//                }
-//                nodes[0].dom = document.body
-//                a = document.body
-//            }
+
+            diff(this.vnodes[0], nodes[0])
+            toDOM(this.vnodes)
+                //            var a = nodes[0].dom
+                //            if (a !== document.body) {
+                //                while (a.firstChild) {
+                //                    document.body.appendChild(a.firstChild)
+                //                }
+                //                nodes[0].dom = document.body
+                //                a = document.body
+                //            }
             this.vm.$element = this.vnodes[0]
         } else {
             this.patch(this.nodes, nodes)
@@ -352,10 +352,12 @@ Render.prototype = {
     }
 
 }
+
 function getTraceKey(item) {
     var type = typeof item
     return item && type === 'object' ? item.$hashcode : type + ':' + item
 }
+
 function repeatCb(obj, el, index, keys, nodes, cb, isArray) {
     let local = {}
     local[keys[0]] = el
@@ -363,18 +365,19 @@ function repeatCb(obj, el, index, keys, nodes, cb, isArray) {
         local[keys[1]] = index
     if (keys[2])
         local[keys[1]] = obj
-    var arr = cb(local), obj
+    var arr = cb(local),
+        obj
     arr.push({
         nodeName: '#text',
         nodeValue: ' '
     })
     obj = {
-        key: isArray ? getTraceKey(el): index,
+        key: isArray ? getTraceKey(el) : index,
         nodeName: '#document-fragment',
         children: arr
     }
-    
-   nodes.push(obj)
+
+    nodes.push(obj)
 }
 var container = {
         script: function(node) {
@@ -391,10 +394,10 @@ var container = {
         }
     }
     // 以后要废掉vdom系列,action
-function diff(a, b){
-    switch(a.nodeName){
+function diff(a, b) {
+    switch (a.nodeName) {
         case '#text':
-            if(a.dynamic && a.nodeValue !== b.nodeValue){
+            if (a.dynamic && a.nodeValue !== b.nodeValue) {
                 console.log('888')
                 a.dom.nodeValue = b.nodeValue
             }
@@ -406,29 +409,31 @@ function diff(a, b){
             break
         case void(0):
             break
-        default: 
-           if(a.staticRoot){
-               toDOM(el)
-               return
-           }
-           if(b.dirs){
-               for(var i = 0, dir; dir = b.dirs[i++];){
-                  var d = avalon.directives[dir.type]
-                 if(!a['_'+dir.name]){
-                     a['_'+dir.name] = {}
-                 }
-                 var bb =  a['_'+dir.name]
-                 d.diff.call(d, bb, dir.value)
-               }
-           }
-           if(!a.isVoidTag){
-               for(var i = 0, n = a.children.length; i < n; i++){
-                     diff(a.children[i], b.children[i])
-               }
-           }
-           break
+        default:
+            if (a.staticRoot) {
+                toDOM(el)
+                return
+            }
+            if (b.dirs) {
+                for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
+                    var adir = a.dirs[i]
+
+                    var d = avalon.directives[bdir.type]
+
+                    if (d.diff.call(d, adir.value, bdir.value, adir)) {
+                        d.update(a, adir.value)
+                    }
+                }
+            }
+            if (!a.isVoidTag) {
+                for (var i = 0, n = a.children.length; i < n; i++) {
+                    diff(a.children[i], b.children[i])
+                }
+            }
+            break
     }
 }
+
 function toDOM(el) {
 
     if (el.props) {
@@ -452,7 +457,7 @@ function toDOM(el) {
         return el.dom
     } else if (el.nodeName === '#comment') {
         return el.dom || (el.dom = document.createComment(el.nodeValue))
-   } else if (el.nodeName === '#document-fragment') {
+    } else if (el.nodeName === '#document-fragment') {
         var dom = document.createDocumentFragment()
         appendChild(dom, el.children)
         el.split = dom.lastChild
@@ -475,7 +480,7 @@ function toDOM(el) {
     }
 }
 
-function appendChild(parent, children){
+function appendChild(parent, children) {
     for (var i = 0, n = children.length; i < n; i++) {
         var b = toDOM(children[i])
         if (b) {
