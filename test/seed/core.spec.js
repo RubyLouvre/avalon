@@ -1,16 +1,15 @@
-import { avalon, inspect, ohasOwn, getLongID, getShortID } from
-    '../../src/seed/core'
-describe('seed/core', function () {
+import { avalon, inspect, ohasOwn, getLongID, getShortID } from '../../src/seed/core'
+describe('seed/core', function() {
 
     // jasmine.addMatchers
-    it('avalon', function () {
+    it('avalon', function() {
         expect(avalon).toA('function')
         var a = {}
         expect(avalon(a)[0]).toBe(a)
         expect(avalon(a).element).toBe(a)
         console.log(avalon.msie, '当前游览器是')
     })
-    it('config', function () {
+    it('config', function() {
 
         try {
             avalon.config({ interpolate: ['aaa', 'aaa'] })
@@ -33,7 +32,7 @@ describe('seed/core', function () {
         delete avalon.config.aaa
     })
 
-    it('shadowCopy', function () {
+    it('shadowCopy', function() {
         var a = { aa: 1 }
         var b = { bb: 2 }
         var c = avalon.shadowCopy(a, b)
@@ -42,7 +41,7 @@ describe('seed/core', function () {
         expect(avalon.shadowCopy).toBeTruthy()
     })
 
-    it('inspect', function () {
+    it('inspect', function() {
         expect(inspect).toBe(Object.prototype.toString)
         expect(inspect.call('')).toBe('[object String]')
         expect(inspect.call([])).toBe('[object Array]')
@@ -50,32 +49,32 @@ describe('seed/core', function () {
         expect(inspect.call(new Date())).toBe('[object Date]')
         expect(inspect.call(/test/)).toBe('[object RegExp]')
     })
-   it('parsers', function () {
-        
-            expect(avalon.parsers).toA('object')
-            expect(avalon.parsers.number('111')).toBe(111)
-            expect(avalon.parsers.number('')).toBe('')
-            expect(avalon.parsers.number('ddd')).toBe(0)
-            expect(avalon.parsers.string(111)).toBe('111')
-            expect(avalon.parsers.string(null)).toBe('')
-            expect(avalon.parsers.string(void 0)).toBe('')
-            expect(avalon.parsers.boolean('')).toBe('')
-            expect(avalon.parsers.boolean('true')).toBe(true)
-            expect(avalon.parsers.boolean('1')).toBe(true)
+    it('parsers', function() {
 
-        
+        expect(avalon.parsers).toA('object')
+        expect(avalon.parsers.number('111')).toBe(111)
+        expect(avalon.parsers.number('')).toBe('')
+        expect(avalon.parsers.number('ddd')).toBe(0)
+        expect(avalon.parsers.string(111)).toBe('111')
+        expect(avalon.parsers.string(null)).toBe('')
+        expect(avalon.parsers.string(void 0)).toBe('')
+        expect(avalon.parsers.boolean('')).toBe('')
+        expect(avalon.parsers.boolean('true')).toBe(true)
+        expect(avalon.parsers.boolean('1')).toBe(true)
+
+
     })
-    it('ohasOwn', function () {
+    it('ohasOwn', function() {
         expect(ohasOwn).toA('function')
         expect(ohasOwn).toBe(Object.prototype.hasOwnProperty)
     })
 
-    it('noop', function () {
-         expect(avalon.noop).not.toThrow();
-         expect(avalon.noop()).toBeUndefined()
+    it('noop', function() {
+        expect(avalon.noop).not.toThrow();
+        expect(avalon.noop()).toBeUndefined()
     })
 
-    it('log', function () {
+    it('log', function() {
         expect(avalon.log(11, 22)).toBeUndefined()
         expect(avalon.log).toA('function')
         spyOn(avalon, 'log')
@@ -83,28 +82,33 @@ describe('seed/core', function () {
         expect(avalon.log).toHaveBeenCalled()
 
     })
-    it('warn', function () {
+    it('warn', function() {
         expect(avalon.warn(11, 22)).toBeUndefined()
         expect(avalon.warn).toA('function')
     })
 
-    it('error', function () {
-        expect(function () {
+    it('error', function() {
+        expect(function() {
             avalon.error('aaa')
 
-        }).toThrowError(TypeError)
+        }).toThrowError(Error)
 
         expect(function fn2() {
             avalon.error('eee', TypeError)
         }).toThrowError(TypeError)
 
+
+        expect(function fn2() {
+            avalon.error('eee', SyntaxError)
+        }).toThrowError(SyntaxError)
+
     })
-    it('_decode', function () {
+    it('_decode', function() {
         expect(/^\s+$/.test(avalon._decode('&nbsp;'))).toBe(true)
         expect(avalon._decode('aaa')).toBe('aaa')
     })
 
-    it('oneObject', function () {
+    it('oneObject', function() {
 
         expect(avalon.oneObject('aa,bb,cc')).toEqual({
             aa: 1,
@@ -119,14 +123,14 @@ describe('seed/core', function () {
         })
     })
 
-    it('hyphen', function () {
+    it('hyphen', function() {
 
         expect(typeof avalon.hyphen).toBe('function')
         expect(avalon.hyphen("aaaBBB")).toBe('aaa-bbb')
 
     })
 
-    it('camelize', function () {
+    it('camelize', function() {
 
         expect(typeof avalon.camelize).toBe('function')
         expect(avalon.camelize('aaa-bbb-ccc')).toBe('aaaBbbCcc')
@@ -134,45 +138,45 @@ describe('seed/core', function () {
         expect(avalon.camelize('')).toBe('')
     })
 
-    it('makeHashCode', function () {
+    it('makeHashCode', function() {
 
         expect(typeof avalon.makeHashCode).toBe('function')
         expect(avalon.makeHashCode('eee')).toMatch(/eee\d+/)
 
     })
 
-    it('getLongID', function () {
+    it('getLongID', function() {
 
         expect(getLongID({})).toMatch(/e\d{6,}/)
 
     })
 
-    it('getShortID', function () {
+    it('getShortID', function() {
 
         expect(getShortID({})).toMatch(/_\d{1,3}/)
 
     })
 
-    it('escapeRegExp', function () {
+    it('escapeRegExp', function() {
 
         var str = '\\ ^ $ * + ? . ( ) | { } [ ]'
         expect(avalon.escapeRegExp(str)).toBe('\\\\ \\^ \\$ \\* \\+ \\? \\. \\( \\) \\| \\{ \\} \\[ \\]')
 
     })
 
-    it('slice', function () {
+    it('slice', function() {
 
         expect(avalon.slice([1, 2, 3, 4], 1, 2)).toEqual([2])
 
     })
-    it('isObject', function () {
+    it('isObject', function() {
 
         expect(avalon.isObject({})).toBe(true)
         expect(avalon.isObject(avalon.noop)).toBe(false)
 
     })
 
-    it('range', function () {
+    it('range', function() {
 
         expect(avalon.range(10)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
         expect(avalon.range(1, 11)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
@@ -184,7 +188,7 @@ describe('seed/core', function () {
     })
 
 
-    it('avalon.Array', function () {
+    it('avalon.Array', function() {
 
         expect(avalon.Array).toA('object')
         expect(avalon.Array).toHaveKeys(['merge', 'ensure', 'remove', 'removeAt'])
