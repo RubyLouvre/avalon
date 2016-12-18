@@ -54,7 +54,7 @@ VElement.prototype = {
                     dom.innerHTML = template
                 } catch (e) {
                     /* istanbul ignore next*/
-                    this.hackIE(dom, this.nodeName, template)
+                    hackIE(dom, this.nodeName, template)
                 }
                 break
             case 'option':
@@ -74,18 +74,7 @@ VElement.prototype = {
         return this.dom = dom
     },
     /* istanbul ignore next */
-    hackIE(dom, nodeName, template) {
-        switch (nodeName) {
-            case 'style':
-                dom.setAttribute('type', 'text/css')
-                dom.styleSheet.cssText = template
-                break
-            case 'xmp': //IE6-8,XMP元素里面只能有文本节点,不能使用innerHTML
-            case 'noscript':
-                dom.textContent = template
-                break
-        }
-    },
+   
     toHTML() {
         var arr = []
         var props = this.props || {}
@@ -109,7 +98,18 @@ VElement.prototype = {
         return str + '</' + this.nodeName + '>'
     }
 }
-
+ function hackIE(dom, nodeName, template) {
+        switch (nodeName) {
+            case 'style':
+                dom.setAttribute('type', 'text/css')
+                dom.styleSheet.cssText = template
+                break
+            case 'xmp': //IE6-8,XMP元素里面只能有文本节点,不能使用innerHTML
+            case 'noscript':
+                dom.textContent = template
+                break
+        }
+    }
 function skipFalseAndFunction(a) {
     return a !== false && (Object(a) !== a)
 }

@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-15:15:22 version 2.2.3 by 司徒正美
+built in 2016-12-18:13:49 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -227,7 +227,7 @@ IE7的checked属性应该使用defaultChecked来设置
             Function.apply.call(method, console, arguments);
         }
     }
-    function error(e, str) {
+    function error(str, e) {
         throw (e || Error)(str);
     }
     function noop() {}
@@ -2833,11 +2833,16 @@ IE7的checked属性应该使用defaultChecked来设置
                 setEventId(elem, keys.join(','));
                 //将令牌放进avalon-events属性中
             }
+            return fn;
         } else {
             /* istanbul ignore next */
-            avalon._nativeBind(elem, type, fn);
+            var cb = function cb(e) {
+                fn.call(elem, new avEvent(event));
+            };
+
+            avalon._nativeBind(elem, type, cb);
+            return cb;
         }
-        return fn; //兼容之前的版本
     };
 
     function setEventId(node, value) {
@@ -3353,7 +3358,7 @@ IE7的checked属性应该使用defaultChecked来设置
                         dom.innerHTML = template;
                     } catch (e) {
                         /* istanbul ignore next*/
-                        this.hackIE(dom, this.nodeName, template);
+                        hackIE(dom, this.nodeName, template);
                     }
                     break;
                 case 'option':
@@ -3373,18 +3378,7 @@ IE7的checked属性应该使用defaultChecked来设置
         },
 
         /* istanbul ignore next */
-        hackIE: function hackIE(dom, nodeName, template) {
-            switch (nodeName) {
-                case 'style':
-                    dom.setAttribute('type', 'text/css');
-                    dom.styleSheet.cssText = template;
-                    break;
-                case 'xmp': //IE6-8,XMP元素里面只能有文本节点,不能使用innerHTML
-                case 'noscript':
-                    dom.textContent = template;
-                    break;
-            }
-        },
+
         toHTML: function toHTML() {
             var arr = [];
             var props = this.props || {};
@@ -3408,7 +3402,18 @@ IE7的checked属性应该使用defaultChecked来设置
             return str + '</' + this.nodeName + '>';
         }
     };
-
+    function hackIE(dom, nodeName, template) {
+        switch (nodeName) {
+            case 'style':
+                dom.setAttribute('type', 'text/css');
+                dom.styleSheet.cssText = template;
+                break;
+            case 'xmp': //IE6-8,XMP元素里面只能有文本节点,不能使用innerHTML
+            case 'noscript':
+                dom.textContent = template;
+                break;
+        }
+    }
     function skipFalseAndFunction(a) {
         return a !== false && Object(a) !== a;
     }
@@ -5333,7 +5338,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
     avalon.directive('expr', {
         update: function update(vdom, value) {
-            value = value === null ? '\u200B' : value === '' ? '\u200B' : value;
+            value = value === null || value === '' ? '\u200B' : value;
             vdom.nodeValue = value;
             //https://github.com/RubyLouvre/avalon/issues/1834
             if (vdom.dom) vdom.dom.data = value;

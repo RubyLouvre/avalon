@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-15:15:7 version 2.2.3 by 司徒正美
+built in 2016-12-18:13:48 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.2
 fix ms-controller BUG, 上下VM相同时,不会进行合并
 为监听数组添加toJSON方法
@@ -226,7 +226,7 @@ IE7的checked属性应该使用defaultChecked来设置
             Function.apply.call(method, console, arguments)
         }
     }
-    function error(e, str) {
+    function error(str, e) {
         throw (e || Error)(str)
     }
     function noop() {}
@@ -2256,11 +2256,16 @@ IE7的checked属性应该使用defaultChecked来设置
                 setEventId(elem, keys.join(','))
                 //将令牌放进avalon-events属性中
             }
+            return fn
         } else {
             /* istanbul ignore next */
-            avalon$2._nativeBind(elem, type, fn)
+            var cb = function cb(e) {
+                fn.call(elem, new avEvent(event))
+            }
+
+            avalon$2._nativeBind(elem, type, cb)
+            return cb
         }
-        return fn //兼容之前的版本
     }
 
     function setEventId(node, value) {
@@ -3133,7 +3138,6 @@ IE7的checked属性应该使用defaultChecked来设置
         this.isAction = true
         var expr = this.expr
         // 缓存取值函数
-        console.log(this.type)
         if (typeof this.getter !== 'function') {
             this.getter = createGetter(expr, this.type)
         }
@@ -3142,7 +3146,7 @@ IE7的checked属性应该使用defaultChecked来设置
             this.setter = createSetter(expr, this.type)
         }
         // 缓存表达式旧值
-        this.oldValue = null
+        this.value = NaN
         // 表达式初始值 & 提取依赖
         if (!this.node) {
             this.value = this.get()
@@ -4637,11 +4641,10 @@ IE7的checked属性应该使用defaultChecked来设置
 
     avalon$2.directive('expr', {
         update: function update(vdom, value) {
-            console.log(value, '111')
+            value = value === null || value === '' ? '\u200B' : value
             vdom.nodeValue = value
             //https://github.com/RubyLouvre/avalon/issues/1834
-            if (vdom.dom) if (value === '') value = '\u200B'
-            vdom.dom.data = value
+            if (vdom.dom) vdom.dom.data = value
         }
     })
 
@@ -6342,7 +6345,6 @@ IE7的checked属性应该使用defaultChecked来设置
                 var vdom = children[i]
                 switch (vdom.nodeName) {
                     case '#text':
-                        console.log(vdom)
                         scope && this.scanText(vdom, scope)
                         break
                     case '#comment':
