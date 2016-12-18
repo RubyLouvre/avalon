@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-18:13:49 version 2.2.3 by 司徒正美
+built in 2016-12-18:14:1 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -6801,7 +6801,7 @@ IE7的checked属性应该使用defaultChecked来设置
             /* istanbul ignore if */
             if (typeof Promise !== 'function') {
                 //avalon-promise不支持phantomjs
-                avalon.wain('please npm install es6-promise or bluebird');
+                avalon.warn('please npm install es6-promise or bluebird');
             }
             /* istanbul ignore if */
             if (elem.disabled) return;

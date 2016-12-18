@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-18:13:48 version 2.2.3 by 司徒正美
+built in 2016-12-18:14:1 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.2
 fix ms-controller BUG, 上下VM相同时,不会进行合并
 为监听数组添加toJSON方法
@@ -5976,7 +5976,7 @@ IE7的checked属性应该使用defaultChecked来设置
             /* istanbul ignore if */
             if (typeof Promise !== 'function') {
                 //avalon-promise不支持phantomjs
-                avalon$2.wain('please npm install es6-promise or bluebird')
+                avalon$2.warn('please npm install es6-promise or bluebird')
             }
             /* istanbul ignore if */
             if (elem.disabled) return

@@ -114,7 +114,7 @@ var valiDir = avalon.directive('validate', {
        
         /* istanbul ignore if */
         if (typeof Promise !== 'function') {//avalon-promise不支持phantomjs
-            avalon.wain('please npm install es6-promise or bluebird')
+            avalon.warn('please npm install es6-promise or bluebird')
         }
         /* istanbul ignore if */
         if (elem.disabled)
