@@ -15,7 +15,7 @@ export function numberFilter(number, decimals, point, thousands) {
                 .replace(/[^0-9+\-Ee.]/g, '')
         var n = !isFinite(+number) ? 0 : +number,
                 prec = !isFinite(+decimals) ? 3 : Math.abs(decimals),
-                sep = thousands || ",",
+                sep = typeof thousands === 'string' ? thousands: "," ,
                 dec = point || ".",
                 s = ''
 
