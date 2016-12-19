@@ -386,6 +386,7 @@ var container = {
         }
     }
     // 以后要废掉vdom系列,action
+    //a是旧的虚拟DOM, b是新的
 function diff(a, b) {
     switch (a.nodeName) {
         case '#text':
@@ -394,6 +395,10 @@ function diff(a, b) {
             }
             break
         case '#comment':
+             if (a.nodeName !== b.nodeName) {
+                //a.nodeValue = b.nodeValue
+                console.log(a, b)
+            }
             break
         case '#document-fragment':
             diff(a.children, b.children)
@@ -403,6 +408,18 @@ function diff(a, b) {
         default:
             if (a.staticRoot) {
                 toDOM(a)
+                return
+            }
+            if (a.nodeName !== b.nodeName ) {
+               for(var i in a){
+                   delete a[i]
+               }
+               for(var i in b){
+                   a[i] = b[i]
+               }
+               //console.log('要变if', a,b)
+                //这里要做dispose处理
+              //  toDOM(a)
                 return
             }
             var delay

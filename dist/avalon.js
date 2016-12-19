@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-19:13:58 version 2.2.2 by 司徒正美
+built in 2016-12-19:14:35 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -396,9 +396,7 @@ IE7的checked属性应该使用defaultChecked来设置
             config.rexpr = new RegExp(o + '([\\s\\S]*)' + c);
         }
     };
-    function createAnchor(nodeValue) {
-        return document$1.createComment(nodeValue);
-    }
+
     config.plugins = plugins;
     config({
         interpolate: ['{{', '}}'],
@@ -6115,6 +6113,7 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     };
     // 以后要废掉vdom系列,action
+    //a是旧的虚拟DOM, b是新的
     function diff(a, b) {
         switch (a.nodeName) {
             case '#text':
@@ -6123,6 +6122,10 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
                 break;
             case '#comment':
+                if (a.nodeName !== b.nodeName) {
+                    //a.nodeValue = b.nodeValue
+                    console.log(a, b);
+                }
                 break;
             case '#document-fragment':
                 diff(a.children, b.children);
@@ -6132,6 +6135,18 @@ IE7的checked属性应该使用defaultChecked来设置
             default:
                 if (a.staticRoot) {
                     toDOM(a);
+                    return;
+                }
+                if (a.nodeName !== b.nodeName || a.nodeName === 'k') {
+                    for (var i in a) {
+                        delete a[i];
+                    }
+                    for (var i in b) {
+                        a[i] = b[i];
+                    }
+                    //console.log('要变if', a,b)
+                    //这里要做dispose处理
+                    //  toDOM(a)
                     return;
                 }
                 var delay;
@@ -6257,45 +6272,46 @@ IE7的checked属性应该使用defaultChecked来设置
     avalon.directive('if', {
 
         priority: 5,
-        init: function init() {
-            this.placeholder = createAnchor('if');
-            var props = this.node.props;
-            delete props['ms-if'];
-            delete props[':if'];
-            this.fragment = avalon.vdom(this.node, 'toHTML');
-        },
+        //    init: function() {
+        //        this.placeholder = createAnchor('if')
+        //        var props = this.node.props
+        //        delete props['ms-if']
+        //        delete props[':if']
+        //        this.fragment = avalon.vdom(this.node, 'toHTML')
+        //    },
         diff: function diff(newVal, oldVal) {
-            var n = !!newVal;
-            if (oldVal === void 0 || n !== oldVal) {
-                this.value = n;
-                return true;
-            }
+            return true;
+            //        var n = !!newVal
+            //        if (oldVal === void 0 || n !== oldVal) {
+            //            this.value = n
+            //            return true
+            //        }
         },
         update: function update(vdom, value) {
-            if (this.isShow === void 0 && value) {
-                continueScan(this, vdom);
-                return;
-            }
-            this.isShow = value;
-            var placeholder = this.placeholder;
-
-            if (value) {
-                var p = placeholder.parentNode;
-                continueScan(this, vdom);
-                p && p.replaceChild(vdom.dom, placeholder);
-            } else {
-                //移除DOM
-                this.beforeDispose();
-                vdom.nodeValue = 'if';
-                vdom.nodeName = '#comment';
-                delete vdom.children;
-                var dom = vdom.dom;
-                var p = dom && dom.parentNode;
-                vdom.dom = placeholder;
-                if (p) {
-                    p.replaceChild(placeholder, dom);
-                }
-            }
+            console.log('ddddd');
+            //        if (this.isShow === void 0 && value) {
+            //            continueScan(this, vdom)
+            //            return
+            //        }
+            //        this.isShow = value
+            //        var placeholder = this.placeholder
+            //
+            //        if (value) {
+            //            var p = placeholder.parentNode
+            //            continueScan(this, vdom)
+            //            p && p.replaceChild(vdom.dom, placeholder)
+            //        } else { //移除DOM
+            //            this.beforeDispose()
+            //            vdom.nodeValue = 'if'
+            //            vdom.nodeName = '#comment'
+            //            delete vdom.children
+            //            var dom = vdom.dom
+            //            var p = dom && dom.parentNode
+            //            vdom.dom = placeholder
+            //            if (p) {
+            //                p.replaceChild(placeholder, dom)
+            //            }
+            //        }
         },
         beforeDispose: function beforeDispose() {
             if (this.innerRender) {
@@ -6303,12 +6319,6 @@ IE7的checked属性应该使用defaultChecked来设置
             }
         }
     });
-
-    function continueScan(instance, vdom) {
-        var innerRender = instance.innerRender = avalon.scan(instance.fragment, instance.vm);
-        avalon.shadowCopy(vdom, innerRender.root);
-        delete vdom.nodeValue;
-    }
 
     avalon.directive('on', {
         beforeInit: function beforeInit() {
