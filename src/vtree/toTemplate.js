@@ -9,6 +9,7 @@ export function Yield(nodes, render) {
     this.render = render
     var body = this.genChildren(nodes)
     this.body = body
+    console.log(body)
     this.exec = Function('__vmodel__', 'Ʃ', 'return ' + body)
 }
 Yield.prototype = {
@@ -33,7 +34,7 @@ Yield.prototype = {
     },
     genText(node) {
         if (node.dynamic) {
-            return `Ʃ.text( ${ createExpr( parseInterpolate(node.nodeValue) ) })`
+            return `Ʃ.text( ${ createExpr( parseInterpolate(node.nodeValue)) },${true})`
         }
         return `Ʃ.text(${avalon.quote(node.nodeValue)})`
     },
@@ -66,17 +67,13 @@ Yield.prototype = {
                 var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag)
                 var code = createExpr(expr, 'text')
                 node.template = `[Ʃ.text( ${code} )]`
-
+                node.children = [{dynamic: true, nodeName: '#text',vtype:8, nodeValue: NaN}]
                 removeDir('text', dirs, props)
                 removeDir('html', dirs, props)
 
             }
 
-            if (dirs['ms-html']) {
-                //变成可以传参的东西
-                node.template = `Ʃ.html( ${ createExpr(dirs['ms-html'])}, __vmodel__ )`
-                removeDir('html', dirs, props)
-            }
+           
             if (dirs['ms-if']) {
                 //变成可以传参的东西
                 var hasIf = createExpr(dirs['ms-if'])
@@ -116,6 +113,7 @@ Yield.prototype = {
                 return toJSONByArray(
                     `type: ${avalon.quote(dir.type)}`,
                     `name: ${avalon.quote(dir.name)}`,
+                    `vm: __vmodel__`,
                     dir.param ? `param: ${avalon.quote(dir.param)}` : '',
                     `value: ${createExpr(dir.expr)}`
                 )

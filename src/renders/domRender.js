@@ -27,7 +27,7 @@ avalon.scan = function(node, vm) {
 /**
  * avalon.scan 的内部实现
  */
-function Render(node, vm, noexe) {
+export function Render(node, vm, noexe) {
     this.root = node //如果传入的字符串,确保只有一个标签作为根节点
     this.vm = vm
     this.exe = noexe === undefined
@@ -66,8 +66,8 @@ Render.prototype = {
     comment: function(value) {
         return { nodeName: '#comment', vtype: 8, nodeValue: value }
     },
-    text: function(a) {
-        return { nodeName: '#text', vtype: 3, nodeValue: a || '' }
+    text: function(a, d) {
+        return { nodeName: '#text', vtype: 3, nodeValue: a || '',dynamic: d }
     },
     html: function(html, vm) {
         var a = new Render(html, vm, true)
@@ -243,6 +243,7 @@ Render.prototype = {
     complete() {
         optimize(this.root)
         this.Yield = Yield
+
         var fn = new Yield(this.vnodes, this)
         this.tmpl = fn
         if (this.exe) {
@@ -257,19 +258,11 @@ Render.prototype = {
     },
     update: function() {
         var nodes = this.tmpl.exec(this.vm, this)
-        console.log(nodes, this.tmpl.body)
         if (!this.vm.$element) {
 
             diff(this.vnodes[0], nodes[0])
             toDOM(this.vnodes)
-                //            var a = nodes[0].dom
-                //            if (a !== document.body) {
-                //                while (a.firstChild) {
-                //                    document.body.appendChild(a.firstChild)
-                //                }
-                //                nodes[0].dom = document.body
-                //                a = document.body
-                //            }
+      
             this.vm.$element = this.vnodes[0]
         } else {
             this.patch(this.nodes, nodes)
@@ -383,13 +376,13 @@ var container = {
             try {
                 node.dom.text = node.children[0].nodeValue
             } catch (e) {
-                console.log(node)
+                avalon.log(node)
             }
         },
         style: function(node) {
             try {
                 node.dom.textContext = node.children[0].nodeValue
-            } catch (e) { console.log(node) }
+            } catch (e) { avalon.log(node) }
         }
     }
     // 以后要废掉vdom系列,action
@@ -397,7 +390,7 @@ function diff(a, b) {
     switch (a.nodeName) {
         case '#text':
             if (a.dynamic && a.nodeValue !== b.nodeValue) {
-                a.dom.nodeValue = b.nodeValue
+                a.nodeValue = b.nodeValue
             }
             break
         case '#comment':
@@ -412,19 +405,21 @@ function diff(a, b) {
                 toDOM(a)
                 return
             }
+            var delay
             if (b.dirs) {
                 for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                     var adir = a.dirs[i]
-                    if (adir.diff(bdir.value, adir.value, a)) {
+                    if (adir.diff(bdir.value, adir.value, a, bdir)) {
                         if (adir.after) {
 
                         } else {
+                            delay = adir.delay
                             adir.update(a, adir.value)
                         }
                     }
                 }
             }
-            if (!a.isVoidTag) {
+            if (!a.isVoidTag && !delay) {
                 for (var i = 0, n = a.children.length; i < n; i++) {
                     diff(a.children[i], b.children[i])
                 }
@@ -463,8 +458,13 @@ function toDOM(el) {
         el.dom = dom
         return dom
     } else if (el.nodeName === '#text') {
-        if (el.dom)
+        if (el.dom){
+            if(el.dynamic && el.nodeValue !== el.dom.nodeValue){
+               el.dom.nodeValue = el.nodeValue
+            }
             return el.dom
+        }
+           
         return document.createTextNode(el.nodeValue)
     } else if (Array.isArray(el)) {
         el = flatten(el)

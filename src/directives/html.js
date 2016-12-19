@@ -1,20 +1,26 @@
 import { avalon } from '../seed/core'
+import { Render } from '../renders/domRender'
 
 avalon.directive('html', {
-
+    diff: function(a, b, vdom, dir){
+        a = (a == null ? '': a ).toString().trim()
+        b = (b == null ? '': b).toString().trim()
+        
+        if(a !== b){
+            this.vm = dir.vm
+            this.value = a || ' '
+            return true
+        }
+    },
     update: function(vdom, value) {
         this.beforeDispose()
-
-        this.innerRender = avalon.scan('<div class="ms-html-container">' + value + '</div>', this.vm, function() {
-            var oldRoot = this.root
-            if(vdom.children)
-               vdom.children.length = 0
-            vdom.children = oldRoot.children
-            this.root = vdom
-            if (vdom.dom)
-                avalon.clearHTML(vdom.dom)
-        })
-
+        
+        var a = this.innerRender = new Render(value, this.vm)
+        var children = a.tmpl.exec(a.vm, a)
+        vdom.children = children
+        if (vdom.dom)
+            avalon.clearHTML(vdom.dom)
+     
     },
     beforeDispose: function() {
         if (this.innerRender) {

@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-18:23:4 version 2.2.2 by 司徒正美
+built in 2016-12-19:13:58 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -900,7 +900,7 @@ IE7的checked属性应该使用defaultChecked来设置
         number = (number + '').replace(/[^0-9+\-Ee.]/g, '');
         var n = !isFinite(+number) ? 0 : +number,
             prec = !isFinite(+decimals) ? 3 : Math.abs(decimals),
-            sep = thousands || ",",
+            sep = typeof thousands === 'string' ? thousands : ",",
             dec = point || ".",
             s = '';
 
@@ -2837,11 +2837,16 @@ IE7的checked属性应该使用defaultChecked来设置
                 setEventId(elem, keys.join(','));
                 //将令牌放进avalon-events属性中
             }
+            return fn; //兼容之前的版本
         } else {
             /* istanbul ignore next */
-            avalon._nativeBind(elem, type, fn);
+            var cb = function cb(e) {
+                return fn.call(elem, new avEvent(e));
+            };
+
+            avalon._nativeBind(elem, type, cb);
+            return cb;
         }
-        return fn; //兼容之前的版本
     };
 
     function setEventId(node, value) {
@@ -5391,18 +5396,855 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     });
 
-    avalon.directive('html', {
+    function optimize(node) {
+        markStatic(node);
+        // second pass: mark static roots.
+        isStaticRoot(node, false);
+        return node;
+    }
 
+    function markStatic(node) {
+        node["static"] = isStatic(node);
+        if (node.vtype === 1 && !node.isVoidTag) {
+            // do not make component slot content static. this avoids
+            // 1. components not able to mutate slot nodes
+            // 2. static slot content fails for hot-reloading
+            if (node.nodeName === 'slot') {
+                node["static"] = false;
+                return;
+            }
+            if (node.props['ms-skip'] || node.props[':skip']) {
+                node["static"] = false;
+                return;
+            }
+
+            for (var i = 0, l = node.children.length; i < l; i++) {
+                var child = node.children[i];
+                markStatic(child);
+                if (!child["static"]) {
+                    node["static"] = false;
+                }
+            }
+        }
+    }
+
+    function isStaticRoot(node) {
+        var ret = true;
+        if (node.children) {
+            node.children.forEach(function (el) {
+                ret = ret & isStaticRoot(el);
+            });
+            if (ret && node["static"]) {
+                node.staticRoot = true;
+            }
+        }
+
+        return ret;
+    }
+
+    function isStatic(node) {
+        return !node.dynamic;
+    }
+
+    var eventMap = avalon.oneObject('animationend,blur,change,input,' + 'click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,' + 'mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit', 'on');
+    function parseAttributes(dirs, node) {
+        var uniq = {},
+            bindings = [],
+            props = node.props,
+            hasIf = false;
+        for (var name in dirs) {
+            var value = dirs[name];
+            var arr = name.split('-');
+            // ms-click
+            if (name in props) {
+                var attrName = name;
+            } else {
+                attrName = ':' + name.slice(3);
+            }
+            if (eventMap[arr[1]]) {
+                arr.splice(1, 0, 'on');
+            }
+            //ms-on-click
+            if (arr[1] === 'on') {
+                arr[3] = parseFloat(arr[3]) || 0;
+            }
+
+            var type = arr[1];
+            if (type === 'controller' || type === 'important') continue;
+            if (directives[type]) {
+                var _binding;
+
+                delete props[attrName];
+                var binding = (_binding = {
+                    type: type,
+                    param: arr[2],
+                    name: attrName
+                }, _binding['name'] = arr.join('-'), _binding.expr = value, _binding.priority = directives[type].priority || type.charCodeAt(0) * 100, _binding);
+                avalon.mix(binding, directives[type]);
+
+                if (type === 'on') {
+                    binding.priority += arr[3];
+                }
+                if (!uniq[binding.name]) {
+                    uniq[binding.name] = value;
+                    bindings.push(binding);
+                    if (type === 'for') {
+                        return [avalon.mix(binding, tuple[3])];
+                    }
+                }
+            }
+        }
+        bindings.sort(byPriority);
+        return bindings;
+    }
+    function byPriority(a, b) {
+        return a.priority - b.priority;
+    }
+
+    var rimprovePriority = /[+-\?]/;
+    var rinnerValue = /__value__\)$/;
+    function parseInterpolate(expr) {
+        var rlineSp = /\n\r?/g;
+        var str = String(expr).trim().replace(rlineSp, '');
+        var tokens = [];
+        do {
+            //aaa{{@bbb}}ccc
+            var index = str.indexOf(config.openTag);
+            index = index === -1 ? str.length : index;
+            var value = str.slice(0, index);
+            if (/\S/.test(value)) {
+                tokens.push(avalon.quote(avalon._decode(value)));
+            }
+            str = str.slice(index + config.openTag.length);
+            if (str) {
+                index = str.indexOf(config.closeTag);
+                var value = str.slice(0, index);
+                var expr = avalon.unescapeHTML(value);
+                if (/\|\s*\w/.test(expr)) {
+                    //如果存在过滤器，优化干掉
+                    var arr = addScope(expr, 'expr');
+                    if (arr[1]) {
+                        expr = arr[1].replace(rinnerValue, arr[0] + ')');
+                    }
+                }
+                if (rimprovePriority) {
+                    expr = '(' + expr + ')';
+                }
+                tokens.push(expr);
+
+                str = str.slice(index + config.closeTag.length);
+            }
+        } while (str.length);
+        return tokens.join('+');
+    }
+
+    function Yield(nodes, render) {
+        this.render = render;
+        var body = this.genChildren(nodes);
+        this.body = body;
+        console.log(body);
+        this.exec = Function('__vmodel__', 'Ʃ', 'return ' + body);
+    }
+    Yield.prototype = {
+        genChildren: function genChildren(nodes) {
+            if (nodes.length) {
+                return '[' + nodes.map(function (node) {
+                    return this.genNode(node);
+                }, this).join(',\n') + ']';
+            } else {
+                return '[]';
+            }
+        },
+        genNode: function genNode(node) {
+            if (node.vtype === 1) {
+                return this.genElement(node);
+            } else if (node.vtype === 8) {
+                return this.genComment(node);
+            } else {
+                return this.genText(node);
+            }
+        },
+        genText: function genText(node) {
+            if (node.dynamic) {
+                return '\u01A9.text( ' + createExpr(parseInterpolate(node.nodeValue)) + ',' + true + ')';
+            }
+            return '\u01A9.text(' + avalon.quote(node.nodeValue) + ')';
+        },
+        genComment: function genComment(node) {
+            if (node.dynamic) {
+                var dir = node["for"];
+                avalon.directives['for'].beforeInit.call(dir);
+                var keys = '\'' + dir.valName + ',' + dir.keyName + ',' + dir.asName + '\'';
+                return '\u01A9.comment(\'ms-for:' + dir.expr + '\'),\n                    \u01A9.repeat(' + createExpr(dir.expr) + ', ' + keys + ', function(__local__){\n                return ' + this.genChildren(dir.nodes) + '\n            })';
+            }
+
+            return '\u01A9.comment(' + avalon.quote(node.nodeValue) + ')';
+        },
+        genElement: function genElement(node) {
+            if (node.staticRoot) {
+                var index = this.render.staticIndex++;
+                this.render.staticTree[index] = node;
+                return '\u01A9.static(' + index + ')';
+            }
+            var dirs = node.dirs,
+                props = node.props;
+            if (dirs) {
+                var hasCtrl = dirs['ms-controller'];
+                delete dirs['ms-controller'];
+                if (dirs['ms-text']) {
+                    var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag);
+                    var code = createExpr(expr, 'text');
+                    node.template = '[\u01A9.text( ' + code + ' )]';
+                    node.children = [{ dynamic: true, nodeName: '#text', vtype: 8, nodeValue: NaN }];
+                    removeDir('text', dirs, props);
+                    removeDir('html', dirs, props);
+                }
+
+                if (dirs['ms-if']) {
+                    //变成可以传参的东西
+                    var hasIf = createExpr(dirs['ms-if']);
+                    removeDir('if', dirs, props);
+                }
+                if (!Object.keys(dirs).length) {
+                    dirs = null;
+                }
+            }
+            var json = toJSONByArray('nodeName: \'' + node.nodeName + '\'', ' vtype: ' + node.vtype, node.isVoidTag ? 'isVoidTag: true' : '', node["static"] ? 'static: true' : '', dirs ? this.genDirs(dirs, node) : '', 'props: ' + toJSONByObject(node.props), 'children: ' + (node.template || this.genChildren(node.children)));
+            if (hasIf) {
+                json = hasIf + '? ' + json + ': \u01A9.comment(\'if\')';
+            }
+            if (hasCtrl) {
+                return '\u01A9.ctrl(' + avalon.quote(hasCtrl) + ', __vmodel__,function(__vmodel__){ \n                 return ' + json + '\n             })';
+            } else {
+                return json;
+            }
+        },
+        genDirs: function genDirs(dirs, node) {
+            var arr = parseAttributes(dirs, node);
+            if (arr.length) {
+                node.dirs = arr;
+                return 'dirs:[' + arr.map(function (dir) {
+                    return toJSONByArray('type: ' + avalon.quote(dir.type), 'name: ' + avalon.quote(dir.name), 'vm: __vmodel__', dir.param ? 'param: ' + avalon.quote(dir.param) : '', 'value: ' + createExpr(dir.expr));
+                }) + ']';
+            }
+            return '';
+        }
+    };
+
+    function removeDir(name, dirs, props) {
+        delete dirs['ms-' + name];
+        delete props['ms-' + name];
+        delete props[':' + name];
+    }
+
+    var rneedQuote = /[W\:-]/;
+
+    function fixKey(k) {
+        return rneedQuote.test(k) || keyMap[k] ? avalon.quote(k) : k;
+    }
+
+    function toJSONByArray() {
+        return '{' + avalon.slice(arguments, 0).filter(function (el) {
+            return el;
+        }).join(',') + '}';
+    }
+
+    function toJSONByObject(obj) {
+        var arr = [];
+        for (var i in obj) {
+            if (obj[i] === undefined || obj[i] === '') continue;
+            arr.push(fixKey(i) + ': ' + avalon.quote(obj[i]));
+        }
+        return '{' + arr + '}';
+    }
+
+    function getChildren(arr) {
+        var count = 0;
+        for (var i = 0, el; el = arr[i++];) {
+            if (el.nodeName === '#document-fragment') {
+                count += getChildren(el.children);
+            } else {
+                count += 1;
+            }
+        }
+        return count;
+    }
+    function groupTree(parent, children) {
+        children && children.forEach(function (vdom) {
+            if (!vdom) return;
+            var vlength = vdom.children && getChildren(vdom.children);
+            if (vdom.nodeName === '#document-fragment') {
+                var dom = createFragment();
+            } else {
+                dom = avalon.vdom(vdom, 'toDOM');
+                var domlength = dom.childNodes && dom.childNodes.length;
+                if (domlength && vlength && domlength > vlength) {
+                    if (!appendChildMayThrowError[dom.nodeName]) {
+                        avalon.clearHTML(dom);
+                    }
+                }
+            }
+            if (vlength) {
+                groupTree(dom, vdom.children);
+            }
+            //高级版本可以尝试 querySelectorAll
+
+            try {
+                if (!appendChildMayThrowError[parent.nodeName]) {
+                    parent.appendChild(dom);
+                }
+            } catch (e) {}
+        });
+    }
+
+    function dumpTree(elem) {
+        var firstChild;
+        while (firstChild = elem.firstChild) {
+            if (firstChild.nodeType === 1) {
+                dumpTree(firstChild);
+            }
+            elem.removeChild(firstChild);
+        }
+    }
+
+    function getRange(childNodes, node) {
+        var i = childNodes.indexOf(node) + 1;
+        var deep = 1,
+            nodes = [],
+            end;
+        nodes.start = i;
+        while (node = childNodes[i++]) {
+            nodes.push(node);
+            if (node.nodeName === '#comment') {
+                if (startWith(node.nodeValue, 'ms-for:')) {
+                    deep++;
+                } else if (node.nodeValue === 'ms-for-end:') {
+                    deep--;
+                    if (deep === 0) {
+                        //  node.nodeValue = 'msfor-end:'
+                        end = node;
+                        nodes.pop();
+                        break;
+                    }
+                }
+            }
+        }
+        nodes.end = end;
+        return nodes;
+    }
+
+    function startWith(long, short) {
+        return long.indexOf(short) === 0;
+    }
+
+    var appendChildMayThrowError = {
+        '#text': 1,
+        '#comment': 1,
+        script: 1,
+        style: 1,
+        noscript: 1
+    };
+
+    /**
+     * 生成一个渲染器,并作为它第一个遇到的ms-controller对应的VM的$render属性
+     * @param {String|DOM} node
+     * @param {ViewModel|Undefined} vm
+     * @param {Function|Undefined} beforeReady
+     * @returns {Render}
+     */
+    avalon.scan = function (node, vm) {
+        return new Render(node, vm);
+    };
+
+    /**
+     * avalon.scan 的内部实现
+     */
+    function Render(node, vm, noexe) {
+        this.root = node; //如果传入的字符串,确保只有一个标签作为根节点
+        this.vm = vm;
+        this.exe = noexe === undefined;
+        this.callbacks = [];
+        this.staticIndex = 0;
+        this.staticTree = {};
+        this.uuid = Math.random();
+        this.init();
+    }
+
+    Render.prototype = {
+        /**
+         * 开始扫描指定区域
+         * 收集绑定属性
+         * 生成指令并建立与VM的关联
+         */
+        init: function init() {
+            var vnodes;
+            if (this.root && this.root.nodeType > 0) {
+                vnodes = fromDOM(this.root); //转换虚拟DOM
+                //将扫描区域的每一个节点与其父节点分离,更少指令对DOM操作时,对首屏输出造成的频繁重绘
+                dumpTree(this.root);
+            } else if (typeof this.root === 'string') {
+                vnodes = fromString(this.root); //转换虚拟DOM
+            } else {
+                return avalon.warn('avalon.scan first argument must element or HTML string');
+            }
+            this.root = vnodes[0];
+            this.vnodes = vnodes;
+            this.scanChildren(vnodes, this.vm, true);
+        },
+
+        "static": function _static(i) {
+            return this.staticTree[i];
+        },
+        comment: function comment(value) {
+            return { nodeName: '#comment', vtype: 8, nodeValue: value };
+        },
+        text: function text(a, d) {
+            return { nodeName: '#text', vtype: 3, nodeValue: a || '', dynamic: d };
+        },
+        html: function html(_html, vm) {
+            var a = new Render(_html, vm, true);
+            return a.tmpl.exec(vm, this);
+        },
+        ctrl: function ctrl(id, scope, cb) {
+            var dir = directives['controller'];
+            scope = dir.getScope.call(this, id, scope);
+            return cb(scope);
+        },
+        repeat: function repeat(obj, str, cb) {
+            var nodes = [];
+            var keys = str.split(',');
+
+            if (Array.isArray(obj)) {
+                for (var i = 0, n = obj.length; i < n; i++) {
+                    repeatCb(obj, obj[i], i, keys, nodes, cb, true);
+                }
+            } else if (avalon.isObject(obj)) {
+                for (var i in obj) {
+                    if (obj.hasOwnProperty(i)) {
+                        repeatCb(obj, obj[i], i, keys, nodes, cb);
+                    }
+                }
+            }
+            return nodes;
+        },
+        scanChildren: function scanChildren(children, scope, isRoot) {
+            for (var i = 0; i < children.length; i++) {
+                var vdom = children[i];
+                switch (vdom.nodeName) {
+                    case '#text':
+                        this.scanText(vdom, scope);
+                        break;
+                    case '#comment':
+                        this.scanComment(vdom, scope, children);
+                        break;
+                    default:
+                        this.scanTag(vdom, scope, children, false);
+                        break;
+                }
+            }
+            if (isRoot) {
+                this.complete();
+            }
+        },
+
+        /**
+         * 从文本节点获取指令
+         * @param {type} vdom 
+         * @param {type} scope
+         * @returns {undefined}
+         */
+        scanText: function scanText(vdom, scope) {
+            if (config.rexpr.test(vdom.nodeValue)) {
+                vdom.dynamic = true;
+            }
+        },
+
+        /**
+         * 从注释节点获取指令
+         * @param {type} vdom 
+         * @param {type} scope
+         * @param {type} parentChildren
+         * @returns {undefined}
+         */
+        scanComment: function scanComment(vdom, scope, parentChildren) {
+            if (startWith(vdom.nodeValue, 'ms-for:')) {
+                this.getForBinding(vdom, scope, parentChildren);
+            }
+        },
+
+        /**
+         * 从元素节点的nodeName与属性中获取指令
+         * @param {type} vdom 
+         * @param {type} scope
+         * @param {type} parentChildren
+         * @param {type} isRoot 用于执行complete方法
+         * @returns {undefined}
+         */
+        scanTag: function scanTag(vdom, scope, parentChildren, isRoot) {
+            var dirs = {},
+                attrs = vdom.props,
+                hasDir,
+                hasFor;
+            for (var attr in attrs) {
+                var value = attrs[attr];
+                var oldName = attr;
+                if (attr.charAt(0) === ':') {
+                    attr = 'ms-' + attr.slice(1);
+                }
+                if (startWith(attr, 'ms-')) {
+                    dirs[attr] = value;
+                    var type = attr.match(/\w+/g)[1];
+                    type = eventMap[type] || type;
+                    if (!directives[type]) {
+                        avalon.warn(attr + ' has not registered!');
+                    }
+                    hasDir = true;
+                }
+                if (attr === 'ms-for') {
+                    hasFor = value;
+                    delete attrs[oldName];
+                }
+            }
+            var $id = dirs['ms-important'] || dirs['ms-controller'];
+            if ($id) {
+                /**
+                 * 后端渲染
+                 * serverTemplates后端给avalon添加的对象,里面都是模板,
+                 * 将原来后端渲染好的区域再还原成原始样子,再被扫描
+                 */
+
+                //推算出指令类型
+                var type = dirs['ms-important'] === $id ? 'important' : 'controller';
+                //推算出用户定义时属性名,是使用ms-属性还是:属性
+                var attrName = 'ms-' + type in attrs ? 'ms-' + type : ':' + type;
+
+                if (inBrowser) {
+                    delete attrs[attrName];
+                }
+                var dir = directives[type];
+                scope = dir.getScope.call(this, $id, scope);
+
+                if (!scope) {
+                    return;
+                } else {
+                    if (!this.vm) {
+                        this.vm = scope;
+                    }
+                    vdom.dynamic = true;
+                    var clazz = attrs['class'];
+                    if (clazz) {
+                        attrs['class'] = (' ' + clazz + ' ').replace(' ms-controller ', '').trim();
+                    }
+                }
+                var render = this;
+                scope.$render = render;
+            }
+            if (hasFor) {
+                if (vdom.dom) {
+                    vdom.dom.removeAttribute(oldName);
+                }
+                return this.getForBindingByElement(vdom, scope, parentChildren, hasFor);
+            }
+
+            if (/^ms\-/.test(vdom.nodeName)) {
+                attrs.is = vdom.nodeName;
+            }
+
+            if (attrs['is']) {
+                if (!dirs['ms-widget']) {
+                    dirs['ms-widget'] = '{}';
+                }
+                hasDir = true;
+            }
+            if (hasDir) {
+                vdom.dirs = dirs;
+                vdom.dynamic = true;
+            }
+            var children = vdom.children;
+            //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
+            if (!orphanTag[vdom.nodeName] && children && children.length && !delayCompileNodes(dirs)) {
+                this.scanChildren(children, scope, false);
+            }
+        },
+
+        /**
+         * 将绑定属性转换为指令
+         * 执行各种回调与优化指令
+         * @returns {undefined}
+         */
+        complete: function complete() {
+            optimize(this.root);
+            this.Yield = Yield;
+
+            var fn = new Yield(this.vnodes, this);
+            this.tmpl = fn;
+            if (this.exe) {
+                var me = this;
+                collectDeps(this, this.update);
+            }
+        },
+
+        insert: function insert(nodes) {
+            toDOM(nodes, true);
+        },
+        update: function update() {
+            var nodes = this.tmpl.exec(this.vm, this);
+            if (!this.vm.$element) {
+
+                diff(this.vnodes[0], nodes[0]);
+                toDOM(this.vnodes);
+
+                this.vm.$element = this.vnodes[0];
+            } else {
+                this.patch(this.nodes, nodes);
+            }
+            this.nodes = nodes;
+        },
+        /**
+         * 销毁所有指令
+         * @returns {undefined}
+         */
+        dispose: function dispose() {
+            var list = this.directives || [];
+            for (var i = 0, el; el = list[i++];) {
+                el.dispose();
+            }
+            //防止其他地方的this.innerRender && this.innerRender.dispose报错
+            for (var _i4 in this) {
+                if (_i4 !== 'dispose') delete this[_i4];
+            }
+        },
+
+        /**
+         * 将循环区域转换为for指令
+         * @param {type} begin 注释节点
+         * @param {type} scope
+         * @param {type} parentChildren
+         * @param {type} userCb 循环结束回调
+         * @returns {undefined}
+         */
+        getForBinding: function getForBinding(begin, scope, parentChildren, userCb) {
+            var expr = begin.nodeValue.replace('ms-for:', '').trim();
+            begin.nodeValue = 'ms-for:' + expr;
+            var nodes = getRange(parentChildren, begin);
+            this.scanChildren(nodes, scope, false);
+            var end = nodes.end;
+            begin.dynamic = true;
+            //   var fragment = avalon.vdom(nodes, 'toHTML')
+            parentChildren.splice(nodes.start, nodes.length);
+            begin.props = {};
+            begin["for"] = {
+                begin: begin,
+                end: end,
+                expr: expr,
+                nodes: nodes,
+                userCb: userCb
+
+                // parentChildren
+            };
+        },
+
+        /**
+         * 在带ms-for元素节点旁添加两个注释节点,组成循环区域
+         * @param {type} vdom
+         * @param {type} scope
+         * @param {type} parentChildren
+         * @param {type} expr
+         * @returns {undefined}
+         */
+        getForBindingByElement: function getForBindingByElement(vdom, scope, parentChildren, expr) {
+            var index = parentChildren.indexOf(vdom); //原来带ms-for的元素节点
+            var props = vdom.props;
+            var begin = {
+                nodeName: '#comment',
+                vtype: 8,
+                nodeValue: 'ms-for:' + expr
+            };
+            if (props.slot) {
+                begin.slot = props.slot;
+                delete props.slot;
+            }
+            var end = {
+                vtype: 8,
+                nodeName: '#comment',
+                nodeValue: 'ms-for-end:'
+            };
+            parentChildren.splice(index, 1, begin, vdom, end);
+            this.getForBinding(begin, scope, parentChildren, props['data-for-rendered']);
+        }
+    };
+
+    function getTraceKey(item) {
+        var type = typeof item;
+        return item && type === 'object' ? item.$hashcode : type + ':' + item;
+    }
+
+    function repeatCb(obj, el, index, keys, nodes, cb, isArray$$1) {
+        var local = {};
+        local[keys[0]] = el;
+        if (keys[1]) local[keys[1]] = index;
+        if (keys[2]) local[keys[1]] = obj;
+        var arr = cb(local),
+            obj;
+        arr.push({
+            nodeName: '#text',
+            nodeValue: ' '
+        });
+        obj = {
+            key: isArray$$1 ? getTraceKey(el) : index,
+            nodeName: '#document-fragment',
+            children: arr
+        };
+
+        nodes.push(obj);
+    }
+    var container = {
+        script: function script(node) {
+            try {
+                node.dom.text = node.children[0].nodeValue;
+            } catch (e) {
+                avalon.log(node);
+            }
+        },
+        style: function style(node) {
+            try {
+                node.dom.textContext = node.children[0].nodeValue;
+            } catch (e) {
+                avalon.log(node);
+            }
+        }
+    };
+    // 以后要废掉vdom系列,action
+    function diff(a, b) {
+        switch (a.nodeName) {
+            case '#text':
+                if (a.dynamic && a.nodeValue !== b.nodeValue) {
+                    a.nodeValue = b.nodeValue;
+                }
+                break;
+            case '#comment':
+                break;
+            case '#document-fragment':
+                diff(a.children, b.children);
+                break;
+            case void 0:
+                break;
+            default:
+                if (a.staticRoot) {
+                    toDOM(a);
+                    return;
+                }
+                var delay;
+                if (b.dirs) {
+                    for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
+                        var adir = a.dirs[i];
+                        if (adir.diff(bdir.value, adir.value, a, bdir)) {
+                            if (adir.after) {} else {
+                                delay = adir.delay;
+                                adir.update(a, adir.value);
+                            }
+                        }
+                    }
+                }
+                if (!a.isVoidTag && !delay) {
+                    for (var i = 0, n = a.children.length; i < n; i++) {
+                        diff(a.children[i], b.children[i]);
+                    }
+                }
+                break;
+        }
+    }
+
+    function toDOM(el) {
+
+        if (el.props) {
+            if (!el.dom) {
+                console.log(el.dom, el);
+                el.dom = document.createElement(el.nodeName);
+            }
+            for (var i in el.props) {
+                if (typeof el.dom[i] === 'boolean') {
+                    el.dom[i] = !!el.props[i];
+                } else {
+                    el.dom.setAttribute(i, el.props[i]);
+                }
+            }
+            if (container[el.nodeName]) {
+                container[el.nodeName](el);
+            } else if (el.children && !el.isVoidTag) {
+                appendChild(el.dom, el.children);
+            }
+            return el.dom;
+        } else if (el.nodeName === '#comment') {
+            return el.dom || (el.dom = document.createComment(el.nodeValue));
+        } else if (el.nodeName === '#document-fragment') {
+            var dom = document.createDocumentFragment();
+            appendChild(dom, el.children);
+            el.split = dom.lastChild;
+            el.dom = dom;
+            return dom;
+        } else if (el.nodeName === '#text') {
+            if (el.dom) {
+                if (el.dynamic && el.nodeValue !== el.dom.nodeValue) {
+                    el.dom.nodeValue = el.nodeValue;
+                }
+                return el.dom;
+            }
+
+            return document.createTextNode(el.nodeValue);
+        } else if (Array.isArray(el)) {
+            el = flatten(el);
+            if (el.length === 1) {
+                console.log(el[0]);
+                return toDOM(el[0]);
+            } else {
+                var a = document.createDocumentFragment();
+                appendChild(a, el);
+                return a;
+            }
+        }
+    }
+
+    function appendChild(parent, children) {
+        for (var i = 0, n = children.length; i < n; i++) {
+            var b = toDOM(children[i]);
+            if (b) {
+                parent.appendChild(b);
+            }
+        }
+    }
+
+    function flatten(array) {
+        var ret = [];
+        for (var i = 0, n = array.length; i < n; i++) {
+            var el = array[i];
+            if (Array.isArray(el)) {
+                ret.push.apply(ret, el);
+            } else {
+                ret.push(el);
+            }
+        }
+        return ret;
+    }
+
+    avalon.directive('html', {
+        diff: function diff(a, b, vdom, dir) {
+            a = (a == null ? '' : a).toString().trim();
+            b = (b == null ? '' : b).toString().trim();
+
+            if (a !== b) {
+                this.vm = dir.vm;
+                this.value = a || ' ';
+                return true;
+            }
+        },
         update: function update(vdom, value) {
             this.beforeDispose();
 
-            this.innerRender = avalon.scan('<div class="ms-html-container">' + value + '</div>', this.vm, function () {
-                var oldRoot = this.root;
-                if (vdom.children) vdom.children.length = 0;
-                vdom.children = oldRoot.children;
-                this.root = vdom;
-                if (vdom.dom) avalon.clearHTML(vdom.dom);
-            });
+            var a = this.innerRender = new Render(value, this.vm);
+            var children = a.tmpl.exec(a.vm, a);
+            vdom.children = children;
+            if (vdom.dom) avalon.clearHTML(vdom.dom);
         },
         beforeDispose: function beforeDispose() {
             if (this.innerRender) {
@@ -5600,7 +6442,7 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     });
 
-    function getTraceKey(item) {
+    function getTraceKey$1(item) {
         var type = typeof item;
         return item && type === 'object' ? item.$hashcode : type + ':' + item;
     }
@@ -5617,7 +6459,7 @@ IE7的checked属性应该使用defaultChecked来设置
             if (instance.fragments) {
                 instance.preFragments = instance.fragments;
                 avalon.each(obj, function (key, value) {
-                    var k = array ? getTraceKey(value) : key;
+                    var k = array ? getTraceKey$1(value) : key;
                     fragments.push({
                         key: k,
                         val: value,
@@ -5628,7 +6470,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 instance.fragments = fragments;
             } else {
                 avalon.each(obj, function (key, value) {
-                    var k = array ? getTraceKey(value) : key;
+                    var k = array ? getTraceKey$1(value) : key;
                     fragments.push(new VFragment([], k, value, i++));
                     ids.push(k);
                 });
@@ -6889,840 +7731,6 @@ IE7的checked属性应该使用defaultChecked来设置
         resetInFocus: true, //@config {Boolean} true，在focus事件中执行onReset回调,
         deduplicateInValidateAll: false //@config {Boolean} false，在validateAll回调中对reason数组根据元素节点进行去重
     };
-
-    function optimize(node) {
-        markStatic(node);
-        // second pass: mark static roots.
-        isStaticRoot(node, false);
-        return node;
-    }
-
-    function markStatic(node) {
-        node["static"] = isStatic(node);
-        if (node.vtype === 1 && !node.isVoidTag) {
-            // do not make component slot content static. this avoids
-            // 1. components not able to mutate slot nodes
-            // 2. static slot content fails for hot-reloading
-            if (node.nodeName === 'slot') {
-                node["static"] = false;
-                return;
-            }
-            if (node.props['ms-skip'] || node.props[':skip']) {
-                node["static"] = false;
-                return;
-            }
-
-            for (var i = 0, l = node.children.length; i < l; i++) {
-                var child = node.children[i];
-                markStatic(child);
-                if (!child["static"]) {
-                    node["static"] = false;
-                }
-            }
-        }
-    }
-
-    function isStaticRoot(node) {
-        var ret = true;
-        if (node.children) {
-            node.children.forEach(function (el) {
-                ret = ret & isStaticRoot(el);
-            });
-            if (ret && node["static"]) {
-                node.staticRoot = true;
-            }
-        }
-
-        return ret;
-    }
-
-    function isStatic(node) {
-        return !node.dynamic;
-    }
-
-    var eventMap = avalon.oneObject('animationend,blur,change,input,' + 'click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,' + 'mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit', 'on');
-    function parseAttributes(dirs, node) {
-        var uniq = {},
-            bindings = [],
-            props = node.props,
-            hasIf = false;
-        for (var name in dirs) {
-            var value = dirs[name];
-            var arr = name.split('-');
-            // ms-click
-            if (name in props) {
-                var attrName = name;
-            } else {
-                attrName = ':' + name.slice(3);
-            }
-            if (eventMap[arr[1]]) {
-                arr.splice(1, 0, 'on');
-            }
-            //ms-on-click
-            if (arr[1] === 'on') {
-                arr[3] = parseFloat(arr[3]) || 0;
-            }
-
-            var type = arr[1];
-            if (type === 'controller' || type === 'important') continue;
-            if (directives[type]) {
-                var _binding;
-
-                delete props[attrName];
-                var binding = (_binding = {
-                    type: type,
-                    param: arr[2],
-                    name: attrName
-                }, _binding['name'] = arr.join('-'), _binding.expr = value, _binding.priority = directives[type].priority || type.charCodeAt(0) * 100, _binding);
-                avalon.mix(binding, directives[type]);
-
-                if (type === 'on') {
-                    binding.priority += arr[3];
-                }
-                if (!uniq[binding.name]) {
-                    uniq[binding.name] = value;
-                    bindings.push(binding);
-                    if (type === 'for') {
-                        return [avalon.mix(binding, tuple[3])];
-                    }
-                }
-            }
-        }
-        bindings.sort(byPriority);
-        return bindings;
-    }
-    function byPriority(a, b) {
-        return a.priority - b.priority;
-    }
-
-    var rimprovePriority = /[+-\?]/;
-    var rinnerValue = /__value__\)$/;
-    function parseInterpolate(expr) {
-        var rlineSp = /\n\r?/g;
-        var str = String(expr).trim().replace(rlineSp, '');
-        var tokens = [];
-        do {
-            //aaa{{@bbb}}ccc
-            var index = str.indexOf(config.openTag);
-            index = index === -1 ? str.length : index;
-            var value = str.slice(0, index);
-            if (/\S/.test(value)) {
-                tokens.push(avalon.quote(avalon._decode(value)));
-            }
-            str = str.slice(index + config.openTag.length);
-            if (str) {
-                index = str.indexOf(config.closeTag);
-                var value = str.slice(0, index);
-                var expr = avalon.unescapeHTML(value);
-                if (/\|\s*\w/.test(expr)) {
-                    //如果存在过滤器，优化干掉
-                    var arr = addScope(expr, 'expr');
-                    if (arr[1]) {
-                        expr = arr[1].replace(rinnerValue, arr[0] + ')');
-                    }
-                }
-                if (rimprovePriority) {
-                    expr = '(' + expr + ')';
-                }
-                tokens.push(expr);
-
-                str = str.slice(index + config.closeTag.length);
-            }
-        } while (str.length);
-        return tokens.join('+');
-    }
-
-    function Yield(nodes, render) {
-        this.render = render;
-        var body = this.genChildren(nodes);
-        this.body = body;
-        this.exec = Function('__vmodel__', 'Ʃ', 'return ' + body);
-    }
-    Yield.prototype = {
-        genChildren: function genChildren(nodes) {
-            if (nodes.length) {
-                return '[' + nodes.map(function (node) {
-                    return this.genNode(node);
-                }, this).join(',\n') + ']';
-            } else {
-                return '[]';
-            }
-        },
-        genNode: function genNode(node) {
-            if (node.vtype === 1) {
-                return this.genElement(node);
-            } else if (node.vtype === 8) {
-                return this.genComment(node);
-            } else {
-                return this.genText(node);
-            }
-        },
-        genText: function genText(node) {
-            if (node.dynamic) {
-                return '\u01A9.text( ' + createExpr(parseInterpolate(node.nodeValue)) + ')';
-            }
-            return '\u01A9.text(' + avalon.quote(node.nodeValue) + ')';
-        },
-        genComment: function genComment(node) {
-            if (node.dynamic) {
-                var dir = node["for"];
-                avalon.directives['for'].beforeInit.call(dir);
-                var keys = '\'' + dir.valName + ',' + dir.keyName + ',' + dir.asName + '\'';
-                return '\u01A9.comment(\'ms-for:' + dir.expr + '\'),\n                    \u01A9.repeat(' + createExpr(dir.expr) + ', ' + keys + ', function(__local__){\n                return ' + this.genChildren(dir.nodes) + '\n            })';
-            }
-
-            return '\u01A9.comment(' + avalon.quote(node.nodeValue) + ')';
-        },
-        genElement: function genElement(node) {
-            if (node.staticRoot) {
-                var index = this.render.staticIndex++;
-                this.render.staticTree[index] = node;
-                return '\u01A9.static(' + index + ')';
-            }
-            var dirs = node.dirs,
-                props = node.props;
-            if (dirs) {
-                var hasCtrl = dirs['ms-controller'];
-                delete dirs['ms-controller'];
-                if (dirs['ms-text']) {
-                    var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag);
-                    var code = createExpr(expr, 'text');
-                    node.template = '[\u01A9.text( ' + code + ' )]';
-
-                    removeDir('text', dirs, props);
-                    removeDir('html', dirs, props);
-                }
-
-                if (dirs['ms-html']) {
-                    //变成可以传参的东西
-                    node.template = '\u01A9.html( ' + createExpr(dirs['ms-html']) + ', __vmodel__ )';
-                    removeDir('html', dirs, props);
-                }
-                if (dirs['ms-if']) {
-                    //变成可以传参的东西
-                    var hasIf = createExpr(dirs['ms-if']);
-                    removeDir('if', dirs, props);
-                }
-                if (!Object.keys(dirs).length) {
-                    dirs = null;
-                }
-            }
-            var json = toJSONByArray('nodeName: \'' + node.nodeName + '\'', ' vtype: ' + node.vtype, node.isVoidTag ? 'isVoidTag: true' : '', node["static"] ? 'static: true' : '', dirs ? this.genDirs(dirs, node) : '', 'props: ' + toJSONByObject(node.props), 'children: ' + (node.template || this.genChildren(node.children)));
-            if (hasIf) {
-                json = hasIf + '? ' + json + ': \u01A9.comment(\'if\')';
-            }
-            if (hasCtrl) {
-                return '\u01A9.ctrl(' + avalon.quote(hasCtrl) + ', __vmodel__,function(__vmodel__){ \n                 return ' + json + '\n             })';
-            } else {
-                return json;
-            }
-        },
-        genDirs: function genDirs(dirs, node) {
-            var arr = parseAttributes(dirs, node);
-            if (arr.length) {
-                node.dirs = arr;
-                return 'dirs:[' + arr.map(function (dir) {
-                    return toJSONByArray('type: ' + avalon.quote(dir.type), 'name: ' + avalon.quote(dir.name), dir.param ? 'param: ' + avalon.quote(dir.param) : '', 'value: ' + createExpr(dir.expr));
-                }) + ']';
-            }
-            return '';
-        }
-    };
-
-    function removeDir(name, dirs, props) {
-        delete dirs['ms-' + name];
-        delete props['ms-' + name];
-        delete props[':' + name];
-    }
-
-    var rneedQuote = /[W\:-]/;
-
-    function fixKey(k) {
-        return rneedQuote.test(k) || keyMap[k] ? avalon.quote(k) : k;
-    }
-
-    function toJSONByArray() {
-        return '{' + avalon.slice(arguments, 0).filter(function (el) {
-            return el;
-        }).join(',') + '}';
-    }
-
-    function toJSONByObject(obj) {
-        var arr = [];
-        for (var i in obj) {
-            if (obj[i] === undefined || obj[i] === '') continue;
-            arr.push(fixKey(i) + ': ' + avalon.quote(obj[i]));
-        }
-        return '{' + arr + '}';
-    }
-
-    function getChildren(arr) {
-        var count = 0;
-        for (var i = 0, el; el = arr[i++];) {
-            if (el.nodeName === '#document-fragment') {
-                count += getChildren(el.children);
-            } else {
-                count += 1;
-            }
-        }
-        return count;
-    }
-    function groupTree(parent, children) {
-        children && children.forEach(function (vdom) {
-            if (!vdom) return;
-            var vlength = vdom.children && getChildren(vdom.children);
-            if (vdom.nodeName === '#document-fragment') {
-                var dom = createFragment();
-            } else {
-                dom = avalon.vdom(vdom, 'toDOM');
-                var domlength = dom.childNodes && dom.childNodes.length;
-                if (domlength && vlength && domlength > vlength) {
-                    if (!appendChildMayThrowError[dom.nodeName]) {
-                        avalon.clearHTML(dom);
-                    }
-                }
-            }
-            if (vlength) {
-                groupTree(dom, vdom.children);
-            }
-            //高级版本可以尝试 querySelectorAll
-
-            try {
-                if (!appendChildMayThrowError[parent.nodeName]) {
-                    parent.appendChild(dom);
-                }
-            } catch (e) {}
-        });
-    }
-
-    function dumpTree(elem) {
-        var firstChild;
-        while (firstChild = elem.firstChild) {
-            if (firstChild.nodeType === 1) {
-                dumpTree(firstChild);
-            }
-            elem.removeChild(firstChild);
-        }
-    }
-
-    function getRange(childNodes, node) {
-        var i = childNodes.indexOf(node) + 1;
-        var deep = 1,
-            nodes = [],
-            end;
-        nodes.start = i;
-        while (node = childNodes[i++]) {
-            nodes.push(node);
-            if (node.nodeName === '#comment') {
-                if (startWith(node.nodeValue, 'ms-for:')) {
-                    deep++;
-                } else if (node.nodeValue === 'ms-for-end:') {
-                    deep--;
-                    if (deep === 0) {
-                        //  node.nodeValue = 'msfor-end:'
-                        end = node;
-                        nodes.pop();
-                        break;
-                    }
-                }
-            }
-        }
-        nodes.end = end;
-        return nodes;
-    }
-
-    function startWith(long, short) {
-        return long.indexOf(short) === 0;
-    }
-
-    var appendChildMayThrowError = {
-        '#text': 1,
-        '#comment': 1,
-        script: 1,
-        style: 1,
-        noscript: 1
-    };
-
-    /**
-     * 生成一个渲染器,并作为它第一个遇到的ms-controller对应的VM的$render属性
-     * @param {String|DOM} node
-     * @param {ViewModel|Undefined} vm
-     * @param {Function|Undefined} beforeReady
-     * @returns {Render}
-     */
-    avalon.scan = function (node, vm) {
-        return new Render(node, vm);
-    };
-
-    /**
-     * avalon.scan 的内部实现
-     */
-    function Render(node, vm, noexe) {
-        this.root = node; //如果传入的字符串,确保只有一个标签作为根节点
-        this.vm = vm;
-        this.exe = noexe === undefined;
-        this.callbacks = [];
-        this.staticIndex = 0;
-        this.staticTree = {};
-        this.uuid = Math.random();
-        this.init();
-    }
-
-    Render.prototype = {
-        /**
-         * 开始扫描指定区域
-         * 收集绑定属性
-         * 生成指令并建立与VM的关联
-         */
-        init: function init() {
-            var vnodes;
-            if (this.root && this.root.nodeType > 0) {
-                vnodes = fromDOM(this.root); //转换虚拟DOM
-                //将扫描区域的每一个节点与其父节点分离,更少指令对DOM操作时,对首屏输出造成的频繁重绘
-                dumpTree(this.root);
-            } else if (typeof this.root === 'string') {
-                vnodes = fromString(this.root); //转换虚拟DOM
-            } else {
-                return avalon.warn('avalon.scan first argument must element or HTML string');
-            }
-            this.root = vnodes[0];
-            this.vnodes = vnodes;
-            this.scanChildren(vnodes, this.vm, true);
-        },
-
-        "static": function _static(i) {
-            return this.staticTree[i];
-        },
-        comment: function comment(value) {
-            return { nodeName: '#comment', vtype: 8, nodeValue: value };
-        },
-        text: function text(a) {
-            return { nodeName: '#text', vtype: 3, nodeValue: a || '' };
-        },
-        html: function html(_html, vm) {
-            var a = new Render(_html, vm, true);
-            return a.tmpl.exec(vm, this);
-        },
-        ctrl: function ctrl(id, scope, cb) {
-            var dir = directives['controller'];
-            scope = dir.getScope.call(this, id, scope);
-            return cb(scope);
-        },
-        repeat: function repeat(obj, str, cb) {
-            var nodes = [];
-            var keys = str.split(',');
-
-            if (Array.isArray(obj)) {
-                for (var i = 0, n = obj.length; i < n; i++) {
-                    repeatCb(obj, obj[i], i, keys, nodes, cb, true);
-                }
-            } else if (avalon.isObject(obj)) {
-                for (var i in obj) {
-                    if (obj.hasOwnProperty(i)) {
-                        repeatCb(obj, obj[i], i, keys, nodes, cb);
-                    }
-                }
-            }
-            return nodes;
-        },
-        scanChildren: function scanChildren(children, scope, isRoot) {
-            for (var i = 0; i < children.length; i++) {
-                var vdom = children[i];
-                switch (vdom.nodeName) {
-                    case '#text':
-                        this.scanText(vdom, scope);
-                        break;
-                    case '#comment':
-                        this.scanComment(vdom, scope, children);
-                        break;
-                    default:
-                        this.scanTag(vdom, scope, children, false);
-                        break;
-                }
-            }
-            if (isRoot) {
-                this.complete();
-            }
-        },
-
-        /**
-         * 从文本节点获取指令
-         * @param {type} vdom 
-         * @param {type} scope
-         * @returns {undefined}
-         */
-        scanText: function scanText(vdom, scope) {
-            if (config.rexpr.test(vdom.nodeValue)) {
-                vdom.dynamic = true;
-            }
-        },
-
-        /**
-         * 从注释节点获取指令
-         * @param {type} vdom 
-         * @param {type} scope
-         * @param {type} parentChildren
-         * @returns {undefined}
-         */
-        scanComment: function scanComment(vdom, scope, parentChildren) {
-            if (startWith(vdom.nodeValue, 'ms-for:')) {
-                this.getForBinding(vdom, scope, parentChildren);
-            }
-        },
-
-        /**
-         * 从元素节点的nodeName与属性中获取指令
-         * @param {type} vdom 
-         * @param {type} scope
-         * @param {type} parentChildren
-         * @param {type} isRoot 用于执行complete方法
-         * @returns {undefined}
-         */
-        scanTag: function scanTag(vdom, scope, parentChildren, isRoot) {
-            var dirs = {},
-                attrs = vdom.props,
-                hasDir,
-                hasFor;
-            for (var attr in attrs) {
-                var value = attrs[attr];
-                var oldName = attr;
-                if (attr.charAt(0) === ':') {
-                    attr = 'ms-' + attr.slice(1);
-                }
-                if (startWith(attr, 'ms-')) {
-                    dirs[attr] = value;
-                    var type = attr.match(/\w+/g)[1];
-                    type = eventMap[type] || type;
-                    if (!directives[type]) {
-                        avalon.warn(attr + ' has not registered!');
-                    }
-                    hasDir = true;
-                }
-                if (attr === 'ms-for') {
-                    hasFor = value;
-                    delete attrs[oldName];
-                }
-            }
-            var $id = dirs['ms-important'] || dirs['ms-controller'];
-            if ($id) {
-                /**
-                 * 后端渲染
-                 * serverTemplates后端给avalon添加的对象,里面都是模板,
-                 * 将原来后端渲染好的区域再还原成原始样子,再被扫描
-                 */
-
-                //推算出指令类型
-                var type = dirs['ms-important'] === $id ? 'important' : 'controller';
-                //推算出用户定义时属性名,是使用ms-属性还是:属性
-                var attrName = 'ms-' + type in attrs ? 'ms-' + type : ':' + type;
-
-                if (inBrowser) {
-                    delete attrs[attrName];
-                }
-                var dir = directives[type];
-                scope = dir.getScope.call(this, $id, scope);
-
-                if (!scope) {
-                    return;
-                } else {
-                    if (!this.vm) {
-                        this.vm = scope;
-                    }
-                    vdom.dynamic = true;
-                    var clazz = attrs['class'];
-                    if (clazz) {
-                        attrs['class'] = (' ' + clazz + ' ').replace(' ms-controller ', '').trim();
-                    }
-                }
-                var render = this;
-                scope.$render = render;
-            }
-            if (hasFor) {
-                if (vdom.dom) {
-                    vdom.dom.removeAttribute(oldName);
-                }
-                return this.getForBindingByElement(vdom, scope, parentChildren, hasFor);
-            }
-
-            if (/^ms\-/.test(vdom.nodeName)) {
-                attrs.is = vdom.nodeName;
-            }
-
-            if (attrs['is']) {
-                if (!dirs['ms-widget']) {
-                    dirs['ms-widget'] = '{}';
-                }
-                hasDir = true;
-            }
-            if (hasDir) {
-                vdom.dirs = dirs;
-                vdom.dynamic = true;
-            }
-            var children = vdom.children;
-            //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
-            if (!orphanTag[vdom.nodeName] && children && children.length && !delayCompileNodes(dirs)) {
-                this.scanChildren(children, scope, false);
-            }
-        },
-
-        /**
-         * 将绑定属性转换为指令
-         * 执行各种回调与优化指令
-         * @returns {undefined}
-         */
-        complete: function complete() {
-            optimize(this.root);
-            this.Yield = Yield;
-            var fn = new Yield(this.vnodes, this);
-            this.tmpl = fn;
-            if (this.exe) {
-                var me = this;
-                collectDeps(this, this.update);
-            }
-        },
-
-        insert: function insert(nodes) {
-            toDOM(nodes, true);
-        },
-        update: function update() {
-            var nodes = this.tmpl.exec(this.vm, this);
-            console.log(nodes, this.tmpl.body);
-            if (!this.vm.$element) {
-
-                diff(this.vnodes[0], nodes[0]);
-                toDOM(this.vnodes);
-                //            var a = nodes[0].dom
-                //            if (a !== document.body) {
-                //                while (a.firstChild) {
-                //                    document.body.appendChild(a.firstChild)
-                //                }
-                //                nodes[0].dom = document.body
-                //                a = document.body
-                //            }
-                this.vm.$element = this.vnodes[0];
-            } else {
-                this.patch(this.nodes, nodes);
-            }
-            this.nodes = nodes;
-        },
-        /**
-         * 销毁所有指令
-         * @returns {undefined}
-         */
-        dispose: function dispose() {
-            var list = this.directives || [];
-            for (var i = 0, el; el = list[i++];) {
-                el.dispose();
-            }
-            //防止其他地方的this.innerRender && this.innerRender.dispose报错
-            for (var _i4 in this) {
-                if (_i4 !== 'dispose') delete this[_i4];
-            }
-        },
-
-        /**
-         * 将循环区域转换为for指令
-         * @param {type} begin 注释节点
-         * @param {type} scope
-         * @param {type} parentChildren
-         * @param {type} userCb 循环结束回调
-         * @returns {undefined}
-         */
-        getForBinding: function getForBinding(begin, scope, parentChildren, userCb) {
-            var expr = begin.nodeValue.replace('ms-for:', '').trim();
-            begin.nodeValue = 'ms-for:' + expr;
-            var nodes = getRange(parentChildren, begin);
-            this.scanChildren(nodes, scope, false);
-            var end = nodes.end;
-            begin.dynamic = true;
-            //   var fragment = avalon.vdom(nodes, 'toHTML')
-            parentChildren.splice(nodes.start, nodes.length);
-            begin.props = {};
-            begin["for"] = {
-                begin: begin,
-                end: end,
-                expr: expr,
-                nodes: nodes,
-                userCb: userCb
-
-                // parentChildren
-            };
-        },
-
-        /**
-         * 在带ms-for元素节点旁添加两个注释节点,组成循环区域
-         * @param {type} vdom
-         * @param {type} scope
-         * @param {type} parentChildren
-         * @param {type} expr
-         * @returns {undefined}
-         */
-        getForBindingByElement: function getForBindingByElement(vdom, scope, parentChildren, expr) {
-            var index = parentChildren.indexOf(vdom); //原来带ms-for的元素节点
-            var props = vdom.props;
-            var begin = {
-                nodeName: '#comment',
-                vtype: 8,
-                nodeValue: 'ms-for:' + expr
-            };
-            if (props.slot) {
-                begin.slot = props.slot;
-                delete props.slot;
-            }
-            var end = {
-                vtype: 8,
-                nodeName: '#comment',
-                nodeValue: 'ms-for-end:'
-            };
-            parentChildren.splice(index, 1, begin, vdom, end);
-            this.getForBinding(begin, scope, parentChildren, props['data-for-rendered']);
-        }
-    };
-
-    function getTraceKey$1(item) {
-        var type = typeof item;
-        return item && type === 'object' ? item.$hashcode : type + ':' + item;
-    }
-
-    function repeatCb(obj, el, index, keys, nodes, cb, isArray$$1) {
-        var local = {};
-        local[keys[0]] = el;
-        if (keys[1]) local[keys[1]] = index;
-        if (keys[2]) local[keys[1]] = obj;
-        var arr = cb(local),
-            obj;
-        arr.push({
-            nodeName: '#text',
-            nodeValue: ' '
-        });
-        obj = {
-            key: isArray$$1 ? getTraceKey$1(el) : index,
-            nodeName: '#document-fragment',
-            children: arr
-        };
-
-        nodes.push(obj);
-    }
-    var container = {
-        script: function script(node) {
-            try {
-                node.dom.text = node.children[0].nodeValue;
-            } catch (e) {
-                console.log(node);
-            }
-        },
-        style: function style(node) {
-            try {
-                node.dom.textContext = node.children[0].nodeValue;
-            } catch (e) {
-                console.log(node);
-            }
-        }
-    };
-    // 以后要废掉vdom系列,action
-    function diff(a, b) {
-        switch (a.nodeName) {
-            case '#text':
-                if (a.dynamic && a.nodeValue !== b.nodeValue) {
-                    a.dom.nodeValue = b.nodeValue;
-                }
-                break;
-            case '#comment':
-                break;
-            case '#document-fragment':
-                diff(a.children, b.children);
-                break;
-            case void 0:
-                break;
-            default:
-                if (a.staticRoot) {
-                    toDOM(a);
-                    return;
-                }
-                if (b.dirs) {
-                    for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
-                        var adir = a.dirs[i];
-                        if (adir.diff(bdir.value, adir.value, a)) {
-                            if (adir.after) {} else {
-                                adir.update(a, adir.value);
-                            }
-                        }
-                    }
-                }
-                if (!a.isVoidTag) {
-                    for (var i = 0, n = a.children.length; i < n; i++) {
-                        diff(a.children[i], b.children[i]);
-                    }
-                }
-                break;
-        }
-    }
-
-    function toDOM(el) {
-
-        if (el.props) {
-            if (!el.dom) {
-                console.log(el.dom, el);
-                el.dom = document.createElement(el.nodeName);
-            }
-            for (var i in el.props) {
-                if (typeof el.dom[i] === 'boolean') {
-                    el.dom[i] = !!el.props[i];
-                } else {
-                    el.dom.setAttribute(i, el.props[i]);
-                }
-            }
-            if (container[el.nodeName]) {
-                container[el.nodeName](el);
-            } else if (el.children && !el.isVoidTag) {
-                appendChild(el.dom, el.children);
-            }
-            return el.dom;
-        } else if (el.nodeName === '#comment') {
-            return el.dom || (el.dom = document.createComment(el.nodeValue));
-        } else if (el.nodeName === '#document-fragment') {
-            var dom = document.createDocumentFragment();
-            appendChild(dom, el.children);
-            el.split = dom.lastChild;
-            el.dom = dom;
-            return dom;
-        } else if (el.nodeName === '#text') {
-            if (el.dom) return el.dom;
-            return document.createTextNode(el.nodeValue);
-        } else if (Array.isArray(el)) {
-            el = flatten(el);
-            if (el.length === 1) {
-                console.log(el[0]);
-                return toDOM(el[0]);
-            } else {
-                var a = document.createDocumentFragment();
-                appendChild(a, el);
-                return a;
-            }
-        }
-    }
-
-    function appendChild(parent, children) {
-        for (var i = 0, n = children.length; i < n; i++) {
-            var b = toDOM(children[i]);
-            if (b) {
-                parent.appendChild(b);
-            }
-        }
-    }
-
-    function flatten(array) {
-        var ret = [];
-        for (var i = 0, n = array.length; i < n; i++) {
-            var el = array[i];
-            if (Array.isArray(el)) {
-                ret.push.apply(ret, el);
-            } else {
-                ret.push(el);
-            }
-        }
-        return ret;
-    }
 
     var events = 'onInit,onReady,onViewChange,onDispose,onEnter,onLeave';
     var componentEvents = avalon.oneObject(events);
