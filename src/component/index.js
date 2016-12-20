@@ -70,6 +70,9 @@ avalon.directive('widget', {
             fromCache = true
 
         } else {
+            if(typeof component === 'function'){
+               component = new component(value)
+            }
             var comVm = createComponentVm(component, value, is)
             fireComponentHook(comVm, vdom, 'Init')
             this.comVm = comVm

@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-18:17:18 version 2.2.3 by 司徒正美
+built in 2016-12-20:11:9 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -900,7 +900,7 @@ IE7的checked属性应该使用defaultChecked来设置
         number = (number + '').replace(/[^0-9+\-Ee.]/g, '');
         var n = !isFinite(+number) ? 0 : +number,
             prec = !isFinite(+decimals) ? 3 : Math.abs(decimals),
-            sep = thousands || ",",
+            sep = typeof thousands === 'string' ? thousands : ",",
             dec = point || ".",
             s = '';
 
@@ -7568,6 +7568,9 @@ IE7的checked属性应该使用defaultChecked来设置
                 replaceRoot(this, comVm.$render);
                 fromCache = true;
             } else {
+                if (typeof component === 'function') {
+                    component = new component(value);
+                }
                 var comVm = createComponentVm(component, value, is);
                 fireComponentHook(comVm, vdom, 'Init');
                 this.comVm = comVm;
