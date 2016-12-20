@@ -47,6 +47,9 @@ avalon.directive('on', {
         delete this.param
         avalon(dom).bind(this.eventType, fn)
     },
+    update: function(value, vdom) {
+
+    },
 
     beforeDispose: function() {
         avalon(this.node.dom).unbind(this.eventType)

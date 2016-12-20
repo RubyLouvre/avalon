@@ -1,7 +1,7 @@
 import { avalon, platform } from '../seed/core'
 var arrayWarn = {}
 var cssDir = avalon.directive('css', {
-    diff: function(newVal, oldVal) {
+    diff: function(oldVal, newVal) {
         if (Object(newVal) === newVal) {
             newVal = platform.toJson(newVal) //安全的遍历VBscript
             if (Array.isArray(newVal)) { //转换成对象
@@ -54,7 +54,7 @@ var cssDir = avalon.directive('css', {
         }
         return false
     },
-    update: function(vdom, value) {
+    update: function(value, vdom) {
 
         var dom = vdom.dom
         if (dom && dom.nodeType === 1) {

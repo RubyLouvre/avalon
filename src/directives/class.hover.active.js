@@ -26,14 +26,14 @@ function classNames() {
 
 
 avalon.directive('class', {
-    diff: function (newVal, oldVal) {
+    diff: function(oldVal, newVal) {
         var type = this.type
         var vdom = this.node
         var classEvent = vdom.classEvent || {}
-        if (type === 'hover') {//在移出移入时切换类名
+        if (type === 'hover') { //在移出移入时切换类名
             classEvent.mouseenter = activateClass
             classEvent.mouseleave = abandonClass
-        } else if (type === 'active') {//在获得焦点时切换类名
+        } else if (type === 'active') { //在获得焦点时切换类名
             classEvent.tabIndex = vdom.props.tabindex || -1
             classEvent.mousedown = activateClass
             classEvent.mouseup = abandonClass
@@ -50,7 +50,7 @@ avalon.directive('class', {
             return true
         }
     },
-    update: function (vdom, value) {
+    update: function(value, vdom) {
         var dom = vdom.dom
         if (dom && dom.nodeType == 1) {
 
@@ -68,7 +68,7 @@ avalon.directive('class', {
                 vdom.classEvent = {}
             }
             var names = ['class', 'hover', 'active']
-            names.forEach(function (type) {
+            names.forEach(function(type) {
                 if (dirType !== type)
                     return
                 if (type === 'class') {
@@ -121,4 +121,3 @@ function setClass(dom, neo) {
 
 markID(activateClass)
 markID(abandonClass)
-

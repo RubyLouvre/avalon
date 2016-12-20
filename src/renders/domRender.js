@@ -67,7 +67,7 @@ Render.prototype = {
         return { nodeName: '#comment', vtype: 8, nodeValue: value }
     },
     text: function(a, d) {
-        return { nodeName: '#text', vtype: 3, nodeValue: a || '',dynamic: d }
+        return { nodeName: '#text', vtype: 3, nodeValue: a || '', dynamic: d }
     },
     html: function(html, vm) {
         var a = new Render(html, vm, true)
@@ -262,7 +262,7 @@ Render.prototype = {
 
             diff(this.vnodes[0], nodes[0])
             toDOM(this.vnodes)
-      
+
             this.vm.$element = this.vnodes[0]
         } else {
             this.patch(this.nodes, nodes)
@@ -395,7 +395,7 @@ function diff(a, b) {
             }
             break
         case '#comment':
-             if (a.nodeName !== b.nodeName) {
+            if (a.nodeName !== b.nodeName) {
                 //a.nodeValue = b.nodeValue
                 console.log(a, b)
             }
@@ -410,28 +410,28 @@ function diff(a, b) {
                 toDOM(a)
                 return
             }
-            if (a.nodeName !== b.nodeName ) {
-               for(var i in a){
-                   delete a[i]
-               }
-               for(var i in b){
-                   a[i] = b[i]
-               }
-               //console.log('要变if', a,b)
+            if (a.nodeName !== b.nodeName) {
+                for (var i in a) {
+                    delete a[i]
+                }
+                for (var i in b) {
+                    a[i] = b[i]
+                }
+                //console.log('要变if', a,b)
                 //这里要做dispose处理
-              //  toDOM(a)
+                //  toDOM(a)
                 return
             }
             var delay
             if (b.dirs) {
                 for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                     var adir = a.dirs[i]
-                    if (adir.diff(bdir.value, adir.value, a, bdir)) {
+                    if (adir.diff(adir.value, bdir.value, a, b)) {
                         if (adir.after) {
 
                         } else {
                             delay = adir.delay
-                            adir.update(a, adir.value)
+                            adir.update(adir.value, a, b)
                         }
                     }
                 }
@@ -475,18 +475,17 @@ function toDOM(el) {
         el.dom = dom
         return dom
     } else if (el.nodeName === '#text') {
-        if (el.dom){
-            if(el.dynamic && el.nodeValue !== el.dom.nodeValue){
-               el.dom.nodeValue = el.nodeValue
+        if (el.dom) {
+            if (el.dynamic && el.nodeValue !== el.dom.nodeValue) {
+                el.dom.nodeValue = el.nodeValue
             }
             return el.dom
         }
-           
+
         return document.createTextNode(el.nodeValue)
     } else if (Array.isArray(el)) {
         el = flatten(el)
         if (el.length === 1) {
-            console.log(el[0])
             return toDOM(el[0])
         } else {
             var a = document.createDocumentFragment()

@@ -87,8 +87,9 @@ Yield.prototype = {
             `nodeName: '${node.nodeName}'`,
             ` vtype: ${node.vtype}`,
             node.isVoidTag ? 'isVoidTag: true' : '',
-            node.static ? 'static: true' : '',
+            node.staticRoot ? 'staticRoot: true' : '',
             dirs ? this.genDirs(dirs, node) : '',
+            dirs ? 'vm: __vmodel__':'',
             `props: ${toJSONByObject(node.props)}`,
             `children: ${ node.template || this.genChildren(node.children)}`
 
@@ -113,9 +114,9 @@ Yield.prototype = {
                 return toJSONByArray(
                     `type: ${avalon.quote(dir.type)}`,
                     `name: ${avalon.quote(dir.name)}`,
-                    `vm: __vmodel__`,
+                    
                     dir.param ? `param: ${avalon.quote(dir.param)}` : '',
-                    `value: ${createExpr(dir.expr)}`
+                    `value:  ${  dir.type ==='on' ? avalon.quote(dir.expr) :createExpr(dir.expr)}`
                 )
             }) + ']'
         }

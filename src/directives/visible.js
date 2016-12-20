@@ -2,6 +2,7 @@ import { avalon } from '../seed/core'
 import '../effect/index'
 
 var none = 'none'
+
 function parseDisplay(elem, val) {
     //用于取得此类标签的默认display值
     var doc = elem.ownerDocument
@@ -21,7 +22,7 @@ function parseDisplay(elem, val) {
 
 avalon.parseDisplay = parseDisplay
 avalon.directive('visible', {
-    diff: function (newVal, oldVal) {
+    diff: function(oldVal, newVal) {
         var n = !!newVal
         if (oldVal === void 0 || n !== oldVal) {
             this.value = n
@@ -29,7 +30,7 @@ avalon.directive('visible', {
         }
     },
     ready: true,
-    update: function (vdom, show) {     
+    update: function(vdom, show) {
         var dom = vdom.dom
         if (dom && dom.nodeType === 1) {
             var display = dom.style.display
@@ -57,12 +58,12 @@ avalon.directive('visible', {
                     vdom.displayValue = display
                 }
             }
-            var cb = function () {
+            var cb = function() {
                 if (value !== void 0) {
                     dom.style.display = value
                 }
             }
-     
+
             avalon.applyEffect(dom, vdom, {
                 hook: show ? 'onEnterDone' : 'onLeaveDone',
                 cb: cb
@@ -71,4 +72,3 @@ avalon.directive('visible', {
 
     }
 })
-

@@ -34,9 +34,9 @@ avalon.directive('for', {
         this.keyName = kv[0]
         this.valName = kv[1]
         this.signature = avalon.makeHashCode('for')
-       
+
         this.asName = asName || ''
-       
+
 
         delete this.param
     },
@@ -52,7 +52,7 @@ avalon.directive('for', {
         this.cache = {}
 
     },
-    diff: function(newVal, oldVal) {
+    diff: function(oldVal, newVal) {
         /* istanbul ignore if */
         if (this.updating) {
             return
@@ -160,7 +160,7 @@ function diffList(instance) {
     })
 
     instance.fragments.forEach(function(c, index) {
-         var fragment = isInCache(cache, c.key)
+        var fragment = isInCache(cache, c.key)
             //取出之前的文档碎片
         if (fragment) {
             delete fragment._dispose
@@ -185,9 +185,9 @@ function diffList(instance) {
             fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
             delete fragment._dispose
         } else {
-          
+
             c = new VFragment([], c.key, c.val, c.index)
-            
+
             fragment = FragmentDecorator(c, instance, c.index)
             list.push(fragment)
         }
@@ -254,14 +254,14 @@ function FragmentDecorator(fragment, instance, index) {
     var vm = fragment.vm = platform.itemFactory(instance.vm, {
         data: data
     })
-    if(instance.isArray){
-        vm.$watch(instance.valName, function(a){
-            if(instance.value && instance.value.set){
+    if (instance.isArray) {
+        vm.$watch(instance.valName, function(a) {
+            if (instance.value && instance.value.set) {
                 instance.value.set(vm[instance.keyName], a)
             }
         })
-    }else{
-        vm.$watch(instance.valName, function(a){
+    } else {
+        vm.$watch(instance.valName, function(a) {
             instance.value[fragment.key] = a
         })
     }
