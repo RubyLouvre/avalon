@@ -247,6 +247,7 @@ Render.prototype = {
         var fn = new Yield(this.vnodes, this)
         this.tmpl = fn
         if (this.exe) {
+
             var me = this
             collectDeps(this, this.update)
 
@@ -415,12 +416,7 @@ function diff(a, b) {
         case '#comment':
             toDOM(a)
             if (a.nodeName !== b.nodeName) {
-                for (var i in a) {
-                    delete a[i]
-                }
-                for (var i in b) {
-                    a[i] = b[i]
-                }
+                handleIf(a,b)
                 toDOM(a)
             }
             break
@@ -436,37 +432,23 @@ function diff(a, b) {
             }
             var parentNode = a.dom
             if (a.nodeName !== b.nodeName) {
-                for (var i in a) {
-                    delete a[i]
-                }
-                for (var i in b) {
-                    a[i] = b[i]
-                }
-                //console.log('要变if', a,b)
-                //这里要做dispose处理
-                toDOM(a)
+                handleIf(a,b)
                 return
             }
             var delay
+            var isHTML
             if (b.dirs) {
                 for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                     var adir = a.dirs[i]
 
                     delay = delay || adir.delay
                     if (adir.diff(adir.value, bdir.value, a, b)) {
-
-
                         adir.update(adir.value, a, b)
-                        if(!adir.removeName){
-                            a.dom.removeAttribute(a.name)
+                        if (!adir.removeName) {
+                            a.dom.removeAttribute(adir.name)
                             adir.removeName = true
                         }
-                        if (adir.type === 'html') {
-                            a.children.forEach(function(el) {
-                                toDOM(el)
-                                parentNode.appendChild(el.dom)
-                            })
-                        }
+
 
                     }
 
@@ -479,9 +461,15 @@ function diff(a, b) {
                 for (var i = 0, n = a.children.length; i < n; i++) {
                     var c = a.children[i]
                     var d = b.children[i]
-                    diff(c, d)
+                    if (d) {
+                        diff(c, d)
+                    } else {
+
+                        toDOM(c)
+                    }
                     if (c.dom !== childNodes[i]) {
                         if (!childNodes[i]) {
+                            //  parentNode.removeChild(c.dom)
                             parentNode.appendChild(c.dom)
                         } else {
                             parentNode.replaceChild(c.dom, childNodes[i])
@@ -541,7 +529,32 @@ function toDOM(el) {
         }
     }
 }
+function handleIf(a, b){
+    handleDispose(a)
+    for (var i in a) {
+        delete a[i]
+    }
+    for (var i in b) {
+        a[i] = b[i]
+    }
+    toDOM(a)
+}
 
+function handleDispose(a){
+    if(a.dirs){
+        for(var i = 0, el; el = a.dirs[i++];){
+            if(el.beforeDispose){
+                el.beforeDispose()
+            }
+        }
+    }
+    var arr = a.children || Array.isArray(a) ? a: false
+    if(arr){
+        for(var i = 0, el; el = arr[i++];){
+            handleDispose(el)
+        }
+    }
+}
 function appendChild(parent, children) {
     for (var i = 0, n = children.length; i < n; i++) {
         var b = toDOM(children[i])

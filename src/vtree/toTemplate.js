@@ -9,7 +9,6 @@ export function Yield(nodes, render) {
     this.render = render
     var body = this.genChildren(nodes)
     this.body = body
-    console.log(body)
     this.exec = Function('__vmodel__', 'Ʃ', 'return ' + body)
 }
 Yield.prototype = {
@@ -114,7 +113,7 @@ Yield.prototype = {
                 return toJSONByArray(
                     `type: ${avalon.quote(dir.type)}`,
                     `name: ${avalon.quote(dir.name)}`,
-                    
+                    dir.uuid ?  `uuid: ${avalon.quote(dir.uuid)}`: '',
                     dir.param ? `param: ${avalon.quote(dir.param)}` : '',
                     `value:  ${  dir.type ==='on' ? avalon.quote(dir.expr) :createExpr(dir.expr)}`
                 )

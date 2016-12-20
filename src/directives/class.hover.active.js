@@ -26,9 +26,8 @@ function classNames() {
 
 
 avalon.directive('class', {
-    diff: function(oldVal, newVal) {
+    diff: function(oldVal, newVal, vdom) {
         var type = this.type
-        var vdom = this.node
         var classEvent = vdom.classEvent || {}
         if (type === 'hover') { //在移出移入时切换类名
             classEvent.mouseenter = activateClass
@@ -43,7 +42,7 @@ avalon.directive('class', {
 
         var className = classNames(newVal)
 
-        if (typeof oldVal === void 0 || oldVal !== className) {
+        if (oldVal !== className) {
             this.value = className
 
             vdom['change-' + type] = className
@@ -52,7 +51,7 @@ avalon.directive('class', {
     },
     update: function(value, vdom) {
         var dom = vdom.dom
-        if (dom && dom.nodeType == 1) {
+        if (dom && dom.nodeType === 1) {
 
             var dirType = this.type
             var change = 'change-' + dirType

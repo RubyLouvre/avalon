@@ -11,7 +11,7 @@ avalon.directive('on', {
         }
     },
     update: function(value, vdom, _) {
-        var underline = this.name.replace('ms-on-', 'e').replace('-', '_')
+        var underline = this.uuid.replace('ms-on-', 'e').replace('-', '_')
         var uuid = underline + '_' + value.
         replace(/\s/g, '').
         replace(/[^$a-z]/ig, function(e) {
@@ -43,7 +43,6 @@ avalon.directive('on', {
         }
         var dom = vdom.dom
         dom._ms_context_ = _.vm
-
         this.eventType = this.param.replace(/\-(\d)$/, '')
         delete this.param
         this.vdom = vdom
