@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-20:11:9 version 2.2.3 by 司徒正美
+built in 2016-12-20:12:12 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.2
 fix ms-controller BUG, 上下VM相同时,不会进行合并
 为监听数组添加toJSON方法
