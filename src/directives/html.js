@@ -2,7 +2,7 @@ import { avalon } from '../seed/core'
 import { Render } from '../renders/domRender'
 
 avalon.directive('html', {
-    diff: function(oldVal, newVal) {
+    diff: function(oldVal, newVal) { //oldVal, newVal, oldVdom, newVdom
         oldVal = (oldVal == null ? '' : oldVal).toString().trim()
         newVal = (newVal == null ? '' : newVal).toString().trim()
 
@@ -12,11 +12,11 @@ avalon.directive('html', {
             return true
         }
     },
-    update: function(value, vdom) {
+    update: function(value, vdom, newVdom) { //oldVal( == newVal), oldVdom, newVdom
         this.beforeDispose()
 
-        var a = this.innerRender = new Render(value, this.vm)
-        var children = a.tmpl.exec(a.vm, a)
+        var render = this.innerRender = new Render(value, newVdom.vm)
+        var children = render.tmpl.exec(render.vm, render)
         vdom.children = children
         if (vdom.dom)
             avalon.clearHTML(vdom.dom)

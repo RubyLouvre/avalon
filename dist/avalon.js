@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-19:14:35 version 2.2.2 by 司徒正美
+built in 2016-12-20:15:36 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -4782,7 +4782,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
     var arrayWarn = {};
     var cssDir = avalon.directive('css', {
-        diff: function diff(newVal, oldVal) {
+        diff: function diff(oldVal, newVal) {
             if (Object(newVal) === newVal) {
                 newVal = platform.toJson(newVal); //安全的遍历VBscript
                 if (Array.isArray(newVal)) {
@@ -4839,7 +4839,7 @@ IE7的checked属性应该使用defaultChecked来设置
             }
             return false;
         },
-        update: function update(vdom, value) {
+        update: function update(value, vdom) {
 
             var dom = vdom.dom;
             if (dom && dom.nodeType === 1) {
@@ -5274,6 +5274,7 @@ IE7的checked属性应该使用defaultChecked来设置
      */
 
     var none = 'none';
+
     function parseDisplay(elem, val) {
         //用于取得此类标签的默认display值
         var doc = elem.ownerDocument;
@@ -5293,7 +5294,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
     avalon.parseDisplay = parseDisplay;
     avalon.directive('visible', {
-        diff: function diff(newVal, oldVal) {
+        diff: function diff(oldVal, newVal) {
             var n = !!newVal;
             if (oldVal === void 0 || n !== oldVal) {
                 this.value = n;
@@ -5368,7 +5369,7 @@ IE7的checked属性应该使用defaultChecked来设置
     });
 
     avalon.directive('expr', {
-        update: function update(vdom, value) {
+        update: function update(value, vdom) {
             vdom.nodeValue = value;
             //https://github.com/RubyLouvre/avalon/issues/1834
             if (vdom.dom) if (value === '') value = '\u200B';
@@ -5378,7 +5379,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
     avalon.directive('attr', {
         diff: cssDiff,
-        update: function update(vdom, value) {
+        update: function update(value, vdom) {
             var props = vdom.props;
             for (var i in value) {
                 if (!!value[i] === false) {
@@ -5393,6 +5394,8 @@ IE7的checked属性应该使用defaultChecked来设置
             }
         }
     });
+
+    //绑定对象只有value不一样，
 
     function optimize(node) {
         markStatic(node);
@@ -5607,7 +5610,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     dirs = null;
                 }
             }
-            var json = toJSONByArray('nodeName: \'' + node.nodeName + '\'', ' vtype: ' + node.vtype, node.isVoidTag ? 'isVoidTag: true' : '', node["static"] ? 'static: true' : '', dirs ? this.genDirs(dirs, node) : '', 'props: ' + toJSONByObject(node.props), 'children: ' + (node.template || this.genChildren(node.children)));
+            var json = toJSONByArray('nodeName: \'' + node.nodeName + '\'', ' vtype: ' + node.vtype, node.isVoidTag ? 'isVoidTag: true' : '', node.staticRoot ? 'staticRoot: true' : '', dirs ? this.genDirs(dirs, node) : '', dirs ? 'vm: __vmodel__' : '', 'props: ' + toJSONByObject(node.props), 'children: ' + (node.template || this.genChildren(node.children)));
             if (hasIf) {
                 json = hasIf + '? ' + json + ': \u01A9.comment(\'if\')';
             }
@@ -5622,7 +5625,7 @@ IE7的checked属性应该使用defaultChecked来设置
             if (arr.length) {
                 node.dirs = arr;
                 return 'dirs:[' + arr.map(function (dir) {
-                    return toJSONByArray('type: ' + avalon.quote(dir.type), 'name: ' + avalon.quote(dir.name), 'vm: __vmodel__', dir.param ? 'param: ' + avalon.quote(dir.param) : '', 'value: ' + createExpr(dir.expr));
+                    return toJSONByArray('type: ' + avalon.quote(dir.type), 'name: ' + avalon.quote(dir.name), dir.param ? 'param: ' + avalon.quote(dir.param) : '', 'value:  ' + (dir.type === 'on' ? avalon.quote(dir.expr) : createExpr(dir.expr)));
                 }) + ']';
             }
             return '';
@@ -6137,7 +6140,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     toDOM(a);
                     return;
                 }
-                if (a.nodeName !== b.nodeName || a.nodeName === 'k') {
+                if (a.nodeName !== b.nodeName) {
                     for (var i in a) {
                         delete a[i];
                     }
@@ -6153,11 +6156,16 @@ IE7的checked属性应该使用defaultChecked来设置
                 if (b.dirs) {
                     for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                         var adir = a.dirs[i];
-                        if (adir.diff(bdir.value, adir.value, a, bdir)) {
-                            if (adir.after) {} else {
-                                delay = adir.delay;
-                                adir.update(a, adir.value);
+                        try {
+                            if (adir.diff(adir.value, bdir.value, a, b)) {
+                                if (adir.after) {} else {
+                                    delay = adir.delay;
+                                    adir.update(adir.value, a, b);
+                                }
                             }
+                        } catch (e) {
+                            console.log(e);
+                            console.log(adir);
                         }
                     }
                 }
@@ -6210,7 +6218,6 @@ IE7的checked属性应该使用defaultChecked来设置
         } else if (Array.isArray(el)) {
             el = flatten(el);
             if (el.length === 1) {
-                console.log(el[0]);
                 return toDOM(el[0]);
             } else {
                 var a = document.createDocumentFragment();
@@ -6243,21 +6250,23 @@ IE7的checked属性应该使用defaultChecked来设置
     }
 
     avalon.directive('html', {
-        diff: function diff(a, b, vdom, dir) {
-            a = (a == null ? '' : a).toString().trim();
-            b = (b == null ? '' : b).toString().trim();
+        diff: function diff(oldVal, newVal) {
+            //oldVal, newVal, oldVdom, newVdom
+            oldVal = (oldVal == null ? '' : oldVal).toString().trim();
+            newVal = (newVal == null ? '' : newVal).toString().trim();
 
-            if (a !== b) {
-                this.vm = dir.vm;
-                this.value = a || ' ';
+            if (oldVal !== newVal) {
+
+                this.value = newVal || ' ';
                 return true;
             }
         },
-        update: function update(vdom, value) {
+        update: function update(value, vdom, newVdom) {
+            //oldVal( == newVal), oldVdom, newVdom
             this.beforeDispose();
 
-            var a = this.innerRender = new Render(value, this.vm);
-            var children = a.tmpl.exec(a.vm, a);
+            var render = this.innerRender = new Render(value, newVdom.vm);
+            var children = render.tmpl.exec(render.vm, render);
             vdom.children = children;
             if (vdom.dom) avalon.clearHTML(vdom.dom);
         },
@@ -6279,7 +6288,7 @@ IE7的checked属性应该使用defaultChecked来设置
         //        delete props[':if']
         //        this.fragment = avalon.vdom(this.node, 'toHTML')
         //    },
-        diff: function diff(newVal, oldVal) {
+        diff: function diff(oldVal, newVal) {
             return true;
             //        var n = !!newVal
             //        if (oldVal === void 0 || n !== oldVal) {
@@ -6287,7 +6296,7 @@ IE7的checked属性应该使用defaultChecked来设置
             //            return true
             //        }
         },
-        update: function update(vdom, value) {
+        update: function update(value, vdom) {
             console.log('ddddd');
             //        if (this.isShow === void 0 && value) {
             //            continueScan(this, vdom)
@@ -6321,11 +6330,11 @@ IE7的checked属性应该使用defaultChecked来设置
     });
 
     avalon.directive('on', {
-        beforeInit: function beforeInit() {
-            this.getter = avalon.noop;
+
+        diff: function diff(oldVal, newVal) {
+            return oldVal !== newVal;
         },
-        init: function init() {
-            var vdom = this.node;
+        update: function update(value, vdom, _) {
             var underline = this.name.replace('ms-on-', 'e').replace('-', '_');
             var uuid = underline + '_' + this.expr.replace(/\s/g, '').replace(/[^$a-z]/ig, function (e) {
                 return e.charCodeAt(0);
@@ -6349,17 +6358,17 @@ IE7的checked属性应该使用defaultChecked来设置
                 fn.uuid = uuid;
                 avalon.eventListeners[uuid] = fn;
             }
-
-            var dom = avalon.vdom(vdom, 'toDOM');
-            dom._ms_context_ = this.vm;
+            var dom = vdom.dom;
+            dom._ms_context_ = _.vm;
 
             this.eventType = this.param.replace(/\-(\d)$/, '');
             delete this.param;
+            this.vdom = vdom;
             avalon(dom).bind(this.eventType, fn);
         },
 
         beforeDispose: function beforeDispose() {
-            avalon(this.node.dom).unbind(this.eventType);
+            avalon(this.vdom.dom).unbind(this.eventType);
         }
     });
 
@@ -6409,7 +6418,7 @@ IE7的checked属性应该使用defaultChecked来设置
             this.fragment = ['<div>', this.fragment, '<!--', this.signature, '--></div>'].join('');
             this.cache = {};
         },
-        diff: function diff(newVal, oldVal) {
+        diff: function diff(oldVal, newVal) {
             /* istanbul ignore if */
             if (this.updating) {
                 return;
@@ -6683,7 +6692,7 @@ IE7的checked属性应该使用defaultChecked来设置
     }
 
     avalon.directive('class', {
-        diff: function diff(newVal, oldVal) {
+        diff: function diff(oldVal, newVal) {
             var type = this.type;
             var vdom = this.node;
             var classEvent = vdom.classEvent || {};
@@ -6709,7 +6718,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 return true;
             }
         },
-        update: function update(vdom, value) {
+        update: function update(value, vdom) {
             var dom = vdom.dom;
             if (dom && dom.nodeType == 1) {
 
@@ -7341,7 +7350,7 @@ IE7的checked属性应该使用defaultChecked来设置
         beforeInit: duplexBeforeInit,
         init: duplexInit,
         diff: duplexDiff,
-        update: function update(vdom, value) {
+        update: function update(value, vdom) {
             var dom = vdom.dom;
             if (!this.dom) {
                 this.dom = dom;
@@ -7394,7 +7403,7 @@ IE7的checked属性应该使用defaultChecked来设置
     }
 
     avalon.directive('rules', {
-        diff: function diff(rules) {
+        diff: function diff(old, rules) {
             if (isObject(rules)) {
                 var vdom = this.node;
                 vdom.rules = platform.toJson(rules);
@@ -7405,11 +7414,13 @@ IE7的checked属性应该使用defaultChecked来设置
             }
         }
     });
+
     function isRegExp(value) {
         return avalon.type(value) === 'regexp';
     }
     var rmail = /^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/i;
     var rurl = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/;
+
     function isCorrectDate(value) {
         if (typeof value === "string" && value) {
             //是字符串但不能是空字符
@@ -7546,7 +7557,7 @@ IE7的checked属性应该使用defaultChecked来设置
     });
 
     var valiDir = avalon.directive('validate', {
-        diff: function diff(validator) {
+        diff: function diff(odl, validator) {
             var vdom = this.node;
             if (vdom.validator) {
                 return;
@@ -7569,7 +7580,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 return true;
             }
         },
-        update: function update(vdom) {
+        update: function update(value, vdom) {
             var validator = vdom.validator;
             var dom = vdom.dom;
             validator.dom = dom;
@@ -7583,6 +7594,7 @@ IE7的checked属性应该使用defaultChecked来设置
             delete vdom.vmValidator;
 
             dom.setAttribute('novalidate', 'novalidate');
+
             function onManual() {
                 valiDir.validateAll.call(validator, validator.onValidateAll);
             }

@@ -426,13 +426,18 @@ function diff(a, b) {
             if (b.dirs) {
                 for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                     var adir = a.dirs[i]
-                    if (adir.diff(adir.value, bdir.value, a, b)) {
-                        if (adir.after) {
+                    try {
+                        if (adir.diff(adir.value, bdir.value, a, b)) {
+                            if (adir.after) {
 
-                        } else {
-                            delay = adir.delay
-                            adir.update(adir.value, a, b)
+                            } else {
+                                delay = adir.delay
+                                adir.update(adir.value, a, b)
+                            }
                         }
+                    } catch (e) {
+                        console.log(e)
+                        console.log(adir)
                     }
                 }
             }

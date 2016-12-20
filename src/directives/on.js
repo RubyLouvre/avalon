@@ -3,11 +3,11 @@ import { avalon, inBrowser } from '../seed/core'
 import { addScope, makeHandle } from '../parser/index'
 
 avalon.directive('on', {
-    beforeInit: function() {
-        this.getter = avalon.noop
+
+    diff: function(oldVal, newVal) {
+        return oldVal !== newVal
     },
-    init: function() {
-        var vdom = this.node
+    update: function(value, vdom, _) {
         var underline = this.name.replace('ms-on-', 'e').replace('-', '_')
         var uuid = underline + '_' + this.expr.
         replace(/\s/g, '').
@@ -38,20 +38,16 @@ avalon.directive('on', {
             fn.uuid = uuid
             avalon.eventListeners[uuid] = fn
         }
-
-
-        var dom = avalon.vdom(vdom, 'toDOM')
-        dom._ms_context_ = this.vm
+        var dom = vdom.dom
+        dom._ms_context_ = _.vm
 
         this.eventType = this.param.replace(/\-(\d)$/, '')
         delete this.param
+        this.vdom = vdom
         avalon(dom).bind(this.eventType, fn)
-    },
-    update: function(value, vdom) {
-
     },
 
     beforeDispose: function() {
-        avalon(this.node.dom).unbind(this.eventType)
+        avalon(this.vdom.dom).unbind(this.eventType)
     }
 })
