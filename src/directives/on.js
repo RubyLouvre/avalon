@@ -5,18 +5,21 @@ import { addScope, makeHandle } from '../parser/index'
 avalon.directive('on', {
 
     diff: function(oldVal, newVal) {
-        return oldVal !== newVal
+        if( oldVal !== newVal){
+            this.value = newVal+''
+            return true
+        }
     },
     update: function(value, vdom, _) {
         var underline = this.name.replace('ms-on-', 'e').replace('-', '_')
-        var uuid = underline + '_' + this.expr.
+        var uuid = underline + '_' + value.
         replace(/\s/g, '').
         replace(/[^$a-z]/ig, function(e) {
             return e.charCodeAt(0)
         })
         var fn = avalon.eventListeners[uuid]
         if (!fn) {
-            var arr = addScope(this.expr)
+            var arr = addScope(value)
             var body = arr[0],
                 filters = arr[1]
             body = makeHandle(body)

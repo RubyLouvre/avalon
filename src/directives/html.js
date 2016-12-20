@@ -7,14 +7,12 @@ avalon.directive('html', {
         newVal = (newVal == null ? '' : newVal).toString().trim()
 
         if (oldVal !== newVal) {
-
-            this.value = newVal || ' '
+            this.value = newVal
             return true
         }
     },
     update: function(value, vdom, newVdom) { //oldVal( == newVal), oldVdom, newVdom
         this.beforeDispose()
-
         var render = this.innerRender = new Render(value, newVdom.vm)
         var children = render.tmpl.exec(render.vm, render)
         vdom.children = children

@@ -4,7 +4,7 @@ import { fromString } from '../vtree/fromString'
 
 import { optimize } from '../vtree/optimize'
 import { Yield } from '../vtree/toTemplate'
-import { collectDeps } from '../vmodel/transaction'
+import { runActions, collectDeps } from '../vmodel/transaction'
 
 import { orphanTag } from '../vtree/orphanTag'
 import { parseAttributes, eventMap } from '../parser/attributes'
@@ -256,16 +256,26 @@ Render.prototype = {
         toDOM(nodes, true)
 
     },
+
+    schedule() {
+        if (!avalon.uniqActions[this.uuid]) {
+            avalon.uniqActions[this.uuid] = 1
+            avalon.pendingActions.push(this)
+        }
+
+        runActions() //这里会还原_isScheduled
+    },
     update: function() {
         var nodes = this.tmpl.exec(this.vm, this)
         if (!this.vm.$element) {
 
             diff(this.vnodes[0], nodes[0])
-            toDOM(this.vnodes)
+                //   toDOM(this.vnodes)
 
             this.vm.$element = this.vnodes[0]
         } else {
-            this.patch(this.nodes, nodes)
+            diff(this.vnodes[0], nodes[0])
+                //  toDOM(this.vnodes)
         }
         this.nodes = nodes
     },
@@ -371,33 +381,47 @@ function repeatCb(obj, el, index, keys, nodes, cb, isArray) {
 
     nodes.push(obj)
 }
+
 var container = {
-        script: function(node) {
-            try {
-                node.dom.text = node.children[0].nodeValue
-            } catch (e) {
-                avalon.log(node)
-            }
-        },
-        style: function(node) {
-            try {
-                node.dom.textContext = node.children[0].nodeValue
-            } catch (e) { avalon.log(node) }
+    script: function(node) {
+        try {
+            node.dom.text = node.children[0].nodeValue
+        } catch (e) {
+            avalon.log(node)
         }
+    },
+    style: function(node) {
+        try {
+            node.dom.textContext = node.children[0].nodeValue
+        } catch (e) { avalon.log(node) }
     }
-    // 以后要废掉vdom系列,action
-    //a是旧的虚拟DOM, b是新的
+}
+
+// 以后要废掉vdom系列,action
+//a是旧的虚拟DOM, b是新的
 function diff(a, b) {
+
     switch (a.nodeName) {
         case '#text':
+            toDOM(a)
+
             if (a.dynamic && a.nodeValue !== b.nodeValue) {
                 a.nodeValue = b.nodeValue
+                if (a.dom) {
+                    a.dom.nodeValue = b.nodeValue
+                }
             }
             break
         case '#comment':
+            toDOM(a)
             if (a.nodeName !== b.nodeName) {
-                //a.nodeValue = b.nodeValue
-                console.log(a, b)
+                for (var i in a) {
+                    delete a[i]
+                }
+                for (var i in b) {
+                    a[i] = b[i]
+                }
+                toDOM(a)
             }
             break
         case '#document-fragment':
@@ -406,10 +430,11 @@ function diff(a, b) {
         case void(0):
             break
         default:
+            toDOM(a)
             if (a.staticRoot) {
-                toDOM(a)
                 return
             }
+            var parentNode = a.dom
             if (a.nodeName !== b.nodeName) {
                 for (var i in a) {
                     delete a[i]
@@ -419,55 +444,74 @@ function diff(a, b) {
                 }
                 //console.log('要变if', a,b)
                 //这里要做dispose处理
-                //  toDOM(a)
+                toDOM(a)
                 return
             }
             var delay
             if (b.dirs) {
                 for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                     var adir = a.dirs[i]
-                    try {
-                        if (adir.diff(adir.value, bdir.value, a, b)) {
-                            if (adir.after) {
 
-                            } else {
-                                delay = adir.delay
-                                adir.update(adir.value, a, b)
-                            }
+                    delay = delay || adir.delay
+                    if (adir.diff(adir.value, bdir.value, a, b)) {
+
+
+                        adir.update(adir.value, a, b)
+                        if(!adir.removeName){
+                            a.dom.removeAttribute(a.name)
+                            adir.removeName = true
                         }
-                    } catch (e) {
-                        console.log(e)
-                        console.log(adir)
+                        if (adir.type === 'html') {
+                            a.children.forEach(function(el) {
+                                toDOM(el)
+                                parentNode.appendChild(el.dom)
+                            })
+                        }
+
                     }
+
                 }
             }
-            if (!a.isVoidTag && !delay) {
+
+            if (!a.isVoidTag && !delay && !orphanTag[a.nodeName]) {
+
+                var childNodes = parentNode.childNodes
                 for (var i = 0, n = a.children.length; i < n; i++) {
-                    diff(a.children[i], b.children[i])
+                    var c = a.children[i]
+                    var d = b.children[i]
+                    diff(c, d)
+                    if (c.dom !== childNodes[i]) {
+                        if (!childNodes[i]) {
+                            parentNode.appendChild(c.dom)
+                        } else {
+                            parentNode.replaceChild(c.dom, childNodes[i])
+                        }
+                    }
                 }
             }
             break
     }
 }
 
+
 function toDOM(el) {
 
     if (el.props) {
-        if (!el.dom) {
-            console.log(el.dom, el)
-            el.dom = document.createElement(el.nodeName)
+        if (el.dom) {
+            return el.dom
         }
+        el.dom = document.createElement(el.nodeName)
+
         for (var i in el.props) {
             if (typeof el.dom[i] === 'boolean') {
                 el.dom[i] = !!el.props[i]
             } else {
                 el.dom.setAttribute(i, el.props[i])
             }
-
         }
         if (container[el.nodeName]) {
             container[el.nodeName](el)
-        } else if (el.children && !el.isVoidTag) {
+        } else if (el.children && !el.isVoidTag && !el.dirs) {
             appendChild(el.dom, el.children)
         }
         return el.dom
@@ -478,16 +522,14 @@ function toDOM(el) {
         appendChild(dom, el.children)
         el.split = dom.lastChild
         el.dom = dom
-        return dom
+        return el.dom = dom
     } else if (el.nodeName === '#text') {
         if (el.dom) {
-            if (el.dynamic && el.nodeValue !== el.dom.nodeValue) {
-                el.dom.nodeValue = el.nodeValue
-            }
+
             return el.dom
         }
 
-        return document.createTextNode(el.nodeValue)
+        return el.dom = document.createTextNode(el.nodeValue)
     } else if (Array.isArray(el)) {
         el = flatten(el)
         if (el.length === 1) {

@@ -1,4 +1,5 @@
 import { avalon, createFragment } from '../seed/core'
+import { orphanTag } from '../vtree/orphanTag'
 
 function getChildren(arr) {
     var count = 0
@@ -42,6 +43,8 @@ export function groupTree(parent, children) {
 
 export function dumpTree(elem) {
     var firstChild
+    if(orphanTag[elem.nodeName.toLowerCase()])
+        return
     while (firstChild = elem.firstChild) {
         if (firstChild.nodeType === 1) {
             dumpTree(firstChild)
