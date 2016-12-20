@@ -267,7 +267,9 @@ Render.prototype = {
         runActions() //这里会还原_isScheduled
     },
     update: function() {
+     
         var nodes = this.tmpl.exec(this.vm, this)
+        console.log(this.tmpl.body, nodes)
         if (!this.vm.$element) {
 
             diff(this.vnodes[0], nodes[0])
@@ -312,7 +314,8 @@ Render.prototype = {
         begin.dynamic = true
             //   var fragment = avalon.vdom(nodes, 'toHTML')
         parentChildren.splice(nodes.start, nodes.length)
-        begin.props = {}
+       // begin.props = {}
+       console.log(nodes)
         begin.for = {
             begin,
             end,
@@ -414,6 +417,7 @@ function diff(a, b) {
             }
             break
         case '#comment':
+            console.log(a, '---')
             toDOM(a)
             if (a.nodeName !== b.nodeName) {
                 handleIf(a,b)
@@ -424,6 +428,7 @@ function diff(a, b) {
             diff(a.children, b.children)
             break
         case void(0):
+            avalon.directives['for'].diff(a, b)
             break
         default:
             toDOM(a)

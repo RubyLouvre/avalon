@@ -41,7 +41,7 @@ Yield.prototype = {
         if (node.dynamic) {
             var dir = node.for
             avalon.directives['for'].beforeInit.call(dir)
-            var keys = `'${dir.valName},${dir.keyName},${dir.asName}'`
+            var keys = `'${dir.valName},${dir.keyName},${dir.asName},${dir.cb}'`
             return `Ʃ.comment('ms-for:${dir.expr}'),
                     Ʃ.repeat(${ createExpr(dir.expr) }, ${keys}, function(__local__){
                 return ${this.genChildren(dir.nodes)}

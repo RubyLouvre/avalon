@@ -52,24 +52,37 @@ avalon.directive('for', {
         this.cache = {}
 
     },
-    diff: function(oldVal, newVal) {
-        /* istanbul ignore if */
-        if (this.updating) {
-            return
-        }
-
-        this.updating = true
-        var traceIds = createFragments(this, newVal)
-
-        if (this.oldTrackIds === void 0)
-            return true
-
-        if (this.oldTrackIds !== traceIds) {
-            this.oldTrackIds = traceIds
-            return true
-        }
-
-    },
+//    diff: function(oldVal, newVal) {
+//        /* istanbul ignore if */
+//        if (this.updating) {
+//            return
+//        }
+//
+//        this.updating = true
+//        var traceIds = createFragments(this, newVal)
+//
+//        if (this.oldTrackIds === void 0)
+//            return true
+//
+//        if (this.oldTrackIds !== traceIds) {
+//            this.oldTrackIds = traceIds
+//            return true
+//        }
+//
+//    },
+ diff: function(oldVal, newVal) {
+      
+       var traceIds = createTrackIds(newVal)
+      if (oldVal.trackIds === void 0){
+          oldVal.trackIds = traceIds
+          return true
+       }else if(oldVal.trackIds !== traceIds ){
+            oldVal.trackIds = traceIds
+          return true
+       }
+       
+           
+ },
     update: function() {
 
         if (!this.preFragments) {
@@ -97,45 +110,16 @@ avalon.directive('for', {
     }
 })
 
-function getTraceKey(item) {
-    var type = typeof item
-    return item && type === 'object' ? item.$hashcode : type + ':' + item
-}
 
-//创建一组fragment的虚拟DOM
-function createFragments(instance, obj) {
-    if (isObject(obj)) {
-        var array = Array.isArray(obj)
-        var ids = []
-        var fragments = [],
-            i = 0
-
-        instance.isArray = array
-        if (instance.fragments) {
-            instance.preFragments = instance.fragments
-            avalon.each(obj, function(key, value) {
-                var k = array ? getTraceKey(value) : key
-                fragments.push({
-                    key: k,
-                    val: value,
-                    index: i++
-                })
-                ids.push(k)
-            })
-            instance.fragments = fragments
-        } else {
-            avalon.each(obj, function(key, value) {
-                var k = array ? getTraceKey(value) : key
-                fragments.push(new VFragment([], k, value, i++))
-                ids.push(k)
-            })
-            instance.fragments = fragments
-        }
-        return ids.join(';;')
-    } else {
-        return NaN
+function createTrackIds(nodes){
+    var ids = []
+    for(var i = 0, el; el = nodes[i++];){
+        ids.push(el.key)
     }
+    return ids.join(';;')
 }
+
+
 
 
 function mountList(instance) {
