@@ -34,7 +34,6 @@ avalon.directive('for', {
         this.keyName = kv[0]
         this.valName = kv[1]
         this.asName = asName || ''
-
         delete this.param
     },
 
@@ -44,7 +43,6 @@ avalon.directive('for', {
         if (!oldVal.length) {
             oldVal.trackIds = traceIds
             oldVal.same = false
-
             oldVal.push.apply(oldVal, newVal)
 
             return 1
@@ -57,10 +55,8 @@ avalon.directive('for', {
             return 3
         }
 
-
     },
     update: function(oldVal, newVal, oldChild, newChild, i, p) {
-
 
         if (oldVal.same) {
             //只是单纯将循环区域里的节点抽取出来,同步到父节点的children中
@@ -84,14 +80,13 @@ avalon.directive('for', {
             var args5 = getFlattenNodes(newVal, i)
             newChild.splice.apply(newChild, args5)
         }
-        if (oldVal.userCb) {
-            if (!oldVal.cb) {
-                var cb = oldVal.userCb
-                if (typeof cb === 'string' && cb) {
+        if (!oldVal.cb && newVal.cb ) {
+            
+            var cb = newVal.cb
+            if (cb !== 'undefined' && typeof cb === 'string' ) {
                     var arr = addScope(cb, 'for')
                     var body = makeHandle(arr[0])
-                    oldVal.cb = new Function('$event', 'var __vmodel__ = this\nreturn ' + body)
-                }
+                    oldVal.cb = new Function('$event','$$l','var __vmodel__ = this\nreturn ' + body)
             }
         }
 
@@ -106,8 +101,6 @@ function createTrackIds(nodes) {
     }
     return ids.join(';;')
 }
-
-
 
 
 function getFlattenNodes(nodes, i, cache) {

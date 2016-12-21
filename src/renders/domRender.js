@@ -81,7 +81,8 @@ Render.prototype = {
     repeat: function(obj, str, cb) {
         var nodes = []
         var keys = str.split(',')
-
+        nodes.cb = keys.splice(3,7).join(',')
+        
         if (Array.isArray(obj)) {
             for (var i = 0, n = obj.length; i < n; i++) {
                 repeatCb(obj, obj[i], i, keys, nodes, cb, true)
@@ -308,7 +309,7 @@ Render.prototype = {
      * @param {type} userCb 循环结束回调
      * @returns {undefined}
      */
-    getForBinding(begin, scope, parentChildren, userCb) {
+    getForBinding(begin, scope, parentChildren, cb) {
         var expr = begin.nodeValue.replace('ms-for:', '').trim()
         begin.nodeValue = 'ms-for:' + expr
 
@@ -316,7 +317,6 @@ Render.prototype = {
         this.scanChildren(nodes, scope, false)
         var end = nodes.end
         begin.dynamic = true
-            //   var fragment = avalon.vdom(nodes, 'toHTML')
         parentChildren.splice(nodes.start, nodes.length, [])
 
         begin.for = {
@@ -324,7 +324,7 @@ Render.prototype = {
             end,
             expr,
             nodes,
-            userCb
+            cb
 
         }
 
@@ -353,7 +353,10 @@ Render.prototype = {
             nodeValue: 'ms-for-end:'
         }
         parentChildren.splice(index, 1, begin, vdom, end)
-        this.getForBinding(begin, scope, parentChildren, props['data-for-rendered'])
+        var cbName = 'data-for-rendered'
+        var cb = props[cbName]
+        delete props[cbName]
+        this.getForBinding(begin, scope, parentChildren, cb || '')
 
     }
 

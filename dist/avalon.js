@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-21:19:2 version 2.2.2 by 司徒正美
+built in 2016-12-21:20:1 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -5809,6 +5809,7 @@ IE7的checked属性应该使用defaultChecked来设置
         repeat: function repeat(obj, str, cb) {
             var nodes = [];
             var keys = str.split(',');
+            nodes.cb = keys.splice(3, 7).join(',');
 
             if (Array.isArray(obj)) {
                 for (var i = 0, n = obj.length; i < n; i++) {
@@ -6035,7 +6036,7 @@ IE7的checked属性应该使用defaultChecked来设置
          * @param {type} userCb 循环结束回调
          * @returns {undefined}
          */
-        getForBinding: function getForBinding(begin, scope, parentChildren, userCb) {
+        getForBinding: function getForBinding(begin, scope, parentChildren, cb) {
             var expr = begin.nodeValue.replace('ms-for:', '').trim();
             begin.nodeValue = 'ms-for:' + expr;
 
@@ -6043,7 +6044,6 @@ IE7的checked属性应该使用defaultChecked来设置
             this.scanChildren(nodes, scope, false);
             var end = nodes.end;
             begin.dynamic = true;
-            //   var fragment = avalon.vdom(nodes, 'toHTML')
             parentChildren.splice(nodes.start, nodes.length, []);
 
             begin["for"] = {
@@ -6051,7 +6051,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 end: end,
                 expr: expr,
                 nodes: nodes,
-                userCb: userCb
+                cb: cb
 
             };
         },
@@ -6080,7 +6080,10 @@ IE7的checked属性应该使用defaultChecked来设置
                 nodeValue: 'ms-for-end:'
             };
             parentChildren.splice(index, 1, begin, vdom, end);
-            this.getForBinding(begin, scope, parentChildren, props['data-for-rendered']);
+            var cbName = 'data-for-rendered';
+            var cb = props[cbName];
+            delete props[cbName];
+            this.getForBinding(begin, scope, parentChildren, cb || '');
         }
     };
 
@@ -6460,7 +6463,6 @@ IE7的checked属性应该使用defaultChecked来设置
             this.keyName = kv[0];
             this.valName = kv[1];
             this.asName = asName || '';
-
             delete this.param;
         },
 
@@ -6469,7 +6471,6 @@ IE7的checked属性应该使用defaultChecked来设置
             if (!oldVal.length) {
                 oldVal.trackIds = traceIds;
                 oldVal.same = false;
-
                 oldVal.push.apply(oldVal, newVal);
 
                 return 1;
@@ -6505,14 +6506,13 @@ IE7的checked属性应该使用defaultChecked来设置
                 var args5 = getFlattenNodes(newVal, i);
                 newChild.splice.apply(newChild, args5);
             }
-            if (oldVal.userCb) {
-                if (!oldVal.cb) {
-                    var cb = oldVal.userCb;
-                    if (typeof cb === 'string' && cb) {
-                        var arr = addScope(cb, 'for');
-                        var body = makeHandle(arr[0]);
-                        oldVal.cb = new Function('$event', 'var __vmodel__ = this\nreturn ' + body);
-                    }
+            if (!oldVal.cb && newVal.cb) {
+
+                var cb = newVal.cb;
+                if (cb !== 'undefined' && typeof cb === 'string') {
+                    var arr = addScope(cb, 'for');
+                    var body = makeHandle(arr[0]);
+                    oldVal.cb = new Function('$event', '$$l', 'var __vmodel__ = this\nreturn ' + body);
                 }
             }
         }
