@@ -10,7 +10,7 @@ export function optimize(node) {
 
 function markStatic(node) {
     node.static = isStatic(node);
-    if (node.props && !node.isVoidTag) {
+    if (node.props && !node.vtype) {
         // do not make component slot content static. this avoids
         // 1. components not able to mutate slot nodes
         // 2. static slot content fails for hot-reloading

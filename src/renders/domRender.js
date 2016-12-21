@@ -81,8 +81,8 @@ Render.prototype = {
     repeat: function(obj, str, cb) {
         var nodes = []
         var keys = str.split(',')
-        nodes.cb = keys.splice(3,7).join(',')
-        
+        nodes.cb = keys.splice(3, 7).join(',')
+
         if (Array.isArray(obj)) {
             for (var i = 0, n = obj.length; i < n; i++) {
                 repeatCb(obj, obj[i], i, keys, nodes, cb, true)
@@ -272,11 +272,11 @@ Render.prototype = {
         }
 
     },
-    
+
     update: function() {
         this.vm.$render = this
         var nodes = this.tmpl.exec(this.vm, {})
-        
+
         if (!this.vm.$element) {
             diff(this.vnodes[0], nodes[0])
 
@@ -376,19 +376,18 @@ function repeatCb(obj, el, index, keys, nodes, cb, isArray) {
         local[keys[1]] = obj
     var arr = cb(local)
     var key = isArray ? getTraceKey(el) : index
-    if(arr.length === 1){
+    if (arr.length === 1) {
         var elem = arr[0]
         elem.key = key
         nodes.push(elem)
-    }else{
-         elem = {
+    } else {
+        elem = {
             key: key,
             nodeName: '#document-fragment',
             children: arr
         }
         nodes.push(elem)
     }
-       
 
 }
 
@@ -455,11 +454,11 @@ function diff(a, b) {
                 for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                     var adir = a.dirs[i]
 
-                   
-                    if(!adir.diff){
+
+                    if (!adir.diff) {
                         avalon.mix(adir, directives[adir.type])
                     }
-                     delay = delay || adir.delay
+                    delay = delay || adir.delay
                     if (adir.diff && adir.diff(adir.value, bdir.value, a, b)) {
                         toDOM(a)
                         adir.update(adir.value, a, b)
@@ -469,15 +468,15 @@ function diff(a, b) {
                         }
 
 
-                    }else{
-                        if(!adir.diff)
-                        console.log(adir, '没有diff方法')
+                    } else {
+                        if (!adir.diff)
+                            console.log(adir, '没有diff方法')
                     }
 
                 }
             }
 
-            if (!a.isVoidTag && !delay && !orphanTag[a.nodeName]) {
+            if (!a.vtype && !delay) {
 
                 var childNodes = parentNode.childNodes
                 var achild = a.children.concat()
@@ -491,7 +490,7 @@ function diff(a, b) {
                         c.updating = false
 
                         if (typeof arr === 'number') {
-                          //  console.log('数组扁平化', arr)
+                            //  console.log('数组扁平化', arr)
                             avalon.directives.for.update(c, d, achild, bchild, i, parentNode)
 
                             c = achild[i]
@@ -499,7 +498,7 @@ function diff(a, b) {
                             diff(c, d)
                         }
                     }
-                  //  toDOM(c)
+                    //  toDOM(c)
                     if (c.dom !== childNodes[i]) {
 
                         if (!childNodes[i]) {
@@ -542,7 +541,7 @@ function toDOM(el, b) {
         }
         if (container[el.nodeName]) {
             container[el.nodeName](el)
-        } else if (el.children && !el.isVoidTag && !el.dirs) {
+        } else if (el.children && !el.vtype && !el.dirs) {
             appendChild(el.dom, el.children)
         }
         return el.dom
@@ -565,14 +564,14 @@ function toDOM(el, b) {
     } else if (Array.isArray(el)) {
         // el = flatten(el)
         console.log('数组变DOM', b)
-       
-            //        if (el.length === 1) {
-            //            return toDOM(el[0])
-            //        } else {
-            //            var a = document.createDocumentFragment()
-            //            appendChild(a, el)
-            //            return a
-            //        }
+
+        //        if (el.length === 1) {
+        //            return toDOM(el[0])
+        //        } else {
+        //            var a = document.createDocumentFragment()
+        //            appendChild(a, el)
+        //            return a
+        //        }
     }
 }
 

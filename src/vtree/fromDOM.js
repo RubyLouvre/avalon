@@ -1,11 +1,18 @@
-import { orphanTag } from './orphanTag'
+import { orphanTag, makeOrphan } from './orphanTag'
 import { voidTag } from './voidTag'
-import { makeOrphan } from './makeOrphan'
 
 export function fromDOM(dom) {
     return [from(dom)]
 }
-
+/**
+ * 虚拟元素节点有如下属性
+ * nodeName: 标签名,一律小写
+ * ns: svg | vml | html
+ * dom: 原来的元素节点
+ * vtype: 1 闭合 2容器(里面都是文本,存兼容问题) 0 不闭合;原先的isVoidTag被废掉
+ * props: 属性集合
+ * dirs: 指令数组
+ */
 export function from(node) {
     var type = node.nodeName.toLowerCase()
     switch (type) {
@@ -20,28 +27,28 @@ export function from(node) {
         default:
             var props = markProps(node, node.attributes || [])
             var vnode = {
-               
                 nodeName: type,
                 dom: node,
-                isVoidTag: !!voidTag[type],
-                props: props
+                vtype: voidTag[type] || orphanTag[type] || 0,
+                props: props,
+                children: []
             }
-            if(type === 'option'){
-                if(option.selected){
+            if (type === 'option') {
+                if (option.selected) {
                     props.selected = true
                 }
-                if(option.disabled){
+                if (option.disabled) {
                     props.disabled = true
                 }
             }
-            
-            if (orphanTag[type] || type === 'option') {
+
+            if (type in orphanTag) {
                 makeOrphan(vnode, type, node.text || node.innerHTML)
                 if (node.childNodes.length === 1) {
                     vnode.children[0].dom = node.firstChild
                 }
-            } else if (!vnode.isVoidTag) {
-                vnode.children = []
+            } else if (!vnode.vtype) {
+
                 for (var i = 0, el; el = node.childNodes[i++];) {
                     var child = from(el)
                     if (/\S/.test(child.nodeValue)) {

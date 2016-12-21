@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-21:20:1 version 2.2.2 by 司徒正美
+built in 2016-12-22:0:51 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -2302,12 +2302,13 @@ IE7的checked属性应该使用defaultChecked来设置
     };
 
     var orphanTag = {
-        script: 1,
-        style: 1,
-        textarea: 1,
-        xmp: 1,
-        noscript: 1,
-        template: 1
+        script: 2,
+        style: 2,
+        textarea: 2,
+        xmp: 2,
+        noscript: 2,
+        template: 2,
+        option: 0
     };
 
     /* 
@@ -2348,6 +2349,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
     //专门用于处理option标签里面的标签
     var rtrimHTML = /<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi;
+
     function trimHTML(v) {
         return String(v).replace(rtrimHTML, '').trim();
     }
@@ -2573,18 +2575,18 @@ IE7的checked属性应该使用defaultChecked来设置
                 var str = this.str;
                 var match = str.match(ropenTag); //处理元素节点开始部分
                 if (match) {
-                    var nodeName = match[1];
+                    var type = match[1];
                     var props = {};
-                    if (/^[A-Z]/.test(nodeName) && avalon.components[nodeName]) {
-                        props.is = nodeName;
+                    if (/^[A-Z]/.test(type) && avalon.components[type]) {
+                        props.is = type;
                     }
-                    nodeName = nodeName.toLowerCase();
-                    var isVoidTag = !!voidTag[nodeName] || match[3] === '\/';
+                    type = type.toLowerCase();
+                    var isVoidTag = voidTag[type] || match[3] === '\/';
                     var node = this.node = {
-                        nodeName: nodeName,
+                        nodeName: type,
                         props: {},
                         children: [],
-                        isVoidTag: isVoidTag
+                        vtype: isVoidTag ? 1 : orphanTag[type] || 0
                     };
                     var attrs = match[2];
                     if (attrs) {
@@ -2596,7 +2598,7 @@ IE7的checked属性应该使用defaultChecked来设置
                         node.end = true;
                     } else {
                         this.stack.push(node);
-                        if (orphanTag[nodeName] || nodeName === 'option') {
+                        if (type in orphanTag) {
                             var index = str.indexOf('</' + nodeName + '>');
                             var innerHTML = str.slice(0, index).trim();
                             str = str.slice(index);
@@ -3197,7 +3199,15 @@ IE7的checked属性应该使用defaultChecked来设置
     function fromDOM(dom) {
         return [from$1(dom)];
     }
-
+    /**
+     * 虚拟元素节点有如下属性
+     * nodeName: 标签名,一律小写
+     * ns: svg | vml | html
+     * dom: 原来的元素节点
+     * vtype: 1 闭合 2容器(里面都是文本,存兼容问题) 0 不闭合;原先的isVoidTag被废掉
+     * props: 属性集合
+     * dirs: 指令数组
+     */
     function from$1(node) {
         var type = node.nodeName.toLowerCase();
         switch (type) {
@@ -3212,11 +3222,11 @@ IE7的checked属性应该使用defaultChecked来设置
             default:
                 var props = markProps(node, node.attributes || []);
                 var vnode = {
-
                     nodeName: type,
                     dom: node,
-                    isVoidTag: !!voidTag[type],
-                    props: props
+                    vtype: voidTag[type] || orphanTag[type] || 0,
+                    props: props,
+                    children: []
                 };
                 if (type === 'option') {
                     if (option.selected) {
@@ -3227,13 +3237,13 @@ IE7的checked属性应该使用defaultChecked来设置
                     }
                 }
 
-                if (orphanTag[type] || type === 'option') {
+                if (type in orphanTag) {
                     makeOrphan(vnode, type, node.text || node.innerHTML);
                     if (node.childNodes.length === 1) {
                         vnode.children[0].dom = node.firstChild;
                     }
-                } else if (!vnode.isVoidTag) {
-                    vnode.children = [];
+                } else if (!vnode.vtype) {
+
                     for (var i = 0, el; el = node.childNodes[i++];) {
                         var child = from$1(el);
                         if (/\S/.test(child.nodeValue)) {
@@ -5390,7 +5400,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
     function markStatic(node) {
         node["static"] = isStatic(node);
-        if (node.props && !node.isVoidTag) {
+        if (node.props && !node.vtype) {
             // do not make component slot content static. this avoids
             // 1. components not able to mutate slot nodes
             // 2. static slot content fails for hot-reloading
@@ -5603,7 +5613,9 @@ IE7的checked属性应该使用defaultChecked来设置
                     dirs = null;
                 }
             }
-            var json = toJSONByArray('nodeName: \'' + node.nodeName + '\'', node.isVoidTag ? 'isVoidTag: true' : '', node.staticRoot ? 'staticRoot: true' : '', dirs ? this.genDirs(dirs, node) : '', dirs ? 'vm: __vmodel__' : '', dirs ? 'local: $$l' : '', 'props: ' + toJSONByObject(node.props), 'children: ' + (node.template || this.genChildren(node.children)));
+
+            var json = toJSONByArray('nodeName: \'' + node.nodeName + '\'', node.vtype ? 'vtype: ' + node.vtype : '', node.staticRoot ? 'staticRoot: true' : '', dirs ? this.genDirs(dirs, node) : '', dirs ? 'vm: __vmodel__' : '', dirs ? 'local: $$l' : '', 'props: ' + toJSONByObject(node.props), 'children: ' + (node.template || this.genChildren(node.children)));
+
             if (hasIf) {
                 json = hasIf + '? ' + json + ': \u01A9.comment(\'if\')';
             }
@@ -6195,7 +6207,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     }
                 }
 
-                if (!a.isVoidTag && !delay && !orphanTag[a.nodeName]) {
+                if (!a.vtype && !delay) {
 
                     var childNodes = parentNode.childNodes;
                     var achild = a.children.concat();
@@ -6259,7 +6271,7 @@ IE7的checked属性应该使用defaultChecked来设置
             }
             if (container[el.nodeName]) {
                 container[el.nodeName](el);
-            } else if (el.children && !el.isVoidTag && !el.dirs) {
+            } else if (el.children && !el.vtype && !el.dirs) {
                 appendChild(el.dom, el.children);
             }
             return el.dom;

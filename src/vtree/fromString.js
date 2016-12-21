@@ -8,8 +8,7 @@
 import { avalon, Cache } from '../seed/core'
 import { clearString, stringPool, fill, rfill } from "./clearString"
 import { voidTag } from "./voidTag"
-import { orphanTag } from "./orphanTag"
-import { makeOrphan } from "./makeOrphan"
+import { orphanTag, makeOrphan } from "./orphanTag"
 import { makeTbody } from "./makeTbody"
 import { validateDOMNesting } from "./validateDOMNesting"
 
@@ -124,18 +123,18 @@ AST.prototype = {
             var str = this.str
             var match = str.match(ropenTag) //处理元素节点开始部分
             if (match) {
-                var nodeName = match[1]
+                var type = match[1]
                 var props = {}
-                if (/^[A-Z]/.test(nodeName) && avalon.components[nodeName]) {
-                    props.is = nodeName
+                if (/^[A-Z]/.test(type) && avalon.components[type]) {
+                    props.is = type
                 }
-                nodeName = nodeName.toLowerCase()
-                var isVoidTag = !!voidTag[nodeName] || match[3] === '\/'
+                type = type.toLowerCase()
+                var isVoidTag = voidTag[type] || match[3] === '\/'
                 var node = this.node = {
-                    nodeName: nodeName,
+                    nodeName: type,
                     props: {},
                     children: [],
-                    isVoidTag: isVoidTag
+                    vtype: isVoidTag ? 1 : (orphanTag[type] || 0)
                 }
                 var attrs = match[2]
                 if (attrs) {
@@ -147,7 +146,7 @@ AST.prototype = {
                     node.end = true
                 } else {
                     this.stack.push(node)
-                    if (orphanTag[nodeName] || nodeName === 'option') {
+                    if (type in orphanTag) {
                         var index = str.indexOf('</' + nodeName + '>')
                         var innerHTML = str.slice(0, index).trim()
                         str = str.slice(index)
