@@ -149,9 +149,46 @@ Render.prototype = {
      * @returns {undefined}
      */
     scanTag(vdom, scope, parentChildren, isRoot) {
+        var attrs = vdom.props
+
+        //处理dirs
+        var dirs = this.checkDirs(vdom, attrs)
+
+        //处理scope
+        scope = this.checkVm(dirs, attrs, scope)
+
+        //处理for
+        if (dirs['ms-for']) {
+            return this.getForBindingByElement(vdom, scope, parentChildren, dirs['ms-for'])
+        }
+
+        //处理widget
+        if (/^ms\-/.test(vdom.nodeName)) {
+            attrs.is = vdom.nodeName
+        }
+
+        if (attrs['is']) {
+            dirs = dirs || {}
+            if (!dirs['ms-widget']) {
+                dirs['ms-widget'] = '{}'
+            }
+        }
+
+        if (dirs) {
+            vdom.dirs = dirs
+            vdom.dynamic = true
+        }
+        //处理children
+        var children = vdom.children
+        var noDelay = !dirs || !delayCompileNodes(dirs)
+            //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
+        if (noDelay && !vdom.type && children.length) {
+            this.scanChildren(children, scope, false)
+        }
+    },
+    checkDirs(vdom, attrs) {
         var dirs = {},
-            attrs = vdom.props,
-            hasDir, hasFor
+            hasDir
         for (var attr in attrs) {
             var value = attrs[attr]
             var oldName = attr
@@ -164,14 +201,19 @@ Render.prototype = {
                 type = eventMap[type] || type
                 if (!directives[type]) {
                     avalon.warn(attr + ' has not registered!')
+                } else if (attr === 'ms-for') {
+                    if (vdom.dom) {
+                        vdom.dom.removeAttribute(oldName)
+                    }
+                    delete attrs[oldName]
                 }
                 hasDir = true
             }
-            if (attr === 'ms-for') {
-                hasFor = value
-                delete attrs[oldName]
-            }
+
         }
+        return hasDir ? dirs : false
+    },
+    checkVm(dirs, attrs, scope) {
         var $id = dirs['ms-important'] || dirs['ms-controller']
         if ($id) {
             /**
@@ -190,53 +232,22 @@ Render.prototype = {
             }
             var dir = directives[type]
             scope = dir.getScope.call(this, $id, scope)
-
             if (!scope) {
                 return
             } else {
                 if (!this.vm) {
                     this.vm = scope
                 }
-                vdom.dynamic = true
+
                 var clazz = attrs['class']
                 if (clazz) {
                     attrs['class'] = (' ' + clazz + ' ').replace(' ms-controller ', '').trim()
                 }
-            }
-            var render = this
-            scope.$render = render
 
-        }
-        if (hasFor) {
-            if (vdom.dom) {
-                vdom.dom.removeAttribute(oldName)
             }
-            return this.getForBindingByElement(vdom, scope, parentChildren, hasFor)
+            scope.$render = this
         }
-
-        if (/^ms\-/.test(vdom.nodeName)) {
-            attrs.is = vdom.nodeName
-        }
-
-        if (attrs['is']) {
-            if (!dirs['ms-widget']) {
-                dirs['ms-widget'] = '{}'
-            }
-            hasDir = true
-        }
-        if (hasDir) {
-            vdom.dirs = dirs
-            vdom.dynamic = true
-        }
-        var children = vdom.children
-            //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
-        if (!orphanTag[vdom.nodeName] &&
-            children &&
-            children.length &&
-            !delayCompileNodes(dirs)
-        ) {
-            this.scanChildren(children, scope, false)
-        }
+        return scope
     },
     /**
      * 将绑定属性转换为指令

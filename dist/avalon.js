@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-22:0:51 version 2.2.2 by 司徒正美
+built in 2016-12-22:1:23 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -5892,10 +5892,46 @@ IE7的checked属性应该使用defaultChecked来设置
          * @returns {undefined}
          */
         scanTag: function scanTag(vdom, scope, parentChildren, isRoot) {
+            var attrs = vdom.props;
+
+            //处理dirs
+            var dirs = this.checkDirs(vdom, attrs);
+
+            //处理scope
+            scope = this.checkVm(dirs, attrs, scope);
+
+            //处理for
+            if (dirs['ms-for']) {
+                return this.getForBindingByElement(vdom, scope, parentChildren, dirs['ms-for']);
+            }
+
+            //处理widget
+            if (/^ms\-/.test(vdom.nodeName)) {
+                attrs.is = vdom.nodeName;
+            }
+
+            if (attrs['is']) {
+                dirs = dirs || {};
+                if (!dirs['ms-widget']) {
+                    dirs['ms-widget'] = '{}';
+                }
+            }
+
+            if (dirs) {
+                vdom.dirs = dirs;
+                vdom.dynamic = true;
+            }
+            //处理children
+            var children = vdom.children;
+            var noDelay = !dirs || !delayCompileNodes(dirs);
+            //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
+            if (noDelay && !vdom.type && children.length) {
+                this.scanChildren(children, scope, false);
+            }
+        },
+        checkDirs: function checkDirs(vdom, attrs) {
             var dirs = {},
-                attrs = vdom.props,
-                hasDir,
-                hasFor;
+                hasDir;
             for (var attr in attrs) {
                 var value = attrs[attr];
                 var oldName = attr;
@@ -5908,14 +5944,18 @@ IE7的checked属性应该使用defaultChecked来设置
                     type = eventMap[type] || type;
                     if (!directives[type]) {
                         avalon.warn(attr + ' has not registered!');
+                    } else if (attr === 'ms-for') {
+                        if (vdom.dom) {
+                            vdom.dom.removeAttribute(oldName);
+                        }
+                        delete attrs[oldName];
                     }
                     hasDir = true;
                 }
-                if (attr === 'ms-for') {
-                    hasFor = value;
-                    delete attrs[oldName];
-                }
             }
+            return hasDir ? dirs : false;
+        },
+        checkVm: function checkVm(dirs, attrs, scope) {
             var $id = dirs['ms-important'] || dirs['ms-controller'];
             if ($id) {
                 /**
@@ -5934,48 +5974,21 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
                 var dir = directives[type];
                 scope = dir.getScope.call(this, $id, scope);
-
                 if (!scope) {
                     return;
                 } else {
                     if (!this.vm) {
                         this.vm = scope;
                     }
-                    vdom.dynamic = true;
+
                     var clazz = attrs['class'];
                     if (clazz) {
                         attrs['class'] = (' ' + clazz + ' ').replace(' ms-controller ', '').trim();
                     }
                 }
-                var render = this;
-                scope.$render = render;
+                scope.$render = this;
             }
-            if (hasFor) {
-                if (vdom.dom) {
-                    vdom.dom.removeAttribute(oldName);
-                }
-                return this.getForBindingByElement(vdom, scope, parentChildren, hasFor);
-            }
-
-            if (/^ms\-/.test(vdom.nodeName)) {
-                attrs.is = vdom.nodeName;
-            }
-
-            if (attrs['is']) {
-                if (!dirs['ms-widget']) {
-                    dirs['ms-widget'] = '{}';
-                }
-                hasDir = true;
-            }
-            if (hasDir) {
-                vdom.dirs = dirs;
-                vdom.dynamic = true;
-            }
-            var children = vdom.children;
-            //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
-            if (!orphanTag[vdom.nodeName] && children && children.length && !delayCompileNodes(dirs)) {
-                this.scanChildren(children, scope, false);
-            }
+            return scope;
         },
 
         /**
