@@ -92,8 +92,7 @@ AST.prototype = {
             this.str = str.slice(i)
             this.node = {
                 nodeName: '#text',
-                nodeValue: nodeValue,
-                vtype: 3,
+                nodeValue: nodeValue
             }
             if (rcontent.test(nodeValue)) {
                 this.tryGenChildren() //不收集空白节点
@@ -114,7 +113,6 @@ AST.prototype = {
                 this.str = str.slice(l + 3)
                 this.node = {
                     nodeName: '#comment',
-                    vtype: 8,
                     nodeValue: nodeValue
                 }
                 this.tryGenChildren()
@@ -137,7 +135,6 @@ AST.prototype = {
                     nodeName: nodeName,
                     props: {},
                     children: [],
-                    vtype: 1,
                     isVoidTag: isVoidTag
                 }
                 var attrs = match[2]

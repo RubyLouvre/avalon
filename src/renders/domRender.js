@@ -64,10 +64,10 @@ Render.prototype = {
         return this.staticTree[i]
     },
     comment: function(value) {
-        return { nodeName: '#comment', vtype: 8, nodeValue: value }
+        return { nodeName: '#comment', nodeValue: value }
     },
     text: function(a, d) {
-        return { nodeName: '#text', vtype: 3, nodeValue: a || '', dynamic: d }
+        return { nodeName: '#text', nodeValue: a || '', dynamic: d }
     },
     html: function(html, vm) {
         var a = new Render(html, vm, true)
@@ -273,8 +273,9 @@ Render.prototype = {
     },
     
     update: function() {
-
-        var nodes = this.tmpl.exec(this.vm, this)
+        this.vm.$render = this
+        var nodes = this.tmpl.exec(this.vm, {})
+        
         if (!this.vm.$element) {
             diff(this.vnodes[0], nodes[0])
 
@@ -341,7 +342,6 @@ Render.prototype = {
         var props = vdom.props
         var begin = {
             nodeName: '#comment',
-            vtype: 8,
             nodeValue: 'ms-for:' + expr
         }
         if (props.slot) {
@@ -349,7 +349,6 @@ Render.prototype = {
             delete props.slot
         }
         var end = {
-            vtype: 8,
             nodeName: '#comment',
             nodeValue: 'ms-for-end:'
         }
@@ -448,12 +447,18 @@ function diff(a, b) {
             }
             var delay
             var isHTML
+            var directives = avalon.directives
             if (b.dirs) {
                 for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                     var adir = a.dirs[i]
 
-                    delay = delay || adir.delay
-                    if (adir.diff(adir.value, bdir.value, a, b)) {
+                   
+                    if(!adir.diff){
+                        avalon.mix(adir, directives[adir.type])
+                    }
+                     delay = delay || adir.delay
+                    if (adir.diff && adir.diff(adir.value, bdir.value, a, b)) {
+                        toDOM(a)
                         adir.update(adir.value, a, b)
                         if (!adir.removeName) {
                             a.dom.removeAttribute(adir.name)
@@ -461,6 +466,9 @@ function diff(a, b) {
                         }
 
 
+                    }else{
+                        if(!adir.diff)
+                        console.log(adir, '没有diff方法')
                     }
 
                 }
@@ -480,7 +488,7 @@ function diff(a, b) {
                         c.updating = false
 
                         if (typeof arr === 'number') {
-                            console.log('数组扁平化', arr)
+                          //  console.log('数组扁平化', arr)
                             avalon.directives.for.update(c, d, achild, bchild, i, parentNode)
 
                             c = achild[i]
@@ -488,7 +496,7 @@ function diff(a, b) {
                             diff(c, d)
                         }
                     }
-                    toDOM(c)
+                  //  toDOM(c)
                     if (c.dom !== childNodes[i]) {
 
                         if (!childNodes[i]) {

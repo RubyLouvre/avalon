@@ -151,7 +151,7 @@ function dispatch(event) {
                 if (vm && vm.$hashcode === false) {
                     return avalon.unbind(elem, type, fn)
                 }
-                var ret = fn.call(vm || elem, event)
+                var ret = fn.call(vm || elem, event, host._ms_local_)
 
                 if (ret === false) {
                     event.preventDefault()

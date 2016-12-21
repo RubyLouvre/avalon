@@ -35,7 +35,7 @@ function addScopeForLocal(str) {
     return str.replace(robjectProp, dig).
     replace(rlocalVar, function(el) {
         if (!skipMap[el]) {
-            return "__local__." + el
+            return "$$l." + el
         }
         return el
     })
@@ -95,7 +95,7 @@ var rhandleName = /^__vmodel__\.[$\w\.]+$/
 var rfixIE678 = /__vmodel__\.([^(]+)\(([^)]*)\)/
 export function makeHandle(body) {
     if (rhandleName.test(body)) {
-        body = body + '($event)'
+        body = body + '($event,$$l)'
     }
     /* istanbul ignore if */
     if (msie < 9) {

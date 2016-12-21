@@ -10,14 +10,15 @@ avalon.directive('html', {
             this.value = newVal
             return true
         } else if (render) {
-            var children = render.tmpl.exec(render.vm, render)
+            var children = render.tmpl.exec(render.vm, newVdom.local)
             newVdom.children = children
         }
     },
     update: function(value, vdom, newVdom) { //oldVal( == newVal), oldVdom, newVdom
         this.beforeDispose()
         var render = this.innerRender = new Render(value, newVdom.vm, true)
-        var children = render.tmpl.exec(render.vm, render)
+       
+        var children = render.tmpl.exec(render.vm, newVdom.local)
         newVdom.children = vdom.children = children
         if (vdom.dom)
             avalon.clearHTML(vdom.dom)

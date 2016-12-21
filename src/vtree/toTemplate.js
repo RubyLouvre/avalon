@@ -9,7 +9,7 @@ export function Yield(nodes, render) {
     this.render = render
     var body = this.genChildren(nodes)
     this.body = body
-    this.exec = Function('__vmodel__', 'Ʃ', 'return ' + body)
+    this.exec = Function('__vmodel__','$$l', 'var Ʃ = __vmodel__.$render;return ' + body)
 }
 Yield.prototype = {
     genChildren(nodes) {
@@ -28,11 +28,11 @@ Yield.prototype = {
     },
 
     genNode(node) {
-        if (node.vtype === 1) {
+        if (node.props) {
             return this.genElement(node)
-        } else if (node.vtype === 8) {
+        } else if (node.nodeName === '#comment') {
             return this.genComment(node)
-        } else if(node.vtype === 3){
+        } else if(node.nodeName === '#text'){
             return this.genText(node)
         }
     },
@@ -48,7 +48,7 @@ Yield.prototype = {
             avalon.directives['for'].beforeInit.call(dir)
             var keys = `'${dir.valName},${dir.keyName},${dir.asName},${dir.cb}'`
             return `Ʃ.comment('ms-for:${dir.expr}'),
-                    Ʃ.repeat(${ createExpr(dir.expr) }, ${keys}, function(__local__){
+                    Ʃ.repeat(${ createExpr(dir.expr) }, ${keys}, function($$l){
                 return ${this.genChildren(dir.nodes)}
             })`
         }
@@ -71,7 +71,7 @@ Yield.prototype = {
                 var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag)
                 var code = createExpr(expr, 'text')
                 node.template = `[Ʃ.text( ${code} )]`
-                node.children = [{dynamic: true, nodeName: '#text',vtype:8, nodeValue: NaN}]
+                node.children = [{dynamic: true, nodeName: '#text', nodeValue: NaN}]
                 removeDir('text', dirs, props)
                 removeDir('html', dirs, props)
 
@@ -89,11 +89,11 @@ Yield.prototype = {
         }
         var json = toJSONByArray(
             `nodeName: '${node.nodeName}'`,
-            ` vtype: ${node.vtype}`,
             node.isVoidTag ? 'isVoidTag: true' : '',
             node.staticRoot ? 'staticRoot: true' : '',
             dirs ? this.genDirs(dirs, node) : '',
             dirs ? 'vm: __vmodel__':'',
+            dirs ? 'local: $$l':'',
             `props: ${toJSONByObject(node.props)}`,
             `children: ${ node.template || this.genChildren(node.children)}`
 
@@ -114,11 +114,12 @@ Yield.prototype = {
         var arr = parseAttributes(dirs, node)
         if (arr.length) {
             node.dirs = arr
+            // dir.uuid ?  `uuid: ${avalon.quote(dir.uuid)}`: '',
             return 'dirs:[' + arr.map(function(dir) {
                 return toJSONByArray(
                     `type: ${avalon.quote(dir.type)}`,
                     `name: ${avalon.quote(dir.name)}`,
-                    dir.uuid ?  `uuid: ${avalon.quote(dir.uuid)}`: '',
+                   
                     dir.param ? `param: ${avalon.quote(dir.param)}` : '',
                     `value:  ${  dir.type ==='on' ? avalon.quote(dir.expr) :createExpr(dir.expr)}`
                 )

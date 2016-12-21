@@ -12,7 +12,6 @@ export function makeTbody(nodes) {
                 tbody = {
                     nodeName: 'tbody',
                     props: {},
-                    vtype: 1,
                     children: []
                 }
                 tbody.children.push(node)

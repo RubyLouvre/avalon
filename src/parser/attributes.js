@@ -37,10 +37,10 @@ export function parseAttributes(dirs, node) {
                 expr: value,
                 priority: directives[type].priority || type.charCodeAt(0) * 100
             }
-            var uuid = arr.join('-')
-            if(uuid !== attrName){
-                binding.uuid = uuid
-            }
+//            var uuid = arr.join('-')
+//            if(uuid !== attrName){
+//                binding.uuid = uuid
+//            }
             avalon.mix(binding, directives[type])
 
             if (type === 'on') {

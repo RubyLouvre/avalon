@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-21:16:54 version 2.2.2 by 司徒正美
+built in 2016-12-21:19:2 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -2369,7 +2369,6 @@ IE7的checked属性应该使用defaultChecked来设置
                     tbody = {
                         nodeName: 'tbody',
                         props: {},
-                        vtype: 1,
                         children: []
                     };
                     tbody.children.push(node);
@@ -2542,8 +2541,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 this.str = str.slice(i);
                 this.node = {
                     nodeName: '#text',
-                    nodeValue: nodeValue,
-                    vtype: 3
+                    nodeValue: nodeValue
                 };
                 if (rcontent.test(nodeValue)) {
                     this.tryGenChildren(); //不收集空白节点
@@ -2564,7 +2562,6 @@ IE7的checked属性应该使用defaultChecked来设置
                     this.str = str.slice(l + 3);
                     this.node = {
                         nodeName: '#comment',
-                        vtype: 8,
                         nodeValue: nodeValue
                     };
                     this.tryGenChildren();
@@ -2587,7 +2584,6 @@ IE7的checked属性应该使用defaultChecked来设置
                         nodeName: nodeName,
                         props: {},
                         children: [],
-                        vtype: 1,
                         isVoidTag: isVoidTag
                     };
                     var attrs = match[2];
@@ -2929,7 +2925,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     if (vm && vm.$hashcode === false) {
                         return avalon.unbind(elem, type, fn);
                     }
-                    var ret = fn.call(vm || elem, event);
+                    var ret = fn.call(vm || elem, event, host._ms_local_);
 
                     if (ret === false) {
                         event.preventDefault();
@@ -3211,13 +3207,12 @@ IE7的checked属性应该使用defaultChecked来设置
                 return {
                     nodeName: type,
                     dom: node,
-                    vtype: node.nodeType,
                     nodeValue: node.nodeValue
                 };
             default:
                 var props = markProps(node, node.attributes || []);
                 var vnode = {
-                    vtype: 1,
+
                     nodeName: type,
                     dom: node,
                     isVoidTag: !!voidTag[type],
@@ -3747,7 +3742,7 @@ IE7的checked属性应该使用defaultChecked来设置
     function addScopeForLocal(str) {
         return str.replace(robjectProp, dig).replace(rlocalVar, function (el) {
             if (!skipMap[el]) {
-                return "__local__." + el;
+                return "$$l." + el;
             }
             return el;
         });
@@ -3807,7 +3802,7 @@ IE7的checked属性应该使用defaultChecked来设置
     var rfixIE678 = /__vmodel__\.([^(]+)\(([^)]*)\)/;
     function makeHandle(body) {
         if (rhandleName.test(body)) {
-            body = body + '($event)';
+            body = body + '($event,$$l)';
         }
         /* istanbul ignore if */
         if (msie < 9) {
@@ -5291,7 +5286,7 @@ IE7的checked属性应该使用defaultChecked来设置
             }
         },
         ready: true,
-        update: function update(vdom, show) {
+        update: function update(show, vdom) {
             var dom = vdom.dom;
             if (dom && dom.nodeType === 1) {
                 var display = dom.style.display;
@@ -5395,7 +5390,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
     function markStatic(node) {
         node["static"] = isStatic(node);
-        if (node.vtype === 1 && !node.isVoidTag) {
+        if (node.props && !node.isVoidTag) {
             // do not make component slot content static. this avoids
             // 1. components not able to mutate slot nodes
             // 2. static slot content fails for hot-reloading
@@ -5471,10 +5466,10 @@ IE7的checked属性应该使用defaultChecked来设置
                     expr: value,
                     priority: directives[type].priority || type.charCodeAt(0) * 100
                 };
-                var uuid = arr.join('-');
-                if (uuid !== attrName) {
-                    binding.uuid = uuid;
-                }
+                //            var uuid = arr.join('-')
+                //            if(uuid !== attrName){
+                //                binding.uuid = uuid
+                //            }
                 avalon.mix(binding, directives[type]);
 
                 if (type === 'on') {
@@ -5537,7 +5532,7 @@ IE7的checked属性应该使用defaultChecked来设置
         this.render = render;
         var body = this.genChildren(nodes);
         this.body = body;
-        this.exec = Function('__vmodel__', 'Ʃ', 'return ' + body);
+        this.exec = Function('__vmodel__', '$$l', 'var Ʃ = __vmodel__.$render;return ' + body);
     }
     Yield.prototype = {
         genChildren: function genChildren(nodes) {
@@ -5555,11 +5550,11 @@ IE7的checked属性应该使用defaultChecked来设置
             }
         },
         genNode: function genNode(node) {
-            if (node.vtype === 1) {
+            if (node.props) {
                 return this.genElement(node);
-            } else if (node.vtype === 8) {
+            } else if (node.nodeName === '#comment') {
                 return this.genComment(node);
-            } else if (node.vtype === 3) {
+            } else if (node.nodeName === '#text') {
                 return this.genText(node);
             }
         },
@@ -5574,7 +5569,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 var dir = node["for"];
                 avalon.directives['for'].beforeInit.call(dir);
                 var keys = '\'' + dir.valName + ',' + dir.keyName + ',' + dir.asName + ',' + dir.cb + '\'';
-                return '\u01A9.comment(\'ms-for:' + dir.expr + '\'),\n                    \u01A9.repeat(' + createExpr(dir.expr) + ', ' + keys + ', function(__local__){\n                return ' + this.genChildren(dir.nodes) + '\n            })';
+                return '\u01A9.comment(\'ms-for:' + dir.expr + '\'),\n                    \u01A9.repeat(' + createExpr(dir.expr) + ', ' + keys + ', function($$l){\n                return ' + this.genChildren(dir.nodes) + '\n            })';
             }
 
             return '\u01A9.comment(' + avalon.quote(node.nodeValue) + ')';
@@ -5594,7 +5589,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag);
                     var code = createExpr(expr, 'text');
                     node.template = '[\u01A9.text( ' + code + ' )]';
-                    node.children = [{ dynamic: true, nodeName: '#text', vtype: 8, nodeValue: NaN }];
+                    node.children = [{ dynamic: true, nodeName: '#text', nodeValue: NaN }];
                     removeDir('text', dirs, props);
                     removeDir('html', dirs, props);
                 }
@@ -5608,7 +5603,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     dirs = null;
                 }
             }
-            var json = toJSONByArray('nodeName: \'' + node.nodeName + '\'', ' vtype: ' + node.vtype, node.isVoidTag ? 'isVoidTag: true' : '', node.staticRoot ? 'staticRoot: true' : '', dirs ? this.genDirs(dirs, node) : '', dirs ? 'vm: __vmodel__' : '', 'props: ' + toJSONByObject(node.props), 'children: ' + (node.template || this.genChildren(node.children)));
+            var json = toJSONByArray('nodeName: \'' + node.nodeName + '\'', node.isVoidTag ? 'isVoidTag: true' : '', node.staticRoot ? 'staticRoot: true' : '', dirs ? this.genDirs(dirs, node) : '', dirs ? 'vm: __vmodel__' : '', dirs ? 'local: $$l' : '', 'props: ' + toJSONByObject(node.props), 'children: ' + (node.template || this.genChildren(node.children)));
             if (hasIf) {
                 json = hasIf + '? ' + json + ': \u01A9.comment(\'if\')';
             }
@@ -5622,8 +5617,9 @@ IE7的checked属性应该使用defaultChecked来设置
             var arr = parseAttributes(dirs, node);
             if (arr.length) {
                 node.dirs = arr;
+                // dir.uuid ?  `uuid: ${avalon.quote(dir.uuid)}`: '',
                 return 'dirs:[' + arr.map(function (dir) {
-                    return toJSONByArray('type: ' + avalon.quote(dir.type), 'name: ' + avalon.quote(dir.name), dir.uuid ? 'uuid: ' + avalon.quote(dir.uuid) : '', dir.param ? 'param: ' + avalon.quote(dir.param) : '', 'value:  ' + (dir.type === 'on' ? avalon.quote(dir.expr) : createExpr(dir.expr)));
+                    return toJSONByArray('type: ' + avalon.quote(dir.type), 'name: ' + avalon.quote(dir.name), dir.param ? 'param: ' + avalon.quote(dir.param) : '', 'value:  ' + (dir.type === 'on' ? avalon.quote(dir.expr) : createExpr(dir.expr)));
                 }) + ']';
             }
             return '';
@@ -5796,10 +5792,10 @@ IE7的checked属性应该使用defaultChecked来设置
             return this.staticTree[i];
         },
         comment: function comment(value) {
-            return { nodeName: '#comment', vtype: 8, nodeValue: value };
+            return { nodeName: '#comment', nodeValue: value };
         },
         text: function text(a, d) {
-            return { nodeName: '#text', vtype: 3, nodeValue: a || '', dynamic: d };
+            return { nodeName: '#text', nodeValue: a || '', dynamic: d };
         },
         html: function html(_html, vm) {
             var a = new Render(_html, vm, true);
@@ -6004,18 +6000,16 @@ IE7的checked属性应该使用defaultChecked来设置
 
 
         update: function update() {
-
-            var nodes = this.tmpl.exec(this.vm, this);
+            this.vm.$render = this;
+            var nodes = this.tmpl.exec(this.vm, {});
 
             if (!this.vm.$element) {
-
                 diff(this.vnodes[0], nodes[0]);
 
                 this.vm.$element = this.vnodes[0];
             } else {
                 diff(this.vnodes[0], nodes[0]);
             }
-            //  this.nodes = nodes
             this._isScheduled = false;
         },
         /**
@@ -6075,7 +6069,6 @@ IE7的checked属性应该使用defaultChecked来设置
             var props = vdom.props;
             var begin = {
                 nodeName: '#comment',
-                vtype: 8,
                 nodeValue: 'ms-for:' + expr
             };
             if (props.slot) {
@@ -6083,7 +6076,6 @@ IE7的checked属性应该使用defaultChecked来设置
                 delete props.slot;
             }
             var end = {
-                vtype: 8,
                 nodeName: '#comment',
                 nodeValue: 'ms-for-end:'
             };
@@ -6178,17 +6170,24 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
                 var delay;
                 var isHTML;
+                var directives$$1 = avalon.directives;
                 if (b.dirs) {
                     for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                         var adir = a.dirs[i];
 
+                        if (!adir.diff) {
+                            avalon.mix(adir, directives$$1[adir.type]);
+                        }
                         delay = delay || adir.delay;
-                        if (adir.diff(adir.value, bdir.value, a, b)) {
+                        if (adir.diff && adir.diff(adir.value, bdir.value, a, b)) {
+                            toDOM(a);
                             adir.update(adir.value, a, b);
                             if (!adir.removeName) {
                                 a.dom.removeAttribute(adir.name);
                                 adir.removeName = true;
                             }
+                        } else {
+                            if (!adir.diff) console.log(adir, '没有diff方法');
                         }
                     }
                 }
@@ -6207,7 +6206,7 @@ IE7的checked属性应该使用defaultChecked来设置
                             c.updating = false;
 
                             if (typeof arr === 'number') {
-                                console.log('数组扁平化', arr);
+                                //  console.log('数组扁平化', arr)
                                 avalon.directives["for"].update(c, d, achild, bchild, _i5, parentNode);
 
                                 c = achild[_i5];
@@ -6215,7 +6214,7 @@ IE7的checked属性应该使用defaultChecked来设置
                                 diff(c, d);
                             }
                         }
-                        toDOM(c);
+                        //  toDOM(c)
                         if (c.dom !== childNodes[_i5]) {
 
                             if (!childNodes[_i5]) {
@@ -6354,7 +6353,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 this.value = newVal;
                 return true;
             } else if (render) {
-                var children = render.tmpl.exec(render.vm, render);
+                var children = render.tmpl.exec(render.vm, newVdom.local);
                 newVdom.children = children;
             }
         },
@@ -6362,7 +6361,8 @@ IE7的checked属性应该使用defaultChecked来设置
             //oldVal( == newVal), oldVdom, newVdom
             this.beforeDispose();
             var render = this.innerRender = new Render(value, newVdom.vm, true);
-            var children = render.tmpl.exec(render.vm, render);
+
+            var children = render.tmpl.exec(render.vm, newVdom.local);
             newVdom.children = vdom.children = children;
             if (vdom.dom) avalon.clearHTML(vdom.dom);
         },
@@ -6376,64 +6376,24 @@ IE7的checked属性应该使用defaultChecked来设置
     avalon.directive('if', {
 
         priority: 5,
-        //    init: function() {
-        //        this.placeholder = createAnchor('if')
-        //        var props = this.node.props
-        //        delete props['ms-if']
-        //        delete props[':if']
-        //        this.fragment = avalon.vdom(this.node, 'toHTML')
-        //    },
+
         diff: function diff(oldVal, newVal) {
             return true;
-            //        var n = !!newVal
-            //        if (oldVal === void 0 || n !== oldVal) {
-            //            this.value = n
-            //            return true
-            //        }
         },
-        update: function update(value, vdom) {
-            console.log('ddddd');
-            //        if (this.isShow === void 0 && value) {
-            //            continueScan(this, vdom)
-            //            return
-            //        }
-            //        this.isShow = value
-            //        var placeholder = this.placeholder
-            //
-            //        if (value) {
-            //            var p = placeholder.parentNode
-            //            continueScan(this, vdom)
-            //            p && p.replaceChild(vdom.dom, placeholder)
-            //        } else { //移除DOM
-            //            this.beforeDispose()
-            //            vdom.nodeValue = 'if'
-            //            vdom.nodeName = '#comment'
-            //            delete vdom.children
-            //            var dom = vdom.dom
-            //            var p = dom && dom.parentNode
-            //            vdom.dom = placeholder
-            //            if (p) {
-            //                p.replaceChild(placeholder, dom)
-            //            }
-            //        }
-        },
-        beforeDispose: function beforeDispose() {
-            if (this.innerRender) {
-                this.innerRender.dispose();
-            }
-        }
+        update: function update(value, vdom) {}
     });
 
     avalon.directive('on', {
 
-        diff: function diff(oldVal, newVal) {
-            if (oldVal !== newVal) {
+        diff: function diff(oldVal, newVal, a, b) {
+            if (oldVal !== newVal || a === b) {
                 this.value = newVal + '';
                 return true;
             }
         },
         update: function update(value, vdom, _) {
-            var underline = this.uuid.replace('ms-on-', 'e').replace('-', '_');
+
+            var underline = this.name.replace(/^(\:|ms\-)/, 'e').replace('-', '_');
             var uuid = underline + '_' + value.replace(/\s/g, '').replace(/[^$a-z]/ig, function (e) {
                 return e.charCodeAt(0);
             });
@@ -6452,12 +6412,13 @@ IE7的checked属性应该使用defaultChecked来设置
                     return (/\S/.test(el)
                     );
                 });
-                fn = new Function('$event', ret.join('\n'));
+                fn = new Function('$event', '$$l', ret.join('\n'));
                 fn.uuid = uuid;
                 avalon.eventListeners[uuid] = fn;
             }
             var dom = vdom.dom;
             dom._ms_context_ = _.vm;
+            dom._ms_local_ = _.local;
             this.eventType = this.param.replace(/\-(\d)$/, '');
             delete this.param;
             this.vdom = vdom;
@@ -6502,37 +6463,22 @@ IE7的checked属性应该使用defaultChecked来设置
 
             delete this.param;
         },
-        init: function init() {
-            var cb = this.userCb;
-            if (typeof cb === 'string' && cb) {
-                var arr = addScope(cb, 'for');
-                var body = makeHandle(arr[0]);
-                this.userCb = new Function('$event', 'var __vmodel__ = this\nreturn ' + body);
-            }
-            this.node.forDir = this; //暴露给component/index.js中的resetParentChildren方法使用
-            this.fragment = ['<div>', this.fragment, '<!--', this.signature, '--></div>'].join('');
-            this.cache = {};
-        },
 
         diff: function diff(oldVal, newVal) {
             var traceIds = createTrackIds(newVal);
-            console.log(oldVal.trackIds, traceIds);
             if (!oldVal.length) {
                 oldVal.trackIds = traceIds;
                 oldVal.same = false;
 
                 oldVal.push.apply(oldVal, newVal);
 
-                console.log('11111', newVal);
                 return 1;
             } else if (oldVal.trackIds !== traceIds) {
                 oldVal.same = false;
                 oldVal.trackIds = traceIds;
-                console.log('2222');
                 return 2;
             } else {
                 oldVal.same = true;
-                console.log('3333', oldVal);
                 return 3;
             }
         },
@@ -6541,24 +6487,33 @@ IE7的checked属性应该使用defaultChecked来设置
             if (oldVal.same) {
                 //只是单纯将循环区域里的节点抽取出来,同步到父节点的children中
 
-                var args1 = getFlattenNodes(oldVal, i);
+                var args1 = oldVal.cachedArgs || getFlattenNodes(oldVal, i);
                 oldChild.splice.apply(oldChild, args1);
                 var args2 = getFlattenNodes(newVal, i);
                 newChild.splice.apply(newChild, args2);
             } else if (oldVal.length === 0 || !oldVal.cache) {
                 //将key保存到oldVal的cache里面,并且它们都共用相同的子节点
                 var args3 = getFlattenNodes(oldVal, i, oldVal.cache = {});
-
+                oldVal.cachedArgs = args3;
                 newChild.splice.apply(newChild, args3);
                 oldChild.splice.apply(oldChild, args3);
             } else {
                 var args4 = [i, 1];
                 diffRepeatRange(oldVal, newVal, args4);
-
-                // var args4 = getFlattenNodes(oldVal, i)
+                oldVal.cachedArgs = args4;
                 oldChild.splice.apply(oldChild, args4);
                 var args5 = getFlattenNodes(newVal, i);
                 newChild.splice.apply(newChild, args5);
+            }
+            if (oldVal.userCb) {
+                if (!oldVal.cb) {
+                    var cb = oldVal.userCb;
+                    if (typeof cb === 'string' && cb) {
+                        var arr = addScope(cb, 'for');
+                        var body = makeHandle(arr[0]);
+                        oldVal.cb = new Function('$event', 'var __vmodel__ = this\nreturn ' + body);
+                    }
+                }
             }
         }
     });

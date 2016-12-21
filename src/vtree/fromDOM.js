@@ -15,13 +15,12 @@ export function from(node) {
             return {
                 nodeName: type,
                 dom: node,
-                vtype: node.nodeType,
                 nodeValue: node.nodeValue
             }
         default:
             var props = markProps(node, node.attributes || [])
             var vnode = {
-                vtype: 1,
+               
                 nodeName: type,
                 dom: node,
                 isVoidTag: !!voidTag[type],

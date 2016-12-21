@@ -30,7 +30,7 @@ avalon.directive('visible', {
         }
     },
     ready: true,
-    update: function(vdom, show) {
+    update: function(show,vdom) {
         var dom = vdom.dom
         if (dom && dom.nodeType === 1) {
             var display = dom.style.display

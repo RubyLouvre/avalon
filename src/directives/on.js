@@ -4,14 +4,15 @@ import { addScope, makeHandle } from '../parser/index'
 
 avalon.directive('on', {
 
-    diff: function(oldVal, newVal) {
-        if( oldVal !== newVal){
+    diff: function(oldVal, newVal, a, b) {
+        if( oldVal !== newVal || a === b){
             this.value = newVal+''
             return true
         }
     },
     update: function(value, vdom, _) {
-        var underline = this.uuid.replace('ms-on-', 'e').replace('-', '_')
+        
+        var underline = this.name.replace(/^(\:|ms\-)/, 'e').replace('-', '_')
         var uuid = underline + '_' + value.
         replace(/\s/g, '').
         replace(/[^$a-z]/ig, function(e) {
@@ -37,12 +38,13 @@ avalon.directive('on', {
             ].filter(function(el) {
                 return /\S/.test(el)
             })
-            fn = new Function('$event', ret.join('\n'))
+            fn = new Function('$event','$$l', ret.join('\n'))
             fn.uuid = uuid
             avalon.eventListeners[uuid] = fn
         }
         var dom = vdom.dom
         dom._ms_context_ = _.vm
+        dom._ms_local_ = _.local
         this.eventType = this.param.replace(/\-(\d)$/, '')
         delete this.param
         this.vdom = vdom
