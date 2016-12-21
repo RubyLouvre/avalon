@@ -37,26 +37,16 @@ avalon.directive('for', {
 
         delete this.param
     },
-    init: function() {
-        var cb = this.userCb
-        if (typeof cb === 'string' && cb) {
-            var arr = addScope(cb, 'for')
-            var body = makeHandle(arr[0])
-            this.userCb = new Function('$event', 'var __vmodel__ = this\nreturn ' + body)
-        }
-        this.node.forDir = this //暴露给component/index.js中的resetParentChildren方法使用
-        this.fragment = ['<div>', this.fragment, '<!--', this.signature, '--></div>'].join('')
-        this.cache = {}
 
-    },
 
     diff: function(oldVal, newVal) {
         var traceIds = createTrackIds(newVal)
-        if (oldVal.trackIds === void 0) {
+        if (!oldVal.length) {
             oldVal.trackIds = traceIds
             oldVal.same = false
-            oldVal.length = 0
+
             oldVal.push.apply(oldVal, newVal)
+
             return 1
         } else if (oldVal.trackIds !== traceIds) {
             oldVal.same = false
@@ -70,29 +60,41 @@ avalon.directive('for', {
 
     },
     update: function(oldVal, newVal, oldChild, newChild, i, p) {
-        var flat = [i, 1]
-            //将循环区域里的节点抽取出来,同步到父节点的children中
-        if (oldVal.same) {
-            var flat = oldVal.flat
-            newChild.splice.apply(newChild, flat)
-        } else if (oldVal.length === 0 || !oldVal.cache) {
-            mountList(oldVal, oldVal.cache = {}, flat)
-            newChild.splice.apply(newChild, flat)
-            oldVal.flat = flat
-        } else {
-            diffList(oldVal, newVal, flat)
-            var flat2 = [i, 1]
-            mountList(newVal, null, flat2, true)
-            newChild.splice.apply(newChild, flat2)
-            oldVal.flat = flat
-        }
-        oldChild.splice.apply(oldChild, flat)
 
-    },
-    beforeDispose: function() {
-        this.fragments.forEach(function(el) {
-            el.dispose()
-        })
+
+        if (oldVal.same) {
+            //只是单纯将循环区域里的节点抽取出来,同步到父节点的children中
+
+            var args1 = oldVal.cachedArgs || getFlattenNodes(oldVal, i)
+            oldChild.splice.apply(oldChild, args1)
+            var args2 = getFlattenNodes(newVal, i)
+            newChild.splice.apply(newChild, args2)
+        } else if (oldVal.length === 0 || !oldVal.cache) {
+            //将key保存到oldVal的cache里面,并且它们都共用相同的子节点
+            var args3 = getFlattenNodes(oldVal, i, oldVal.cache = {})
+            oldVal.cachedArgs = args3
+            newChild.splice.apply(newChild, args3)
+            oldChild.splice.apply(oldChild, args3)
+
+        } else {
+            var args4 = [i, 1]
+            diffRepeatRange(oldVal, newVal, args4)
+            oldVal.cachedArgs = args4
+            oldChild.splice.apply(oldChild, args4)
+            var args5 = getFlattenNodes(newVal, i)
+            newChild.splice.apply(newChild, args5)
+        }
+        if (oldVal.userCb) {
+            if (!oldVal.cb) {
+                var cb = oldVal.userCb
+                if (typeof cb === 'string' && cb) {
+                    var arr = addScope(cb, 'for')
+                    var body = makeHandle(arr[0])
+                    oldVal.cb = new Function('$event', 'var __vmodel__ = this\nreturn ' + body)
+                }
+            }
+        }
+
     }
 })
 
@@ -108,144 +110,83 @@ function createTrackIds(nodes) {
 
 
 
-function mountList(nodes, cache, flat, not) {
+function getFlattenNodes(nodes, i, cache) {
+    var flattenNodes = [i, 1]
     nodes.forEach(function(el) {
-        !not && saveInCache(cache, el)
-        el.children.forEach(function(elem) {
-            flat.push(elem)
-        })
+        cache && saveInCache(cache, el)
+        if (el.nodeName === '#document-fragment') {
+            el.children.forEach(function(elem) {
+                flattenNodes.push(elem)
+            })
+        } else {
+            flattenNodes.push(el)
+        }
     })
+    return flattenNodes
 }
-
-function diffList(list, newNodes, flat) {
-    var cache = list.cache
+//比如两个循环区域, 重写oldVal的cache与它的部分元素
+function diffRepeatRange(oldVal, newVal, flattenNodes) {
+    var cache = oldVal.cache || {}
     var newCache = {}
     var fuzzy = []
         //标记它们都应该为移除
-    list.forEach(function(el) {
-        el._dispose = true
+    oldVal.forEach(function(node) {
+        node._dispose = true
     })
 
-    newNodes.forEach(function(c, index) {
-        var fragment = isInCache(cache, c.key)
+    newVal.forEach(function(node, index) {
+        var cached = isInCache(cache, node.key)
             //取出之前的文档碎片
-        if (fragment) {
-            delete fragment._dispose
-            fragment.oldIndex = fragment.index
-            fragment.index = index // 相当于 c.index
-                //            fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
-            saveInCache(newCache, fragment)
+        if (cached) {
+            delete cached._dispose
+            cached.oldIndex = cached.index
+            cached.index = index // 相当于 node.index
+                //   cached.vm[instance.keyName] = instance.isArray ? index : cached.key
+            saveInCache(newCache, cached)
         } else {
             //如果找不到就进行模糊搜索
-            fuzzy.push(c)
+            fuzzy.push(node)
         }
     })
 
-    fuzzy.forEach(function(c) {
-        var fragment = fuzzyMatchCache(cache, c.key)
-        if (fragment) { //重复利用
-            fragment.oldIndex = fragment.index
-            fragment.key = c.key
-            var val = fragment.val = c.val
-            var index = fragment.index = c.index
-                //   fragment.vm[instance.valName] = val
-                //   fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
-            delete fragment._dispose
+    fuzzy.forEach(function(node) {
+        var cached = fuzzyMatchCache(cache, node.key)
+        if (cached) { //重复利用
+            cached.oldIndex = cached.index
+            cached.key = node.key
+            var val = cached.val = node.val
+            var index = cached.index = node.index
+                //   cached.vm[instance.valName] = val
+                //   cached.vm[instance.keyName] = instance.isArray ? index : cached.key
+            delete cached._dispose
         } else {
-            list.push(c)
-            fragment = c
+            oldVal.push(node)
+            cached = node
         }
 
-        saveInCache(newCache, fragment)
+        saveInCache(newCache, cached)
     })
 
-    list.sort(function(a, b) {
+    oldVal.sort(function(a, b) {
         return a.index - b.index
     })
 
-    for (var el, i = 0; el = list[i]; i++) {
+    for (let el, i = 0; el = oldVal[i]; i++) {
         if (el._dispose) {
-            list.splice(i, 1)
-                --i
-        } else {
-            flat.push.apply(flat, el.children)
-        }
-    }
-    list.cache = newCache
-}
-
-function updateItemVm(vm, top) {
-    for (var i in top) {
-        if (top.hasOwnProperty(i)) {
-            vm[i] = top[i]
-        }
-    }
-}
-
-
-
-function updateList(instance) {
-    var before = instance.begin.dom
-    var parent = before.parentNode
-    var list = instance.fragments
-    var end = instance.end.dom
-    for (var i = 0, item; item = list[i]; i++) {
-        if (item._dispose) {
-            list.splice(i, 1)
+            oldVal.splice(i, 1);
             i--
-            item.dispose()
-            continue
-        }
-        if (item.oldIndex !== item.index) {
-            var f = item.toFragment()
-            parent.insertBefore(f, before.nextSibling || end)
-        }
-        before = item.split
-    }
-    var ch = instance.parentChildren
-    var startIndex = ch.indexOf(instance.begin)
-    var endIndex = ch.indexOf(instance.end)
-
-    list.splice.apply(ch, [startIndex + 1, endIndex - startIndex].concat(list))
-}
-
-
-/**
- * 
- * @param {type} fragment
- * @param {type} this
- * @param {type} index
- * @returns { key, val, index, oldIndex, this, dom, split, vm}
- */
-function FragmentDecorator(fragment, instance, index) {
-    var data = {}
-    data[instance.keyName] = instance.isArray ? index : fragment.key
-    data[instance.valName] = fragment.val
-    if (instance.asName) {
-        data[instance.asName] = instance.value
-    }
-    var vm = fragment.vm = platform.itemFactory(instance.vm, {
-        data: data
-    })
-    if (instance.isArray) {
-        vm.$watch(instance.valName, function(a) {
-            if (instance.value && instance.value.set) {
-                instance.value.set(vm[instance.keyName], a)
+        } else {
+            if (el.nodeName === '#document-fragment') {
+                flattenNodes.push.apply(flattenNodes, el.children)
+            } else {
+                flattenNodes.push(el)
             }
-        })
-    } else {
-        vm.$watch(instance.valName, function(a) {
-            instance.value[fragment.key] = a
-        })
+        }
     }
-    fragment.index = index
-    fragment.innerRender = avalon.scan(instance.fragment, vm, function() {
-        var oldRoot = this.root
-        ap.push.apply(fragment.children, oldRoot.children)
-        this.root = fragment
-    })
-    return fragment
+    oldVal.cache = newCache
 }
+
+
 // 新位置: 旧位置
 function isInCache(cache, id) {
     var c = cache[id]

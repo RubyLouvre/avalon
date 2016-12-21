@@ -271,18 +271,17 @@ Render.prototype = {
         }
 
     },
+    
     update: function() {
 
         var nodes = this.tmpl.exec(this.vm, this)
         if (!this.vm.$element) {
-
             diff(this.vnodes[0], nodes[0])
 
             this.vm.$element = this.vnodes[0]
         } else {
             diff(this.vnodes[0], nodes[0])
         }
-        this.nodes = nodes
         this._isScheduled = false
     },
     /**
@@ -373,20 +372,22 @@ function repeatCb(obj, el, index, keys, nodes, cb, isArray) {
         local[keys[1]] = index
     if (keys[2])
         local[keys[1]] = obj
-    var arr = cb(local),
-        obj
-        //    arr.push({
-        //        nodeName: '#text',
-        //        nodeValue: ' ',
-        //        vtype: 8
-        //    })
-    obj = {
-        key: isArray ? getTraceKey(el) : index,
-        nodeName: '#document-fragment',
-        children: arr
+    var arr = cb(local)
+    var key = isArray ? getTraceKey(el) : index
+    if(arr.length === 1){
+        var elem = arr[0]
+        elem.key = key
+        nodes.push(elem)
+    }else{
+         elem = {
+            key: key,
+            nodeName: '#document-fragment',
+            children: arr
+        }
+        nodes.push(elem)
     }
+       
 
-    nodes.push(obj)
 }
 
 var container = {
@@ -426,7 +427,6 @@ function diff(a, b) {
             }
             break
         case '#document-fragment':
-            console.log('这是碎片')
             diff(a.children, b.children)
             break
         case void(0):
@@ -554,7 +554,7 @@ function toDOM(el, b) {
     } else if (Array.isArray(el)) {
         // el = flatten(el)
         console.log('数组变DOM', b)
-        throw 2
+       
             //        if (el.length === 1) {
             //            return toDOM(el[0])
             //        } else {

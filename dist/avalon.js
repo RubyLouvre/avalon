@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-21:12:22 version 2.2.2 by 司徒正美
+built in 2016-12-21:16:54 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -4077,14 +4077,7 @@ IE7的checked属性应该使用defaultChecked来设置
         set: function set(newValue) {
             var oldValue = this.value;
             if (newValue !== oldValue) {
-                if (Array.isArray(newValue) && oldValue && oldValue.pushArray) {
-                    oldValue.length = 0;
-                    //防止vm.array = newArray时被notify两次
-                    oldValue.stopNotify = true;
-                    oldValue.pushArray(newValue);
-                    oldValue.stopNotify = false;
-                    newValue = oldValue;
-                } else if (avalon.isObject(newValue)) {
+                if (avalon.isObject(newValue)) {
                     var hash = oldValue && oldValue.$hashcode;
                     var childVM = platform.createProxy(newValue, this);
                     if (childVM) {
@@ -4500,7 +4493,7 @@ IE7的checked属性应该使用defaultChecked来设置
             var result = original.apply(this, args);
 
             this.toJSON();
-            if (!this.stopNotify) core.__dep__.notify(method);
+            core.__dep__.notify(method);
             return result;
         };
     });
@@ -6009,9 +6002,11 @@ IE7的checked属性应该使用defaultChecked来设置
             }
         },
 
+
         update: function update() {
 
             var nodes = this.tmpl.exec(this.vm, this);
+
             if (!this.vm.$element) {
 
                 diff(this.vnodes[0], nodes[0]);
@@ -6020,7 +6015,7 @@ IE7的checked属性应该使用defaultChecked来设置
             } else {
                 diff(this.vnodes[0], nodes[0]);
             }
-            this.nodes = nodes;
+            //  this.nodes = nodes
             this._isScheduled = false;
         },
         /**
@@ -6107,20 +6102,20 @@ IE7的checked属性应该使用defaultChecked来设置
         local[keys[0]] = el;
         if (keys[1]) local[keys[1]] = index;
         if (keys[2]) local[keys[1]] = obj;
-        var arr = cb(local),
-            obj;
-        //    arr.push({
-        //        nodeName: '#text',
-        //        nodeValue: ' ',
-        //        vtype: 8
-        //    })
-        obj = {
-            key: isArray$$1 ? getTraceKey(el) : index,
-            nodeName: '#document-fragment',
-            children: arr
-        };
-
-        nodes.push(obj);
+        var arr = cb(local);
+        var key = isArray$$1 ? getTraceKey(el) : index;
+        if (arr.length === 1) {
+            var elem = arr[0];
+            elem.key = key;
+            nodes.push(elem);
+        } else {
+            elem = {
+                key: key,
+                nodeName: '#document-fragment',
+                children: arr
+            };
+            nodes.push(elem);
+        }
     }
 
     var container = {
@@ -6162,7 +6157,6 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
                 break;
             case '#document-fragment':
-                console.log('这是碎片');
                 diff(a.children, b.children);
                 break;
             case void 0:
@@ -6286,7 +6280,7 @@ IE7的checked属性应该使用defaultChecked来设置
         } else if (Array.isArray(el)) {
             // el = flatten(el)
             console.log('数组变DOM', b);
-            throw 2;
+
             //        if (el.length === 1) {
             //            return toDOM(el[0])
             //        } else {
@@ -6522,44 +6516,50 @@ IE7的checked属性应该使用defaultChecked来设置
 
         diff: function diff(oldVal, newVal) {
             var traceIds = createTrackIds(newVal);
-            if (oldVal.trackIds === void 0) {
+            console.log(oldVal.trackIds, traceIds);
+            if (!oldVal.length) {
                 oldVal.trackIds = traceIds;
                 oldVal.same = false;
-                oldVal.length = 0;
+
                 oldVal.push.apply(oldVal, newVal);
+
+                console.log('11111', newVal);
                 return 1;
             } else if (oldVal.trackIds !== traceIds) {
                 oldVal.same = false;
                 oldVal.trackIds = traceIds;
+                console.log('2222');
                 return 2;
             } else {
                 oldVal.same = true;
+                console.log('3333', oldVal);
                 return 3;
             }
         },
         update: function update(oldVal, newVal, oldChild, newChild, i, p) {
-            var flat = [i, 1];
-            //将循环区域里的节点抽取出来,同步到父节点的children中
+
             if (oldVal.same) {
-                var flat = oldVal.flat;
-                newChild.splice.apply(newChild, flat);
+                //只是单纯将循环区域里的节点抽取出来,同步到父节点的children中
+
+                var args1 = getFlattenNodes(oldVal, i);
+                oldChild.splice.apply(oldChild, args1);
+                var args2 = getFlattenNodes(newVal, i);
+                newChild.splice.apply(newChild, args2);
             } else if (oldVal.length === 0 || !oldVal.cache) {
-                mountList(oldVal, oldVal.cache = {}, flat);
-                newChild.splice.apply(newChild, flat);
-                oldVal.flat = flat;
+                //将key保存到oldVal的cache里面,并且它们都共用相同的子节点
+                var args3 = getFlattenNodes(oldVal, i, oldVal.cache = {});
+
+                newChild.splice.apply(newChild, args3);
+                oldChild.splice.apply(oldChild, args3);
             } else {
-                diffList(oldVal, newVal, flat);
-                var flat2 = [i, 1];
-                mountList(newVal, null, flat2, true);
-                newChild.splice.apply(newChild, flat2);
-                oldVal.flat = flat;
+                var args4 = [i, 1];
+                diffRepeatRange(oldVal, newVal, args4);
+
+                // var args4 = getFlattenNodes(oldVal, i)
+                oldChild.splice.apply(oldChild, args4);
+                var args5 = getFlattenNodes(newVal, i);
+                newChild.splice.apply(newChild, args5);
             }
-            oldChild.splice.apply(oldChild, flat);
-        },
-        beforeDispose: function beforeDispose() {
-            this.fragments.forEach(function (el) {
-                el.dispose();
-            });
         }
     });
 
@@ -6571,71 +6571,81 @@ IE7的checked属性应该使用defaultChecked来设置
         return ids.join(';;');
     }
 
-    function mountList(nodes, cache, flat, not) {
+    function getFlattenNodes(nodes, i, cache) {
+        var flattenNodes = [i, 1];
         nodes.forEach(function (el) {
-            !not && saveInCache(cache, el);
-            el.children.forEach(function (elem) {
-                flat.push(elem);
-            });
+            cache && saveInCache(cache, el);
+            if (el.nodeName === '#document-fragment') {
+                el.children.forEach(function (elem) {
+                    flattenNodes.push(elem);
+                });
+            } else {
+                flattenNodes.push(el);
+            }
         });
+        return flattenNodes;
     }
-
-    function diffList(list, newNodes, flat) {
-        var cache = list.cache;
+    //比如两个循环区域, 重写oldVal的cache与它的部分元素
+    function diffRepeatRange(oldVal, newVal, flattenNodes) {
+        var cache = oldVal.cache || {};
         var newCache = {};
         var fuzzy = [];
         //标记它们都应该为移除
-        list.forEach(function (el) {
-            el._dispose = true;
+        oldVal.forEach(function (node) {
+            node._dispose = true;
         });
 
-        newNodes.forEach(function (c, index) {
-            var fragment = isInCache(cache, c.key);
+        newVal.forEach(function (node, index) {
+            var cached = isInCache(cache, node.key);
             //取出之前的文档碎片
-            if (fragment) {
-                delete fragment._dispose;
-                fragment.oldIndex = fragment.index;
-                fragment.index = index; // 相当于 c.index
-                //            fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
-                saveInCache(newCache, fragment);
+            if (cached) {
+                delete cached._dispose;
+                cached.oldIndex = cached.index;
+                cached.index = index; // 相当于 node.index
+                //   cached.vm[instance.keyName] = instance.isArray ? index : cached.key
+                saveInCache(newCache, cached);
             } else {
                 //如果找不到就进行模糊搜索
-                fuzzy.push(c);
+                fuzzy.push(node);
             }
         });
 
-        fuzzy.forEach(function (c) {
-            var fragment = fuzzyMatchCache(cache, c.key);
-            if (fragment) {
+        fuzzy.forEach(function (node) {
+            var cached = fuzzyMatchCache(cache, node.key);
+            if (cached) {
                 //重复利用
-                fragment.oldIndex = fragment.index;
-                fragment.key = c.key;
-                var val = fragment.val = c.val;
-                var index = fragment.index = c.index;
-                //   fragment.vm[instance.valName] = val
-                //   fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
-                delete fragment._dispose;
+                cached.oldIndex = cached.index;
+                cached.key = node.key;
+                var val = cached.val = node.val;
+                var index = cached.index = node.index;
+                //   cached.vm[instance.valName] = val
+                //   cached.vm[instance.keyName] = instance.isArray ? index : cached.key
+                delete cached._dispose;
             } else {
-                list.push(c);
-                fragment = c;
+                oldVal.push(node);
+                cached = node;
             }
 
-            saveInCache(newCache, fragment);
+            saveInCache(newCache, cached);
         });
 
-        list.sort(function (a, b) {
+        oldVal.sort(function (a, b) {
             return a.index - b.index;
         });
 
-        for (var el, i = 0; el = list[i]; i++) {
+        for (var el, i = 0; el = oldVal[i]; i++) {
             if (el._dispose) {
-                list.splice(i, 1);
-                --i;
+                oldVal.splice(i, 1);
+                i--;
             } else {
-                flat.push.apply(flat, el.children);
+                if (el.nodeName === '#document-fragment') {
+                    flattenNodes.push.apply(flattenNodes, el.children);
+                } else {
+                    flattenNodes.push(el);
+                }
             }
         }
-        list.cache = newCache;
+        oldVal.cache = newCache;
     }
 
     // 新位置: 旧位置
