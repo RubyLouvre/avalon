@@ -14,9 +14,14 @@ export function Yield(nodes, render) {
 Yield.prototype = {
     genChildren(nodes) {
         if (nodes.length) {
-            return '[' + nodes.map(function(node) {
-                return this.genNode(node)
-            }, this).join(',\n') + ']'
+            var arr = []
+            nodes.forEach(function(node) {
+                var a = this.genNode(node)
+                if(a){
+                    arr.push(a)
+                }
+            }, this)
+            return '[' + arr.join(',\n') + ']'
         } else {
             return '[]'
         }
@@ -27,7 +32,7 @@ Yield.prototype = {
             return this.genElement(node)
         } else if (node.vtype === 8) {
             return this.genComment(node)
-        } else {
+        } else if(node.vtype === 3){
             return this.genText(node)
         }
     },

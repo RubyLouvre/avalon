@@ -79,7 +79,8 @@ __method__.forEach(function(method) {
         var result = original.apply(this, args)
 
         this.toJSON()
-        core.__dep__.notify(method)
+        if(!this.stopNotify)
+           core.__dep__.notify(method)
         return result
     }
 })

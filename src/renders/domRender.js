@@ -98,16 +98,18 @@ Render.prototype = {
     scanChildren(children, scope, isRoot) {
         for (var i = 0; i < children.length; i++) {
             var vdom = children[i]
-            switch (vdom.nodeName) {
-                case '#text':
-                    this.scanText(vdom, scope)
-                    break
-                case '#comment':
-                    this.scanComment(vdom, scope, children)
-                    break
-                default:
-                    this.scanTag(vdom, scope, children, false)
-                    break
+            if (vdom.nodeName) {
+                switch (vdom.nodeName) {
+                    case '#text':
+                        this.scanText(vdom, scope)
+                        break
+                    case '#comment':
+                        this.scanComment(vdom, scope, children)
+                        break
+                    default:
+                        this.scanTag(vdom, scope, children, false)
+                        break
+                }
             }
         }
         if (isRoot) {
@@ -259,28 +261,29 @@ Render.prototype = {
     },
 
     schedule() {
-        if (!avalon.uniqActions[this.uuid]) {
-            avalon.uniqActions[this.uuid] = 1
-            avalon.pendingActions.push(this)
+        if (!this._isScheduled) {
+            this._isScheduled = true
+            if (!avalon.uniqActions[this.uuid]) {
+                avalon.uniqActions[this.uuid] = 1
+                avalon.pendingActions.push(this)
+            }
+            runActions() //这里会还原_isScheduled
         }
 
-        runActions() //这里会还原_isScheduled
     },
     update: function() {
-     
+
         var nodes = this.tmpl.exec(this.vm, this)
-        console.log(this.tmpl.body, nodes)
         if (!this.vm.$element) {
 
             diff(this.vnodes[0], nodes[0])
-                //   toDOM(this.vnodes)
 
             this.vm.$element = this.vnodes[0]
         } else {
             diff(this.vnodes[0], nodes[0])
-                //  toDOM(this.vnodes)
         }
         this.nodes = nodes
+        this._isScheduled = false
     },
     /**
      * 销毁所有指令
@@ -308,14 +311,14 @@ Render.prototype = {
     getForBinding(begin, scope, parentChildren, userCb) {
         var expr = begin.nodeValue.replace('ms-for:', '').trim()
         begin.nodeValue = 'ms-for:' + expr
+
         var nodes = getRange(parentChildren, begin)
         this.scanChildren(nodes, scope, false)
         var end = nodes.end
         begin.dynamic = true
             //   var fragment = avalon.vdom(nodes, 'toHTML')
-        parentChildren.splice(nodes.start, nodes.length)
-       // begin.props = {}
-       console.log(nodes)
+        parentChildren.splice(nodes.start, nodes.length, [])
+
         begin.for = {
             begin,
             end,
@@ -323,7 +326,6 @@ Render.prototype = {
             nodes,
             userCb
 
-            // parentChildren
         }
 
     },
@@ -373,10 +375,11 @@ function repeatCb(obj, el, index, keys, nodes, cb, isArray) {
         local[keys[1]] = obj
     var arr = cb(local),
         obj
-    arr.push({
-        nodeName: '#text',
-        nodeValue: ' '
-    })
+        //    arr.push({
+        //        nodeName: '#text',
+        //        nodeValue: ' ',
+        //        vtype: 8
+        //    })
     obj = {
         key: isArray ? getTraceKey(el) : index,
         nodeName: '#document-fragment',
@@ -404,12 +407,11 @@ var container = {
 // 以后要废掉vdom系列,action
 //a是旧的虚拟DOM, b是新的
 function diff(a, b) {
-
     switch (a.nodeName) {
         case '#text':
             toDOM(a)
 
-            if (a.dynamic && a.nodeValue !== b.nodeValue) {
+            if (a.nodeValue !== b.nodeValue) {
                 a.nodeValue = b.nodeValue
                 if (a.dom) {
                     a.dom.nodeValue = b.nodeValue
@@ -417,27 +419,31 @@ function diff(a, b) {
             }
             break
         case '#comment':
-            console.log(a, '---')
             toDOM(a)
             if (a.nodeName !== b.nodeName) {
-                handleIf(a,b)
+                handleIf(a, b)
                 toDOM(a)
             }
             break
         case '#document-fragment':
+            console.log('这是碎片')
             diff(a.children, b.children)
             break
         case void(0):
-            avalon.directives['for'].diff(a, b)
+
+            console.log('这是数组')
+
+            return avalon.directives['for'].diff(a, b)
             break
         default:
             toDOM(a)
-            if (a.staticRoot) {
+            if (a.staticRoot && a.hasScan) {
+
                 return
             }
             var parentNode = a.dom
             if (a.nodeName !== b.nodeName) {
-                handleIf(a,b)
+                handleIf(a, b)
                 return
             }
             var delay
@@ -463,31 +469,52 @@ function diff(a, b) {
             if (!a.isVoidTag && !delay && !orphanTag[a.nodeName]) {
 
                 var childNodes = parentNode.childNodes
-                for (var i = 0, n = a.children.length; i < n; i++) {
-                    var c = a.children[i]
-                    var d = b.children[i]
-                    if (d) {
-                        diff(c, d)
-                    } else {
+                var achild = a.children.concat()
+                var bchild = b.children.concat()
+                for (let i = 0; i < achild.length; i++) {
+                    let c = achild[i]
+                    let d = bchild[i]
 
-                        toDOM(c)
+                    if (d) {
+                        let arr = diff(c, d)
+                        c.updating = false
+
+                        if (typeof arr === 'number') {
+                            console.log('数组扁平化', arr)
+                            avalon.directives.for.update(c, d, achild, bchild, i, parentNode)
+
+                            c = achild[i]
+                            d = bchild[i]
+                            diff(c, d)
+                        }
                     }
+                    toDOM(c)
                     if (c.dom !== childNodes[i]) {
+
                         if (!childNodes[i]) {
                             //  parentNode.removeChild(c.dom)
                             parentNode.appendChild(c.dom)
                         } else {
-                            parentNode.replaceChild(c.dom, childNodes[i])
+                            try {
+                                parentNode.insertBefore(c.dom, childNodes[i])
+                            } catch (e) {
+                                console.log(c, c.dom, childNodes[i], 'error', e)
+                            }
                         }
+                    } else {
+                        // parentNode.appendChild(c.dom)
                     }
                 }
+            }
+            if (a.staticRoot) {
+                a.hasScan = true
             }
             break
     }
 }
 
 
-function toDOM(el) {
+function toDOM(el, b) {
 
     if (el.props) {
         if (el.dom) {
@@ -511,6 +538,7 @@ function toDOM(el) {
     } else if (el.nodeName === '#comment') {
         return el.dom || (el.dom = document.createComment(el.nodeValue))
     } else if (el.nodeName === '#document-fragment') {
+        console.log('文档变DOM')
         var dom = document.createDocumentFragment()
         appendChild(dom, el.children)
         el.split = dom.lastChild
@@ -524,17 +552,20 @@ function toDOM(el) {
 
         return el.dom = document.createTextNode(el.nodeValue)
     } else if (Array.isArray(el)) {
-        el = flatten(el)
-        if (el.length === 1) {
-            return toDOM(el[0])
-        } else {
-            var a = document.createDocumentFragment()
-            appendChild(a, el)
-            return a
-        }
+        // el = flatten(el)
+        console.log('数组变DOM', b)
+        throw 2
+            //        if (el.length === 1) {
+            //            return toDOM(el[0])
+            //        } else {
+            //            var a = document.createDocumentFragment()
+            //            appendChild(a, el)
+            //            return a
+            //        }
     }
 }
-function handleIf(a, b){
+
+function handleIf(a, b) {
     handleDispose(a)
     for (var i in a) {
         delete a[i]
@@ -545,21 +576,22 @@ function handleIf(a, b){
     toDOM(a)
 }
 
-function handleDispose(a){
-    if(a.dirs){
-        for(var i = 0, el; el = a.dirs[i++];){
-            if(el.beforeDispose){
+function handleDispose(a) {
+    if (a.dirs) {
+        for (var i = 0, el; el = a.dirs[i++];) {
+            if (el.beforeDispose) {
                 el.beforeDispose()
             }
         }
     }
-    var arr = a.children || Array.isArray(a) ? a: false
-    if(arr){
-        for(var i = 0, el; el = arr[i++];){
+    var arr = a.children || Array.isArray(a) ? a : false
+    if (arr) {
+        for (var i = 0, el; el = arr[i++];) {
             handleDispose(el)
         }
     }
 }
+
 function appendChild(parent, children) {
     for (var i = 0, n = children.length; i < n; i++) {
         var b = toDOM(children[i])
@@ -574,7 +606,11 @@ function flatten(array) {
     for (var i = 0, n = array.length; i < n; i++) {
         var el = array[i]
         if (Array.isArray(el)) {
+            el = flatten(el)
             ret.push.apply(ret, el)
+        } else if (el.nodeName === '#document-fragment') {
+
+            ret.push.apply(ret, el.children)
         } else {
             ret.push(el)
         }

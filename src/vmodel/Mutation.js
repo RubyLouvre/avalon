@@ -78,7 +78,10 @@ Mutation.prototype = {
             if (Array.isArray(newValue) &&
                 oldValue && oldValue.pushArray) {
                 oldValue.length = 0
+                //防止vm.array = newArray时被notify两次
+                oldValue.stopNotify =  true
                 oldValue.pushArray(newValue)
+                oldValue.stopNotify =  false
                 newValue = oldValue
             } else if (avalon.isObject(newValue)) {
                 var hash = oldValue && oldValue.$hashcode

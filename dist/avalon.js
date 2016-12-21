@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-20:19:59 version 2.2.2 by 司徒正美
+built in 2016-12-21:12:22 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -3612,7 +3612,6 @@ IE7的checked属性应该使用defaultChecked来设置
     function reportObserved(target) {
         var action = avalon.trackingAction || null;
         if (action !== null) {
-
             avalon.track('征收到', target.expr);
             action.mapIDs[target.uuid] = target;
         }
@@ -3697,12 +3696,6 @@ IE7的checked属性应该使用defaultChecked来设置
                 action.depsVersion[_dep.uuid] = _dep.version;
             }
         }
-
-        //    for (let i = 0, dep; dep = prev[i++];) {
-        //        if (!checked[dep.uuid]) {
-        //            avalon.Array.remove(dep.observers, action)
-        //        }
-        //    }
     }
 
     function transaction(action, thisArg, args) {
@@ -4086,7 +4079,10 @@ IE7的checked属性应该使用defaultChecked来设置
             if (newValue !== oldValue) {
                 if (Array.isArray(newValue) && oldValue && oldValue.pushArray) {
                     oldValue.length = 0;
+                    //防止vm.array = newArray时被notify两次
+                    oldValue.stopNotify = true;
                     oldValue.pushArray(newValue);
+                    oldValue.stopNotify = false;
                     newValue = oldValue;
                 } else if (avalon.isObject(newValue)) {
                     var hash = oldValue && oldValue.$hashcode;
@@ -4504,7 +4500,7 @@ IE7的checked属性应该使用defaultChecked来设置
             var result = original.apply(this, args);
 
             this.toJSON();
-            core.__dep__.notify(method);
+            if (!this.stopNotify) core.__dep__.notify(method);
             return result;
         };
     });
@@ -5553,9 +5549,14 @@ IE7的checked属性应该使用defaultChecked来设置
     Yield.prototype = {
         genChildren: function genChildren(nodes) {
             if (nodes.length) {
-                return '[' + nodes.map(function (node) {
-                    return this.genNode(node);
-                }, this).join(',\n') + ']';
+                var arr = [];
+                nodes.forEach(function (node) {
+                    var a = this.genNode(node);
+                    if (a) {
+                        arr.push(a);
+                    }
+                }, this);
+                return '[' + arr.join(',\n') + ']';
             } else {
                 return '[]';
             }
@@ -5565,7 +5566,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 return this.genElement(node);
             } else if (node.vtype === 8) {
                 return this.genComment(node);
-            } else {
+            } else if (node.vtype === 3) {
                 return this.genText(node);
             }
         },
@@ -5579,7 +5580,7 @@ IE7的checked属性应该使用defaultChecked来设置
             if (node.dynamic) {
                 var dir = node["for"];
                 avalon.directives['for'].beforeInit.call(dir);
-                var keys = '\'' + dir.valName + ',' + dir.keyName + ',' + dir.asName + '\'';
+                var keys = '\'' + dir.valName + ',' + dir.keyName + ',' + dir.asName + ',' + dir.cb + '\'';
                 return '\u01A9.comment(\'ms-for:' + dir.expr + '\'),\n                    \u01A9.repeat(' + createExpr(dir.expr) + ', ' + keys + ', function(__local__){\n                return ' + this.genChildren(dir.nodes) + '\n            })';
             }
 
@@ -5836,16 +5837,18 @@ IE7的checked属性应该使用defaultChecked来设置
         scanChildren: function scanChildren(children, scope, isRoot) {
             for (var i = 0; i < children.length; i++) {
                 var vdom = children[i];
-                switch (vdom.nodeName) {
-                    case '#text':
-                        this.scanText(vdom, scope);
-                        break;
-                    case '#comment':
-                        this.scanComment(vdom, scope, children);
-                        break;
-                    default:
-                        this.scanTag(vdom, scope, children, false);
-                        break;
+                if (vdom.nodeName) {
+                    switch (vdom.nodeName) {
+                        case '#text':
+                            this.scanText(vdom, scope);
+                            break;
+                        case '#comment':
+                            this.scanComment(vdom, scope, children);
+                            break;
+                        default:
+                            this.scanTag(vdom, scope, children, false);
+                            break;
+                    }
                 }
             }
             if (isRoot) {
@@ -5996,29 +5999,29 @@ IE7的checked属性应该使用defaultChecked来设置
         },
 
         schedule: function schedule() {
-            if (!avalon.uniqActions[this.uuid]) {
-                avalon.uniqActions[this.uuid] = 1;
-                avalon.pendingActions.push(this);
+            if (!this._isScheduled) {
+                this._isScheduled = true;
+                if (!avalon.uniqActions[this.uuid]) {
+                    avalon.uniqActions[this.uuid] = 1;
+                    avalon.pendingActions.push(this);
+                }
+                runActions(); //这里会还原_isScheduled
             }
-
-            runActions(); //这里会还原_isScheduled
         },
 
         update: function update() {
 
             var nodes = this.tmpl.exec(this.vm, this);
-            console.log(this.tmpl.body, nodes);
             if (!this.vm.$element) {
 
                 diff(this.vnodes[0], nodes[0]);
-                //   toDOM(this.vnodes)
 
                 this.vm.$element = this.vnodes[0];
             } else {
                 diff(this.vnodes[0], nodes[0]);
-                //  toDOM(this.vnodes)
             }
             this.nodes = nodes;
+            this._isScheduled = false;
         },
         /**
          * 销毁所有指令
@@ -6046,14 +6049,14 @@ IE7的checked属性应该使用defaultChecked来设置
         getForBinding: function getForBinding(begin, scope, parentChildren, userCb) {
             var expr = begin.nodeValue.replace('ms-for:', '').trim();
             begin.nodeValue = 'ms-for:' + expr;
+
             var nodes = getRange(parentChildren, begin);
             this.scanChildren(nodes, scope, false);
             var end = nodes.end;
             begin.dynamic = true;
             //   var fragment = avalon.vdom(nodes, 'toHTML')
-            parentChildren.splice(nodes.start, nodes.length);
-            // begin.props = {}
-            console.log(nodes);
+            parentChildren.splice(nodes.start, nodes.length, []);
+
             begin["for"] = {
                 begin: begin,
                 end: end,
@@ -6061,7 +6064,6 @@ IE7的checked属性应该使用defaultChecked来设置
                 nodes: nodes,
                 userCb: userCb
 
-                // parentChildren
             };
         },
 
@@ -6107,10 +6109,11 @@ IE7的checked属性应该使用defaultChecked来设置
         if (keys[2]) local[keys[1]] = obj;
         var arr = cb(local),
             obj;
-        arr.push({
-            nodeName: '#text',
-            nodeValue: ' '
-        });
+        //    arr.push({
+        //        nodeName: '#text',
+        //        nodeValue: ' ',
+        //        vtype: 8
+        //    })
         obj = {
             key: isArray$$1 ? getTraceKey(el) : index,
             nodeName: '#document-fragment',
@@ -6140,12 +6143,11 @@ IE7的checked属性应该使用defaultChecked来设置
     // 以后要废掉vdom系列,action
     //a是旧的虚拟DOM, b是新的
     function diff(a, b) {
-
         switch (a.nodeName) {
             case '#text':
                 toDOM(a);
 
-                if (a.dynamic && a.nodeValue !== b.nodeValue) {
+                if (a.nodeValue !== b.nodeValue) {
                     a.nodeValue = b.nodeValue;
                     if (a.dom) {
                         a.dom.nodeValue = b.nodeValue;
@@ -6153,7 +6155,6 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
                 break;
             case '#comment':
-                console.log(a, '---');
                 toDOM(a);
                 if (a.nodeName !== b.nodeName) {
                     handleIf(a, b);
@@ -6161,13 +6162,19 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
                 break;
             case '#document-fragment':
+                console.log('这是碎片');
                 diff(a.children, b.children);
                 break;
             case void 0:
+
+                console.log('这是数组');
+
+                return avalon.directives['for'].diff(a, b);
                 break;
             default:
                 toDOM(a);
-                if (a.staticRoot) {
+                if (a.staticRoot && a.hasScan) {
+
                     return;
                 }
                 var parentNode = a.dom;
@@ -6195,30 +6202,51 @@ IE7的checked属性应该使用defaultChecked来设置
                 if (!a.isVoidTag && !delay && !orphanTag[a.nodeName]) {
 
                     var childNodes = parentNode.childNodes;
-                    for (var i = 0, n = a.children.length; i < n; i++) {
-                        var c = a.children[i];
-                        var d = b.children[i];
-                        if (d) {
-                            diff(c, d);
-                        } else {
+                    var achild = a.children.concat();
+                    var bchild = b.children.concat();
+                    for (var _i5 = 0; _i5 < achild.length; _i5++) {
+                        var c = achild[_i5];
+                        var d = bchild[_i5];
 
-                            toDOM(c);
+                        if (d) {
+                            var arr = diff(c, d);
+                            c.updating = false;
+
+                            if (typeof arr === 'number') {
+                                console.log('数组扁平化', arr);
+                                avalon.directives["for"].update(c, d, achild, bchild, _i5, parentNode);
+
+                                c = achild[_i5];
+                                d = bchild[_i5];
+                                diff(c, d);
+                            }
                         }
-                        if (c.dom !== childNodes[i]) {
-                            if (!childNodes[i]) {
+                        toDOM(c);
+                        if (c.dom !== childNodes[_i5]) {
+
+                            if (!childNodes[_i5]) {
                                 //  parentNode.removeChild(c.dom)
                                 parentNode.appendChild(c.dom);
                             } else {
-                                parentNode.replaceChild(c.dom, childNodes[i]);
+                                try {
+                                    parentNode.insertBefore(c.dom, childNodes[_i5]);
+                                } catch (e) {
+                                    console.log(c, c.dom, childNodes[_i5], 'error', e);
+                                }
                             }
+                        } else {
+                            // parentNode.appendChild(c.dom)
                         }
                     }
+                }
+                if (a.staticRoot) {
+                    a.hasScan = true;
                 }
                 break;
         }
     }
 
-    function toDOM(el) {
+    function toDOM(el, b) {
 
         if (el.props) {
             if (el.dom) {
@@ -6242,6 +6270,7 @@ IE7的checked属性应该使用defaultChecked来设置
         } else if (el.nodeName === '#comment') {
             return el.dom || (el.dom = document.createComment(el.nodeValue));
         } else if (el.nodeName === '#document-fragment') {
+            console.log('文档变DOM');
             var dom = document.createDocumentFragment();
             appendChild(dom, el.children);
             el.split = dom.lastChild;
@@ -6255,16 +6284,19 @@ IE7的checked属性应该使用defaultChecked来设置
 
             return el.dom = document.createTextNode(el.nodeValue);
         } else if (Array.isArray(el)) {
-            el = flatten(el);
-            if (el.length === 1) {
-                return toDOM(el[0]);
-            } else {
-                var a = document.createDocumentFragment();
-                appendChild(a, el);
-                return a;
-            }
+            // el = flatten(el)
+            console.log('数组变DOM', b);
+            throw 2;
+            //        if (el.length === 1) {
+            //            return toDOM(el[0])
+            //        } else {
+            //            var a = document.createDocumentFragment()
+            //            appendChild(a, el)
+            //            return a
+            //        }
         }
     }
+
     function handleIf(a, b) {
         handleDispose(a);
         for (var i in a) {
@@ -6291,6 +6323,7 @@ IE7的checked属性应该使用defaultChecked来设置
             }
         }
     }
+
     function appendChild(parent, children) {
         for (var i = 0, n = children.length; i < n; i++) {
             var b = toDOM(children[i]);
@@ -6305,7 +6338,11 @@ IE7的checked属性应该使用defaultChecked来设置
         for (var i = 0, n = array.length; i < n; i++) {
             var el = array[i];
             if (Array.isArray(el)) {
+                el = flatten(el);
                 ret.push.apply(ret, el);
+            } else if (el.nodeName === '#document-fragment') {
+
+                ret.push.apply(ret, el.children);
             } else {
                 ret.push(el);
             }
@@ -6467,8 +6504,6 @@ IE7的checked属性应该使用defaultChecked来设置
             this.expr = arr[1];
             this.keyName = kv[0];
             this.valName = kv[1];
-            this.signature = avalon.makeHashCode('for');
-
             this.asName = asName || '';
 
             delete this.param;
@@ -6484,41 +6519,42 @@ IE7的checked属性应该使用defaultChecked来设置
             this.fragment = ['<div>', this.fragment, '<!--', this.signature, '--></div>'].join('');
             this.cache = {};
         },
+
         diff: function diff(oldVal, newVal) {
-            /* istanbul ignore if */
-            if (this.updating) {
-                return;
-            }
-
-            this.updating = true;
-            var traceIds = createFragments(this, newVal);
-
-            if (this.oldTrackIds === void 0) return true;
-
-            if (this.oldTrackIds !== traceIds) {
-                this.oldTrackIds = traceIds;
-                return true;
+            var traceIds = createTrackIds(newVal);
+            if (oldVal.trackIds === void 0) {
+                oldVal.trackIds = traceIds;
+                oldVal.same = false;
+                oldVal.length = 0;
+                oldVal.push.apply(oldVal, newVal);
+                return 1;
+            } else if (oldVal.trackIds !== traceIds) {
+                oldVal.same = false;
+                oldVal.trackIds = traceIds;
+                return 2;
+            } else {
+                oldVal.same = true;
+                return 3;
             }
         },
-        update: function update() {
-
-            if (!this.preFragments) {
-                this.fragments = this.fragments || [];
-                mountList(this);
+        update: function update(oldVal, newVal, oldChild, newChild, i, p) {
+            var flat = [i, 1];
+            //将循环区域里的节点抽取出来,同步到父节点的children中
+            if (oldVal.same) {
+                var flat = oldVal.flat;
+                newChild.splice.apply(newChild, flat);
+            } else if (oldVal.length === 0 || !oldVal.cache) {
+                mountList(oldVal, oldVal.cache = {}, flat);
+                newChild.splice.apply(newChild, flat);
+                oldVal.flat = flat;
             } else {
-                //  collectInFor(this)
-                diffList(this);
-                updateList(this);
+                diffList(oldVal, newVal, flat);
+                var flat2 = [i, 1];
+                mountList(newVal, null, flat2, true);
+                newChild.splice.apply(newChild, flat2);
+                oldVal.flat = flat;
             }
-
-            if (this.userCb) {
-                this.userCb.call(this.vm, {
-                    type: 'rendered',
-                    target: this.begin.dom,
-                    signature: this.signature
-                });
-            }
-            delete this.updating;
+            oldChild.splice.apply(oldChild, flat);
         },
         beforeDispose: function beforeDispose() {
             this.fragments.forEach(function (el) {
@@ -6527,81 +6563,47 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     });
 
-    function getTraceKey$1(item) {
-        var type = typeof item;
-        return item && type === 'object' ? item.$hashcode : type + ':' + item;
-    }
-
-    //创建一组fragment的虚拟DOM
-    function createFragments(instance, obj) {
-        if (isObject(obj)) {
-            var array = Array.isArray(obj);
-            var ids = [];
-            var fragments = [],
-                i = 0;
-
-            instance.isArray = array;
-            if (instance.fragments) {
-                instance.preFragments = instance.fragments;
-                avalon.each(obj, function (key, value) {
-                    var k = array ? getTraceKey$1(value) : key;
-                    fragments.push({
-                        key: k,
-                        val: value,
-                        index: i++
-                    });
-                    ids.push(k);
-                });
-                instance.fragments = fragments;
-            } else {
-                avalon.each(obj, function (key, value) {
-                    var k = array ? getTraceKey$1(value) : key;
-                    fragments.push(new VFragment([], k, value, i++));
-                    ids.push(k);
-                });
-                instance.fragments = fragments;
-            }
-            return ids.join(';;');
-        } else {
-            return NaN;
+    function createTrackIds(nodes) {
+        var ids = [];
+        for (var i = 0, el; el = nodes[i++];) {
+            ids.push(el.key);
         }
+        return ids.join(';;');
     }
 
-    function mountList(instance) {
-        var args = instance.fragments.map(function (fragment, index) {
-            FragmentDecorator(fragment, instance, index);
-            saveInCache(instance.cache, fragment);
-            return fragment;
+    function mountList(nodes, cache, flat, not) {
+        nodes.forEach(function (el) {
+            !not && saveInCache(cache, el);
+            el.children.forEach(function (elem) {
+                flat.push(elem);
+            });
         });
-        var list = instance.parentChildren;
-        var i = list.indexOf(instance.begin);
-        list.splice.apply(list, [i + 1, 0].concat(args));
     }
 
-    function diffList(instance) {
-        var cache = instance.cache;
+    function diffList(list, newNodes, flat) {
+        var cache = list.cache;
         var newCache = {};
         var fuzzy = [];
-        var list = instance.preFragments;
-
+        //标记它们都应该为移除
         list.forEach(function (el) {
             el._dispose = true;
         });
 
-        instance.fragments.forEach(function (c, index) {
+        newNodes.forEach(function (c, index) {
             var fragment = isInCache(cache, c.key);
             //取出之前的文档碎片
             if (fragment) {
                 delete fragment._dispose;
                 fragment.oldIndex = fragment.index;
                 fragment.index = index; // 相当于 c.index
-                fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key;
+                //            fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
                 saveInCache(newCache, fragment);
             } else {
                 //如果找不到就进行模糊搜索
                 fuzzy.push(c);
             }
         });
+
         fuzzy.forEach(function (c) {
             var fragment = fuzzyMatchCache(cache, c.key);
             if (fragment) {
@@ -6610,88 +6612,32 @@ IE7的checked属性应该使用defaultChecked来设置
                 fragment.key = c.key;
                 var val = fragment.val = c.val;
                 var index = fragment.index = c.index;
-
-                fragment.vm[instance.valName] = val;
-                fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key;
+                //   fragment.vm[instance.valName] = val
+                //   fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
                 delete fragment._dispose;
             } else {
-
-                c = new VFragment([], c.key, c.val, c.index);
-
-                fragment = FragmentDecorator(c, instance, c.index);
-                list.push(fragment);
+                list.push(c);
+                fragment = c;
             }
+
             saveInCache(newCache, fragment);
         });
 
-        instance.fragments = list;
         list.sort(function (a, b) {
             return a.index - b.index;
         });
-        instance.cache = newCache;
-    }
 
-    function updateList(instance) {
-        var before = instance.begin.dom;
-        var parent = before.parentNode;
-        var list = instance.fragments;
-        var end = instance.end.dom;
-        for (var i = 0, item; item = list[i]; i++) {
-            if (item._dispose) {
+        for (var el, i = 0; el = list[i]; i++) {
+            if (el._dispose) {
                 list.splice(i, 1);
-                i--;
-                item.dispose();
-                continue;
+                --i;
+            } else {
+                flat.push.apply(flat, el.children);
             }
-            if (item.oldIndex !== item.index) {
-                var f = item.toFragment();
-                parent.insertBefore(f, before.nextSibling || end);
-            }
-            before = item.split;
         }
-        var ch = instance.parentChildren;
-        var startIndex = ch.indexOf(instance.begin);
-        var endIndex = ch.indexOf(instance.end);
-
-        list.splice.apply(ch, [startIndex + 1, endIndex - startIndex].concat(list));
+        list.cache = newCache;
     }
 
-    /**
-     * 
-     * @param {type} fragment
-     * @param {type} this
-     * @param {type} index
-     * @returns { key, val, index, oldIndex, this, dom, split, vm}
-     */
-    function FragmentDecorator(fragment, instance, index) {
-        var data = {};
-        data[instance.keyName] = instance.isArray ? index : fragment.key;
-        data[instance.valName] = fragment.val;
-        if (instance.asName) {
-            data[instance.asName] = instance.value;
-        }
-        var vm = fragment.vm = platform.itemFactory(instance.vm, {
-            data: data
-        });
-        if (instance.isArray) {
-            vm.$watch(instance.valName, function (a) {
-                if (instance.value && instance.value.set) {
-                    instance.value.set(vm[instance.keyName], a);
-                }
-            });
-        } else {
-            vm.$watch(instance.valName, function (a) {
-                instance.value[fragment.key] = a;
-            });
-        }
-        fragment.index = index;
-        fragment.innerRender = avalon.scan(instance.fragment, vm, function () {
-            var oldRoot = this.root;
-            ap.push.apply(fragment.children, oldRoot.children);
-            this.root = fragment;
-        });
-        return fragment;
-    }
     // 新位置: 旧位置
     function isInCache(cache, id) {
         var c = cache[id];

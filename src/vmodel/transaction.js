@@ -41,7 +41,6 @@ export function propagateChanged(target) {
 export function reportObserved(target) {
     var action = avalon.trackingAction || null
     if (action !== null) {
-
         avalon.track('征收到', target.expr)
         action.mapIDs[target.uuid] = target;
     }
@@ -131,11 +130,6 @@ function resetDeps(action) {
         }
     }
 
-//    for (let i = 0, dep; dep = prev[i++];) {
-//        if (!checked[dep.uuid]) {
-//            avalon.Array.remove(dep.observers, action)
-//        }
-//    }
 
 }
 

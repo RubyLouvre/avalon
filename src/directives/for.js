@@ -33,10 +33,7 @@ avalon.directive('for', {
         this.expr = arr[1]
         this.keyName = kv[0]
         this.valName = kv[1]
-        this.signature = avalon.makeHashCode('for')
-
         this.asName = asName || ''
-
 
         delete this.param
     },
@@ -52,56 +49,45 @@ avalon.directive('for', {
         this.cache = {}
 
     },
-//    diff: function(oldVal, newVal) {
-//        /* istanbul ignore if */
-//        if (this.updating) {
-//            return
-//        }
-//
-//        this.updating = true
-//        var traceIds = createFragments(this, newVal)
-//
-//        if (this.oldTrackIds === void 0)
-//            return true
-//
-//        if (this.oldTrackIds !== traceIds) {
-//            this.oldTrackIds = traceIds
-//            return true
-//        }
-//
-//    },
- diff: function(oldVal, newVal) {
-      
-       var traceIds = createTrackIds(newVal)
-      if (oldVal.trackIds === void 0){
-          oldVal.trackIds = traceIds
-          return true
-       }else if(oldVal.trackIds !== traceIds ){
+
+    diff: function(oldVal, newVal) {
+        var traceIds = createTrackIds(newVal)
+        if (oldVal.trackIds === void 0) {
             oldVal.trackIds = traceIds
-          return true
-       }
-       
-           
- },
-    update: function() {
-
-        if (!this.preFragments) {
-            this.fragments = this.fragments || []
-            mountList(this)
+            oldVal.same = false
+            oldVal.length = 0
+            oldVal.push.apply(oldVal, newVal)
+            return 1
+        } else if (oldVal.trackIds !== traceIds) {
+            oldVal.same = false
+            oldVal.trackIds = traceIds
+            return 2
         } else {
-            //  collectInFor(this)
-            diffList(this)
-            updateList(this)
+            oldVal.same = true
+            return 3
         }
 
-        if (this.userCb) {
-            this.userCb.call(this.vm, {
-                type: 'rendered',
-                target: this.begin.dom,
-                signature: this.signature
-            })
+
+    },
+    update: function(oldVal, newVal, oldChild, newChild, i, p) {
+        var flat = [i, 1]
+            //将循环区域里的节点抽取出来,同步到父节点的children中
+        if (oldVal.same) {
+            var flat = oldVal.flat
+            newChild.splice.apply(newChild, flat)
+        } else if (oldVal.length === 0 || !oldVal.cache) {
+            mountList(oldVal, oldVal.cache = {}, flat)
+            newChild.splice.apply(newChild, flat)
+            oldVal.flat = flat
+        } else {
+            diffList(oldVal, newVal, flat)
+            var flat2 = [i, 1]
+            mountList(newVal, null, flat2, true)
+            newChild.splice.apply(newChild, flat2)
+            oldVal.flat = flat
         }
-        delete this.updating
+        oldChild.splice.apply(oldChild, flat)
+
     },
     beforeDispose: function() {
         this.fragments.forEach(function(el) {
@@ -111,9 +97,9 @@ avalon.directive('for', {
 })
 
 
-function createTrackIds(nodes){
+function createTrackIds(nodes) {
     var ids = []
-    for(var i = 0, el; el = nodes[i++];){
+    for (var i = 0, el; el = nodes[i++];) {
         ids.push(el.key)
     }
     return ids.join(';;')
@@ -122,41 +108,39 @@ function createTrackIds(nodes){
 
 
 
-function mountList(instance) {
-    var args = instance.fragments.map(function(fragment, index) {
-        FragmentDecorator(fragment, instance, index)
-        saveInCache(instance.cache, fragment)
-        return fragment
+function mountList(nodes, cache, flat, not) {
+    nodes.forEach(function(el) {
+        !not && saveInCache(cache, el)
+        el.children.forEach(function(elem) {
+            flat.push(elem)
+        })
     })
-    var list = instance.parentChildren
-    var i = list.indexOf(instance.begin)
-    list.splice.apply(list, [i + 1, 0].concat(args))
 }
 
-function diffList(instance) {
-    var cache = instance.cache
+function diffList(list, newNodes, flat) {
+    var cache = list.cache
     var newCache = {}
     var fuzzy = []
-    var list = instance.preFragments
-
+        //标记它们都应该为移除
     list.forEach(function(el) {
         el._dispose = true
     })
 
-    instance.fragments.forEach(function(c, index) {
+    newNodes.forEach(function(c, index) {
         var fragment = isInCache(cache, c.key)
             //取出之前的文档碎片
         if (fragment) {
             delete fragment._dispose
             fragment.oldIndex = fragment.index
             fragment.index = index // 相当于 c.index
-            fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
+                //            fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
             saveInCache(newCache, fragment)
         } else {
             //如果找不到就进行模糊搜索
             fuzzy.push(c)
         }
     })
+
     fuzzy.forEach(function(c) {
         var fragment = fuzzyMatchCache(cache, c.key)
         if (fragment) { //重复利用
@@ -164,25 +148,30 @@ function diffList(instance) {
             fragment.key = c.key
             var val = fragment.val = c.val
             var index = fragment.index = c.index
-
-            fragment.vm[instance.valName] = val
-            fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
+                //   fragment.vm[instance.valName] = val
+                //   fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
             delete fragment._dispose
         } else {
-
-            c = new VFragment([], c.key, c.val, c.index)
-
-            fragment = FragmentDecorator(c, instance, c.index)
-            list.push(fragment)
+            list.push(c)
+            fragment = c
         }
+
         saveInCache(newCache, fragment)
     })
 
-    instance.fragments = list
     list.sort(function(a, b) {
         return a.index - b.index
     })
-    instance.cache = newCache
+
+    for (var el, i = 0; el = list[i]; i++) {
+        if (el._dispose) {
+            list.splice(i, 1)
+                --i
+        } else {
+            flat.push.apply(flat, el.children)
+        }
+    }
+    list.cache = newCache
 }
 
 function updateItemVm(vm, top) {
