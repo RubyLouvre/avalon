@@ -18,7 +18,7 @@ module.exports = function(config) {
     // https://saucelabs.com/platforms
     // Browsers to run on Sauce Labs
     var customLaunchers = {
-
+/*
         SL_IE_8: {
             base: 'SauceLabs',
             browserName: 'internet explorer',
@@ -146,17 +146,23 @@ module.exports = function(config) {
             base: 'SauceLabs',
             browserName: 'iphone'
         },
+        IE7: {
+            base: 'SauceLabs',
+            browserName: 'internet explorer',
+            version: '7',
+            platform: 'Windows XP'
+        },
+        */
         sl_android_4_4: {
             base: "SauceLabs",
             browserName: "android",
             version: "4.4"
         },
 
-        IE7: {
-            base: 'SauceLabs',
-            browserName: 'internet explorer',
-            version: '7',
-            platform: 'Windows XP'
+        sl_android_4_1: {
+            base: "SauceLabs",
+            browserName: "android",
+            version: "4.1"
         },
         android_latest: {
             base: 'SauceLabs',
