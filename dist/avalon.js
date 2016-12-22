@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-22:19:53 version 2.2.2 by 司徒正美
+built in 2016-12-22:20:6 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -3285,276 +3285,6 @@ IE7的checked属性应该使用defaultChecked来设置
         return ret;
     }
 
-    function VText(text) {
-        this.nodeName = '#text';
-        this.nodeValue = text;
-    }
-
-    VText.prototype = {
-        constructor: VText,
-        toDOM: function toDOM() {
-            /* istanbul ignore if*/
-            if (this.dom) return this.dom;
-            var v = avalon._decode(this.nodeValue);
-            return this.dom = document$1.createTextNode(v);
-        },
-        toHTML: function toHTML() {
-            return this.nodeValue;
-        }
-    };
-
-    function VComment(text) {
-        this.nodeName = '#comment';
-        this.nodeValue = text;
-    }
-    VComment.prototype = {
-        constructor: VComment,
-        toDOM: function toDOM() {
-            if (this.dom) return this.dom;
-            return this.dom = document$1.createComment(this.nodeValue);
-        },
-        toHTML: function toHTML() {
-            return '<!--' + this.nodeValue + '-->';
-        }
-    };
-
-    function VElement(type, props, children, isVoidTag) {
-        this.nodeName = type;
-        this.props = props;
-        this.children = children;
-        this.isVoidTag = isVoidTag;
-    }
-    VElement.prototype = {
-        constructor: VElement,
-        toDOM: function toDOM() {
-            if (this.dom) return this.dom;
-            var dom,
-                tagName = this.nodeName;
-            if (avalon.modern && svgTags[tagName]) {
-                dom = createSVG(tagName);
-                /* istanbul ignore next*/
-            } else if (!avalon.modern && (VMLTags[tagName] || rvml.test(tagName))) {
-                dom = createVML(tagName);
-            } else {
-                dom = document$1.createElement(tagName);
-            }
-
-            var props = this.props || {};
-
-            for (var i in props) {
-                var val = props[i];
-                if (skipFalseAndFunction(val)) {
-                    /* istanbul ignore if*/
-                    if (specalAttrs[i] && avalon.msie < 8) {
-                        specalAttrs[i](dom, val);
-                    } else {
-                        dom.setAttribute(i, val + '');
-                    }
-                }
-            }
-            var c = this.children || [];
-            var template = c[0] ? c[0].nodeValue : '';
-            switch (this.nodeName) {
-                case 'script':
-                    dom.type = 'noexec';
-                    dom.text = template;
-                    try {
-                        dom.innerHTML = template;
-                    } catch (e) {}
-                    dom.type = props.type || '';
-                    break;
-                case 'noscript':
-                    dom.textContent = template;
-                case 'style':
-                case 'xmp':
-                case 'template':
-                    try {
-                        dom.innerHTML = template;
-                    } catch (e) {
-                        /* istanbul ignore next*/
-                        this.hackIE(dom, this.nodeName, template);
-                    }
-                    break;
-                case 'option':
-                    //IE6-8,为option添加文本子节点,不会同步到text属性中
-                    /* istanbul ignore next */
-                    if (msie$1 < 9) dom.text = template;
-                default:
-                    /* istanbul ignore next */
-                    if (!this.isVoidTag && this.children) {
-                        this.children.forEach(function (el) {
-                            return c && dom.appendChild(avalon.vdom(c, 'toDOM'));
-                        });
-                    }
-                    break;
-            }
-            return this.dom = dom;
-        },
-
-        /* istanbul ignore next */
-        hackIE: function hackIE(dom, nodeName, template) {
-            switch (nodeName) {
-                case 'style':
-                    dom.setAttribute('type', 'text/css');
-                    dom.styleSheet.cssText = template;
-                    break;
-                case 'xmp': //IE6-8,XMP元素里面只能有文本节点,不能使用innerHTML
-                case 'noscript':
-                    dom.textContent = template;
-                    break;
-            }
-        },
-        toHTML: function toHTML() {
-            var arr = [];
-            var props = this.props || {};
-            for (var i in props) {
-                var val = props[i];
-                if (skipFalseAndFunction(val)) {
-                    arr.push(i + '=' + avalon.quote(props[i] + ''));
-                }
-            }
-            arr = arr.length ? ' ' + arr.join(' ') : '';
-            var str = '<' + this.nodeName + arr;
-            if (this.isVoidTag) {
-                return str + '/>';
-            }
-            str += '>';
-            if (this.children) {
-                str += this.children.map(function (el) {
-                    return el ? avalon.vdom(el, 'toHTML') : '';
-                }).join('');
-            }
-            return str + '</' + this.nodeName + '>';
-        }
-    };
-
-    function skipFalseAndFunction(a) {
-        return a !== false && Object(a) !== a;
-    }
-    /* istanbul ignore next */
-    var specalAttrs = {
-        "class": function _class(dom, val) {
-            dom.className = val;
-        },
-        style: function style(dom, val) {
-            dom.style.cssText = val;
-        },
-        type: function type(dom, val) {
-            try {
-                //textarea,button 元素在IE6,7设置 type 属性会抛错
-                dom.type = val;
-            } catch (e) {}
-        },
-        'for': function _for(dom, val) {
-            dom.setAttribute('for', val);
-            dom.htmlFor = val;
-        }
-    };
-
-    function createSVG(type) {
-        return document$1.createElementNS('http://www.w3.org/2000/svg', type);
-    }
-    var svgTags = avalon.oneObject('circle,defs,ellipse,image,line,' + 'path,polygon,polyline,rect,symbol,text,use,g,svg');
-
-    var rvml = /^\w+\:\w+/;
-    /* istanbul ignore next*/
-    function createVML(type) {
-        if (document$1.styleSheets.length < 31) {
-            document$1.createStyleSheet().addRule(".rvml", "behavior:url(#default#VML)");
-        } else {
-            // no more room, add to the existing one
-            // http://msdn.microsoft.com/en-us/library/ms531194%28VS.85%29.aspx
-            document$1.styleSheets[0].addRule(".rvml", "behavior:url(#default#VML)");
-        }
-        var arr = type.split(':');
-        if (arr.length === 1) {
-            arr.unshift('v');
-        }
-        var tag = arr[1];
-        var ns = arr[0];
-        if (!document$1.namespaces[ns]) {
-            document$1.namespaces.add(ns, "urn:schemas-microsoft-com:vml");
-        }
-        return document$1.createElement('<' + ns + ':' + tag + ' class="rvml">');
-    }
-
-    var VMLTags = avalon.oneObject('shape,line,polyline,rect,roundrect,oval,arc,' + 'curve,background,image,shapetype,group,fill,' + 'stroke,shadow, extrusion, textbox, imagedata, textpath');
-
-    function VFragment(children, key, val, index) {
-        this.nodeName = '#document-fragment';
-        this.children = children;
-        this.key = key;
-        this.val = val;
-        this.index = index;
-        this.props = {};
-    }
-    VFragment.prototype = {
-        constructor: VFragment,
-        toDOM: function toDOM() {
-            if (this.dom) return this.dom;
-            var f = this.toFragment();
-            //IE6-11 docment-fragment都没有children属性 
-            this.split = f.lastChild;
-            return this.dom = f;
-        },
-        dispose: function dispose() {
-            this.toFragment();
-            this.innerRender && this.innerRender.dispose();
-            for (var i in this) {
-                this[i] = null;
-            }
-        },
-        toFragment: function toFragment() {
-            var f = createFragment();
-            this.children.forEach(function (el) {
-                return f.appendChild(avalon.vdom(el, 'toDOM'));
-            });
-            return f;
-        },
-        toHTML: function toHTML() {
-            var c = this.children;
-            return c.map(function (el) {
-                return avalon.vdom(el, 'toHTML');
-            }).join('');
-        }
-    };
-
-    /**
-     * 虚拟DOM的4大构造器
-     */
-    avalon.mix(avalon, {
-        VText: VText,
-        VComment: VComment,
-        VElement: VElement,
-        VFragment: VFragment
-    });
-
-    var constNameMap = {
-        '#text': 'VText',
-        '#document-fragment': 'VFragment',
-        '#comment': 'VComment'
-    };
-
-    var vdom$1 = avalon.vdomAdaptor = avalon.vdom = function (obj, method) {
-        if (!obj) {
-            //obj在ms-for循环里面可能是null
-            return method === "toHTML" ? '' : createFragment();
-        }
-        if (typeof obj === 'string') {
-            return document.createTextNode(obj);
-        }
-        var nodeName = obj.nodeName;
-        if (!nodeName) {
-            return new avalon.VFragment(obj)[method]();
-        }
-        var constName = constNameMap[nodeName] || 'VElement';
-        return avalon[constName].prototype[method].call(obj);
-    };
-
-    avalon.domize = function (a) {
-        return avalon.vdom(a, 'toDOM');
-    };
-
     /**
     $$skipArray:是系统级通用的不可监听属性
     $skipArray: 是当前对象特有的不可监听属性
@@ -5774,8 +5504,8 @@ IE7的checked属性应该使用defaultChecked来设置
                 var value = el.props[i];
                 if (typeof elem[i] === 'boolean') {
                     elem[i] = !!value;
-                } else if (specalAttrs$1[i]) {
-                    specalAttrs$1[i](elem, value);
+                } else if (specalAttrs[i]) {
+                    specalAttrs[i](elem, value);
                 } else {
                     elem.setAttribute(i, value);
                 }
@@ -5843,7 +5573,7 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     };
 
-    var specalAttrs$1 = {
+    var specalAttrs = {
         "class": function _class(dom, val) {
             dom.className = val;
         },
@@ -5861,6 +5591,10 @@ IE7的checked属性应该使用defaultChecked来设置
             dom.htmlFor = val;
         }
     };
+
+    var svgTags = avalon.oneObject('circle,defs,ellipse,image,line,' + 'path,polygon,polyline,rect,symbol,text,use,g,svg');
+
+    var VMLTags = avalon.oneObject('shape,line,polyline,rect,roundrect,oval,arc,' + 'curve,background,image,shapetype,group,fill,' + 'stroke,shadow, extrusion, textbox, imagedata, textpath');
 
     // // 以后要废掉vdom系列,action
     //a是旧的虚拟DOM, b是新的

@@ -100,3 +100,35 @@ var specalAttrs = {
         dom.htmlFor = val
     }
 }
+
+function createSVG(type) {
+    return document.createElementNS('http://www.w3.org/2000/svg', type)
+}
+var svgTags = avalon.oneObject('circle,defs,ellipse,image,line,' +
+    'path,polygon,polyline,rect,symbol,text,use,g,svg')
+
+var rvml = /^\w+\:\w+/
+    /* istanbul ignore next*/
+function createVML(type) {
+    if (document.styleSheets.length < 31) {
+        document.createStyleSheet().addRule(".rvml", "behavior:url(#default#VML)");
+    } else {
+        // no more room, add to the existing one
+        // http://msdn.microsoft.com/en-us/library/ms531194%28VS.85%29.aspx
+        document.styleSheets[0].addRule(".rvml", "behavior:url(#default#VML)");
+    }
+    var arr = type.split(':')
+    if (arr.length === 1) {
+        arr.unshift('v')
+    }
+    var tag = arr[1]
+    var ns = arr[0]
+    if (!document.namespaces[ns]) {
+        document.namespaces.add(ns, "urn:schemas-microsoft-com:vml")
+    }
+    return document.createElement('<' + ns + ':' + tag + ' class="rvml">');
+}
+
+var VMLTags = avalon.oneObject('shape,line,polyline,rect,roundrect,oval,arc,' +
+    'curve,background,image,shapetype,group,fill,' +
+    'stroke,shadow, extrusion, textbox, imagedata, textpath')

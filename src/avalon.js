@@ -1,4 +1,4 @@
-import {avalon} from './seed/core'
+import { avalon } from './seed/core'
 import './seed/lang.compact'
 
 
@@ -8,7 +8,6 @@ import './dom/compact'
 import './vtree/fromString'
 import './vtree/fromDOM'
 
-import './vdom/compact'
 import './vmodel/compact'
 import './directives/compact'
 

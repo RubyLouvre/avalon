@@ -1,6 +1,5 @@
 import { avalon, createFragment, platform, isObject, ap } from '../seed/core'
 
-import { VFragment } from '../vdom/VFragment'
 
 import { addScope, makeHandle } from '../parser/index'
 
@@ -80,13 +79,13 @@ avalon.directive('for', {
             var args5 = getFlattenNodes(newVal, i)
             newChild.splice.apply(newChild, args5)
         }
-        if (!oldVal.cb && newVal.cb ) {
-            
+        if (!oldVal.cb && newVal.cb) {
+
             var cb = newVal.cb
-            if (cb !== 'undefined' && typeof cb === 'string' ) {
-                    var arr = addScope(cb, 'for')
-                    var body = makeHandle(arr[0])
-                    oldVal.cb = new Function('$event','$$l','var __vmodel__ = this\nreturn ' + body)
+            if (cb !== 'undefined' && typeof cb === 'string') {
+                var arr = addScope(cb, 'for')
+                var body = makeHandle(arr[0])
+                oldVal.cb = new Function('$event', '$$l', 'var __vmodel__ = this\nreturn ' + body)
             }
         }
 
