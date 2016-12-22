@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-21:20:52 version 2.2.3 by 司徒正美
+built in 2016-12-22:11:24 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.2
 fix ms-controller BUG, 上下VM相同时,不会进行合并
 为监听数组添加toJSON方法
@@ -2260,7 +2260,7 @@ IE7的checked属性应该使用defaultChecked来设置
         } else {
             /* istanbul ignore next */
             var cb = function cb(e) {
-                fn.call(elem, new avEvent(event))
+                fn.call(elem, new avEvent(e))
             }
 
             avalon$2._nativeBind(elem, type, cb)
@@ -4641,7 +4641,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
     avalon$2.directive('expr', {
         update: function update(vdom, value) {
-            value = value === null || value === '' ? '\u200B' : value
+            value = value == null || value === '' ? '\u200B' : value
             vdom.nodeValue = value
             //https://github.com/RubyLouvre/avalon/issues/1834
             if (vdom.dom) vdom.dom.data = value

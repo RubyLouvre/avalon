@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-21:20:54 version 2.2.3 by 司徒正美
+built in 2016-12-22:11:25 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -2837,7 +2837,7 @@ IE7的checked属性应该使用defaultChecked来设置
         } else {
             /* istanbul ignore next */
             var cb = function cb(e) {
-                fn.call(elem, new avEvent(event));
+                fn.call(elem, new avEvent(e));
             };
 
             avalon._nativeBind(elem, type, cb);

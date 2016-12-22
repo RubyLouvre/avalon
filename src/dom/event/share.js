@@ -63,7 +63,7 @@ avalon.bind = function(elem, type, fn) {
     } else {
         /* istanbul ignore next */
         function cb(e){
-           fn.call(elem,  new avEvent(event))
+           fn.call(elem,  new avEvent(e))
         }
         avalon._nativeBind(elem, type, cb)
         return cb
