@@ -12,7 +12,7 @@ var rargs = /[$\w_]+/g
 avalon.directive('for', {
     delay: true,
     priority: 3,
-    beforeInit: function() {
+    parse: function() {
         var str = this.expr,
             asName
         str = str.replace(rforAs, function(a, b) {

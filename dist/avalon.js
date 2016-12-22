@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-22:1:23 version 2.2.2 by 司徒正美
+built in 2016-12-22:17:23 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -5544,6 +5544,7 @@ IE7的checked属性应该使用defaultChecked来设置
         this.body = body;
         this.exec = Function('__vmodel__', '$$l', 'var Ʃ = __vmodel__.$render;return ' + body);
     }
+
     Yield.prototype = {
         genChildren: function genChildren(nodes) {
             if (nodes.length) {
@@ -5577,7 +5578,7 @@ IE7的checked属性应该使用defaultChecked来设置
         genComment: function genComment(node) {
             if (node.dynamic) {
                 var dir = node["for"];
-                avalon.directives['for'].beforeInit.call(dir);
+                directives['for'].parse.call(dir);
                 var keys = '\'' + dir.valName + ',' + dir.keyName + ',' + dir.asName + ',' + dir.cb + '\'';
                 return '\u01A9.comment(\'ms-for:' + dir.expr + '\'),\n                    \u01A9.repeat(' + createExpr(dir.expr) + ', ' + keys + ', function($$l){\n                return ' + this.genChildren(dir.nodes) + '\n            })';
             }
@@ -5609,6 +5610,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     var hasIf = createExpr(dirs['ms-if']);
                     removeDir('if', dirs, props);
                 }
+
                 if (!Object.keys(dirs).length) {
                     dirs = null;
                 }
@@ -5629,12 +5631,19 @@ IE7的checked属性应该使用defaultChecked来设置
             var arr = parseAttributes(dirs, node);
             if (arr.length) {
                 node.dirs = arr;
-                // dir.uuid ?  `uuid: ${avalon.quote(dir.uuid)}`: '',
                 return 'dirs:[' + arr.map(function (dir) {
+                    if (dir.type === 'duplex') {
+                        return this.genDuplex(dir, node);
+                    }
                     return toJSONByArray('type: ' + avalon.quote(dir.type), 'name: ' + avalon.quote(dir.name), dir.param ? 'param: ' + avalon.quote(dir.param) : '', 'value:  ' + (dir.type === 'on' ? avalon.quote(dir.expr) : createExpr(dir.expr)));
-                }) + ']';
+                }, this) + ']';
             }
             return '';
+        },
+        genDuplex: function genDuplex(dir, node) {
+            //抽取里面的change, debounce过滤器为isChanged， debounceTime
+            directives.duplex.parse(dir, node);
+            return toJSONByArray(dir.isChecked ? 'isChecked: ' + dir.isChecked : '', dir.isChange ? 'isChange: ' + dir.isChange : '', dir.debounceTime ? 'debounceTime: ' + dir.debounceTime : '', dir.cb ? 'cb: ' + avalon.quote(dir.cb) : '', dir.parsers ? 'parsers: ' + avalon.quote(dir.parsers) : '', 'dtype: ' + avalon.quote(dir.dtype), 'type: ' + avalon.quote(dir.type), 'expr: ' + avalon.quote(dir.expr), 'name: ' + avalon.quote(dir.name), 'value:  ' + createExpr(dir.expr));
         }
     };
 
@@ -5898,7 +5907,7 @@ IE7的checked属性应该使用defaultChecked来设置
             var dirs = this.checkDirs(vdom, attrs);
 
             //处理scope
-            scope = this.checkVm(dirs, attrs, scope);
+            scope = this.checkVm(scope, attrs, dirs);
 
             //处理for
             if (dirs['ms-for']) {
@@ -5906,6 +5915,17 @@ IE7的checked属性应该使用defaultChecked来设置
             }
 
             //处理widget
+            this.checkWidget(vdom, attrs, dirs);
+
+            //处理children
+            var children = vdom.children;
+            var noDelay = !dirs || !delayCompileNodes(dirs);
+            //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
+            if (noDelay && !vdom.vtype && children.length) {
+                this.scanChildren(children, scope, false);
+            }
+        },
+        checkWidget: function checkWidget(vdom, attrs, dirs) {
             if (/^ms\-/.test(vdom.nodeName)) {
                 attrs.is = vdom.nodeName;
             }
@@ -5920,13 +5940,6 @@ IE7的checked属性应该使用defaultChecked来设置
             if (dirs) {
                 vdom.dirs = dirs;
                 vdom.dynamic = true;
-            }
-            //处理children
-            var children = vdom.children;
-            var noDelay = !dirs || !delayCompileNodes(dirs);
-            //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
-            if (noDelay && !vdom.type && children.length) {
-                this.scanChildren(children, scope, false);
             }
         },
         checkDirs: function checkDirs(vdom, attrs) {
@@ -5955,7 +5968,7 @@ IE7的checked属性应该使用defaultChecked来设置
             }
             return hasDir ? dirs : false;
         },
-        checkVm: function checkVm(dirs, attrs, scope) {
+        checkVm: function checkVm(scope, attrs, dirs) {
             var $id = dirs['ms-important'] || dirs['ms-controller'];
             if ($id) {
                 /**
@@ -6183,7 +6196,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
                 console.log('这是数组');
 
-                return avalon.directives['for'].diff(a, b);
+                return directives['for'].diff(a, b);
                 break;
             default:
                 toDOM(a);
@@ -6198,13 +6211,12 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
                 var delay;
                 var isHTML;
-                var directives$$1 = avalon.directives;
                 if (b.dirs) {
                     for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                         var adir = a.dirs[i];
 
                         if (!adir.diff) {
-                            avalon.mix(adir, directives$$1[adir.type]);
+                            avalon.mix(adir, directives[adir.type]);
                         }
                         delay = delay || adir.delay;
                         if (adir.diff && adir.diff(adir.value, bdir.value, a, b)) {
@@ -6235,7 +6247,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
                             if (typeof arr === 'number') {
                                 //  console.log('数组扁平化', arr)
-                                avalon.directives["for"].update(c, d, achild, bchild, _i5, parentNode);
+                                directives['for'].update(c, d, achild, bchild, _i5, parentNode);
 
                                 c = achild[_i5];
                                 d = bchild[_i5];
@@ -6412,7 +6424,22 @@ IE7的checked属性应该使用defaultChecked来设置
     });
 
     avalon.directive('on', {
+        parse: function parse(value) {
+            var arr = addScope(value);
+            var body = arr[0],
+                filters = arr[1];
+            body = makeHandle(body);
 
+            if (filters) {
+                filters = filters.replace(/__value__/g, '$event');
+                filters += '\nif($event.$return){\n\treturn;\n}';
+            }
+            var ret = ['try{', '\tvar __vmodel__ = this;', '\t' + filters, '\treturn ' + body, '}catch(e){avalon.log(e, "in on dir")}'].filter(function (el) {
+                return (/\S/.test(el)
+                );
+            });
+            return new Function('$event', '$$l', ret.join('\n'));
+        },
         diff: function diff(oldVal, newVal, a, b) {
             if (oldVal !== newVal || a === b) {
                 this.value = newVal + '';
@@ -6421,26 +6448,12 @@ IE7的checked属性应该使用defaultChecked来设置
         },
         update: function update(value, vdom, _) {
 
-            var underline = this.name.replace(/^(\:|ms\-)/, 'e').replace('-', '_');
-            var uuid = underline + '_' + value.replace(/\s/g, '').replace(/[^$a-z]/ig, function (e) {
+            var uuid = (this.name + '_' + value).replace(/^(\:|ms\-)/, 'e').replace('-', '_').replace(/\s/g, '').replace(/[^$a-z]/ig, function (e) {
                 return e.charCodeAt(0);
             });
             var fn = avalon.eventListeners[uuid];
             if (!fn) {
-                var arr = addScope(value);
-                var body = arr[0],
-                    filters = arr[1];
-                body = makeHandle(body);
-
-                if (filters) {
-                    filters = filters.replace(/__value__/g, '$event');
-                    filters += '\nif($event.$return){\n\treturn;\n}';
-                }
-                var ret = ['try{', '\tvar __vmodel__ = this;', '\t' + filters, '\treturn ' + body, '}catch(e){avalon.log(e, "in on dir")}'].filter(function (el) {
-                    return (/\S/.test(el)
-                    );
-                });
-                fn = new Function('$event', '$$l', ret.join('\n'));
+                fn = this.parse(value);
                 fn.uuid = uuid;
                 avalon.eventListeners[uuid] = fn;
             }
@@ -6465,7 +6478,7 @@ IE7的checked属性应该使用defaultChecked来设置
     avalon.directive('for', {
         delay: true,
         priority: 3,
-        beforeInit: function beforeInit() {
+        parse: function parse() {
             var str = this.expr,
                 asName;
             str = str.replace(rforAs, function (a, b) {
@@ -6824,214 +6837,6 @@ IE7的checked属性应该使用defaultChecked来设置
         return arr.join('');
     }
 
-    var rchangeFilter = /\|\s*change\b/;
-    var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/;
-    function duplexBeforeInit() {
-        var expr = this.expr;
-        if (rchangeFilter.test(expr)) {
-            this.isChanged = true;
-            expr = expr.replace(rchangeFilter, '');
-        }
-        var match = expr.match(rdebounceFilter);
-        if (match) {
-            expr = expr.replace(rdebounceFilter, '');
-            if (!this.isChanged) {
-                this.debounceTime = parseInt(match[1], 10) || 300;
-            }
-        }
-        this.expr = expr;
-    }
-    function duplexInit() {
-        var expr = this.expr;
-        var node = this.node;
-        var etype = node.props.type;
-        this.parseValue = parseValue;
-        //处理数据转换器
-        var parsers = this.param,
-            dtype;
-        var isChecked = false;
-        parsers = parsers ? parsers.split('-').map(function (a) {
-            if (a === 'checked') {
-                isChecked = true;
-            }
-            return a;
-        }) : [];
-        node.duplex = this;
-        if (rcheckedType.test(etype) && isChecked) {
-            //如果是radio, checkbox,判定用户使用了checked格式函数没有
-            parsers = [];
-            dtype = 'radio';
-            this.isChecked = isChecked;
-        }
-        this.parsers = parsers;
-        if (!/input|textarea|select/.test(node.nodeName)) {
-            if ('contenteditable' in node.props) {
-                dtype = 'contenteditable';
-            }
-        } else if (!dtype) {
-            dtype = node.nodeName === 'select' ? 'select' : etype === 'checkbox' ? 'checkbox' : etype === 'radio' ? 'radio' : 'input';
-        }
-        this.dtype = dtype;
-        var isChanged = false,
-            debounceTime = 0;
-        //判定是否使用了 change debounce 过滤器
-        // this.isChecked = /boolean/.test(parsers)
-        if (dtype !== 'input' && dtype !== 'contenteditable') {
-            delete this.isChange;
-            delete this.debounceTime;
-        } else if (!this.isChecked) {
-            this.isString = true;
-        }
-
-        var cb = node.props['data-duplex-changed'];
-        if (cb) {
-            var arr = addScope(cb, 'xx');
-            var body = makeHandle(arr[0]);
-            this.userCb = new Function('$event', 'var __vmodel__ = this\nreturn ' + body);
-        }
-    }
-    function duplexDiff(newVal, oldVal) {
-        if (Array.isArray(newVal)) {
-            if (newVal + '' !== this.compareVal) {
-                this.compareVal = newVal + '';
-                return true;
-            }
-        } else {
-            newVal = this.parseValue(newVal);
-            if (!this.isChecked) {
-                this.value = newVal += '';
-            }
-            if (newVal !== this.compareVal) {
-                this.compareVal = newVal;
-                return true;
-            }
-        }
-    }
-
-    function duplexValidate(node, vdom) {
-        //将当前虚拟DOM的duplex添加到它上面的表单元素的validate指令的fields数组中
-        var field = vdom.duplex;
-        var rules = vdom.rules;
-
-        if (rules && !field.validator) {
-            while (node && node.nodeType === 1) {
-                var validator = node._ms_validate_;
-                if (validator) {
-                    field.rules = rules;
-                    field.validator = validator;
-
-                    if (avalon.Array.ensure(validator.fields, field)) {
-                        validator.addField(field);
-                    }
-                    break;
-                }
-                node = node.parentNode;
-            }
-        }
-    }
-
-    var valueHijack = true;
-    try {
-        //#272 IE9-IE11, firefox
-        var setters = {};
-        var aproto = HTMLInputElement.prototype;
-        var bproto = HTMLTextAreaElement.prototype;
-        var newSetter = function newSetter(value) {
-            // jshint ignore:line
-            setters[this.tagName].call(this, value);
-            var data = this._ms_duplex_;
-            if (!this.caret && data && data.isString) {
-                data.duplexCb.call(this, { type: 'setter' });
-            }
-        };
-        var inputProto = HTMLInputElement.prototype;
-        Object.getOwnPropertyNames(inputProto); //故意引发IE6-8等浏览器报错
-        setters['INPUT'] = Object.getOwnPropertyDescriptor(aproto, 'value').set;
-
-        Object.defineProperty(aproto, 'value', {
-            set: newSetter
-        });
-        setters['TEXTAREA'] = Object.getOwnPropertyDescriptor(bproto, 'value').set;
-        Object.defineProperty(bproto, 'value', {
-            set: newSetter
-        });
-        valueHijack = false;
-    } catch (e) {
-        //在chrome 43中 ms-duplex终于不需要使用定时器实现双向绑定了
-        // http://updates.html5rocks.com/2015/04/DOM-attributes-now-on-the-prototype
-        // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
-    }
-
-    function parseValue(val) {
-        for (var i = 0, k; k = this.parsers[i++];) {
-            var fn = avalon.parsers[k];
-            if (fn) {
-                val = fn.call(this, val);
-            }
-        }
-        return val;
-    }
-
-    var updateView = {
-        input: function input() {
-            //处理单个value值处理
-            this.node.props.value = this.value + '';
-            this.dom.value = this.value;
-        },
-        updateChecked: function updateChecked(vdom, checked) {
-            if (vdom.dom) {
-                vdom.dom.defaultChecked = vdom.dom.checked = checked;
-            }
-        },
-        radio: function radio() {
-            //处理单个checked属性
-            var node = this.node;
-            var nodeValue = node.props.value;
-            var checked;
-            if (this.isChecked) {
-                checked = !!this.value;
-            } else {
-                checked = this.value + '' === nodeValue;
-            }
-            node.props.checked = checked;
-            updateView.updateChecked(node, checked);
-        },
-        checkbox: function checkbox() {
-            //处理多个checked属性
-            var node = this.node;
-            var props = node.props;
-            var value = props.value + '';
-            var values = [].concat(this.value);
-            var checked = values.some(function (el) {
-                return el + '' === value;
-            });
-
-            props.defaultChecked = props.checked = checked;
-            updateView.updateChecked(node, checked);
-        },
-        select: function select() {
-            //处理子级的selected属性
-            var a = Array.isArray(this.value) ? this.value.map(String) : this.value + '';
-            lookupOption(this.node, a);
-        },
-        contenteditable: function contenteditable() {
-            //处理单个innerHTML 
-
-            var vnodes = fromString(this.value);
-            var fragment = createFragment();
-            for (var i = 0, el; el = vnodes[i++];) {
-                var child = avalon.vdom(el, 'toDOM');
-                fragment.appendChild(child);
-            }
-            avalon.clearHTML(this.dom).appendChild(fragment);
-            var list = this.node.children;
-            list.length = 0;
-            Array.prototype.push.apply(list, vnodes);
-
-            this.duplexCb.call(this.dom);
-        }
-    };
-
     var updateDataActions = {
         input: function input(prop) {
             //处理单个value值处理
@@ -7102,7 +6907,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
     function duplexCb(field) {
         if (field.userCb) {
-            field.userCb.call(field.vm, {
+            field.userCb.call(field.vdom.vm, {
                 type: 'changed',
                 target: field.dom
             });
@@ -7144,6 +6949,246 @@ IE7的checked属性应该使用defaultChecked来设置
             updateDataActions[field.dtype].call(field);
         }
     }
+
+    var rchangeFilter = /\|\s*change\b/;
+    var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/;
+    function duplexParse(dir, node) {
+        /**
+         * dtype: String,
+         * isChange: Boolean | Undefined,
+         * isChecked: Boolean | Undefined,
+         * expr: String,
+         * debounceTime: Number,
+         * expr: String,
+         * parsers: String,
+         * name: String,
+         * cb: String | Undefined
+         */
+
+        //抽取里面的change, debounce过滤器为isChanged， debounceTime
+        var expr = dir.expr,
+            dtype;
+        if (rchangeFilter.test(expr)) {
+            dir.isChanged = true;
+            expr = expr.replace(rchangeFilter, '');
+        }
+        var match = expr.match(rdebounceFilter);
+        if (match) {
+            expr = expr.replace(rdebounceFilter, '');
+            if (!dir.isChanged) {
+                dir.debounceTime = parseInt(match[1], 10) || 300;
+            }
+        }
+        dir.expr = expr;
+
+        //处理数据转换器
+        var etype = node.props.type;
+        var parsers = dir.param || '';
+        delete dir.param;
+        var isChecked = /checked/.test(parsers);
+
+        // node.duplex = this
+        if (rcheckedType.test(etype) && isChecked) {
+            //如果是radio, checkbox,并使用了ms-duplex-checked，那么禁用其他parsers
+            parsers = '';
+            dtype = 'radio';
+            dir.isChecked = isChecked;
+        }
+        dir.parsers = parsers;
+
+        //处理dtype
+
+        if (!/input|textarea|select/.test(node.nodeName)) {
+            if ('contenteditable' in node.props) {
+                dtype = 'contenteditable';
+            }
+        } else if (!dtype) {
+            dtype = node.nodeName === 'select' ? 'select' : etype === 'checkbox' ? 'checkbox' : etype === 'radio' ? 'radio' : 'input';
+        }
+        dir.dtype = dtype;
+
+        //判定是否使用了 change debounce 过滤器
+        // 如果不是dtype不是input,contenteditable，那不能使用isChange, debounceTime
+        if (dtype !== 'input' && dtype !== 'contenteditable') {
+            delete dir.isChange;
+            delete dir.debounceTime;
+        }
+        //处理回调
+        var cbName = 'data-duplex-changed';
+        var cb = node.props[cbName];
+        if (node.dom) {
+            node.dom.removeAttribute(cbName);
+        }
+        dir.cb = cb;
+    }
+
+    function duplexDiff(oldVal, newVal) {
+        if (Array.isArray(newVal)) {
+            if (newVal + '' !== this.compareVal) {
+                this.compareVal = newVal + '';
+                return true;
+            }
+        } else {
+            this.parseValue = parseValue;
+            newVal = this.parseValue(newVal);
+            if (!this.isChecked) {
+                this.value = newVal += '';
+            }
+            if (newVal !== this.compareVal) {
+                this.compareVal = newVal;
+                return true;
+            }
+        }
+    }
+    function duplexInit(vdom, updateDataEvents) {
+        var dom = vdom.dom;
+        this.vdom = vdom;
+        this.dom = dom;
+
+        //添加userCb
+        if (this.cb) {
+            var arr = addScope(this.cb, 'xx');
+            var body = makeHandle(arr[0]);
+            this.userCb = new Function('$event', 'var __vmodel__ = this\nreturn ' + body);
+        }
+        var setter = createSetter(this.expr, 'duplex');
+        this.setValue = function (value) {
+            setter(vdom.vm, value);
+        };
+        //添加duplexCb
+        this.duplexCb = updateDataHandle;
+
+        dom._ms_duplex_ = this;
+        //绑定事件
+        updateDataEvents(dom, this);
+        //添加验证
+        duplexValidate(dom, vdom);
+    }
+
+    function duplexValidate(dom, vdom) {
+        //将当前虚拟DOM的duplex添加到它上面的表单元素的validate指令的fields数组中
+        var field = vdom.duplex;
+        var rules = vdom.rules;
+
+        if (rules && !field.validator) {
+            while (dom && dom.nodeType === 1) {
+                var validator = dom._ms_validate_;
+                if (validator) {
+                    field.rules = rules;
+                    field.validator = validator;
+
+                    if (avalon.Array.ensure(validator.fields, field)) {
+                        validator.addField(field);
+                    }
+                    break;
+                }
+                dom = dom.parentNode;
+            }
+        }
+    }
+
+    var valueHijack = true;
+    try {
+        //#272 IE9-IE11, firefox
+        var setters = {};
+        var aproto = HTMLInputElement.prototype;
+        var bproto = HTMLTextAreaElement.prototype;
+        var newSetter = function newSetter(value) {
+            // jshint ignore:line
+            setters[this.tagName].call(this, value);
+            var data = this._ms_duplex_;
+            if (!this.caret && data && data.dtype === 'input') {
+                data.duplexCb.call(this, { type: 'setter' });
+            }
+        };
+        var inputProto = HTMLInputElement.prototype;
+        Object.getOwnPropertyNames(inputProto); //故意引发IE6-8等浏览器报错
+        setters['INPUT'] = Object.getOwnPropertyDescriptor(aproto, 'value').set;
+
+        Object.defineProperty(aproto, 'value', {
+            set: newSetter
+        });
+        setters['TEXTAREA'] = Object.getOwnPropertyDescriptor(bproto, 'value').set;
+        Object.defineProperty(bproto, 'value', {
+            set: newSetter
+        });
+        valueHijack = false;
+    } catch (e) {
+        //在chrome 43中 ms-duplex终于不需要使用定时器实现双向绑定了
+        // http://updates.html5rocks.com/2015/04/DOM-attributes-now-on-the-prototype
+        // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
+    }
+
+    function parseValue(val) {
+        if (!this.parsers) return val;
+        this.parsers.replace(/\w+/g, function (k) {
+            var fn = avalon.parsers[k];
+            if (fn) {
+                val = fn.call(this, val);
+            }
+        });
+        return val;
+    }
+
+    var updateView = {
+        input: function input() {
+            //处理单个value值处理
+            this.vdom.props.value = this.value + '';
+            this.dom.value = this.value;
+        },
+        updateChecked: function updateChecked(vdom, checked) {
+            if (vdom.dom) {
+                vdom.dom.defaultChecked = vdom.dom.checked = checked;
+            }
+        },
+        radio: function radio() {
+            //处理单个checked属性
+            var node = this.vdom;
+            var nodeValue = node.props.value;
+            var checked;
+            if (this.isChecked) {
+                checked = !!this.value;
+            } else {
+                checked = this.value + '' === nodeValue;
+            }
+            node.props.checked = checked;
+            updateView.updateChecked(node, checked);
+        },
+        checkbox: function checkbox() {
+            //处理多个checked属性
+            var node = this.vdom;
+            var props = node.props;
+            var value = props.value + '';
+            var values = [].concat(this.value);
+            var checked = values.some(function (el) {
+                return el + '' === value;
+            });
+
+            props.defaultChecked = props.checked = checked;
+            updateView.updateChecked(node, checked);
+        },
+        select: function select() {
+            //处理子级的selected属性
+            var a = Array.isArray(this.value) ? this.value.map(String) : this.value + '';
+            lookupOption(this.vdom, a);
+        },
+        contenteditable: function contenteditable() {
+            //处理单个innerHTML 
+
+            var vnodes = fromString(this.value);
+            var fragment = createFragment();
+            for (var i = 0, el; el = vnodes[i++];) {
+                var child = avalon.vdom(el, 'toDOM');
+                fragment.appendChild(child);
+            }
+            avalon.clearHTML(this.dom).appendChild(fragment);
+            var list = this.vdom.children;
+            list.length = 0;
+            Array.prototype.push.apply(list, vnodes);
+
+            this.duplexCb.call(this.dom);
+        }
+    };
 
     /* 
      * 通过绑定事件同步vmodel
@@ -7348,25 +7393,18 @@ IE7的checked属性应该使用defaultChecked来设置
 
     avalon.directive('duplex', {
         priority: 9999999,
-        beforeInit: duplexBeforeInit,
-        init: duplexInit,
+        parse: duplexParse,
         diff: duplexDiff,
-        update: function update(value, vdom) {
-            var dom = vdom.dom;
+        update: function update(value, vdom, newVdom) {
+            vdom.vm = newVdom.vm;
             if (!this.dom) {
-                this.dom = dom;
-                this.duplexCb = updateDataHandle;
-                dom._ms_duplex_ = this;
-                //绑定事件
-                updateDataEvents(dom, this);
-                //添加验证
-                duplexValidate(dom, vdom);
+                duplexInit.call(this, vdom, updateDataEvents);
             }
             //如果不支持input.value的Object.defineProperty的属性支持,
             //需要通过轮询同步, chrome 42及以下版本需要这个hack
             pollValue.call(this, avalon.msie, valueHijack);
-            //更新视图
 
+            //更新视图
             updateView[this.dtype].call(this);
         }
     });
@@ -7374,7 +7412,7 @@ IE7的checked属性应该使用defaultChecked来设置
     function pollValue(isIE, valueHijack$$1) {
         var dom = this.dom;
         if (this.isString && valueHijack$$1 && !isIE && !dom.valueHijack) {
-            dom.valueHijack = updateDataHandle;
+            dom.valueHijack = updateModel;
             var intervalID = setInterval(function () {
                 if (!avalon.contains(avalon.root, dom)) {
                     clearInterval(intervalID);
@@ -7406,7 +7444,7 @@ IE7的checked属性应该使用defaultChecked来设置
     avalon.directive('rules', {
         diff: function diff(old, rules) {
             if (isObject(rules)) {
-                var vdom = this.node;
+                var vdom = this.vdom;
                 vdom.rules = platform.toJson(rules);
                 if (vdom.duplex) {
                     vdom.duplex.rules = vdom.rules;
@@ -7558,8 +7596,8 @@ IE7的checked属性应该使用defaultChecked来设置
     });
 
     var valiDir = avalon.directive('validate', {
-        diff: function diff(odl, validator) {
-            var vdom = this.node;
+        diff: function diff(old, validator) {
+            var vdom = this.vdom;
             if (vdom.validator) {
                 return;
             }

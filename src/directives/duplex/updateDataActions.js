@@ -1,7 +1,7 @@
 import { avalon } from '../../seed/core'
 
 export var updateDataActions = {
-    input: function (prop) {//处理单个value值处理
+    input: function(prop) { //处理单个value值处理
         var field = this
         prop = prop || 'value'
         var dom = field.dom
@@ -13,14 +13,14 @@ export var updateDataActions = {
         field.setValue(parsedValue)
         duplexCb(field)
         var pos = field.pos
-          /* istanbul ignore if */
+            /* istanbul ignore if */
         if (dom.caret) {
             field.setCaret(dom, pos)
         }
         //vm.aaa = '1234567890'
         //处理 <input ms-duplex='@aaa|limitBy(8)'/>{{@aaa}} 这种格式化同步不一致的情况 
     },
-    radio: function () {
+    radio: function() {
         var field = this
         if (field.isChecked) {
             var val = !field.value
@@ -31,7 +31,7 @@ export var updateDataActions = {
             field.value = NaN
         }
     },
-    checkbox: function () {
+    checkbox: function() {
         var field = this
         var array = field.value
         if (!Array.isArray(array)) {
@@ -47,12 +47,12 @@ export var updateDataActions = {
         this.__test__ = array
 
     },
-    select: function () {
+    select: function() {
         var field = this
         var val = avalon(field.dom).val() //字符串或字符串数组
         if (val + '' !== this.value + '') {
             if (Array.isArray(val)) { //转换布尔数组或其他
-                val = val.map(function (v) {
+                val = val.map(function(v) {
                     return field.parseValue(v)
                 })
             } else {
@@ -62,14 +62,14 @@ export var updateDataActions = {
             duplexCb(field)
         }
     },
-    contenteditable: function () {
+    contenteditable: function() {
         updateDataActions.input.call(this, 'innerHTML')
     }
 }
 
 function duplexCb(field) {
     if (field.userCb) {
-        field.userCb.call(field.vm, {
+        field.userCb.call(field.vdom.vm, {
             type: 'changed',
             target: field.dom
         })

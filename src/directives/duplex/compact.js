@@ -1,30 +1,22 @@
 import { avalon } from '../../seed/core'
-import { duplexBeforeInit, duplexInit, duplexDiff, duplexValidate, valueHijack, updateView } from './share'
-import { updateModel } from './updateDataHandle'
+import { duplexParse, duplexDiff, duplexInit, valueHijack, updateView } from './share'
 import { updateDataEvents } from './updateDataEvents.compact'
 
 
 avalon.directive('duplex', {
     priority: 9999999,
-    beforeInit: duplexBeforeInit,
-    init: duplexInit,
+    parse: duplexParse,
     diff: duplexDiff,
-    update: function(value, vdom) {
-        var dom = vdom.dom
+    update: function(value, vdom, newVdom) {
+        vdom.vm = newVdom.vm
         if (!this.dom) {
-            this.dom = dom
-            this.duplexCb = updateModel
-            dom._ms_duplex_ = this
-                //绑定事件
-            updateDataEvents(dom, this)
-                //添加验证
-            duplexValidate(dom, vdom)
+            duplexInit.call(this, vdom, updateDataEvents)
         }
         //如果不支持input.value的Object.defineProperty的属性支持,
         //需要通过轮询同步, chrome 42及以下版本需要这个hack
         pollValue.call(this, avalon.msie, valueHijack)
-            //更新视图
 
+        //更新视图
         updateView[this.dtype].call(this)
 
     }

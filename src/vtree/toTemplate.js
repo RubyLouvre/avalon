@@ -1,7 +1,7 @@
 import { parseAttributes } from '../parser/attributes'
 import { parseInterpolate } from '../parser/interpolate'
 import { keyMap, createExpr } from '../parser/index'
-import { avalon, config } from '../seed/core'
+import { avalon, config, directives } from '../seed/core'
 
 
 export function Yield(nodes, render) {
@@ -10,6 +10,8 @@ export function Yield(nodes, render) {
     this.body = body
     this.exec = Function('__vmodel__', '$$l', 'var Ʃ = __vmodel__.$render;return ' + body)
 }
+
+
 Yield.prototype = {
     genChildren(nodes) {
         if (nodes.length) {
@@ -44,7 +46,7 @@ Yield.prototype = {
     genComment(node) {
         if (node.dynamic) {
             var dir = node.for
-            avalon.directives['for'].beforeInit.call(dir)
+            directives['for'].parse.call(dir)
             var keys = `'${dir.valName},${dir.keyName},${dir.asName},${dir.cb}'`
             return `Ʃ.comment('ms-for:${dir.expr}'),
                     Ʃ.repeat(${ createExpr(dir.expr) }, ${keys}, function($$l){
@@ -82,6 +84,7 @@ Yield.prototype = {
                 var hasIf = createExpr(dirs['ms-if'])
                 removeDir('if', dirs, props)
             }
+
             if (!Object.keys(dirs).length) {
                 dirs = null
             }
@@ -116,8 +119,10 @@ Yield.prototype = {
         var arr = parseAttributes(dirs, node)
         if (arr.length) {
             node.dirs = arr
-                // dir.uuid ?  `uuid: ${avalon.quote(dir.uuid)}`: '',
             return 'dirs:[' + arr.map(function(dir) {
+                if (dir.type === 'duplex') {
+                    return this.genDuplex(dir, node)
+                }
                 return toJSONByArray(
                     `type: ${avalon.quote(dir.type)}`,
                     `name: ${avalon.quote(dir.name)}`,
@@ -125,9 +130,25 @@ Yield.prototype = {
                     dir.param ? `param: ${avalon.quote(dir.param)}` : '',
                     `value:  ${  dir.type ==='on' ? avalon.quote(dir.expr) :createExpr(dir.expr)}`
                 )
-            }) + ']'
+            }, this) + ']'
         }
         return ''
+    },
+    genDuplex(dir, node) {
+        //抽取里面的change, debounce过滤器为isChanged， debounceTime
+        directives.duplex.parse(dir, node)
+        return toJSONByArray(
+            dir.isChecked ? `isChecked: ${dir.isChecked}` : '',
+            dir.isChange ? `isChange: ${dir.isChange}` : '',
+            dir.debounceTime ? `debounceTime: ${dir.debounceTime}` : '',
+            dir.cb ? `cb: ${avalon.quote(dir.cb)}` : '',
+            dir.parsers ? `parsers: ${avalon.quote(dir.parsers)}` : '',
+            `dtype: ${avalon.quote(dir.dtype)}`,
+            `type: ${avalon.quote(dir.type)}`,
+            `expr: ${avalon.quote(dir.expr)}`,
+            `name: ${avalon.quote(dir.name)}`,
+            `value:  ${ createExpr(dir.expr) }`
+        )
     }
 
 }

@@ -1,7 +1,7 @@
 import { avalon, isObject, platform } from '../seed/core'
 var valiDir = avalon.directive('validate', {
-    diff: function(odl, validator) {
-        var vdom = this.node
+    diff: function(old, validator) {
+        var vdom = this.vdom
         if (vdom.validator) {
             return
         }

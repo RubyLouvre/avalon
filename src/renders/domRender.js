@@ -506,7 +506,7 @@ function diff(a, b) {
 
                         if (typeof arr === 'number') {
                             //  console.log('数组扁平化', arr)
-                            directives.for.update(c, d, achild, bchild, i, parentNode)
+                            directives['for'].update(c, d, achild, bchild, i, parentNode)
 
                             c = achild[i]
                             d = bchild[i]
