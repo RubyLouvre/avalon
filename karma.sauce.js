@@ -146,11 +146,11 @@ module.exports = function(config) {
             base: 'SauceLabs',
             browserName: 'iphone'
         },
-        /*   sl_android_4_4: {
+        sl_android_4_4: {
             base: "SauceLabs",
             browserName: "android",
             version: "4.4"
-        },*/
+        },
 
         IE7: {
             base: 'SauceLabs',
