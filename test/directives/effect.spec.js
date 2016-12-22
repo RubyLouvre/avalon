@@ -110,7 +110,8 @@ describe('effect', function() {
             document.body.appendChild(el2)
             if (avalon.modern) {
                 expect(getAnimationTime(el)).toBe(2000)
-                expect(getAnimationTime(el2)).toBe(300)
+                //安卓4.1会返回浮点数 300.00001192092896 
+                expect(~~getAnimationTime(el2).toFixed(0)).toBe(300)
                 document.body.removeChild(el)
                 document.body.removeChild(el2)
             }

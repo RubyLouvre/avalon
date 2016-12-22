@@ -123,7 +123,7 @@ module.exports = function(config) {
             platform: 'OS X 10.10'
         },
         // iOS (last 2 major versions)
-*/
+
         sl_ios_9: {
             base: 'SauceLabs',
             browserName: 'Safari',
@@ -152,7 +152,7 @@ module.exports = function(config) {
             version: '7',
             platform: 'Windows XP'
         },
-        
+        */
         android_4_4: {
             base: "SauceLabs",
             browserName: "android",

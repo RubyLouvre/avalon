@@ -239,8 +239,8 @@ describe('duplex', function () {
         })
         avalon.scan(div, vm)
         setTimeout(function () {
-
-            var options = div.getElementsByTagName('option')
+            var element = div.getElementsByTagName('select')[0]
+            var options = element.options
             var ps = div.getElementsByTagName('p')
             expect(options[0].selected).toBe(true)
             expect(options[1].selected).toBe(false)
@@ -250,7 +250,10 @@ describe('duplex', function () {
             options[1].selected = true
             options[2].selected = true
             options[3].selected = false
-            var element = div.getElementsByTagName('select')[0]
+            
+            var fixAndroid442 = options[1].selected
+            var fixAndroid443 = options[2].selected
+            
             var update = element._ms_duplex_.duplexCb
             update.call(element,{
                 type: 'change'
