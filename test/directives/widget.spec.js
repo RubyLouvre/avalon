@@ -992,7 +992,7 @@ describe('widget', function() {
         })
         div.innerHTML = heredoc(function() {
             /*
-            <div ms-controller="widget16" ><ms-select :widget="{num: @aaa}" /></div>
+            <div ms-controller="widget16" ><wbr is="ms-select" :widget="{num: @aaa}" /></div>
             */
         })
         vm = avalon.define({
@@ -1086,56 +1086,56 @@ describe('widget', function() {
     })
 
     it('处理数组', function(done) {
-        avalon.component("ms-pager2", {
-            template: heredoc(function() {
-                /*
-                 <div class="pagination">
-                 <ul>
-                 <li :for="el in @pages" 
-                 :class="[ el == @currentPage && 'active' ]">
-                 <a href="javascript:void(0)" :click="@gotoPage(el, $event)">{{el}}</a>
-                 </li>
-                 </ul>
-                 </div>
-                 */
-            }),
-            defaults: {
-                totalPage: 25,
-                currentPage: 1,
-                showPage: 5,
-                pages: [1, 2, 3, 4, 5],
-                gotoPage: function(page, e) {
-                    this.currentPage = page;
-                    this.pages = this.getPages();
-                },
-                getPages: function() {
-                    var pages = [];
-                    var s = this.showPage,
-                        l = this.currentPage,
-                        r = this.currentPage,
-                        c = this.totalPage;
-                    pages.push(l);
-                    while (true) {
-                        if (pages.length >= s) {
-                            break;
+            avalon.component("ms-pager2", {
+                template: heredoc(function() {
+                    /*
+                     <div class="pagination">
+                     <ul>
+                     <li :for="el in @pages" 
+                     :class="[ el == @currentPage && 'active' ]">
+                     <a href="javascript:void(0)" :click="@gotoPage(el, $event)">{{el}}</a>
+                     </li>
+                     </ul>
+                     </div>
+                     */
+                }),
+                defaults: {
+                    totalPage: 25,
+                    currentPage: 1,
+                    showPage: 5,
+                    pages: [1, 2, 3, 4, 5],
+                    gotoPage: function(page, e) {
+                        this.currentPage = page;
+                        this.pages = this.getPages();
+                    },
+                    getPages: function() {
+                        var pages = [];
+                        var s = this.showPage,
+                            l = this.currentPage,
+                            r = this.currentPage,
+                            c = this.totalPage;
+                        pages.push(l);
+                        while (true) {
+                            if (pages.length >= s) {
+                                break;
+                            }
+                            if (l > 1) {
+                                pages.unshift(--l);
+                            }
+                            if (pages.length >= s) {
+                                break;
+                            }
+                            if (r < c) {
+                                pages.push(++r);
+                            }
                         }
-                        if (l > 1) {
-                            pages.unshift(--l);
-                        }
-                        if (pages.length >= s) {
-                            break;
-                        }
-                        if (r < c) {
-                            pages.push(++r);
-                        }
-                    }
 
-                    return pages;
+                        return pages;
+                    }
                 }
-            }
-        });
-        div.innerHTML = heredoc(function() {
-            /*
+            });
+            div.innerHTML = heredoc(function() {
+                /*
              <div ms-controller="widget19">
              <wbr is="ms-pager2" />
             <style>
@@ -1165,35 +1165,35 @@ describe('widget', function() {
             </style>
              </div>
              */
-        })
-        vm = avalon.define({
-            $id: 'widget19'
-        })
-        avalon.scan(div)
-        setTimeout(function() {
-            var ul = div.getElementsByTagName('ul')[0]
-            expect(ul[textProp]).toBe('12345')
-            var lis = ul.getElementsByTagName('a')
-            fireClick(lis[3])
+            })
+            vm = avalon.define({
+                $id: 'widget19'
+            })
+            avalon.scan(div)
             setTimeout(function() {
-                expect(ul[textProp]).toBe('23456')
+                var ul = div.getElementsByTagName('ul')[0]
+                expect(ul[textProp]).toBe('12345')
+                var lis = ul.getElementsByTagName('a')
                 fireClick(lis[3])
                 setTimeout(function() {
-                    expect(ul[textProp]).toBe('34567')
-                    fireClick(lis[0])
+                    expect(ul[textProp]).toBe('23456')
+                    fireClick(lis[3])
                     setTimeout(function() {
-                        expect(ul[textProp]).toBe('12345')
-                        delete avalon.components['ms-pager2']
-                        done()
+                        expect(ul[textProp]).toBe('34567')
+                        fireClick(lis[0])
+                        setTimeout(function() {
+                            expect(ul[textProp]).toBe('12345')
+                            delete avalon.components['ms-pager2']
+                            done()
+                        }, 120)
                     }, 120)
                 }, 120)
-            }, 120)
-        }, 100)
-    })
-    //有空加上这个测试 https://github.com/RubyLouvre/avalon/issues/1862
-  it("修正selected同步BUG", function(done){
-      div.innerHTML = heredoc(function(){
-          /*
+            }, 100)
+        })
+        //有空加上这个测试 https://github.com/RubyLouvre/avalon/issues/1862
+    it("修正selected同步BUG", function(done) {
+        div.innerHTML = heredoc(function() {
+            /*
     <div ms-controller="widget20">
         <div class="panel panel-default ms-controller" >
             <xmp ms-widget="{is:'ms-pager3'}"></xmp>
@@ -1201,9 +1201,9 @@ describe('widget', function() {
 
     </div>
           */
-      })
-      avalon.component('ms-pager3', {
-            template: heredoc(function(){
+        })
+        avalon.component('ms-pager3', {
+            template: heredoc(function() {
                 /*
                 <select ms-duplex="@countPerPage">
                 <option role="option" value="5">5</option>     
@@ -1215,33 +1215,33 @@ describe('widget', function() {
                 countPerPage: 10
             }
         });
-         vm = avalon.define({
+        vm = avalon.define({
             $id: 'widget20'
         })
         avalon.scan(div, vm)
-        setTimeout(function(){
-           var op = div.getElementsByTagName('option')
-           expect(op[1].selected).toBe(true)
-           delete avalon.components['ms-pager3']
-           done()
+        setTimeout(function() {
+            var op = div.getElementsByTagName('option')
+            expect(op[1].selected).toBe(true)
+            delete avalon.components['ms-pager3']
+            done()
         })
-   })
-    it("组件继承功能", function(done){
-         var aaa = avalon.component('aaa', {
+    })
+    it("组件继承功能", function(done) {
+        var aaa = avalon.component('aaa', {
             defaults: {
-                aaa:11,
-                bbb:22
+                aaa: 11,
+                bbb: 22
             },
             template: '<strong>{{@aaa}}</strong>'
         })
         var bbb = aaa.extend({
-            displayName:'bbb',
+            displayName: 'bbb',
             template: '<em><strong>{{@aaa}}</strong></em>'
         })
         var ccc = aaa.extend({
-            displayName:'ccc'
+            displayName: 'ccc'
         })
-        div.innerHTML = heredoc(function(){
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller='widget21'>
              <wbr is='aaa' /><wbr is='bbb' /><wbr is='ccc' />
@@ -1252,15 +1252,15 @@ describe('widget', function() {
             $id: 'widget21'
         })
         avalon.scan(div, vm)
-        setTimeout(function(){
+        setTimeout(function() {
             expect(div.getElementsByTagName('strong').length).toBe(3)
             expect(div.getElementsByTagName('em').length).toBe(1)
             delete avalon.components.aaa
             delete avalon.components.bbb
             delete avalon.components.ccc
             done()
-        },100)
-        
-        
+        }, 100)
+
+
     })
 })
