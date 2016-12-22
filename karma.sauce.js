@@ -153,16 +153,19 @@ module.exports = function(config) {
             platform: 'Windows XP'
         },
         */
-        sl_android_4_4: {
+        android_4_4: {
             base: "SauceLabs",
             browserName: "android",
-            version: "4.4"
+            version: "4.4",
+            deviceName: 'Android Emulator',
+            deviceType: 'tablet'
         },
 
-        sl_android_4_1: {
+        android_4_1: {
             base: "SauceLabs",
             browserName: "android",
-            version: "4.1"
+            version: "4.1",
+            deviceName: 'Samsung Galaxy Note Emulator'
         },
         android_latest: {
             base: 'SauceLabs',
@@ -170,6 +173,8 @@ module.exports = function(config) {
             platform: 'Linux',
             version: '5.0'
         }
+        
+       // { browserName: "android", platform: "Linux", "device-type": "tablet", version: "4.1" },
     };
 
     config.set({
