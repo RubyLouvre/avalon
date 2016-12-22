@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>TODO supply a title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="./dist/avalon.js"></script>
+
+</head>
+
+<body>
+    <script>
+        function heredoc(fn) {
+            return fn.toString().replace(/^[^\/]+\/\*!?\s?/, '').
+            replace(/\*\/[^\/]+$/, '').trim().replace(/>\s*</g, '><')
+        }
+        var treeCaches = {}
+        var tree = avalon.component('tree', {
+            template: heredoc(function() {
+                /*
+                <div class="tree-node" ms-click='@click' ms-class="@cls" ms-css="{'text-indent': @level * 30}">
+                <p>第{{@level}}层</p>
+                <div ms-for="(index,el) in @children">
+                   <wbr is="tree" ms-widget="[el, {level: @level+1, pid: @sid, pos:index}]" />
+                </div>
+                </div>
+                */
+            }),
+            defaults: {
+                sid: 0,
+                pid: 0,
+                level: 0,
+                pos: 0,
+                children: [],
+                cls: '',
+                click: function() {
+                    var vm = this
+                    var parentVm = treeCaches[vm.pid]
+                    if(parentVm){
+                        parentVm.cls = new Date - 0
+                    }
+                },
+                onReady: function(e) {
+                   var vm = e.vmodel
+                   vm.sid = vm.sid == 0 ? Math.random() : vm.sid
+                   treeCaches[vm.sid] = vm
+                   console.log(treeCaches)
+               }
+            }
+        })
+        var vm = avalon.define({
+            $id: 'test',
+            options: {
+                sid: 'top',
+                pid: null,
+                level: 0,
+                cls: 'open',
+                pos: 0,
+                children: [{
+                    children: [{
+                        children: [
+                            {children:[]}
+                        ]
+                    }]
+                }, {
+                    children: [{
+                        children: []
+                    }]
+                }, {
+                    children: [{
+                        children: []
+                    }]
+                }]
+            }
+            
+        })
+    </script>
+    <style>
+        .tree-node {
+
+        }
+    </style>
+    <div ms-controller="test">
+        <wbr is="tree" ms-widget="@options" />
+    </div>
+</body>
+
+</html>
