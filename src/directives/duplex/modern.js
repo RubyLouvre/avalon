@@ -1,7 +1,6 @@
 
 import { avalon } from '../../seed/core'
-import { duplexBeforeInit, duplexInit, duplexDiff, duplexValidate, valueHijack, updateView } from './share'
-import { updateModel } from './updateDataHandle'
+import { duplexBeforeInit, duplexInit, duplexDiff, duplexBind, valueHijack, updateView } from './share'
 import { updateDataEvents } from './updateDataEvents.modern'
 
 
@@ -11,15 +10,8 @@ avalon.directive('duplex', {
     init: duplexInit,
     diff: duplexDiff,
     update: function (vdom, value) {
-        var dom = vdom.dom
         if (!this.dom) {
-            this.duplexCb = updateModel
-            this.dom = dom
-            dom._ms_duplex_ = this
-            //绑定事件
-            updateDataEvents(dom, this)
-            //添加验证
-            duplexValidate(dom, vdom)
+           duplexBind.call(this, vdom, updateDataEvents)
         }
         updateView[this.dtype].call(this)
     }

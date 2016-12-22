@@ -1,8 +1,8 @@
 
 import { avalon } from '../../seed/core'
-import { duplexBeforeInit, duplexInit, duplexDiff, duplexValidate, valueHijack, updateView } from './share'
-import { updateModel } from './updateDataHandle'
+import { duplexBeforeInit, duplexInit, duplexDiff, duplexBind, valueHijack, updateView } from './share'
 import { updateDataEvents } from './updateDataEvents.compact'
+import { updateModel } from './updateDataHandle'
 
 
 avalon.directive('duplex', {
@@ -11,15 +11,10 @@ avalon.directive('duplex', {
     init: duplexInit,
     diff: duplexDiff,
     update: function (vdom, value) {
-        var dom = vdom.dom
+       // var dom = vdom.dom
         if (!this.dom) {
-            this.dom = dom
-            this.duplexCb = updateModel
-            dom._ms_duplex_ = this
-            //绑定事件
-            updateDataEvents(dom, this)
-            //添加验证
-            duplexValidate(dom, vdom)
+            duplexBind.call(this, vdom, updateDataEvents)
+
         }
         //如果不支持input.value的Object.defineProperty的属性支持,
         //需要通过轮询同步, chrome 42及以下版本需要这个hack

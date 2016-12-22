@@ -3,6 +3,7 @@ import { rcheckedType } from '../../dom/rcheckedType'
 import { lookupOption } from './option'
 import { addScope, makeHandle } from '../../parser/index'
 import { fromString } from '../../vtree/fromString'
+import { updateModel } from './updateDataHandle'
 
 
 var rchangeFilter = /\|\s*change\b/
@@ -92,25 +93,31 @@ export function duplexDiff(newVal, oldVal) {
 
 }
 
-
-export function duplexValidate(node, vdom) {
-    //将当前虚拟DOM的duplex添加到它上面的表单元素的validate指令的fields数组中
-    var field = vdom.duplex
+export function duplexBind(vdom, addEvent){
+    var dom = vdom.dom
+    this.dom = dom
+    this.duplexCb = updateModel
+    dom._ms_duplex_ = this
+    //绑定事件
+    addEvent(dom, this)
+    //添加验证
+   
     var rules = vdom.rules
+    //将当前虚拟DOM的duplex添加到它上面的表单元素的validate指令的fields数组中
 
-    if (rules && !field.validator) {
-        while (node && node.nodeType === 1) {
-            var validator = node._ms_validate_
+    if (rules && !this.validator) {
+        while (dom && dom.nodeType === 1) {
+            var validator = dom._ms_validate_
             if (validator) {
-                field.rules = rules
-                field.validator = validator
+                this.rules = rules
+                this.validator = validator
 
-                if (avalon.Array.ensure(validator.fields, field)) {
-                    validator.addField(field)
+                if (avalon.Array.ensure(validator.fields, this)) {
+                    validator.addField(this)
                 }
                 break
             }
-            node = node.parentNode
+            dom = dom.parentNode
         }
     }
 }

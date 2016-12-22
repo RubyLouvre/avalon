@@ -16,6 +16,8 @@ install:
 - npm run buildAvalon
 script:
 - npm run build
+- npm run sauce
+
 addons:
   code_climate:
     repo_token: cecb8ec105dc8e4b3f298312502f078a646f46ff
