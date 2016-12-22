@@ -1043,7 +1043,6 @@ describe('widget', function() {
         })
         avalon.scan(div, vm)
         setTimeout(function() {
-            console.log('这是用于测试IE3')
             expect(div[textProp]).toBe('111')
             done()
         }, 100)
@@ -1175,9 +1174,11 @@ describe('widget', function() {
             setTimeout(function() {
                 var ul = div.getElementsByTagName('ul')[0]
                 expect(ul[textProp]).toBe('12345')
+                console.log('0000000000')
                 var lis = ul.getElementsByTagName('a')
                 fireClick(lis[3])
                 setTimeout(function() {
+                    console.log('111111111')
                     expect(ul[textProp]).toBe('23456')
                     fireClick(lis[3])
                     setTimeout(function() {
@@ -1223,6 +1224,7 @@ describe('widget', function() {
         })
         avalon.scan(div, vm)
         setTimeout(function() {
+            console.log('22222222222')
             var op = div.getElementsByTagName('option')
             expect(op[1].selected).toBe(true)
             delete avalon.components['ms-pager3']
@@ -1256,7 +1258,6 @@ describe('widget', function() {
         })
         avalon.scan(div, vm)
         setTimeout(function() {
-            console.log('这是用于测试IE66')
             expect(div.getElementsByTagName('strong').length).toBe(3)
             expect(div.getElementsByTagName('em').length).toBe(1)
             delete avalon.components.aaa
