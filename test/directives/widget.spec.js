@@ -1008,11 +1008,9 @@ describe('widget', function() {
                 expect(p.innerHTML).toBe('12')
                 vm.aaa = 18
                 setTimeout(function() {
-                    console.log('这是用于测试IE1')
                     expect(p.innerHTML).toBe('18')
                     setTimeout(function() {
                         expect(onViewChangeCount).toBe(2)
-                        console.log('这是用于测试IE2')
                         delete avalon.components['ms-select']
                         done()
                     }, 100)
@@ -1078,6 +1076,7 @@ describe('widget', function() {
             setTimeout(function() {
                 vm.data.pushArray([7, 8])
                 setTimeout(function() {
+                    console.log('这是用于测试IE4')
                     vm.data.pushArray([100, 200])
                     expect(div[textProp]).toBe('1|2|3|4|5|6|7|8|100|200|')
                     delete avalon.components['vip-test']
@@ -1185,6 +1184,7 @@ describe('widget', function() {
                         expect(ul[textProp]).toBe('34567')
                         fireClick(lis[0])
                         setTimeout(function() {
+                            console.log('这是用于测试IE5')
                             expect(ul[textProp]).toBe('12345')
                             delete avalon.components['ms-pager2']
                             done()
@@ -1256,6 +1256,7 @@ describe('widget', function() {
         })
         avalon.scan(div, vm)
         setTimeout(function() {
+            console.log('这是用于测试IE66')
             expect(div.getElementsByTagName('strong').length).toBe(3)
             expect(div.getElementsByTagName('em').length).toBe(1)
             delete avalon.components.aaa
