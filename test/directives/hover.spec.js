@@ -25,19 +25,20 @@ describe('hover', function() {
         avalon.scan(div)
         var el = div.getElementsByTagName('div')[0]
         var v = el.getAttribute('avalon-events') || ''
+        avalon.log('ms-hover上的所有事件', v)
         var map = {}
         v.replace(/[^,]+/g, function(vv) {
             var arr = vv.split(':')
             map[arr[0]] = arr[1]
         })
         expect(Object.keys(map).sort().join('')).toMatch(/(mouseentermouseleave|mouseout|mouseover)/)
-        var fn = avalon.eventListeners[map.mouseenter]
+        var fn = avalon.eventListeners[map.mouseenter||map.mouseover]
         fn({
             type: 'mouseenter',
             target: el
         })
         expect(avalon(el).hasClass('h')).toBe(true)
-        fn = avalon.eventListeners[map.mouseleave]
+        fn = avalon.eventListeners[map.mouseleave||map.mouseout]
         fn({
             type: 'mouseleave',
             target: el
