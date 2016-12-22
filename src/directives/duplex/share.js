@@ -100,7 +100,7 @@ export function duplexDiff(oldVal, newVal) {
     }
 
 }
-export function duplexInit(vdom, updateDataEvents) {
+export function duplexInit(vdom, addEvent) {
     var dom = vdom.dom
     this.vdom = vdom
     this.dom = dom
@@ -120,7 +120,7 @@ export function duplexInit(vdom, updateDataEvents) {
 
     dom._ms_duplex_ = this
         //绑定事件
-    updateDataEvents(dom, this)
+    addEvent(dom, this)
         //添加验证
     duplexValidate(dom, vdom)
 }
