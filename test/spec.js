@@ -36,7 +36,7 @@ import '../src/renders/domRender'
 
 import './directives/attr.spec'
 
-/*
+
 import './directives/duplex.spec'
 
 import './directives/expr.spec'
@@ -60,4 +60,3 @@ import './directives/effect.spec'
 
 import './directives/widget.spec'
 
-*/

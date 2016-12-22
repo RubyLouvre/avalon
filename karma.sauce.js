@@ -18,7 +18,7 @@ module.exports = function(config) {
     // https://saucelabs.com/platforms
     // Browsers to run on Sauce Labs
     var customLaunchers = {
-/*
+
         SL_IE_8: {
             base: 'SauceLabs',
             browserName: 'internet explorer',
@@ -152,7 +152,7 @@ module.exports = function(config) {
             version: '7',
             platform: 'Windows XP'
         },
-        */
+        
         android_4_4: {
             base: "SauceLabs",
             browserName: "android",
@@ -167,6 +167,12 @@ module.exports = function(config) {
             version: "4.1",
             deviceName: 'Samsung Galaxy Note Emulator'
         },
+        android_4_0: {
+            base: "SauceLabs",
+            browserName: "android",
+            version: "4.0",
+            deviceName: 'HTC One X Emulator'
+        },
         android_latest: {
             base: 'SauceLabs',
             browserName: 'android',
@@ -176,7 +182,7 @@ module.exports = function(config) {
         
        // { browserName: "android", platform: "Linux", "device-type": "tablet", version: "4.1" },
     };
-
+//https://github.com/pwnn/tagOf/blob/d510ec5195f70d0fa69cfa95e37bd9032d3afc73/test/config/.launchers.yml
     config.set({
 
         // base path that will be used to resolve all patterns (eg. files, exclude)
@@ -214,7 +220,7 @@ module.exports = function(config) {
         logLevel: config.LOG_INFO,
 
         sauceLabs: {
-            testName: '修正selected BUG',
+            testName: '兼容到4.0',
             //recordScreenshots: false,
             connectOptions: {
                 port: 5757,
