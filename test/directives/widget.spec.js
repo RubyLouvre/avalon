@@ -1182,7 +1182,6 @@ describe('widget', function() {
                         expect(ul[textProp]).toBe('34567')
                         fireClick(lis[0])
                         setTimeout(function() {
-                            console.log('这是用于测试IE5')
                             expect(ul[textProp]).toBe('12345')
                             delete avalon.components['ms-pager2']
                             done()
@@ -1222,7 +1221,6 @@ describe('widget', function() {
         })
         avalon.scan(div, vm)
         setTimeout(function() {
-            console.log('22222222222')
             var op = div.getElementsByTagName('option')
             expect(op[1].selected).toBe(true)
             delete avalon.components['ms-pager3']
