@@ -1008,9 +1008,11 @@ describe('widget', function() {
                 expect(p.innerHTML).toBe('12')
                 vm.aaa = 18
                 setTimeout(function() {
+                    console.log('这是用于测试IE1')
                     expect(p.innerHTML).toBe('18')
                     setTimeout(function() {
                         expect(onViewChangeCount).toBe(2)
+                        console.log('这是用于测试IE2')
                         delete avalon.components['ms-select']
                         done()
                     }, 100)
@@ -1043,6 +1045,7 @@ describe('widget', function() {
         })
         avalon.scan(div, vm)
         setTimeout(function() {
+            console.log('这是用于测试IE3')
             expect(div[textProp]).toBe('111')
             done()
         }, 100)
