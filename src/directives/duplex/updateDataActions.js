@@ -58,6 +58,7 @@ export var updateDataActions = {
             } else {
                 val = field.parseValue(val)
             }
+            avalon.log('select update',val)
             field.setValue(val)
             duplexCb(field)
         }
