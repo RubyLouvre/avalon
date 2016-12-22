@@ -241,28 +241,13 @@ describe('duplex', function () {
         setTimeout(function () {
             var element = div.getElementsByTagName('select')[0]
             var options = element.options
-            var ps = div.getElementsByTagName('p')
             expect(options[0].selected).toBe(true)
             expect(options[1].selected).toBe(false)
             expect(options[2].selected).toBe(false)
             expect(options[3].selected).toBe(true)
-            options[0].selected = false
-            options[1].selected = true
-            options[2].selected = true
-            options[3].selected = false
-            
-            var fixAndroid442 = options[1].selected
-            var fixAndroid443 = options[2].selected
-            
-            var update = element._ms_duplex_.duplexCb
-            update.call(element,{
-                type: 'change'
-            })
-            setTimeout(function () {
-                expect(vm.arr.concat()).toEqual([222, 333])
-                expect(ps[0].innerHTML).toEqual([222, 333] + "")
+
                 done()
-            },130)
+           
         }, 130)
     })
 
