@@ -155,7 +155,7 @@ Render.prototype = {
         var dirs = this.checkDirs(vdom, attrs)
 
         //处理scope
-        scope = this.checkVm(dirs, attrs, scope)
+        scope = this.checkVm(scope, attrs, dirs)
 
         //处理for
         if (dirs['ms-for']) {
@@ -163,6 +163,17 @@ Render.prototype = {
         }
 
         //处理widget
+        this.checkWidget(vdom, attrs, dirs)
+
+        //处理children
+        var children = vdom.children
+        var noDelay = !dirs || !delayCompileNodes(dirs)
+            //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
+        if (noDelay && !vdom.vtype && children.length) {
+            this.scanChildren(children, scope, false)
+        }
+    },
+    checkWidget(vdom, attrs, dirs) {
         if (/^ms\-/.test(vdom.nodeName)) {
             attrs.is = vdom.nodeName
         }
@@ -172,18 +183,12 @@ Render.prototype = {
             if (!dirs['ms-widget']) {
                 dirs['ms-widget'] = '{}'
             }
+
         }
 
         if (dirs) {
             vdom.dirs = dirs
             vdom.dynamic = true
-        }
-        //处理children
-        var children = vdom.children
-        var noDelay = !dirs || !delayCompileNodes(dirs)
-            //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
-        if (noDelay && !vdom.type && children.length) {
-            this.scanChildren(children, scope, false)
         }
     },
     checkDirs(vdom, attrs) {
@@ -213,7 +218,7 @@ Render.prototype = {
         }
         return hasDir ? dirs : false
     },
-    checkVm(dirs, attrs, scope) {
+    checkVm(scope, attrs, dirs) {
         var $id = dirs['ms-important'] || dirs['ms-controller']
         if ($id) {
             /**
@@ -445,7 +450,7 @@ function diff(a, b) {
 
             console.log('这是数组')
 
-            return avalon.directives['for'].diff(a, b)
+            return directives['for'].diff(a, b)
             break
         default:
             toDOM(a)
@@ -460,7 +465,6 @@ function diff(a, b) {
             }
             var delay
             var isHTML
-            var directives = avalon.directives
             if (b.dirs) {
                 for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                     var adir = a.dirs[i]
@@ -502,7 +506,7 @@ function diff(a, b) {
 
                         if (typeof arr === 'number') {
                             //  console.log('数组扁平化', arr)
-                            avalon.directives.for.update(c, d, achild, bchild, i, parentNode)
+                            directives.for.update(c, d, achild, bchild, i, parentNode)
 
                             c = achild[i]
                             d = bchild[i]
