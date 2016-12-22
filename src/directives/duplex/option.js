@@ -13,15 +13,18 @@ function setOption(vdom, values) {
     if (!('disabled' in props)) {
         var value = getOptionValue(vdom, props).trim()
         props.selected = values.indexOf(value) !== -1
+       
         if (vdom.dom) {
             vdom.dom.selected = props.selected
+            var v = vdom.dom.selected
         }
+        
     }
 }
 
 function getOptionValue(vdom, props) {
     if (props && 'value' in props) {
-        return props.value
+        return props.value+ ''
     }
     var arr = []
     vdom.children.forEach(function (el) {

@@ -1173,11 +1173,9 @@ describe('widget', function() {
             setTimeout(function() {
                 var ul = div.getElementsByTagName('ul')[0]
                 expect(ul[textProp]).toBe('12345')
-                console.log('0000000000')
                 var lis = ul.getElementsByTagName('span')
                 fireClick(lis[3])
                 setTimeout(function() {
-                    console.log('111111111')
                     expect(ul[textProp]).toBe('23456')
                     fireClick(lis[3])
                     setTimeout(function() {
@@ -1211,7 +1209,8 @@ describe('widget', function() {
                 <select ms-duplex="@countPerPage">
                 <option role="option" value="5">5</option>     
                <option role="option" value="10">10</option>
-               <option role="option" value="20">20</option></select>
+               <option role="option" value="20">20</option>
+               </select>
                  */
             }),
             defaults: {
@@ -1228,7 +1227,7 @@ describe('widget', function() {
             expect(op[1].selected).toBe(true)
             delete avalon.components['ms-pager3']
             done()
-        })
+        },300)
     })
     it("组件继承功能", function(done) {
         var aaa = avalon.component('aaa', {

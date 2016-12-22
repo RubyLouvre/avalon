@@ -68,9 +68,9 @@ describe('attr', function () {
     it('selected', function (done) {
         div.innerHTML = heredoc(function () {
             /*
-             <select ms-controller='attr3' ms-attr='{multiple:@a}'>
+             <select ms-controller='attr3' multiple>
              <option>000</option>
-             <option ms-attr='{selected:@b}'>111</option>
+             <option ms-attr='{selected:@a}'>111</option>
              <option>222</option>
              <option>333</option>
              </select>
@@ -78,24 +78,23 @@ describe('attr', function () {
         })
         vm = avalon.define({
             $id: 'attr3',
-            a: true,
-            b: true
+            a: true
         })
         avalon.scan(div)
-        var opts = div.getElementsByTagName('option')
-        expect(div.children[0].multiple).toBe(true)
-        expect(opts[1].selected).toBe(true)
-        expect(div.children[0].type).toBe('select-multiple')
+        setTimeout(function(){
+            var opts = div.getElementsByTagName('option')
+            expect(div.children[0].multiple).toBe(true)
+            expect(opts[1].selected).toBe(true)
+            expect(div.children[0].type).toBe('select-multiple')
+            vm.a = false
+            setTimeout(function () {
 
-        vm.a = false
-        vm.b = false
-        setTimeout(function () {
-            expect(div.children[0].multiple).toBe(false)
-            expect(div.children[0].type).toBe('select-one')
-            expect(opts[1].selected).toBe(false)
-            done()
+                expect(opts[1].selected).toBe(false)
+                done()
 
+            }, 100)
         }, 100)
+       
     })
 
     it('contentEditable', function (done) {

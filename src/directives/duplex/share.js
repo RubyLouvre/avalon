@@ -56,7 +56,7 @@ export function duplexInit() {
                     'input'
     }
     this.dtype = dtype
-    var isChanged = false, debounceTime = 0
+ 
     //判定是否使用了 change debounce 过滤器
     // this.isChecked = /boolean/.test(parsers)
     if (dtype !== 'input' && dtype !== 'contenteditable') {
@@ -165,9 +165,9 @@ function parseValue(val) {
 
 export var updateView = {
     input: function () {//处理单个value值处理
-        this.node.props.value = this.value + ''
-        this.dom.value = this.value
-
+        var vdom = this.node
+        var value = this.value + ''
+        vdom.dom.value =   vdom.props.value = value
     },
     updateChecked: function (vdom, checked) {
         if (vdom.dom) {

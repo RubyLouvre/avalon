@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-22:17:51 version 2.2.3 by 司徒正美
+built in 2016-12-22:23:27 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.3
 
 
@@ -5919,15 +5919,17 @@ avalon.bind 在绑定非元素节点也要修正事件对象
         if (!('disabled' in props)) {
             var value = getOptionValue(vdom, props).trim();
             props.selected = values.indexOf(value) !== -1;
+
             if (vdom.dom) {
                 vdom.dom.selected = props.selected;
+                var v = vdom.dom.selected;
             }
         }
     }
 
     function getOptionValue(vdom, props) {
         if (props && 'value' in props) {
-            return props.value;
+            return props.value + '';
         }
         var arr = [];
         vdom.children.forEach(function (el) {
@@ -6113,8 +6115,7 @@ avalon.bind 在绑定非元素节点也要修正事件对象
             dtype = node.nodeName === 'select' ? 'select' : etype === 'checkbox' ? 'checkbox' : etype === 'radio' ? 'radio' : 'input';
         }
         this.dtype = dtype;
-        var isChanged = false,
-            debounceTime = 0;
+
         //判定是否使用了 change debounce 过滤器
         // this.isChecked = /boolean/.test(parsers)
         if (dtype !== 'input' && dtype !== 'contenteditable') {
@@ -6223,8 +6224,9 @@ avalon.bind 在绑定非元素节点也要修正事件对象
     var updateView = {
         input: function input() {
             //处理单个value值处理
-            this.node.props.value = this.value + '';
-            this.dom.value = this.value;
+            var vdom = this.node;
+            var value = this.value + '';
+            vdom.dom.value = vdom.props.value = value;
         },
         updateChecked: function updateChecked(vdom, checked) {
             if (vdom.dom) {
