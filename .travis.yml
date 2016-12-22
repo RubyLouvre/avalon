@@ -16,6 +16,7 @@ install:
 - npm run buildAvalon
 script:
 - npm run build
+- npm run sauce
 
 addons:
   code_climate:

@@ -203,7 +203,7 @@ module.exports = function(config) {
         logLevel: config.LOG_INFO,
 
         sauceLabs: {
-            testName: 'avalon2.2.2(IE7)',
+            testName: '修正selected BUG',
             //recordScreenshots: false,
             connectOptions: {
                 port: 5757,
