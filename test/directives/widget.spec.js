@@ -1075,7 +1075,6 @@ describe('widget', function() {
             setTimeout(function() {
                 vm.data.pushArray([7, 8])
                 setTimeout(function() {
-                    console.log('这是用于测试IE4')
                     vm.data.pushArray([100, 200])
                     expect(div[textProp]).toBe('1|2|3|4|5|6|7|8|100|200|')
                     delete avalon.components['vip-test']
@@ -1094,7 +1093,7 @@ describe('widget', function() {
                      <ul>
                      <li :for="el in @pages" 
                      :class="[ el == @currentPage && 'active' ]">
-                     <a href="javascript:void(0)" :click="@gotoPage(el, $event)">{{el}}</a>
+                     <span :click="@gotoPage(el, $event)">{{el}}</span>
                      </li>
                      </ul>
                      </div>
@@ -1148,7 +1147,7 @@ describe('widget', function() {
     .pagination li{
         float: left;
     }
-    .pagination li a{
+    .pagination li span{
         text-decoration: none;
         display: inline-block;
         width:40px;
@@ -1159,7 +1158,7 @@ describe('widget', function() {
         color:#000;
 
     }
-    .pagination .active a{
+    .pagination .active span{
         background: #009a61;
         color:#fff;
     }
@@ -1175,7 +1174,7 @@ describe('widget', function() {
                 var ul = div.getElementsByTagName('ul')[0]
                 expect(ul[textProp]).toBe('12345')
                 console.log('0000000000')
-                var lis = ul.getElementsByTagName('a')
+                var lis = ul.getElementsByTagName('span')
                 fireClick(lis[3])
                 setTimeout(function() {
                     console.log('111111111')
