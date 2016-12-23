@@ -126,24 +126,27 @@ module.exports = function(config) {
         sl_ios_8: {
             "platformName": "iOS",
             "platformVersion": "8.4",
-            "browserName": "iPhone",
-            "deviceName": "iPhone Simulator",
-            "appiumVersion": "1.5.3"
+            "browserName": "Safari",
+            "deviceName": "iPhone 5 Simulator",
+            "appiumVersion": "1.5.3",
+            'deviceOrientation': 'portrait'
         },
         sl_ios_9: {
             "platformName": "iOS",
             "platformVersion": "9.3",
-            "browserName": "iPhone",
-            "deviceName": "iPhone Simulator",
-            "appiumVersion": "1.5.3"
+            "browserName": "Safari",
+            "deviceName": "iPhone 6s Plus Device",
+            "appiumVersion": "1.5.3",
+            'deviceOrientation': 'portrait'
         },
 
         iphone_latest: {
             "platformName": "iOS",
-            "browserName": "iPhone",
+            "browserName": "Safari",
             "platformVersion": "10.0",
             "deviceName": "iPhone 7 Plus Simulator",
-            "appiumVersion": "1.6.2"
+            "appiumVersion": "1.6.3",
+            'deviceOrientation': 'portrait'
         },
 
         IE7: {
@@ -177,6 +180,7 @@ module.exports = function(config) {
 
         // { browserName: "android", platform: "Linux", "device-type": "tablet", version: "4.1" },
     };
+    //https://github.com/karma-runner/karma-sauce-launcher/issues/61
     //https://github.com/pwnn/tagOf/blob/d510ec5195f70d0fa69cfa95e37bd9032d3afc73/test/config/.launchers.yml
     config.set({
 
