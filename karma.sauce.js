@@ -83,36 +83,20 @@ module.exports = function(config) {
         sl_android_5_1: createCustomLauncher('android', null, '5.1'),
 
         // iOS (last 2 major versions)
-        /*   sl_iphone_5: {
-               "platformName": "iOS",
-               "platformVersion": "8.4",
-               "browserName": "Safari",
-               "deviceName": "iPhone 5 Simulator",
-               "appiumVersion": "1.5.3",
-               'deviceOrientation': 'portrait'
-           },
-           sl_iphone_6: {
-               "platformName": "iOS",
-               "platformVersion": "9.3",
-               "browserName": "Safari",
-               "deviceName": "iPhone 6s Plus Device",
-               "appiumVersion": "1.5.3",
-               'deviceOrientation': 'portrait'
-           },
-
-           sl_iphone_latest: {
-               "platformName": "iOS",
-               "browserName": "Safari",
-               "platformVersion": "10.0",
-               "deviceName": "iPhone 7 Plus Simulator",
-               "appiumVersion": "1.6.3",
-               'deviceOrientation': 'portrait'
-           },*/
-        sl_iphone: {
-            base: "SauceLabs",
-            browserName: "iphone",
-            version: "8.0"
+        sauce_ios9_iphone: {
+            base: 'SauceLabs',
+            browserName: 'iphone',
+            platform: 'OS X 10.10',
+            version: '9.2',
         },
+        sauce_ios8_iphone: {
+            base: 'SauceLabs',
+            browserName: 'iphone',
+            platform: 'OS X 10.10',
+            version: '8.4',
+        },
+
+
         iphone_latest: {
             base: "SauceLabs",
             browserName: "iphone",
@@ -120,9 +104,32 @@ module.exports = function(config) {
 
 
 
-
-
         /*
+          sl_iphone_5: {
+            "platformName": "iOS",
+            "platformVersion": "8.4",
+            "browserName": "Safari",
+            "appiumVersion": "1.5.3",
+            "deviceName": "iPhone Simulator",
+            'deviceOrientation': 'portrait'
+        },
+        sl_iphone_6: {
+            "platformName": "iOS",
+            "platformVersion": "9.3",
+            "browserName": "Safari",
+            "appiumVersion": "1.5.3",
+            "deviceName": "iPhone Simulator",
+            'deviceOrientation': 'portrait'
+        },
+
+        sl_iphone_latest: {
+            "platformName": "iOS",
+            "browserName": "Safari",
+            "platformVersion": "10.0",
+            "deviceName": "iPhone Simulator",
+            "appiumVersion": "1.6.3",
+            'deviceOrientation': 'portrait'
+        },
         sl_iphone = { base: "SauceLabs", browserName: "iphone", version: "8.0" }
                 android_4_4: {
                     base: "SauceLabs",
