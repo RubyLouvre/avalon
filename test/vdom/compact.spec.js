@@ -1,4 +1,7 @@
 import { avalon, vdom, VText, VComment, VElement, VFragment } from '../../src/vdom/compact'
+import { hideProperty } from '../../src/vmodel/compact'
+import '../../src/renders/domRender'
+
 describe('vdom', function() {
     describe('VElement', function() {
         it('test', function() {
