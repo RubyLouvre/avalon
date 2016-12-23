@@ -58,7 +58,7 @@ module.exports = function(config) {
         chrome55: createCustomLauncher('chrome', 'OS X 10.10', '55.0'),
 
 
-        chrome45: createCustomLauncher('chrome', 'Windows 8', '45.0'),
+        chrome45: createCustomLauncher('chrome', 'OS X 10.8', '45.0'),
 
         chrome30: createCustomLauncher('chrome', 'Windows 7', '30.0'),
         sl_edge_14: createCustomLauncher('MicrosoftEdge', 'Windows 10', '14'),
@@ -100,57 +100,6 @@ module.exports = function(config) {
         },
 
 
-
-
-        /*
-          sl_iphone_5: {
-            "platformName": "iOS",
-            "platformVersion": "8.4",
-            "browserName": "Safari",
-            "appiumVersion": "1.5.3",
-            "deviceName": "iPhone Simulator",
-            'deviceOrientation': 'portrait'
-        },
-        sl_iphone_6: {
-            "platformName": "iOS",
-            "platformVersion": "9.3",
-            "browserName": "Safari",
-            "appiumVersion": "1.5.3",
-            "deviceName": "iPhone Simulator",
-            'deviceOrientation': 'portrait'
-        },
-
-        sl_iphone_latest: {
-            "platformName": "iOS",
-            "browserName": "Safari",
-            "platformVersion": "10.0",
-            "deviceName": "iPhone Simulator",
-            "appiumVersion": "1.6.3",
-            'deviceOrientation': 'portrait'
-        },
-        sl_iphone = { base: "SauceLabs", browserName: "iphone", version: "8.0" }
-                android_4_4: {
-                    base: "SauceLabs",
-                    browserName: "android",
-                    version: "4.4",
-                    deviceName: 'Android Emulator',
-                    deviceType: 'tablet'
-                },
-
-
-                android_4_0: {
-                    base: "SauceLabs",
-                    browserName: "android",
-                    version: "4.0",
-                    deviceName: 'HTC One X Emulator'
-                },
-                android_latest: {
-                    base: 'SauceLabs',
-                    browserName: 'android',
-                    platform: 'Linux',
-                    version: '5.0'
-                }
-        */
     };
     //https://github.com/karma-runner/karma-sauce-launcher/issues/61
     // https://wiki.saucelabs.com/display/DOCS/Platform+Configurator#/   
@@ -189,7 +138,7 @@ module.exports = function(config) {
         // level of logging
         // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
         logLevel: config.LOG_INFO,
-        retryLimit: 10,
+        retryLimit: 10, //为了保证都能运行这么多浏览器，必须添加重起的次数
         sauceLabs: {
             testName: '加大mac测试',
             //recordScreenshots: false,

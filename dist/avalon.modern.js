@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-23:2:32 version 2.2.3 by 司徒正美
+built in 2016-12-23:22:35 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.3
 
 fix VElement hackIE BUG
@@ -4858,11 +4858,14 @@ avalon.bind 在绑定非元素节点也要修正事件对象
             }
 
             if (this.userCb) {
-                this.userCb.call(this.vm, {
-                    type: 'rendered',
-                    target: this.begin.dom,
-                    signature: this.signature
-                })
+                var me = this
+                setTimeout(function () {
+                    me.userCb.call(me.vm, {
+                        type: 'rendered',
+                        target: me.begin.dom,
+                        signature: me.signature
+                    })
+                }, 0)
             }
             delete this.updating
         },
@@ -5225,7 +5228,7 @@ avalon.bind 在绑定非元素节点也要修正事件对象
 
             if (vdom.dom) {
                 vdom.dom.selected = props.selected
-                var v = vdom.dom.selected
+                var v = vdom.dom.selected //必须加上这个,防止移出节点selected失效
             }
         }
     }
