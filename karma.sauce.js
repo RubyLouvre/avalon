@@ -17,110 +17,60 @@ module.exports = function(config) {
     }
     // https://saucelabs.com/platforms
     // Browsers to run on Sauce Labs
+    function createCustomLauncher(browser, platform, version) {
+        if (browser === 'IE') {
+            browser = 'internet explorer'
+        }
+        return {
+            base: 'SauceLabs',
+            browserName: browser,
+            platform: platform,
+            version: version
+        };
+    }
     var customLaunchers = {
 
-        SL_IE_8: {
-            base: 'SauceLabs',
-            browserName: 'internet explorer',
-            version: '8',
-            platform: 'Windows XP'
+        sl_win_ie_8: createCustomLauncher('IE', 'Windows XP', '8'),
 
-        },
-        'SL_IE_9': {
-            base: 'SauceLabs',
-            browserName: 'internet explorer',
-            platform: 'Windows 2008',
-            version: '9'
-        },
-        'SL_IE_10': {
-            base: 'SauceLabs',
-            browserName: 'internet explorer',
-            platform: 'Windows 2012',
-            version: '10'
-        },
-        'SL_IE_11': {
-            base: 'SauceLabs',
-            browserName: 'internet explorer',
-            platform: 'Windows 8.1',
-            version: '11'
-        },
-        Edge13: {
-            base: 'SauceLabs',
-            browserName: 'MicrosoftEdge',
-            version: '13.10586',
-            platform: 'Windows 10',
-        },
-        Edge14: {
-            base: 'SauceLabs',
-            browserName: 'MicrosoftEdge',
-            version: '14.14393',
-            platform: 'Windows 10',
-        },
+        sl_win_ie_9: createCustomLauncher('IE', 'Windows 2008', '9'),
 
-        chrome_54: {
-            base: 'SauceLabs',
-            browserName: 'chrome',
-            version: '54.0',
-            platform: 'Windows 10'
-        },
-        chrome50: {
-            base: 'SauceLabs',
-            browserName: 'chrome',
-            version: '50.0',
-            platform: 'Windows 10'
-        },
-        chrome40: {
-            base: 'SauceLabs',
-            browserName: 'chrome',
-            version: '40.0',
-            platform: 'Windows 8'
-        },
-        chrome30: {
-            base: 'SauceLabs',
-            browserName: 'chrome',
-            version: '30.0',
-            platform: 'Windows 7'
-        },
+        sl_win_ie_10: createCustomLauncher('IE', 'Windows 2012', '10'),
+
+        sl_win_ie_11: createCustomLauncher('IE', 'Windows 8.1', '11'),
+
+
+
+        sl_edge_13: createCustomLauncher('MicrosoftEdge', 'Windows 10', '13.10586'),
+        sl_edge_14: createCustomLauncher('MicrosoftEdge', 'Windows 10', '14.14393'),
+        chrome54: createCustomLauncher('chrome', 'Windows 10', '54.0'),
+
+        chrome50: createCustomLauncher('chrome', 'Windows 10', '50.0'),
+
+
+        chrome40: createCustomLauncher('chrome', 'Windows 8', '40.0'),
+
+        chrome30: createCustomLauncher('chrome', 'Windows 7', '30.0'),
+
+        sl_win_ie_7: createCustomLauncher('IE', 'Windows XP', '7'),
+
+        firefox20: createCustomLauncher('firefox', 'Windows 7', '20.0'),
+
+        firefox30: createCustomLauncher('firefox', 'Windows 8', '30.0'),
+        firefox40: createCustomLauncher('firefox', 'Windows 8.1', '40.0'),
+        firefox50: createCustomLauncher('firefox', 'Windows 10', '50.0'),
 
         //chrome最低只支持到26
 
-        firefox20: {
-            base: 'SauceLabs',
-            browserName: 'firefox',
-            version: '20',
-            platform: 'Windows 7'
-        },
-        firefox30: {
-            base: 'SauceLabs',
-            browserName: 'firefox',
-            version: '30',
-            platform: 'Windows 8'
-        },
-        firefox40: {
-            base: 'SauceLabs',
-            browserName: 'firefox',
-            version: '40',
-            platform: 'Windows 8.1'
-        },
-        firefox50: {
-            base: 'SauceLabs',
-            browserName: 'firefox',
-            version: '50',
-            platform: 'Windows 10'
-        },
         // Safari (last 2 versions)
-        safari_8: {
-            base: 'SauceLabs',
-            browserName: 'Safari',
-            version: '8',
-            platform: 'OS X 10.10'
-        },
-        safari_9: {
-            base: 'SauceLabs',
-            browserName: 'Safari',
-            version: '9',
-            platform: 'OS X 10.11'
-        },
+        sl_mac_safari_8: createCustomLauncher('safari', 'OS X 10.10'),
+        sl_mac_safari_9: createCustomLauncher('safari', 'OS X 10.11'),
+        sl_ios_8_safari: createCustomLauncher('iphone', null, '8.4'),
+        sl_ios_9_safari: createCustomLauncher('iphone', null, '9.3'),
+        sl_ios_10_safari: createCustomLauncher('iphone', null, '10.0'),
+
+        sl_android_4_0: createCustomLauncher('android', null, '4.0'),
+        sl_android_4_4: createCustomLauncher('android', null, '4.4'),
+        sl_android_5_1: createCustomLauncher('android', null, '5.1'),
 
         // iOS (last 2 major versions)
         /* sl_ios_8: {
@@ -148,59 +98,34 @@ module.exports = function(config) {
              "appiumVersion": "1.6.3",
              'deviceOrientation': 'portrait'
          },*/
-        sl_ios_9: {
-            base: 'SauceLabs',
-            browserName: 'Safari',
-            appiumVersion: '1.5.3',
-            deviceName: 'iPhone Simulator',
-            deviceOrientation: 'portrait',
-            platformVersion: '9.3',
-            platformName: 'iOS'
-        },
-        sl_ios_8: {
-            base: 'SauceLabs',
-            browserName: 'Safari',
-            appiumVersion: '1.5.3',
-            deviceName: 'iPhone Simulator',
-            deviceOrientation: 'portrait',
-            platformVersion: '8.4',
-            platformName: 'iOS'
-        },
-        iphone_latest: {
-            base: 'SauceLabs',
-            browserName: 'iphone'
-        },
-
-        IE7: {
-            base: 'SauceLabs',
-            browserName: 'internet explorer',
-            version: '7',
-            platform: 'Windows XP'
-        },
-
-        android_4_4: {
-            base: "SauceLabs",
-            browserName: "android",
-            version: "4.4",
-            deviceName: 'Android Emulator',
-            deviceType: 'tablet'
-        },
 
 
-        android_4_0: {
-            base: "SauceLabs",
-            browserName: "android",
-            version: "4.0",
-            deviceName: 'HTC One X Emulator'
-        },
-        android_latest: {
-            base: 'SauceLabs',
-            browserName: 'android',
-            platform: 'Linux',
-            version: '5.0'
-        }
 
-        // { browserName: "android", platform: "Linux", "device-type": "tablet", version: "4.1" },
+
+
+        /*
+                android_4_4: {
+                    base: "SauceLabs",
+                    browserName: "android",
+                    version: "4.4",
+                    deviceName: 'Android Emulator',
+                    deviceType: 'tablet'
+                },
+
+
+                android_4_0: {
+                    base: "SauceLabs",
+                    browserName: "android",
+                    version: "4.0",
+                    deviceName: 'HTC One X Emulator'
+                },
+                android_latest: {
+                    base: 'SauceLabs',
+                    browserName: 'android',
+                    platform: 'Linux',
+                    version: '5.0'
+                }
+        */
     };
     //https://github.com/karma-runner/karma-sauce-launcher/issues/61
     // https://wiki.saucelabs.com/display/DOCS/Platform+Configurator#/   
