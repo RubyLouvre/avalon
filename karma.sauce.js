@@ -76,9 +76,6 @@ module.exports = function(config) {
         // Safari (last 2 versions)
         sl_mac_safari_8: createCustomLauncher('safari', 'OS X 10.10'),
         sl_mac_safari_9: createCustomLauncher('safari', 'OS X 10.11'),
-        sl_iphone_5: createCustomLauncher('iphone', 'OS X 10.8', '5'),
-        sl_iphone_6: createCustomLauncher('iphone', 'OS X 10.8', '6'),
-        sl_iphone_7: createCustomLauncher('iphone', 'OS X 10.11', '7'),
 
 
         sl_android_4_0: createCustomLauncher('android', null, '4.0'),
@@ -86,31 +83,31 @@ module.exports = function(config) {
         sl_android_5_1: createCustomLauncher('android', null, '5.1'),
 
         // iOS (last 2 major versions)
-        /* sl_ios_8: {
-             "platformName": "iOS",
-             "platformVersion": "8.4",
-             "browserName": "Safari",
-             "deviceName": "iPhone 5 Simulator",
-             "appiumVersion": "1.5.3",
-             'deviceOrientation': 'portrait'
-         },
-         sl_ios_9: {
-             "platformName": "iOS",
-             "platformVersion": "9.3",
-             "browserName": "Safari",
-             "deviceName": "iPhone 6s Plus Device",
-             "appiumVersion": "1.5.3",
-             'deviceOrientation': 'portrait'
-         },
+        sl_iphone_5: {
+            "platformName": "iOS",
+            "platformVersion": "8.4",
+            "browserName": "Safari",
+            "deviceName": "iPhone 5 Simulator",
+            "appiumVersion": "1.5.3",
+            'deviceOrientation': 'portrait'
+        },
+        sl_iphone_6: {
+            "platformName": "iOS",
+            "platformVersion": "9.3",
+            "browserName": "Safari",
+            "deviceName": "iPhone 6s Plus Device",
+            "appiumVersion": "1.5.3",
+            'deviceOrientation': 'portrait'
+        },
 
-         iphone_latest: {
-             "platformName": "iOS",
-             "browserName": "Safari",
-             "platformVersion": "10.0",
-             "deviceName": "iPhone 7 Plus Simulator",
-             "appiumVersion": "1.6.3",
-             'deviceOrientation': 'portrait'
-         },*/
+        sl_iphone_latest: {
+            "platformName": "iOS",
+            "browserName": "Safari",
+            "platformVersion": "10.0",
+            "deviceName": "iPhone 7 Plus Simulator",
+            "appiumVersion": "1.6.3",
+            'deviceOrientation': 'portrait'
+        },
 
 
 
