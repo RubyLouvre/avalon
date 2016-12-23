@@ -42,7 +42,7 @@ module.exports = function(config) {
     }
     var customLaunchers = {
         sl_win_ie_10: createCustomLauncher('IE', 'Windows 8', '10'),
-        
+
         "sl_safari_8": {
             "base": "SauceLabs",
             "browserName": "safari",
@@ -60,12 +60,12 @@ module.exports = function(config) {
 
 
         sl_edge_13: createCustomLauncher('MicrosoftEdge', 'Windows 10', '13'),
-       
+
         chrome54: createCustomLauncher('chrome', 'Windows 10', '54.0'),
 
         chrome50: createCustomLauncher('chrome', 'Windows 10', '50.0'),
 
-       
+
         chrome40: createCustomLauncher('chrome', 'Windows 8', '40.0'),
 
         chrome30: createCustomLauncher('chrome', 'Windows 7', '30.0'),
@@ -73,9 +73,8 @@ module.exports = function(config) {
         sl_edge_14: createCustomLauncher('MicrosoftEdge', 'Windows 10', '14'),
         sl_win_ie_7: createCustomLauncher('IE', 'Windows XP', '7'),
 
-        firefox20: createCustomLauncher('firefox', 'Windows 7', '20.0'),
+        firefox20: createCustomLauncher('firefox', 'Windows XP', '20.0'),
 
-        firefox30: createCustomLauncher('firefox', 'Windows 8', '30.0'),
         firefox40: createCustomLauncher('firefox', 'Windows 8.1', '40.0'),
         firefox50: createCustomLauncher('firefox', 'Windows 10', '50.0'),
 
@@ -91,7 +90,7 @@ module.exports = function(config) {
         },
 
         sl_android_4_0: createCustomLauncher('android', null, '4.0'),
-       
+
         sl_android_5_1: createCustomLauncher('android', null, '5.1'),
 
         // iOS (last 2 major versions)
