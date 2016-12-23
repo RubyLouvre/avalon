@@ -109,36 +109,36 @@ module.exports = function(config) {
             platform: 'Windows 10'
         },
         // Safari (last 2 versions)
-
-        sl_safari_9: {
-            base: 'SauceLabs',
-            browserName: 'Safari',
-            version: '9',
-            platform: 'OS X 10.11'
-        },
-        sl_safari_8: {
+        safari_8: {
             base: 'SauceLabs',
             browserName: 'Safari',
             version: '8',
             platform: 'OS X 10.10'
         },
-        // iOS (last 2 major versions)
-
-        sl_ios_9: {
-            "platformName": "iOS",
-            "platformVersion": "9.3",
-            "browserName": "iPhone",
-            "deviceName": "iPhone Simulator",
-            "appiumVersion": "1.3.4"
+        safari_9: {
+            base: 'SauceLabs',
+            browserName: 'Safari',
+            version: '9',
+            platform: 'OS X 10.11'
         },
-        sl_ios_8: {
+
+        // iOS (last 2 major versions)
+        ios_8: {
             "platformName": "iOS",
             "platformVersion": "8.4",
             "browserName": "iPhone",
             "deviceName": "iPhone Simulator",
             "appiumVersion": "1.5.3"
         },
-        iphone_latest: {
+        ios_9: {
+            "platformName": "iOS",
+            "platformVersion": "9.3",
+            "browserName": "iPhone",
+            "deviceName": "iPhone Simulator",
+            "appiumVersion": "1.3.4"
+        },
+
+        ios_10: {
             "platformName": "iOS",
             "browserName": "iPhone",
             "platformVersion": "10.0",
@@ -214,7 +214,7 @@ module.exports = function(config) {
         logLevel: config.LOG_INFO,
 
         sauceLabs: {
-            testName: '兼容到4.0',
+            testName: '支持firefox 50',
             //recordScreenshots: false,
             connectOptions: {
                 port: 5757,
