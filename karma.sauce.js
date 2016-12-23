@@ -41,7 +41,14 @@ module.exports = function(config) {
         };
     }
     var customLaunchers = {
-
+        sl_win_ie_10: createCustomLauncher('IE', 'Windows 8', '10'),
+        
+        "sl_safari_8": {
+            "base": "SauceLabs",
+            "browserName": "safari",
+            "version": "8.0",
+            "platform": "OS X 10.10"
+        },
         sl_win_ie_8: createCustomLauncher('IE', 'Windows XP', '8'),
 
         sl_win_ie_9: createCustomLauncher('IE', 'Windows 2008', '9'),
@@ -58,10 +65,11 @@ module.exports = function(config) {
 
         chrome50: createCustomLauncher('chrome', 'Windows 10', '50.0'),
 
-        sl_win_ie_10: createCustomLauncher('IE', 'Windows 8', '10'),
+       
         chrome40: createCustomLauncher('chrome', 'Windows 8', '40.0'),
 
         chrome30: createCustomLauncher('chrome', 'Windows 7', '30.0'),
+        sl_android_4_4: createCustomLauncher('android', null, '4.4'),
         sl_edge_14: createCustomLauncher('MicrosoftEdge', 'Windows 10', '14'),
         sl_win_ie_7: createCustomLauncher('IE', 'Windows XP', '7'),
 
@@ -75,12 +83,6 @@ module.exports = function(config) {
 
         // Safari (last 2 versions)
 
-        "sl_safari_8": {
-            "base": "SauceLabs",
-            "browserName": "safari",
-            "version": "8.0",
-            "platform": "OS X 10.10"
-        },
         "sl_safari_9": {
             "base": "SauceLabs",
             "browserName": "safari",
@@ -89,7 +91,7 @@ module.exports = function(config) {
         },
 
         sl_android_4_0: createCustomLauncher('android', null, '4.0'),
-        sl_android_4_4: createCustomLauncher('android', null, '4.4'),
+       
         sl_android_5_1: createCustomLauncher('android', null, '5.1'),
 
         // iOS (last 2 major versions)

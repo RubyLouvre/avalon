@@ -9,30 +9,30 @@ import './filters/index.spec'
 import './vdom/compact.spec'
 
 //DOM相关测试
-
-import './dom/shim.compact.spec'
-import './dom/ready.compact.spec'
-import './dom/val.compact.spec'
-import './dom/class.compact.spec'
-import './dom/html.spec'
-import './dom/attr.compact.spec'
-import './dom/event.compact.spec'
-import './dom/css.compact.spec'
-
-
-import './vtree/clearString.spec'
-import './vtree/fromString.spec'
-import './vtree/fromDOM.spec'
-
-
-import './vmodel/compact.spec'
-
-import './parser/index'
-
-//这不是测试，但下面的模块都依赖这个
 //
-import '../src/directives/compact'
-import '../src/renders/domRender'
+//import './dom/shim.compact.spec'
+//import './dom/ready.compact.spec'
+//import './dom/val.compact.spec'
+//import './dom/class.compact.spec'
+//import './dom/html.spec'
+//import './dom/attr.compact.spec'
+//import './dom/event.compact.spec'
+//import './dom/css.compact.spec'
+//
+//
+//import './vtree/clearString.spec'
+//import './vtree/fromString.spec'
+//import './vtree/fromDOM.spec'
+//
+//
+//import './vmodel/compact.spec'
+//
+//import './parser/index'
+//
+////这不是测试，但下面的模块都依赖这个
+////
+//import '../src/directives/compact'
+//import '../src/renders/domRender'
 
 //import './directives/attr.spec'
 //
