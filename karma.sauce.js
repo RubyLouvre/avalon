@@ -21,6 +21,18 @@ module.exports = function(config) {
         if (browser === 'IE') {
             browser = 'internet explorer'
         }
+        if (browser === 'iphone') {
+            if (platform === null) {
+                platform = '1.5.3'
+            }
+            return {
+                browserName: "Safari",
+                platformVersion: version,
+                platformName: "iOS",
+                deviceName: "iPhone Simulator",
+                "appium-version": platform
+            }
+        }
         return {
             base: 'SauceLabs',
             browserName: browser,
@@ -66,7 +78,7 @@ module.exports = function(config) {
         sl_mac_safari_9: createCustomLauncher('safari', 'OS X 10.11'),
         sl_ios_8_safari: createCustomLauncher('iphone', null, '8.4'),
         sl_ios_9_safari: createCustomLauncher('iphone', null, '9.3'),
-        sl_ios_10_safari: createCustomLauncher('iphone', null, '10.0'),
+        sl_ios_10_safari: createCustomLauncher('iphone', '1.6.3', '10.0'),
 
         sl_android_4_0: createCustomLauncher('android', null, '4.0'),
         sl_android_4_4: createCustomLauncher('android', null, '4.4'),
