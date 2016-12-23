@@ -73,7 +73,8 @@ module.exports = function(config) {
         firefox20: createCustomLauncher('firefox', 'Windows XP', '20.0'),
 
         firefox40: createCustomLauncher('firefox', 'Windows 8', '40.0'),
-        firefox50: createCustomLauncher('firefox', 'Windows 10', '50.0'),
+
+        firefox50: createCustomLauncher('firefox', 'OS X 10.9', '50.0'),
 
         //chrome最低只支持到26
 
