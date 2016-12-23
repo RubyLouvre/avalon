@@ -63,8 +63,6 @@ module.exports = function(config) {
 
         chrome54: createCustomLauncher('chrome', 'Windows 10', '54.0'),
 
-        chrome50: createCustomLauncher('chrome', 'Windows 10', '50.0'),
-
 
         chrome40: createCustomLauncher('chrome', 'Windows 8', '40.0'),
 
