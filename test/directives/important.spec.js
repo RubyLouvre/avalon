@@ -1,20 +1,21 @@
 import { avalon } from '../../src/seed/core'
 
-describe('css', function () {
+describe('css', function() {
 
-    var body = document.body, div, vm
-    beforeEach(function () {
+    var body = document.body,
+        div, vm
+    beforeEach(function() {
         div = document.createElement('div')
         body.appendChild(div)
     })
-    afterEach(function () {
+    afterEach(function() {
         body.removeChild(div)
         delete avalon.vmodels[vm.$id]
     })
 
-    it('important', function (done) {
+    it('important', function(done) {
 
-        div.innerHTML = heredoc(function () {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller='ii1' >
               <p>{{@aaa}}</p>
@@ -46,13 +47,13 @@ describe('css', function () {
         expect(ps[1].innerHTML).toBe('blue')
         expect(ps[2].innerHTML).toBe('green')
         vm.aaa = 'white'
-        setTimeout(function () {
+        setTimeout(function() {
 
             expect(ps[0].innerHTML).toBe('white')
             expect(ps[1].innerHTML).toBe('blue')
             expect(ps[2].innerHTML).toBe('green')
             vm2.aaa = 'yellow'
-            setTimeout(function () {
+            setTimeout(function() {
                 expect(ps[0].innerHTML).toBe('white')
                 expect(ps[1].innerHTML).toBe('yellow')
                 expect(ps[2].innerHTML).toBe('green')
@@ -65,9 +66,9 @@ describe('css', function () {
 
     })
 
-    it('如果vm不存在不能扫描,直接抛错', function () {
+    it('如果vm不存在不能扫描,直接抛错', function() {
 
-        div.innerHTML = heredoc(function () {
+        div.innerHTML = heredoc(function() {
             /*
              <div ms-controller='ii4' >
               <p>{{@aaa}}</p>
@@ -84,14 +85,12 @@ describe('css', function () {
             aaa: 'red'
         })
         var hasError = 0
-        try{
-        avalon.scan(div)
-    }catch(e){
-        hasError = 1
-    }
+        try {
+            avalon.scan(div)
+        } catch (e) {
+            hasError = 1
+        }
         expect(hasError).toBe(1)
-      
-       
 
     })
 
