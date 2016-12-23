@@ -141,7 +141,6 @@ describe('controller', function() {
             fireClick(button)
             setTimeout(function() {
                 var blockquote = div.getElementsByTagName('blockquote')[0]
-                console.log(blockquote[textProp], '111')
                 var text = blockquote[textProp].replace(/[\r\n\s]/g, '').trim()
                 expect(text).toBe('123111')
                 delete avalon.vmodels.ccc1

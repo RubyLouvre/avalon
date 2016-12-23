@@ -62,7 +62,6 @@ describe('validate', function () {
         fireClick(btn)
         setTimeout(function () {
             expect(validate.onValidateAll).toHaveBeenCalled()
-            console.log('validate')
             var args = validate.onValidateAll.calls.argsFor(0)
             var first = args[0]
             expect(first.length).toBe(1)
@@ -192,8 +191,6 @@ describe('validate', function () {
             deduplicateInValidateAll: true
         })
     })
-    
-
-
+   
 
 })
