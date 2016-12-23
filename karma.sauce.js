@@ -46,7 +46,7 @@ module.exports = function(config) {
 
         sl_win_ie_9: createCustomLauncher('IE', 'Windows 2008', '9'),
 
-        sl_win_ie_10: createCustomLauncher('IE', 'Windows 2012', '10'),
+
 
         sl_win_ie_11: createCustomLauncher('IE', 'Windows 8.1', '11'),
 
@@ -58,7 +58,7 @@ module.exports = function(config) {
 
         chrome50: createCustomLauncher('chrome', 'Windows 10', '50.0'),
 
-
+        sl_win_ie_10: createCustomLauncher('IE', 'Windows 8', '10'),
         chrome40: createCustomLauncher('chrome', 'Windows 8', '40.0'),
 
         chrome30: createCustomLauncher('chrome', 'Windows 7', '30.0'),
