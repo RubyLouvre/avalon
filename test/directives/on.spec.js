@@ -206,8 +206,8 @@ describe('on', function () {
             setTimeout(function () {
                 expect(i).toBe(0)
                 done()
-            }, 150)
-        }, 150)
+            }, 100)
+        }, 100)
     })
 
     it('复杂路径的事件绑定', function (done) {

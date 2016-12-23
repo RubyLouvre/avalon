@@ -125,9 +125,9 @@ describe('widget', function() {
                     expect(div2[textProp]).toBe('新面板plus')
                     expect(span[textProp]).toBe('新按钮plus')
                     done()
-                }, 300)
-            }, 300)
-        }, 300)
+                }, 100)
+            }, 100)
+        }, 100)
     })
 
     it('通过更新配置对象修改组件界面(数组形式)', function(done) {
@@ -167,9 +167,9 @@ describe('widget', function() {
                     expect(div2[textProp]).toBe('新面板plus')
                     expect(span[textProp]).toBe('新按钮plus')
                     done()
-                }, 300)
-            }, 300)
-        }, 300)
+                }, 100)
+            }, 100)
+        }, 100)
     })
 
 
@@ -472,7 +472,7 @@ describe('widget', function() {
             delete avalon.components['Test']
             done()
 
-        }, 150)
+        }, 100)
 
     })
 
@@ -566,8 +566,8 @@ describe('widget', function() {
                     delete avalon.components['ms-pagination2']
                     delete avalon.vmodels.xxx_
                     done()
-                }, 150)
-            }, 150)
+                }, 100)
+            }, 100)
         }, 150)
 
     })
@@ -702,7 +702,7 @@ describe('widget', function() {
             delete avalon.vmodels['widget11']
             delete avalon.vmodels['CoursePlanCard']
             done()
-        }, 150)
+        }, 100)
 
     })
     it('移动多个同名的slot元素到组件内部', function(done) {
@@ -746,7 +746,7 @@ describe('widget', function() {
 
             delete avalon.components.Slots
             done()
-        }, 150)
+        }, 100)
 
     })
     it('slot+ms-for', function(done) {
@@ -784,7 +784,7 @@ describe('widget', function() {
 
             delete avalon.components.Slots
             done()
-        }, 150)
+        }, 100)
 
     })
     it('cached', function(done) {
@@ -1017,7 +1017,7 @@ describe('widget', function() {
 
                 }, 100)
             }, 100)
-        }, 300)
+        }, 100)
 
     })
 
@@ -1225,7 +1225,7 @@ describe('widget', function() {
             expect(op[1].selected).toBe(true)
             delete avalon.components['ms-pager3']
             done()
-        },300)
+        },130)
     })
     it("组件继承功能", function(done) {
         var aaa = avalon.component('aaa', {

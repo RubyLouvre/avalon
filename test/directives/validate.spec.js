@@ -77,7 +77,7 @@ describe('validate', function () {
                 expect(validate.onValidateAll.calls.count()).toBe(2)
                 expect(validate.onValidateAll.calls.argsFor(1)[0]).toEqual([])
                 done()
-            }, 300)
+            }, 100)
 
         },100)
     })

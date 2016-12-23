@@ -19,7 +19,7 @@ describe('innerHTML', function () {
         setTimeout(function(){
             expect(div.innerHTML).toBe('test3'); 
             done()
-        },3000)
+        },100)
        
     });
 });

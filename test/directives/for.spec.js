@@ -74,8 +74,8 @@ describe('for', function() {
                 expect(ps[3].innerHTML).toBe('3')
                 expect(ps[4].innerHTML).toBe('2')
                 done()
-            }, 300)
-        }, 300)
+            }, 100)
+        }, 100)
     })
 
     it('双层循环,并且重复利用已有的元素节点', function(done) {
@@ -603,7 +603,7 @@ describe('for', function() {
             var strongs = div.getElementsByTagName('strong')
             expect(strongs.length).toBe(6)
             done()
-        }, 150)
+        }, 100)
     })
 
     it('修正误用前面的节点当循环区域的父节点的问题', function(done) {
@@ -668,9 +668,9 @@ describe('for', function() {
                 expect(bs[3]._ms_context_.$index).toBe(3)
                 expect(bs[3]._ms_context_.item).toBe(4)
                 done()
-            }, 300)
+            }, 100)
 
-        }, 300)
+        }, 100)
     })
     it('diff', function() {
         var diff = avalon.directives.for.diff
