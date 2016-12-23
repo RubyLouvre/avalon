@@ -16,7 +16,7 @@ function setOption(vdom, values) {
        
         if (vdom.dom) {
             vdom.dom.selected = props.selected
-            var v = vdom.dom.selected
+            var v = vdom.dom.selected //必须加上这个,防止移出节点selected失效
         }
         
     }

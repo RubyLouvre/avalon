@@ -81,11 +81,15 @@ avalon.directive('for', {
         }
 
         if (this.userCb) {
-            this.userCb.call(this.vm, {
-                type: 'rendered',
-                target: this.begin.dom,
-                signature: this.signature
-            })
+            var me = this
+                setTimeout(function(){
+                    me.userCb.call(me.vm, {
+                    type: 'rendered',
+                    target: me.begin.dom,
+                    signature: me.signature
+                })
+            },0)
+            
         }
         delete this.updating
     },
