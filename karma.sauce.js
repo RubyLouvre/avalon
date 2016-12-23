@@ -97,11 +97,6 @@ module.exports = function(config) {
         },
 
 
-        iphone_latest: {
-            base: "SauceLabs",
-            browserName: "iphone",
-        }
-
 
 
         /*
