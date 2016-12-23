@@ -123,28 +123,29 @@ module.exports = function(config) {
         },
 
         // iOS (last 2 major versions)
-        ios_8: {
+        sl_ios_8: {
             "platformName": "iOS",
             "platformVersion": "8.4",
             "browserName": "iPhone",
             "deviceName": "iPhone Simulator",
             "appiumVersion": "1.5.3"
         },
-        ios_9: {
+        sl_ios_9: {
             "platformName": "iOS",
             "platformVersion": "9.3",
             "browserName": "iPhone",
             "deviceName": "iPhone Simulator",
-            "appiumVersion": "1.3.4"
+            "appiumVersion": "1.5.3"
         },
 
-        ios_10: {
+        iphone_latest: {
             "platformName": "iOS",
             "browserName": "iPhone",
             "platformVersion": "10.0",
             "deviceName": "iPhone 7 Plus Simulator",
             "appiumVersion": "1.6.2"
         },
+
         IE7: {
             base: 'SauceLabs',
             browserName: 'internet explorer',
