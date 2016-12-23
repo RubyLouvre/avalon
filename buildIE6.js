@@ -59,6 +59,7 @@ avalon.bind 在绑定非元素节点也要修正事件对象
 处理expr的null undefined情况     
 修正error函数参数顺序导致的错误
 支持组件继承(对象形式与函数形式皆可)
+添加对安卓4.4， safari7, firefox50, chrome55的测试
 */
     })
     var now = new Date
