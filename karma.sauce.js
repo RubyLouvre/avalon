@@ -43,12 +43,6 @@ module.exports = function(config) {
     var customLaunchers = {
         sl_win_ie_10: createCustomLauncher('IE', 'Windows 8', '10'),
 
-        "sl_safari_8": {
-            "base": "SauceLabs",
-            "browserName": "safari",
-            "version": "8.0",
-            "platform": "OS X 10.10"
-        },
         sl_win_ie_8: createCustomLauncher('IE', 'Windows XP', '8'),
 
         sl_win_ie_9: createCustomLauncher('IE', 'Windows 2008', '9'),
@@ -80,25 +74,25 @@ module.exports = function(config) {
 
         // Safari (last 2 versions)
 
-        "sl_safari_9": {
-            "base": "SauceLabs",
-            "browserName": "safari",
-            "version": "9.0",
-            "platform": "OS X 10.11"
-        },
+        sl_safari9: createCustomLauncher('safari', 'OS X 10.11', '9'),
+
+        sl_safari8: createCustomLauncher('safari', 'OS X 10.10', '8'),
+
+        sl_safari7: createCustomLauncher('safari', 'OS X 10.9', '7'),
 
         sl_android_4_0: createCustomLauncher('android', null, '4.0'),
+        sl_android_4_4: createCustomLauncher('android', null, '4.4'),
 
         sl_android_5_1: createCustomLauncher('android', null, '5.1'),
 
         // iOS (last 2 major versions)
-        sauce_ios9_iphone: {
+        sl_ios9_iphone: {
             base: 'SauceLabs',
             browserName: 'iphone',
             platform: 'OS X 10.10',
             version: '9.2',
         },
-        sauce_ios8_iphone: {
+        sl_ios8_iphone: {
             base: 'SauceLabs',
             browserName: 'iphone',
             platform: 'OS X 10.10',
@@ -195,7 +189,7 @@ module.exports = function(config) {
         // level of logging
         // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
         logLevel: config.LOG_INFO,
-        retryLimit: 5,
+        retryLimit: 10,
         sauceLabs: {
             testName: '加大mac测试',
             //recordScreenshots: false,
@@ -205,7 +199,7 @@ module.exports = function(config) {
             },
             public: 'public'
         },
-        captureTimeout: 120000,
+        captureTimeout: 160000,
         customLaunchers: customLaunchers,
 
         // start these browsers
