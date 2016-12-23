@@ -67,13 +67,12 @@ module.exports = function(config) {
         chrome40: createCustomLauncher('chrome', 'Windows 8', '40.0'),
 
         chrome30: createCustomLauncher('chrome', 'Windows 7', '30.0'),
-        sl_android_4_4: createCustomLauncher('android', null, '4.4'),
         sl_edge_14: createCustomLauncher('MicrosoftEdge', 'Windows 10', '14'),
         sl_win_ie_7: createCustomLauncher('IE', 'Windows XP', '7'),
 
         firefox20: createCustomLauncher('firefox', 'Windows XP', '20.0'),
 
-        firefox40: createCustomLauncher('firefox', 'Windows 8.1', '40.0'),
+        firefox40: createCustomLauncher('firefox', 'Windows 8', '40.0'),
         firefox50: createCustomLauncher('firefox', 'Windows 10', '50.0'),
 
         //chrome最低只支持到26
