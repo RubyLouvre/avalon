@@ -83,37 +83,47 @@ module.exports = function(config) {
         sl_android_5_1: createCustomLauncher('android', null, '5.1'),
 
         // iOS (last 2 major versions)
-        sl_iphone_5: {
-            "platformName": "iOS",
-            "platformVersion": "8.4",
-            "browserName": "Safari",
-            "deviceName": "iPhone 5 Simulator",
-            "appiumVersion": "1.5.3",
-            'deviceOrientation': 'portrait'
-        },
-        sl_iphone_6: {
-            "platformName": "iOS",
-            "platformVersion": "9.3",
-            "browserName": "Safari",
-            "deviceName": "iPhone 6s Plus Device",
-            "appiumVersion": "1.5.3",
-            'deviceOrientation': 'portrait'
-        },
+        /*   sl_iphone_5: {
+               "platformName": "iOS",
+               "platformVersion": "8.4",
+               "browserName": "Safari",
+               "deviceName": "iPhone 5 Simulator",
+               "appiumVersion": "1.5.3",
+               'deviceOrientation': 'portrait'
+           },
+           sl_iphone_6: {
+               "platformName": "iOS",
+               "platformVersion": "9.3",
+               "browserName": "Safari",
+               "deviceName": "iPhone 6s Plus Device",
+               "appiumVersion": "1.5.3",
+               'deviceOrientation': 'portrait'
+           },
 
-        sl_iphone_latest: {
-            "platformName": "iOS",
-            "browserName": "Safari",
-            "platformVersion": "10.0",
-            "deviceName": "iPhone 7 Plus Simulator",
-            "appiumVersion": "1.6.3",
-            'deviceOrientation': 'portrait'
+           sl_iphone_latest: {
+               "platformName": "iOS",
+               "browserName": "Safari",
+               "platformVersion": "10.0",
+               "deviceName": "iPhone 7 Plus Simulator",
+               "appiumVersion": "1.6.3",
+               'deviceOrientation': 'portrait'
+           },*/
+        sl_iphone: {
+            base: "SauceLabs",
+            browserName: "iphone",
+            version: "8.0"
         },
+        iphone_latest: {
+            base: "SauceLabs",
+            browserName: "iphone",
+        }
 
 
 
 
 
         /*
+        sl_iphone = { base: "SauceLabs", browserName: "iphone", version: "8.0" }
                 android_4_4: {
                     base: "SauceLabs",
                     browserName: "android",
