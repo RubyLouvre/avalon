@@ -74,9 +74,19 @@ module.exports = function(config) {
         //chrome最低只支持到26
 
         // Safari (last 2 versions)
-        sl_mac_safari_8: createCustomLauncher('safari', 'OS X 10.10'),
-        sl_mac_safari_9: createCustomLauncher('safari', 'OS X 10.11'),
 
+        "sl_safari_8": {
+            "base": "SauceLabs",
+            "browserName": "safari",
+            "version": "8.0",
+            "platform": "OS X 10.10"
+        },
+        "sl_safari_9": {
+            "base": "SauceLabs",
+            "browserName": "safari",
+            "version": "9.0",
+            "platform": "OS X 10.11"
+        },
 
         sl_android_4_0: createCustomLauncher('android', null, '4.0'),
         sl_android_4_4: createCustomLauncher('android', null, '4.4'),
