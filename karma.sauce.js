@@ -61,10 +61,10 @@ module.exports = function(config) {
 
         sl_edge_13: createCustomLauncher('MicrosoftEdge', 'Windows 10', '13'),
 
-        chrome54: createCustomLauncher('chrome', 'Windows 10', '54.0'),
+        chrome55: createCustomLauncher('chrome', 'OS X 10.10', '55.0'),
 
 
-        chrome40: createCustomLauncher('chrome', 'Windows 8', '40.0'),
+        chrome45: createCustomLauncher('chrome', 'Windows 8', '45.0'),
 
         chrome30: createCustomLauncher('chrome', 'Windows 7', '30.0'),
         sl_edge_14: createCustomLauncher('MicrosoftEdge', 'Windows 10', '14'),
