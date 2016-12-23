@@ -53,7 +53,7 @@ module.exports = function(config) {
 
 
         sl_edge_13: createCustomLauncher('MicrosoftEdge', 'Windows 10', '13'),
-        sl_edge_14: createCustomLauncher('MicrosoftEdge', 'Windows 10', '14'),
+       
         chrome54: createCustomLauncher('chrome', 'Windows 10', '54.0'),
 
         chrome50: createCustomLauncher('chrome', 'Windows 10', '50.0'),
@@ -62,7 +62,7 @@ module.exports = function(config) {
         chrome40: createCustomLauncher('chrome', 'Windows 8', '40.0'),
 
         chrome30: createCustomLauncher('chrome', 'Windows 7', '30.0'),
-
+        sl_edge_14: createCustomLauncher('MicrosoftEdge', 'Windows 10', '14'),
         sl_win_ie_7: createCustomLauncher('IE', 'Windows XP', '7'),
 
         firefox20: createCustomLauncher('firefox', 'Windows 7', '20.0'),
