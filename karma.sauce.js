@@ -102,10 +102,10 @@ module.exports = function(config) {
             version: '40',
             platform: 'Windows 8.1'
         },
-        firefox48: {
+        firefox50: {
             base: 'SauceLabs',
             browserName: 'firefox',
-            version: '48',
+            version: '50',
             platform: 'Windows 10'
         },
         // Safari (last 2 versions)
@@ -138,9 +138,9 @@ module.exports = function(config) {
         },
         iphone_latest: {
             "platformName": "iOS",
-            "platformVersion": "10",
-            "deviceName": "iPhone Simulator",
-            "appiumVersion": "1.5.3"
+            "platformVersion": "10.0",
+            "deviceName": "iPhone 7 Plus Simulator",
+            "appiumVersion": "1.6.2"
         },
         IE7: {
             base: 'SauceLabs',
