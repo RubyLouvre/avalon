@@ -152,7 +152,7 @@ module.exports = function(config) {
             version: '7',
             platform: 'Windows XP'
         },
-       
+
         android_4_4: {
             base: "SauceLabs",
             browserName: "android",
@@ -161,12 +161,7 @@ module.exports = function(config) {
             deviceType: 'tablet'
         },
 
-        android_4_1: {
-            base: "SauceLabs",
-            browserName: "android",
-            version: "4.1",
-            deviceName: 'Samsung Galaxy Note Emulator'
-        },
+
         android_4_0: {
             base: "SauceLabs",
             browserName: "android",
@@ -179,10 +174,10 @@ module.exports = function(config) {
             platform: 'Linux',
             version: '5.0'
         }
-        
-       // { browserName: "android", platform: "Linux", "device-type": "tablet", version: "4.1" },
+
+        // { browserName: "android", platform: "Linux", "device-type": "tablet", version: "4.1" },
     };
-//https://github.com/pwnn/tagOf/blob/d510ec5195f70d0fa69cfa95e37bd9032d3afc73/test/config/.launchers.yml
+    //https://github.com/pwnn/tagOf/blob/d510ec5195f70d0fa69cfa95e37bd9032d3afc73/test/config/.launchers.yml
     config.set({
 
         // base path that will be used to resolve all patterns (eg. files, exclude)
