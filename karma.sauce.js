@@ -127,17 +127,20 @@ module.exports = function(config) {
         sl_ios_9: {
             "platformName": "iOS",
             "platformVersion": "9.3",
+            "browserName": "iPhone",
             "deviceName": "iPhone Simulator",
             "appiumVersion": "1.3.4"
         },
         sl_ios_8: {
             "platformName": "iOS",
             "platformVersion": "8.4",
+            "browserName": "iPhone",
             "deviceName": "iPhone Simulator",
             "appiumVersion": "1.5.3"
         },
         iphone_latest: {
             "platformName": "iOS",
+            "browserName": "iPhone",
             "platformVersion": "10.0",
             "deviceName": "iPhone 7 Plus Simulator",
             "appiumVersion": "1.6.2"
