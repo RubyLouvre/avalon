@@ -1,8 +1,8 @@
-import { avalon,isObject, platform} from '../seed/core'
+import { avalon, isObject, platform } from '../seed/core'
 var valiDir = avalon.directive('validate', {
-    diff: function (validator) {
+    diff: function(validator) {
         var vdom = this.node
-        if (vdom.validator ) {
+        if (vdom.validator) {
             return
         }
         if (isObject(validator)) {
@@ -12,7 +12,7 @@ var valiDir = avalon.directive('validate', {
             //也可以称之为safeValidate
             vdom.vmValidator = validator
             validator = platform.toJson(validator)
-    
+
             vdom.validator = validator
             for (var name in valiDir.defaults) {
                 if (!validator.hasOwnProperty(name)) {
@@ -23,27 +23,27 @@ var valiDir = avalon.directive('validate', {
             return true
         }
     },
-    update: function (vdom) {
+    update: function(vdom) {
         var validator = vdom.validator
         var dom = vdom.dom
         validator.dom = dom
         dom._ms_validate_ = validator
-        
+
         //为了方便用户手动执行验证，我们需要为原始vmValidate上添加一个onManual方法
         var v = vdom.vmValidator
         try {
             v.onManual = onManual
-        } catch (e) {
-        }
+        } catch (e) {}
         delete vdom.vmValidator
 
         dom.setAttribute('novalidate', 'novalidate')
+
         function onManual() {
             valiDir.validateAll.call(validator, validator.onValidateAll)
         }
         /* istanbul ignore if */
         if (validator.validateAllInSubmit) {
-            avalon.bind(dom, 'submit', function (e) {
+            avalon.bind(dom, 'submit', function(e) {
                 e.preventDefault()
                 onManual()
             })
@@ -57,24 +57,24 @@ var valiDir = avalon.directive('validate', {
             })
         }
     },
-    validateAll: function (callback) {
+    validateAll: function(callback) {
         var validator = this
         var fn = typeof callback === 'function' ? callback : validator.onValidateAll
-        var promises = validator.fields.filter(function (field) {
+        var promises = validator.fields.filter(function(field) {
             var el = field.dom
             return el && !el.disabled && validator.dom.contains(el)
-        }).map(function (field) {
+        }).map(function(field) {
             return valiDir.validate(field, true)
         })
         var uniq = {}
-        return Promise.all(promises).then(function (array) {
+        return Promise.all(promises).then(function(array) {
             var reasons = array.concat.apply([], array)
             if (validator.deduplicateInValidateAll) {
-               
-                reasons = reasons.filter(function (reason) {
+
+                reasons = reasons.filter(function(reason) {
                     var el = reason.element
                     var uuid = el.uniqueID || (el.uniqueID = setTimeout('1'))
-                    
+
                     if (uniq[uuid]) {
                         return false
                     } else {
@@ -85,42 +85,43 @@ var valiDir = avalon.directive('validate', {
             fn.call(validator.dom, reasons) //这里只放置未通过验证的组件
         })
     },
-    addField: function (field) {
+    addField: function(field) {
         var validator = this
         var node = field.dom
-        /* istanbul ignore if */
+            /* istanbul ignore if */
         if (validator.validateInKeyup && (!field.isChanged && !field.debounceTime)) {
-            avalon.bind(node, 'keyup', function (e) {
+            avalon.bind(node, 'keyup', function(e) {
                 validator.validate(field, 0, e)
             })
         }
         /* istanbul ignore if */
         if (validator.validateInBlur) {
-            avalon.bind(node, 'blur', function (e) {
+            avalon.bind(node, 'blur', function(e) {
                 validator.validate(field, 0, e)
             })
         }
         /* istanbul ignore if */
         if (validator.resetInFocus) {
-            avalon.bind(node, 'focus', function (e) {
+            avalon.bind(node, 'focus', function(e) {
                 validator.onReset.call(node, e, field)
             })
         }
     },
-    validate: function (field, isValidateAll, event) {
+    validate: function(field, isValidateAll, event) {
         var promises = []
         var value = field.value
         var elem = field.dom
-       
+
         /* istanbul ignore if */
-        if (typeof Promise !== 'function') {//avalon-promise不支持phantomjs
-            avalon.warn('please npm install es6-promise or bluebird')
+        if (typeof Promise !== 'function') { //avalon-promise不支持phantomjs
+            avalon.warn('浏览器不支持原生Promise,请下载并<script src=url>引入\nhttps://github.com/RubyLouvre/avalon/blob/master/test/promise.js')
         }
         /* istanbul ignore if */
         if (elem.disabled)
             return
         var rules = field.rules
-        var ngs = [], isOk = true
+        var ngs = [],
+            isOk = true
         if (!(rules.norequired && value === '')) {
             for (var ruleName in rules) {
                 var ruleValue = rules[ruleName]
@@ -128,17 +129,17 @@ var valiDir = avalon.directive('validate', {
                     continue
                 var hook = avalon.validators[ruleName]
                 var resolve
-                promises.push(new Promise(function (a, b) {
+                promises.push(new Promise(function(a, b) {
                     resolve = a
                 }))
-                var next = function (a) {
-                     var reason = {
-                            element: elem,
-                            data: field.data,
-                            message: elem.getAttribute('data-' + ruleName + '-message') || elem.getAttribute('data-message') || hook.message,
-                            validateRule: ruleName,
-                            getMessage: getMessage
-                        }
+                var next = function(a) {
+                    var reason = {
+                        element: elem,
+                        data: field.data,
+                        message: elem.getAttribute('data-' + ruleName + '-message') || elem.getAttribute('data-message') || hook.message,
+                        validateRule: ruleName,
+                        getMessage: getMessage
+                    }
                     if (a) {
                         resolve(true)
                     } else {
@@ -154,13 +155,13 @@ var valiDir = avalon.directive('validate', {
         }
 
         //如果promises不为空，说明经过验证拦截器
-        return Promise.all(promises).then(function (array) {
+        return Promise.all(promises).then(function(array) {
             if (!isValidateAll) {
                 var validator = field.validator
                 if (isOk) {
                     validator.onSuccess.call(elem, [{
-                           data: field.data,
-                           element: elem
+                        data: field.data,
+                        element: elem
                     }], event)
                 } else {
                     validator.onError.call(elem, ngs, event)
@@ -176,7 +177,7 @@ var rformat = /\\?{{([^{}]+)\}}/gm
 
 function getMessage() {
     var data = this.data || {}
-    return this.message.replace(rformat, function (_, name) {
+    return this.message.replace(rformat, function(_, name) {
         return data[name] == null ? '' : data[name]
     })
 }

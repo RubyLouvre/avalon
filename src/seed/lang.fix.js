@@ -1,4 +1,3 @@
-
 /**
  * 此模块用于修复语言的底层缺陷
  */
@@ -11,15 +10,27 @@ function isNative(fn) {
 /* istanbul ignore if*/
 if (!isNative('司徒正美'.trim)) {
     var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g
-    String.prototype.trim = function () {
+    String.prototype.trim = function() {
         return this.replace(rtrim, '')
     }
 }
+if (!Object.create) {
+    Object.create = (function() {
+        function F() {}
+
+        return function(o) {
+            if (arguments.length != 1) {
+                throw new Error('Object.create implementation only accepts one parameter.');
+            }
+            F.prototype = o;
+            return new F()
+        }
+    })()
+}
 var hasDontEnumBug = !({
-    'toString': null
-}).propertyIsEnumerable('toString'),
-    hasProtoEnumBug = (function () {
-    }).propertyIsEnumerable('prototype'),
+        'toString': null
+    }).propertyIsEnumerable('toString'),
+    hasProtoEnumBug = (function() {}).propertyIsEnumerable('prototype'),
     dontEnums = [
         'toString',
         'toLocaleString',
@@ -32,7 +43,7 @@ var hasDontEnumBug = !({
     dontEnumsLength = dontEnums.length;
 /* istanbul ignore if*/
 if (!isNative(Object.keys)) {
-    Object.keys = function (object) { //ecma262v5 15.2.3.14
+    Object.keys = function(object) { //ecma262v5 15.2.3.14
         var theKeys = []
         var skipProto = hasProtoEnumBug && typeof object === 'function'
         if (typeof object === 'string' || (object && object.callee)) {
@@ -63,7 +74,7 @@ if (!isNative(Object.keys)) {
 }
 /* istanbul ignore if*/
 if (!isNative(Array.isArray)) {
-    Array.isArray = function (a) {
+    Array.isArray = function(a) {
         return Object.prototype.toString.call(a) === '[object Array]'
     }
 }
@@ -71,12 +82,12 @@ if (!isNative(Array.isArray)) {
 /* istanbul ignore if*/
 if (!isNative(isNative.bind)) {
     /* istanbul ignore next*/
-    Function.prototype.bind = function (scope) {
+    Function.prototype.bind = function(scope) {
         if (arguments.length < 2 && scope === void 0)
             return this
         var fn = this,
             argv = arguments
-        return function () {
+        return function() {
             var args = [],
                 i
             for (i = 1; i < argv.length; i++)
@@ -107,7 +118,7 @@ try {
     // NodeList (e.g., getElementsByTagName), HTMLCollection (e.g., childNodes),
     // and will not fail on other DOM objects (as do DOM elements in IE < 9)
     /* istanbul ignore next*/
-    ap.slice = function (begin, end) {
+    ap.slice = function(begin, end) {
         // IE < 9 gets unhappy with an undefined end argument
         end = (typeof end !== 'undefined') ? end : this.length
 
@@ -154,15 +165,15 @@ function iterator(vars, body, ret) {
     var fun = 'for(var ' + vars + 'i=0,n = this.length; i < n; i++){' +
         body.replace('_', '((i in this) && fn.call(scope,this[i],i,this))') +
         '}' + ret
-    /* jshint ignore:start */
+        /* jshint ignore:start */
     return Function('fn,scope', fun)
-    /* jshint ignore:end */
+        /* jshint ignore:end */
 }
 /* istanbul ignore if*/
 if (!isNative(ap.map)) {
     avalon.shadowCopy(ap, {
         //定位操作，返回数组中第一个等于给定参数的元素的索引值。
-        indexOf: function (item, index) {
+        indexOf: function(item, index) {
             var n = this.length,
                 i = ~~index
             if (i < 0)
@@ -173,7 +184,7 @@ if (!isNative(ap.map)) {
             return -1
         },
         //定位操作，同上，不过是从后遍历。
-        lastIndexOf: function (item, index) {
+        lastIndexOf: function(item, index) {
             var n = this.length,
                 i = index == null ? n - 1 : index
             if (i < 0)
