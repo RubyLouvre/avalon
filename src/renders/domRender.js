@@ -49,7 +49,7 @@ Render.prototype = {
         if (this.root && this.root.nodeType > 0) {
             vnodes = fromDOM(this.root) //转换虚拟DOM
                 //将扫描区域的每一个节点与其父节点分离,更少指令对DOM操作时,对首屏输出造成的频繁重绘
-            dumpTree(this.root)
+           // dumpTree(this.root)
         } else if (typeof this.root === 'string') {
             vnodes = fromString(this.root) //转换虚拟DOM
         } else {
@@ -115,6 +115,11 @@ Render.prototype = {
         if (isRoot) {
             this.complete()
         }
+    },
+    component: function(node, state, vm) {
+        node.state = state
+        node.vm = vm
+        return node
     },
     /**
      * 从文本节点获取指令
@@ -249,7 +254,7 @@ Render.prototype = {
                 }
 
             }
-            scope.$render = this
+           // scope.$render = this
         }
         return scope
     },

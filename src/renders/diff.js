@@ -32,22 +32,21 @@ export function diff(a, b) {
             return directives['for'].diff(a, b)
             break
         default:
+          
+            
             toDOM(a)
             if (a.staticRoot && a.hasScan) {
-
                 return
             }
             var parentNode = a.dom
-            if (a.nodeName !== b.nodeName) {
+             if (a.nodeName !== b.nodeName) {
                 handleIf(a, b)
                 return
             }
             var delay
-            var isHTML
             if (b.dirs) {
                 for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                     var adir = a.dirs[i]
-
 
                     if (!adir.diff) {
                         avalon.mix(adir, directives[adir.type])
@@ -81,7 +80,7 @@ export function diff(a, b) {
 
                     if (d) {
                         let arr = diff(c, d)
-                        c.updating = false
+                     
 
                         if (typeof arr === 'number') {
                             //  console.log('数组扁平化', arr)

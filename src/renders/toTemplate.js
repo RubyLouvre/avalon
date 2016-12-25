@@ -2,6 +2,7 @@ import { parseAttributes } from '../parser/attributes'
 import { parseInterpolate } from '../parser/interpolate'
 import { keyMap, createExpr } from '../parser/index'
 import { avalon, config, directives } from '../seed/core'
+import { fromString } from '../vtree/fromString'
 
 
 export function Yield(nodes, render) {
@@ -57,6 +58,26 @@ Yield.prototype = {
 
         return `Ʃ.comment(${avalon.quote(node.nodeValue)})`
     },
+    genComponent(node, dirs) {
+        for (var i in dirs) {
+            if (i !== 'ms-widget')
+                delete dirs[i]
+        }
+
+        var nodes = node.vtype === 2 ?
+            fromString(node.children[0].nodeValue) :
+            node.vtype !== 1 ? node.children.concat() : []
+
+        node.children.length = 0
+
+        return toJSONByArray(
+            `nodeName: '${node.nodeName}'`,
+            this.genDirs(dirs, node),
+            'vm: __vmodel__',
+            `props: ${toJSONByObject(node.props)}`,
+            `children: ${this.genChildren(nodes)}`
+        )
+    },
     genElement(node) {
         if (node.staticRoot) {
             var index = this.render.staticIndex++
@@ -66,8 +87,13 @@ Yield.prototype = {
         var dirs = node.dirs,
             props = node.props
         if (dirs) {
+
             var hasCtrl = dirs['ms-controller']
             delete dirs['ms-controller']
+            if (dirs['ms-widget']) {
+                return this.genComponent(node, dir)
+            }
+
             if (dirs['ms-text']) {
                 var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag)
                 var code = createExpr(expr, 'text')
@@ -88,6 +114,7 @@ Yield.prototype = {
             if (!Object.keys(dirs).length) {
                 dirs = null
             }
+
         }
 
         var json = toJSONByArray(
