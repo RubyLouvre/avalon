@@ -19,8 +19,8 @@ import { diff } from './diff'
  * @param {Function|Undefined} beforeReady
  * @returns {Render}
  */
-avalon.scan = function(node, vm) {
-    return new Render(node, vm)
+avalon.scan = function(node, vm, a) {
+    return new Render(node, vm, a)
 }
 
 /**
@@ -286,7 +286,7 @@ Render.prototype = {
             this.tmpl = fn
         }
         if (this.exe) {
-            console.log('执行', this.uuid)
+            console.log('执行', this.slots)
             collectDeps(this, this.update)
 
         }

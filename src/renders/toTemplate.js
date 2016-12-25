@@ -68,12 +68,13 @@ Yield.prototype = {
             'vm: __vmodel__',
             'slots: slots',
             `props: ${toJSONByObject(node.props)}`,
-            `children: []`
+            `children: ${this.genChildren(node.children)}`
         )
-
+        var _children = node._children
+        delete node._children
         return `(function() {
                 var slots = {}
-                var slotedElements = ${this.genChildren(node._children)}
+                var slotedElements = ${this.genChildren(_children)}
                 return ${ json }
             })()`
 

@@ -29,18 +29,18 @@ avalon.directive('widget', {
     deep: true,
     init: function(oldVal, vdom, newVdom) {
         //cached属性必须定义在组件容器里面,不是template中
-
         this.cacheVm = !!newVdom.props.cached
         if (vdom.dom && vdom.nodeName === '#comment') {
             var comment = vdom.dom
         }
+        //将数组形式转换为对象形式
         var value = toObject(oldVal)
-            //外部VM与内部VM
-            // ＝＝＝创建组件的VM＝＝BEGIN＝＝＝
+
+        // ＝＝＝创建组件的VM＝＝BEGIN＝＝＝
         var is = newVdom.props.is || value.is
         this.is = is
         var component = avalon.components[is]
-            //外部传入的总大于内部
+
 
         //如果组件还没有注册，那么将原元素变成一个占位用的注释节点
         if (!component) {
@@ -52,15 +52,16 @@ avalon.directive('widget', {
             return
         }
         this.readyState = 1
-            //如果是非空元素，比如说xmp, ms-*, template
+
+        //如果是非空元素，比如说xmp, ms-*, template
         var id = value.id || value.$id
         var hasCache = avalon.vmodels[id]
         var fromCache = false
-        console.log('扫描组件的模块', newVdom)
         if (hasCache) {
             comVm = hasCache
             this.comVm = comVm
-                // replaceRoot(this, comVm.$render)
+
+            // replaceRoot(this, comVm.$render)
             fromCache = true
 
         } else {
@@ -68,52 +69,28 @@ avalon.directive('widget', {
             var curVm = newVdom.vm
             fireComponentHook(comVm, vdom, 'Init')
             this.comVm = comVm
-                //在组值的模板里有许多slot元素,它们需要转换成Z.slot('name')
-                // ＝＝＝创建组件的VM＝＝END＝＝＝
+
+            //在组值的模板里有许多slot元素,它们需要转换成Z.slot('name')
+            // ＝＝＝创建组件的VM＝＝END＝＝＝
 
             var innerRender = avalon.scan(component.template, comVm, false)
 
             comVm.$render = innerRender
-            console.log('扫描完毕')
-            var nodesWithSlot = []
-            if (component.soleSlot) {
 
-                this.getter = createGetter('@' + component.soleSlot)
-                nodesWithSlot = { dynamic: true, nodeName: '#text', nodeValue: this.getter(comVm) || '' }
-                innerRender.slots.defaults = [nodesWithSlot]
+            if (component.soleSlot) {
+                this.getter = this.getter || createGetter('@' + component.soleSlot)
+                innerRender.slots.defaults = { dynamic: true, nodeName: '#text', nodeValue: this.getter(comVm) || '' }
             } else {
-                /*   var objectSlot = {}
-                   newVdom.children.forEach(function(el, i) { //要求带slot属性
-                       if (el.slot) {
-                           var nodes = getRange(nodesWithSlot, el)
-                           nodes.push(nodes.end)
-                           nodes.unshift(el)
-                           objectSlot[el.slot] = nodes
-                       } else if (el.props) {
-                           var name = el.props.slot
-                           if (name) {
-                               delete el.props.slot
-                               if (Array.isArray(objectSlot[name])) {
-                                   objectSlot[name].push(el)
-                               } else {
-                                   objectSlot[name] = [el]
-                               }
-                           }
-                       }
-                   })*/
-                console.log(newVdom.slots, 'dddd')
                 innerRender.slots = newVdom.slots
             }
+
             innerRender.exe = true
-            innerRender.update = function() {}
             innerRender.complete()
+
             throw innerRender
         }
-        //是否把slot也放在
-        /*
-        <div>原来旧的</div>
-       
-        */
+
+
         //当组件生成出来，slot元素应该在它应在的位置，然后旧的组件也有slot元素 
         if (comment) {
             var dom = avalon.vdom(vdom, 'toDOM')
@@ -126,9 +103,7 @@ avalon.directive('widget', {
         console.log(vdom, newVdom)
         diff(vdom, newVdom)
 
-        //  dumpTree(vdom.dom)
         comVm.$element = vdom.dom
-            //    groupTree(vdom.dom, vdom.children)
         if (fromCache) {
             fireComponentHook(comVm, vdom, 'Enter')
         } else {
@@ -154,8 +129,9 @@ avalon.directive('widget', {
                 break
 
             default:
-                this.readyState++
-                    var comVm = this.comVm
+                this.readyState++;
+
+                var comVm = this.comVm
                 avalon.viewChanging = true
                 avalon.transaction(function() {
                     for (var i in value) {
