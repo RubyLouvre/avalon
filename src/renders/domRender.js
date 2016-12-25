@@ -33,6 +33,7 @@ export function Render(node, vm, noexe) {
     this.callbacks = []
     this.staticIndex = 0
     this.staticTree = {}
+    this.slots = {}
     this.uuid = Math.random()
     this.init()
 
@@ -49,7 +50,7 @@ Render.prototype = {
         if (this.root && this.root.nodeType > 0) {
             vnodes = fromDOM(this.root) //转换虚拟DOM
                 //将扫描区域的每一个节点与其父节点分离,更少指令对DOM操作时,对首屏输出造成的频繁重绘
-           // dumpTree(this.root)
+            dumpTree(this.root)
         } else if (typeof this.root === 'string') {
             vnodes = fromString(this.root) //转换虚拟DOM
         } else {
@@ -68,9 +69,19 @@ Render.prototype = {
     text: function(a, d) {
         return { nodeName: '#text', nodeValue: a || '', dynamic: d }
     },
+    collectSlot: function(node, slots) {
+        var name = node.props.slot
+
+        slots[name] = node
+        return node
+    },
     html: function(html, vm) {
         var a = new Render(html, vm, true)
         return a.tmpl.exec(vm, this)
+    },
+    slot: function(name) {
+        console.log('索取', name, this.slots[name])
+        return this.slots[name] || []
     },
     ctrl: function(id, scope, cb) {
         var dir = directives['controller']
@@ -116,11 +127,7 @@ Render.prototype = {
             this.complete()
         }
     },
-    component: function(node, state, vm) {
-        node.state = state
-        node.vm = vm
-        return node
-    },
+
     /**
      * 从文本节点获取指令
      * @param {type} vdom 
@@ -155,6 +162,7 @@ Render.prototype = {
     scanTag(vdom, scope, parentChildren, isRoot) {
         var attrs = vdom.props
 
+
         //处理dirs
         var dirs = this.checkDirs(vdom, attrs)
 
@@ -187,13 +195,20 @@ Render.prototype = {
             if (!dirs['ms-widget']) {
                 dirs['ms-widget'] = '{}'
             }
-
         }
-
+        if (dirs['ms-widget']) {
+            var children = vdom.vtype === 2 ?
+                fromString(vdom.children[0].nodeValue) :
+                vdom.vtype !== 1 ? vdom.children.concat() : []
+            vdom._children = children
+            this.scanChildren(children)
+        }
         if (dirs) {
             vdom.dirs = dirs
             vdom.dynamic = true
         }
+
+        // 
     },
     checkDirs(vdom, attrs) {
         var dirs = {},
@@ -254,7 +269,7 @@ Render.prototype = {
                 }
 
             }
-           // scope.$render = this
+            // scope.$render = this
         }
         return scope
     },
@@ -264,14 +279,14 @@ Render.prototype = {
      * @returns {undefined}
      */
     complete() {
-        optimize(this.root)
-        this.Yield = Yield
+        if (!this.tmpl) {
+            optimize(this.root)
 
-        var fn = new Yield(this.vnodes, this)
-        this.tmpl = fn
+            var fn = new Yield(this.vnodes, this)
+            this.tmpl = fn
+        }
         if (this.exe) {
-
-            var me = this
+            console.log('执行', this.uuid)
             collectDeps(this, this.update)
 
         }

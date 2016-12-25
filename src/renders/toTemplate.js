@@ -42,19 +42,18 @@ Yield.prototype = {
         if (node.dynamic) {
             return `Ʃ.text( ${ createExpr( parseInterpolate(node.nodeValue)) },${true})`
         }
-        return `Ʃ.text(${avalon.quote(node.nodeValue)})`
+        return `Ʃ.text( ${avalon.quote(node.nodeValue)} )`
     },
     genComment(node) {
         if (node.dynamic) {
             var dir = node.for
             directives['for'].parse.call(dir)
             var keys = `'${dir.valName},${dir.keyName},${dir.asName},${dir.cb}'`
-            return `Ʃ.comment('ms-for:${dir.expr}'),
+            return `Ʃ.comment('ms-for: ${dir.expr}'),
                     Ʃ.repeat(${ createExpr(dir.expr) }, ${keys}, function($$l){
                 return ${this.genChildren(dir.nodes)}
             })`
         }
-
 
         return `Ʃ.comment(${avalon.quote(node.nodeValue)})`
     },
@@ -63,26 +62,30 @@ Yield.prototype = {
             if (i !== 'ms-widget')
                 delete dirs[i]
         }
-
-        var nodes = node.vtype === 2 ?
-            fromString(node.children[0].nodeValue) :
-            node.vtype !== 1 ? node.children.concat() : []
-
-        node.children.length = 0
-
-        return toJSONByArray(
+        var json = toJSONByArray(
             `nodeName: '${node.nodeName}'`,
             this.genDirs(dirs, node),
             'vm: __vmodel__',
+            'slots: slots',
             `props: ${toJSONByObject(node.props)}`,
-            `children: ${this.genChildren(nodes)}`
+            `children: []`
         )
+
+        return `(function() {
+                var slots = {}
+                var slotedElements = ${this.genChildren(node._children)}
+                return ${ json }
+            })()`
+
     },
     genElement(node) {
+        if (node.nodeName === 'slot') {
+            return `Ʃ.slot(${ avalon.quote(node.props.name || "default") })`
+        }
         if (node.staticRoot) {
             var index = this.render.staticIndex++
                 this.render.staticTree[index] = node
-            return `Ʃ.static(${index})`
+            return `Ʃ.static(${ index })`
         }
         var dirs = node.dirs,
             props = node.props
@@ -91,13 +94,14 @@ Yield.prototype = {
             var hasCtrl = dirs['ms-controller']
             delete dirs['ms-controller']
             if (dirs['ms-widget']) {
-                return this.genComponent(node, dir)
+                return this.genComponent(node, dirs)
             }
 
             if (dirs['ms-text']) {
                 var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag)
                 var code = createExpr(expr, 'text')
-                node.template = `[Ʃ.text( ${code} )]`
+                node.template = `[Ʃ.text(${ code })]
+            `
                 node.children = [{ dynamic: true, nodeName: '#text', nodeValue: NaN }]
                 removeDir('text', dirs, props)
                 removeDir('html', dirs, props)
@@ -119,24 +123,26 @@ Yield.prototype = {
 
         var json = toJSONByArray(
             `nodeName: '${node.nodeName}'`,
-            node.vtype ? `vtype: ${node.vtype}` : '',
+            node.vtype ? `vtype: ${ node.vtype }` : '',
             node.staticRoot ? 'staticRoot: true' : '',
             dirs ? this.genDirs(dirs, node) : '',
             dirs ? 'vm: __vmodel__' : '',
             dirs ? 'local: $$l' : '',
-            `props: ${toJSONByObject(node.props)}`,
-            `children: ${ node.template || this.genChildren(node.children)}`
+            `props: ${ toJSONByObject(node.props) }`,
+            `children: ${ node.template || this.genChildren(node.children) }`
 
         )
-
+        if (node.props.slot) {
+            json = `Ʃ.collectSlot(${json},slots)`
+        }
 
         if (hasIf) {
-            json = `${hasIf}? ${json}: Ʃ.comment('if')`
+            json = `${ hasIf } ? ${ json } : Ʃ.comment('if')`
         }
         if (hasCtrl) {
-            return `Ʃ.ctrl(${avalon.quote(hasCtrl)}, __vmodel__,function(__vmodel__){ 
-                 return ${json}
-             })`
+            return `Ʃ.ctrl( ${ avalon.quote(hasCtrl) }, __vmodel__, function(__vmodel__) {
+                return ${ json }
+            }) `
         } else {
             return json
         }
@@ -151,11 +157,10 @@ Yield.prototype = {
                     return this.genDuplex(dir, node)
                 }
                 return toJSONByArray(
-                    `type: ${avalon.quote(dir.type)}`,
-                    `name: ${avalon.quote(dir.name)}`,
-
-                    dir.param ? `param: ${avalon.quote(dir.param)}` : '',
-                    `value:  ${  dir.type ==='on' ? avalon.quote(dir.expr) :createExpr(dir.expr)}`
+                    `type: ${ avalon.quote(dir.type) }`,
+                    `name: ${ avalon.quote(dir.name) }`,
+                    dir.param ? `param: ${ avalon.quote(dir.param) }` : '',
+                    `value: ${ dir.type === 'on' ? avalon.quote(dir.expr) : createExpr(dir.expr) }`
                 )
             }, this) + ']'
         }
@@ -165,16 +170,16 @@ Yield.prototype = {
         //抽取里面的change, debounce过滤器为isChanged， debounceTime
         directives.duplex.parse(dir, node)
         return toJSONByArray(
-            dir.isChecked ? `isChecked: ${dir.isChecked}` : '',
-            dir.isChange ? `isChange: ${dir.isChange}` : '',
-            dir.debounceTime ? `debounceTime: ${dir.debounceTime}` : '',
-            dir.cb ? `cb: ${avalon.quote(dir.cb)}` : '',
-            dir.parsers ? `parsers: ${avalon.quote(dir.parsers)}` : '',
-            `dtype: ${avalon.quote(dir.dtype)}`,
-            `type: ${avalon.quote(dir.type)}`,
-            `expr: ${avalon.quote(dir.expr)}`,
-            `name: ${avalon.quote(dir.name)}`,
-            `value:  ${ createExpr(dir.expr) }`
+            dir.isChecked ? `isChecked: ${ dir.isChecked }` : '',
+            dir.isChange ? `isChange: ${ dir.isChange }` : '',
+            dir.debounceTime ? `debounceTime: ${ dir.debounceTime }` : '',
+            dir.cb ? `cb: ${ avalon.quote(dir.cb) }` : '',
+            dir.parsers ? `parsers: ${ avalon.quote(dir.parsers) }` : '',
+            `dtype: ${ avalon.quote(dir.dtype) }`,
+            `type: ${ avalon.quote(dir.type) }`,
+            `expr: ${ avalon.quote(dir.expr) }`,
+            `name: ${ avalon.quote(dir.name) }`,
+            `value: ${ createExpr(dir.expr) }`
         )
     }
 
@@ -204,7 +209,7 @@ function toJSONByObject(obj) {
     for (var i in obj) {
         if (obj[i] === undefined || obj[i] === '')
             continue
-        arr.push(`${ fixKey(i) }: ${avalon.quote(obj[i])}`)
+        arr.push(`${ fixKey(i) }: ${ avalon.quote(obj[i]) }`)
     }
     return '{' + arr + '}'
 }

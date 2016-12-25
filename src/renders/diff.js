@@ -27,8 +27,6 @@ export function diff(a, b) {
             break
         case void(0):
 
-            console.log('这是数组')
-
             return directives['for'].diff(a, b)
             break
         default:
@@ -40,8 +38,23 @@ export function diff(a, b) {
             }
             var parentNode = a.dom
              if (a.nodeName !== b.nodeName) {
-                handleIf(a, b)
-                return
+                 if(b.nodeName === '#comment'){
+                    handleIf(a, b)
+                    return
+                }else{
+                    a.nodeName = b.nodeName
+                    a.vtype = b.vtype
+                    a.props = b.props
+                    a.children = b.children
+                    var oldDOM = a.dom
+                    delete a.dom
+                   
+                    toDOM(a)
+                  //  oldDOM.parentNode.replaceChild(a.dom, oldDOM)
+                    parentNode = a.dom
+                  //  console.log('替换组件的根节点')
+                }
+               
             }
             var delay
             if (b.dirs) {
@@ -63,12 +76,11 @@ export function diff(a, b) {
 
                     } else {
                         if (!adir.diff)
-                            console.log(adir, '没有diff方法')
+                            avalon.log(adir, '没有diff方法')
                     }
 
                 }
             }
-
             if (!a.vtype && !delay) {
 
                 var childNodes = parentNode.childNodes
@@ -101,7 +113,8 @@ export function diff(a, b) {
                             try {
                                 parentNode.insertBefore(c.dom, childNodes[i])
                             } catch (e) {
-                                console.log(c, c.dom, childNodes[i], 'error', e)
+                                
+                                avalon.log(c, c.dom, childNodes[i], 'error', e)
                             }
                         }
                     } else {

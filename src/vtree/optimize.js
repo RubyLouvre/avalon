@@ -3,7 +3,6 @@ import { avalon, config } from '../seed/core'
 
 export function optimize(node) {
     markStatic(node);
-    // second pass: mark static roots.
     isStaticRoot(node, false);
     return node
 }
@@ -11,13 +10,7 @@ export function optimize(node) {
 function markStatic(node) {
     node.static = isStatic(node);
     if (node.props && !node.vtype) {
-        // do not make component slot content static. this avoids
-        // 1. components not able to mutate slot nodes
-        // 2. static slot content fails for hot-reloading
-        if (node.nodeName === 'slot') {
-            node.static = false
-            return
-        }
+       
         if (node.props['ms-skip'] || node.props[':skip']) {
             node.static = false
             return
@@ -49,5 +42,5 @@ function isStaticRoot(node) {
 }
 
 function isStatic(node) {
-    return !node.dynamic
+    return !node.dynamic && node.nodeName !== 'slot'
 }

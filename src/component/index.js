@@ -1,9 +1,11 @@
 import { avalon, isObject, platform } from '../seed/core'
 import { cssDiff } from '../directives/css'
-import { groupTree, getRange } from '../renders/share'
+import { getRange } from '../renders/share'
 import { toDOM } from '../renders/toDOM'
 import { toHTML } from '../renders/toHTML'
 import { diff } from '../renders/diff'
+import { createGetter } from '../parser/index'
+
 
 var legalTags = { wbr: 1, xmp: 1, template: 1 }
 var events = 'onInit,onReady,onViewChange,onDispose,onEnter,onLeave'
@@ -39,20 +41,8 @@ avalon.directive('widget', {
         this.is = is
         var component = avalon.components[is]
             //外部传入的总大于内部
-            /*   if (!('fragment' in this)) {
-                   if (vdom.vtype !== 1) { //提取组件容器内部的东西作为模板
-                       var text = vdom.children[0]
-                       if (vdom.vtype === 2) {
-                           this.fragment = text.nodeValue
-                       } else {
-                           this.fragment = toHTML(vdom.children)
-                       }
-                   } else {
-                       this.fragment = false
-                   }
-               }
-               */
-            //如果组件还没有注册，那么将原元素变成一个占位用的注释节点
+
+        //如果组件还没有注册，那么将原元素变成一个占位用的注释节点
         if (!component) {
             this.readyState = 0
             vdom.nodeName = '#comment'
@@ -66,78 +56,77 @@ avalon.directive('widget', {
         var id = value.id || value.$id
         var hasCache = avalon.vmodels[id]
         var fromCache = false
-
+        console.log('扫描组件的模块', newVdom)
         if (hasCache) {
             comVm = hasCache
             this.comVm = comVm
-            replaceRoot(this, comVm.$render)
+                // replaceRoot(this, comVm.$render)
             fromCache = true
 
         } else {
             var comVm = createComponentVm(component, value, is)
+            var curVm = newVdom.vm
             fireComponentHook(comVm, vdom, 'Init')
             this.comVm = comVm
+                //在组值的模板里有许多slot元素,它们需要转换成Z.slot('name')
+                // ＝＝＝创建组件的VM＝＝END＝＝＝
 
-            // ＝＝＝创建组件的VM＝＝END＝＝＝
-            var innerRender = avalon.scan(component.template, comVm)
-            innerRender.root.staticRoot = false
+            var innerRender = avalon.scan(component.template, comVm, false)
+
             comVm.$render = innerRender
-            this.node = vdom
-           // replaceRoot(this, innerRender)
+            console.log('扫描完毕')
             var nodesWithSlot = []
             if (component.soleSlot) {
+
                 this.getter = createGetter('@' + component.soleSlot)
-                nodesWithSlot = { nodeName: '#text', nodeValue: this.getter(comVm) || '' }
+                nodesWithSlot = { dynamic: true, nodeName: '#text', nodeValue: this.getter(comVm) || '' }
+                innerRender.slots.defaults = [nodesWithSlot]
             } else {
-                nodesWithSlot = newVdom.children
+                /*   var objectSlot = {}
+                   newVdom.children.forEach(function(el, i) { //要求带slot属性
+                       if (el.slot) {
+                           var nodes = getRange(nodesWithSlot, el)
+                           nodes.push(nodes.end)
+                           nodes.unshift(el)
+                           objectSlot[el.slot] = nodes
+                       } else if (el.props) {
+                           var name = el.props.slot
+                           if (name) {
+                               delete el.props.slot
+                               if (Array.isArray(objectSlot[name])) {
+                                   objectSlot[name].push(el)
+                               } else {
+                                   objectSlot[name] = [el]
+                               }
+                           }
+                       }
+                   })*/
+                console.log(newVdom.slots, 'dddd')
+                innerRender.slots = newVdom.slots
             }
-
-
-            var arraySlot = [],
-                objectSlot = {}
-                //从用户写的元素内部 收集要移动到 新创建的组件内部的元素
-            if (component.soleSlot) {
-                arraySlot = nodesWithSlot
-            } else {
-                nodesWithSlot.forEach(function(el, i) { //要求带slot属性
-                    if (el.slot) {
-                        var nodes = getRange(nodesWithSlot, el)
-                        nodes.push(nodes.end)
-                        nodes.unshift(el)
-                        objectSlot[el.slot] = nodes
-                    } else if (el.props) {
-                        var name = el.props.slot
-                        if (name) {
-                            delete el.props.slot
-                            if (Array.isArray(objectSlot[name])) {
-                                objectSlot[name].push(el)
-                            } else {
-                                objectSlot[name] = [el]
-                            }
-                        }
-                    }
-                })
-            }
-            //将原来元素的所有孩子，全部移动新的元素的第一个slot的位置上
-            if (component.soleSlot) {
-                insertArraySlot(innerRender.vnodes, arraySlot)
-            } else {
-                insertObjectSlot(innerRender.vnodes, objectSlot)
-            }
+            innerRender.exe = true
+            innerRender.update = function() {}
+            innerRender.complete()
+            throw innerRender
         }
-        console.log(innerRender.vnodes)
+        //是否把slot也放在
+        /*
+        <div>原来旧的</div>
+       
+        */
+        //当组件生成出来，slot元素应该在它应在的位置，然后旧的组件也有slot元素 
         if (comment) {
             var dom = avalon.vdom(vdom, 'toDOM')
             comment.parentNode.replaceChild(dom, comment)
             comVm.$element = innerRender.root.dom = dom
             delete this.reInit
         }
+        var newVdom = innerRender.root
 
-        //处理DOM节点
-        this.node = vdom
-       // toDOM(vdom)
+        console.log(vdom, newVdom)
         diff(vdom, newVdom)
-            //  dumpTree(vdom.dom)
+
+        //  dumpTree(vdom.dom)
         comVm.$element = vdom.dom
             //    groupTree(vdom.dom, vdom.children)
         if (fromCache) {
@@ -158,12 +147,10 @@ avalon.directive('widget', {
     update: function(value, vdom, newVdom) {
         // this.oldValue = value //★★防止递归
         this.value = avalon.mix(true, {}, value)
-        console.log(this.readyState, ' 000')
+        console.log(this.readyState, ' 000', newVdom)
         switch (this.readyState) {
             case 0:
-
                 this.init(value, vdom, newVdom)
-
                 break
 
             default:
