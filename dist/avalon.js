@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-26:18:29 version 2.2.2 by 司徒正美
+built in 2016-12-26:19:6 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -5723,6 +5723,19 @@ IE7的checked属性应该使用defaultChecked来设置
         }
         toDOM(a);
     }
+    function diffSlots(a, b) {
+        if (!a) {
+            return;
+        }
+        for (var i in a) {
+            if (!a.hasOwnProperty(i)) return;
+            var aslot = a[i];
+            var bslot = b[i];
+            aslot.forEach(function (el, index) {
+                diff(el, bslot[index]);
+            });
+        }
+    }
 
     function handleDispose(a) {
         if (a.dirs) {
@@ -7630,7 +7643,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     this.getter = this.getter || createGetter('@' + component.soleSlot);
                     innerRender.slots.defaults = { dynamic: true, nodeName: '#text', nodeValue: this.getter(comVm) || '' };
                 } else {
-                    innerRender.slots = newVdom.slots;
+                    this.slots = innerRender.slots = newVdom.slots;
                 }
                 innerRender.exe = true;
                 innerRender.noDiff = true;
@@ -7662,7 +7675,9 @@ IE7的checked属性应该使用defaultChecked来设置
                 fireComponentHook(comVm, vdom, 'Ready');
             }
         },
-        diff: function diff(oldVal, newVal, vdom, neVdom) {
+        diff: function diff(oldVal, newVal, vdom, newVdom) {
+            diffSlots(this.slots, newVdom.slots);
+
             if (cssDiff.call(this, oldVal, newVal)) {
                 if (!this.readyState) this.readyState = 0;
                 this.delay = false;

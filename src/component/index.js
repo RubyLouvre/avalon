@@ -2,7 +2,7 @@ import { avalon, isObject, platform } from '../seed/core'
 import { cssDiff } from '../directives/css'
 import { getRange, dumpTree } from '../renders/share'
 import { toDOM } from '../renders/toDOM'
-import { diff } from '../renders/diff'
+import { diff ,diffSlots} from '../renders/diff'
 import { createGetter } from '../parser/index'
 
 
@@ -80,7 +80,7 @@ avalon.directive('widget', {
                 this.getter = this.getter || createGetter('@' + component.soleSlot)
                 innerRender.slots.defaults = { dynamic: true, nodeName: '#text', nodeValue: this.getter(comVm) || '' }
             } else {
-                innerRender.slots = newVdom.slots
+               this.slots = innerRender.slots = newVdom.slots
             }
             innerRender.exe = true
             innerRender.noDiff = true
@@ -113,7 +113,9 @@ console.log(vdom.dom,'组件update')
             fireComponentHook(comVm, vdom, 'Ready')
         }
     },
-    diff: function(oldVal, newVal, vdom, neVdom) {
+    diff: function(oldVal, newVal, vdom, newVdom) {
+        diffSlots(this.slots, newVdom.slots)
+        
         if (cssDiff.call(this, oldVal, newVal)) {
             if (!this.readyState)
                 this.readyState = 0

@@ -47,7 +47,7 @@ export function diff(a, b) {
                     if (!adir.diff) {
                         avalon.mix(adir, directives[adir.type])
                     }
-                   
+                    
                     if (adir.diff && adir.diff(adir.value, bdir.value, a, b)) {
                         toDOM(a)
                         adir.update(adir.value, a, b)
@@ -68,7 +68,7 @@ export function diff(a, b) {
                             adir.removeName = true
                         }
                     } 
-                     delay = delay || adir.delay
+                    delay = delay || adir.delay
 
                 }
             }
@@ -141,6 +141,20 @@ function handleIf(a, b) {
         a[i] = b[i]
     }
     toDOM(a)
+}
+export function diffSlots(a, b){
+    if(!a){
+        return
+    }
+    for(var i in a){
+        if(!a.hasOwnProperty(i))
+            return
+        var aslot = a[i]
+        var bslot = b[i]
+        aslot.forEach(function(el, index){
+            diff(el, bslot[index])
+        })
+    }
 }
 
 function handleDispose(a) {
