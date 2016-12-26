@@ -32,46 +32,52 @@ avalon.directive('visible', {
             return true
         }
     },
-    ready: true,
-    update: function(show, vdom) {
-        var dom = vdom.dom
-        if (dom && dom.nodeType === 1) {
-            var display = dom.style.display
-            var value
-            if (show) {
-                if (display === none) {
-                    value = vdom.displayValue
-                    if (!value) {
-                        dom.style.display = ''
-                        if (dom.style.cssText === '') {
-                            dom.removeAttribute('style')
-                        }
+    _update: function(show, vdom, dom) {
+
+        var display = dom.style.display
+        var value
+        if (show) {
+            if (display === none) {
+                value = vdom.displayValue
+                if (!value) {
+                    dom.style.display = ''
+                    if (dom.style.cssText === '') {
+                        dom.removeAttribute('style')
                     }
                 }
-                if (dom.style.display === '' && avalon(dom).css('display') === none &&
-                    // fix firefox BUG,必须挂到页面上
-                    avalon.contains(dom.ownerDocument, dom)) {
-                    value = parseDisplay(dom)
-                }
-
-            } else {
-
-                if (display !== none) {
-                    value = none
-                    vdom.displayValue = display
-                }
             }
-            var cb = function() {
-                if (value !== void 0) {
-                    dom.style.display = value
-                }
+            if (dom.style.display === '' && avalon(dom).css('display') === none &&
+                // fix firefox BUG,必须挂到页面上
+                avalon.contains(dom.ownerDocument, dom)) {
+                value = parseDisplay(dom)
             }
 
-            avalon.applyEffect(dom, vdom, {
-                hook: show ? 'onEnterDone' : 'onLeaveDone',
-                cb: cb
-            })
+        } else {
+
+            if (display !== none) {
+                value = none
+                vdom.displayValue = display
+            }
         }
+        var cb = function() {
+            if (value !== void 0) {
+                dom.style.display = value
+            }
+        }
+cb()
+//        avalon.applyEffect(dom, vdom, {
+//            hook: show ? 'onEnterDone' : 'onLeaveDone',
+//            cb: cb
+//        })
 
+    },
+    update: function(show, vdom, newVdom, afterCb) {
+        var me = this
+        afterCb.push(function() {
+            var dom = vdom.dom
+            if (dom && dom.nodeType === 1) {
+                me._update(show, vdom, dom)
+            }
+        })
     }
 })

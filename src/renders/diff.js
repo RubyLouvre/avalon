@@ -81,7 +81,7 @@ export function diff(a, b) {
             //可以在这里回收节点
             if (b.nodeName === '#comment') {
                 //ms-if ms-widget 元素节点要变成注释节点
-                a.props = a.props = null
+                a.props = a.props = a.dom = null
                 handleIf(a, b)
                 stop = true
             }

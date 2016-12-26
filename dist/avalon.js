@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-27:1:33 version 2.2.2 by 司徒正美
+built in 2016-12-27:1:55 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -5031,45 +5031,51 @@ IE7的checked属性应该使用defaultChecked来设置
                 return true;
             }
         },
-        ready: true,
-        update: function update(show, vdom) {
-            var dom = vdom.dom;
-            if (dom && dom.nodeType === 1) {
-                var display = dom.style.display;
-                var value;
-                if (show) {
-                    if (display === none) {
-                        value = vdom.displayValue;
-                        if (!value) {
-                            dom.style.display = '';
-                            if (dom.style.cssText === '') {
-                                dom.removeAttribute('style');
-                            }
+        _update: function _update(show, vdom, dom) {
+
+            var display = dom.style.display;
+            var value;
+            if (show) {
+                if (display === none) {
+                    value = vdom.displayValue;
+                    if (!value) {
+                        dom.style.display = '';
+                        if (dom.style.cssText === '') {
+                            dom.removeAttribute('style');
                         }
                     }
-                    if (dom.style.display === '' && avalon(dom).css('display') === none &&
-                    // fix firefox BUG,必须挂到页面上
-                    avalon.contains(dom.ownerDocument, dom)) {
-                        value = parseDisplay(dom);
-                    }
-                } else {
-
-                    if (display !== none) {
-                        value = none;
-                        vdom.displayValue = display;
-                    }
                 }
-                var cb = function cb() {
-                    if (value !== void 0) {
-                        dom.style.display = value;
-                    }
-                };
+                if (dom.style.display === '' && avalon(dom).css('display') === none &&
+                // fix firefox BUG,必须挂到页面上
+                avalon.contains(dom.ownerDocument, dom)) {
+                    value = parseDisplay(dom);
+                }
+            } else {
 
-                avalon.applyEffect(dom, vdom, {
-                    hook: show ? 'onEnterDone' : 'onLeaveDone',
-                    cb: cb
-                });
+                if (display !== none) {
+                    value = none;
+                    vdom.displayValue = display;
+                }
             }
+            var cb = function cb() {
+                if (value !== void 0) {
+                    dom.style.display = value;
+                }
+            };
+            cb();
+            //        avalon.applyEffect(dom, vdom, {
+            //            hook: show ? 'onEnterDone' : 'onLeaveDone',
+            //            cb: cb
+            //        })
+        },
+        update: function update(show, vdom, newVdom, afterCb) {
+            var me = this;
+            afterCb.push(function () {
+                var dom = vdom.dom;
+                if (dom && dom.nodeType === 1) {
+                    me._update(show, vdom, dom);
+                }
+            });
         }
     });
 
@@ -5663,7 +5669,8 @@ IE7的checked属性应该使用defaultChecked来设置
                 //可以在这里回收节点
                 if (b.nodeName === '#comment') {
                     //ms-if ms-widget 元素节点要变成注释节点
-                    a.props = a.props = null;
+                    a.props = a.props = a.dom = null;
+                    console.log('00000');
                     handleIf(a, b);
                     stop = true;
                 }
@@ -7215,7 +7222,6 @@ IE7的checked属性应该使用defaultChecked来设置
             //更新视图
             var me = this;
             afterCb.push(function () {
-                console.log('111');
                 updateView[me.dtype].call(me);
             });
         }
