@@ -1,5 +1,5 @@
 import { avalon } from '../../seed/core'
-import { duplexParse, duplexDiff, duplexInit, valueHijack, updateView } from './share'
+import { duplexParse, duplexDiff, duplexInit, valueHijack as needPoll, updateView } from './share'
 import { updateDataEvents } from './updateDataEvents.compact'
 
 
@@ -7,27 +7,27 @@ avalon.directive('duplex', {
     priority: 9999999,
     parse: duplexParse,
     diff: duplexDiff,
-    update: function(value, vdom, newVdom) {
+    update: function(value, vdom, newVdom, afterCb) {
         vdom.vm = newVdom.vm
         if (!this.dom) {
             duplexInit.call(this, vdom, updateDataEvents)
         }
         //如果不支持input.value的Object.defineProperty的属性支持,
         //需要通过轮询同步, chrome 42及以下版本需要这个hack
-        pollValue.call(this, avalon.msie, valueHijack)
+
+        pollValue.call(this.dom, avalon.msie, /input|edit/.test(this.dtype))
 
         //更新视图
-        updateView[this.dtype].call(this)
+        var me = this
+        afterCb.push(function() {
+            updateView[me.dtype].call(me)
+        })
 
     }
 })
 
-function pollValue(isIE, valueHijack) {
-    var dom = this.dom
-    if (this.isString &&
-        valueHijack &&
-        !isIE &&
-        !dom.valueHijack) {
+function pollValue(dom, isIE, canEdit) {
+    if (canEdit && needPoll && !isIE && !dom.valueHijack) {
         dom.valueHijack = updateModel
         var intervalID = setInterval(function() {
             if (!avalon.contains(avalon.root, dom)) {

@@ -6,12 +6,14 @@ avalon.directive('duplex', {
     priority: 2000,
     parse: duplexParse,
     diff: duplexDiff,
-    update: function(value, vdom) {
+    update: function(value, vdom, newVdom, afterCb) {
         vdom.vm = newVdom.vm
-
-        if (!this.dom) {
-            duplexInit.call(this, vdom, updateDataEvents)
+        var me = this
+        if (!me.dom) {
+            duplexInit.call(me, vdom, updateDataEvents)
         }
-        updateView[this.dtype].call(this)
+        afterCb.push(function() {
+            updateView[me.dtype].call(me)
+        })
     }
 })

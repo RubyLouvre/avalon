@@ -1,7 +1,6 @@
 import { avalon, directives } from '../seed/core'
 import { toDOM } from './toDOM'
 
-// 以后要废掉vdom系列,action
 //a是旧的虚拟DOM, b是新的
 export function diff(a, b) {
 
@@ -19,14 +18,12 @@ export function diff(a, b) {
         case '#comment':
             //两个注释节点进行比较
             if (b.nodeName !== '#comment') {
-                //如果注释节点要变成元素节点
-
+                //ms-if 注释节点要变成元素节点
                 for (var i in b) {
                     a[i] = b[i]
                 }
                 delete a.dom
                 reInitDires(a)
-                    //  cloneVdom(b, a)
                 diff(a, b)
             } else {
                 toDOM(a)
@@ -67,7 +64,7 @@ export function diff(a, b) {
                         if (a.dom !== parentNode) {
                             toDOM(a)
                             var p = parentNode.parentNode
-                            
+
                             if (p) {
                                 p.replaceChild(a.dom, parentNode)
                             }
@@ -81,10 +78,9 @@ export function diff(a, b) {
                     stop = stop || adir.delay
                 }
             }
-            //ms-widget, ms-if都会产生注释节点,这时不用再往下遍历
             //可以在这里回收节点
             if (b.nodeName === '#comment') {
-                //处理if指令
+                //ms-if ms-widget 元素节点要变成注释节点
                 a.props = a.props = null
                 handleIf(a, b)
                 stop = true
@@ -101,7 +97,7 @@ export function diff(a, b) {
                     if (d) { //如果数量相等则进行比较
                         let arr = diff(c, d)
                         if (typeof arr === 'number') {
-                            directives['for'].update(c, d, achild, bchild, i,afterCb)
+                            directives['for'].update(c, d, achild, bchild, i, afterCb)
                             c = achild[i]
                             d = bchild[i]
                             diff(c, d)
@@ -115,7 +111,7 @@ export function diff(a, b) {
                             try {
                                 parentNode.insertBefore(c.dom, childNodes[i])
                             } catch (e) {
-                                avalon.log(c, c.dom, childNodes[i], 'error', e)
+                                avalon.log(c.dom, childNodes[i], 'error', e)
                             }
                         }
                     }
@@ -128,9 +124,8 @@ export function diff(a, b) {
                     }
                 }
             }
-            
-            if (afterCb.length) {
 
+            if (afterCb.length) {
                 afterCb.forEach(function(fn) {
                     fn(a)
                 })

@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-27:1:0 version 2.2.2 by 司徒正美
+built in 2016-12-27:1:33 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -5583,7 +5583,6 @@ IE7的checked属性应该使用defaultChecked来设置
 
     var VMLTags = avalon.oneObject('shape,line,polyline,rect,roundrect,oval,arc,' + 'curve,background,image,shapetype,group,fill,' + 'stroke,shadow, extrusion, textbox, imagedata, textpath');
 
-    // 以后要废掉vdom系列,action
     //a是旧的虚拟DOM, b是新的
     function diff(a, b) {
 
@@ -5601,14 +5600,12 @@ IE7的checked属性应该使用defaultChecked来设置
             case '#comment':
                 //两个注释节点进行比较
                 if (b.nodeName !== '#comment') {
-                    //如果注释节点要变成元素节点
-
+                    //ms-if 注释节点要变成元素节点
                     for (var i in b) {
                         a[i] = b[i];
                     }
                     delete a.dom;
                     reInitDires(a);
-                    //  cloneVdom(b, a)
                     diff(a, b);
                 } else {
                     toDOM(a);
@@ -5663,10 +5660,9 @@ IE7的checked属性应该使用defaultChecked来设置
                         stop = stop || adir.delay;
                     }
                 }
-                //ms-widget, ms-if都会产生注释节点,这时不用再往下遍历
                 //可以在这里回收节点
                 if (b.nodeName === '#comment') {
-                    //处理if指令
+                    //ms-if ms-widget 元素节点要变成注释节点
                     a.props = a.props = null;
                     handleIf(a, b);
                     stop = true;
@@ -5699,7 +5695,7 @@ IE7的checked属性应该使用defaultChecked来设置
                                 try {
                                     parentNode.insertBefore(c.dom, childNodes[_i4]);
                                 } catch (e) {
-                                    avalon.log(c, c.dom, childNodes[_i4], 'error', e);
+                                    avalon.log(c.dom, childNodes[_i4], 'error', e);
                                 }
                             }
                         }
@@ -5714,7 +5710,6 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
 
                 if (afterCb.length) {
-
                     afterCb.forEach(function (fn) {
                         fn(a);
                     });
@@ -7207,23 +7202,27 @@ IE7的checked属性应该使用defaultChecked来设置
         priority: 9999999,
         parse: duplexParse,
         diff: duplexDiff,
-        update: function update(value, vdom, newVdom) {
+        update: function update(value, vdom, newVdom, afterCb) {
             vdom.vm = newVdom.vm;
             if (!this.dom) {
                 duplexInit.call(this, vdom, updateDataEvents);
             }
             //如果不支持input.value的Object.defineProperty的属性支持,
             //需要通过轮询同步, chrome 42及以下版本需要这个hack
-            pollValue.call(this, avalon.msie, valueHijack);
+
+            pollValue.call(this.dom, avalon.msie, /input|edit/.test(this.dtype));
 
             //更新视图
-            updateView[this.dtype].call(this);
+            var me = this;
+            afterCb.push(function () {
+                console.log('111');
+                updateView[me.dtype].call(me);
+            });
         }
     });
 
-    function pollValue(isIE, valueHijack$$1) {
-        var dom = this.dom;
-        if (this.isString && valueHijack$$1 && !isIE && !dom.valueHijack) {
+    function pollValue(dom, isIE, canEdit) {
+        if (canEdit && valueHijack && !isIE && !dom.valueHijack) {
             dom.valueHijack = updateModel;
             var intervalID = setInterval(function () {
                 if (!avalon.contains(avalon.root, dom)) {
