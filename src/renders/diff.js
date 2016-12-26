@@ -11,7 +11,6 @@ export function diff(a, b) {
             toDOM(a)
             if (a.nodeValue !== b.nodeValue) {
                 a.nodeValue = b.nodeValue
-                console.log(b.nodeValue,'ppp')
                 if (a.dom) {
                     a.dom.nodeValue = b.nodeValue
                 }
@@ -40,48 +39,48 @@ export function diff(a, b) {
                 return
             }            
             toDOM(a)
-            var parentNode = a.dom,  delay
+            var parentNode = a.dom
+            var stop = false
+            var afterCb = []
             if (b.dirs) {
                 for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                     var adir = a.dirs[i]
                     if (!adir.diff) {
                         avalon.mix(adir, directives[adir.type])
                     }
-                    
+                    //diff时依次传入指令的旧值,指令的新值, 旧的虚拟DOM, 新的虚拟DOM
                     if (adir.diff && adir.diff(adir.value, bdir.value, a, b)) {
                         toDOM(a)
-                        adir.update(adir.value, a, b)
+                        adir.update(adir.value, a, b, afterCb)
+                        //如果组件没有加载,a,b分别为wbr, #comment
+                        //如果成功加载,a,b分别为div, div
                         //如果是widget, a.dom会被删掉
                         if(a.dom !== parentNode){
-                            console.log('组件指令已经执行')
+                            toDOM(a)
                             var p = parentNode.parentNode
                             if(p){
-                             
                                p.replaceChild(a.dom,parentNode)
                             }
-                          
                             parentNode = a.dom
                         }
-                        //如果是组件指令,那么a === b或至少保证a.nodeName === b.nodeNaem
-                        if (!adir.removeName ) {
-                            a.dom.removeAttribute(adir.name)
+                        if (!adir.removeName && parentNode.removeAttribute ) {
+                            parentNode.removeAttribute(adir.name)
                             adir.removeName = true
                         }
                     } 
-                    delay = delay || adir.delay
-
+                    stop = stop || adir.delay
                 }
             }
-          if (a.nodeName !== b.nodeName) {
-                if (b.nodeName === '#comment') {
-                   toDOM(a)
-                    //处理if指令
-                    handleIf(a, b)
-                   return
-                }
-           }
-            if (!a.vtype && !delay) {
-
+           //ms-widget, ms-if都会产生注释节点,这时不用再往下遍历
+           //可以在这里回收节点
+            if (b.nodeName === '#comment') {
+                delete a.dom
+                //处理if指令
+                handleIf(a, b)
+                console.log('00000')
+                stop = true
+            }
+            if (!a.vtype && !stop) {
                 var childNodes = parentNode.childNodes
                  
                 var achild = a.children.concat()
@@ -124,7 +123,11 @@ export function diff(a, b) {
                     }
                 }
             }
-
+            if(afterCb.lenght){
+                afterCb.forEach(function(fn){
+                    fn(a)
+                })
+            }
             if (a.staticRoot) {
                 a.hasScan = true
             }
@@ -134,9 +137,11 @@ export function diff(a, b) {
 
 function handleIf(a, b) {
     handleDispose(a)
-    for (var i in a) {
-        delete a[i]
-    }
+//    for (var i in a) {
+//        delete a[i]
+//    }
+    delete a.props
+    delete a.children
     for (var i in b) {
         a[i] = b[i]
     }
@@ -146,6 +151,7 @@ export function diffSlots(a, b){
     if(!a){
         return
     }
+    console.log(a, b, 'slot')
     for(var i in a){
         if(!a.hasOwnProperty(i))
             return

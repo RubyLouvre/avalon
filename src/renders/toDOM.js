@@ -34,10 +34,9 @@ export function toDOM(el, b) {
         if (el.dom) {
             return el.dom
         }
-        console.log(el.nodeValue, 'ooooo')
-        return el.dom = document.createTextNode(el.nodeValue)
+       return el.dom = document.createTextNode(el.nodeValue)
     } else if (Array.isArray(el)) {
-        console.log('数组变DOM', b)
+        avalon.log('数组变DOM', b)
 
     }
 }

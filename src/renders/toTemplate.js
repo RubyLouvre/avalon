@@ -9,7 +9,7 @@ export function Yield(nodes, render) {
     this.render = render
     var body = this.genChildren(nodes)
     this.body = body
-    this.exec = Function('__vmodel__', '$$l', 'var Ʃ = __vmodel__.$render;return ' + body)
+    this.exec = Function('__vmodel__', '$$l', 'var \u01A9 = __vmodel__.$render;return ' + body)
 }
 
 
@@ -40,22 +40,22 @@ Yield.prototype = {
     },
     genText(node) {
         if (node.dynamic) {
-            return `Ʃ.text( ${ createExpr( parseInterpolate(node.nodeValue)) },${true})`
+            return `\u01A9.text( ${ createExpr( parseInterpolate(node.nodeValue)) },${true})`
         }
-        return `Ʃ.text( ${avalon.quote(node.nodeValue)} )`
+        return `\u01A9.text( ${avalon.quote(node.nodeValue)} )`
     },
     genComment(node) {
         if (node.dynamic) {
             var dir = node.for
             directives['for'].parse.call(dir)
             var keys = `'${dir.valName},${dir.keyName},${dir.asName},${dir.cb}'`
-            return `Ʃ.comment('ms-for: ${dir.expr}'),
-                    Ʃ.repeat(${ createExpr(dir.expr) }, ${keys}, function($$l){
+            return `\u01A9.comment('ms-for: ${dir.expr}'),
+                    \u01A9.repeat(${ createExpr(dir.expr) }, ${keys}, function($$l){
                 return ${this.genChildren(dir.nodes)}
             })`
         }
 
-        return `Ʃ.comment(${avalon.quote(node.nodeValue)})`
+        return `\u01A9.comment(${avalon.quote(node.nodeValue)})`
     },
     genComponent(node, dirs) {
         for (var i in dirs) {
@@ -81,12 +81,12 @@ Yield.prototype = {
     },
     genElement(node) {
         if (node.nodeName === 'slot') {
-            return `Ʃ.slot(${ avalon.quote(node.props.name || "default") })`
+            return `\u01A9.slot(${ avalon.quote(node.props.name || "default") })`
         }
         if (node.staticRoot) {
             var index = this.render.staticIndex++
                 this.render.staticTree[index] = node
-            return `Ʃ.static(${ index })`
+            return `\u01A9.static(${ index })`
         }
         var dirs = node.dirs,
             props = node.props
@@ -101,7 +101,7 @@ Yield.prototype = {
             if (dirs['ms-text']) {
                 var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag)
                 var code = createExpr(expr, 'text')
-                node.template = `[Ʃ.text(${ code })]`
+                node.template = `[\u01A9.text(${ code })]`
                 node.children = [{ dynamic: true, nodeName: '#text', nodeValue: NaN }]
                 removeDir('text', dirs, props)
                 removeDir('html', dirs, props)
@@ -133,14 +133,14 @@ Yield.prototype = {
 
         )
         if (node.props.slot) {
-            json = `Ʃ.collectSlot(${json},slots)`
+            json = `\u01A9.collectSlot(${json},slots)`
         }
 
         if (hasIf) {
-            json = `${ hasIf } ? ${ json } : Ʃ.comment('if')`
+            json = `${ hasIf } ? ${ json } : \u01A9.comment('if')`
         }
         if (hasCtrl) {
-            return `Ʃ.ctrl( ${ avalon.quote(hasCtrl) }, __vmodel__, function(__vmodel__) {
+            return `\u01A9.ctrl( ${ avalon.quote(hasCtrl) }, __vmodel__, function(__vmodel__) {
                 return ${ json }
             }) `
         } else {

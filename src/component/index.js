@@ -2,7 +2,7 @@ import { avalon, isObject, platform } from '../seed/core'
 import { cssDiff } from '../directives/css'
 import { getRange, dumpTree } from '../renders/share'
 import { toDOM } from '../renders/toDOM'
-import { diff ,diffSlots} from '../renders/diff'
+import { diff, diffSlots } from '../renders/diff'
 import { createGetter } from '../parser/index'
 
 
@@ -23,10 +23,10 @@ function toObject(value) {
 }
 var componentQueue = []
 avalon.directive('widget', {
-  
+
     priority: 4,
     deep: true,
-    init: function(oldVal, vdom, newVdom) {
+    init: function(oldVal, vdom, newVdom, afterCb) {
         //cached属性必须定义在组件容器里面,不是template中
         this.cacheVm = !!newVdom.props.cached
         if (vdom.dom && vdom.nodeName === '#comment') {
@@ -44,9 +44,10 @@ avalon.directive('widget', {
         //如果组件还没有注册，那么将原元素变成一个占位用的注释节点
         if (!component) {
             this.readyState = 0
-            vdom.nodeName = '#comment'
-            vdom.nodeValue = 'unresolved component placeholder'
-            delete vdom.dom
+
+            newVdom.nodeName = '#comment'
+            newVdom.nodeValue = 'unresolved component placeholder'
+            newVdom.dom = newVdom.props = null
             avalon.Array.ensure(componentQueue, this)
             return
         }
@@ -73,14 +74,14 @@ avalon.directive('widget', {
             // ＝＝＝创建组件的VM＝＝END＝＝＝
 
             var innerRender = avalon.scan(component.template, comVm, false)
-            
+
             comVm.$render = innerRender
 
             if (component.soleSlot) {
                 this.getter = this.getter || createGetter('@' + component.soleSlot)
                 innerRender.slots.defaults = { dynamic: true, nodeName: '#text', nodeValue: this.getter(comVm) || '' }
             } else {
-               this.slots = innerRender.slots = newVdom.slots
+                this.slots = innerRender.slots = newVdom.slots
             }
             innerRender.exe = true
             innerRender.noDiff = true
@@ -97,41 +98,45 @@ avalon.directive('widget', {
         }
         this.vdom = vdom
         var root = innerRender.root
-        Array('nodeName','vtype','props','children','dom' ).forEach(function(prop){
-           newVdom[prop] = vdom[prop] = root[prop]
+        Array('nodeName', 'vtype', 'props', 'children', 'dom').forEach(function(prop) {
+            newVdom[prop] = vdom[prop] = root[prop]
         })
-        
-        toDOM(vdom)
-       
-console.log(vdom.dom,'组件update')
-      //  diff(vdom, newVdom)
 
-        comVm.$element = vdom.dom
-        if (fromCache) {
-            fireComponentHook(comVm, vdom, 'Enter')
-        } else {
-            fireComponentHook(comVm, vdom, 'Ready')
-        }
+        // toDOM(vdom)
+
+        console.log(vdom.dom, '组件update')
+
+
+
+        afterCb.push(function(vdom) {
+            comVm.$element = vdom.dom
+            if (fromCache) {
+                fireComponentHook(comVm, vdom, 'Enter')
+            } else {
+                fireComponentHook(comVm, vdom, 'Ready')
+            }
+        })
+
     },
     diff: function(oldVal, newVal, vdom, newVdom) {
         diffSlots(this.slots, newVdom.slots)
-        
+
         if (cssDiff.call(this, oldVal, newVal)) {
             if (!this.readyState)
                 this.readyState = 0
-             this.delay = false
+            this.delay = false
             return true
         }
         this.delay = true
         console.log('diff return false')
     },
 
-    update: function(value, vdom, newVdom) {
+    update: function(value, vdom, newVdom, afterCb) {
         // this.oldValue = value //★★防止递归
         this.value = avalon.mix(true, {}, value)
         switch (this.readyState) {
             case 0:
-                this.init(value, vdom, newVdom)
+                this.init(value, vdom, newVdom, afterCb)
                 break
 
             default:
@@ -155,14 +160,15 @@ console.log(vdom.dom,'组件update')
     },
     beforeDispose: function() {
         var comVm = this.comVm
-        if (!this.cacheVm) {
-            fireComponentHook(comVm, this.node, 'Dispose')
-            comVm.$hashcode = false
-            delete avalon.vmodels[comVm.$id]
-            this.innerRender && this.innerRender.dispose()
-        } else {
-            fireComponentHook(comVm, this.node, 'Leave')
-        }
+        console.log(comVm, 'dispose')
+            //        if (!this.cacheVm) {
+            //            fireComponentHook(comVm, this.node, 'Dispose')
+            //            comVm.$hashcode = false
+            //            delete avalon.vmodels[comVm.$id]
+            //            this.innerRender && this.innerRender.dispose()
+            //        } else {
+            //            fireComponentHook(comVm, this.node, 'Leave')
+            //        }
     },
 })
 
