@@ -82,6 +82,9 @@ export function duplexParse(dir, node) {
 }
 
 export function duplexDiff(oldVal, newVal) {
+    if (!this.inited) {
+        this.compareVal = NaN
+    }
     if (Array.isArray(newVal)) {
         if (newVal + '' !== this.compareVal) {
             this.compareVal = newVal + ''
@@ -112,10 +115,10 @@ export function duplexInit(vdom, addEvent) {
         this.userCb = new Function('$event', 'var __vmodel__ = this\nreturn ' + body)
     }
     var setter = createSetter(this.expr, 'duplex')
-    this.setValue = function(value){
-        setter(vdom.vm, value)
-    }
-    //添加duplexCb
+    this.setValue = function(value) {
+            setter(vdom.vm, value)
+        }
+        //添加duplexCb
     this.duplexCb = updateModel
 
     dom._ms_duplex_ = this

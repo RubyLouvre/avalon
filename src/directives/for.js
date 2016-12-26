@@ -55,7 +55,7 @@ avalon.directive('for', {
         }
 
     },
-    update: function(oldVal, newVal, oldChild, newChild, i, p) {
+    update: function(oldVal, newVal, oldChild, newChild, i, afterCb) {
 
         if (oldVal.same) {
             //只是单纯将循环区域里的节点抽取出来,同步到父节点的children中
@@ -88,7 +88,11 @@ avalon.directive('for', {
                 oldVal.cb = new Function('$event', '$$l', 'var __vmodel__ = this\nreturn ' + body)
             }
         }
-
+        if(!oldVal.slot){
+            afterCb.push(function(a){
+                console.log(a.dom, 'for rendered')
+            })
+        }
     }
 })
 

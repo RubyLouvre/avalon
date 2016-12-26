@@ -35,10 +35,7 @@ export function toDOM(el, b) {
             return el.dom
         }
        return el.dom = document.createTextNode(el.nodeValue)
-    } else if (Array.isArray(el)) {
-        avalon.log('数组变DOM', b)
-
-    }
+    } 
 }
 
 

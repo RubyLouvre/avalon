@@ -4,8 +4,8 @@ import { toDOM } from './toDOM'
 // 以后要废掉vdom系列,action
 //a是旧的虚拟DOM, b是新的
 export function diff(a, b) {
+
     switch (a.nodeName) {
-         
         case '#text':
             //两个文本节点进行比较
             toDOM(a)
@@ -17,10 +17,18 @@ export function diff(a, b) {
             }
             break
         case '#comment':
-             //两个注释节点进行比较
-            toDOM(a)
-            if (a.nodeName !== b.nodeName) {
-                handleIf(a, b)
+            //两个注释节点进行比较
+            if (b.nodeName !== '#comment') {
+                //如果注释节点要变成元素节点
+
+                for (var i in b) {
+                    a[i] = b[i]
+                }
+                delete a.dom
+                reInitDires(a)
+                    //  cloneVdom(b, a)
+                diff(a, b)
+            } else {
                 toDOM(a)
             }
             break
@@ -37,7 +45,7 @@ export function diff(a, b) {
             if (a.staticRoot && a.hasScan) {
                 toDOM(a)
                 return
-            }            
+            }
             toDOM(a)
             var parentNode = a.dom
             var stop = false
@@ -51,58 +59,55 @@ export function diff(a, b) {
                     //diff时依次传入指令的旧值,指令的新值, 旧的虚拟DOM, 新的虚拟DOM
                     if (adir.diff && adir.diff(adir.value, bdir.value, a, b)) {
                         toDOM(a)
+                        adir.inited = true
                         adir.update(adir.value, a, b, afterCb)
-                        //如果组件没有加载,a,b分别为wbr, #comment
-                        //如果成功加载,a,b分别为div, div
-                        //如果是widget, a.dom会被删掉
-                        if(a.dom !== parentNode){
+                            //如果组件没有加载,a,b分别为wbr, #comment
+                            //如果成功加载,a,b分别为div, div
+                            //如果是widget, a.dom会被删掉
+                        if (a.dom !== parentNode) {
                             toDOM(a)
                             var p = parentNode.parentNode
-                            if(p){
-                               p.replaceChild(a.dom,parentNode)
+                            
+                            if (p) {
+                                p.replaceChild(a.dom, parentNode)
                             }
                             parentNode = a.dom
                         }
-                        if (!adir.removeName && parentNode.removeAttribute ) {
+                        if (!adir.removeName && parentNode.removeAttribute) {
                             parentNode.removeAttribute(adir.name)
                             adir.removeName = true
                         }
-                    } 
+                    }
                     stop = stop || adir.delay
                 }
             }
-           //ms-widget, ms-if都会产生注释节点,这时不用再往下遍历
-           //可以在这里回收节点
+            //ms-widget, ms-if都会产生注释节点,这时不用再往下遍历
+            //可以在这里回收节点
             if (b.nodeName === '#comment') {
-                delete a.dom
                 //处理if指令
+                a.props = a.props = null
                 handleIf(a, b)
-                console.log('00000')
                 stop = true
             }
             if (!a.vtype && !stop) {
                 var childNodes = parentNode.childNodes
-                 
                 var achild = a.children.concat()
                 var bchild = b.children.concat()
-                
                 for (let i = 0; i < achild.length; i++) {
-                  
+
                     let c = achild[i]
                     let d = bchild[i]
-                 
+
                     if (d) { //如果数量相等则进行比较
                         let arr = diff(c, d)
                         if (typeof arr === 'number') {
-                            //  console.log('数组扁平化', arr)
-                            directives['for'].update(c, d, achild, bchild, i, parentNode)
-
+                            directives['for'].update(c, d, achild, bchild, i,afterCb)
                             c = achild[i]
                             d = bchild[i]
                             diff(c, d)
                         }
                     }
-                  
+
                     if (c.dom !== childNodes[i]) {
                         if (!childNodes[i]) { //数量一致就添加
                             parentNode.appendChild(c.dom)
@@ -123,8 +128,10 @@ export function diff(a, b) {
                     }
                 }
             }
-            if(afterCb.lenght){
-                afterCb.forEach(function(fn){
+            
+            if (afterCb.length) {
+
+                afterCb.forEach(function(fn) {
                     fn(a)
                 })
             }
@@ -133,32 +140,41 @@ export function diff(a, b) {
             }
             break
     }
+
 }
 
 function handleIf(a, b) {
     handleDispose(a)
-//    for (var i in a) {
-//        delete a[i]
-//    }
-    delete a.props
-    delete a.children
     for (var i in b) {
         a[i] = b[i]
     }
     toDOM(a)
 }
-export function diffSlots(a, b){
-    if(!a){
+export function diffSlots(a, b) {
+    if (!a) {
         return
     }
-    console.log(a, b, 'slot')
-    for(var i in a){
-        if(!a.hasOwnProperty(i))
+    for (var i in a) {
+        if (!a.hasOwnProperty(i))
             return
         var aslot = a[i]
         var bslot = b[i]
-        aslot.forEach(function(el, index){
+        aslot.forEach(function(el, index) {
             diff(el, bslot[index])
+        })
+    }
+
+}
+
+function reInitDires(a) {
+    if (a.dirs) {
+        a.dirs.forEach(function(dir) {
+            delete dir.inited
+        })
+    }
+    if (a.children) {
+        a.children.forEach(function(child) {
+            reInitDires(child)
         })
     }
 }

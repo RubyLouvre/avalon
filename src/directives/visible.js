@@ -23,6 +23,9 @@ function parseDisplay(elem, val) {
 avalon.parseDisplay = parseDisplay
 avalon.directive('visible', {
     diff: function(oldVal, newVal) {
+        if (!this.inited) {
+            oldVal = void 0
+        }
         var n = !!newVal
         if (oldVal === void 0 || n !== oldVal) {
             this.value = n
@@ -30,7 +33,7 @@ avalon.directive('visible', {
         }
     },
     ready: true,
-    update: function(show,vdom) {
+    update: function(show, vdom) {
         var dom = vdom.dom
         if (dom && dom.nodeType === 1) {
             var display = dom.style.display

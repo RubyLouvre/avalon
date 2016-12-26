@@ -3,6 +3,9 @@ import { Render } from '../renders/domRender'
 
 avalon.directive('html', {
     diff: function(oldVal, newVal, vdom, newVdom) { //oldVal, newVal, oldVdom, newVdom
+        if (!this.inited) {
+            oldVal = null
+        }
         oldVal = (oldVal == null ? '' : oldVal).toString().trim()
         newVal = (newVal == null ? '' : newVal).toString().trim()
         var render = this.innerRender
@@ -17,7 +20,7 @@ avalon.directive('html', {
     update: function(value, vdom, newVdom) { //oldVal( == newVal), oldVdom, newVdom
         this.beforeDispose()
         var render = this.innerRender = new Render(value, newVdom.vm, true)
-       
+
         var children = render.tmpl.exec(render.vm, newVdom.local)
         newVdom.children = vdom.children = children
         if (vdom.dom)

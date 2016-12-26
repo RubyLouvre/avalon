@@ -2,6 +2,9 @@ import { avalon, platform } from '../seed/core'
 var arrayWarn = {}
 var cssDir = avalon.directive('css', {
     diff: function(oldVal, newVal) {
+        if (!this.inited) {
+            oldVal = null
+        }
         if (Object(newVal) === newVal) {
             newVal = platform.toJson(newVal) //安全的遍历VBscript
             if (Array.isArray(newVal)) { //转换成对象

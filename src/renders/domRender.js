@@ -67,13 +67,13 @@ Render.prototype = {
         return { nodeName: '#comment', nodeValue: value }
     },
     text: function(a, d) {
-        a = a == null ? '\u200b' : a+''
+        a = a == null ? '\u200b' : a + ''
         return { nodeName: '#text', nodeValue: a || '', dynamic: !!d }
     },
     collectSlot: function(node, slots) {
         var name = node.props.slot
-        if( !slots[name]) {
-             slots[name] = []
+        if (!slots[name]) {
+            slots[name] = []
         }
         slots[name].push(node)
         return node
@@ -83,10 +83,8 @@ Render.prototype = {
         return a.tmpl.exec(vm, this)
     },
     slot: function(name) {
-        var a =this.slots[name]
-      
+        var a = this.slots[name]
         a.slot = name
-        console.log(a, 'slot get')
         return a
     },
     ctrl: function(id, scope, cb) {
@@ -214,7 +212,6 @@ Render.prototype = {
             vdom.dynamic = true
         }
 
-        // 
     },
     checkDirs(vdom, attrs) {
         var dirs = {},
@@ -311,16 +308,19 @@ Render.prototype = {
     update: function() {
         this.vm.$render = this
         var nodes = this.tmpl.exec(this.vm, {})
-        if(this.noDiff){
+        if (this.noDiff) {
             this.root = nodes[0]
             return
         }
-        if (!this.vm.$element) {
-            diff(this.vnodes[0], nodes[0])
-
-            this.vm.$element = this.vnodes[0]
-        } else {
-            diff(this.vnodes[0], nodes[0])
+        try {
+            if (!this.vm.$element) {
+                diff(this.vnodes[0], nodes[0])
+                this.vm.$element = this.vnodes[0]
+            } else {
+                diff(this.vnodes[0], nodes[0])
+            }
+        } catch (diffError) {
+            console.log(diffError)
         }
         this._isScheduled = false
     },
