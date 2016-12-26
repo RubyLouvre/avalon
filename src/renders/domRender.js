@@ -80,8 +80,7 @@ Render.prototype = {
         return a.tmpl.exec(vm, this)
     },
     slot: function(name) {
-        console.log('索取', name, this.slots[name])
-        return this.slots[name] || []
+        return [this.slots[name]]
     },
     ctrl: function(id, scope, cb) {
         var dir = directives['controller']
@@ -269,7 +268,6 @@ Render.prototype = {
                 }
 
             }
-            // scope.$render = this
         }
         return scope
     },

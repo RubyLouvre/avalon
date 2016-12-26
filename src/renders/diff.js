@@ -1,13 +1,12 @@
 import { avalon, directives } from '../seed/core'
 import { toDOM } from './toDOM'
 
-// // 以后要废掉vdom系列,action
+// 以后要废掉vdom系列,action
 //a是旧的虚拟DOM, b是新的
 export function diff(a, b) {
     switch (a.nodeName) {
         case '#text':
             toDOM(a)
-
             if (a.nodeValue !== b.nodeValue) {
                 a.nodeValue = b.nodeValue
                 if (a.dom) {
@@ -26,41 +25,40 @@ export function diff(a, b) {
             diff(a.children, b.children)
             break
         case void(0):
-
+            console.log(a, b)
+            throw 'xx'
             return directives['for'].diff(a, b)
             break
         default:
-          
-            
-            toDOM(a)
             if (a.staticRoot && a.hasScan) {
+                toDOM(a)
                 return
             }
             var parentNode = a.dom
-             if (a.nodeName !== b.nodeName) {
-                 if(b.nodeName === '#comment'){
+            if (a.nodeName !== b.nodeName) {
+                if (b.nodeName === '#comment') {
+                    toDOM(a)
+
+                    //处理if指令
                     handleIf(a, b)
                     return
-                }else{
+                } else {
+                    //处理组件
                     a.nodeName = b.nodeName
                     a.vtype = b.vtype
                     a.props = b.props
                     a.children = b.children
-                    var oldDOM = a.dom
+                    avalon.clearHTML(a.dom)
                     delete a.dom
-                   
-                    toDOM(a)
-                  //  oldDOM.parentNode.replaceChild(a.dom, oldDOM)
-                    parentNode = a.dom
-                  //  console.log('替换组件的根节点')
                 }
-               
             }
+            toDOM(a)
+            parentNode = a.dom
+
             var delay
             if (b.dirs) {
                 for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                     var adir = a.dirs[i]
-
                     if (!adir.diff) {
                         avalon.mix(adir, directives[adir.type])
                     }
@@ -89,11 +87,8 @@ export function diff(a, b) {
                 for (let i = 0; i < achild.length; i++) {
                     let c = achild[i]
                     let d = bchild[i]
-
-                    if (d) {
+                    if (d) { //如果数量相等则进行比较
                         let arr = diff(c, d)
-                     
-
                         if (typeof arr === 'number') {
                             //  console.log('数组扁平化', arr)
                             directives['for'].update(c, d, achild, bchild, i, parentNode)
@@ -103,25 +98,27 @@ export function diff(a, b) {
                             diff(c, d)
                         }
                     }
-                    //  toDOM(c)
                     if (c.dom !== childNodes[i]) {
-
-                        if (!childNodes[i]) {
-                            //  parentNode.removeChild(c.dom)
+                        if (!childNodes[i]) { //数量一致就添加
                             parentNode.appendChild(c.dom)
                         } else {
                             try {
                                 parentNode.insertBefore(c.dom, childNodes[i])
                             } catch (e) {
-                                
                                 avalon.log(c, c.dom, childNodes[i], 'error', e)
                             }
                         }
-                    } else {
-                        // parentNode.appendChild(c.dom)
+                    }
+                }
+                //移除多余节点
+                if (childNodes.length > achild.length) {
+                    let j = achild.length
+                    while (childNodes[j]) {
+                        parentNode.removeChild(childNodes[j])
                     }
                 }
             }
+
             if (a.staticRoot) {
                 a.hasScan = true
             }

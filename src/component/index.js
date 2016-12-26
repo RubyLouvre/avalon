@@ -1,8 +1,7 @@
 import { avalon, isObject, platform } from '../seed/core'
 import { cssDiff } from '../directives/css'
-import { getRange } from '../renders/share'
+import { getRange, dumpTree } from '../renders/share'
 import { toDOM } from '../renders/toDOM'
-import { toHTML } from '../renders/toHTML'
 import { diff } from '../renders/diff'
 import { createGetter } from '../parser/index'
 
@@ -74,7 +73,7 @@ avalon.directive('widget', {
             // ＝＝＝创建组件的VM＝＝END＝＝＝
 
             var innerRender = avalon.scan(component.template, comVm, false)
-
+            console.log(innerRender.tmpl.body, '000')
             comVm.$render = innerRender
 
             if (component.soleSlot) {
@@ -87,20 +86,18 @@ avalon.directive('widget', {
             innerRender.exe = true
             innerRender.complete()
 
-            throw innerRender
         }
 
 
         //当组件生成出来，slot元素应该在它应在的位置，然后旧的组件也有slot元素 
         if (comment) {
-            var dom = avalon.vdom(vdom, 'toDOM')
+            var dom = toDOM(vdom)
             comment.parentNode.replaceChild(dom, comment)
             comVm.$element = innerRender.root.dom = dom
             delete this.reInit
         }
         var newVdom = innerRender.root
 
-        console.log(vdom, newVdom)
         diff(vdom, newVdom)
 
         comVm.$element = vdom.dom
@@ -122,7 +119,6 @@ avalon.directive('widget', {
     update: function(value, vdom, newVdom) {
         // this.oldValue = value //★★防止递归
         this.value = avalon.mix(true, {}, value)
-        console.log(this.readyState, ' 000', newVdom)
         switch (this.readyState) {
             case 0:
                 this.init(value, vdom, newVdom)
