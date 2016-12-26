@@ -67,7 +67,8 @@ Render.prototype = {
         return { nodeName: '#comment', nodeValue: value }
     },
     text: function(a, d) {
-        return { nodeName: '#text', nodeValue: a || '', dynamic: d }
+        a = a == null ? '\u200b' : a+''
+        return { nodeName: '#text', nodeValue: a || '', dynamic: !!d }
     },
     collectSlot: function(node, slots) {
         var name = node.props.slot

@@ -85,7 +85,6 @@ avalon.directive('widget', {
             innerRender.exe = true
             innerRender.noDiff = true
             innerRender.complete()
-console.log( newVdom.slots)
         }
 
 
@@ -98,7 +97,6 @@ console.log( newVdom.slots)
         }
         this.vdom = vdom
         var root = innerRender.root
-        console.log(root,'000')
         Array('nodeName','vtype','props','children','dom' ).forEach(function(prop){
            newVdom[prop] = vdom[prop] = root[prop]
         })
@@ -123,7 +121,7 @@ console.log(vdom.dom,'组件update')
             return true
         }
         this.delay = true
-        console.log('失败',this, vdom, neVdom)
+        console.log('diff return false')
     },
 
     update: function(value, vdom, newVdom) {

@@ -37,7 +37,6 @@ Yield.prototype = {
         } else if (node.nodeName === '#text') {
             return this.genText(node)
         }
-        console.log(node, '999')
     },
     genText(node) {
         if (node.dynamic) {
@@ -102,8 +101,7 @@ Yield.prototype = {
             if (dirs['ms-text']) {
                 var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag)
                 var code = createExpr(expr, 'text')
-                node.template = `[Ʃ.text(${ code })]
-            `
+                node.template = `[Ʃ.text(${ code })]`
                 node.children = [{ dynamic: true, nodeName: '#text', nodeValue: NaN }]
                 removeDir('text', dirs, props)
                 removeDir('html', dirs, props)

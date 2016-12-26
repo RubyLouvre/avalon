@@ -11,6 +11,7 @@ export function diff(a, b) {
             toDOM(a)
             if (a.nodeValue !== b.nodeValue) {
                 a.nodeValue = b.nodeValue
+                console.log(b.nodeValue,'ppp')
                 if (a.dom) {
                     a.dom.nodeValue = b.nodeValue
                 }
@@ -27,7 +28,6 @@ export function diff(a, b) {
         case '#document-fragment':
             break
         case void(0):
-            console.log(a,b)
             //两个数组(循环区域进行比较 )
             return directives['for'].diff(a, b)
             break

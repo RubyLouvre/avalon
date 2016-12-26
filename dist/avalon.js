@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-26:17:24 version 2.2.2 by 司徒正美
+built in 2016-12-26:18:29 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -5068,37 +5068,7 @@ IE7的checked属性应该使用defaultChecked来设置
     });
 
     avalon.directive('text', {
-        delay: true,
-        init: function init() {
-
-            var node = this.node;
-            if (node.isVoidTag) {
-                avalon.error('自闭合元素不能使用ms-text');
-            }
-            var child = { nodeName: '#text', nodeValue: this.getValue() };
-            node.children.splice(0, node.children.length, child);
-            if (inBrowser) {
-                avalon.clearHTML(node.dom);
-                node.dom.appendChild(avalon.vdom(child, 'toDOM'));
-            }
-            this.node = child;
-            var type = 'expr';
-            this.type = this.name = type;
-            var directive$$1 = avalon.directives[type];
-            var me = this;
-            this.callback = function (value) {
-                directive$$1.update.call(me, me.node, value);
-            };
-        }
-    });
-
-    avalon.directive('expr', {
-        update: function update(value, vdom) {
-            vdom.nodeValue = value;
-            //https://github.com/RubyLouvre/avalon/issues/1834
-            if (vdom.dom) if (value === '') value = '\u200B';
-            vdom.dom.data = value;
-        }
+        diff: avalon.noop
     });
 
     avalon.directive('attr', {
@@ -5291,7 +5261,6 @@ IE7的checked属性应该使用defaultChecked来设置
             } else if (node.nodeName === '#text') {
                 return this.genText(node);
             }
-            console.log(node, '999');
         },
         genText: function genText(node) {
             if (node.dynamic) {
@@ -5340,7 +5309,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 if (dirs['ms-text']) {
                     var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag);
                     var code = createExpr(expr, 'text');
-                    node.template = '[\u01A9.text(' + code + ')]\n            ';
+                    node.template = '[\u01A9.text(' + code + ')]';
                     node.children = [{ dynamic: true, nodeName: '#text', nodeValue: NaN }];
                     removeDir('text', dirs, props);
                     removeDir('html', dirs, props);
@@ -5542,6 +5511,7 @@ IE7的checked属性应该使用defaultChecked来设置
             if (el.dom) {
                 return el.dom;
             }
+            console.log(el.nodeValue, 'ooooo');
             return el.dom = document.createTextNode(el.nodeValue);
         } else if (Array.isArray(el)) {
             console.log('数组变DOM', b);
@@ -5620,6 +5590,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 toDOM(a);
                 if (a.nodeValue !== b.nodeValue) {
                     a.nodeValue = b.nodeValue;
+                    console.log(b.nodeValue, 'ppp');
                     if (a.dom) {
                         a.dom.nodeValue = b.nodeValue;
                     }
@@ -5636,7 +5607,6 @@ IE7的checked属性应该使用defaultChecked来设置
             case '#document-fragment':
                 break;
             case void 0:
-                console.log(a, b);
                 //两个数组(循环区域进行比较 )
                 return directives['for'].diff(a, b);
                 break;
@@ -5825,7 +5795,8 @@ IE7的checked属性应该使用defaultChecked来设置
             return { nodeName: '#comment', nodeValue: value };
         },
         text: function text(a, d) {
-            return { nodeName: '#text', nodeValue: a || '', dynamic: d };
+            a = a == null ? '\u200B' : a + '';
+            return { nodeName: '#text', nodeValue: a || '', dynamic: !!d };
         },
         collectSlot: function collectSlot(node, slots) {
             var name = node.props.slot;
@@ -7664,7 +7635,6 @@ IE7的checked属性应该使用defaultChecked来设置
                 innerRender.exe = true;
                 innerRender.noDiff = true;
                 innerRender.complete();
-                console.log(newVdom.slots);
             }
 
             //当组件生成出来，slot元素应该在它应在的位置，然后旧的组件也有slot元素 
@@ -7676,7 +7646,6 @@ IE7的checked属性应该使用defaultChecked来设置
             }
             this.vdom = vdom;
             var root$$1 = innerRender.root;
-            console.log(root$$1, '000');
             Array('nodeName', 'vtype', 'props', 'children', 'dom').forEach(function (prop) {
                 newVdom[prop] = vdom[prop] = root$$1[prop];
             });
@@ -7700,7 +7669,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 return true;
             }
             this.delay = true;
-            console.log('失败', this, vdom, neVdom);
+            console.log('diff return false');
         },
 
         update: function update(value, vdom, newVdom) {
