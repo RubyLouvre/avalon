@@ -9,7 +9,7 @@ import { runActions, collectDeps } from '../vmodel/transaction'
 import { eventMap } from '../parser/attributes'
 
 import { startWith, dumpTree, getRange } from './share'
-import { diff } from './diff2'
+import { diff } from './diff'
 
 
 /**
