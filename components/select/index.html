@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
     <head>
@@ -10,7 +11,7 @@
     </head>
     <body>
         <div ms-controller="test">
-            <xmp ms-widget="{is:'ms-select', items:@items, value:@value}"></xmp>
+            <xmp ms-widget="{is:'ms-select', items:@items, value:@value,onChange:@onChange}"></xmp>
             {{@value}}
         </div>
 
@@ -23,8 +24,8 @@
                 $id: 'test',
                 items: ['请选择', '选项一', '选项二'],
                 value: '请选择',
-                onChange:function(a, b){
-                    console.log(a,b)
+                onChange:  function(a, b){
+                     vm.value = a
                 }
             });
             function heredoc(fn) {
@@ -63,17 +64,20 @@
                             }
                         })
                     },
+                    onChange:  function(a, b){
+                       //默认方法
+                    },
                     _selectValue: function (key) {
                         var old = this.value
                         var neo = this.items[key]
                         if (old !== neo) {
                             this.value = neo
-                            if (this.hasOwnProperty('onChange') && typeof this.onChange === 'function') {
-                                var ret = this.onChange(neo, old)
-                                if (ret !== false) {
-                                    this._open = false
-                                }
+                         
+                            var ret = this.onChange(neo, old)
+                            if (ret !== false) {
+                                this._open = false
                             }
+                        
                         }
                     },
                     _openDropDown: function () {
@@ -81,7 +85,6 @@
                     }
                 }
             });
-
         </script>
         <p>给用户用的API有</p>
         <ul>
@@ -89,6 +92,7 @@
             <li>name:用于提交表单</li>
             <li>onChange:当value改变时触发,如果它返回false则不会自动关闭菜单</li>
             <li>items:列表中的内容</li>
+            
         </ul>
     </body>
 </html>
