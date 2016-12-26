@@ -5,7 +5,9 @@ import { toDOM } from './toDOM'
 //a是旧的虚拟DOM, b是新的
 export function diff(a, b) {
     switch (a.nodeName) {
+         
         case '#text':
+            //两个文本节点进行比较
             toDOM(a)
             if (a.nodeValue !== b.nodeValue) {
                 a.nodeValue = b.nodeValue
@@ -15,6 +17,7 @@ export function diff(a, b) {
             }
             break
         case '#comment':
+             //两个注释节点进行比较
             toDOM(a)
             if (a.nodeName !== b.nodeName) {
                 handleIf(a, b)
@@ -22,71 +25,73 @@ export function diff(a, b) {
             }
             break
         case '#document-fragment':
-            diff(a.children, b.children)
             break
         case void(0):
-            console.log(a, b)
-            throw 'xx'
+            console.log(a,b)
+            //两个数组(循环区域进行比较 )
             return directives['for'].diff(a, b)
             break
         default:
+            //两个元素节点进行比较
+            //先处理静态节点,静态节点不会变动,不用比较
+            //如果上面有指令,应用指令
             if (a.staticRoot && a.hasScan) {
                 toDOM(a)
                 return
-            }
-            var parentNode = a.dom
-            if (a.nodeName !== b.nodeName) {
-                if (b.nodeName === '#comment') {
-                    toDOM(a)
-
-                    //处理if指令
-                    handleIf(a, b)
-                    return
-                } else {
-                    //处理组件
-                    a.nodeName = b.nodeName
-                    a.vtype = b.vtype
-                    a.props = b.props
-                    a.children = b.children
-                    avalon.clearHTML(a.dom)
-                    delete a.dom
-                }
-            }
+            }            
             toDOM(a)
-            parentNode = a.dom
-
-            var delay
+            var parentNode = a.dom,  delay
             if (b.dirs) {
                 for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                     var adir = a.dirs[i]
                     if (!adir.diff) {
                         avalon.mix(adir, directives[adir.type])
                     }
-                    delay = delay || adir.delay
+                   
                     if (adir.diff && adir.diff(adir.value, bdir.value, a, b)) {
                         toDOM(a)
                         adir.update(adir.value, a, b)
-                        if (!adir.removeName) {
+                        //如果是widget, a.dom会被删掉
+                        if(a.dom !== parentNode){
+                            console.log('组件指令已经执行')
+                            var p = parentNode.parentNode
+                            if(p){
+                             
+                               p.replaceChild(a.dom,parentNode)
+                            }
+                          
+                            parentNode = a.dom
+                        }
+                        //如果是组件指令,那么a === b或至少保证a.nodeName === b.nodeNaem
+                        if (!adir.removeName ) {
                             a.dom.removeAttribute(adir.name)
                             adir.removeName = true
                         }
-
-
-                    } else {
-                        if (!adir.diff)
-                            avalon.log(adir, '没有diff方法')
-                    }
+                    } 
+                     delay = delay || adir.delay
 
                 }
             }
+          if (a.nodeName !== b.nodeName) {
+                if (b.nodeName === '#comment') {
+                   toDOM(a)
+                    //处理if指令
+                    handleIf(a, b)
+                   return
+                }
+           }
             if (!a.vtype && !delay) {
 
                 var childNodes = parentNode.childNodes
+                 
                 var achild = a.children.concat()
                 var bchild = b.children.concat()
+                
                 for (let i = 0; i < achild.length; i++) {
+                  
                     let c = achild[i]
                     let d = bchild[i]
+                 
                     if (d) { //如果数量相等则进行比较
                         let arr = diff(c, d)
                         if (typeof arr === 'number') {
@@ -98,6 +103,7 @@ export function diff(a, b) {
                             diff(c, d)
                         }
                     }
+                  
                     if (c.dom !== childNodes[i]) {
                         if (!childNodes[i]) { //数量一致就添加
                             parentNode.appendChild(c.dom)

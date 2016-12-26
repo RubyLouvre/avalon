@@ -9,7 +9,7 @@ import { runActions, collectDeps } from '../vmodel/transaction'
 import { eventMap } from '../parser/attributes'
 
 import { startWith, dumpTree, getRange } from './share'
-import { diff } from './diff'
+import { diff } from './diff2'
 
 
 /**
@@ -71,8 +71,10 @@ Render.prototype = {
     },
     collectSlot: function(node, slots) {
         var name = node.props.slot
-
-        slots[name] = node
+        if( !slots[name]) {
+             slots[name] = []
+        }
+        slots[name].push(node)
         return node
     },
     html: function(html, vm) {
@@ -80,7 +82,11 @@ Render.prototype = {
         return a.tmpl.exec(vm, this)
     },
     slot: function(name) {
-        return [this.slots[name]]
+        var a =this.slots[name]
+      
+        a.slot = name
+        console.log(a, 'slot get')
+        return a
     },
     ctrl: function(id, scope, cb) {
         var dir = directives['controller']
@@ -284,7 +290,6 @@ Render.prototype = {
             this.tmpl = fn
         }
         if (this.exe) {
-            console.log('执行', this.slots)
             collectDeps(this, this.update)
 
         }
@@ -305,7 +310,10 @@ Render.prototype = {
     update: function() {
         this.vm.$render = this
         var nodes = this.tmpl.exec(this.vm, {})
-
+        if(this.noDiff){
+            this.root = nodes[0]
+            return
+        }
         if (!this.vm.$element) {
             diff(this.vnodes[0], nodes[0])
 

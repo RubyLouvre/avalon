@@ -37,6 +37,7 @@ Yield.prototype = {
         } else if (node.nodeName === '#text') {
             return this.genText(node)
         }
+        console.log(node, '999')
     },
     genText(node) {
         if (node.dynamic) {

@@ -23,7 +23,7 @@ function toObject(value) {
 }
 var componentQueue = []
 avalon.directive('widget', {
-    delay: true,
+  
     priority: 4,
     deep: true,
     init: function(oldVal, vdom, newVdom) {
@@ -73,7 +73,7 @@ avalon.directive('widget', {
             // ＝＝＝创建组件的VM＝＝END＝＝＝
 
             var innerRender = avalon.scan(component.template, comVm, false)
-            console.log(innerRender.tmpl.body, '000')
+            
             comVm.$render = innerRender
 
             if (component.soleSlot) {
@@ -82,10 +82,10 @@ avalon.directive('widget', {
             } else {
                 innerRender.slots = newVdom.slots
             }
-
             innerRender.exe = true
+            innerRender.noDiff = true
             innerRender.complete()
-
+console.log( newVdom.slots)
         }
 
 
@@ -96,9 +96,17 @@ avalon.directive('widget', {
             comVm.$element = innerRender.root.dom = dom
             delete this.reInit
         }
-        var newVdom = innerRender.root
-
-        diff(vdom, newVdom)
+        this.vdom = vdom
+        var root = innerRender.root
+        console.log(root,'000')
+        Array('nodeName','vtype','props','children','dom' ).forEach(function(prop){
+           newVdom[prop] = vdom[prop] = root[prop]
+        })
+        
+        toDOM(vdom)
+       
+console.log(vdom.dom,'组件update')
+      //  diff(vdom, newVdom)
 
         comVm.$element = vdom.dom
         if (fromCache) {
@@ -107,13 +115,15 @@ avalon.directive('widget', {
             fireComponentHook(comVm, vdom, 'Ready')
         }
     },
-    diff: function(oldVal, newVal) {
+    diff: function(oldVal, newVal, vdom, neVdom) {
         if (cssDiff.call(this, oldVal, newVal)) {
             if (!this.readyState)
                 this.readyState = 0
+             this.delay = false
             return true
         }
-        console.log('失败')
+        this.delay = true
+        console.log('失败',this, vdom, neVdom)
     },
 
     update: function(value, vdom, newVdom) {

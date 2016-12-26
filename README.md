@@ -20,6 +20,17 @@
 <p align="center">
 <a href="https://saucelabs.com/beta/builds/7c80ed0dd7b34c55815d65a132ff0226"><img src="https://saucelabs.com/browser-matrix/rubylouvre.svg" alt="Browser Matrix"></a>
 </p>
+
+
+```javascript
+npm install avalon2
+```
+
+es6调用方式 
+```
+import * as avalon from 'avalon2'
+```
+
 ###[English tutorials](https://github.com/RubyLouvre/avalon/tree/master/tutorials)
 
 ###[avalon cookbook](https://github.com/RubyLouvre/avalon/blob/2.1.8/avalon%20cookbook.pdf)
@@ -37,9 +48,7 @@
 
 
 
-```javascript
-npm install avalon2
-```
+
 
 ###谁在用avalon
 
