@@ -81,7 +81,7 @@ Yield.prototype = {
     },
     genElement(node) {
         if (node.nodeName === 'slot') {
-            return `\u01A9.slot(${ avalon.quote(node.props.name || "default") })`
+            return `\u01A9.slot(${ avalon.quote(node.props.name || "defaults") })`
         }
        
         if (node.staticRoot) {

@@ -35,47 +35,34 @@ avalon.directive('widget', {
         //将数组形式转换为对象形式
         var value = toObject(oldVal)
 
-        // ＝＝＝创建组件的VM＝＝BEGIN＝＝＝
         var is = newVdom.props.is || value.is
         this.is = is
         var component = avalon.components[is]
-
-
         //如果组件还没有注册，那么将原元素变成一个占位用的注释节点
         if (!component) {
             this.readyState = 0
-
             newVdom.nodeName = '#comment'
             newVdom.nodeValue = 'unresolved component placeholder'
             newVdom.dom = newVdom.props = null
             avalon.Array.ensure(componentQueue, this)
             return
         }
+        
         this.readyState = 1
 
-        //如果是非空元素，比如说xmp, ms-*, template
-        var id = value.id || value.$id
-        var hasCache = avalon.vmodels[id]
-        var fromCache = false
-        if (hasCache) {
-            comVm = hasCache
+        var id = value.id || value.$id, innerRender,comVm
+        var fromCache = avalon.vmodels[id]
+        
+        if (fromCache) {
+            comVm = fromCache
             this.comVm = comVm
-
-            // replaceRoot(this, comVm.$render)
-            fromCache = true
+            innerRender = comVm.$render
 
         } else {
-            var comVm = createComponentVm(component, value, is)
-            var curVm = newVdom.vm
-            fireComponentHook(comVm, vdom, 'Init')
+            comVm = createComponentVm(component, value, is)
+            fireComponentHook(newVdom.vm, vdom, 'Init')
             this.comVm = comVm
-
-            //在组值的模板里有许多slot元素,它们需要转换成Z.slot('name')
-            // ＝＝＝创建组件的VM＝＝END＝＝＝
-
-            var innerRender = avalon.scan(component.template, comVm, false)
-
-            comVm.$render = innerRender
+            innerRender = avalon.scan(component.template, comVm, false)
 
             if (component.soleSlot) {
                 this.getter = this.getter || createGetter('@' + component.soleSlot)
@@ -83,9 +70,11 @@ avalon.directive('widget', {
             } else {
                 this.slots = innerRender.slots = newVdom.slots
             }
-            innerRender.exe = true
-            innerRender.noDiff = true
+           
+
+            innerRender.exe = innerRender.noDiff = true
             innerRender.complete()
+            delete vdom.dom   
         }
 
 
@@ -96,20 +85,17 @@ avalon.directive('widget', {
             comVm.$element = innerRender.root.dom = dom
             delete this.reInit
         }
+        
         this.vdom = vdom
         var root = innerRender.root
         Array('nodeName', 'vtype', 'props', 'children', 'dom').forEach(function(prop) {
             newVdom[prop] = vdom[prop] = root[prop]
         })
 
-        // toDOM(vdom)
-
-        console.log(vdom.dom, '组件update')
-
-
 
         afterCb.push(function(vdom) {
             comVm.$element = vdom.dom
+            root.dom = vdom.dom
             if (fromCache) {
                 fireComponentHook(comVm, vdom, 'Enter')
             } else {
@@ -172,20 +158,7 @@ avalon.directive('widget', {
     },
 })
 
-function replaceRoot(instance, innerRender) {
-    instance.innerRender = innerRender
-    var root = innerRender.root
-    var vdom = instance.node
-    var slot = vdom.props.slot
-    for (var i in root) {
-        vdom[i] = root[i]
-    }
-    if (vdom.props && slot) {
-        vdom.props.slot = slot
-    }
-    innerRender.root = vdom
-    innerRender.vnodes[0] = vdom
-}
+
 
 function fireComponentHook(vm, vdom, name) {
     var list = vm.$events['on' + name]
@@ -247,32 +220,7 @@ function resetParentChildren(nodes, arr) {
     }
 }
 
-function insertArraySlot(nodes, arr) {
-    for (var i = 0, el; el = nodes[i]; i++) {
-        if (el.nodeName === 'slot') {
-            resetParentChildren(nodes, arr)
-            nodes.splice.apply(nodes, [i, 1].concat(arr))
-            break
-        } else if (el.children) {
-            insertArraySlot(el.children, arr)
-        }
-    }
-}
 
-
-
-function insertObjectSlot(nodes, obj) {
-    for (var i = 0, el; el = nodes[i]; i++) {
-        if (el.nodeName === 'slot') {
-            var name = el.props.name
-            resetParentChildren(nodes, obj[name])
-            nodes.splice.apply(nodes, [i, 1].concat(obj[name]))
-            continue
-        } else if (el.children) {
-            insertObjectSlot(el.children, obj)
-        }
-    }
-}
 
 avalon.components = {}
 avalon.component = function(name, component) {

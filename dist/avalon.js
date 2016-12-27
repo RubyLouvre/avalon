@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-27:15:35 version 2.2.2 by 司徒正美
+built in 2016-12-27:17:25 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -5301,7 +5301,7 @@ IE7的checked属性应该使用defaultChecked来设置
         },
         genElement: function genElement(node) {
             if (node.nodeName === 'slot') {
-                return '\u01A9.slot(' + avalon.quote(node.props.name || "default") + ')';
+                return '\u01A9.slot(' + avalon.quote(node.props.name || "defaults") + ')';
             }
 
             if (node.staticRoot) {
@@ -5752,9 +5752,13 @@ IE7的checked属性应该使用defaultChecked来设置
 
     function reInitDires(a) {
         if (a.dirs) {
-            a.dirs.forEach(function (dir) {
-                delete dir.inited;
-            });
+            if (Array.isArray(a.dirs)) {
+                a.dirs.forEach(function (dir) {
+                    delete dir.inited;
+                });
+            } else {
+                delete a.dirs;
+            }
         }
         if (a.children) {
             a.children.forEach(function (child) {
@@ -5850,6 +5854,7 @@ IE7的checked属性应该使用defaultChecked来设置
             return a.tmpl.exec(vm, this);
         },
         slot: function slot(name) {
+            console.log(name, '333');
             var a = this.slots[name];
             a.slot = name;
             return a;
@@ -7638,45 +7643,35 @@ IE7的checked属性应该使用defaultChecked来设置
             //将数组形式转换为对象形式
             var value = toObject(oldVal);
 
-            // ＝＝＝创建组件的VM＝＝BEGIN＝＝＝
             var is = newVdom.props.is || value.is;
             this.is = is;
             var component = avalon.components[is];
-
             //如果组件还没有注册，那么将原元素变成一个占位用的注释节点
             if (!component) {
                 this.readyState = 0;
-
                 newVdom.nodeName = '#comment';
                 newVdom.nodeValue = 'unresolved component placeholder';
                 newVdom.dom = newVdom.props = null;
                 avalon.Array.ensure(componentQueue, this);
                 return;
             }
+
             this.readyState = 1;
 
-            //如果是非空元素，比如说xmp, ms-*, template
-            var id = value.id || value.$id;
-            var hasCache = avalon.vmodels[id];
-            var fromCache = false;
-            if (hasCache) {
-                comVm = hasCache;
-                this.comVm = comVm;
+            var id = value.id || value.$id,
+                innerRender,
+                comVm;
+            var fromCache = avalon.vmodels[id];
 
-                // replaceRoot(this, comVm.$render)
-                fromCache = true;
+            if (fromCache) {
+                comVm = fromCache;
+                this.comVm = comVm;
+                innerRender = comVm.$render;
             } else {
-                var comVm = createComponentVm(component, value, is);
-                var curVm = newVdom.vm;
-                fireComponentHook(comVm, vdom, 'Init');
+                comVm = createComponentVm(component, value, is);
+                fireComponentHook(newVdom.vm, vdom, 'Init');
                 this.comVm = comVm;
-
-                //在组值的模板里有许多slot元素,它们需要转换成Z.slot('name')
-                // ＝＝＝创建组件的VM＝＝END＝＝＝
-
-                var innerRender = avalon.scan(component.template, comVm, false);
-
-                comVm.$render = innerRender;
+                innerRender = avalon.scan(component.template, comVm, false);
 
                 if (component.soleSlot) {
                     this.getter = this.getter || createGetter('@' + component.soleSlot);
@@ -7684,9 +7679,10 @@ IE7的checked属性应该使用defaultChecked来设置
                 } else {
                     this.slots = innerRender.slots = newVdom.slots;
                 }
-                innerRender.exe = true;
-                innerRender.noDiff = true;
+
+                innerRender.exe = innerRender.noDiff = true;
                 innerRender.complete();
+                delete vdom.dom;
             }
 
             //当组件生成出来，slot元素应该在它应在的位置，然后旧的组件也有slot元素 
@@ -7696,18 +7692,16 @@ IE7的checked属性应该使用defaultChecked来设置
                 comVm.$element = innerRender.root.dom = dom;
                 delete this.reInit;
             }
+
             this.vdom = vdom;
             var root$$1 = innerRender.root;
             Array('nodeName', 'vtype', 'props', 'children', 'dom').forEach(function (prop) {
                 newVdom[prop] = vdom[prop] = root$$1[prop];
             });
 
-            // toDOM(vdom)
-
-            console.log(vdom.dom, '组件update');
-
             afterCb.push(function (vdom) {
                 comVm.$element = vdom.dom;
+                root$$1.dom = vdom.dom;
                 if (fromCache) {
                     fireComponentHook(comVm, vdom, 'Enter');
                 } else {
@@ -7815,38 +7809,6 @@ IE7的checked属性应该使用defaultChecked来设置
                     });
                 }
                 //delete a[i] 这里不能删除,会导致再次切换时没有onReady
-            }
-        }
-    }
-
-    function resetParentChildren(nodes, arr) {
-        var dir = arr && arr[0] && arr[0].forDir;
-        if (dir) {
-            dir.parentChildren = nodes;
-        }
-    }
-
-    function insertArraySlot(nodes, arr) {
-        for (var i = 0, el; el = nodes[i]; i++) {
-            if (el.nodeName === 'slot') {
-                resetParentChildren(nodes, arr);
-                nodes.splice.apply(nodes, [i, 1].concat(arr));
-                break;
-            } else if (el.children) {
-                insertArraySlot(el.children, arr);
-            }
-        }
-    }
-
-    function insertObjectSlot(nodes, obj) {
-        for (var i = 0, el; el = nodes[i]; i++) {
-            if (el.nodeName === 'slot') {
-                var name = el.props.name;
-                resetParentChildren(nodes, obj[name]);
-                nodes.splice.apply(nodes, [i, 1].concat(obj[name]));
-                continue;
-            } else if (el.children) {
-                insertObjectSlot(el.children, obj);
             }
         }
     }
