@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-27:12:18 version 2.2.3 by 司徒正美
+built in 2016-12-27:12:19 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.3
 
 fix VElement hackIE BUG

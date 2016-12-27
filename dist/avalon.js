@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-27:12:17 version 2.2.3 by 司徒正美
+built in 2016-12-27:12:20 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.3
 
 
@@ -6198,7 +6198,6 @@ avalon.bind 在绑定非元素节点也要修正事件对象
             if (once && p && p.nodeType === 11) {
                 //如果input元素是循环生成的,那么它这时还没有插入到DOM树,其根节点是#document-fragment
                 setTimeout(function () {
-                    console.log(dom);
                     addValidate(field, dom);
                 });
                 break;
