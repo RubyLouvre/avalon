@@ -29,9 +29,6 @@ avalon.directive('widget', {
     init: function(oldVal, vdom, newVdom, afterCb) {
         //cached属性必须定义在组件容器里面,不是template中
         this.cacheVm = !!newVdom.props.cached
-        if (vdom.dom && vdom.nodeName === '#comment') {
-            var comment = vdom.dom
-        }
         //将数组形式转换为对象形式
         var value = toObject(oldVal)
 
@@ -71,7 +68,6 @@ avalon.directive('widget', {
                 this.slots = innerRender.slots = newVdom.slots
             }
            
-
             innerRender.exe = innerRender.noDiff = true
             innerRender.complete()
             delete vdom.dom   
@@ -79,12 +75,7 @@ avalon.directive('widget', {
 
 
         //当组件生成出来，slot元素应该在它应在的位置，然后旧的组件也有slot元素 
-        if (comment) {
-            var dom = toDOM(vdom)
-            comment.parentNode.replaceChild(dom, comment)
-            comVm.$element = innerRender.root.dom = dom
-            delete this.reInit
-        }
+
         
         this.vdom = vdom
         var root = innerRender.root

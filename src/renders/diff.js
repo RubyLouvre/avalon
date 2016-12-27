@@ -163,13 +163,9 @@ export function diffSlots(a, b) {
 
 function reInitDires(a) {
     if (a.dirs) {
-        if(Array.isArray(a.dirs)){
-            a.dirs.forEach(function(dir) {
-                delete dir.inited
-            })
-        }else{
-            delete a.dirs
-        }
+        a.dirs.forEach(function(dir) {
+            delete dir.inited
+        })      
     }
     if (a.children) {
         a.children.forEach(function(child) {

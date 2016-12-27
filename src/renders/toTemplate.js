@@ -5,15 +5,14 @@ import { avalon, config, directives } from '../seed/core'
 import { fromString } from '../vtree/fromString'
 
 
-export function Yield(nodes, render) {
+export function Lexer(nodes, render) {
     this.render = render
     var body = this.genChildren(nodes)
-    this.body = body
-    this.exec = Function('__vmodel__', '$$l', 'var \u01A9 = __vmodel__.$render;return ' + body)
+    this.fork = Function('__vmodel__', '$$l', 'var \u01A9 = __vmodel__.$render;return ' + body)
 }
 
 
-Yield.prototype = {
+Lexer.prototype = {
     genChildren(nodes) {
         if (nodes.length) {
             var arr = []
@@ -118,6 +117,7 @@ Yield.prototype = {
             }
 
             if (!Object.keys(dirs).length) {
+                delete node.dirs
                 dirs = null
             }
 

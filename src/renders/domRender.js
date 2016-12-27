@@ -3,7 +3,7 @@ import { fromDOM } from '../vtree/fromDOM'
 import { fromString } from '../vtree/fromString'
 
 import { optimize } from '../vtree/optimize'
-import { Yield } from './toTemplate'
+import { Lexer } from './toTemplate'
 import { runActions, collectDeps } from '../vmodel/transaction'
 
 import { eventMap } from '../parser/attributes'
@@ -38,13 +38,25 @@ export function Render(node, vm, noexe) {
     this.init()
 
 }
-
+/**
+ * 渲染器是avalon更新视图的核心组件,
+ * 第一步,它会将真实DOM (fromDOM) 或HTML字符串 (fromString) 转换为AST 节点树
+ * 这个节点也就是最原始的虚拟DOM树(下称vtree1),
+ * 它里面包括文本节点,元素节点,文碎碎片,注释节点,循环区域(以数组形式表示)
+ * 然后通过scanChildren,scanText,scanElement,scanComment
+ * 为元素添加dynamic, dirs等属性, 为渲染器获取第一个vm
+ * 
+ * 第二步, 在vtree1都被扫描,并获得vm的情况下,
+ * 再发动两次扫描vtree1,为节点添加static, staticRoot属性
+ * 然后Lexer类,将vtree1转换为一个模块函数(bigrender)
+ * bigrender传入一个vm及一个本地对象,就可以生成一个新的虚拟DOM树vtree2
+ * 
+ * 第三步,就是diff, 从上到下,vtree1, vtree2一一对应进行diff,
+ * 这个过程会跳过文档碎片与循环区域,并将它们的内部节点提到外面的children上
+ * 如果遇到widget,还要diff插槽元素
+ * 
+ */
 Render.prototype = {
-    /**
-     * 开始扫描指定区域
-     * 收集绑定属性
-     * 生成指令并建立与VM的关联
-     */
     init() {
         var vnodes
         if (this.root && this.root.nodeType > 0) {
@@ -60,56 +72,7 @@ Render.prototype = {
         this.vnodes = vnodes
         this.scanChildren(vnodes, this.vm, true)
     },
-    static: function(i) {
-        return this.staticTree[i]
-    },
-    comment: function(value) {
-        return { nodeName: '#comment', nodeValue: value }
-    },
-    text: function(a, d) {
-        a = a == null ? '\u200b' : a + ''
-        return { nodeName: '#text', nodeValue: a || '', dynamic: !!d }
-    },
-    collectSlot: function(node, slots) {
-        var name = node.props.slot
-        if (!slots[name]) {
-            slots[name] = []
-        }
-        slots[name].push(node)
-        return node
-    },
-    html: function(html, vm) {
-        var a = new Render(html, vm, true)
-        return a.tmpl.exec(vm, this)
-    },
-    slot: function(name) {
-        var a = this.slots[name]
-        a.slot = name
-        return a
-    },
-    ctrl: function(id, scope, cb) {
-        var dir = directives['controller']
-        scope = dir.getScope.call(this, id, scope)
-        return cb(scope)
-    },
-    repeat: function(obj, str, cb) {
-        var nodes = []
-        var keys = str.split(',')
-        nodes.cb = keys.splice(3, 7).join(',')
-
-        if (Array.isArray(obj)) {
-            for (var i = 0, n = obj.length; i < n; i++) {
-                repeatCb(obj, obj[i], i, keys, nodes, cb, true)
-            }
-        } else if (avalon.isObject(obj)) {
-            for (var i in obj) {
-                if (obj.hasOwnProperty(i)) {
-                    repeatCb(obj, obj[i], i, keys, nodes, cb)
-                }
-            }
-        }
-        return nodes
-    },
+    
     scanChildren(children, scope, isRoot) {
         for (var i = 0; i < children.length; i++) {
             var vdom = children[i]
@@ -127,8 +90,25 @@ Render.prototype = {
                 }
             }
         }
-        if (isRoot) {
+        
+        if (isRoot && this.vm) {
             this.complete()
+        }
+    },
+     /**
+     * 将绑定属性转换为指令
+     * 执行各种回调与优化指令
+     * @returns {undefined}
+     */
+    complete() {
+        if (!this.template) {
+            optimize(this.root)
+            var lexer = new Lexer(this.vnodes, this)
+            this.template = lexer.fork +''
+            this.fork = lexer.fork
+        }
+        if (this.exe) {
+            collectDeps(this, this.update)
         }
     },
 
@@ -188,6 +168,7 @@ Render.prototype = {
             this.scanChildren(children, scope, false)
         }
     },
+    dispose: function(){},
     checkWidget(vdom, attrs, dirs) {
         if (/^ms\-/.test(vdom.nodeName)) {
             attrs.is = vdom.nodeName
@@ -226,7 +207,7 @@ Render.prototype = {
                 var type = attr.match(/\w+/g)[1]
                 type = eventMap[type] || type
                 if (!directives[type]) {
-                    avalon.warn(attr + ' has not registered!')
+                    avalon.warn(`不存在${attr} 指令`)
                 } else if (attr === 'ms-for') {
                     if (vdom.dom) {
                         vdom.dom.removeAttribute(oldName)
@@ -259,6 +240,7 @@ Render.prototype = {
             var dir = directives[type]
             scope = dir.getScope.call(this, $id, scope)
             if (!scope) {
+                avalon.warn(`$id为"${$id}"的vm还没有定义`)
                 return
             } else {
                 if (!this.vm) {
@@ -274,24 +256,57 @@ Render.prototype = {
         }
         return scope
     },
-    /**
-     * 将绑定属性转换为指令
-     * 执行各种回调与优化指令
-     * @returns {undefined}
-     */
-    complete() {
-        if (!this.tmpl) {
-            optimize(this.root)
-
-            var fn = new Yield(this.vnodes, this)
-            this.tmpl = fn
-        }
-        if (this.exe) {
-            collectDeps(this, this.update)
-
-        }
+   
+    static: function(i) {
+        return this.staticTree[i]
     },
+    comment: function(value) {
+        return { nodeName: '#comment', nodeValue: value }
+    },
+    text: function(a, d) {
+        a = a == null ? '\u200b' : a + ''
+        return { nodeName: '#text', nodeValue: a || '', dynamic: !!d }
+    },
+    collectSlot: function(node, slots) {
+        var name = node.props.slot
+        if (!slots[name]) {
+            slots[name] = []
+        }
+        slots[name].push(node)
+        return node
+    },
+    html: function(html, vm) {
+        var a = new Render(html, vm, true)
+        return a.fork(vm, this)
+    },
+    slot: function(name) {
+        var a = this.slots[name]
+        a.slot = name
+        return a
+    },
+    ctrl: function(id, scope, cb) {
+        var dir = directives['controller']
+        scope = dir.getScope.call(this, id, scope)
+        return cb(scope)
+    },
+    repeat: function(obj, str, cb) {
+        var nodes = []
+        var keys = str.split(',')
+        nodes.cb = keys.splice(3, 7).join(',')
 
+        if (Array.isArray(obj)) {
+            for (var i = 0, n = obj.length; i < n; i++) {
+                repeatCb(obj, obj[i], i, keys, nodes, cb, true)
+            }
+        } else if (avalon.isObject(obj)) {
+            for (var i in obj) {
+                if (obj.hasOwnProperty(i)) {
+                    repeatCb(obj, obj[i], i, keys, nodes, cb)
+                }
+            }
+        }
+        return nodes
+    },
     schedule() {
         if (!this._isScheduled) {
             this._isScheduled = true
@@ -306,34 +321,21 @@ Render.prototype = {
 
     update: function() {
         this.vm.$render = this
-        var nodes = this.tmpl.exec(this.vm, {})
+        var nodes = this.fork(this.vm, {})
+        var root =  this.root = nodes[0]
         if (this.noDiff) {
-            this.root = nodes[0]
             return
         }
         try {
-            diff(this.vnodes[0], nodes[0])
+            diff(this.vnodes[0], root)
             this.vm.$element = this.vnodes[0]
         } catch (diffError) {
             avalon.log(diffError)
         }
         this._isScheduled = false
     },
-    /**
-     * 销毁所有指令
-     * @returns {undefined}
-     */
-    dispose() {
-        var list = this.directives || []
-        for (let i = 0, el; el = list[i++];) {
-            el.dispose()
-        }
-        //防止其他地方的this.innerRender && this.innerRender.dispose报错
-        for (let i in this) {
-            if (i !== 'dispose')
-                delete this[i]
-        }
-    },
+    
+    
     /**
      * 将循环区域转换为for指令
      * @param {type} begin 注释节点
