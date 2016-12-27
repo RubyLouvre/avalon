@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-27:17:25 version 2.2.2 by 司徒正美
+built in 2016-12-27:17:29 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -5854,7 +5854,6 @@ IE7的checked属性应该使用defaultChecked来设置
             return a.tmpl.exec(vm, this);
         },
         slot: function slot(name) {
-            console.log(name, '333');
             var a = this.slots[name];
             a.slot = name;
             return a;
@@ -6081,14 +6080,10 @@ IE7的checked属性应该使用defaultChecked来设置
                 return;
             }
             try {
-                if (!this.vm.$element) {
-                    diff(this.vnodes[0], nodes[0]);
-                    this.vm.$element = this.vnodes[0];
-                } else {
-                    diff(this.vnodes[0], nodes[0]);
-                }
+                diff(this.vnodes[0], nodes[0]);
+                this.vm.$element = this.vnodes[0];
             } catch (diffError) {
-                console.log(diffError);
+                avalon.log(diffError);
             }
             this._isScheduled = false;
         },
