@@ -166,7 +166,6 @@ Render.prototype = {
     scanTag(vdom, scope, parentChildren, isRoot) {
         var attrs = vdom.props
 
-
         //处理dirs
         var dirs = this.checkDirs(vdom, attrs)
 
@@ -313,14 +312,10 @@ Render.prototype = {
             return
         }
         try {
-            if (!this.vm.$element) {
-                diff(this.vnodes[0], nodes[0])
-                this.vm.$element = this.vnodes[0]
-            } else {
-                diff(this.vnodes[0], nodes[0])
-            }
+            diff(this.vnodes[0], nodes[0])
+            this.vm.$element = this.vnodes[0]
         } catch (diffError) {
-            console.log(diffError)
+            avalon.log(diffError)
         }
         this._isScheduled = false
     },
