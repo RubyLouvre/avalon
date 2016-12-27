@@ -49,7 +49,7 @@ Yield.prototype = {
             var dir = node.for
             directives['for'].parse.call(dir)
             var keys = `'${dir.valName},${dir.keyName},${dir.asName},${dir.cb}'`
-            return `\u01A9.comment('ms-for: ${dir.expr}'),
+            return `{nodeName:'#comment',vm:__vmodel__, local:$$l,nodeValue:${avalon.quote(node.nodeValue)}},
                     \u01A9.repeat(${ createExpr(dir.expr) }, ${keys}, function($$l){
                 return ${this.genChildren(dir.nodes)}
             })`
@@ -83,6 +83,7 @@ Yield.prototype = {
         if (node.nodeName === 'slot') {
             return `\u01A9.slot(${ avalon.quote(node.props.name || "default") })`
         }
+       
         if (node.staticRoot) {
             var index = this.render.staticIndex++
                 this.render.staticTree[index] = node
@@ -90,6 +91,7 @@ Yield.prototype = {
         }
         var dirs = node.dirs,
             props = node.props
+       
         if (dirs) {
 
             var hasCtrl = dirs['ms-controller']
@@ -120,7 +122,7 @@ Yield.prototype = {
             }
 
         }
-
+         
         var json = toJSONByArray(
             `nodeName: '${node.nodeName}'`,
             node.vtype ? `vtype: ${ node.vtype }` : '',

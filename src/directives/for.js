@@ -56,7 +56,7 @@ avalon.directive('for', {
 
     },
     update: function(oldVal, newVal, oldChild, newChild, i, afterCb) {
-
+       
         if (oldVal.same) {
             //只是单纯将循环区域里的节点抽取出来,同步到父节点的children中
 
@@ -64,6 +64,7 @@ avalon.directive('for', {
             oldChild.splice.apply(oldChild, args1)
             var args2 = getFlattenNodes(newVal, i)
             newChild.splice.apply(newChild, args2)
+            return
         } else if (oldVal.length === 0 || !oldVal.cache) {
             //将key保存到oldVal的cache里面,并且它们都共用相同的子节点
             var args3 = getFlattenNodes(oldVal, i, oldVal.cache = {})
@@ -79,18 +80,22 @@ avalon.directive('for', {
             var args5 = getFlattenNodes(newVal, i)
             newChild.splice.apply(newChild, args5)
         }
-        if (!oldVal.cb && newVal.cb) {
-
-            var cb = newVal.cb
-            if (cb !== 'undefined' && typeof cb === 'string') {
-                var arr = addScope(cb, 'for')
-                var body = makeHandle(arr[0])
-                oldVal.cb = new Function('$event', '$$l', 'var __vmodel__ = this\nreturn ' + body)
-            }
-        }
         if(!oldVal.slot){
-            afterCb.push(function(a){
-                console.log(a.dom, 'for rendered')
+            var comment = newChild[i-1]
+            var render = oldVal.cb
+            var string = newVal.cb
+            if (!render && string && string !== 'undefined') {
+                var arr = addScope(string, 'for')
+                var body = makeHandle(arr[0])
+                render = oldVal.cb = new Function('$event', '$$l', 'var __vmodel__ = this\nreturn ' + body)
+            }
+            if(!render)
+                return 
+            afterCb.push(function(vdom){
+                render.call(comment.vm, {
+                    type: 'rendered',
+                    target: vdom.dom
+                },comment.local)
             })
         }
     }

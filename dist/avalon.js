@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-27:1:57 version 2.2.2 by 司徒正美
+built in 2016-12-27:15:35 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -5285,7 +5285,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 var dir = node["for"];
                 directives['for'].parse.call(dir);
                 var keys = '\'' + dir.valName + ',' + dir.keyName + ',' + dir.asName + ',' + dir.cb + '\'';
-                return '\u01A9.comment(\'ms-for: ' + dir.expr + '\'),\n                    \u01A9.repeat(' + createExpr(dir.expr) + ', ' + keys + ', function($$l){\n                return ' + this.genChildren(dir.nodes) + '\n            })';
+                return '{nodeName:\'#comment\',vm:__vmodel__, local:$$l,nodeValue:' + avalon.quote(node.nodeValue) + '},\n                    \u01A9.repeat(' + createExpr(dir.expr) + ', ' + keys + ', function($$l){\n                return ' + this.genChildren(dir.nodes) + '\n            })';
             }
 
             return '\u01A9.comment(' + avalon.quote(node.nodeValue) + ')';
@@ -5303,6 +5303,7 @@ IE7的checked属性应该使用defaultChecked来设置
             if (node.nodeName === 'slot') {
                 return '\u01A9.slot(' + avalon.quote(node.props.name || "default") + ')';
             }
+
             if (node.staticRoot) {
                 var index = this.render.staticIndex++;
                 this.render.staticTree[index] = node;
@@ -5310,6 +5311,7 @@ IE7的checked属性应该使用defaultChecked来设置
             }
             var dirs = node.dirs,
                 props = node.props;
+
             if (dirs) {
 
                 var hasCtrl = dirs['ms-controller'];
@@ -6219,13 +6221,8 @@ IE7的checked属性应该使用defaultChecked来设置
     });
 
     avalon.directive('if', {
-
         priority: 5,
-
-        diff: function diff(oldVal, newVal) {
-            return true;
-        },
-        update: function update(value, vdom) {}
+        diff: avalon.noop
     });
 
     avalon.directive('on', {
@@ -6335,6 +6332,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 oldChild.splice.apply(oldChild, args1);
                 var args2 = getFlattenNodes(newVal, i);
                 newChild.splice.apply(newChild, args2);
+                return;
             } else if (oldVal.length === 0 || !oldVal.cache) {
                 //将key保存到oldVal的cache里面,并且它们都共用相同的子节点
                 var args3 = getFlattenNodes(oldVal, i, oldVal.cache = {});
@@ -6349,18 +6347,21 @@ IE7的checked属性应该使用defaultChecked来设置
                 var args5 = getFlattenNodes(newVal, i);
                 newChild.splice.apply(newChild, args5);
             }
-            if (!oldVal.cb && newVal.cb) {
-
-                var cb = newVal.cb;
-                if (cb !== 'undefined' && typeof cb === 'string') {
-                    var arr = addScope(cb, 'for');
-                    var body = makeHandle(arr[0]);
-                    oldVal.cb = new Function('$event', '$$l', 'var __vmodel__ = this\nreturn ' + body);
-                }
-            }
             if (!oldVal.slot) {
-                afterCb.push(function (a) {
-                    console.log(a.dom, 'for rendered');
+                var comment = newChild[i - 1];
+                var render = oldVal.cb;
+                var string = newVal.cb;
+                if (!render && string && string !== 'undefined') {
+                    var arr = addScope(string, 'for');
+                    var body = makeHandle(arr[0]);
+                    render = oldVal.cb = new Function('$event', '$$l', 'var __vmodel__ = this\nreturn ' + body);
+                }
+                if (!render) return;
+                afterCb.push(function (vdom) {
+                    render.call(comment.vm, {
+                        type: 'rendered',
+                        target: vdom.dom
+                    }, comment.local);
                 });
             }
         }
