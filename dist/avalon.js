@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-27:1:55 version 2.2.2 by 司徒正美
+built in 2016-12-27:1:57 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -5670,7 +5670,6 @@ IE7的checked属性应该使用defaultChecked来设置
                 if (b.nodeName === '#comment') {
                     //ms-if ms-widget 元素节点要变成注释节点
                     a.props = a.props = a.dom = null;
-                    console.log('00000');
                     handleIf(a, b);
                     stop = true;
                 }
