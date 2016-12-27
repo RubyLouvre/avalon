@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-23:22:35 version 2.2.3 by 司徒正美
+built in 2016-12-27:12:17 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.3
 
 
@@ -8,6 +8,7 @@ avalon.bind 在绑定非元素节点也要修正事件对象
 处理expr的null undefined情况     
 修正error函数参数顺序导致的错误
 支持组件继承(对象形式与函数形式皆可)
+添加对安卓4.4， safari7, firefox50, chrome55的测试
 
 */(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() : typeof define === 'function' && define.amd ? define(factory) : global.avalon = factory();
@@ -461,6 +462,19 @@ avalon.bind 在绑定非元素节点也要修正事件对象
         String.prototype.trim = function () {
             return this.replace(rtrim, '');
         };
+    }
+    if (!Object.create) {
+        Object.create = function () {
+            function F() {}
+
+            return function (o) {
+                if (arguments.length != 1) {
+                    throw new Error('Object.create implementation only accepts one parameter.');
+                }
+                F.prototype = o;
+                return new F();
+            };
+        }();
     }
     var hasDontEnumBug = !{
         'toString': null
@@ -6163,21 +6177,33 @@ avalon.bind 在绑定非元素节点也要修正事件对象
         //添加验证
 
         var rules = vdom.rules;
+        this.rules = rules;
         //将当前虚拟DOM的duplex添加到它上面的表单元素的validate指令的fields数组中
-
         if (rules && !this.validator) {
-            while (dom && dom.nodeType === 1) {
-                var validator = dom._ms_validate_;
-                if (validator) {
-                    this.rules = rules;
-                    this.validator = validator;
+            addValidate(this, dom, true);
+        }
+    }
 
-                    if (avalon.Array.ensure(validator.fields, this)) {
-                        validator.addField(this);
-                    }
-                    break;
+    function addValidate(field, dom, once) {
+        while (dom && dom.nodeType === 1) {
+            var validator = dom._ms_validate_;
+            if (validator) {
+                field.validator = validator;
+                if (avalon.Array.ensure(validator.fields, field)) {
+                    validator.addField(field);
                 }
-                dom = dom.parentNode;
+                break;
+            }
+            var p = dom.parentNode;
+            if (once && p && p.nodeType === 11) {
+                //如果input元素是循环生成的,那么它这时还没有插入到DOM树,其根节点是#document-fragment
+                setTimeout(function () {
+                    console.log(dom);
+                    addValidate(field, dom);
+                });
+                break;
+            } else {
+                dom = p;
             }
         }
     }
@@ -6727,6 +6753,7 @@ avalon.bind 在绑定非元素节点也要修正事件对象
             delete vdom.vmValidator;
 
             dom.setAttribute('novalidate', 'novalidate');
+
             function onManual() {
                 valiDir.validateAll.call(validator, validator.onValidateAll);
             }
@@ -6805,7 +6832,7 @@ avalon.bind 在绑定非元素节点也要修正事件对象
             /* istanbul ignore if */
             if (typeof Promise !== 'function') {
                 //avalon-promise不支持phantomjs
-                avalon.warn('please npm install es6-promise or bluebird');
+                avalon.warn('浏览器不支持原生Promise,请下载并<script src=url>引入\nhttps://github.com/RubyLouvre/avalon/blob/master/test/promise.js');
             }
             /* istanbul ignore if */
             if (elem.disabled) return;

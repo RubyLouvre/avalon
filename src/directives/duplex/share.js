@@ -103,25 +103,35 @@ export function duplexBind(vdom, addEvent){
     //添加验证
    
     var rules = vdom.rules
+    this.rules = rules
     //将当前虚拟DOM的duplex添加到它上面的表单元素的validate指令的fields数组中
-
     if (rules && !this.validator) {
-        while (dom && dom.nodeType === 1) {
-            var validator = dom._ms_validate_
-            if (validator) {
-                this.rules = rules
-                this.validator = validator
-
-                if (avalon.Array.ensure(validator.fields, this)) {
-                    validator.addField(this)
-                }
-                break
-            }
-            dom = dom.parentNode
-        }
+        addValidate(this, dom, true)
     }
 }
 
+function addValidate(field,dom, once){
+    while (dom && dom.nodeType === 1) {
+        var validator = dom._ms_validate_
+        if (validator) {
+            field.validator = validator
+            if (avalon.Array.ensure(validator.fields, field)) {
+                validator.addField(field)
+            }
+            break
+        }
+        var p = dom.parentNode
+        if( once && p && p.nodeType  === 11){
+             //如果input元素是循环生成的,那么它这时还没有插入到DOM树,其根节点是#document-fragment
+            setTimeout(function(){
+                addValidate(field, dom)
+            })
+            break
+        }else{
+            dom = p
+        }
+    }
+}
 
 export var valueHijack = true
 try { //#272 IE9-IE11, firefox
