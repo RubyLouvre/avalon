@@ -64,11 +64,11 @@ avalon.directive('visible', {
                 dom.style.display = value
             }
         }
-cb()
-//        avalon.applyEffect(dom, vdom, {
-//            hook: show ? 'onEnterDone' : 'onLeaveDone',
-//            cb: cb
-//        })
+
+        avalon.applyEffect(vdom, {
+            hook: show ? 'onEnterDone' : 'onLeaveDone',
+            cb: cb
+        })
 
     },
     update: function(show, vdom, newVdom, afterCb) {

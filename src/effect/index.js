@@ -10,31 +10,37 @@ import {
 
 var effectDir = avalon.directive('effect', {
     priority: 5,
-    diff: function (effect) {
-        var vdom = this.node
-        if (typeof effect === 'string') {
-            this.value = effect = {
-                is: effect
+    diff: function (oldVal, newVal, vdom) {
+        if (typeof newVal === 'string') {
+            newVal = {
+                is: newVal
             }
             avalon.warn('ms-effect的指令值不再支持字符串,必须是一个对象')
         }
-        this.value = vdom.effect = effect
-        var ok = cssDiff.call(this, effect, this.oldValue)
+       
+        var ok = cssDiff.call(this, oldVal, newVal)
         var me = this
         if (ok) {
-            setTimeout(function () {
-                vdom.animating = true
-                effectDir.update.call(me, vdom, vdom.effect)
-            })
+            vdom.effect = newVal
             vdom.animating = false
             return true
         }
         return false
     },
+    
+    update: function(change, vdom, newVdom, afterCb){
+        var me = this
+        afterCb.push(function() {
+            var dom = vdom.dom
+            if (dom && dom.nodeType === 1) {
+                me._update(vdom, change)
+            }
+        })
+    },
 
-    update: function (vdom, change, opts) {
+    _update: function (vdom, change, opts) {
         var dom = vdom.dom
-        if (dom && dom.nodeType === 1) {
+       // if (dom && dom.nodeType === 1) {
             //要求配置对象必须指定is属性，action必须是布尔或enter,leave,move
             var option = change || opts
             var is = option.is
@@ -66,7 +72,7 @@ var effectDir = avalon.directive('effect', {
 
             }
             return true
-        }
+       // }
     }
 })
 
@@ -215,10 +221,10 @@ function createAction(action) {
     }
 }
 
-avalon.applyEffect = function (dom, vdom, opts) {
+avalon.applyEffect = function (vdom, opts) {
     var cb = opts.cb
     var curEffect = vdom.effect
-    if (curEffect && dom && dom.nodeType === 1) {
+    if (curEffect && vdom.props) {
         var hook = opts.hook
         var old = curEffect[hook]
         if (cb) {
@@ -231,10 +237,10 @@ avalon.applyEffect = function (dom, vdom, opts) {
             }
         }
         getAction(opts)
-        avalon.directives.effect.update(vdom, curEffect, avalon.shadowCopy({}, opts))
+        avalon.directives.effect._update(vdom, curEffect, avalon.shadowCopy({}, opts))
 
     } else if (cb) {
-        cb(dom)
+        cb(vdom.dom)
     }
 }
 /**

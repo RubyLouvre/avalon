@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-28:21:32 version 2.2.2 by 司徒正美
+built in 2016-12-28:23:32 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -4698,63 +4698,69 @@ IE7的checked属性应该使用defaultChecked来设置
 
     var effectDir = avalon.directive('effect', {
         priority: 5,
-        diff: function diff(effect) {
-            var vdom = this.node;
-            if (typeof effect === 'string') {
-                this.value = effect = {
-                    is: effect
+        diff: function diff(oldVal, newVal, vdom) {
+            if (typeof newVal === 'string') {
+                newVal = {
+                    is: newVal
                 };
                 avalon.warn('ms-effect的指令值不再支持字符串,必须是一个对象');
             }
-            this.value = vdom.effect = effect;
-            var ok = cssDiff.call(this, effect, this.oldValue);
+
+            var ok = cssDiff.call(this, oldVal, newVal);
             var me = this;
             if (ok) {
-                setTimeout(function () {
-                    vdom.animating = true;
-                    effectDir.update.call(me, vdom, vdom.effect);
-                });
+                vdom.effect = newVal;
                 vdom.animating = false;
                 return true;
             }
             return false;
         },
 
-        update: function update(vdom, change, opts) {
+        update: function update(change, vdom, newVdom, afterCb) {
+            var me = this;
+            afterCb.push(function () {
+                var dom = vdom.dom;
+                if (dom && dom.nodeType === 1) {
+                    me._update(vdom, change);
+                }
+            });
+        },
+
+        _update: function _update(vdom, change, opts) {
             var dom = vdom.dom;
-            if (dom && dom.nodeType === 1) {
-                //要求配置对象必须指定is属性，action必须是布尔或enter,leave,move
-                var option = change || opts;
-                var is = option.is;
+            // if (dom && dom.nodeType === 1) {
+            //要求配置对象必须指定is属性，action必须是布尔或enter,leave,move
+            var option = change || opts;
+            var is = option.is;
 
-                var globalOption = avalon.effects[is];
-                if (!globalOption) {
-                    //如果没有定义特效
-                    avalon.warn(is + ' effect is undefined');
-                    return;
-                }
-                var finalOption = {};
-                var action = actionMaps[option.action];
-                if (typeof Effect.prototype[action] !== 'function') {
-                    avalon.warn('action is undefined');
-                    return;
-                }
-                //必须预定义特效
-
-                var effect = new avalon.Effect(dom);
-                avalon.mix(finalOption, globalOption, option, { action: action });
-
-                if (finalOption.queue) {
-                    animationQueue.push(function () {
-                        effect[action](finalOption);
-                    });
-                    callNextAnimation();
-                } else {
-
-                    effect[action](finalOption);
-                }
-                return true;
+            var globalOption = avalon.effects[is];
+            if (!globalOption) {
+                //如果没有定义特效
+                avalon.warn(is + ' effect is undefined');
+                return;
             }
+            var finalOption = {};
+            var action = actionMaps[option.action];
+            if (typeof Effect.prototype[action] !== 'function') {
+                avalon.warn('action is undefined');
+                return;
+            }
+            //必须预定义特效
+
+            var effect = new avalon.Effect(dom);
+            avalon.mix(finalOption, globalOption, option, { action: action });
+
+            if (finalOption.queue) {
+                animationQueue.push(function () {
+                    effect[action](finalOption);
+                });
+                callNextAnimation();
+            } else {
+
+                effect[action](finalOption);
+            }
+            return true;
+            // }
         }
     });
 
@@ -4900,10 +4906,10 @@ IE7的checked属性应该使用defaultChecked来设置
         };
     }
 
-    avalon.applyEffect = function (dom, vdom, opts) {
+    avalon.applyEffect = function (vdom, opts) {
         var cb = opts.cb;
         var curEffect = vdom.effect;
-        if (curEffect && dom && dom.nodeType === 1) {
+        if (curEffect && vdom.props) {
             var hook = opts.hook;
             var old = curEffect[hook];
             if (cb) {
@@ -4916,9 +4922,9 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
             }
             getAction(opts);
-            avalon.directives.effect.update(vdom, curEffect, avalon.shadowCopy({}, opts));
+            avalon.directives.effect._update(vdom, curEffect, avalon.shadowCopy({}, opts));
         } else if (cb) {
-            cb(dom);
+            cb(vdom.dom);
         }
     };
     /**
@@ -5062,11 +5068,11 @@ IE7的checked属性应该使用defaultChecked来设置
                     dom.style.display = value;
                 }
             };
-            cb();
-            //        avalon.applyEffect(dom, vdom, {
-            //            hook: show ? 'onEnterDone' : 'onLeaveDone',
-            //            cb: cb
-            //        })
+
+            avalon.applyEffect(vdom, {
+                hook: show ? 'onEnterDone' : 'onLeaveDone',
+                cb: cb
+            });
         },
         update: function update(show, vdom, newVdom, afterCb) {
             var me = this;
@@ -5247,7 +5253,7 @@ IE7的checked属性应该使用defaultChecked来设置
         this.staticIndex = 0;
         this.staticTree = {};
         var body = this.genChildren(nodes);
-        this.fork = Function('__vmodel__', '$$l', 'staticTree', 'var \u01A9 = __vmodel__.$render;' + 'staticTree = staticTree || {};' + 'return ' + body);
+        this.fork = Function('__vmodel__', '$$l', 'var \u01A9 = __vmodel__.$render;' + 'return ' + body);
     }
 
     Lexer.prototype = {
@@ -5305,9 +5311,10 @@ IE7的checked属性应该使用defaultChecked来设置
             }
 
             if (node.staticRoot) {
-                var index = this.staticIndex++;
-                this.staticTree[index] = node;
-                return 'staticTree[' + index + ']';
+                var index = avalon.staticIndex;
+                avalon.staticTree[index] = node;
+                avalon.staticIndex++;
+                return '\u01A9.static(' + index + ')';
             }
             var dirs = node.dirs,
                 props = node.props;
@@ -5790,6 +5797,8 @@ IE7的checked属性应该使用defaultChecked来设置
     avalon.scan = function (node, vm, a) {
         return new Render(node, vm, a);
     };
+    avalon.staticIndex = 0;
+    avalon.staticTree = {};
 
     /**
      * avalon.scan 的内部实现
@@ -5799,8 +5808,7 @@ IE7的checked属性应该使用defaultChecked来设置
         this.vm = vm;
         this.exe = noexe === undefined;
         this.callbacks = [];
-        //这个会被Lexer中的staticTree重写
-        this.staticTree = {};
+
         this.slots = {};
         this.uuid = Math.random();
         this.init();
@@ -5863,18 +5871,20 @@ IE7的checked属性应该使用defaultChecked来设置
         },
 
         /**
-        * 将绑定属性转换为指令
-        * 执行各种回调与优化指令
-        * @returns {undefined}
-        */
+         * 将绑定属性转换为指令
+         * 执行各种回调与优化指令
+         * @returns {undefined}
+         */
         complete: function complete() {
             if (!this.template) {
                 if (this.root) {
                     //如果是空字符串,vnodes为[], root为undefined
                     optimize(this.root);
                 }
+                this.beginIndex = avalon.staticIndex;
                 var lexer = new Lexer(this.vnodes, this);
-                this.staticTree = lexer.staticTree;
+                this.endIndex = avalon.staticIndex;
+
                 this.template = lexer.fork + '';
                 this.fork = lexer.fork;
             }
@@ -5943,7 +5953,11 @@ IE7的checked属性应该使用defaultChecked来设置
             }
         },
 
-        dispose: function dispose() {},
+        dispose: function dispose() {
+            for (var i = this.beginIndex, n = this.endIndex; i < n; i++) {
+                delete avalon.staticTree[i];
+            }
+        },
         checkWidget: function checkWidget(vdom, attrs, dirs) {
             if (/^ms\-/.test(vdom.nodeName)) {
                 attrs.is = vdom.nodeName;
@@ -6029,7 +6043,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
 
         "static": function _static(i) {
-            return this.staticTree[i];
+            return avalon.staticTree[i];
         },
         comment: function comment(value) {
             return { nodeName: '#comment', nodeValue: value };
@@ -6089,7 +6103,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
         update: function update() {
             this.vm.$render = this;
-            var nodes = this.fork(this.vm, {}, this.staticTree);
+            var nodes = this.fork(this.vm, {});
             var root$$1 = this.root = nodes[0];
             if (this.noDiff) {
                 return;
@@ -6201,7 +6215,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 this.value = newVal;
                 return true;
             } else if (render) {
-                var children = render.fork(render.vm, newVdom.local, this.tree);
+                var children = render.fork(render.vm, newVdom.local);
                 newVdom.children = children;
             }
         },
@@ -6210,15 +6224,14 @@ IE7的checked属性应该使用defaultChecked来设置
             var vm = newVdom.vm;
 
             var render = this.innerRender = new Render(value, vm, true);
-            this.tree = render.staticTree;
-            var children = render.fork(render.vm, newVdom.local, this.tree);
+
+            var children = render.fork(render.vm, newVdom.locale);
 
             newVdom.children = vdom.children = children;
             if (vdom.dom) avalon.clearHTML(vdom.dom);
         },
         beforeDispose: function beforeDispose() {
             if (this.innerRender) {
-                delete this.tree;
 
                 this.innerRender.dispose();
                 delete this.innerRender;
