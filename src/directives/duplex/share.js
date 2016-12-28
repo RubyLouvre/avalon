@@ -125,29 +125,7 @@ export function duplexInit(vdom, addEvent) {
         //绑定事件
     addEvent(dom, this)
         //添加验证
-    duplexValidate(dom, vdom)
-}
-
-export function duplexValidate(dom, vdom) {
-    //将当前虚拟DOM的duplex添加到它上面的表单元素的validate指令的fields数组中
-    var field = vdom.duplex
-    var rules = vdom.rules
-
-    if (rules && !field.validator) {
-        while (dom && dom.nodeType === 1) {
-            var validator = dom._ms_validate_
-            if (validator) {
-                field.rules = rules
-                field.validator = validator
-
-                if (avalon.Array.ensure(validator.fields, field)) {
-                    validator.addField(field)
-                }
-                break
-            }
-            dom = dom.parentNode
-        }
-    }
+        //  duplexValidate(dom, vdom)
 }
 
 

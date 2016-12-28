@@ -1,71 +1,98 @@
 import { avalon, isObject, platform } from '../seed/core'
 var valiDir = avalon.directive('validate', {
-    diff: function(old, validator) {
-        var vdom = this.vdom
+    diff: function(oldVal, newVal, vdom) {
+        if (!this.inited) {
+            vdom.validator = null
+        }
         if (vdom.validator) {
             return
         }
-        if (isObject(validator)) {
+        if (isObject(newVal)) {
             //注意，这个Form标签的虚拟DOM有两个验证对象
             //一个是vmValidator，它是用户VM上的那个原始子对象，也是一个VM
             //一个是validator，它是vmValidator.$model， 这是为了防止IE6－8添加子属性时添加的hack
             //也可以称之为safeValidate
-            vdom.vmValidator = validator
-            validator = platform.toJson(validator)
-
+            vdom.vmValidator = newVal
+            var validator = platform.toJson(newVal)
             vdom.validator = validator
+            validator.fields = []
             for (var name in valiDir.defaults) {
                 if (!validator.hasOwnProperty(name)) {
                     validator[name] = valiDir.defaults[name]
                 }
             }
-            validator.fields = validator.fields || []
             return true
         }
     },
-    update: function(value, vdom) {
-        var validator = vdom.validator
-        var dom = vdom.dom
-        validator.dom = dom
-        dom._ms_validate_ = validator
-
-        //为了方便用户手动执行验证，我们需要为原始vmValidate上添加一个onManual方法
-        var v = vdom.vmValidator
-        try {
-            v.onManual = onManual
-        } catch (e) {}
-        delete vdom.vmValidator
-
-        dom.setAttribute('novalidate', 'novalidate')
-
-        function onManual() {
-            valiDir.validateAll.call(validator, validator.onValidateAll)
-        }
-        /* istanbul ignore if */
-        if (validator.validateAllInSubmit) {
-            avalon.bind(dom, 'submit', function(e) {
-                e.preventDefault()
-                onManual()
+    update: function(value, vdom, newVdom, afterCb) {
+        afterCb.push(function() {
+            var validator = vdom.validator
+            var dom = validator.dom = vdom.dom
+            dom._ms_validate_ = validator
+            var fields = validator.fields
+            collectFeild(vdom.children, fields, validator)
+            avalon.bind(window, 'keyup', function(e) {
+                var target = e.target
+                var duplex = target._ms_duplex_
+                if (duplex) {
+                    var vdom = duplex.vdom
+                    if (vdom.rules) {
+                        if (avalon.Array.ensure(fields, duplex)) {
+                            bindValidateEvent(field, validator)
+                        }
+                    }
+                }
             })
-        }
-        /* istanbul ignore if */
-        if (typeof validator.onInit === 'function') { //vmodels是不包括vmodel的
-            validator.onInit.call(dom, {
-                type: 'init',
-                target: dom,
-                validator: validator
-            })
-        }
+
+            //为了方便用户手动执行验证，我们需要为原始vmValidate上添加一个onManual方法
+            var v = vdom.vmValidator
+            try {
+                v.onManual = onManual
+            } catch (e) {}
+            delete vdom.vmValidator
+
+
+
+            dom.setAttribute('novalidate', 'novalidate')
+
+            function onManual() {
+                valiDir.validateAll.call(validator, validator.onValidateAll)
+            }
+            /* istanbul ignore if */
+            if (validator.validateAllInSubmit) {
+                avalon.bind(dom, 'submit', function(e) {
+                    e.preventDefault()
+                    onManual()
+                })
+            }
+
+            /* istanbul ignore if */
+            if (typeof validator.onInit === 'function') { //vmodels是不包括vmodel的
+                validator.onInit.call(dom, {
+                    type: 'init',
+                    target: dom,
+                    validator: validator
+                })
+            }
+        })
+
     },
     validateAll: function(callback) {
-        var validator = this
-        var fn = typeof callback === 'function' ? callback : validator.onValidateAll
+        var vdom = this
+        var validator = vdom.validator
+        var fields = validator.fields = []
+        collectFeild(vdom.children, fields, validator)
+
+
+        var fn = typeof callback === 'function' ? callback :
+            validator.onValidateAll
         var promises = validator.fields.filter(function(field) {
             var el = field.dom
             return el && !el.disabled && validator.dom.contains(el)
         }).map(function(field) {
             return valiDir.validate(field, true)
         })
+
         var uniq = {}
         return Promise.all(promises).then(function(array) {
             var reasons = array.concat.apply([], array)
@@ -85,28 +112,7 @@ var valiDir = avalon.directive('validate', {
             fn.call(validator.dom, reasons) //这里只放置未通过验证的组件
         })
     },
-    addField: function(field) {
-        var validator = this
-        var node = field.dom
-            /* istanbul ignore if */
-        if (validator.validateInKeyup && (!field.isChanged && !field.debounceTime)) {
-            avalon.bind(node, 'keyup', function(e) {
-                validator.validate(field, 0, e)
-            })
-        }
-        /* istanbul ignore if */
-        if (validator.validateInBlur) {
-            avalon.bind(node, 'blur', function(e) {
-                validator.validate(field, 0, e)
-            })
-        }
-        /* istanbul ignore if */
-        if (validator.resetInFocus) {
-            avalon.bind(node, 'focus', function(e) {
-                validator.onReset.call(node, e, field)
-            })
-        }
-    },
+
     validate: function(field, isValidateAll, event) {
         var promises = []
         var value = field.value
@@ -173,6 +179,46 @@ var valiDir = avalon.directive('validate', {
     }
 })
 
+function collectFeild(nodes, fields, validator) {
+    for (var i = 0, vdom; vdom = nodes[i++];) {
+        var duplex = vdom.rules && vdom.duplex
+        if (duplex) {
+            fields.push(duplex)
+            bindValidateEvent(duplex, validator)
+        } else if (vdom.children) {
+            collectFeild(vdom.children, fields, validator)
+        } else if (Array.isArray(vdom)) {
+            collectFeild(vdom, fields, validator)
+        }
+    }
+}
+
+function bindValidateEvent(field, validator) {
+
+    var node = field.dom
+    if (node._bindValidate) {
+        return
+    }
+    node._bindValidate = true
+        /* istanbul ignore if */
+    if (validator.validateInKeyup && (!field.isChanged && !field.debounceTime)) {
+        avalon.bind(node, 'keyup', function(e) {
+            validator.validate(field, 0, e)
+        })
+    }
+    /* istanbul ignore if */
+    if (validator.validateInBlur) {
+        avalon.bind(node, 'blur', function(e) {
+            validator.validate(field, 0, e)
+        })
+    }
+    /* istanbul ignore if */
+    if (validator.resetInFocus) {
+        avalon.bind(node, 'focus', function(e) {
+            validator.onReset.call(node, e, field)
+        })
+    }
+}
 var rformat = /\\?{{([^{}]+)\}}/gm
 
 function getMessage() {
