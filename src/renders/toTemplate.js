@@ -5,10 +5,14 @@ import { avalon, config, directives } from '../seed/core'
 import { fromString } from '../vtree/fromString'
 
 
-export function Lexer(nodes, render) {
-    this.render = render
+export function Lexer(nodes) {
+    this.staticIndex = 0
+    this.staticTree = {}
     var body = this.genChildren(nodes)
-    this.fork = Function('__vmodel__', '$$l', 'var \u01A9 = __vmodel__.$render;return ' + body)
+    this.fork = Function('__vmodel__', '$$l', 'staticTree',
+    'var \u01A9 = __vmodel__.$render;'+
+    'staticTree = staticTree || {};'+
+    'return '+ body)
 }
 
 
@@ -84,9 +88,9 @@ Lexer.prototype = {
         }
        
         if (node.staticRoot) {
-            var index = this.render.staticIndex++
-                this.render.staticTree[index] = node
-            return `\u01A9.static(${ index })`
+            var index = this.staticIndex++
+                this.staticTree[index] = node
+            return `staticTree[${ index }]`
         }
         var dirs = node.dirs,
             props = node.props

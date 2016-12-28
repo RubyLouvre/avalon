@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-27:17:29 version 2.2.2 by 司徒正美
+built in 2016-12-28:21:32 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -5243,14 +5243,14 @@ IE7的checked属性应该使用defaultChecked来设置
         return tokens.join('+');
     }
 
-    function Yield(nodes, render) {
-        this.render = render;
+    function Lexer(nodes) {
+        this.staticIndex = 0;
+        this.staticTree = {};
         var body = this.genChildren(nodes);
-        this.body = body;
-        this.exec = Function('__vmodel__', '$$l', 'var \u01A9 = __vmodel__.$render;return ' + body);
+        this.fork = Function('__vmodel__', '$$l', 'staticTree', 'var \u01A9 = __vmodel__.$render;' + 'staticTree = staticTree || {};' + 'return ' + body);
     }
 
-    Yield.prototype = {
+    Lexer.prototype = {
         genChildren: function genChildren(nodes) {
             if (nodes.length) {
                 var arr = [];
@@ -5305,9 +5305,9 @@ IE7的checked属性应该使用defaultChecked来设置
             }
 
             if (node.staticRoot) {
-                var index = this.render.staticIndex++;
-                this.render.staticTree[index] = node;
-                return '\u01A9.static(' + index + ')';
+                var index = this.staticIndex++;
+                this.staticTree[index] = node;
+                return 'staticTree[' + index + ']';
             }
             var dirs = node.dirs,
                 props = node.props;
@@ -5336,6 +5336,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
 
                 if (!Object.keys(dirs).length) {
+                    delete node.dirs;
                     dirs = null;
                 }
             }
@@ -5752,13 +5753,9 @@ IE7的checked属性应该使用defaultChecked来设置
 
     function reInitDires(a) {
         if (a.dirs) {
-            if (Array.isArray(a.dirs)) {
-                a.dirs.forEach(function (dir) {
-                    delete dir.inited;
-                });
-            } else {
-                delete a.dirs;
-            }
+            a.dirs.forEach(function (dir) {
+                delete dir.inited;
+            });
         }
         if (a.children) {
             a.children.forEach(function (child) {
@@ -5802,19 +5799,31 @@ IE7的checked属性应该使用defaultChecked来设置
         this.vm = vm;
         this.exe = noexe === undefined;
         this.callbacks = [];
-        this.staticIndex = 0;
+        //这个会被Lexer中的staticTree重写
         this.staticTree = {};
         this.slots = {};
         this.uuid = Math.random();
         this.init();
     }
-
+    /**
+     * 渲染器是avalon更新视图的核心组件,
+     * 第一步,它会将真实DOM (fromDOM) 或HTML字符串 (fromString) 转换为AST 节点树
+     * 这个节点也就是最原始的虚拟DOM树(下称vtree1),
+     * 它里面包括文本节点,元素节点,文碎碎片,注释节点,循环区域(以数组形式表示)
+     * 然后通过scanChildren,scanText,scanElement,scanComment
+     * 为元素添加dynamic, dirs等属性, 为渲染器获取第一个vm
+     * 
+     * 第二步, 在vtree1都被扫描,并获得vm的情况下,
+     * 再发动两次扫描vtree1,为节点添加static, staticRoot属性
+     * 然后Lexer类,将vtree1转换为一个模块函数(bigrender)
+     * bigrender传入一个vm及一个本地对象,就可以生成一个新的虚拟DOM树vtree2
+     * 
+     * 第三步,就是diff, 从上到下,vtree1, vtree2一一对应进行diff,
+     * 这个过程会跳过文档碎片与循环区域,并将它们的内部节点提到外面的children上
+     * 如果遇到widget,还要diff插槽元素
+     * 
+     */
     Render.prototype = {
-        /**
-         * 开始扫描指定区域
-         * 收集绑定属性
-         * 生成指令并建立与VM的关联
-         */
         init: function init() {
             var vnodes;
             if (this.root && this.root.nodeType > 0) {
@@ -5829,57 +5838,6 @@ IE7的checked属性应该使用defaultChecked来设置
             this.root = vnodes[0];
             this.vnodes = vnodes;
             this.scanChildren(vnodes, this.vm, true);
-        },
-
-        "static": function _static(i) {
-            return this.staticTree[i];
-        },
-        comment: function comment(value) {
-            return { nodeName: '#comment', nodeValue: value };
-        },
-        text: function text(a, d) {
-            a = a == null ? '\u200B' : a + '';
-            return { nodeName: '#text', nodeValue: a || '', dynamic: !!d };
-        },
-        collectSlot: function collectSlot(node, slots) {
-            var name = node.props.slot;
-            if (!slots[name]) {
-                slots[name] = [];
-            }
-            slots[name].push(node);
-            return node;
-        },
-        html: function html(_html, vm) {
-            var a = new Render(_html, vm, true);
-            return a.tmpl.exec(vm, this);
-        },
-        slot: function slot(name) {
-            var a = this.slots[name];
-            a.slot = name;
-            return a;
-        },
-        ctrl: function ctrl(id, scope, cb) {
-            var dir = directives['controller'];
-            scope = dir.getScope.call(this, id, scope);
-            return cb(scope);
-        },
-        repeat: function repeat(obj, str, cb) {
-            var nodes = [];
-            var keys = str.split(',');
-            nodes.cb = keys.splice(3, 7).join(',');
-
-            if (Array.isArray(obj)) {
-                for (var i = 0, n = obj.length; i < n; i++) {
-                    repeatCb(obj, obj[i], i, keys, nodes, cb, true);
-                }
-            } else if (avalon.isObject(obj)) {
-                for (var i in obj) {
-                    if (obj.hasOwnProperty(i)) {
-                        repeatCb(obj, obj[i], i, keys, nodes, cb);
-                    }
-                }
-            }
-            return nodes;
         },
         scanChildren: function scanChildren(children, scope, isRoot) {
             for (var i = 0; i < children.length; i++) {
@@ -5898,8 +5856,30 @@ IE7的checked属性应该使用defaultChecked来设置
                     }
                 }
             }
-            if (isRoot) {
+
+            if (isRoot && this.vm) {
                 this.complete();
+            }
+        },
+
+        /**
+        * 将绑定属性转换为指令
+        * 执行各种回调与优化指令
+        * @returns {undefined}
+        */
+        complete: function complete() {
+            if (!this.template) {
+                if (this.root) {
+                    //如果是空字符串,vnodes为[], root为undefined
+                    optimize(this.root);
+                }
+                var lexer = new Lexer(this.vnodes, this);
+                this.staticTree = lexer.staticTree;
+                this.template = lexer.fork + '';
+                this.fork = lexer.fork;
+            }
+            if (this.exe) {
+                collectDeps(this, this.update);
             }
         },
 
@@ -5962,6 +5942,8 @@ IE7的checked属性应该使用defaultChecked来设置
                 this.scanChildren(children, scope, false);
             }
         },
+
+        dispose: function dispose() {},
         checkWidget: function checkWidget(vdom, attrs, dirs) {
             if (/^ms\-/.test(vdom.nodeName)) {
                 attrs.is = vdom.nodeName;
@@ -5997,7 +5979,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     var type = attr.match(/\w+/g)[1];
                     type = eventMap[type] || type;
                     if (!directives[type]) {
-                        avalon.warn(attr + ' has not registered!');
+                        avalon.warn('\u4E0D\u5B58\u5728' + attr + '\xA0\u6307\u4EE4');
                     } else if (attr === 'ms-for') {
                         if (vdom.dom) {
                             vdom.dom.removeAttribute(oldName);
@@ -6029,6 +6011,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 var dir = directives[type];
                 scope = dir.getScope.call(this, $id, scope);
                 if (!scope) {
+                    avalon.warn('$id\u4E3A"' + $id + '"\u7684vm\u8FD8\u6CA1\u6709\u5B9A\u4E49');
                     return;
                 } else {
                     if (!this.vm) {
@@ -6044,21 +6027,53 @@ IE7的checked属性应该使用defaultChecked来设置
             return scope;
         },
 
-        /**
-         * 将绑定属性转换为指令
-         * 执行各种回调与优化指令
-         * @returns {undefined}
-         */
-        complete: function complete() {
-            if (!this.tmpl) {
-                optimize(this.root);
 
-                var fn = new Yield(this.vnodes, this);
-                this.tmpl = fn;
+        "static": function _static(i) {
+            return this.staticTree[i];
+        },
+        comment: function comment(value) {
+            return { nodeName: '#comment', nodeValue: value };
+        },
+        text: function text(a, d) {
+            a = a == null ? '\u200B' : a + '';
+            return { nodeName: '#text', nodeValue: a || '', dynamic: !!d };
+        },
+        collectSlot: function collectSlot(node, slots) {
+            var name = node.props.slot;
+            if (!slots[name]) {
+                slots[name] = [];
             }
-            if (this.exe) {
-                collectDeps(this, this.update);
+            slots[name].push(node);
+            return node;
+        },
+
+        slot: function slot(name) {
+            var a = this.slots[name];
+            a.slot = name;
+            return a;
+        },
+        ctrl: function ctrl(id, scope, cb) {
+            var dir = directives['controller'];
+            scope = dir.getScope.call(this, id, scope);
+            return cb(scope);
+        },
+        repeat: function repeat(obj, str, cb) {
+            var nodes = [];
+            var keys = str.split(',');
+            nodes.cb = keys.splice(3, 7).join(',');
+
+            if (Array.isArray(obj)) {
+                for (var i = 0, n = obj.length; i < n; i++) {
+                    repeatCb(obj, obj[i], i, keys, nodes, cb, true);
+                }
+            } else if (avalon.isObject(obj)) {
+                for (var i in obj) {
+                    if (obj.hasOwnProperty(i)) {
+                        repeatCb(obj, obj[i], i, keys, nodes, cb);
+                    }
+                }
             }
+            return nodes;
         },
         schedule: function schedule() {
             if (!this._isScheduled) {
@@ -6074,32 +6089,18 @@ IE7的checked属性应该使用defaultChecked来设置
 
         update: function update() {
             this.vm.$render = this;
-            var nodes = this.tmpl.exec(this.vm, {});
+            var nodes = this.fork(this.vm, {}, this.staticTree);
+            var root$$1 = this.root = nodes[0];
             if (this.noDiff) {
-                this.root = nodes[0];
                 return;
             }
             try {
-                diff(this.vnodes[0], nodes[0]);
+                diff(this.vnodes[0], root$$1);
                 this.vm.$element = this.vnodes[0];
             } catch (diffError) {
                 avalon.log(diffError);
             }
             this._isScheduled = false;
-        },
-        /**
-         * 销毁所有指令
-         * @returns {undefined}
-         */
-        dispose: function dispose() {
-            var list = this.directives || [];
-            for (var i = 0, el; el = list[i++];) {
-                el.dispose();
-            }
-            //防止其他地方的this.innerRender && this.innerRender.dispose报错
-            for (var _i5 in this) {
-                if (_i5 !== 'dispose') delete this[_i5];
-            }
         },
 
         /**
@@ -6200,22 +6201,27 @@ IE7的checked属性应该使用defaultChecked来设置
                 this.value = newVal;
                 return true;
             } else if (render) {
-                var children = render.tmpl.exec(render.vm, newVdom.local);
+                var children = render.fork(render.vm, newVdom.local, this.tree);
                 newVdom.children = children;
             }
         },
         update: function update(value, vdom, newVdom) {
-            //oldVal( == newVal), oldVdom, newVdom
             this.beforeDispose();
-            var render = this.innerRender = new Render(value, newVdom.vm, true);
+            var vm = newVdom.vm;
 
-            var children = render.tmpl.exec(render.vm, newVdom.local);
+            var render = this.innerRender = new Render(value, vm, true);
+            this.tree = render.staticTree;
+            var children = render.fork(render.vm, newVdom.local, this.tree);
+
             newVdom.children = vdom.children = children;
             if (vdom.dom) avalon.clearHTML(vdom.dom);
         },
         beforeDispose: function beforeDispose() {
             if (this.innerRender) {
+                delete this.tree;
+
                 this.innerRender.dispose();
+                delete this.innerRender;
             }
         }
     });
@@ -7632,9 +7638,6 @@ IE7的checked属性应该使用defaultChecked来设置
         init: function init(oldVal, vdom, newVdom, afterCb) {
             //cached属性必须定义在组件容器里面,不是template中
             this.cacheVm = !!newVdom.props.cached;
-            if (vdom.dom && vdom.nodeName === '#comment') {
-                var comment = vdom.dom;
-            }
             //将数组形式转换为对象形式
             var value = toObject(oldVal);
 
@@ -7681,12 +7684,7 @@ IE7的checked属性应该使用defaultChecked来设置
             }
 
             //当组件生成出来，slot元素应该在它应在的位置，然后旧的组件也有slot元素 
-            if (comment) {
-                var dom = toDOM(vdom);
-                comment.parentNode.replaceChild(dom, comment);
-                comVm.$element = innerRender.root.dom = dom;
-                delete this.reInit;
-            }
+
 
             this.vdom = vdom;
             var root$$1 = innerRender.root;

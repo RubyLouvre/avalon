@@ -13,22 +13,28 @@ avalon.directive('html', {
             this.value = newVal
             return true
         } else if (render) {
-            var children = render.fork(render.vm, newVdom.local)
+            var children = render.fork(render.vm, newVdom.local, this.tree)
             newVdom.children = children
         }
     },
-    update: function(value, vdom, newVdom) { //oldVal( == newVal), oldVdom, newVdom
+    update: function(value, vdom, newVdom) { 
         this.beforeDispose()
-        var render = this.innerRender = new Render(value, newVdom.vm, true)
-
-        var children = render.fork(render.vm, newVdom.local)
+        var vm = newVdom.vm
+    
+        var render = this.innerRender = new Render(value, vm, true)
+        this.tree = render.staticTree
+        var children = render.fork(render.vm, newVdom.local, this.tree )
+      
         newVdom.children = vdom.children = children
         if (vdom.dom)
            avalon.clearHTML(vdom.dom)
     },
     beforeDispose: function() {
         if (this.innerRender) {
+            delete this.tree
+           
             this.innerRender.dispose()
+            delete this.innerRender
         }
     }
 })

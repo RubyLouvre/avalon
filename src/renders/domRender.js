@@ -31,7 +31,7 @@ export function Render(node, vm, noexe) {
     this.vm = vm
     this.exe = noexe === undefined
     this.callbacks = []
-    this.staticIndex = 0
+    //这个会被Lexer中的staticTree重写
     this.staticTree = {}
     this.slots = {}
     this.uuid = Math.random()
@@ -102,8 +102,11 @@ Render.prototype = {
      */
     complete() {
         if (!this.template) {
-            optimize(this.root)
+            if(this.root){//如果是空字符串,vnodes为[], root为undefined
+               optimize(this.root)
+            }
             var lexer = new Lexer(this.vnodes, this)
+            this.staticTree = lexer.staticTree
             this.template = lexer.fork +''
             this.fork = lexer.fork
         }
@@ -275,10 +278,7 @@ Render.prototype = {
         slots[name].push(node)
         return node
     },
-    html: function(html, vm) {
-        var a = new Render(html, vm, true)
-        return a.fork(vm, this)
-    },
+  
     slot: function(name) {
         var a = this.slots[name]
         a.slot = name
@@ -321,7 +321,7 @@ Render.prototype = {
 
     update: function() {
         this.vm.$render = this
-        var nodes = this.fork(this.vm, {})
+        var nodes = this.fork(this.vm, {}, this.staticTree)
         var root =  this.root = nodes[0]
         if (this.noDiff) {
             return
