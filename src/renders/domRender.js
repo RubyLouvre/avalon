@@ -22,6 +22,8 @@ import { diff } from './diff'
 avalon.scan = function(node, vm, a) {
     return new Render(node, vm, a)
 }
+avalon.staticIndex = 0
+avalon.staticTree = {}
 
 /**
  * avalon.scan 的内部实现
@@ -31,8 +33,7 @@ export function Render(node, vm, noexe) {
     this.vm = vm
     this.exe = noexe === undefined
     this.callbacks = []
-    //这个会被Lexer中的staticTree重写
-    this.staticTree = {}
+
     this.slots = {}
     this.uuid = Math.random()
     this.init()
@@ -72,7 +73,7 @@ Render.prototype = {
         this.vnodes = vnodes
         this.scanChildren(vnodes, this.vm, true)
     },
-    
+
     scanChildren(children, scope, isRoot) {
         for (var i = 0; i < children.length; i++) {
             var vdom = children[i]
@@ -90,24 +91,26 @@ Render.prototype = {
                 }
             }
         }
-        
+
         if (isRoot && this.vm) {
             this.complete()
         }
     },
-     /**
+    /**
      * 将绑定属性转换为指令
      * 执行各种回调与优化指令
      * @returns {undefined}
      */
     complete() {
         if (!this.template) {
-            if(this.root){//如果是空字符串,vnodes为[], root为undefined
-               optimize(this.root)
+            if (this.root) { //如果是空字符串,vnodes为[], root为undefined
+                optimize(this.root)
             }
+            this.beginIndex = avalon.staticIndex
             var lexer = new Lexer(this.vnodes, this)
-            this.staticTree = lexer.staticTree
-            this.template = lexer.fork +''
+            this.endIndex = avalon.staticIndex
+
+            this.template = lexer.fork + ''
             this.fork = lexer.fork
         }
         if (this.exe) {
@@ -171,7 +174,11 @@ Render.prototype = {
             this.scanChildren(children, scope, false)
         }
     },
-    dispose: function(){},
+    dispose: function() {
+        for (var i = this.beginIndex, n = this.endIndex; i < n; i++) {
+            delete avalon.staticTree[i]
+        }
+    },
     checkWidget(vdom, attrs, dirs) {
         if (/^ms\-/.test(vdom.nodeName)) {
             attrs.is = vdom.nodeName
@@ -259,9 +266,9 @@ Render.prototype = {
         }
         return scope
     },
-   
+
     static: function(i) {
-        return this.staticTree[i]
+        return avalon.staticTree[i]
     },
     comment: function(value) {
         return { nodeName: '#comment', nodeValue: value }
@@ -278,7 +285,7 @@ Render.prototype = {
         slots[name].push(node)
         return node
     },
-  
+
     slot: function(name) {
         var a = this.slots[name]
         a.slot = name
@@ -321,8 +328,8 @@ Render.prototype = {
 
     update: function() {
         this.vm.$render = this
-        var nodes = this.fork(this.vm, {}, this.staticTree)
-        var root =  this.root = nodes[0]
+        var nodes = this.fork(this.vm, {})
+        var root = this.root = nodes[0]
         if (this.noDiff) {
             return
         }
@@ -334,8 +341,8 @@ Render.prototype = {
         }
         this._isScheduled = false
     },
-    
-    
+
+
     /**
      * 将循环区域转换为for指令
      * @param {type} begin 注释节点

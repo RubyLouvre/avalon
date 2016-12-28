@@ -9,10 +9,9 @@ export function Lexer(nodes) {
     this.staticIndex = 0
     this.staticTree = {}
     var body = this.genChildren(nodes)
-    this.fork = Function('__vmodel__', '$$l', 'staticTree',
-    'var \u01A9 = __vmodel__.$render;'+
-    'staticTree = staticTree || {};'+
-    'return '+ body)
+    this.fork = Function('__vmodel__', '$$l',
+        'var \u01A9 = __vmodel__.$render;' +
+        'return ' + body)
 }
 
 
@@ -86,15 +85,16 @@ Lexer.prototype = {
         if (node.nodeName === 'slot') {
             return `\u01A9.slot(${ avalon.quote(node.props.name || "defaults") })`
         }
-       
+
         if (node.staticRoot) {
-            var index = this.staticIndex++
-                this.staticTree[index] = node
-            return `staticTree[${ index }]`
+            var index = avalon.staticIndex
+            avalon.staticTree[index] = node
+            avalon.staticIndex++;
+            return `\u01A9.static(${ index })`
         }
         var dirs = node.dirs,
             props = node.props
-       
+
         if (dirs) {
 
             var hasCtrl = dirs['ms-controller']
@@ -126,7 +126,7 @@ Lexer.prototype = {
             }
 
         }
-         
+
         var json = toJSONByArray(
             `nodeName: '${node.nodeName}'`,
             node.vtype ? `vtype: ${ node.vtype }` : '',
