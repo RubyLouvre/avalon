@@ -9,13 +9,14 @@ avalon.directive('duplex', {
     diff: duplexDiff,
     update: function(value, vdom, newVdom, afterCb) {
         vdom.vm = newVdom.vm
-        if (!this.dom) {
+        var dom = vdom.dom || {}
+        if (!dom._ms_duplex) {
             duplexInit.call(this, vdom, updateDataEvents)
         }
         //如果不支持input.value的Object.defineProperty的属性支持,
         //需要通过轮询同步, chrome 42及以下版本需要这个hack
 
-        pollValue.call(this.dom, avalon.msie, /input|edit/.test(this.dtype))
+        pollValue.call(dom, avalon.msie, /input|edit/.test(this.dtype))
 
         //更新视图
         var me = this

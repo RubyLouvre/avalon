@@ -8,10 +8,11 @@ avalon.directive('duplex', {
     diff: duplexDiff,
     update: function(value, vdom, newVdom, afterCb) {
         vdom.vm = newVdom.vm
-        var me = this
-        if (!me.dom) {
-            duplexInit.call(me, vdom, updateDataEvents)
+        var dom = vdom.dom || {}
+        if (!dom._ms_duplex) {
+            duplexInit.call(this, vdom, updateDataEvents)
         }
+        var me = this
         afterCb.push(function() {
             updateView[me.dtype].call(me)
         })

@@ -106,8 +106,9 @@ export function duplexDiff(oldVal, newVal) {
 export function duplexInit(vdom, addEvent) {
     var dom = vdom.dom
     this.vdom = vdom
-    this.dom = dom
-
+    
+    vdom.duplex = dom._ms_duplex_ = this
+    
     //添加userCb
     if (this.cb) {
         var arr = addScope(this.cb, 'xx')
@@ -121,7 +122,8 @@ export function duplexInit(vdom, addEvent) {
         //添加duplexCb
     this.duplexCb = updateModel
 
-    dom._ms_duplex_ = this
+  
+    
         //绑定事件
     addEvent(dom, this)
         //添加验证
@@ -173,8 +175,9 @@ function parseValue(val) {
 
 export var updateView = {
     input: function() { //处理单个value值处理
-        this.vdom.props.value = this.value + ''
-        this.dom.value = this.value
+        var vdom = this.vdom
+        vdom.props.value = this.value + ''
+        vdom.dom.value = this.value
 
     },
     updateChecked: function(vdom, checked) {
@@ -183,20 +186,20 @@ export var updateView = {
         }
     },
     radio: function() { //处理单个checked属性
-        var node = this.vdom
-        var nodeValue = node.props.value
+        var vdom = this.vdom
+        var nodeValue = vdom.props.value
         var checked
         if (this.isChecked) {
             checked = !!this.value
         } else {
             checked = this.value + '' === nodeValue
         }
-        node.props.checked = checked
-        updateView.updateChecked(node, checked)
+        vdom.props.checked = checked
+        updateView.updateChecked(vdom, checked)
     },
     checkbox: function() { //处理多个checked属性
-        var node = this.vdom
-        var props = node.props
+        var vdom = this.vdom
+        var props = vdom.props
         var value = props.value + ''
         var values = [].concat(this.value)
         var checked = values.some(function(el) {
@@ -204,7 +207,7 @@ export var updateView = {
         })
 
         props.defaultChecked = props.checked = checked
-        updateView.updateChecked(node, checked)
+        updateView.updateChecked(vdom, checked)
     },
     select: function() { //处理子级的selected属性
         var a = Array.isArray(this.value) ?
@@ -214,16 +217,13 @@ export var updateView = {
     contenteditable: function() { //处理单个innerHTML 
 
         var vnodes = fromString(this.value)
-        var fragment = createFragment()
-        for (var i = 0, el; el = vnodes[i++];) {
-            var child = avalon.vdom(el, 'toDOM')
-            fragment.appendChild(child)
-        }
-        avalon.clearHTML(this.dom).appendChild(fragment)
+        var fragment = toDOM(vnodes)
+        var dom = this.vdom.dom
+        avalon.clearHTML(dom).appendChild(fragment)
         var list = this.vdom.children
         list.length = 0
         Array.prototype.push.apply(list, vnodes)
 
-        this.duplexCb.call(this.dom)
+        this.duplexCb.call(dom)
     }
 }

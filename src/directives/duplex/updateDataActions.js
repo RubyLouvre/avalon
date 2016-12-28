@@ -4,7 +4,7 @@ export var updateDataActions = {
     input: function(prop) { //处理单个value值处理
         var field = this
         prop = prop || 'value'
-        var dom = field.dom
+        var dom = field.vdom.dom
         var rawValue = dom[prop]
         var parsedValue = field.parseValue(rawValue)
 
@@ -38,18 +38,18 @@ export var updateDataActions = {
             avalon.warn('ms-duplex应用于checkbox上要对应一个数组')
             array = [array]
         }
-        var method = field.dom.checked ? 'ensure' : 'remove'
+        var dom = this.vdom.dom
+        var method = dom.checked ? 'ensure' : 'remove'
         if (array[method]) {
-            var val = field.parseValue(field.dom.value)
+            var val = field.parseValue(dom.value)
             array[method](val)
             duplexCb(field)
         }
-        this.__test__ = array
 
     },
     select: function() {
         var field = this
-        var val = avalon(field.dom).val() //字符串或字符串数组
+        var val = avalon(field.vdom.dom).val() //字符串或字符串数组
         if (val + '' !== this.value + '') {
             if (Array.isArray(val)) { //转换布尔数组或其他
                 val = val.map(function(v) {
@@ -71,7 +71,7 @@ function duplexCb(field) {
     if (field.userCb) {
         field.userCb.call(field.vdom.vm, {
             type: 'changed',
-            target: field.dom
+            target: field.vdom.dom
         })
     }
 }
