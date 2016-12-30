@@ -11,7 +11,8 @@ export function lookupOption(vdom, values) {
 function setOption(vdom, values) {
     var props = vdom.props
     if (!('disabled' in props)) {
-        var value = getOptionValue(vdom, props).trim()
+        var value = getOptionValue(vdom, props)
+            value = String(value || '').trim()
         props.selected = values.indexOf(value) !== -1
        
         if (vdom.dom) {

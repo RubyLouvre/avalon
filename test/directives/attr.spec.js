@@ -190,5 +190,26 @@ describe('attr', function () {
         expect(el.title).toBe('111')
         done()
     })
+    it('getOptionValue', function (done) {
+        //https://github.com/RubyLouvre/avalon/issues/1891
+        div.innerHTML = heredoc(function () {
+            /*
+             <div ms-controller='attr8'>
+       <select>
+		<option :for="(i,v) in data" :attr="{value:i}">{{v}}</option>
+	</select>
+             </div>
+             */
+        })
+        vm = avalon.define({
+            $id: 'attr8',
+            data: [1,2,3,4]
+        })
+        avalon.scan(div)
+        var el = div.getElementsByTagName('option')
+
+        expect(el.length).toBe(4)
+        done()
+    })
 
 })
