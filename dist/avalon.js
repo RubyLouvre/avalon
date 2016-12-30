@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-30:10:54 version 2.2.3 by 司徒正美
+built in 2016-12-30:11:29 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.3
 
 
@@ -5693,7 +5693,9 @@ avalon.bind 在绑定非元素节点也要修正事件对象
     }
 
     function resetVM(vm, a, b) {
-        vm.$accessors[a].value = NaN;
+        if (avalon.config.inProxyMode) {
+            vm.$accessors[a].value = NaN;
+        }
     }
 
     function updateList(instance) {

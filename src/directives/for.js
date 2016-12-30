@@ -215,7 +215,9 @@ function updateItemVm(vm, top) {
 }
 
 function resetVM(vm, a, b) {
-    vm.$accessors[a].value = NaN
+    if(avalon.config.inProxyMode){
+       vm.$accessors[a].value = NaN
+    }
 }
 
 

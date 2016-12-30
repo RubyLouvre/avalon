@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-27:12:19 version 2.2.3 by 司徒正美
+built in 2016-12-30:11:31 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.3
 
 fix VElement hackIE BUG
@@ -4982,7 +4982,9 @@ avalon.bind 在绑定非元素节点也要修正事件对象
     }
 
     function resetVM(vm, a, b) {
-        vm.$accessors[a].value = NaN
+        if (avalon$2.config.inProxyMode) {
+            vm.$accessors[a].value = NaN
+        }
     }
 
     function updateList(instance) {
@@ -5223,7 +5225,8 @@ avalon.bind 在绑定非元素节点也要修正事件对象
     function setOption(vdom, values) {
         var props = vdom.props
         if (!('disabled' in props)) {
-            var value = getOptionValue(vdom, props).trim()
+            var value = getOptionValue(vdom, props)
+            value = String(value || '').trim()
             props.selected = values.indexOf(value) !== -1
 
             if (vdom.dom) {
