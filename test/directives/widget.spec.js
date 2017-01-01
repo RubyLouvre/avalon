@@ -810,7 +810,7 @@ describe('widget', function() {
             vm.aaa = true
             setTimeout(function() {
                 button = div.getElementsByTagName('button')[0]
-                expect(button[textProp]).toBe(text)
+                expect(button[textProp]).not.toBe(text)
                 expect(button.getAttribute('title')).toBe('vvvv')
                 done()
             }, 100)

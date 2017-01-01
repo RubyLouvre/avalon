@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-30:11:29 version 2.2.3 by 司徒正美
+built in 2017-1-1:12:20 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.3
 
 
@@ -7589,12 +7589,12 @@ avalon.bind 在绑定非元素节点也要修正事件对象
                 avalon.Array.ensure(componentQueue, this);
                 return;
             }
-            this.readyState = 1;
+
             //如果是非空元素，比如说xmp, ms-*, template
             var id = value.id || value.$id;
             var hasCache = avalon.vmodels[id];
             var fromCache = false;
-
+            // this.readyState = 1
             if (hasCache) {
                 comVm = hasCache;
                 this.comVm = comVm;
@@ -7605,6 +7605,7 @@ avalon.bind 在绑定非元素节点也要修正事件对象
                     component = new component(value);
                 }
                 var comVm = createComponentVm(component, value, is);
+                this.readyState = 1;
                 fireComponentHook(comVm, vdom, 'Init');
                 this.comVm = comVm;
 
@@ -7693,6 +7694,7 @@ avalon.bind 在绑定非元素节点也要修正事件对象
                 case 0:
                     if (this.reInit) {
                         this.init();
+                        this.readyState++;
                     }
                     break;
                 case 1:

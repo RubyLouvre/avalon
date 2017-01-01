@@ -57,23 +57,23 @@ avalon.directive('widget', {
             avalon.Array.ensure(componentQueue, this)
             return
         }
-        this.readyState = 1
+       
             //如果是非空元素，比如说xmp, ms-*, template
         var id = value.id || value.$id
         var hasCache = avalon.vmodels[id]
         var fromCache = false
-
+       // this.readyState = 1
         if (hasCache) {
             comVm = hasCache
             this.comVm = comVm
             replaceRoot(this, comVm.$render)
             fromCache = true
-
         } else {
             if(typeof component === 'function'){
                component = new component(value)
             }
             var comVm = createComponentVm(component, value, is)
+            this.readyState = 1
             fireComponentHook(comVm, vdom, 'Init')
             this.comVm = comVm
 
@@ -161,6 +161,7 @@ avalon.directive('widget', {
             case 0:
                 if (this.reInit) {
                     this.init()
+                    this.readyState++
                 }
                 break
             case 1:
