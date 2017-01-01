@@ -4,6 +4,7 @@ import { lookupOption } from './option'
 import { fromString } from '../../vtree/fromString'
 import { updateModel } from './updateDataHandle'
 import { addScope, makeHandle, createSetter } from '../../parser/index'
+import { toDOM } from '../../renders/toDOM'
 
 
 var rchangeFilter = /\|\s*change\b/
@@ -106,9 +107,9 @@ export function duplexDiff(oldVal, newVal) {
 export function duplexInit(vdom, addEvent) {
     var dom = vdom.dom
     this.vdom = vdom
-    
+
     vdom.duplex = dom._ms_duplex_ = this
-    
+
     //添加userCb
     if (this.cb) {
         var arr = addScope(this.cb, 'xx')
@@ -122,9 +123,9 @@ export function duplexInit(vdom, addEvent) {
         //添加duplexCb
     this.duplexCb = updateModel
 
-  
-    
-        //绑定事件
+
+
+    //绑定事件
     addEvent(dom, this)
         //添加验证
         //  duplexValidate(dom, vdom)

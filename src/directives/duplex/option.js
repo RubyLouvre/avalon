@@ -1,17 +1,18 @@
 export function lookupOption(vdom, values) {
-   vdom.children && vdom.children.forEach(function (el) {
+    vdom.children && vdom.children.forEach(function(el) {
         if (el.nodeName === 'option') {
             setOption(el, values)
         } else {
             lookupOption(el, values)
-        } 
+        }
     })
 }
 
 function setOption(vdom, values) {
     var props = vdom.props
     if (!('disabled' in props)) {
-        var value = getOptionValue(vdom, props).trim()
+        var value = getOptionValue(vdom, props)
+        value = String(value || '').trim()
         props.selected = values.indexOf(value) !== -1
         if (vdom.dom) {
             vdom.dom.selected = props.selected
@@ -24,7 +25,7 @@ function getOptionValue(vdom, props) {
         return props.value
     }
     var arr = []
-    vdom.children.forEach(function (el) {
+    vdom.children.forEach(function(el) {
         if (el.nodeName === '#text') {
             arr.push(el.nodeValue)
         } else if (el.nodeName === '#document-fragment') {

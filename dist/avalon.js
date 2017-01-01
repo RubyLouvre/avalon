@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-29:1:32 version 2.2.2 by 司徒正美
+built in 2016-12-30:14:37 version 2.2.2 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -6644,7 +6644,8 @@ IE7的checked属性应该使用defaultChecked来设置
     function setOption(vdom, values) {
         var props = vdom.props;
         if (!('disabled' in props)) {
-            var value = getOptionValue(vdom, props).trim();
+            var value = getOptionValue(vdom, props);
+            value = String(value || '').trim();
             props.selected = values.indexOf(value) !== -1;
             if (vdom.dom) {
                 vdom.dom.selected = props.selected;
@@ -6672,7 +6673,7 @@ IE7的checked属性应该使用defaultChecked来设置
             //处理单个value值处理
             var field = this;
             prop = prop || 'value';
-            var dom = field.dom;
+            var dom = field.vdom.dom;
             var rawValue = dom[prop];
             var parsedValue = field.parseValue(rawValue);
 
@@ -6706,17 +6707,17 @@ IE7的checked属性应该使用defaultChecked来设置
                 avalon.warn('ms-duplex应用于checkbox上要对应一个数组');
                 array = [array];
             }
-            var method = field.dom.checked ? 'ensure' : 'remove';
+            var dom = this.vdom.dom;
+            var method = dom.checked ? 'ensure' : 'remove';
             if (array[method]) {
-                var val = field.parseValue(field.dom.value);
+                var val = field.parseValue(dom.value);
                 array[method](val);
                 duplexCb(field);
             }
-            this.__test__ = array;
         },
         select: function select() {
             var field = this;
-            var val = avalon(field.dom).val(); //字符串或字符串数组
+            var val = avalon(field.vdom.dom).val(); //字符串或字符串数组
             if (val + '' !== this.value + '') {
                 if (Array.isArray(val)) {
                     //转换布尔数组或其他
@@ -6739,7 +6740,7 @@ IE7的checked属性应该使用defaultChecked来设置
         if (field.userCb) {
             field.userCb.call(field.vdom.vm, {
                 type: 'changed',
-                target: field.dom
+                target: field.vdom.dom
             });
         }
     }
@@ -6876,7 +6877,8 @@ IE7的checked属性应该使用defaultChecked来设置
     function duplexInit(vdom, addEvent) {
         var dom = vdom.dom;
         this.vdom = vdom;
-        this.dom = dom;
+
+        vdom.duplex = dom._ms_duplex_ = this;
 
         //添加userCb
         if (this.cb) {
@@ -6890,10 +6892,6 @@ IE7的checked属性应该使用defaultChecked来设置
         };
         //添加duplexCb
         this.duplexCb = updateDataHandle;
-
-        dom._ms_duplex_ = this;
-        vdom.duplex = this;
-        this.rules = vdom.rules;
 
         //绑定事件
         addEvent(dom, this);
@@ -6947,8 +6945,9 @@ IE7的checked属性应该使用defaultChecked来设置
     var updateView = {
         input: function input() {
             //处理单个value值处理
-            this.vdom.props.value = this.value + '';
-            this.dom.value = this.value;
+            var vdom = this.vdom;
+            vdom.props.value = this.value + '';
+            vdom.dom.value = this.value;
         },
         updateChecked: function updateChecked(vdom, checked) {
             if (vdom.dom) {
@@ -6957,21 +6956,21 @@ IE7的checked属性应该使用defaultChecked来设置
         },
         radio: function radio() {
             //处理单个checked属性
-            var node = this.vdom;
-            var nodeValue = node.props.value;
+            var vdom = this.vdom;
+            var nodeValue = vdom.props.value;
             var checked;
             if (this.isChecked) {
                 checked = !!this.value;
             } else {
                 checked = this.value + '' === nodeValue;
             }
-            node.props.checked = checked;
-            updateView.updateChecked(node, checked);
+            vdom.props.checked = checked;
+            updateView.updateChecked(vdom, checked);
         },
         checkbox: function checkbox() {
             //处理多个checked属性
-            var node = this.vdom;
-            var props = node.props;
+            var vdom = this.vdom;
+            var props = vdom.props;
             var value = props.value + '';
             var values = [].concat(this.value);
             var checked = values.some(function (el) {
@@ -6979,7 +6978,7 @@ IE7的checked属性应该使用defaultChecked来设置
             });
 
             props.defaultChecked = props.checked = checked;
-            updateView.updateChecked(node, checked);
+            updateView.updateChecked(vdom, checked);
         },
         select: function select() {
             //处理子级的selected属性
@@ -6990,17 +6989,14 @@ IE7的checked属性应该使用defaultChecked来设置
             //处理单个innerHTML 
 
             var vnodes = fromString(this.value);
-            var fragment = createFragment();
-            for (var i = 0, el; el = vnodes[i++];) {
-                var child = avalon.vdom(el, 'toDOM');
-                fragment.appendChild(child);
-            }
-            avalon.clearHTML(this.dom).appendChild(fragment);
+            var fragment = toDOM(vnodes);
+            var dom = this.vdom.dom;
+            avalon.clearHTML(dom).appendChild(fragment);
             var list = this.vdom.children;
             list.length = 0;
             Array.prototype.push.apply(list, vnodes);
 
-            this.duplexCb.call(this.dom);
+            this.duplexCb.call(dom);
         }
     };
 
@@ -7211,13 +7207,14 @@ IE7的checked属性应该使用defaultChecked来设置
         diff: duplexDiff,
         update: function update(value, vdom, newVdom, afterCb) {
             vdom.vm = newVdom.vm;
-            if (!this.dom) {
+            var dom = vdom.dom || {};
+            if (!dom._ms_duplex) {
                 duplexInit.call(this, vdom, updateDataEvents);
             }
             //如果不支持input.value的Object.defineProperty的属性支持,
             //需要通过轮询同步, chrome 42及以下版本需要这个hack
 
-            pollValue.call(this.dom, avalon.msie, /input|edit/.test(this.dtype));
+            pollValue.call(dom, avalon.msie, /input|edit/.test(this.dtype));
 
             //更新视图
             var me = this;
@@ -7262,9 +7259,6 @@ IE7的checked属性应该使用defaultChecked来设置
         diff: function diff(old, rules, vdom) {
             if (isObject(rules)) {
                 vdom.rules = platform.toJson(rules);
-                if (vdom.duplex) {
-                    vdom.duplex.rules = vdom.rules;
-                }
                 return true;
             }
         }
@@ -7449,8 +7443,8 @@ IE7的checked属性应该使用defaultChecked来设置
                 avalon.bind(window, 'keyup', function (e) {
                     var dom = e.target;
                     var duplex = dom._ms_duplex_;
-                    if (duplex && duplex.rules && !duplex.validator) {
-
+                    var vdom = (duplex || {}).vdom;
+                    if (duplex && vdom.rules && !duplex.validator) {
                         if (avalon.Array.ensure(fields, duplex)) {
                             bindValidateEvent(duplex, validator);
                         }
@@ -7467,7 +7461,6 @@ IE7的checked属性应该使用defaultChecked来设置
                 dom.setAttribute('novalidate', 'novalidate');
 
                 function onManual() {
-                    console.log('0000000000');
                     valiDir.validateAll.call(vdom, validator.onValidateAll);
                 }
                 /* istanbul ignore if */
@@ -7492,8 +7485,7 @@ IE7的checked属性应该使用defaultChecked来设置
         validateAll: function validateAll(callback) {
             var vdom = this;
             var validator = vdom.validator;
-            console.log('进入validateAll');
-            console.log(vdom);
+
             var fields = validator.fields = [];
             collectFeild(vdom.children, fields, validator);
 
