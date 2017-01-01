@@ -25,8 +25,7 @@ export function parseAttributes(dirs, node) {
         }
 
         var type = arr[1]
-        if (type === 'controller' || type === 'important')
-            continue
+
         if (directives[type]) {
             delete props[attrName]
             var binding = {

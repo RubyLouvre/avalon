@@ -96,9 +96,7 @@ Lexer.prototype = {
             props = node.props
 
         if (dirs) {
-
-            var hasCtrl = dirs['ms-controller']
-            delete dirs['ms-controller']
+            var hasCtrl = dirs['ms-controller'] || dirs['ms-important']
             if (dirs['ms-widget']) {
                 return this.genComponent(node, dirs)
             }
@@ -166,7 +164,7 @@ Lexer.prototype = {
                     `type: ${ avalon.quote(dir.type) }`,
                     `name: ${ avalon.quote(dir.name) }`,
                     dir.param ? `param: ${ avalon.quote(dir.param) }` : '',
-                    `value: ${ dir.type === 'on' ? avalon.quote(dir.expr) : createExpr(dir.expr) }`
+                    `value: ${ /^(?:controller|important|on)$/.test(dir.type) ? avalon.quote(dir.expr) : createExpr(dir.expr) }`
                 )
             }, this) + ']'
         }

@@ -29,7 +29,7 @@ function $watch(expr, callback, deep) {
     var w = new Action(this, {
         deep: deep,
         type: 'user',
-        expr: expr
+        expr: '@'+expr
     }, callback)
     if (!core[expr]) {
         core[expr] = [w]

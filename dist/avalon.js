@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-30:14:37 version 2.2.2 by 司徒正美
+built in 2017-1-1:23:58 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -411,7 +411,7 @@ IE7的checked属性应该使用defaultChecked来设置
         inspect: inspect,
         ohasOwn: ohasOwn,
         rword: rword,
-        version: "2.2.2",
+        version: "2.2.3",
         vmodels: {},
 
         directives: directives,
@@ -4289,7 +4289,7 @@ IE7的checked属性应该使用defaultChecked来设置
             var w = new Action(core.__proxy__, {
                 deep: deep,
                 type: 'user',
-                expr: expr
+                expr: '@' + expr
             }, callback);
             if (!core[expr]) {
                 core[expr] = [w];
@@ -4465,39 +4465,41 @@ IE7的checked属性应该使用defaultChecked来设置
             if (v) return v;
             throw 'error! no vmodel called ' + name;
         },
-        update: function update(node, attrName, $id) {
-            if (!avalon.inBrowser) return;
-            var dom = avalon.vdom(node, 'toDOM');
-            if (dom.nodeType === 1) {
-                dom.removeAttribute(attrName);
-                avalon(dom).removeClass('ms-controller');
+        diff: function diff(oldVal, newVal) {
+            if (!this.inited) oldVal = null;
+            if (oldVal !== newVal) {
+                this.value = newVal;
+                return true;
             }
-            var vm = avalon.vmodels[$id];
-            if (vm) {
-                vm.$element = dom;
-                vm.$render = this;
+        },
+        update: function update(val, vdom, newVdom, afterCb) {
+            var vm = newVdom.vm;
+            afterCb.push(function () {
+                vm.$element = vdom.dom;
                 vm.$fire('onReady');
                 delete vm.$events.onReady;
-            }
+            });
         }
     });
 
-    var impCb = impDir.update;
-
+    var cachedCtrl = {};
     avalon.directive('controller', {
         priority: 2,
+        diff: impDir.diff,
+        update: impDir.update,
         getScope: function getScope(name, scope) {
             var v = avalon.vmodels[name];
             if (v) {
                 v.$render = this;
                 if (scope && scope !== v) {
-                    return platform.fuseFactory(scope, v);
+                    var key = scope.$id + '-' + name;
+                    if (cachedCtrl[key]) return cachedCtrl[key];
+                    return cachedCtrl[key] = platform.fuseFactory(scope, v);
                 }
                 return v;
             }
             return scope;
-        },
-        update: impCb
+        }
     });
 
     avalon.directive('skip', {
@@ -5176,7 +5178,7 @@ IE7的checked属性应该使用defaultChecked来设置
             }
 
             var type = arr[1];
-            if (type === 'controller' || type === 'important') continue;
+
             if (directives[type]) {
                 delete props[attrName];
                 var binding = {
@@ -5320,9 +5322,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 props = node.props;
 
             if (dirs) {
-
-                var hasCtrl = dirs['ms-controller'];
-                delete dirs['ms-controller'];
+                var hasCtrl = dirs['ms-controller'] || dirs['ms-important'];
                 if (dirs['ms-widget']) {
                     return this.genComponent(node, dirs);
                 }
@@ -5370,7 +5370,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     if (dir.type === 'duplex') {
                         return this.genDuplex(dir, node);
                     }
-                    return toJSONByArray('type: ' + avalon.quote(dir.type), 'name: ' + avalon.quote(dir.name), dir.param ? 'param: ' + avalon.quote(dir.param) : '', 'value: ' + (dir.type === 'on' ? avalon.quote(dir.expr) : createExpr(dir.expr)));
+                    return toJSONByArray('type: ' + avalon.quote(dir.type), 'name: ' + avalon.quote(dir.name), dir.param ? 'param: ' + avalon.quote(dir.param) : '', 'value: ' + (/^(?:controller|important|on)$/.test(dir.type) ? avalon.quote(dir.expr) : createExpr(dir.expr)));
                 }, this) + ']';
             }
             return '';
@@ -6006,39 +6006,21 @@ IE7的checked属性应该使用defaultChecked来设置
             return hasDir ? dirs : false;
         },
         checkVm: function checkVm(scope, attrs, dirs) {
+            if (scope) {
+                if (!this.vm) {
+                    this.vm = scope;
+                }
+                return scope;
+            }
+
             var $id = dirs['ms-important'] || dirs['ms-controller'];
             if ($id) {
-                /**
-                 * 后端渲染
-                 * serverTemplates后端给avalon添加的对象,里面都是模板,
-                 * 将原来后端渲染好的区域再还原成原始样子,再被扫描
-                 */
-
-                //推算出指令类型
-                var type = dirs['ms-important'] === $id ? 'important' : 'controller';
-                //推算出用户定义时属性名,是使用ms-属性还是:属性
-                var attrName = 'ms-' + type in attrs ? 'ms-' + type : ':' + type;
-
-                if (inBrowser) {
-                    delete attrs[attrName];
-                }
-                var dir = directives[type];
-                scope = dir.getScope.call(this, $id, scope);
-                if (!scope) {
-                    avalon.warn('$id\u4E3A"' + $id + '"\u7684vm\u8FD8\u6CA1\u6709\u5B9A\u4E49');
-                    return;
-                } else {
-                    if (!this.vm) {
-                        this.vm = scope;
-                    }
-
-                    var clazz = attrs['class'];
-                    if (clazz) {
-                        attrs['class'] = (' ' + clazz + ' ').replace(' ms-controller ', '').trim();
-                    }
+                var vm = avalon.vmodels[$id];
+                if (vm) {
+                    this.vm = vm;
+                    return vm;
                 }
             }
-            return scope;
         },
 
 

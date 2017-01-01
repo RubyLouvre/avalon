@@ -44,7 +44,7 @@ export function watchFactory(core) {
         var w = new Action(core.__proxy__, {
             deep: deep,
             type: 'user',
-            expr: expr
+            expr: '@'+expr
         }, callback)
         if (!core[expr]) {
             core[expr] = [w]

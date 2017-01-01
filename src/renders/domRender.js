@@ -231,40 +231,21 @@ Render.prototype = {
         return hasDir ? dirs : false
     },
     checkVm(scope, attrs, dirs) {
+        if (scope) {
+            if (!this.vm) {
+                this.vm = scope
+            }
+            return scope
+        }
+
         var $id = dirs['ms-important'] || dirs['ms-controller']
         if ($id) {
-            /**
-             * 后端渲染
-             * serverTemplates后端给avalon添加的对象,里面都是模板,
-             * 将原来后端渲染好的区域再还原成原始样子,再被扫描
-             */
-
-            //推算出指令类型
-            var type = dirs['ms-important'] === $id ? 'important' : 'controller'
-                //推算出用户定义时属性名,是使用ms-属性还是:属性
-            var attrName = ('ms-' + type) in attrs ? 'ms-' + type : ':' + type
-
-            if (inBrowser) {
-                delete attrs[attrName]
-            }
-            var dir = directives[type]
-            scope = dir.getScope.call(this, $id, scope)
-            if (!scope) {
-                avalon.warn(`$id为"${$id}"的vm还没有定义`)
-                return
-            } else {
-                if (!this.vm) {
-                    this.vm = scope
-                }
-
-                var clazz = attrs['class']
-                if (clazz) {
-                    attrs['class'] = (' ' + clazz + ' ').replace(' ms-controller ', '').trim()
-                }
-
+            var vm = avalon.vmodels[$id]
+            if (vm) {
+                this.vm = vm
+                return vm
             }
         }
-        return scope
     },
 
     static: function(i) {

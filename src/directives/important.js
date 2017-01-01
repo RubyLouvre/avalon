@@ -1,6 +1,6 @@
 import { avalon } from '../seed/core'
 
-var impDir = avalon.directive('important', {
+export var impDir = avalon.directive('important', {
     priority: 1,
     getScope: function(name, scope) {
         var v = avalon.vmodels[name]
@@ -8,23 +8,21 @@ var impDir = avalon.directive('important', {
             return v
         throw 'error! no vmodel called ' + name
     },
-    update: function(node, attrName, $id) {
-        if (!avalon.inBrowser)
-            return
-        var dom = avalon.vdom(node, 'toDOM')
-        if (dom.nodeType === 1) {
-            dom.removeAttribute(attrName)
-            avalon(dom).removeClass('ms-controller')
+    diff: function(oldVal, newVal) {
+        if (!this.inited)
+            oldVal = null
+        if (oldVal !== newVal) {
+            this.value = newVal
+            return true
         }
-        var vm = avalon.vmodels[$id]
-        if(vm){
-           vm.$element = dom
-           vm.$render = this
-           vm.$fire('onReady')
-           delete vm.$events.onReady
-        }
-       
+    },
+    update: function(val, vdom, newVdom, afterCb) {
+        var vm = newVdom.vm
+        afterCb.push(function() {
+            vm.$element = vdom.dom
+            vm.$fire('onReady')
+            delete vm.$events.onReady
+        })
+
     }
 })
-
-export var impCb = impDir.update
