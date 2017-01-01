@@ -405,7 +405,6 @@
         // 依赖 id 缓存
         this.depIds = []
         this.newDepIds = []
-        this.shallowIds = []
         // 依赖实例缓存
         this.depends = []
         this.newDepends = []
@@ -452,7 +451,6 @@
         // 深层依赖获取
         if (this.deep) {
             // 先缓存浅依赖的 ids
-            this.shallowIds = copy(this.newDepIds)
             walkThrough(value, true)
         }
 
@@ -511,8 +509,8 @@
         var newVal = this.value = this.get()
         var callback = this.callback
         if (callback && (oldVal !== newVal)) {
-            var fromDeep = this.deep && this.shallowIds.indexOf(guid) < 0
-            callback.call(this.context, newVal, oldVal, fromDeep, args)
+           
+            callback.call(this.context, newVal, oldVal, args)
         }
     }
 

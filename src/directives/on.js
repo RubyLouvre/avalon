@@ -1,4 +1,5 @@
 import { avalon, inBrowser } from '../seed/core'
+import { impDir } from './important'
 
 import { addScope, makeHandle } from '../parser/index'
 
@@ -24,12 +25,7 @@ avalon.directive('on', {
             })
             return new Function('$event','$$l', ret.join('\n'))
     },
-    diff: function(oldVal, newVal, a, b) {
-        if( oldVal !== newVal || a === b){
-            this.value = newVal+''
-            return true
-        }
-    },
+    diff: impDir.diff,
     update: function(value, vdom, _) {
         
         var uuid = (this.name+'_'+ value).

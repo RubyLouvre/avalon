@@ -7,7 +7,6 @@ var valiDir = avalon.directive('validate', {
         if (vdom.validator) {
             return
         }
-        console.log(newVal)
         if (isObject(newVal)) {
             //注意，这个Form标签的虚拟DOM有两个验证对象
             //一个是vmValidator，它是用户VM上的那个原始子对象，也是一个VM

@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-1:23:58 version 2.2.3 by 司徒正美
+built in 2017-1-2:0:10 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -4476,6 +4476,7 @@ IE7的checked属性应该使用defaultChecked来设置
             var vm = newVdom.vm;
             afterCb.push(function () {
                 vm.$element = vdom.dom;
+                avalon(vdom.dom).removeClass('ms-controller');
                 vm.$fire('onReady');
                 delete vm.$events.onReady;
             });

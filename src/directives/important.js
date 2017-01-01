@@ -20,6 +20,7 @@ export var impDir = avalon.directive('important', {
         var vm = newVdom.vm
         afterCb.push(function() {
             vm.$element = vdom.dom
+            avalon(vdom.dom).removeClass('ms-controller')
             vm.$fire('onReady')
             delete vm.$events.onReady
         })
