@@ -32,8 +32,7 @@ var valiDir = avalon.directive('validate', {
             dom._ms_validate_ = validator
             var fields = validator.fields
             collectFeild(vdom.children, fields, validator)
-            console.log('999999',validator)
-            avalon.bind(window, 'keyup', function(e) {
+            avalon.bind(document, 'focusin', function(e) {
                 var dom = e.target
                 var duplex = dom._ms_duplex_
                 var vdom = (duplex || {}).vdom
@@ -126,7 +125,7 @@ var valiDir = avalon.directive('validate', {
         /* istanbul ignore if */
         if (elem.disabled)
             return
-        var rules = field.rules
+        var rules = field.vdom.rules
         var ngs = [],
             isOk = true
         if (!(rules.norequired && value === '')) {
