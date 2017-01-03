@@ -9,23 +9,23 @@ export function orderBy(array, by, decend) {
     var type = avalon.type(array)
     if (type !== 'array' && type !== 'object')
         throw 'orderBy只能处理对象或数组'
-    var criteria = typeof by == 'string' ? function (el) {
+    var criteria = typeof by == 'string' ? function(el) {
         return el && el[by]
-    } : typeof by === 'function' ? by : function (el) {
+    } : typeof by === 'function' ? by : function(el) {
         return el
     }
     var mapping = {}
     var temp = []
-   __repeat(array, Array.isArray(array), function(key){
-       var val = array[key]
+    __repeat(array, Array.isArray(array), function(key) {
+        var val = array[key]
         var k = criteria(val, key)
-            if (k in mapping) {
-                mapping[k].push(key)
-            } else {
-                mapping[k] = [key]
-            }
-            temp.push(k)
-   })
+        if (k in mapping) {
+            mapping[k].push(key)
+        } else {
+            mapping[k] = [key]
+        }
+        temp.push(k)
+    })
 
     temp.sort()
     if (decend < 0) {
@@ -33,7 +33,7 @@ export function orderBy(array, by, decend) {
     }
     var _array = type === 'array'
     var target = _array ? [] : {}
-    return recovery(target, temp, function (k) {
+    return recovery(target, temp, function(k) {
         var key = mapping[k].shift()
         if (_array) {
             target.push(array[key])
@@ -42,22 +42,23 @@ export function orderBy(array, by, decend) {
         }
     })
 }
-function __repeat(array, isArray, cb){
-       if(isArray){
-          array.forEach(function(val, index){
-              cb(index)
-          })
-       } else if(typeof array.$track === 'string'){
-           array.$track.replace(/[^☥]+/g,function(k){
-               cb(k)
-           })
-       } else{
-           for(var i in array){
-               if(array.hasOwnProperty(i)){
-                   cb(i)
-               }
-           }
-       }
+
+function __repeat(array, isArray, cb) {
+    if (isArray) {
+        array.forEach(function(val, index) {
+            cb(index)
+        })
+    } else if (typeof array.$track === 'string') {
+        array.$track.replace(/[^☥]+/g, function(k) {
+            cb(k)
+        })
+    } else {
+        for (var i in array) {
+            if (array.hasOwnProperty(i)) {
+                cb(i)
+            }
+        }
+    }
 }
 export function filterBy(array, search) {
     var type = avalon.type(array)
@@ -72,32 +73,34 @@ export function filterBy(array, search) {
             return array
         } else {
             var reg = new RegExp(avalon.escapeRegExp(search), 'i')
-            criteria = function (el) {
+            criteria = function(el) {
                 return reg.test(el)
             }
         }
     } else {
         return array
     }
- var isArray = type === 'array'
-    array = convertArray(array, isArray).filter(function (el, i) {
-        return !!criteria.apply(el, [el.value, i].concat(args))
-    })
-
+    var index = 0
+    var isArray = type === 'array'
     var target = isArray ? [] : {}
-    return recovery(target, array, function (el) {
-        if (isArray) {
-            target.push(el.value)
-        } else {
-            target[el.key] = el.value
+    __repeat(array, isArray, function(key) {
+        var val = array[key]
+        if (criteria.apply(val, [val, index].concat(args))) {
+            if (isArray) {
+                target.push(val)
+            } else {
+                target[key] = val
+            }
         }
+        index++
     })
+    return target
 }
 
 export function selectBy(data, array, defaults) {
     if (avalon.isObject(data) && !Array.isArray(data)) {
         var target = []
-        return recovery(target, array, function (name) {
+        return recovery(target, array, function(name) {
             target.push(data.hasOwnProperty(name) ? data[name] : defaults ? defaults[name] : '')
         })
     } else {
@@ -109,7 +112,7 @@ export function limitBy(input, limit, begin) {
     var type = avalon.type(input)
     if (type !== 'array' && type !== 'object')
         throw 'limitBy只能处理对象或数组'
-    //必须是数值
+            //必须是数值
     if (typeof limit !== 'number') {
         return input
     }
@@ -139,7 +142,7 @@ export function limitBy(input, limit, begin) {
         return data
     }
     var target = {}
-    return recovery(target, data, function (el) {
+    return recovery(target, data, function(el) {
         target[el.key] = el.value
     })
 }
@@ -154,15 +157,15 @@ function recovery(ret, array, callback) {
 //Chrome谷歌浏览器中js代码Array.sort排序的bug乱序解决办法
 //http://www.cnblogs.com/yzeng/p/3949182.html
 function convertArray(array, isArray) {
-     var ret = [], i = 0
-    __repeat(array, isArray, function(key){
-          ret[i] = {
-                oldIndex: i,
-                value: array[key],
-                key: key
-            }
-            i++
+    var ret = [],
+        i = 0
+    __repeat(array, isArray, function(key) {
+        ret[i] = {
+            oldIndex: i,
+            value: array[key],
+            key: key
+        }
+        i++
     })
-    
     return ret
 }

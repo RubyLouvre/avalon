@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-3:21:29 version 2.2.3 by 司徒正美
+built in 2017-1-3:21:45 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.3
 
 
@@ -1264,6 +1264,7 @@ avalon.bind 在绑定非元素节点也要修正事件对象
             }
         });
     }
+
     function __repeat(array, isArray$$1, cb) {
         if (isArray$$1) {
             array.forEach(function (val, index) {
@@ -1300,19 +1301,21 @@ avalon.bind 在绑定非元素节点也要修正事件对象
         } else {
             return array;
         }
+        var index = 0;
         var isArray$$1 = type === 'array';
-        array = convertArray(array, isArray$$1).filter(function (el, i) {
-            return !!criteria.apply(el, [el.value, i].concat(args));
-        });
-
         var target = isArray$$1 ? [] : {};
-        return recovery(target, array, function (el) {
-            if (isArray$$1) {
-                target.push(el.value);
-            } else {
-                target[el.key] = el.value;
+        __repeat(array, isArray$$1, function (key) {
+            var val = array[key];
+            if (criteria.apply(val, [val, index].concat(args))) {
+                if (isArray$$1) {
+                    target.push(val);
+                } else {
+                    target[key] = val;
+                }
             }
+            index++;
         });
+        return target;
     }
 
     function selectBy(data, array, defaults) {
@@ -1384,7 +1387,6 @@ avalon.bind 在绑定非元素节点也要修正事件对象
             };
             i++;
         });
-
         return ret;
     }
 
