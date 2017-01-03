@@ -272,8 +272,9 @@ Render.prototype = {
         a.slot = name
         return a
     },
-    ctrl: function(id, scope, cb) {
-        var dir = directives['controller']
+    ctrl: function(id, scope, isImport, cb) {
+        var name = isImport ? 'important' : 'controller'
+        var dir = directives[name]
         scope = dir.getScope.call(this, id, scope)
         return cb(scope)
     },

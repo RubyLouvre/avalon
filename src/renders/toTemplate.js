@@ -97,6 +97,7 @@ Lexer.prototype = {
 
         if (dirs) {
             var hasCtrl = dirs['ms-controller'] || dirs['ms-important']
+            var isImport = 'ms-important' in dirs
             if (dirs['ms-widget']) {
                 return this.genComponent(node, dirs)
             }
@@ -144,7 +145,7 @@ Lexer.prototype = {
             json = `${ hasIf } ? ${ json } : \u01A9.comment('if')`
         }
         if (hasCtrl) {
-            return `\u01A9.ctrl( ${ avalon.quote(hasCtrl) }, __vmodel__, function(__vmodel__) {
+            return `\u01A9.ctrl( ${ avalon.quote(hasCtrl) }, __vmodel__, ${isImport}, function(__vmodel__) {
                 return ${ json }
             }) `
         } else {
