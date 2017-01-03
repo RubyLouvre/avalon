@@ -172,7 +172,9 @@ function diffList(instance) {
             delete fragment._dispose
             fragment.oldIndex = fragment.index
             fragment.index = index // 相当于 c.index
+
             resetVM(fragment.vm, instance.keyName)
+            fragment.vm[instance.valName] = c.val
             fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
             saveInCache(newCache, fragment)
 
@@ -219,6 +221,8 @@ function updateItemVm(vm, top) {
 function resetVM(vm, a, b) {
     if(avalon.config.inProxyMode){
        vm.$accessors[a].value = NaN
+    }else{
+         vm.$accessors[a].set(NaN)
     }
 }
 

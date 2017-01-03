@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-3:15:7 version 2.2.3 by 司徒正美
+built in 2017-1-3:20:17 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.3
 
 
@@ -5658,7 +5658,9 @@ avalon.bind 在绑定非元素节点也要修正事件对象
                 delete fragment._dispose;
                 fragment.oldIndex = fragment.index;
                 fragment.index = index; // 相当于 c.index
+
                 resetVM(fragment.vm, instance.keyName);
+                fragment.vm[instance.valName] = c.val;
                 fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key;
                 saveInCache(newCache, fragment);
             } else {
@@ -5697,6 +5699,8 @@ avalon.bind 在绑定非元素节点也要修正事件对象
     function resetVM(vm, a, b) {
         if (avalon.config.inProxyMode) {
             vm.$accessors[a].value = NaN;
+        } else {
+            vm.$accessors[a].set(NaN);
         }
     }
 
