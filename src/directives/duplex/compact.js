@@ -11,10 +11,8 @@ avalon.directive('duplex', {
     init: duplexInit,
     diff: duplexDiff,
     update: function (vdom, value) {
-       // var dom = vdom.dom
         if (!this.dom) {
             duplexBind.call(this, vdom, updateDataEvents)
-
         }
         //如果不支持input.value的Object.defineProperty的属性支持,
         //需要通过轮询同步, chrome 42及以下版本需要这个hack

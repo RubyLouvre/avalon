@@ -54,8 +54,9 @@ describe('验证规则', function () {
                     expect(flag).toBe(2)
                     vm.bbb = false 
                     var input = document.getElementsByTagName('input')[0]
+                    var duplex = input._ms_duplex_
                     
-                    expect(input._ms_duplex_.rules).toEqual({required:false})
+                    expect(duplex.rules || duplex.vdom.rules).toEqual({required:false})
                     done()
                 },100)
             })

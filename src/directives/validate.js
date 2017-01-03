@@ -12,7 +12,7 @@ var valiDir = avalon.directive('validate', {
             //也可以称之为safeValidate
             vdom.vmValidator = validator
             validator = platform.toJson(validator)
-
+            validator.vdom = vdom
             vdom.validator = validator
             for (var name in valiDir.defaults) {
                 if (!validator.hasOwnProperty(name)) {
@@ -24,11 +24,24 @@ var valiDir = avalon.directive('validate', {
         }
     },
     update: function(vdom) {
+        
         var validator = vdom.validator
-        var dom = vdom.dom
-        validator.dom = dom
+        var dom = validator.dom = vdom.dom
         dom._ms_validate_ = validator
+        var fields = validator.fields
+        collectFeild(vdom.children, fields, validator)
+        avalon.bind(document, 'focusin', function(e) {
+            var dom = e.target
+            var duplex = dom._ms_duplex_
+            var vdom = (duplex || {}).vdom
+            if (duplex && vdom.rules && !duplex.validator) {
+                if (avalon.Array.ensure(fields, duplex)) {
+                    bindValidateEvent(duplex, validator)
+                }
 
+            }
+        })
+        
         //为了方便用户手动执行验证，我们需要为原始vmValidate上添加一个onManual方法
         var v = vdom.vmValidator
         try {
@@ -48,17 +61,13 @@ var valiDir = avalon.directive('validate', {
                 onManual()
             })
         }
-        /* istanbul ignore if */
-        if (typeof validator.onInit === 'function') { //vmodels是不包括vmodel的
-            validator.onInit.call(dom, {
-                type: 'init',
-                target: dom,
-                validator: validator
-            })
-        }
+        
     },
     validateAll: function(callback) {
         var validator = this
+        var vdom = this.vdom
+        var fields = validator.fields = []
+        collectFeild(vdom.children, fields, validator)
         var fn = typeof callback === 'function' ? callback : validator.onValidateAll
         var promises = validator.fields.filter(function(field) {
             var el = field.dom
@@ -85,28 +94,7 @@ var valiDir = avalon.directive('validate', {
             fn.call(validator.dom, reasons) //这里只放置未通过验证的组件
         })
     },
-    addField: function(field) {
-        var validator = this
-        var node = field.dom
-            /* istanbul ignore if */
-        if (validator.validateInKeyup && (!field.isChanged && !field.debounceTime)) {
-            avalon.bind(node, 'keyup', function(e) {
-                validator.validate(field, 0, e)
-            })
-        }
-        /* istanbul ignore if */
-        if (validator.validateInBlur) {
-            avalon.bind(node, 'blur', function(e) {
-                validator.validate(field, 0, e)
-            })
-        }
-        /* istanbul ignore if */
-        if (validator.resetInFocus) {
-            avalon.bind(node, 'focus', function(e) {
-                validator.onReset.call(node, e, field)
-            })
-        }
-    },
+    
     validate: function(field, isValidateAll, event) {
         var promises = []
         var value = field.value
@@ -119,7 +107,7 @@ var valiDir = avalon.directive('validate', {
         /* istanbul ignore if */
         if (elem.disabled)
             return
-        var rules = field.rules
+        var rules = field.vdom.rules
         var ngs = [],
             isOk = true
         if (!(rules.norequired && value === '')) {
@@ -173,6 +161,46 @@ var valiDir = avalon.directive('validate', {
     }
 })
 
+function collectFeild(nodes, fields, validator) {
+    for (var i = 0, vdom; vdom = nodes[i++];) {
+        var duplex = vdom.rules && vdom.duplex
+        if (duplex) {
+            fields.push(duplex)
+            bindValidateEvent(duplex, validator)
+        } else if (vdom.children) {
+            collectFeild(vdom.children, fields, validator)
+        } else if (Array.isArray(vdom)) {
+            collectFeild(vdom, fields, validator)
+        }
+    }
+}
+
+function bindValidateEvent(field, validator) {
+
+    var node = field.dom
+    if (field.validator) {
+        return
+    }
+    field.validator = validator
+        /* istanbul ignore if */
+    if (validator.validateInKeyup && (!field.isChanged && !field.debounceTime)) {
+        avalon.bind(node, 'keyup', function(e) {
+            validator.validate(field, 0, e)
+        })
+    }
+    /* istanbul ignore if */
+    if (validator.validateInBlur) {
+        avalon.bind(node, 'blur', function(e) {
+            validator.validate(field, 0, e)
+        })
+    }
+    /* istanbul ignore if */
+    if (validator.resetInFocus) {
+        avalon.bind(node, 'focus', function(e) {
+            validator.onReset.call(node, e, field)
+        })
+    }
+}
 var rformat = /\\?{{([^{}]+)\}}/gm
 
 function getMessage() {
@@ -183,7 +211,6 @@ function getMessage() {
 }
 valiDir.defaults = {
     validate: valiDir.validate,
-    addField: valiDir.addField, //供内部使用,收集此元素底下的所有ms-duplex的域对象
     onError: avalon.noop,
     onSuccess: avalon.noop,
     onComplete: avalon.noop,

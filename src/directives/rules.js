@@ -5,9 +5,6 @@ avalon.directive('rules', {
         if (isObject(rules)) {
             var vdom = this.node
             vdom.rules = platform.toJson(rules)
-            if (vdom.duplex) {
-                vdom.duplex.rules = vdom.rules
-            }
             return true
         }
     }

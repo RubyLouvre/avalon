@@ -53,13 +53,12 @@ module.exports = rollup.rollup({
         /*
 https://github.com/RubyLouvre/avalon/tree/2.2.3
 
-
-fix VElement hackIE BUG
-avalon.bind 在绑定非元素节点也要修正事件对象 
-处理expr的null undefined情况     
-修正error函数参数顺序导致的错误
-支持组件继承(对象形式与函数形式皆可)
-添加对安卓4.4， safari7, firefox50, chrome55的测试
+修正IE下 orderBy BUG
+更改下载Promise的提示
+修复avalon.modern 在Proxy 模式下使用ms-for 循环对象时出错的BUG
+修复effect内部传参 BUG
+重构ms-validate的绑定事件的机制     
+      
 */
     })
     var now = new Date

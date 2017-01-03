@@ -96,41 +96,11 @@ export function duplexDiff(newVal, oldVal) {
 export function duplexBind(vdom, addEvent){
     var dom = vdom.dom
     this.dom = dom
+    this.vdom = vdom
     this.duplexCb = updateModel
     dom._ms_duplex_ = this
     //绑定事件
     addEvent(dom, this)
-    //添加验证
-   
-    var rules = vdom.rules
-    this.rules = rules
-    //将当前虚拟DOM的duplex添加到它上面的表单元素的validate指令的fields数组中
-    if (rules && !this.validator) {
-        addValidate(this, dom, true)
-    }
-}
-
-function addValidate(field,dom, once){
-    while (dom && dom.nodeType === 1) {
-        var validator = dom._ms_validate_
-        if (validator) {
-            field.validator = validator
-            if (avalon.Array.ensure(validator.fields, field)) {
-                validator.addField(field)
-            }
-            break
-        }
-        var p = dom.parentNode
-        if( once && p && p.nodeType  === 11){
-             //如果input元素是循环生成的,那么它这时还没有插入到DOM树,其根节点是#document-fragment
-            setTimeout(function(){
-                addValidate(field, dom)
-            })
-            break
-        }else{
-            dom = p
-        }
-    }
 }
 
 export var valueHijack = true

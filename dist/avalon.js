@@ -1,14 +1,12 @@
 /*!
-built in 2017-1-3:21:45 version 2.2.3 by 司徒正美
+built in 2017-1-4:0:37 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.3
 
-
-fix VElement hackIE BUG
-avalon.bind 在绑定非元素节点也要修正事件对象 
-处理expr的null undefined情况     
-修正error函数参数顺序导致的错误
-支持组件继承(对象形式与函数形式皆可)
-添加对安卓4.4， safari7, firefox50, chrome55的测试
+修正IE下 orderBy BUG
+更改下载Promise的提示
+修复avalon.modern 在Proxy 模式下使用ms-for 循环对象时出错的BUG
+修复effect内部传参 BUG
+重构ms-validate的绑定事件的机制
 
 */(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() : typeof define === 'function' && define.amd ? define(factory) : global.avalon = factory();
@@ -6192,41 +6190,11 @@ avalon.bind 在绑定非元素节点也要修正事件对象
     function duplexBind(vdom, addEvent) {
         var dom = vdom.dom;
         this.dom = dom;
+        this.vdom = vdom;
         this.duplexCb = updateDataHandle;
         dom._ms_duplex_ = this;
         //绑定事件
         addEvent(dom, this);
-        //添加验证
-
-        var rules = vdom.rules;
-        this.rules = rules;
-        //将当前虚拟DOM的duplex添加到它上面的表单元素的validate指令的fields数组中
-        if (rules && !this.validator) {
-            addValidate(this, dom, true);
-        }
-    }
-
-    function addValidate(field, dom, once) {
-        while (dom && dom.nodeType === 1) {
-            var validator = dom._ms_validate_;
-            if (validator) {
-                field.validator = validator;
-                if (avalon.Array.ensure(validator.fields, field)) {
-                    validator.addField(field);
-                }
-                break;
-            }
-            var p = dom.parentNode;
-            if (once && p && p.nodeType === 11) {
-                //如果input元素是循环生成的,那么它这时还没有插入到DOM树,其根节点是#document-fragment
-                setTimeout(function () {
-                    addValidate(field, dom);
-                });
-                break;
-            } else {
-                dom = p;
-            }
-        }
     }
 
     var valueHijack = true;
@@ -6539,7 +6507,6 @@ avalon.bind 在绑定非元素节点也要修正事件对象
         init: duplexInit,
         diff: duplexDiff,
         update: function update(vdom, value) {
-            // var dom = vdom.dom
             if (!this.dom) {
                 duplexBind.call(this, vdom, updateDataEvents);
             }
@@ -6589,9 +6556,6 @@ avalon.bind 在绑定非元素节点也要修正事件对象
             if (isObject(rules)) {
                 var vdom = this.node;
                 vdom.rules = platform.toJson(rules);
-                if (vdom.duplex) {
-                    vdom.duplex.rules = vdom.rules;
-                }
                 return true;
             }
         }
@@ -6749,7 +6713,7 @@ avalon.bind 在绑定非元素节点也要修正事件对象
                 //也可以称之为safeValidate
                 vdom.vmValidator = validator;
                 validator = platform.toJson(validator);
-
+                validator.vdom = vdom;
                 vdom.validator = validator;
                 for (var name in valiDir.defaults) {
                     if (!validator.hasOwnProperty(name)) {
@@ -6761,10 +6725,22 @@ avalon.bind 在绑定非元素节点也要修正事件对象
             }
         },
         update: function update(vdom) {
+
             var validator = vdom.validator;
-            var dom = vdom.dom;
-            validator.dom = dom;
+            var dom = validator.dom = vdom.dom;
             dom._ms_validate_ = validator;
+            var fields = validator.fields;
+            collectFeild(vdom.children, fields, validator);
+            avalon.bind(document, 'focusin', function (e) {
+                var dom = e.target;
+                var duplex = dom._ms_duplex_;
+                var vdom = (duplex || {}).vdom;
+                if (duplex && vdom.rules && !duplex.validator) {
+                    if (avalon.Array.ensure(fields, duplex)) {
+                        bindValidateEvent(duplex, validator);
+                    }
+                }
+            });
 
             //为了方便用户手动执行验证，我们需要为原始vmValidate上添加一个onManual方法
             var v = vdom.vmValidator;
@@ -6785,18 +6761,12 @@ avalon.bind 在绑定非元素节点也要修正事件对象
                     onManual();
                 });
             }
-            /* istanbul ignore if */
-            if (typeof validator.onInit === 'function') {
-                //vmodels是不包括vmodel的
-                validator.onInit.call(dom, {
-                    type: 'init',
-                    target: dom,
-                    validator: validator
-                });
-            }
         },
         validateAll: function validateAll(callback) {
             var validator = this;
+            var vdom = this.vdom;
+            var fields = validator.fields = [];
+            collectFeild(vdom.children, fields, validator);
             var fn = typeof callback === 'function' ? callback : validator.onValidateAll;
             var promises = validator.fields.filter(function (field) {
                 var el = field.dom;
@@ -6823,28 +6793,7 @@ avalon.bind 在绑定非元素节点也要修正事件对象
                 fn.call(validator.dom, reasons); //这里只放置未通过验证的组件
             });
         },
-        addField: function addField(field) {
-            var validator = this;
-            var node = field.dom;
-            /* istanbul ignore if */
-            if (validator.validateInKeyup && !field.isChanged && !field.debounceTime) {
-                avalon.bind(node, 'keyup', function (e) {
-                    validator.validate(field, 0, e);
-                });
-            }
-            /* istanbul ignore if */
-            if (validator.validateInBlur) {
-                avalon.bind(node, 'blur', function (e) {
-                    validator.validate(field, 0, e);
-                });
-            }
-            /* istanbul ignore if */
-            if (validator.resetInFocus) {
-                avalon.bind(node, 'focus', function (e) {
-                    validator.onReset.call(node, e, field);
-                });
-            }
-        },
+
         validate: function validate(field, isValidateAll, event) {
             var promises = [];
             var value = field.value;
@@ -6857,7 +6806,7 @@ avalon.bind 在绑定非元素节点也要修正事件对象
             }
             /* istanbul ignore if */
             if (elem.disabled) return;
-            var rules = field.rules;
+            var rules = field.vdom.rules;
             var ngs = [],
                 isOk = true;
             if (!(rules.norequired && value === '')) {
@@ -6910,6 +6859,46 @@ avalon.bind 在绑定非元素节点也要修正事件对象
         }
     });
 
+    function collectFeild(nodes, fields, validator) {
+        for (var i = 0, vdom; vdom = nodes[i++];) {
+            var duplex = vdom.rules && vdom.duplex;
+            if (duplex) {
+                fields.push(duplex);
+                bindValidateEvent(duplex, validator);
+            } else if (vdom.children) {
+                collectFeild(vdom.children, fields, validator);
+            } else if (Array.isArray(vdom)) {
+                collectFeild(vdom, fields, validator);
+            }
+        }
+    }
+
+    function bindValidateEvent(field, validator) {
+
+        var node = field.dom;
+        if (field.validator) {
+            return;
+        }
+        field.validator = validator;
+        /* istanbul ignore if */
+        if (validator.validateInKeyup && !field.isChanged && !field.debounceTime) {
+            avalon.bind(node, 'keyup', function (e) {
+                validator.validate(field, 0, e);
+            });
+        }
+        /* istanbul ignore if */
+        if (validator.validateInBlur) {
+            avalon.bind(node, 'blur', function (e) {
+                validator.validate(field, 0, e);
+            });
+        }
+        /* istanbul ignore if */
+        if (validator.resetInFocus) {
+            avalon.bind(node, 'focus', function (e) {
+                validator.onReset.call(node, e, field);
+            });
+        }
+    }
     var rformat = /\\?{{([^{}]+)\}}/gm;
 
     function getMessage() {
@@ -6920,7 +6909,6 @@ avalon.bind 在绑定非元素节点也要修正事件对象
     }
     valiDir.defaults = {
         validate: valiDir.validate,
-        addField: valiDir.addField, //供内部使用,收集此元素底下的所有ms-duplex的域对象
         onError: avalon.noop,
         onSuccess: avalon.noop,
         onComplete: avalon.noop,
