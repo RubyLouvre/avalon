@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-3:14:57 version 2.2.3 by 司徒正美
+built in 2017-1-3:15:7 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.3
 
 
@@ -5746,21 +5746,19 @@ avalon.bind 在绑定非元素节点也要修正事件对象
         var vm = fragment.vm = platform.itemFactory(instance.vm, {
             data: data
         });
-        if (instance.valName) {
-            if (instance.isArray) {
-                vm.$watch(instance.valName, function (a) {
-                    if (instance.value && instance.value.set) {
-                        instance.value.set(vm[instance.keyName], a);
-                    }
-                });
-            } else {
-                vm.$watch(instance.valName, function (a) {
-                    instance.value[fragment.key] = a;
-                });
-            }
+        if (instance.isArray) {
+            vm.$watch(instance.valName, function (a) {
+                if (instance.value && instance.value.set) {
+                    instance.value.set(vm[instance.keyName], a);
+                }
+            });
+        } else {
+            vm.$watch(instance.valName, function (a) {
+                instance.value[fragment.key] = a;
+            });
         }
+
         fragment.index = index;
-        console.log(instance.fragment, index);
         fragment.innerRender = avalon.scan(instance.fragment, vm, function () {
             var oldRoot = this.root;
             ap.push.apply(fragment.children, oldRoot.children);

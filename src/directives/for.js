@@ -270,21 +270,19 @@ function FragmentDecorator(fragment, instance, index) {
     var vm = fragment.vm = platform.itemFactory(instance.vm, {
         data: data
     })
-   if(instance.valName){
-        if (instance.isArray) {
-            vm.$watch(instance.valName, function(a) {
-                if (instance.value && instance.value.set) {
-                    instance.value.set(vm[instance.keyName], a)
-                }
-            })
-        } else {
-            vm.$watch(instance.valName, function(a) {
-                instance.value[fragment.key] = a
-            })
-        }
+    if (instance.isArray) {
+        vm.$watch(instance.valName, function(a) {
+            if (instance.value && instance.value.set) {
+                instance.value.set(vm[instance.keyName], a)
+            }
+        })
+    } else {
+        vm.$watch(instance.valName, function(a) {
+            instance.value[fragment.key] = a
+        })
     }
+   
     fragment.index = index
-    console.log(instance.fragment, index)
     fragment.innerRender = avalon.scan(instance.fragment, vm, function() {
         var oldRoot = this.root
         ap.push.apply(fragment.children, oldRoot.children)
