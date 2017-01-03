@@ -7,6 +7,7 @@ import { Lexer } from './toTemplate'
 import { runActions, collectDeps } from '../vmodel/transaction'
 
 import { eventMap } from '../parser/attributes'
+import { $$skipArray } from '../vmodel/reserved'
 
 import { startWith, dumpTree, getRange } from './share'
 import { diff } from './diff'
@@ -289,7 +290,7 @@ Render.prototype = {
             }
         } else if (avalon.isObject(obj)) {
             for (var i in obj) {
-                if (obj.hasOwnProperty(i)) {
+                if (obj.hasOwnProperty(i) && !(i in $$skipArray)) {
                     repeatCb(obj, obj[i], i, keys, nodes, cb)
                 }
             }
