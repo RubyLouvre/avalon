@@ -1,6 +1,7 @@
 import { avalon, createFragment, platform, isObject, ap } from '../seed/core'
 
 import { VFragment } from '../vdom/VFragment'
+import { $$skipArray } from '../vmodel/reserved'
 
 import { addScope, makeHandle } from '../parser/index'
 
@@ -57,7 +58,6 @@ avalon.directive('for', {
         if (this.updating) {
             return
         }
-
         this.updating = true
         var traceIds = createFragments(this, newVal)
 
@@ -129,9 +129,11 @@ function createFragments(instance, obj) {
             instance.fragments = fragments
         } else {
             avalon.each(obj, function(key, value) {
-                var k = array ? getTraceKey(value) : key
-                fragments.push(new VFragment([], k, value, i++))
-                ids.push(k)
+                if(!(key in $$skipArray)){
+                    var k = array ? getTraceKey(value) : key
+                    fragments.push(new VFragment([], k, value, i++))
+                    ids.push(k)
+                }
             })
             instance.fragments = fragments
         }
@@ -268,19 +270,21 @@ function FragmentDecorator(fragment, instance, index) {
     var vm = fragment.vm = platform.itemFactory(instance.vm, {
         data: data
     })
-
-    if (instance.isArray) {
-        vm.$watch(instance.valName, function(a) {
-            if (instance.value && instance.value.set) {
-                instance.value.set(vm[instance.keyName], a)
-            }
-        })
-    } else {
-        vm.$watch(instance.valName, function(a) {
-            instance.value[fragment.key] = a
-        })
+   if(instance.valName){
+        if (instance.isArray) {
+            vm.$watch(instance.valName, function(a) {
+                if (instance.value && instance.value.set) {
+                    instance.value.set(vm[instance.keyName], a)
+                }
+            })
+        } else {
+            vm.$watch(instance.valName, function(a) {
+                instance.value[fragment.key] = a
+            })
+        }
     }
     fragment.index = index
+    console.log(instance.fragment, index)
     fragment.innerRender = avalon.scan(instance.fragment, vm, function() {
         var oldRoot = this.root
         ap.push.apply(fragment.children, oldRoot.children)

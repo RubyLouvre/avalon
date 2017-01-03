@@ -12,6 +12,7 @@ export var $$skipArray = {
     $render: falsy,
     $track: falsy,
     $element: falsy,
+    $computed:falsy,
     $watch: falsy,
     $fire: falsy,
     $events: falsy,
