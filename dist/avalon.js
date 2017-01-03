@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-3:20:17 version 2.2.3 by 司徒正美
+built in 2017-1-3:21:29 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.3
 
 
@@ -1199,6 +1199,31 @@ avalon.bind 在绑定非元素节点也要修正事件对象
     locate.SHORTMONTH = locate.MONTH;
     dateFilter.locate = locate;
 
+    /**
+    $$skipArray:是系统级通用的不可监听属性
+    $skipArray: 是当前对象特有的不可监听属性
+    
+     不同点是
+     $$skipArray被hasOwnProperty后返回false
+     $skipArray被hasOwnProperty后返回true
+     */
+    var falsy;
+    var $$skipArray = {
+        $id: falsy,
+        $render: falsy,
+        $track: falsy,
+        $element: falsy,
+        $computed: falsy,
+        $watch: falsy,
+        $fire: falsy,
+        $events: falsy,
+        $accessors: falsy,
+        $hashcode: falsy,
+        $mutations: falsy,
+        $vbthis: falsy,
+        $vbsetter: falsy
+    };
+
     /*
     https://github.com/hufyhang/orderBy/blob/master/index.js
     */
@@ -1213,20 +1238,16 @@ avalon.bind 在绑定非元素节点也要修正事件对象
         };
         var mapping = {};
         var temp = [];
-        var index = 0;
-        for (var key in array) {
-            if (array.hasOwnProperty(key)) {
-                var val = array[key];
-                var k = criteria(val, key);
-                if (k in mapping) {
-                    mapping[k].push(key);
-                } else {
-                    mapping[k] = [key];
-                }
-
-                temp.push(k);
+        __repeat(array, Array.isArray(array), function (key) {
+            var val = array[key];
+            var k = criteria(val, key);
+            if (k in mapping) {
+                mapping[k].push(key);
+            } else {
+                mapping[k] = [key];
             }
-        }
+            temp.push(k);
+        });
 
         temp.sort();
         if (decend < 0) {
@@ -1242,6 +1263,23 @@ avalon.bind 在绑定非元素节点也要修正事件对象
                 target[key] = array[key];
             }
         });
+    }
+    function __repeat(array, isArray$$1, cb) {
+        if (isArray$$1) {
+            array.forEach(function (val, index) {
+                cb(index);
+            });
+        } else if (typeof array.$track === 'string') {
+            array.$track.replace(/[^☥]+/g, function (k) {
+                cb(k);
+            });
+        } else {
+            for (var i in array) {
+                if (array.hasOwnProperty(i)) {
+                    cb(i);
+                }
+            }
+        }
     }
     function filterBy(array, search) {
         var type = avalon.type(array);
@@ -1262,12 +1300,11 @@ avalon.bind 在绑定非元素节点也要修正事件对象
         } else {
             return array;
         }
-
-        array = convertArray(array).filter(function (el, i) {
+        var isArray$$1 = type === 'array';
+        array = convertArray(array, isArray$$1).filter(function (el, i) {
             return !!criteria.apply(el, [el.value, i].concat(args));
         });
 
-        var isArray$$1 = type === 'array';
         var target = isArray$$1 ? [] : {};
         return recovery(target, array, function (el) {
             if (isArray$$1) {
@@ -1302,7 +1339,7 @@ avalon.bind 在绑定非元素节点也要修正事件对象
         }
         //将目标转换为数组
         if (type === 'object') {
-            input = convertArray(input);
+            input = convertArray(input, false);
         }
         var n = input.length;
         limit = Math.floor(Math.min(n, limit));
@@ -1336,19 +1373,18 @@ avalon.bind 在绑定非元素节点也要修正事件对象
 
     //Chrome谷歌浏览器中js代码Array.sort排序的bug乱序解决办法
     //http://www.cnblogs.com/yzeng/p/3949182.html
-    function convertArray(array) {
+    function convertArray(array, isArray$$1) {
         var ret = [],
             i = 0;
-        for (var key in array) {
-            if (array.hasOwnProperty(key)) {
-                ret[i] = {
-                    oldIndex: i,
-                    value: array[key],
-                    key: key
-                };
-                i++;
-            }
-        }
+        __repeat(array, isArray$$1, function (key) {
+            ret[i] = {
+                oldIndex: i,
+                value: array[key],
+                key: key
+            };
+            i++;
+        });
+
         return ret;
     }
 
@@ -3548,31 +3584,6 @@ avalon.bind 在绑定非元素节点也要修正事件对象
 
     avalon.domize = function (a) {
         return avalon.vdom(a, 'toDOM');
-    };
-
-    /**
-    $$skipArray:是系统级通用的不可监听属性
-    $skipArray: 是当前对象特有的不可监听属性
-    
-     不同点是
-     $$skipArray被hasOwnProperty后返回false
-     $skipArray被hasOwnProperty后返回true
-     */
-    var falsy;
-    var $$skipArray = {
-        $id: falsy,
-        $render: falsy,
-        $track: falsy,
-        $element: falsy,
-        $computed: falsy,
-        $watch: falsy,
-        $fire: falsy,
-        $events: falsy,
-        $accessors: falsy,
-        $hashcode: falsy,
-        $mutations: falsy,
-        $vbthis: falsy,
-        $vbsetter: falsy
     };
 
     avalon.pendingActions = [];

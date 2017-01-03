@@ -1,4 +1,6 @@
 import { avalon } from '../seed/core'
+import { $$skipArray } from '../vmodel/reserved'
+
 /*
 https://github.com/hufyhang/orderBy/blob/master/index.js
 */
@@ -14,20 +16,16 @@ export function orderBy(array, by, decend) {
     }
     var mapping = {}
     var temp = []
-    var index = 0
-    for (var key in array) {
-        if (array.hasOwnProperty(key)) {
-            var val = array[key]
-            var k = criteria(val, key)
+   __repeat(array, Array.isArray(array), function(key){
+       var val = array[key]
+        var k = criteria(val, key)
             if (k in mapping) {
                 mapping[k].push(key)
             } else {
                 mapping[k] = [key]
             }
-
             temp.push(k)
-        }
-    }
+   })
 
     temp.sort()
     if (decend < 0) {
@@ -43,6 +41,23 @@ export function orderBy(array, by, decend) {
             target[key] = array[key]
         }
     })
+}
+function __repeat(array, isArray, cb){
+       if(isArray){
+          array.forEach(function(val, index){
+              cb(index)
+          })
+       } else if(typeof array.$track === 'string'){
+           array.$track.replace(/[^☥]+/g,function(k){
+               cb(k)
+           })
+       } else{
+           for(var i in array){
+               if(array.hasOwnProperty(i)){
+                   cb(i)
+               }
+           }
+       }
 }
 export function filterBy(array, search) {
     var type = avalon.type(array)
@@ -64,12 +79,11 @@ export function filterBy(array, search) {
     } else {
         return array
     }
-
-    array = convertArray(array).filter(function (el, i) {
+ var isArray = type === 'array'
+    array = convertArray(array, isArray).filter(function (el, i) {
         return !!criteria.apply(el, [el.value, i].concat(args))
     })
 
-    var isArray = type === 'array'
     var target = isArray ? [] : {}
     return recovery(target, array, function (el) {
         if (isArray) {
@@ -105,7 +119,7 @@ export function limitBy(input, limit, begin) {
     }
     //将目标转换为数组
     if (type === 'object') {
-        input = convertArray(input)
+        input = convertArray(input, false)
     }
     var n = input.length
     limit = Math.floor(Math.min(n, limit))
@@ -139,17 +153,16 @@ function recovery(ret, array, callback) {
 
 //Chrome谷歌浏览器中js代码Array.sort排序的bug乱序解决办法
 //http://www.cnblogs.com/yzeng/p/3949182.html
-function convertArray(array) {
-    var ret = [], i = 0
-    for (var key in array) {
-        if (array.hasOwnProperty(key)) {
-            ret[i] = {
+function convertArray(array, isArray) {
+     var ret = [], i = 0
+    __repeat(array, isArray, function(key){
+          ret[i] = {
                 oldIndex: i,
                 value: array[key],
                 key: key
             }
             i++
-        }
-    }
+    })
+    
     return ret
 }
