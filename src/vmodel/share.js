@@ -30,7 +30,7 @@ avalon.define = function(definition) {
 }
 
 /**
- * 在末来的版本,avalon改用Proxy来创建VM,因此
+ * 在未来的版本,avalon改用Proxy来创建VM,因此
  */
 
 export function IProxy(definition, dd) {
