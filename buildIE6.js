@@ -51,7 +51,7 @@ module.exports = rollup.rollup({
     }
     var feather = heredoc(function() {
         /*
-https://github.com/RubyLouvre/avalon/tree/2.2.3
+https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 修正IE下 orderBy BUG
 更改下载Promise的提示

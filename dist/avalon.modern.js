@@ -1,10 +1,10 @@
 /*!
-built in 2017-1-4:11:28 version 2.2.3 by 司徒正美
+built in 2017-1-4:13:3 version 2.2.4 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.3
 
-修正IE下 orderBy BUG
 更改下载Promise的提示
-修复avalon.modern 在Proxy 模式下使用ms-for 循环对象时出错的BUG
+修正IE下 orderBy BUG
+修复ms-for在循环利用对象数组的元素时,旧有元素的指令没有进行刷新的BUG
 修复effect内部传参 BUG
 重构ms-validate的绑定事件的机制
 
@@ -410,7 +410,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.3
         inspect: inspect,
         ohasOwn: ohasOwn,
         rword: rword,
-        version: "2.2.3",
+        version: "2.2.4",
         vmodels: {},
 
         directives: directives,
