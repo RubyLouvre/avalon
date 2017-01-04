@@ -1,5 +1,5 @@
 /*!
-built in 2016-12-12:23:5 version 2.2.2 by 司徒正美
+built in 2017-1-5:1:49 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
       fix ms-controller BUG, 上下VM相同时,不会进行合并
 ms-for不再生成代理VM
@@ -35,9 +35,9 @@ IE7的checked属性应该使用defaultChecked来设置
         undefinedfunction: NaN, // other modern browsers
         undefinedobject: NaN }
     /* istanbul ignore next  */
-    var msie = document$1.documentMode || versions[typeof document$1.all + typeof XMLHttpRequest]
+    var msie$1 = document$1.documentMode || versions[typeof document$1.all + typeof XMLHttpRequest]
 
-    var modern = /NaN|undefined/.test(msie) || msie > 8
+    var modern = /NaN|undefined/.test(msie$1) || msie$1 > 8
 
     /*
      https://github.com/rsms/js-lru
@@ -394,9 +394,7 @@ IE7的checked属性应该使用defaultChecked来设置
             config.rexpr = new RegExp(o + '([\\s\\S]*)' + c)
         }
     }
-    function createAnchor(nodeValue) {
-        return document$1.createComment(nodeValue)
-    }
+
     config.plugins = plugins
     config({
         interpolate: ['{{', '}}'],
@@ -411,7 +409,7 @@ IE7的checked属性应该使用defaultChecked来设置
         inspect: inspect,
         ohasOwn: ohasOwn,
         rword: rword,
-        version: "2.2.2",
+        version: "2.2.3",
         vmodels: {},
 
         directives: directives,
@@ -429,7 +427,7 @@ IE7的checked属性应该使用defaultChecked来设置
         config: config,
 
         modern: modern,
-        msie: msie,
+        msie: msie$1,
         root: root,
         document: document$1,
         window: window$1,
@@ -603,7 +601,7 @@ IE7的checked属性应该使用defaultChecked来设置
         number = (number + '').replace(/[^0-9+\-Ee.]/g, '')
         var n = !isFinite(+number) ? 0 : +number,
             prec = !isFinite(+decimals) ? 3 : Math.abs(decimals),
-            sep = thousands || ",",
+            sep = typeof thousands === 'string' ? thousands : ",",
             dec = point || ".",
             s = ''
 
@@ -890,6 +888,31 @@ IE7的checked属性应该使用defaultChecked来设置
     locate.SHORTMONTH = locate.MONTH
     dateFilter.locate = locate
 
+    /**
+    $$skipArray:是系统级通用的不可监听属性
+    $skipArray: 是当前对象特有的不可监听属性
+    
+     不同点是
+     $$skipArray被hasOwnProperty后返回false
+     $skipArray被hasOwnProperty后返回true
+     */
+    var falsy
+    var $$skipArray = {
+        $id: falsy,
+        $render: falsy,
+        $track: falsy,
+        $element: falsy,
+        $watch: falsy,
+        $fire: falsy,
+        $events: falsy,
+        $computed: falsy,
+        $accessors: falsy,
+        $hashcode: falsy,
+        $mutations: falsy,
+        $vbthis: falsy,
+        $vbsetter: falsy
+    }
+
     /*
     https://github.com/hufyhang/orderBy/blob/master/index.js
     */
@@ -904,20 +927,16 @@ IE7的checked属性应该使用defaultChecked来设置
         }
         var mapping = {}
         var temp = []
-        var index = 0
-        for (var key in array) {
-            if (array.hasOwnProperty(key)) {
-                var val = array[key]
-                var k = criteria(val, key)
-                if (k in mapping) {
-                    mapping[k].push(key)
-                } else {
-                    mapping[k] = [key]
-                }
-
-                temp.push(k)
+        __repeat(array, Array.isArray(array), function (key) {
+            var val = array[key]
+            var k = criteria(val, key)
+            if (k in mapping) {
+                mapping[k].push(key)
+            } else {
+                mapping[k] = [key]
             }
-        }
+            temp.push(k)
+        })
 
         temp.sort()
         if (decend < 0) {
@@ -933,6 +952,24 @@ IE7的checked属性应该使用defaultChecked来设置
                 target[key] = array[key]
             }
         })
+    }
+
+    function __repeat(array, isArray$$1, cb) {
+        if (isArray$$1) {
+            array.forEach(function (val, index) {
+                cb(index, true)
+            })
+        } else if (typeof array.$track === 'string') {
+            array.$track.replace(/[^☥]+/g, function (k) {
+                cb(k)
+            })
+        } else {
+            for (var i in array) {
+                if (array.hasOwnProperty(i)) {
+                    cb(i)
+                }
+            }
+        }
     }
     function filterBy(array, search) {
         var type = avalon$2.type(array)
@@ -953,20 +990,21 @@ IE7的checked属性应该使用defaultChecked来设置
         } else {
             return array
         }
-
-        array = convertArray(array).filter(function (el, i) {
-            return !!criteria.apply(el, [el.value, i].concat(args))
-        })
-
+        var index = 0
         var isArray$$1 = type === 'array'
         var target = isArray$$1 ? [] : {}
-        return recovery(target, array, function (el) {
-            if (isArray$$1) {
-                target.push(el.value)
-            } else {
-                target[el.key] = el.value
+        __repeat(array, isArray$$1, function (key) {
+            var val = array[key]
+            if (criteria.apply(val, [val, index].concat(args))) {
+                if (isArray$$1) {
+                    target.push(val)
+                } else {
+                    target[key] = val
+                }
             }
+            index++
         })
+        return target
     }
 
     function selectBy(data, array, defaults) {
@@ -993,7 +1031,7 @@ IE7的checked属性应该使用defaultChecked来设置
         }
         //将目标转换为数组
         if (type === 'object') {
-            input = convertArray(input)
+            input = convertArray(input, false)
         }
         var n = input.length
         limit = Math.floor(Math.min(n, limit))
@@ -1027,19 +1065,17 @@ IE7的checked属性应该使用defaultChecked来设置
 
     //Chrome谷歌浏览器中js代码Array.sort排序的bug乱序解决办法
     //http://www.cnblogs.com/yzeng/p/3949182.html
-    function convertArray(array) {
+    function convertArray(array, isArray$$1) {
         var ret = [],
             i = 0
-        for (var key in array) {
-            if (array.hasOwnProperty(key)) {
-                ret[i] = {
-                    oldIndex: i,
-                    value: array[key],
-                    key: key
-                }
-                i++
+        __repeat(array, isArray$$1, function (key) {
+            ret[i] = {
+                oldIndex: i,
+                value: array[key],
+                key: key
             }
-        }
+            i++
+        })
         return ret
     }
 
@@ -1726,12 +1762,13 @@ IE7的checked属性应该使用defaultChecked来设置
     }
 
     var orphanTag = {
-        script: 1,
-        style: 1,
-        textarea: 1,
-        xmp: 1,
-        noscript: 1,
-        template: 1
+        script: 2,
+        style: 2,
+        textarea: 2,
+        xmp: 2,
+        noscript: 2,
+        template: 2,
+        option: 0
     }
 
     /* 
@@ -1772,6 +1809,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
     //专门用于处理option标签里面的标签
     var rtrimHTML = /<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi
+
     function trimHTML(v) {
         return String(v).replace(rtrimHTML, '').trim()
     }
@@ -1793,7 +1831,6 @@ IE7的checked属性应该使用defaultChecked来设置
                     tbody = {
                         nodeName: 'tbody',
                         props: {},
-                        vtype: 1,
                         children: []
                     }
                     tbody.children.push(node)
@@ -1966,8 +2003,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 this.str = str.slice(i)
                 this.node = {
                     nodeName: '#text',
-                    nodeValue: nodeValue,
-                    vtype: 3
+                    nodeValue: nodeValue
                 }
                 if (rcontent.test(nodeValue)) {
                     this.tryGenChildren() //不收集空白节点
@@ -1988,7 +2024,6 @@ IE7的checked属性应该使用defaultChecked来设置
                     this.str = str.slice(l + 3)
                     this.node = {
                         nodeName: '#comment',
-                        vtype: 8,
                         nodeValue: nodeValue
                     }
                     this.tryGenChildren()
@@ -2000,19 +2035,18 @@ IE7的checked属性应该使用defaultChecked来设置
                 var str = this.str
                 var match = str.match(ropenTag) //处理元素节点开始部分
                 if (match) {
-                    var nodeName = match[1]
+                    var type = match[1]
                     var props = {}
-                    if (/^[A-Z]/.test(nodeName) && avalon$2.components[nodeName]) {
-                        props.is = nodeName
+                    if (/^[A-Z]/.test(type) && avalon$2.components[type]) {
+                        props.is = type
                     }
-                    nodeName = nodeName.toLowerCase()
-                    var isVoidTag = !!voidTag[nodeName] || match[3] === '\/'
+                    type = type.toLowerCase()
+                    var isVoidTag = voidTag[type] || match[3] === '\/'
                     var node = this.node = {
-                        nodeName: nodeName,
+                        nodeName: type,
                         props: {},
                         children: [],
-                        vtype: 1,
-                        isVoidTag: isVoidTag
+                        vtype: isVoidTag ? 1 : orphanTag[type] || 0
                     }
                     var attrs = match[2]
                     if (attrs) {
@@ -2024,7 +2058,7 @@ IE7的checked属性应该使用defaultChecked来设置
                         node.end = true
                     } else {
                         this.stack.push(node)
-                        if (orphanTag[nodeName] || nodeName === 'option') {
+                        if (type in orphanTag) {
                             var index = str.indexOf('</' + nodeName + '>')
                             var innerHTML = str.slice(0, index).trim()
                             str = str.slice(index)
@@ -2259,11 +2293,16 @@ IE7的checked属性应该使用defaultChecked来设置
                 setEventId(elem, keys.join(','))
                 //将令牌放进avalon-events属性中
             }
+            return fn //兼容之前的版本
         } else {
             /* istanbul ignore next */
-            avalon$2._nativeBind(elem, type, fn)
+            var cb = function cb(e) {
+                return fn.call(elem, new avEvent(e))
+            }
+
+            avalon$2._nativeBind(elem, type, cb)
+            return cb
         }
-        return fn //兼容之前的版本
     }
 
     function setEventId(node, value) {
@@ -2348,7 +2387,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     if (vm && vm.$hashcode === false) {
                         return avalon$2.unbind(elem, type, fn)
                     }
-                    var ret = fn.call(vm || elem, event)
+                    var ret = fn.call(vm || elem, event, host._ms_local_)
 
                     if (ret === false) {
                         event.preventDefault()
@@ -2549,7 +2588,15 @@ IE7的checked属性应该使用defaultChecked来设置
     function fromDOM(dom) {
         return [from$1(dom)]
     }
-
+    /**
+     * 虚拟元素节点有如下属性
+     * nodeName: 标签名,一律小写
+     * ns: svg | vml | html
+     * dom: 原来的元素节点
+     * vtype: 1 闭合 2容器(里面都是文本,存兼容问题) 0 不闭合;原先的isVoidTag被废掉
+     * props: 属性集合
+     * dirs: 指令数组
+     */
     function from$1(node) {
         var type = node.nodeName.toLowerCase()
         switch (type) {
@@ -2559,24 +2606,33 @@ IE7的checked属性应该使用defaultChecked来设置
                 return {
                     nodeName: type,
                     dom: node,
-                    vtype: node.nodeType,
                     nodeValue: node.nodeValue
                 }
             default:
+                var props = markProps(node, node.attributes || [])
                 var vnode = {
-                    vtype: 1,
                     nodeName: type,
                     dom: node,
-                    isVoidTag: !!voidTag[type],
-                    props: markProps(node, node.attributes || [])
+                    vtype: voidTag[type] || orphanTag[type] || 0,
+                    props: props,
+                    children: []
                 }
-                if (orphanTag[type] || type === 'option') {
+                if (type === 'option') {
+                    if (option.selected) {
+                        props.selected = true
+                    }
+                    if (option.disabled) {
+                        props.disabled = true
+                    }
+                }
+
+                if (type in orphanTag) {
                     makeOrphan(vnode, type, node.text || node.innerHTML)
                     if (node.childNodes.length === 1) {
                         vnode.children[0].dom = node.firstChild
                     }
-                } else if (!vnode.isVoidTag) {
-                    vnode.children = []
+                } else if (!vnode.vtype) {
+
                     for (var i = 0, el; el = node.childNodes[i++];) {
                         var child = from$1(el)
                         if (/\S/.test(child.nodeValue)) {
@@ -2618,225 +2674,6 @@ IE7的checked属性应该使用defaultChecked来设置
         return ret
     }
 
-    function VText(text) {
-        this.nodeName = '#text'
-        this.nodeValue = text
-    }
-
-    VText.prototype = {
-        constructor: VText,
-        toDOM: function toDOM() {
-            /* istanbul ignore if*/
-            if (this.dom) return this.dom
-            var v = avalon$2._decode(this.nodeValue)
-            return this.dom = document$1.createTextNode(v)
-        },
-        toHTML: function toHTML() {
-            return this.nodeValue
-        }
-    }
-
-    function VComment(text) {
-        this.nodeName = '#comment'
-        this.nodeValue = text
-    }
-    VComment.prototype = {
-        constructor: VComment,
-        toDOM: function toDOM() {
-            if (this.dom) return this.dom
-            return this.dom = document$1.createComment(this.nodeValue)
-        },
-        toHTML: function toHTML() {
-            return '<!--' + this.nodeValue + '-->'
-        }
-    }
-
-    function VElement(type, props, children, isVoidTag) {
-        this.nodeName = type
-        this.props = props
-        this.children = children
-        this.isVoidTag = isVoidTag
-    }
-    VElement.prototype = {
-        constructor: VElement,
-        toDOM: function toDOM() {
-            if (this.dom) return this.dom
-            var dom,
-                tagName = this.nodeName
-            if (avalon$2.modern && svgTags[tagName]) {
-                dom = createSVG(tagName)
-            } else {
-                dom = document$1.createElement(tagName)
-            }
-            var props = this.props || {}
-
-            for (var i in props) {
-                var val = props[i]
-                if (skipFalseAndFunction(val)) {
-                    dom.setAttribute(i, val + '')
-                }
-            }
-            var c = this.children || []
-            var template = c[0] ? c[0].nodeValue : ''
-            switch (this.nodeName) {
-                case 'xmp':
-                case 'style':
-                case 'script':
-                case 'noscript':
-                    dom.innerHTML = template
-                    break
-                case 'template':
-                    if (supportTemplate) {
-                        dom.innerHTML = template
-                    } else {
-                        /* istanbul ignore next*/
-                        dom.textContent = template
-                    }
-                    break
-                default:
-                    if (!this.isVoidTag && this.children) {
-                        this.children.forEach(function (el) {
-                            return el && dom.appendChild(avalon$2.vdom(el, 'toDOM'))
-                        })
-                    }
-                    break
-            }
-            return this.dom = dom
-        },
-        toHTML: function toHTML() {
-            var arr = []
-            var props = this.props || {}
-            for (var i in props) {
-                var val = props[i]
-                if (skipFalseAndFunction(val)) {
-                    arr.push(i + '=' + avalon$2.quote(props[i] + ''))
-                }
-            }
-            arr = arr.length ? ' ' + arr.join(' ') : ''
-            var str = '<' + this.nodeName + arr
-            if (this.isVoidTag) {
-                return str + '/>'
-            }
-            str += '>'
-            if (this.children) {
-                str += this.children.map(function (el) {
-                    return el ? avalon$2.vdom(el, 'toHTML') : ''
-                }).join('')
-            }
-            return str + '</' + this.nodeName + '>'
-        }
-    }
-
-    function skipFalseAndFunction(a) {
-        return a !== false && Object(a) !== a
-    }
-
-    function createSVG(type) {
-        return document$1.createElementNS('http://www.w3.org/2000/svg', type)
-    }
-
-    var svgTags = avalon$2.oneObject('circle,defs,ellipse,image,line,' + 'path,polygon,polyline,rect,symbol,text,use,g,svg')
-
-    if (avalon$2.inBrowser) {
-        var supportTemplate = 'content' in document$1.createElement('template')
-    }
-
-    function VFragment(children, key, val, index) {
-        this.nodeName = '#document-fragment'
-        this.children = children
-        this.key = key
-        this.val = val
-        this.index = index
-        this.props = {}
-    }
-    VFragment.prototype = {
-        constructor: VFragment,
-        toDOM: function toDOM() {
-            if (this.dom) return this.dom
-            var f = this.toFragment()
-            //IE6-11 docment-fragment都没有children属性 
-            this.split = f.lastChild
-            return this.dom = f
-        },
-        dispose: function dispose() {
-            this.toFragment()
-            this.innerRender && this.innerRender.dispose()
-            for (var i in this) {
-                this[i] = null
-            }
-        },
-        toFragment: function toFragment() {
-            var f = createFragment()
-            this.children.forEach(function (el) {
-                return f.appendChild(avalon$2.vdom(el, 'toDOM'))
-            })
-            return f
-        },
-        toHTML: function toHTML() {
-            var c = this.children
-            return c.map(function (el) {
-                return avalon$2.vdom(el, 'toHTML')
-            }).join('')
-        }
-    }
-
-    /**
-     * 虚拟DOM的4大构造器
-     */
-    avalon$2.mix(avalon$2, {
-        VText: VText,
-        VComment: VComment,
-        VElement: VElement,
-        VFragment: VFragment
-    })
-
-    var constNameMap = {
-        '#text': 'VText',
-        '#document-fragment': 'VFragment',
-        '#comment': 'VComment'
-    }
-
-    var vdom = avalon$2.vdomAdaptor = avalon$2.vdom = function (obj, method) {
-        if (!obj) {
-            //obj在ms-for循环里面可能是null
-            return method === "toHTML" ? '' : createFragment()
-        }
-        var nodeName = obj.nodeName
-        if (!nodeName) {
-            return new avalon$2.VFragment(obj)[method]()
-        }
-        var constName = constNameMap[nodeName] || 'VElement'
-        return avalon$2[constName].prototype[method].call(obj)
-    }
-
-    avalon$2.domize = function (a) {
-        return avalon$2.vdom(a, 'toDOM')
-    }
-
-    /**
-    $$skipArray:是系统级通用的不可监听属性
-    $skipArray: 是当前对象特有的不可监听属性
-    
-     不同点是
-     $$skipArray被hasOwnProperty后返回false
-     $skipArray被hasOwnProperty后返回true
-     */
-    var falsy
-    var $$skipArray = {
-        $id: falsy,
-        $render: falsy,
-        $track: falsy,
-        $element: falsy,
-        $watch: falsy,
-        $fire: falsy,
-        $events: falsy,
-        $accessors: falsy,
-        $hashcode: falsy,
-        $mutations: falsy,
-        $vbthis: falsy,
-        $vbsetter: falsy
-    }
-
     avalon$2.pendingActions = []
     avalon$2.uniqActions = {}
     avalon$2.inTransaction = 0
@@ -2875,7 +2712,6 @@ IE7的checked属性应该使用defaultChecked来设置
     function reportObserved(target) {
         var action = avalon$2.trackingAction || null
         if (action !== null) {
-
             avalon$2.track('征收到', target.expr)
             action.mapIDs[target.uuid] = target
         }
@@ -2884,7 +2720,7 @@ IE7的checked属性应该使用defaultChecked来设置
     var targetStack = []
 
     function collectDeps(action, getter) {
-        if (!action.observers) return
+
         var preAction = avalon$2.trackingAction
         if (preAction) {
             targetStack.push(preAction)
@@ -2898,9 +2734,11 @@ IE7的checked属性应该使用defaultChecked来设置
         try {
             result = getter.call(action)
             hasError = false
+        } catch (e) {
+            avalon$2.log(e)
         } finally {
             if (hasError) {
-                avalon$2.warn('collectDeps fail', getter + '')
+                avalon$2.warn('collectDeps fail')
                 action.mapIDs = {}
                 avalon$2.trackingAction = preAction
             } else {
@@ -2935,6 +2773,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 if (dep.lastAccessedBy === action.uuid) {
                     continue
                 }
+
                 dep.lastAccessedBy = action.uuid
                 avalon$2.Array.ensure(dep.observers, action)
             }
@@ -2945,7 +2784,9 @@ IE7的checked属性应该使用defaultChecked来设置
         }
         action.ids = ids
         if (!action.isComputed) {
-            action.observers = curr
+            if (action.observers) {
+                action.observers = curr
+            }
         } else {
             action.depsCount = curr.length
             action.deps = avalon$2.mix({}, action.mapIDs)
@@ -2953,12 +2794,6 @@ IE7的checked属性应该使用defaultChecked来设置
             for (var _i in action.mapIDs) {
                 var _dep = action.mapIDs[_i]
                 action.depsVersion[_dep.uuid] = _dep.version
-            }
-        }
-
-        for (var _i2 = 0, _dep2; _dep2 = prev[_i2++];) {
-            if (!checked[_dep2.uuid]) {
-                avalon$2.Array.remove(_dep2.observers, action)
             }
         }
     }
@@ -3012,7 +2847,7 @@ IE7的checked属性应该使用defaultChecked来设置
     function addScopeForLocal(str) {
         return str.replace(robjectProp, dig).replace(rlocalVar, function (el) {
             if (!skipMap[el]) {
-                return "__vmodel__." + el
+                return "$$l." + el
             }
             return el
         })
@@ -3072,10 +2907,10 @@ IE7的checked属性应该使用defaultChecked来设置
     var rfixIE678 = /__vmodel__\.([^(]+)\(([^)]*)\)/
     function makeHandle(body) {
         if (rhandleName.test(body)) {
-            body = body + '($event)'
+            body = body + '($event,$$l)'
         }
         /* istanbul ignore if */
-        if (msie < 9) {
+        if (msie$1 < 9) {
             body = body.replace(rfixIE678, function (a, b, c) {
                 return '__vmodel__.' + b + '.call(__vmodel__' + (/\S/.test(c) ? ',' + c : '') + ')'
             })
@@ -3342,11 +3177,7 @@ IE7的checked属性应该使用defaultChecked来设置
         set: function set(newValue) {
             var oldValue = this.value
             if (newValue !== oldValue) {
-                if (Array.isArray(newValue) && oldValue && oldValue.pushArray) {
-                    oldValue.length = 0
-                    oldValue.pushArray(newValue)
-                    newValue = oldValue
-                } else if (avalon$2.isObject(newValue)) {
+                if (avalon$2.isObject(newValue)) {
                     var hash = oldValue && oldValue.$hashcode
                     var childVM = platform.createProxy(newValue, this)
                     if (childVM) {
@@ -3811,7 +3642,7 @@ IE7的checked属性应该使用defaultChecked来设置
         var w = new Action(this, {
             deep: deep,
             type: 'user',
-            expr: expr
+            expr: '@' + expr
         }, callback)
         if (!core[expr]) {
             core[expr] = [w]
@@ -3897,15 +3728,18 @@ IE7的checked属性应该使用defaultChecked来设置
 
                 var vm = toProxy(proxy)
                 //先添加普通属性与监控属性
-                for (var _i3 in clone) {
-                    vm[_i3] = clone[_i3]
+                for (var _i2 in clone) {
+                    vm[_i2] = clone[_i2]
+                }
+                vm.hasOwnProperty = function (a) {
+                    return wrapIt(this.$track).indexOf(wrapIt(a)) !== -1
                 }
                 var $computed = clone.$computed
                 //再添加计算属性
                 if ($computed) {
                     delete clone.$computed
-                    for (var _i4 in $computed) {
-                        var val = $computed[_i4]
+                    for (var _i3 in $computed) {
+                        var val = $computed[_i3]
                         if (typeof val === 'function') {
                             var _val = val
                             val = { get: _val }
@@ -3915,15 +3749,15 @@ IE7的checked属性应该使用defaultChecked来设置
                             //在set方法中的target是IProxy，需要重写成Proxy，才能依赖收集
                             val.vm = vm
                             if (val.set) val.setter = val.set
-                            $computed[_i4] = val
-                            delete clone[_i4] //去掉重名的监控属性
+                            $computed[_i3] = val
+                            delete clone[_i3] //去掉重名的监控属性
                         } else {
-                            delete $computed[_i4]
+                            delete $computed[_i3]
                         }
                     }
-                    for (var _i5 in $computed) {
 
-                        vm[_i5] = $computed[_i5]
+                    for (var _i4 in $computed) {
+                        vm[_i4] = $computed[_i4]
                     }
                 }
 
@@ -3954,10 +3788,11 @@ IE7的checked属性应该使用defaultChecked来设置
                     return target[name]
                 },
                 set: function set(target, name, value) {
+
                     if (name === '$model') {
                         return true
                     }
-                    if (name === '$computed') {
+                    if (name === '$computed' || 'hasOwnProperty' === name) {
                         target[name] = value
                         return true
                     }
@@ -4019,39 +3854,42 @@ IE7的checked属性应该使用defaultChecked来设置
             if (v) return v
             throw 'error! no vmodel called ' + name
         },
-        update: function update(node, attrName, $id) {
-            if (!avalon$2.inBrowser) return
-            var dom = avalon$2.vdom(node, 'toDOM')
-            if (dom.nodeType === 1) {
-                dom.removeAttribute(attrName)
-                avalon$2(dom).removeClass('ms-controller')
+        diff: function diff(oldVal, newVal) {
+            if (!this.inited) oldVal = null
+            if (oldVal !== newVal) {
+                this.value = newVal
+                return true
             }
-            var vm = avalon$2.vmodels[$id]
-            if (vm) {
-                vm.$element = dom
-                vm.$render = this
+        },
+        update: function update(val, vdom, newVdom, afterCb) {
+            var vm = newVdom.vm
+            afterCb.push(function () {
+                vm.$element = vdom.dom
+                avalon$2(vdom.dom).removeClass('ms-controller')
                 vm.$fire('onReady')
                 delete vm.$events.onReady
-            }
+            })
         }
     })
 
-    var impCb = impDir.update
-
+    var cachedCtrl = {}
     avalon$2.directive('controller', {
         priority: 2,
+        diff: impDir.diff,
+        update: impDir.update,
         getScope: function getScope(name, scope) {
             var v = avalon$2.vmodels[name]
             if (v) {
                 v.$render = this
                 if (scope && scope !== v) {
-                    return platform.fuseFactory(scope, v)
+                    var key = scope.$id + '-' + name
+                    if (cachedCtrl[key]) return cachedCtrl[key]
+                    return cachedCtrl[key] = platform.fuseFactory(scope, v)
                 }
                 return v
             }
             return scope
-        },
-        update: impCb
+        }
     })
 
     avalon$2.directive('skip', {
@@ -4060,7 +3898,10 @@ IE7的checked属性应该使用defaultChecked来设置
 
     var arrayWarn = {}
     var cssDir = avalon$2.directive('css', {
-        diff: function diff(newVal, oldVal) {
+        diff: function diff(oldVal, newVal) {
+            if (!this.inited) {
+                oldVal = null
+            }
             if (Object(newVal) === newVal) {
                 newVal = platform.toJson(newVal) //安全的遍历VBscript
                 if (Array.isArray(newVal)) {
@@ -4094,19 +3935,19 @@ IE7的checked属性应该使用defaultChecked来设置
                             patch[i] = newVal[i]
                         }
                     } else {
-                        for (var _i6 in newVal) {
+                        for (var _i5 in newVal) {
                             //diff差异点
-                            if (newVal[_i6] !== oldVal[_i6]) {
+                            if (newVal[_i5] !== oldVal[_i5]) {
                                 hasChange = true
                             }
-                            patch[_i6] = newVal[_i6]
+                            patch[_i5] = newVal[_i5]
                         }
                     }
 
-                    for (var _i7 in oldVal) {
-                        if (!(_i7 in patch)) {
+                    for (var _i6 in oldVal) {
+                        if (!(_i6 in patch)) {
                             hasChange = true
-                            patch[_i7] = ''
+                            patch[_i6] = ''
                         }
                     }
                 }
@@ -4117,7 +3958,7 @@ IE7的checked属性应该使用defaultChecked来设置
             }
             return false
         },
-        update: function update(vdom, value) {
+        update: function update(value, vdom) {
 
             var dom = vdom.dom
             if (dom && dom.nodeType === 1) {
@@ -4249,63 +4090,69 @@ IE7的checked属性应该使用defaultChecked来设置
 
     var effectDir = avalon$2.directive('effect', {
         priority: 5,
-        diff: function diff(effect) {
-            var vdom = this.node
-            if (typeof effect === 'string') {
-                this.value = effect = {
-                    is: effect
+        diff: function diff(oldVal, newVal, vdom) {
+            if (typeof newVal === 'string') {
+                newVal = {
+                    is: newVal
                 }
                 avalon$2.warn('ms-effect的指令值不再支持字符串,必须是一个对象')
             }
-            this.value = vdom.effect = effect
-            var ok = cssDiff.call(this, effect, this.oldValue)
+
+            var ok = cssDiff.call(this, oldVal, newVal)
             var me = this
             if (ok) {
-                setTimeout(function () {
-                    vdom.animating = true
-                    effectDir.update.call(me, vdom, vdom.effect)
-                })
+                vdom.effect = newVal
                 vdom.animating = false
                 return true
             }
             return false
         },
 
-        update: function update(vdom, change, opts) {
+        update: function update(change, vdom, newVdom, afterCb) {
+            var me = this
+            afterCb.push(function () {
+                var dom = vdom.dom
+                if (dom && dom.nodeType === 1) {
+                    me._update(vdom, change)
+                }
+            })
+        },
+
+        _update: function _update(vdom, change, opts) {
             var dom = vdom.dom
-            if (dom && dom.nodeType === 1) {
-                //要求配置对象必须指定is属性，action必须是布尔或enter,leave,move
-                var option = change || opts
-                var is = option.is
+            // if (dom && dom.nodeType === 1) {
+            //要求配置对象必须指定is属性，action必须是布尔或enter,leave,move
+            var option = change || opts
+            var is = option.is
 
-                var globalOption = avalon$2.effects[is]
-                if (!globalOption) {
-                    //如果没有定义特效
-                    avalon$2.warn(is + ' effect is undefined')
-                    return
-                }
-                var finalOption = {}
-                var action = actionMaps[option.action]
-                if (typeof Effect.prototype[action] !== 'function') {
-                    avalon$2.warn('action is undefined')
-                    return
-                }
-                //必须预定义特效
-
-                var effect = new avalon$2.Effect(dom)
-                avalon$2.mix(finalOption, globalOption, option, { action: action })
-
-                if (finalOption.queue) {
-                    animationQueue.push(function () {
-                        effect[action](finalOption)
-                    })
-                    callNextAnimation()
-                } else {
-
-                    effect[action](finalOption)
-                }
-                return true
+            var globalOption = avalon$2.effects[is]
+            if (!globalOption) {
+                //如果没有定义特效
+                avalon$2.warn(is + ' effect is undefined')
+                return
             }
+            var finalOption = {}
+            var action = actionMaps[option.action]
+            if (typeof Effect.prototype[action] !== 'function') {
+                avalon$2.warn('action is undefined')
+                return
+            }
+            //必须预定义特效
+
+            var effect = new avalon$2.Effect(dom)
+            avalon$2.mix(finalOption, globalOption, option, { action: action })
+
+            if (finalOption.queue) {
+                animationQueue.push(function () {
+                    effect[action](finalOption)
+                })
+                callNextAnimation()
+            } else {
+
+                effect[action](finalOption)
+            }
+            return true
+            // }
         }
     })
 
@@ -4451,10 +4298,10 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     }
 
-    avalon$2.applyEffect = function (dom, vdom, opts) {
+    avalon$2.applyEffect = function (vdom, opts) {
         var cb = opts.cb
         var curEffect = vdom.effect
-        if (curEffect && dom && dom.nodeType === 1) {
+        if (curEffect && vdom.props) {
             var hook = opts.hook
             var old = curEffect[hook]
             if (cb) {
@@ -4467,9 +4314,9 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
             }
             getAction(opts)
-            avalon$2.directives.effect.update(vdom, curEffect, avalon$2.shadowCopy({}, opts))
+            avalon$2.directives.effect._update(vdom, curEffect, avalon$2.shadowCopy({}, opts))
         } else if (cb) {
-            cb(dom)
+            cb(vdom.dom)
         }
     }
     /**
@@ -4552,6 +4399,7 @@ IE7的checked属性应该使用defaultChecked来设置
      */
 
     var none = 'none'
+
     function parseDisplay(elem, val) {
         //用于取得此类标签的默认display值
         var doc = elem.ownerDocument
@@ -4571,92 +4419,71 @@ IE7的checked属性应该使用defaultChecked来设置
 
     avalon$2.parseDisplay = parseDisplay
     avalon$2.directive('visible', {
-        diff: function diff(newVal, oldVal) {
+        diff: function diff(oldVal, newVal) {
+            if (!this.inited) {
+                oldVal = void 0
+            }
             var n = !!newVal
             if (oldVal === void 0 || n !== oldVal) {
                 this.value = n
                 return true
             }
         },
-        ready: true,
-        update: function update(vdom, show) {
-            var dom = vdom.dom
-            if (dom && dom.nodeType === 1) {
-                var display = dom.style.display
-                var value
-                if (show) {
-                    if (display === none) {
-                        value = vdom.displayValue
-                        if (!value) {
-                            dom.style.display = ''
-                            if (dom.style.cssText === '') {
-                                dom.removeAttribute('style')
-                            }
+        _update: function _update(show, vdom, dom) {
+
+            var display = dom.style.display
+            var value
+            if (show) {
+                if (display === none) {
+                    value = vdom.displayValue
+                    if (!value) {
+                        dom.style.display = ''
+                        if (dom.style.cssText === '') {
+                            dom.removeAttribute('style')
                         }
                     }
-                    if (dom.style.display === '' && avalon$2(dom).css('display') === none &&
-                    // fix firefox BUG,必须挂到页面上
-                    avalon$2.contains(dom.ownerDocument, dom)) {
-                        value = parseDisplay(dom)
-                    }
-                } else {
-
-                    if (display !== none) {
-                        value = none
-                        vdom.displayValue = display
-                    }
                 }
-                var cb = function cb() {
-                    if (value !== void 0) {
-                        dom.style.display = value
-                    }
+                if (dom.style.display === '' && avalon$2(dom).css('display') === none &&
+                // fix firefox BUG,必须挂到页面上
+                avalon$2.contains(dom.ownerDocument, dom)) {
+                    value = parseDisplay(dom)
                 }
+            } else {
 
-                avalon$2.applyEffect(dom, vdom, {
-                    hook: show ? 'onEnterDone' : 'onLeaveDone',
-                    cb: cb
-                })
+                if (display !== none) {
+                    value = none
+                    vdom.displayValue = display
+                }
             }
+            var cb = function cb() {
+                if (value !== void 0) {
+                    dom.style.display = value
+                }
+            }
+
+            avalon$2.applyEffect(vdom, {
+                hook: show ? 'onEnterDone' : 'onLeaveDone',
+                cb: cb
+            })
+        },
+        update: function update(show, vdom, newVdom, afterCb) {
+            var me = this
+            afterCb.push(function () {
+                var dom = vdom.dom
+                if (dom && dom.nodeType === 1) {
+                    me._update(show, vdom, dom)
+                }
+            })
         }
     })
 
     avalon$2.directive('text', {
-        delay: true,
-        init: function init() {
-
-            var node = this.node
-            if (node.isVoidTag) {
-                avalon$2.error('自闭合元素不能使用ms-text')
-            }
-            var child = { nodeName: '#text', nodeValue: this.getValue() }
-            node.children.splice(0, node.children.length, child)
-            if (inBrowser) {
-                avalon$2.clearHTML(node.dom)
-                node.dom.appendChild(avalon$2.vdom(child, 'toDOM'))
-            }
-            this.node = child
-            var type = 'expr'
-            this.type = this.name = type
-            var directive$$1 = avalon$2.directives[type]
-            var me = this
-            this.callback = function (value) {
-                directive$$1.update.call(me, me.node, value)
-            }
-        }
-    })
-
-    avalon$2.directive('expr', {
-        update: function update(vdom, value) {
-            vdom.nodeValue = value
-            //https://github.com/RubyLouvre/avalon/issues/1834
-            if (vdom.dom) if (value === '') value = '\u200B'
-            vdom.dom.data = value
-        }
+        diff: avalon$2.noop
     })
 
     avalon$2.directive('attr', {
         diff: cssDiff,
-        update: function update(vdom, value) {
+        update: function update(value, vdom) {
             var props = vdom.props
             for (var i in value) {
                 if (!!value[i] === false) {
@@ -4672,123 +4499,1156 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     })
 
-    avalon$2.directive('html', {
+    function optimize(node) {
+        markStatic(node)
+        isStaticRoot(node, false)
+        return node
+    }
 
-        update: function update(vdom, value) {
-            this.beforeDispose()
+    function markStatic(node) {
+        node.static = isStatic(node)
+        if (node.props && !node.vtype) {
 
-            this.innerRender = avalon$2.scan('<div class="ms-html-container">' + value + '</div>', this.vm, function () {
-                var oldRoot = this.root
-                if (vdom.children) vdom.children.length = 0
-                vdom.children = oldRoot.children
-                this.root = vdom
-                if (vdom.dom) avalon$2.clearHTML(vdom.dom)
-            })
-        },
-        beforeDispose: function beforeDispose() {
-            if (this.innerRender) {
-                this.innerRender.dispose()
-            }
-        },
-        delay: true
-    })
-
-    avalon$2.directive('if', {
-        delay: true,
-        priority: 5,
-        init: function init() {
-            this.placeholder = createAnchor('if')
-            var props = this.node.props
-            delete props['ms-if']
-            delete props[':if']
-            this.fragment = avalon$2.vdom(this.node, 'toHTML')
-        },
-        diff: function diff(newVal, oldVal) {
-            var n = !!newVal
-            if (oldVal === void 0 || n !== oldVal) {
-                this.value = n
-                return true
-            }
-        },
-        update: function update(vdom, value) {
-            if (this.isShow === void 0 && value) {
-                continueScan(this, vdom)
+            if (node.props['ms-skip'] || node.props[':skip']) {
+                node.static = false
                 return
             }
-            this.isShow = value
-            var placeholder = this.placeholder
 
-            if (value) {
-                var p = placeholder.parentNode
-                continueScan(this, vdom)
-                p && p.replaceChild(vdom.dom, placeholder)
+            for (var i = 0, l = node.children.length; i < l; i++) {
+                var child = node.children[i]
+                markStatic(child)
+                if (!child.static) {
+                    node.static = false
+                }
+            }
+        }
+    }
+
+    function isStaticRoot(node) {
+        var ret = true
+        if (node.children) {
+            node.children.forEach(function (el) {
+                ret = ret & isStaticRoot(el)
+            })
+            if (ret && node.static) {
+                node.staticRoot = true
+            }
+        }
+
+        return ret
+    }
+
+    function isStatic(node) {
+        return !node.dynamic && node.nodeName !== 'slot'
+    }
+
+    var eventMap = avalon$2.oneObject('animationend,blur,change,input,' + 'click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,' + 'mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit', 'on')
+    function parseAttributes(dirs, node) {
+        var uniq = {},
+            bindings = [],
+            props = node.props,
+            hasIf = false
+        for (var name in dirs) {
+            var value = dirs[name]
+            var arr = name.split('-')
+            // ms-click
+            if (name in props) {
+                var attrName = name
             } else {
-                //移除DOM
-                this.beforeDispose()
-                vdom.nodeValue = 'if'
-                vdom.nodeName = '#comment'
-                delete vdom.children
-                var dom = vdom.dom
-                var p = dom && dom.parentNode
-                vdom.dom = placeholder
-                if (p) {
-                    p.replaceChild(placeholder, dom)
+                attrName = ':' + name.slice(3)
+            }
+            if (eventMap[arr[1]]) {
+                arr.splice(1, 0, 'on')
+            }
+            //ms-on-click
+            if (arr[1] === 'on') {
+                arr[3] = parseFloat(arr[3]) || 0
+            }
+
+            var type = arr[1]
+
+            if (directives[type]) {
+                delete props[attrName]
+                var binding = {
+                    type: type,
+                    param: arr[2],
+                    name: attrName,
+
+                    expr: value,
+                    priority: directives[type].priority || type.charCodeAt(0) * 100
+                }
+                //            var uuid = arr.join('-')
+                //            if(uuid !== attrName){
+                //                binding.uuid = uuid
+                //            }
+                avalon$2.mix(binding, directives[type])
+
+                if (type === 'on') {
+                    binding.priority += arr[3]
+                }
+                if (!uniq[binding.name]) {
+                    uniq[binding.name] = value
+                    bindings.push(binding)
+                    if (type === 'for') {
+                        return [avalon$2.mix(binding, tuple[3])]
+                    }
+                }
+            }
+        }
+        bindings.sort(byPriority)
+        return bindings
+    }
+    function byPriority(a, b) {
+        return a.priority - b.priority
+    }
+
+    var rimprovePriority = /[+-\?]/
+    var rinnerValue = /__value__\)$/
+    function parseInterpolate(expr) {
+        var rlineSp = /\n\r?/g
+        var str = String(expr).trim().replace(rlineSp, '')
+        var tokens = []
+        do {
+            //aaa{{@bbb}}ccc
+            var index = str.indexOf(config.openTag)
+            index = index === -1 ? str.length : index
+            var value = str.slice(0, index)
+            if (/\S/.test(value)) {
+                tokens.push(avalon$2.quote(avalon$2._decode(value)))
+            }
+            str = str.slice(index + config.openTag.length)
+            if (str) {
+                index = str.indexOf(config.closeTag)
+                var value = str.slice(0, index)
+                var expr = avalon$2.unescapeHTML(value)
+                if (/\|\s*\w/.test(expr)) {
+                    //如果存在过滤器，优化干掉
+                    var arr = addScope(expr, 'expr')
+                    if (arr[1]) {
+                        expr = arr[1].replace(rinnerValue, arr[0] + ')')
+                    }
+                }
+                if (rimprovePriority) {
+                    expr = '(' + expr + ')'
+                }
+                tokens.push(expr)
+
+                str = str.slice(index + config.closeTag.length)
+            }
+        } while (str.length)
+        return tokens.join('+')
+    }
+
+    function Lexer(nodes) {
+        this.staticIndex = 0
+        this.staticTree = {}
+        var body = this.genChildren(nodes)
+        this.fork = Function('__vmodel__', '$$l', 'var \u01A9 = __vmodel__.$render;' + 'return ' + body)
+    }
+
+    Lexer.prototype = {
+        genChildren: function genChildren(nodes) {
+            if (nodes.length) {
+                var arr = []
+                nodes.forEach(function (node) {
+                    var a = this.genNode(node)
+                    if (a) {
+                        arr.push(a)
+                    }
+                }, this)
+                return '[' + arr.join(',\n') + ']'
+            } else {
+                return '[]'
+            }
+        },
+        genNode: function genNode(node) {
+            if (node.props) {
+                return this.genElement(node)
+            } else if (node.nodeName === '#comment') {
+                return this.genComment(node)
+            } else if (node.nodeName === '#text') {
+                return this.genText(node)
+            }
+        },
+        genText: function genText(node) {
+            if (node.dynamic) {
+                return '\u01A9.text( ' + createExpr(parseInterpolate(node.nodeValue)) + ',' + true + ')'
+            }
+            return '\u01A9.text( ' + avalon$2.quote(node.nodeValue) + ' )'
+        },
+        genComment: function genComment(node) {
+            if (node.dynamic) {
+                var dir = node.for
+                directives['for'].parse.call(dir)
+                var keys = '\'' + dir.valName + ',' + dir.keyName + ',' + dir.asName + ',' + dir.cb + '\''
+                return '{nodeName:\'#comment\',vm:__vmodel__, local:$$l,nodeValue:' + avalon$2.quote(node.nodeValue) + '},\n                    \u01A9.repeat(' + createExpr(dir.expr) + ', ' + keys + ', function($$l){\n                return ' + this.genChildren(dir.nodes) + '\n            })'
+            }
+
+            return '\u01A9.comment(' + avalon$2.quote(node.nodeValue) + ')'
+        },
+        genComponent: function genComponent(node, dirs) {
+            for (var i in dirs) {
+                if (i !== 'ms-widget') delete dirs[i]
+            }
+            var json = toJSONByArray('nodeName: \'' + node.nodeName + '\'', this.genDirs(dirs, node), 'vm: __vmodel__', 'slots: slots', 'props: ' + toJSONByObject(node.props), 'children: ' + this.genChildren(node.children))
+            var _children = node._children
+            delete node._children
+            return '(function() {\n                var slots = {}\n                var slotedElements = ' + this.genChildren(_children) + '\n                return ' + json + '\n            })()'
+        },
+        genElement: function genElement(node) {
+            if (node.nodeName === 'slot') {
+                return '\u01A9.slot(' + avalon$2.quote(node.props.name || "defaults") + ')'
+            }
+
+            if (node.staticRoot) {
+                var index = avalon$2.staticIndex
+                avalon$2.staticTree[index] = node
+                avalon$2.staticIndex++
+                return '\u01A9.static(' + index + ')'
+            }
+            var dirs = node.dirs,
+                props = node.props
+
+            if (dirs) {
+                var hasCtrl = dirs['ms-controller'] || dirs['ms-important']
+                var isImport = 'ms-important' in dirs
+                if (dirs['ms-widget']) {
+                    return this.genComponent(node, dirs)
+                }
+
+                if (dirs['ms-text']) {
+                    var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag)
+                    var code = createExpr(expr, 'text')
+                    node.template = '[\u01A9.text(' + code + ')]'
+                    node.children = [{ dynamic: true, nodeName: '#text', nodeValue: NaN }]
+                    removeDir('text', dirs, props)
+                    removeDir('html', dirs, props)
+                }
+
+                if (dirs['ms-if']) {
+                    //变成可以传参的东西
+                    var hasIf = createExpr(dirs['ms-if'])
+                    removeDir('if', dirs, props)
+                }
+
+                if (!Object.keys(dirs).length) {
+                    delete node.dirs
+                    dirs = null
+                }
+            }
+
+            var json = toJSONByArray('nodeName: \'' + node.nodeName + '\'', node.vtype ? 'vtype: ' + node.vtype : '', node.staticRoot ? 'staticRoot: true' : '', dirs ? this.genDirs(dirs, node) : '', dirs ? 'vm: __vmodel__' : '', dirs ? 'local: $$l' : '', 'props: ' + toJSONByObject(node.props), 'children: ' + (node.template || this.genChildren(node.children)))
+            if (node.props.slot) {
+                json = '\u01A9.collectSlot(' + json + ',slots)'
+            }
+
+            if (hasIf) {
+                json = hasIf + ' ? ' + json + ' : \u01A9.comment(\'if\')'
+            }
+            if (hasCtrl) {
+                return '\u01A9.ctrl( ' + avalon$2.quote(hasCtrl) + ', __vmodel__, ' + isImport + ', function(__vmodel__) {\n                return ' + json + '\n            }) '
+            } else {
+                return json
+            }
+        },
+        genDirs: function genDirs(dirs, node) {
+            var arr = parseAttributes(dirs, node)
+            if (arr.length) {
+                node.dirs = arr
+                return 'dirs:[' + arr.map(function (dir) {
+                    if (dir.type === 'duplex') {
+                        return this.genDuplex(dir, node)
+                    }
+                    return toJSONByArray('type: ' + avalon$2.quote(dir.type), 'name: ' + avalon$2.quote(dir.name), dir.param ? 'param: ' + avalon$2.quote(dir.param) : '', 'value: ' + (/^(?:controller|important|on)$/.test(dir.type) ? avalon$2.quote(dir.expr) : createExpr(dir.expr)))
+                }, this) + ']'
+            }
+            return ''
+        },
+        genDuplex: function genDuplex(dir, node) {
+            //抽取里面的change, debounce过滤器为isChanged， debounceTime
+            directives.duplex.parse(dir, node)
+            return toJSONByArray(dir.isChecked ? 'isChecked: ' + dir.isChecked : '', dir.isChange ? 'isChange: ' + dir.isChange : '', dir.debounceTime ? 'debounceTime: ' + dir.debounceTime : '', dir.cb ? 'cb: ' + avalon$2.quote(dir.cb) : '', dir.parsers ? 'parsers: ' + avalon$2.quote(dir.parsers) : '', 'dtype: ' + avalon$2.quote(dir.dtype), 'type: ' + avalon$2.quote(dir.type), 'expr: ' + avalon$2.quote(dir.expr), 'name: ' + avalon$2.quote(dir.name), 'value: ' + createExpr(dir.expr))
+        }
+    }
+
+    function removeDir(name, dirs, props) {
+        delete dirs['ms-' + name]
+        delete props['ms-' + name]
+        delete props[':' + name]
+    }
+
+    var rneedQuote = /[W\:-]/
+
+    function fixKey(k) {
+        return rneedQuote.test(k) || keyMap[k] ? avalon$2.quote(k) : k
+    }
+
+    function toJSONByArray() {
+        return '{' + avalon$2.slice(arguments, 0).filter(function (el) {
+            return el
+        }).join(',') + '}'
+    }
+
+    function toJSONByObject(obj) {
+        var arr = []
+        for (var i in obj) {
+            if (obj[i] === undefined || obj[i] === '') continue
+            arr.push(fixKey(i) + ': ' + avalon$2.quote(obj[i]))
+        }
+        return '{' + arr + '}'
+    }
+
+    function getChildren(arr) {
+        var count = 0
+        for (var i = 0, el; el = arr[i++];) {
+            if (el.nodeName === '#document-fragment') {
+                count += getChildren(el.children)
+            } else {
+                count += 1
+            }
+        }
+        return count
+    }
+    function groupTree(parent, children) {
+        children && children.forEach(function (vdom) {
+            if (!vdom) return
+            var vlength = vdom.children && getChildren(vdom.children)
+            if (vdom.nodeName === '#document-fragment') {
+                var dom = createFragment()
+            } else {
+                dom = avalon$2.vdom(vdom, 'toDOM')
+                var domlength = dom.childNodes && dom.childNodes.length
+                if (domlength && vlength && domlength > vlength) {
+                    if (!appendChildMayThrowError[dom.nodeName]) {
+                        avalon$2.clearHTML(dom)
+                    }
+                }
+            }
+            if (vlength) {
+                groupTree(dom, vdom.children)
+            }
+            //高级版本可以尝试 querySelectorAll
+
+            try {
+                if (!appendChildMayThrowError[parent.nodeName]) {
+                    parent.appendChild(dom)
+                }
+            } catch (e) {}
+        })
+    }
+
+    function dumpTree(elem) {
+        var firstChild
+        if (orphanTag[elem.nodeName.toLowerCase()]) return
+        while (firstChild = elem.firstChild) {
+            if (firstChild.nodeType === 1) {
+                dumpTree(firstChild)
+            }
+            elem.removeChild(firstChild)
+        }
+    }
+
+    function getRange(childNodes, node) {
+        var i = childNodes.indexOf(node) + 1
+        var deep = 1,
+            nodes = [],
+            end
+        nodes.start = i
+        while (node = childNodes[i++]) {
+            nodes.push(node)
+            if (node.nodeName === '#comment') {
+                if (startWith(node.nodeValue, 'ms-for:')) {
+                    deep++
+                } else if (node.nodeValue === 'ms-for-end:') {
+                    deep--
+                    if (deep === 0) {
+                        //  node.nodeValue = 'msfor-end:'
+                        end = node
+                        nodes.pop()
+                        break
+                    }
+                }
+            }
+        }
+        nodes.end = end
+        return nodes
+    }
+
+    function startWith(long, short) {
+        return long.indexOf(short) === 0
+    }
+
+    var appendChildMayThrowError = {
+        '#text': 1,
+        '#comment': 1,
+        script: 1,
+        style: 1,
+        noscript: 1
+    }
+
+    function toDOM(el, b) {
+
+        if (el.props) {
+            if (el.dom) {
+                return el.dom
+            }
+            var elem = el.dom = document.createElement(el.nodeName)
+
+            for (var i in el.props) {
+                var value = el.props[i]
+                if (typeof elem[i] === 'boolean') {
+                    elem[i] = !!value
+                } else if (specalAttrs[i]) {
+                    specalAttrs[i](elem, value)
+                } else {
+                    elem.setAttribute(i, value)
+                }
+            }
+            if (container[el.nodeName]) {
+                var t = (el.children[0] || {}).nodeValue || ''
+                container[el.nodeName](elem, t)
+            } else if (el.children && !el.vtype && !el.dirs) {
+                appendChild(elem, el.children)
+            }
+            return el.dom
+        } else if (el.nodeName === '#comment') {
+            return el.dom || (el.dom = document.createComment(el.nodeValue))
+        } else if (el.nodeName === '#document-fragment') {
+            var dom = document.createDocumentFragment()
+            appendChild(dom, el.children)
+            el.dom = dom
+            return el.dom = dom
+        } else if (el.nodeName === '#text') {
+            if (el.dom) {
+                return el.dom
+            }
+            return el.dom = document.createTextNode(el.nodeValue)
+        }
+    }
+
+    function appendChild(parent, children) {
+        for (var i = 0, n = children.length; i < n; i++) {
+            var b = toDOM(children[i])
+            if (b) {
+                parent.appendChild(b)
+            }
+        }
+    }
+
+    var container = {
+        script: function script(dom, template) {
+            try {
+                dom.text = template
+            } catch (e) {
+                avalon.log(vdom)
+            }
+        },
+        noscript: function noscript(dom, template) {
+            dom.textContent = template
+        },
+        xmp: function xmp(dom, template) {
+            //IE6-8,XMP元素里面只能有文本节点,不能使用innerHTML
+            dom.textContent = template
+        },
+        option: function option(dom, template) {
+            //IE6-8,为option添加文本子节点,不会同步到text属性中
+            /* istanbul ignore next */
+            if (msie < 9) dom.text = template
+        },
+        style: function style(dom, template) {
+            try {
+                dom.innerHTML = template
+            } catch (e) {
+                dom.setAttribute('type', 'text/css')
+                dom.styleSheet.cssText = template
+            }
+        }
+    }
+
+    var specalAttrs = {
+        "class": function _class(dom, val) {
+            dom.className = val
+        },
+        style: function style(dom, val) {
+            dom.style.cssText = val
+        },
+        type: function type(dom, val) {
+            try {
+                //textarea,button 元素在IE6,7设置 type 属性会抛错
+                dom.type = val
+            } catch (e) {}
+        },
+        'for': function _for(dom, val) {
+            dom.setAttribute('for', val)
+            dom.htmlFor = val
+        }
+    }
+
+    var svgTags = avalon.oneObject('circle,defs,ellipse,image,line,' + 'path,polygon,polyline,rect,symbol,text,use,g,svg')
+
+    var VMLTags = avalon.oneObject('shape,line,polyline,rect,roundrect,oval,arc,' + 'curve,background,image,shapetype,group,fill,' + 'stroke,shadow, extrusion, textbox, imagedata, textpath')
+
+    //a是旧的虚拟DOM, b是新的
+    function diff(a, b) {
+
+        switch (a.nodeName) {
+            case '#text':
+                //两个文本节点进行比较
+                toDOM(a)
+                if (a.nodeValue !== b.nodeValue) {
+                    a.nodeValue = b.nodeValue
+                    if (a.dom) {
+                        a.dom.nodeValue = b.nodeValue
+                    }
+                }
+                break
+            case '#comment':
+                //两个注释节点进行比较
+                if (b.nodeName !== '#comment') {
+                    //ms-if 注释节点要变成元素节点
+                    for (var i in b) {
+                        a[i] = b[i]
+                    }
+                    delete a.dom
+                    reInitDires(a)
+                    diff(a, b)
+                } else {
+                    toDOM(a)
+                }
+                break
+            case '#document-fragment':
+                break
+            case void 0:
+                //两个数组(循环区域进行比较 )
+                return directives['for'].diff(a, b)
+                break
+            default:
+                //两个元素节点进行比较
+                //先处理静态节点,静态节点不会变动,不用比较
+                //如果上面有指令,应用指令
+                if (a.staticRoot && a.hasScan) {
+                    toDOM(a)
+                    return
+                }
+                toDOM(a)
+                var parentNode = a.dom
+                var stop = false
+                var afterCb = []
+                if (b.dirs) {
+                    for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
+                        var adir = a.dirs[i]
+                        if (!adir.diff) {
+                            avalon$2.mix(adir, directives[adir.type])
+                        }
+                        //diff时依次传入指令的旧值,指令的新值, 旧的虚拟DOM, 新的虚拟DOM
+                        if (adir.diff && adir.diff(adir.value, bdir.value, a, b)) {
+                            toDOM(a)
+                            adir.inited = true
+                            adir.update(adir.value, a, b, afterCb)
+                            //如果组件没有加载,a,b分别为wbr, #comment
+                            //如果成功加载,a,b分别为div, div
+                            //如果是widget, a.dom会被删掉
+                            if (a.dom !== parentNode) {
+                                toDOM(a)
+                                var p = parentNode.parentNode
+
+                                if (p) {
+                                    p.replaceChild(a.dom, parentNode)
+                                }
+                                parentNode = a.dom
+                            }
+                            if (!adir.removeName && parentNode.removeAttribute) {
+                                parentNode.removeAttribute(adir.name)
+                                adir.removeName = true
+                            }
+                        }
+                        stop = stop || adir.delay
+                    }
+                }
+                //可以在这里回收节点
+                if (b.nodeName === '#comment') {
+                    //ms-if ms-widget 元素节点要变成注释节点
+                    a.props = a.props = a.dom = null
+                    handleIf(a, b)
+                    stop = true
+                }
+                if (!a.vtype && !stop) {
+                    var childNodes = parentNode.childNodes
+                    var achild = a.children.concat()
+                    var bchild = b.children.concat()
+                    for (var _i7 = 0; _i7 < achild.length; _i7++) {
+
+                        var c = achild[_i7]
+                        var d = bchild[_i7]
+
+                        if (d) {
+                            //如果数量相等则进行比较
+                            var arr = diff(c, d)
+                            if (typeof arr === 'number') {
+                                directives['for'].update(c, d, achild, bchild, _i7, afterCb)
+                                c = achild[_i7]
+                                d = bchild[_i7]
+                                diff(c, d)
+                            }
+                        }
+
+                        if (c.dom !== childNodes[_i7]) {
+                            if (!childNodes[_i7]) {
+                                //数量一致就添加
+                                parentNode.appendChild(c.dom)
+                            } else {
+                                try {
+                                    parentNode.insertBefore(c.dom, childNodes[_i7])
+                                } catch (e) {
+                                    avalon$2.log(c.dom, childNodes[_i7], 'error', e)
+                                }
+                            }
+                        }
+                    }
+                    //移除多余节点
+                    if (childNodes.length > achild.length) {
+                        var j = achild.length
+                        while (childNodes[j]) {
+                            parentNode.removeChild(childNodes[j])
+                        }
+                    }
+                }
+
+                if (afterCb.length) {
+                    afterCb.forEach(function (fn) {
+                        fn(a)
+                    })
+                }
+                if (a.staticRoot) {
+                    a.hasScan = true
+                }
+                break
+        }
+    }
+
+    function handleIf(a, b) {
+        handleDispose(a)
+        for (var i in b) {
+            a[i] = b[i]
+        }
+        toDOM(a)
+    }
+    function diffSlots(a, b) {
+        if (!a) {
+            return
+        }
+        for (var i in a) {
+            if (!a.hasOwnProperty(i)) return
+            var aslot = a[i]
+            var bslot = b[i]
+            aslot.forEach(function (el, index) {
+                diff(el, bslot[index])
+            })
+        }
+    }
+
+    function reInitDires(a) {
+        if (a.dirs) {
+            a.dirs.forEach(function (dir) {
+                delete dir.inited
+            })
+        }
+        if (a.children) {
+            a.children.forEach(function (child) {
+                reInitDires(child)
+            })
+        }
+    }
+
+    function handleDispose(a) {
+        if (a.dirs) {
+            for (var i = 0, el; el = a.dirs[i++];) {
+                if (el.beforeDispose) {
+                    el.beforeDispose()
+                }
+            }
+        }
+        var arr = a.children || Array.isArray(a) ? a : false
+        if (arr) {
+            for (var i = 0, el; el = arr[i++];) {
+                handleDispose(el)
+            }
+        }
+    }
+
+    /**
+     * 生成一个渲染器,并作为它第一个遇到的ms-controller对应的VM的$render属性
+     * @param {String|DOM} node
+     * @param {ViewModel|Undefined} vm
+     * @param {Function|Undefined} beforeReady
+     * @returns {Render}
+     */
+    avalon$2.scan = function (node, vm, a) {
+        return new Render(node, vm, a)
+    }
+    avalon$2.staticIndex = 0
+    avalon$2.staticTree = {}
+
+    /**
+     * avalon.scan 的内部实现
+     */
+    function Render(node, vm, noexe) {
+        this.root = node //如果传入的字符串,确保只有一个标签作为根节点
+        this.vm = vm
+        this.exe = noexe === undefined
+        this.callbacks = []
+
+        this.slots = {}
+        this.uuid = Math.random()
+        this.init()
+    }
+    /**
+     * 渲染器是avalon更新视图的核心组件,
+     * 第一步,它会将真实DOM (fromDOM) 或HTML字符串 (fromString) 转换为AST 节点树
+     * 这个节点也就是最原始的虚拟DOM树(下称vtree1),
+     * 它里面包括文本节点,元素节点,文碎碎片,注释节点,循环区域(以数组形式表示)
+     * 然后通过scanChildren,scanText,scanElement,scanComment
+     * 为元素添加dynamic, dirs等属性, 为渲染器获取第一个vm
+     * 
+     * 第二步, 在vtree1都被扫描,并获得vm的情况下,
+     * 再发动两次扫描vtree1,为节点添加static, staticRoot属性
+     * 然后Lexer类,将vtree1转换为一个模块函数(bigrender)
+     * bigrender传入一个vm及一个本地对象,就可以生成一个新的虚拟DOM树vtree2
+     * 
+     * 第三步,就是diff, 从上到下,vtree1, vtree2一一对应进行diff,
+     * 这个过程会跳过文档碎片与循环区域,并将它们的内部节点提到外面的children上
+     * 如果遇到widget,还要diff插槽元素
+     * 
+     */
+    Render.prototype = {
+        init: function init() {
+            var vnodes
+            if (this.root && this.root.nodeType > 0) {
+                vnodes = fromDOM(this.root) //转换虚拟DOM
+                //将扫描区域的每一个节点与其父节点分离,更少指令对DOM操作时,对首屏输出造成的频繁重绘
+                dumpTree(this.root)
+            } else if (typeof this.root === 'string') {
+                vnodes = fromString(this.root) //转换虚拟DOM
+            } else {
+                return avalon$2.warn('avalon.scan first argument must element or HTML string')
+            }
+            this.root = vnodes[0]
+            this.vnodes = vnodes
+            this.scanChildren(vnodes, this.vm, true)
+        },
+        scanChildren: function scanChildren(children, scope, isRoot) {
+            for (var i = 0; i < children.length; i++) {
+                var vdom = children[i]
+                if (vdom.nodeName) {
+                    switch (vdom.nodeName) {
+                        case '#text':
+                            this.scanText(vdom, scope)
+                            break
+                        case '#comment':
+                            this.scanComment(vdom, scope, children)
+                            break
+                        default:
+                            this.scanTag(vdom, scope, children, false)
+                            break
+                    }
+                }
+            }
+
+            if (isRoot && this.vm) {
+                this.complete()
+            }
+        },
+
+        /**
+         * 将绑定属性转换为指令
+         * 执行各种回调与优化指令
+         * @returns {undefined}
+         */
+        complete: function complete() {
+            if (!this.template) {
+                if (this.root) {
+                    //如果是空字符串,vnodes为[], root为undefined
+                    optimize(this.root)
+                }
+                this.beginIndex = avalon$2.staticIndex
+                var lexer = new Lexer(this.vnodes, this)
+                this.endIndex = avalon$2.staticIndex
+
+                this.template = lexer.fork + ''
+                this.fork = lexer.fork
+            }
+            if (this.exe) {
+                collectDeps(this, this.update)
+            }
+        },
+
+
+        /**
+         * 从文本节点获取指令
+         * @param {type} vdom 
+         * @param {type} scope
+         * @returns {undefined}
+         */
+        scanText: function scanText(vdom, scope) {
+            if (config.rexpr.test(vdom.nodeValue)) {
+                vdom.dynamic = true
+            }
+        },
+
+        /**
+         * 从注释节点获取指令
+         * @param {type} vdom 
+         * @param {type} scope
+         * @param {type} parentChildren
+         * @returns {undefined}
+         */
+        scanComment: function scanComment(vdom, scope, parentChildren) {
+            if (startWith(vdom.nodeValue, 'ms-for:')) {
+                this.getForBinding(vdom, scope, parentChildren)
+            }
+        },
+
+        /**
+         * 从元素节点的nodeName与属性中获取指令
+         * @param {type} vdom 
+         * @param {type} scope
+         * @param {type} parentChildren
+         * @param {type} isRoot 用于执行complete方法
+         * @returns {undefined}
+         */
+        scanTag: function scanTag(vdom, scope, parentChildren, isRoot) {
+            var attrs = vdom.props
+
+            //处理dirs
+            var dirs = this.checkDirs(vdom, attrs)
+
+            //处理scope
+            scope = this.checkVm(scope, attrs, dirs)
+
+            //处理for
+            if (dirs['ms-for']) {
+                return this.getForBindingByElement(vdom, scope, parentChildren, dirs['ms-for'])
+            }
+
+            //处理widget
+            this.checkWidget(vdom, attrs, dirs)
+
+            //处理children
+            var children = vdom.children
+            var noDelay = !dirs || !delayCompileNodes(dirs)
+            //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
+            if (noDelay && !vdom.vtype && children.length) {
+                this.scanChildren(children, scope, false)
+            }
+        },
+
+        dispose: function dispose() {
+            for (var i = this.beginIndex, n = this.endIndex; i < n; i++) {
+                delete avalon$2.staticTree[i]
+            }
+        },
+        checkWidget: function checkWidget(vdom, attrs, dirs) {
+            if (/^ms\-/.test(vdom.nodeName)) {
+                attrs.is = vdom.nodeName
+            }
+
+            if (attrs['is']) {
+                dirs = dirs || {}
+                if (!dirs['ms-widget']) {
+                    dirs['ms-widget'] = '{}'
+                }
+            }
+            if (dirs['ms-widget']) {
+                var children = vdom.vtype === 2 ? fromString(vdom.children[0].nodeValue) : vdom.vtype !== 1 ? vdom.children.concat() : []
+                vdom._children = children
+                this.scanChildren(children)
+            }
+            if (dirs) {
+                vdom.dirs = dirs
+                vdom.dynamic = true
+            }
+        },
+        checkDirs: function checkDirs(vdom, attrs) {
+            var dirs = {},
+                hasDir
+            for (var attr in attrs) {
+                var value = attrs[attr]
+                var oldName = attr
+                if (attr.charAt(0) === ':') {
+                    attr = 'ms-' + attr.slice(1)
+                }
+                if (startWith(attr, 'ms-')) {
+                    dirs[attr] = value
+                    var type = attr.match(/\w+/g)[1]
+                    type = eventMap[type] || type
+                    if (!directives[type]) {
+                        avalon$2.warn('\u4E0D\u5B58\u5728' + attr + '\xA0\u6307\u4EE4')
+                    } else if (attr === 'ms-for') {
+                        if (vdom.dom) {
+                            vdom.dom.removeAttribute(oldName)
+                        }
+                        delete attrs[oldName]
+                    }
+                    hasDir = true
+                }
+            }
+            return hasDir ? dirs : false
+        },
+        checkVm: function checkVm(scope, attrs, dirs) {
+            if (scope) {
+                if (!this.vm) {
+                    this.vm = scope
+                }
+                return scope
+            }
+
+            var $id = dirs['ms-important'] || dirs['ms-controller']
+            if ($id) {
+                var vm = avalon$2.vmodels[$id]
+                if (vm) {
+                    this.vm = vm
+                    return vm
                 }
             }
         },
+
+
+        static: function _static(i) {
+            return avalon$2.staticTree[i]
+        },
+        comment: function comment(value) {
+            return { nodeName: '#comment', nodeValue: value }
+        },
+        text: function text(a, d) {
+            a = a == null ? '\u200B' : a + ''
+            return { nodeName: '#text', nodeValue: a || '', dynamic: !!d }
+        },
+        collectSlot: function collectSlot(node, slots) {
+            var name = node.props.slot
+            if (!slots[name]) {
+                slots[name] = []
+            }
+            slots[name].push(node)
+            return node
+        },
+
+        slot: function slot(name) {
+            var a = this.slots[name]
+            a.slot = name
+            return a
+        },
+        ctrl: function ctrl(id, scope, isImport, cb) {
+            var name = isImport ? 'important' : 'controller'
+            var dir = directives[name]
+            scope = dir.getScope.call(this, id, scope)
+            return cb(scope)
+        },
+        repeat: function repeat(obj, str, cb) {
+            var nodes = []
+            var keys = str.split(',')
+            nodes.cb = keys.splice(3, 7).join(',')
+            __repeat(obj, Array.isArray(obj), function (i, flag) {
+                repeatCb(obj, obj[i], i, keys, nodes, cb, flag)
+            })
+            console.log(keys)
+
+            return nodes
+        },
+        schedule: function schedule() {
+            if (!this._isScheduled) {
+                this._isScheduled = true
+                if (!avalon$2.uniqActions[this.uuid]) {
+                    avalon$2.uniqActions[this.uuid] = 1
+                    avalon$2.pendingActions.push(this)
+                }
+                runActions() //这里会还原_isScheduled
+            }
+        },
+
+
+        update: function update() {
+            this.vm.$render = this
+            var nodes = this.fork(this.vm, {})
+            var root$$1 = this.root = nodes[0]
+            if (this.noDiff) {
+                return
+            }
+            try {
+                diff(this.vnodes[0], root$$1)
+                this.vm.$element = this.vnodes[0]
+            } catch (diffError) {
+                avalon$2.log(diffError)
+            }
+            this._isScheduled = false
+        },
+
+        /**
+         * 将循环区域转换为for指令
+         * @param {type} begin 注释节点
+         * @param {type} scope
+         * @param {type} parentChildren
+         * @param {type} userCb 循环结束回调
+         * @returns {undefined}
+         */
+        getForBinding: function getForBinding(begin, scope, parentChildren, cb) {
+            var expr = begin.nodeValue.replace('ms-for:', '').trim()
+            begin.nodeValue = 'ms-for:' + expr
+
+            var nodes = getRange(parentChildren, begin)
+            this.scanChildren(nodes, scope, false)
+            var end = nodes.end
+            begin.dynamic = true
+            parentChildren.splice(nodes.start, nodes.length, [])
+
+            begin.for = {
+                begin: begin,
+                end: end,
+                expr: expr,
+                nodes: nodes,
+                cb: cb
+
+            }
+        },
+
+        /**
+         * 在带ms-for元素节点旁添加两个注释节点,组成循环区域
+         * @param {type} vdom
+         * @param {type} scope
+         * @param {type} parentChildren
+         * @param {type} expr
+         * @returns {undefined}
+         */
+        getForBindingByElement: function getForBindingByElement(vdom, scope, parentChildren, expr) {
+            var index = parentChildren.indexOf(vdom) //原来带ms-for的元素节点
+            var props = vdom.props
+            var begin = {
+                nodeName: '#comment',
+                nodeValue: 'ms-for:' + expr
+            }
+            if (props.slot) {
+                begin.slot = props.slot
+                delete props.slot
+            }
+            var end = {
+                nodeName: '#comment',
+                nodeValue: 'ms-for-end:'
+            }
+            parentChildren.splice(index, 1, begin, vdom, end)
+            var cbName = 'data-for-rendered'
+            var cb = props[cbName]
+            delete props[cbName]
+            this.getForBinding(begin, scope, parentChildren, cb || '')
+        }
+    }
+
+    function getTraceKey(item) {
+        var type = typeof item
+        return item && type === 'object' ? item.$hashcode : type + ':' + item
+    }
+
+    function repeatCb(obj, el, index, keys, nodes, cb, isArray$$1) {
+        var local = {}
+        local[keys[0]] = el
+        if (keys[1]) local[keys[1]] = index
+        if (keys[2]) local[keys[1]] = obj
+        var arr = cb(local)
+        var key = isArray$$1 ? getTraceKey(el) : index
+        if (arr.length === 1) {
+            var elem = arr[0]
+            elem.key = key
+            nodes.push(elem)
+        } else {
+            elem = {
+                key: key,
+                nodeName: '#document-fragment',
+                children: arr
+            }
+            nodes.push(elem)
+        }
+    }
+
+    avalon$2.directive('html', {
+        diff: function diff(oldVal, newVal, vdom, newVdom) {
+            //oldVal, newVal, oldVdom, newVdom
+            if (!this.inited) {
+                oldVal = null
+            }
+            oldVal = (oldVal == null ? '' : oldVal).toString().trim()
+            newVal = (newVal == null ? '' : newVal).toString().trim()
+            var render = this.innerRender
+            if (oldVal !== newVal) {
+                this.value = newVal
+                return true
+            } else if (render) {
+                var children = render.fork(render.vm, newVdom.local)
+                newVdom.children = children
+            }
+        },
+        update: function update(value, vdom, newVdom) {
+            this.beforeDispose()
+            var vm = newVdom.vm
+
+            var render = this.innerRender = new Render(value, vm, true)
+
+            var children = render.fork(render.vm, newVdom.locale)
+
+            newVdom.children = vdom.children = children
+            if (vdom.dom) avalon$2.clearHTML(vdom.dom)
+        },
         beforeDispose: function beforeDispose() {
             if (this.innerRender) {
+
                 this.innerRender.dispose()
+                delete this.innerRender
             }
         }
     })
 
-    function continueScan(instance, vdom) {
-        var innerRender = instance.innerRender = avalon$2.scan(instance.fragment, instance.vm)
-        avalon$2.shadowCopy(vdom, innerRender.root)
-        delete vdom.nodeValue
-    }
+    avalon$2.directive('if', {
+        priority: 5,
+        diff: avalon$2.noop
+    })
 
     avalon$2.directive('on', {
-        beforeInit: function beforeInit() {
-            this.getter = avalon$2.noop
+        parse: function parse(value) {
+            var arr = addScope(value)
+            var body = arr[0],
+                filters = arr[1]
+            body = makeHandle(body)
+
+            if (filters) {
+                filters = filters.replace(/__value__/g, '$event')
+                filters += '\nif($event.$return){\n\treturn;\n}'
+            }
+            var ret = ['try{', '\tvar __vmodel__ = this;', '\t' + filters, '\treturn ' + body, '}catch(e){avalon.log(e, "in on dir")}'].filter(function (el) {
+                return (/\S/.test(el)
+                )
+            })
+            return new Function('$event', '$$l', ret.join('\n'))
         },
-        init: function init() {
-            var vdom = this.node
-            var underline = this.name.replace('ms-on-', 'e').replace('-', '_')
-            var uuid = underline + '_' + this.expr.replace(/\s/g, '').replace(/[^$a-z]/ig, function (e) {
+        diff: impDir.diff,
+        update: function update(value, vdom, _) {
+
+            var uuid = (this.name + '_' + value).replace(/^(\:|ms\-)/, 'e').replace('-', '_').replace(/\s/g, '').replace(/[^$a-z]/ig, function (e) {
                 return e.charCodeAt(0)
             })
             var fn = avalon$2.eventListeners[uuid]
             if (!fn) {
-                var arr = addScope(this.expr)
-                var body = arr[0],
-                    filters = arr[1]
-                body = makeHandle(body)
-
-                if (filters) {
-                    filters = filters.replace(/__value__/g, '$event')
-                    filters += '\nif($event.$return){\n\treturn;\n}'
-                }
-                var ret = ['try{', '\tvar __vmodel__ = this;', '\t' + filters, '\treturn ' + body, '}catch(e){avalon.log(e, "in on dir")}'].filter(function (el) {
-                    return (/\S/.test(el)
-                    )
-                })
-                fn = new Function('$event', ret.join('\n'))
+                fn = this.parse(value)
                 fn.uuid = uuid
                 avalon$2.eventListeners[uuid] = fn
             }
-
-            var dom = avalon$2.vdom(vdom, 'toDOM')
-            dom._ms_context_ = this.vm
-
+            var dom = vdom.dom
+            dom._ms_context_ = _.vm
+            dom._ms_local_ = _.local
             this.eventType = this.param.replace(/\-(\d)$/, '')
             delete this.param
+            this.vdom = vdom
             avalon$2(dom).bind(this.eventType, fn)
         },
 
         beforeDispose: function beforeDispose() {
-            avalon$2(this.node.dom).unbind(this.eventType)
+            avalon$2(this.vdom.dom).unbind(this.eventType)
         }
     })
 
@@ -4799,7 +5659,7 @@ IE7的checked属性应该使用defaultChecked来设置
     avalon$2.directive('for', {
         delay: true,
         priority: 3,
-        beforeInit: function beforeInit() {
+        parse: function parse() {
             var str = this.expr,
                 asName
             str = str.replace(rforAs, function (a, b) {
@@ -4816,237 +5676,161 @@ IE7的checked属性应该使用defaultChecked来设置
             var kv = arr[0].match(rargs)
             if (kv.length === 1) {
                 //确保avalon._each的回调有三个参数
-                kv.unshift('$key')
+                kv.unshift('')
             }
             this.expr = arr[1]
             this.keyName = kv[0]
             this.valName = kv[1]
-            this.signature = avalon$2.makeHashCode('for')
-            if (asName) {
-                this.asName = asName
-            }
-
+            this.asName = asName || ''
             delete this.param
         },
-        init: function init() {
-            var cb = this.userCb
-            if (typeof cb === 'string' && cb) {
-                var arr = addScope(cb, 'for')
-                var body = makeHandle(arr[0])
-                this.userCb = new Function('$event', 'var __vmodel__ = this\nreturn ' + body)
-            }
-            this.node.forDir = this //暴露给component/index.js中的resetParentChildren方法使用
-            this.fragment = ['<div>', this.fragment, '<!--', this.signature, '--></div>'].join('')
-            this.cache = {}
-        },
-        diff: function diff(newVal, oldVal) {
-            /* istanbul ignore if */
-            if (this.updating) {
-                return
-            }
 
-            this.updating = true
-            var traceIds = createFragments(this, newVal)
+        diff: function diff(oldVal, newVal) {
+            var traceIds = createTrackIds(newVal)
+            if (!oldVal.length) {
+                oldVal.trackIds = traceIds
+                oldVal.same = false
+                oldVal.push.apply(oldVal, newVal)
 
-            if (this.oldTrackIds === void 0) return true
-
-            if (this.oldTrackIds !== traceIds) {
-                this.oldTrackIds = traceIds
-                return true
-            }
-        },
-        update: function update() {
-
-            if (!this.preFragments) {
-                this.fragments = this.fragments || []
-                mountList(this)
+                return 1
+            } else if (oldVal.trackIds !== traceIds) {
+                oldVal.same = false
+                oldVal.trackIds = traceIds
+                return 2
             } else {
-                //  collectInFor(this)
-                diffList(this)
-                updateList(this)
+                oldVal.same = true
+                return 3
             }
+        },
+        update: function update(oldVal, newVal, oldChild, newChild, i, afterCb) {
 
-            if (this.userCb) {
-                this.userCb.call(this.vm, {
-                    type: 'rendered',
-                    target: this.begin.dom,
-                    signature: this.signature
+            if (oldVal.same) {
+                //只是单纯将循环区域里的节点抽取出来,同步到父节点的children中
+
+                var args1 = oldVal.cachedArgs || getFlattenNodes(oldVal, i)
+                oldChild.splice.apply(oldChild, args1)
+                var args2 = getFlattenNodes(newVal, i)
+                newChild.splice.apply(newChild, args2)
+                return
+            } else if (oldVal.length === 0 || !oldVal.cache) {
+                //将key保存到oldVal的cache里面,并且它们都共用相同的子节点
+                var args3 = getFlattenNodes(oldVal, i, oldVal.cache = {})
+                oldVal.cachedArgs = args3
+                newChild.splice.apply(newChild, args3)
+                oldChild.splice.apply(oldChild, args3)
+            } else {
+                var args4 = [i, 1]
+                diffRepeatRange(oldVal, newVal, args4)
+                oldVal.cachedArgs = args4
+                oldChild.splice.apply(oldChild, args4)
+                var args5 = getFlattenNodes(newVal, i)
+                newChild.splice.apply(newChild, args5)
+            }
+            if (!oldVal.slot) {
+                var comment = newChild[i - 1]
+                var render = oldVal.cb
+                var string = newVal.cb
+                if (!render && string && string !== 'undefined') {
+                    var arr = addScope(string, 'for')
+                    var body = makeHandle(arr[0])
+                    render = oldVal.cb = new Function('$event', '$$l', 'var __vmodel__ = this\nreturn ' + body)
+                }
+                if (!render) return
+                afterCb.push(function (vdom) {
+                    render.call(comment.vm, {
+                        type: 'rendered',
+                        target: vdom.dom
+                    }, comment.local)
                 })
             }
-            delete this.updating
-        },
-        beforeDispose: function beforeDispose() {
-            this.fragments.forEach(function (el) {
-                el.dispose()
-            })
         }
     })
 
-    function getTraceKey(item) {
-        var type = typeof item
-        return item && type === 'object' ? item.$hashcode : type + ':' + item
-    }
-
-    //创建一组fragment的虚拟DOM
-    function createFragments(instance, obj) {
-        if (isObject(obj)) {
-            var array = Array.isArray(obj)
-            var ids = []
-            var fragments = [],
-                i = 0
-
-            instance.isArray = array
-            if (instance.fragments) {
-                instance.preFragments = instance.fragments
-                avalon$2.each(obj, function (key, value) {
-                    var k = array ? getTraceKey(value) : key
-                    fragments.push({
-                        key: k,
-                        val: value,
-                        index: i++
-                    })
-                    ids.push(k)
-                })
-                instance.fragments = fragments
-            } else {
-                avalon$2.each(obj, function (key, value) {
-                    var k = array ? getTraceKey(value) : key
-                    fragments.push(new VFragment([], k, value, i++))
-                    ids.push(k)
-                })
-                instance.fragments = fragments
-            }
-            return ids.join(';;')
-        } else {
-            return NaN
+    function createTrackIds(nodes) {
+        var ids = []
+        for (var i = 0, el; el = nodes[i++];) {
+            ids.push(el.key)
         }
+        return ids.join(';;')
     }
 
-    function mountList(instance) {
-        var args = instance.fragments.map(function (fragment, index) {
-            FragmentDecorator(fragment, instance, index)
-            saveInCache(instance.cache, fragment)
-            return fragment
+    function getFlattenNodes(nodes, i, cache) {
+        var flattenNodes = [i, 1]
+        nodes.forEach(function (el) {
+            cache && saveInCache(cache, el)
+            if (el.nodeName === '#document-fragment') {
+                el.children.forEach(function (elem) {
+                    flattenNodes.push(elem)
+                })
+            } else {
+                flattenNodes.push(el)
+            }
         })
-        var list = instance.parentChildren
-        var i = list.indexOf(instance.begin)
-        list.splice.apply(list, [i + 1, 0].concat(args))
+        return flattenNodes
     }
-
-    function diffList(instance) {
-        var cache = instance.cache
+    //比如两个循环区域, 重写oldVal的cache与它的部分元素
+    function diffRepeatRange(oldVal, newVal, flattenNodes) {
+        var cache = oldVal.cache || {}
         var newCache = {}
         var fuzzy = []
-        var list = instance.preFragments
-
-        list.forEach(function (el) {
-            el._dispose = true
+        //标记它们都应该为移除
+        oldVal.forEach(function (node) {
+            node._dispose = true
         })
 
-        instance.fragments.forEach(function (c, index) {
-            var fragment = isInCache(cache, c.key)
+        newVal.forEach(function (node, index) {
+            var cached = isInCache(cache, node.key)
             //取出之前的文档碎片
-            if (fragment) {
-                delete fragment._dispose
-                fragment.oldIndex = fragment.index
-                fragment.index = index // 相当于 c.index
-                fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
-                saveInCache(newCache, fragment)
+            if (cached) {
+                delete cached._dispose
+                cached.oldIndex = cached.index
+                cached.index = index // 相当于 node.index
+                //   cached.vm[instance.keyName] = instance.isArray ? index : cached.key
+                saveInCache(newCache, cached)
             } else {
                 //如果找不到就进行模糊搜索
-                fuzzy.push(c)
+                fuzzy.push(node)
             }
         })
-        fuzzy.forEach(function (c) {
-            var fragment = fuzzyMatchCache(cache, c.key)
-            if (fragment) {
+
+        fuzzy.forEach(function (node) {
+            var cached = fuzzyMatchCache(cache, node.key)
+            if (cached) {
                 //重复利用
-                fragment.oldIndex = fragment.index
-                fragment.key = c.key
-                var val = fragment.val = c.val
-                var index = fragment.index = c.index
-
-                fragment.vm[instance.valName] = val
-                fragment.vm[instance.keyName] = instance.isArray ? index : fragment.key
-                delete fragment._dispose
+                cached.oldIndex = cached.index
+                cached.key = node.key
+                var val = cached.val = node.val
+                var index = cached.index = node.index
+                //   cached.vm[instance.valName] = val
+                //   cached.vm[instance.keyName] = instance.isArray ? index : cached.key
+                delete cached._dispose
             } else {
-
-                c = new VFragment([], c.key, c.val, c.index)
-
-                fragment = FragmentDecorator(c, instance, c.index)
-                list.push(fragment)
+                oldVal.push(node)
+                cached = node
             }
-            saveInCache(newCache, fragment)
+
+            saveInCache(newCache, cached)
         })
 
-        instance.fragments = list
-        list.sort(function (a, b) {
+        oldVal.sort(function (a, b) {
             return a.index - b.index
         })
-        instance.cache = newCache
-    }
 
-    function updateList(instance) {
-        var before = instance.begin.dom
-        var parent = before.parentNode
-        var list = instance.fragments
-        var end = instance.end.dom
-        for (var i = 0, item; item = list[i]; i++) {
-            if (item._dispose) {
-                list.splice(i, 1)
+        for (var el, i = 0; el = oldVal[i]; i++) {
+            if (el._dispose) {
+                oldVal.splice(i, 1)
                 i--
-                item.dispose()
-                continue
-            }
-            if (item.oldIndex !== item.index) {
-                var f = item.toFragment()
-                parent.insertBefore(f, before.nextSibling || end)
-            }
-            before = item.split
-        }
-        var ch = instance.parentChildren
-        var startIndex = ch.indexOf(instance.begin)
-        var endIndex = ch.indexOf(instance.end)
-
-        list.splice.apply(ch, [startIndex + 1, endIndex - startIndex].concat(list))
-    }
-
-    /**
-     * 
-     * @param {type} fragment
-     * @param {type} this
-     * @param {type} index
-     * @returns { key, val, index, oldIndex, this, dom, split, vm}
-     */
-    function FragmentDecorator(fragment, instance, index) {
-        var data = {}
-        data[instance.keyName] = instance.isArray ? index : fragment.key
-        data[instance.valName] = fragment.val
-        if (instance.asName) {
-            data[instance.asName] = instance.value
-        }
-        var vm = fragment.vm = platform.itemFactory(instance.vm, {
-            data: data
-        })
-        if (instance.isArray) {
-            vm.$watch(instance.valName, function (a) {
-                if (instance.value && instance.value.set) {
-                    instance.value.set(vm[instance.keyName], a)
+            } else {
+                if (el.nodeName === '#document-fragment') {
+                    flattenNodes.push.apply(flattenNodes, el.children)
+                } else {
+                    flattenNodes.push(el)
                 }
-            })
-        } else {
-            vm.$watch(instance.valName, function (a) {
-                instance.value[fragment.key] = a
-            })
+            }
         }
-        fragment.index = index
-        fragment.innerRender = avalon$2.scan(instance.fragment, vm, function () {
-            var oldRoot = this.root
-            ap.push.apply(fragment.children, oldRoot.children)
-            this.root = fragment
-        })
-        return fragment
+        oldVal.cache = newCache
     }
+
     // 新位置: 旧位置
     function isInCache(cache, id) {
         var c = cache[id]
@@ -5087,6 +5871,8 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     }
 
+    //https://github.com/youngwind/bue/tree/master/src/directives
+
     //根据VM的属性值或表达式的值切换类名，ms-class='xxx yyy zzz:flag'
     //http://www.cnblogs.com/rubylouvre/archive/2012/12/17/2818540.html
     function classNames() {
@@ -5111,9 +5897,8 @@ IE7的checked属性应该使用defaultChecked来设置
     }
 
     avalon$2.directive('class', {
-        diff: function diff(newVal, oldVal) {
+        diff: function diff(oldVal, newVal, vdom) {
             var type = this.type
-            var vdom = this.node
             var classEvent = vdom.classEvent || {}
             if (type === 'hover') {
                 //在移出移入时切换类名
@@ -5130,16 +5915,16 @@ IE7的checked属性应该使用defaultChecked来设置
 
             var className = classNames(newVal)
 
-            if (typeof oldVal === void 0 || oldVal !== className) {
+            if (oldVal !== className) {
                 this.value = className
 
                 vdom['change-' + type] = className
                 return true
             }
         },
-        update: function update(vdom, value) {
+        update: function update(value, vdom) {
             var dom = vdom.dom
-            if (dom && dom.nodeType == 1) {
+            if (dom && dom.nodeType === 1) {
 
                 var dirType = this.type
                 var change = 'change-' + dirType
@@ -5219,7 +6004,8 @@ IE7的checked属性应该使用defaultChecked来设置
     function setOption(vdom, values) {
         var props = vdom.props
         if (!('disabled' in props)) {
-            var value = getOptionValue(vdom, props).trim()
+            var value = getOptionValue(vdom, props)
+            value = String(value || '').trim()
             props.selected = values.indexOf(value) !== -1
             if (vdom.dom) {
                 vdom.dom.selected = props.selected
@@ -5242,220 +6028,12 @@ IE7的checked属性应该使用defaultChecked来设置
         return arr.join('')
     }
 
-    var rchangeFilter = /\|\s*change\b/
-    var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/
-    function duplexBeforeInit() {
-        var expr = this.expr
-        if (rchangeFilter.test(expr)) {
-            this.isChanged = true
-            expr = expr.replace(rchangeFilter, '')
-        }
-        var match = expr.match(rdebounceFilter)
-        if (match) {
-            expr = expr.replace(rdebounceFilter, '')
-            if (!this.isChanged) {
-                this.debounceTime = parseInt(match[1], 10) || 300
-            }
-        }
-        this.expr = expr
-    }
-    function duplexInit() {
-        var expr = this.expr
-        var node = this.node
-        var etype = node.props.type
-        this.parseValue = parseValue
-        //处理数据转换器
-        var parsers = this.param,
-            dtype
-        var isChecked = false
-        parsers = parsers ? parsers.split('-').map(function (a) {
-            if (a === 'checked') {
-                isChecked = true
-            }
-            return a
-        }) : []
-        node.duplex = this
-        if (rcheckedType.test(etype) && isChecked) {
-            //如果是radio, checkbox,判定用户使用了checked格式函数没有
-            parsers = []
-            dtype = 'radio'
-            this.isChecked = isChecked
-        }
-        this.parsers = parsers
-        if (!/input|textarea|select/.test(node.nodeName)) {
-            if ('contenteditable' in node.props) {
-                dtype = 'contenteditable'
-            }
-        } else if (!dtype) {
-            dtype = node.nodeName === 'select' ? 'select' : etype === 'checkbox' ? 'checkbox' : etype === 'radio' ? 'radio' : 'input'
-        }
-        this.dtype = dtype
-        var isChanged = false,
-            debounceTime = 0
-        //判定是否使用了 change debounce 过滤器
-        // this.isChecked = /boolean/.test(parsers)
-        if (dtype !== 'input' && dtype !== 'contenteditable') {
-            delete this.isChange
-            delete this.debounceTime
-        } else if (!this.isChecked) {
-            this.isString = true
-        }
-
-        var cb = node.props['data-duplex-changed']
-        if (cb) {
-            var arr = addScope(cb, 'xx')
-            var body = makeHandle(arr[0])
-            this.userCb = new Function('$event', 'var __vmodel__ = this\nreturn ' + body)
-        }
-    }
-    function duplexDiff(newVal, oldVal) {
-        if (Array.isArray(newVal)) {
-            if (newVal + '' !== this.compareVal) {
-                this.compareVal = newVal + ''
-                return true
-            }
-        } else {
-            newVal = this.parseValue(newVal)
-            if (!this.isChecked) {
-                this.value = newVal += ''
-            }
-            if (newVal !== this.compareVal) {
-                this.compareVal = newVal
-                return true
-            }
-        }
-    }
-
-    function duplexValidate(node, vdom) {
-        //将当前虚拟DOM的duplex添加到它上面的表单元素的validate指令的fields数组中
-        var field = vdom.duplex
-        var rules = vdom.rules
-
-        if (rules && !field.validator) {
-            while (node && node.nodeType === 1) {
-                var validator = node._ms_validate_
-                if (validator) {
-                    field.rules = rules
-                    field.validator = validator
-
-                    if (avalon$2.Array.ensure(validator.fields, field)) {
-                        validator.addField(field)
-                    }
-                    break
-                }
-                node = node.parentNode
-            }
-        }
-    }
-
-    var valueHijack = true
-    try {
-        //#272 IE9-IE11, firefox
-        var setters = {}
-        var aproto = HTMLInputElement.prototype
-        var bproto = HTMLTextAreaElement.prototype
-        var newSetter = function newSetter(value) {
-            // jshint ignore:line
-            setters[this.tagName].call(this, value)
-            var data = this._ms_duplex_
-            if (!this.caret && data && data.isString) {
-                data.duplexCb.call(this, { type: 'setter' })
-            }
-        }
-        var inputProto = HTMLInputElement.prototype
-        Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
-        setters['INPUT'] = Object.getOwnPropertyDescriptor(aproto, 'value').set
-
-        Object.defineProperty(aproto, 'value', {
-            set: newSetter
-        })
-        setters['TEXTAREA'] = Object.getOwnPropertyDescriptor(bproto, 'value').set
-        Object.defineProperty(bproto, 'value', {
-            set: newSetter
-        })
-        valueHijack = false
-    } catch (e) {
-        //在chrome 43中 ms-duplex终于不需要使用定时器实现双向绑定了
-        // http://updates.html5rocks.com/2015/04/DOM-attributes-now-on-the-prototype
-        // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
-    }
-
-    function parseValue(val) {
-        for (var i = 0, k; k = this.parsers[i++];) {
-            var fn = avalon$2.parsers[k]
-            if (fn) {
-                val = fn.call(this, val)
-            }
-        }
-        return val
-    }
-
-    var updateView = {
-        input: function input() {
-            //处理单个value值处理
-            this.node.props.value = this.value + ''
-            this.dom.value = this.value
-        },
-        updateChecked: function updateChecked(vdom, checked) {
-            if (vdom.dom) {
-                vdom.dom.defaultChecked = vdom.dom.checked = checked
-            }
-        },
-        radio: function radio() {
-            //处理单个checked属性
-            var node = this.node
-            var nodeValue = node.props.value
-            var checked
-            if (this.isChecked) {
-                checked = !!this.value
-            } else {
-                checked = this.value + '' === nodeValue
-            }
-            node.props.checked = checked
-            updateView.updateChecked(node, checked)
-        },
-        checkbox: function checkbox() {
-            //处理多个checked属性
-            var node = this.node
-            var props = node.props
-            var value = props.value + ''
-            var values = [].concat(this.value)
-            var checked = values.some(function (el) {
-                return el + '' === value
-            })
-
-            props.defaultChecked = props.checked = checked
-            updateView.updateChecked(node, checked)
-        },
-        select: function select() {
-            //处理子级的selected属性
-            var a = Array.isArray(this.value) ? this.value.map(String) : this.value + ''
-            lookupOption(this.node, a)
-        },
-        contenteditable: function contenteditable() {
-            //处理单个innerHTML 
-
-            var vnodes = fromString(this.value)
-            var fragment = createFragment()
-            for (var i = 0, el; el = vnodes[i++];) {
-                var child = avalon$2.vdom(el, 'toDOM')
-                fragment.appendChild(child)
-            }
-            avalon$2.clearHTML(this.dom).appendChild(fragment)
-            var list = this.node.children
-            list.length = 0
-            Array.prototype.push.apply(list, vnodes)
-
-            this.duplexCb.call(this.dom)
-        }
-    }
-
     var updateDataActions = {
         input: function input(prop) {
             //处理单个value值处理
             var field = this
             prop = prop || 'value'
-            var dom = field.dom
+            var dom = field.vdom.dom
             var rawValue = dom[prop]
             var parsedValue = field.parseValue(rawValue)
 
@@ -5489,17 +6067,17 @@ IE7的checked属性应该使用defaultChecked来设置
                 avalon$2.warn('ms-duplex应用于checkbox上要对应一个数组')
                 array = [array]
             }
-            var method = field.dom.checked ? 'ensure' : 'remove'
+            var dom = this.vdom.dom
+            var method = dom.checked ? 'ensure' : 'remove'
             if (array[method]) {
-                var val = field.parseValue(field.dom.value)
+                var val = field.parseValue(dom.value)
                 array[method](val)
                 duplexCb(field)
             }
-            this.__test__ = array
         },
         select: function select() {
             var field = this
-            var val = avalon$2(field.dom).val() //字符串或字符串数组
+            var val = avalon$2(field.vdom.dom).val() //字符串或字符串数组
             if (val + '' !== this.value + '') {
                 if (Array.isArray(val)) {
                     //转换布尔数组或其他
@@ -5520,9 +6098,9 @@ IE7的checked属性应该使用defaultChecked来设置
 
     function duplexCb(field) {
         if (field.userCb) {
-            field.userCb.call(field.vm, {
+            field.userCb.call(field.vdom.vm, {
                 type: 'changed',
-                target: field.dom
+                target: field.vdom.dom
             })
         }
     }
@@ -5560,6 +6138,225 @@ IE7的checked属性应该使用defaultChecked来设置
             }
         } else {
             updateDataActions[field.dtype].call(field)
+        }
+    }
+
+    var rchangeFilter = /\|\s*change\b/
+    var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/
+    function duplexParse(dir, node) {
+        /**
+         * dtype: String,
+         * isChange: Boolean | Undefined,
+         * isChecked: Boolean | Undefined,
+         * expr: String,
+         * debounceTime: Number,
+         * expr: String,
+         * parsers: String,
+         * name: String,
+         * cb: String | Undefined
+         */
+
+        //抽取里面的change, debounce过滤器为isChanged， debounceTime
+        var expr = dir.expr,
+            dtype
+        if (rchangeFilter.test(expr)) {
+            dir.isChanged = true
+            expr = expr.replace(rchangeFilter, '')
+        }
+        var match = expr.match(rdebounceFilter)
+        if (match) {
+            expr = expr.replace(rdebounceFilter, '')
+            if (!dir.isChanged) {
+                dir.debounceTime = parseInt(match[1], 10) || 300
+            }
+        }
+        dir.expr = expr
+
+        //处理数据转换器
+        var etype = node.props.type
+        var parsers = dir.param || ''
+        delete dir.param
+        var isChecked = /checked/.test(parsers)
+
+        // node.duplex = this
+        if (rcheckedType.test(etype) && isChecked) {
+            //如果是radio, checkbox,并使用了ms-duplex-checked，那么禁用其他parsers
+            parsers = ''
+            dtype = 'radio'
+            dir.isChecked = isChecked
+        }
+        dir.parsers = parsers
+
+        //处理dtype
+
+        if (!/input|textarea|select/.test(node.nodeName)) {
+            if ('contenteditable' in node.props) {
+                dtype = 'contenteditable'
+            }
+        } else if (!dtype) {
+            dtype = node.nodeName === 'select' ? 'select' : etype === 'checkbox' ? 'checkbox' : etype === 'radio' ? 'radio' : 'input'
+        }
+        dir.dtype = dtype
+
+        //判定是否使用了 change debounce 过滤器
+        // 如果不是dtype不是input,contenteditable，那不能使用isChange, debounceTime
+        if (dtype !== 'input' && dtype !== 'contenteditable') {
+            delete dir.isChange
+            delete dir.debounceTime
+        }
+        //处理回调
+        var cbName = 'data-duplex-changed'
+        var cb = node.props[cbName]
+        if (node.dom) {
+            node.dom.removeAttribute(cbName)
+        }
+        dir.cb = cb
+    }
+
+    function duplexDiff(oldVal, newVal) {
+        if (!this.inited) {
+            this.compareVal = NaN
+        }
+        if (Array.isArray(newVal)) {
+            if (newVal + '' !== this.compareVal) {
+                this.compareVal = newVal + ''
+                return true
+            }
+        } else {
+            this.parseValue = parseValue
+            newVal = this.parseValue(newVal)
+            if (!this.isChecked) {
+                this.value = newVal += ''
+            }
+            if (newVal !== this.compareVal) {
+                this.compareVal = newVal
+                return true
+            }
+        }
+    }
+    function duplexInit(vdom, addEvent) {
+        var dom = vdom.dom
+        this.vdom = vdom
+
+        vdom.duplex = dom._ms_duplex_ = this
+
+        //添加userCb
+        if (this.cb) {
+            var arr = addScope(this.cb, 'xx')
+            var body = makeHandle(arr[0])
+            this.userCb = new Function('$event', 'var __vmodel__ = this\nreturn ' + body)
+        }
+        var setter = createSetter(this.expr, 'duplex')
+        this.setValue = function (value) {
+            setter(vdom.vm, value)
+        }
+        //添加duplexCb
+        this.duplexCb = updateDataHandle
+
+        //绑定事件
+        addEvent(dom, this)
+        //添加验证
+        //  duplexValidate(dom, vdom)
+    }
+
+    var valueHijack = true
+    try {
+        //#272 IE9-IE11, firefox
+        var setters = {}
+        var aproto = HTMLInputElement.prototype
+        var bproto = HTMLTextAreaElement.prototype
+        var newSetter = function newSetter(value) {
+            // jshint ignore:line
+            setters[this.tagName].call(this, value)
+            var data = this._ms_duplex_
+            if (!this.caret && data && data.dtype === 'input') {
+                data.duplexCb.call(this, { type: 'setter' })
+            }
+        }
+        var inputProto = HTMLInputElement.prototype
+        Object.getOwnPropertyNames(inputProto) //故意引发IE6-8等浏览器报错
+        setters['INPUT'] = Object.getOwnPropertyDescriptor(aproto, 'value').set
+
+        Object.defineProperty(aproto, 'value', {
+            set: newSetter
+        })
+        setters['TEXTAREA'] = Object.getOwnPropertyDescriptor(bproto, 'value').set
+        Object.defineProperty(bproto, 'value', {
+            set: newSetter
+        })
+        valueHijack = false
+    } catch (e) {
+        //在chrome 43中 ms-duplex终于不需要使用定时器实现双向绑定了
+        // http://updates.html5rocks.com/2015/04/DOM-attributes-now-on-the-prototype
+        // https://docs.google.com/document/d/1jwA8mtClwxI-QJuHT7872Z0pxpZz8PBkf2bGAbsUtqs/edit?pli=1
+    }
+
+    function parseValue(val) {
+        if (!this.parsers) return val
+        this.parsers.replace(/\w+/g, function (k) {
+            var fn = avalon$2.parsers[k]
+            if (fn) {
+                val = fn.call(this, val)
+            }
+        })
+        return val
+    }
+
+    var updateView = {
+        input: function input() {
+            //处理单个value值处理
+            var vdom = this.vdom
+            vdom.props.value = this.value + ''
+            vdom.dom.value = this.value
+        },
+        updateChecked: function updateChecked(vdom, checked) {
+            if (vdom.dom) {
+                vdom.dom.defaultChecked = vdom.dom.checked = checked
+            }
+        },
+        radio: function radio() {
+            //处理单个checked属性
+            var vdom = this.vdom
+            var nodeValue = vdom.props.value
+            var checked
+            if (this.isChecked) {
+                checked = !!this.value
+            } else {
+                checked = this.value + '' === nodeValue
+            }
+            vdom.props.checked = checked
+            updateView.updateChecked(vdom, checked)
+        },
+        checkbox: function checkbox() {
+            //处理多个checked属性
+            var vdom = this.vdom
+            var props = vdom.props
+            var value = props.value + ''
+            var values = [].concat(this.value)
+            var checked = values.some(function (el) {
+                return el + '' === value
+            })
+
+            props.defaultChecked = props.checked = checked
+            updateView.updateChecked(vdom, checked)
+        },
+        select: function select() {
+            //处理子级的selected属性
+            var a = Array.isArray(this.value) ? this.value.map(String) : this.value + ''
+            lookupOption(this.vdom, a)
+        },
+        contenteditable: function contenteditable() {
+            //处理单个innerHTML 
+
+            var vnodes = fromString(this.value)
+            var fragment = toDOM(vnodes)
+            var dom = this.vdom.dom
+            avalon$2.clearHTML(dom).appendChild(fragment)
+            var list = this.vdom.children
+            list.length = 0
+            Array.prototype.push.apply(list, vnodes)
+
+            this.duplexCb.call(dom)
         }
     }
 
@@ -5675,41 +6472,36 @@ IE7的checked属性应该使用defaultChecked来设置
 
     avalon$2.directive('duplex', {
         priority: 2000,
-        beforeInit: duplexBeforeInit,
-        init: duplexInit,
+        parse: duplexParse,
         diff: duplexDiff,
-        update: function update(vdom, value) {
-            var dom = vdom.dom
-            if (!this.dom) {
-                this.duplexCb = updateDataHandle
-                this.dom = dom
-                dom._ms_duplex_ = this
-                //绑定事件
-                updateDataEvents(dom, this)
-                //添加验证
-                duplexValidate(dom, vdom)
+        update: function update(value, vdom, newVdom, afterCb) {
+            vdom.vm = newVdom.vm
+            var dom = vdom.dom || {}
+            if (!dom._ms_duplex) {
+                duplexInit.call(this, vdom, updateDataEvents)
             }
-            updateView[this.dtype].call(this)
+            var me = this
+            afterCb.push(function () {
+                updateView[me.dtype].call(me)
+            })
         }
     })
 
     avalon$2.directive('rules', {
-        diff: function diff(rules) {
+        diff: function diff(old, rules, vdom) {
             if (isObject(rules)) {
-                var vdom = this.node
                 vdom.rules = platform.toJson(rules)
-                if (vdom.duplex) {
-                    vdom.duplex.rules = vdom.rules
-                }
                 return true
             }
         }
     })
+
     function isRegExp(value) {
         return avalon$2.type(value) === 'regexp'
     }
     var rmail = /^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/i
     var rurl = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/
+
     function isCorrectDate(value) {
         if (typeof value === "string" && value) {
             //是字符串但不能是空字符
@@ -5846,65 +6638,87 @@ IE7的checked属性应该使用defaultChecked来设置
     })
 
     var valiDir = avalon$2.directive('validate', {
-        diff: function diff(validator) {
-            var vdom = this.node
+        diff: function diff(oldVal, newVal, vdom) {
+            if (!this.inited) {
+                vdom.validator = null
+            }
             if (vdom.validator) {
                 return
             }
-            if (isObject(validator)) {
+            if (isObject(newVal)) {
                 //注意，这个Form标签的虚拟DOM有两个验证对象
                 //一个是vmValidator，它是用户VM上的那个原始子对象，也是一个VM
                 //一个是validator，它是vmValidator.$model， 这是为了防止IE6－8添加子属性时添加的hack
                 //也可以称之为safeValidate
-                vdom.vmValidator = validator
-                validator = platform.toJson(validator)
-
+                vdom.vmValidator = newVal
+                var validator = platform.toJson(newVal)
                 vdom.validator = validator
+                validator.fields = []
                 for (var name in valiDir.defaults) {
                     if (!validator.hasOwnProperty(name)) {
                         validator[name] = valiDir.defaults[name]
                     }
                 }
-                validator.fields = validator.fields || []
                 return true
             }
         },
-        update: function update(vdom) {
-            var validator = vdom.validator
-            var dom = vdom.dom
-            validator.dom = dom
-            dom._ms_validate_ = validator
+        update: function update(value, vdom, newVdom, afterCb) {
+            afterCb.push(function () {
 
-            //为了方便用户手动执行验证，我们需要为原始vmValidate上添加一个onManual方法
-            var v = vdom.vmValidator
-            try {
-                v.onManual = onManual
-            } catch (e) {}
-            delete vdom.vmValidator
+                var validator = vdom.validator
+                var dom = validator.dom = vdom.dom
+                dom._ms_validate_ = validator
+                var fields = validator.fields
+                collectFeild(vdom.children, fields, validator)
+                avalon$2.bind(document, 'focusin', function (e) {
+                    var dom = e.target
+                    var duplex = dom._ms_duplex_
+                    var vdom = (duplex || {}).vdom
+                    if (duplex && vdom.rules && !duplex.validator) {
+                        if (avalon$2.Array.ensure(fields, duplex)) {
+                            bindValidateEvent(duplex, validator)
+                        }
+                    }
+                })
 
-            dom.setAttribute('novalidate', 'novalidate')
-            function onManual() {
-                valiDir.validateAll.call(validator, validator.onValidateAll)
-            }
-            /* istanbul ignore if */
-            if (validator.validateAllInSubmit) {
-                avalon$2.bind(dom, 'submit', function (e) {
-                    e.preventDefault()
-                    onManual()
-                })
-            }
-            /* istanbul ignore if */
-            if (typeof validator.onInit === 'function') {
-                //vmodels是不包括vmodel的
-                validator.onInit.call(dom, {
-                    type: 'init',
-                    target: dom,
-                    validator: validator
-                })
-            }
+                //为了方便用户手动执行验证，我们需要为原始vmValidate上添加一个onManual方法
+                var v = vdom.vmValidator
+                try {
+                    v.onManual = onManual
+                } catch (e) {}
+                delete vdom.vmValidator
+
+                dom.setAttribute('novalidate', 'novalidate')
+
+                function onManual() {
+                    valiDir.validateAll.call(vdom, validator.onValidateAll)
+                }
+                /* istanbul ignore if */
+                if (validator.validateAllInSubmit) {
+                    avalon$2.bind(dom, 'submit', function (e) {
+                        e.preventDefault()
+                        onManual()
+                    })
+                }
+
+                /* istanbul ignore if */
+                if (typeof validator.onInit === 'function') {
+                    //vmodels是不包括vmodel的
+                    validator.onInit.call(dom, {
+                        type: 'init',
+                        target: dom,
+                        validator: validator
+                    })
+                }
+            })
         },
         validateAll: function validateAll(callback) {
-            var validator = this
+            var vdom = this
+            var validator = vdom.validator
+
+            var fields = validator.fields = []
+            collectFeild(vdom.children, fields, validator)
+
             var fn = typeof callback === 'function' ? callback : validator.onValidateAll
             var promises = validator.fields.filter(function (field) {
                 var el = field.dom
@@ -5912,6 +6726,7 @@ IE7的checked属性应该使用defaultChecked来设置
             }).map(function (field) {
                 return valiDir.validate(field, true)
             })
+
             var uniq = {}
             return Promise.all(promises).then(function (array) {
                 var reasons = array.concat.apply([], array)
@@ -5931,28 +6746,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 fn.call(validator.dom, reasons) //这里只放置未通过验证的组件
             })
         },
-        addField: function addField(field) {
-            var validator = this
-            var node = field.dom
-            /* istanbul ignore if */
-            if (validator.validateInKeyup && !field.isChanged && !field.debounceTime) {
-                avalon$2.bind(node, 'keyup', function (e) {
-                    validator.validate(field, 0, e)
-                })
-            }
-            /* istanbul ignore if */
-            if (validator.validateInBlur) {
-                avalon$2.bind(node, 'blur', function (e) {
-                    validator.validate(field, 0, e)
-                })
-            }
-            /* istanbul ignore if */
-            if (validator.resetInFocus) {
-                avalon$2.bind(node, 'focus', function (e) {
-                    validator.onReset.call(node, e, field)
-                })
-            }
-        },
+
         validate: function validate(field, isValidateAll, event) {
             var promises = []
             var value = field.value
@@ -5965,7 +6759,7 @@ IE7的checked属性应该使用defaultChecked来设置
             }
             /* istanbul ignore if */
             if (elem.disabled) return
-            var rules = field.rules
+            var rules = field.vdom.rules
             var ngs = [],
                 isOk = true
             if (!(rules.norequired && value === '')) {
@@ -6018,6 +6812,46 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     })
 
+    function collectFeild(nodes, fields, validator) {
+        for (var i = 0, vdom; vdom = nodes[i++];) {
+            var duplex = vdom.rules && vdom.duplex
+            if (duplex) {
+                fields.push(duplex)
+                bindValidateEvent(duplex, validator)
+            } else if (vdom.children) {
+                collectFeild(vdom.children, fields, validator)
+            } else if (Array.isArray(vdom)) {
+                collectFeild(vdom, fields, validator)
+            }
+        }
+    }
+
+    function bindValidateEvent(field, validator) {
+
+        var node = field.dom
+        if (field.validator) {
+            return
+        }
+        field.validator = validator
+        /* istanbul ignore if */
+        if (validator.validateInKeyup && !field.isChanged && !field.debounceTime) {
+            avalon$2.bind(node, 'keyup', function (e) {
+                validator.validate(field, 0, e)
+            })
+        }
+        /* istanbul ignore if */
+        if (validator.validateInBlur) {
+            avalon$2.bind(node, 'blur', function (e) {
+                validator.validate(field, 0, e)
+            })
+        }
+        /* istanbul ignore if */
+        if (validator.resetInFocus) {
+            avalon$2.bind(node, 'focus', function (e) {
+                validator.onReset.call(node, e, field)
+            })
+        }
+    }
     var rformat = /\\?{{([^{}]+)\}}/gm
 
     function getMessage() {
@@ -6028,7 +6862,6 @@ IE7的checked属性应该使用defaultChecked来设置
     }
     valiDir.defaults = {
         validate: valiDir.validate,
-        addField: valiDir.addField, //供内部使用,收集此元素底下的所有ms-duplex的域对象
         onError: avalon$2.noop,
         onSuccess: avalon$2.noop,
         onComplete: avalon$2.noop,
@@ -6040,780 +6873,6 @@ IE7的checked属性应该使用defaultChecked来设置
         validateAllInSubmit: true, //@config {Boolean} true，在submit事件中执行onValidateAll回调
         resetInFocus: true, //@config {Boolean} true，在focus事件中执行onReset回调,
         deduplicateInValidateAll: false //@config {Boolean} false，在validateAll回调中对reason数组根据元素节点进行去重
-    }
-
-    /**
-     * 一个directive装饰器
-     * @returns {directive}
-     */
-    // DirectiveDecorator(scope, binding, vdom, this)
-    // Decorator(vm, options, callback)
-    function Directive(vm, binding, vdom, render) {
-        var type = binding.type
-        var decorator = avalon$2.directives[type]
-        if (inBrowser) {
-            var dom = avalon$2.vdom(vdom, 'toDOM')
-            if (dom.nodeType === 1) {
-                dom.removeAttribute(binding.attrName)
-            }
-            vdom.dom = dom
-        }
-        var callback = decorator.update ? function (value) {
-            if (!render.mount && /css|visible|duplex/.test(type)) {
-                render.callbacks.push(function () {
-                    decorator.update.call(directive$$1, directive$$1.node, value)
-                })
-            } else {
-                decorator.update.call(directive$$1, directive$$1.node, value)
-            }
-        } : avalon$2.noop
-        for (var key in decorator) {
-            binding[key] = decorator[key]
-        }
-        binding.node = vdom
-        var directive$$1 = new Action(vm, binding, callback)
-        if (directive$$1.init) {
-            //这里可能会重写node, callback, type, name
-            directive$$1.init()
-        }
-        directive$$1.update()
-        return directive$$1
-    }
-
-    function optimize(node) {
-        markStatic(node)
-        // second pass: mark static roots.
-        isStaticRoot(node, false)
-        return node
-    }
-
-    function markStatic(node) {
-        node.static = isStatic(node)
-        if (node.vtype === 1 && !node.isVoidTag) {
-            // do not make component slot content static. this avoids
-            // 1. components not able to mutate slot nodes
-            // 2. static slot content fails for hot-reloading
-            if (node.nodeName === 'slot') {
-                node.static = false
-                return
-            }
-            if (node.props['ms-skip'] || node.props[':skip']) {
-                node.static = false
-                return
-            }
-
-            for (var i = 0, l = node.children.length; i < l; i++) {
-                var child = node.children[i]
-                markStatic(child)
-                if (!child.static) {
-                    node.static = false
-                }
-            }
-        }
-    }
-
-    function isStaticRoot(node) {
-        var ret = true
-        if (node.children) {
-            node.children.forEach(function (el) {
-                ret = ret & isStaticRoot(el)
-            })
-            if (ret && node.static) {
-                node.staticRoot = true
-            }
-        }
-
-        return ret
-    }
-
-    function isStatic(node) {
-        return !node.dynamic
-    }
-
-    var eventMap = avalon$2.oneObject('animationend,blur,change,input,' + 'click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,' + 'mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit', 'on')
-    function parseAttributes(dirs, node) {
-        var uniq = {},
-            bindings = []
-        var hasIf = false
-        for (var name in dirs) {
-            var value = dirs[name]
-            var arr = name.split('-')
-            // ms-click
-            if (name in node.props) {
-                var attrName = name
-            } else {
-                attrName = ':' + name.slice(3)
-            }
-            if (eventMap[arr[1]]) {
-                arr.splice(1, 0, 'on')
-            }
-            //ms-on-click
-            if (arr[1] === 'on') {
-                arr[3] = parseFloat(arr[3]) || 0
-            }
-
-            var type = arr[1]
-            if (type === 'controller' || type === 'important') continue
-            if (directives[type]) {
-
-                var binding = {
-                    type: type,
-                    param: arr[2],
-                    attrName: attrName,
-                    name: arr.join('-'),
-                    expr: value,
-                    priority: directives[type].priority || type.charCodeAt(0) * 100
-                }
-                if (type === 'if') {
-                    hasIf = true
-                }
-                if (type === 'on') {
-                    binding.priority += arr[3]
-                }
-                if (!uniq[binding.name]) {
-                    uniq[binding.name] = value
-                    bindings.push(binding)
-                    if (type === 'for') {
-                        return [avalon$2.mix(binding, tuple[3])]
-                    }
-                }
-            }
-        }
-        bindings.sort(byPriority)
-
-        if (hasIf) {
-            var ret = []
-            for (var i = 0, el; el = bindings[i++];) {
-                ret.push(el)
-                if (el.type === 'if') {
-                    return ret
-                }
-            }
-        }
-        return bindings
-    }
-    function byPriority(a, b) {
-        return a.priority - b.priority
-    }
-
-    var rimprovePriority = /[+-\?]/
-    var rinnerValue = /__value__\)$/
-    function parseInterpolate(dir) {
-        var rlineSp = /\n\r?/g
-        var str = dir.nodeValue.trim().replace(rlineSp, '')
-        var tokens = []
-        do {
-            //aaa{{@bbb}}ccc
-            var index = str.indexOf(config.openTag)
-            index = index === -1 ? str.length : index
-            var value = str.slice(0, index)
-            if (/\S/.test(value)) {
-                tokens.push(avalon$2.quote(avalon$2._decode(value)))
-            }
-            str = str.slice(index + config.openTag.length)
-            if (str) {
-                index = str.indexOf(config.closeTag)
-                var value = str.slice(0, index)
-                var expr = avalon$2.unescapeHTML(value)
-                if (/\|\s*\w/.test(expr)) {
-                    //如果存在过滤器，优化干掉
-                    var arr = addScope(expr, 'expr')
-                    if (arr[1]) {
-                        expr = arr[1].replace(rinnerValue, arr[0] + ')')
-                    }
-                }
-                if (rimprovePriority) {
-                    expr = '(' + expr + ')'
-                }
-                tokens.push(expr)
-
-                str = str.slice(index + config.closeTag.length)
-            }
-        } while (str.length)
-        return tokens.join('+')
-    }
-
-    function Yield(nodes, render) {
-        this.render = render
-        var body = this.genChildren(nodes)
-        this.templateBody = body
-        this.templateFn = Function('__vmodel__', 'Ʃ', 'return ' + body)
-    }
-    Yield.prototype = {
-        genChildren: function genChildren(nodes) {
-            if (nodes.length) {
-                return '[' + nodes.map(function (node) {
-                    return this.genNode(node)
-                }, this) + ']'
-            } else {
-                return '[]'
-            }
-        },
-        genNode: function genNode(node) {
-            if (node.vtype === 1) {
-                return this.genElement(node)
-            } else if (node.vtype === 8) {
-                return this.genComment(node)
-            } else {
-                return this.genText(node)
-            }
-        },
-        genText: function genText(node) {
-            if (node.dynamic) {
-                return '\u01A9.text( ' + createExpr(parseInterpolate(node)) + ' )'
-            }
-            return 'Ʃ.text(${avalon.quote(node.nodeValue)})'
-        },
-        genComment: function genComment(node) {
-            return '{nodeName:"#comment",vtype: 8, nodeValue: ' + avalon.quote(node.nodeValue.trim()) + ' }'
-        },
-        genElement: function genElement(node) {
-            if (node.staticRoot) {
-                var index = this.render.staticIndex++
-                this.render.staticTree[index] = node
-                return '\u01A9.static(' + index + ')'
-            }
-            var dirs = node.dirs
-            if (dirs) {
-                var hasCtrl = dirs['ms-controller']
-                delete dirs['ms-controller']
-                if (dirs['ms-text']) {
-                    node.template = '[\u01A9.text( ' + createExpr(parseInterpolate({ nodeValue: dirs['ms-text'] })) + ' )]'
-                    delete dirs['ms-text']
-
-                    delete dirs['ms-html']
-                }
-
-                if (dirs['ms-html']) {
-                    //变成可以传参的东西
-                    node.template = '(new \u01A9(' + createExpr(dirs['ms-html']) + ', __vmodel__, true)).templateBody'
-
-                    delete dirs['ms-html']
-                }
-
-                if (!Object.keys(dirs).length) {
-                    dirs = null
-                }
-            }
-            var json = toJSONByArray('nodeName: "' + node.nodeName + '"', 'vtype: ' + node.vtype, node.isVoidTag ? 'isVoidTag:true' : '', node.static ? 'static:true' : '', dirs ? this.genDirs(dirs, node) : '', 'props: ' + toJSONByObject(node.props), 'children: ' + (node.template || this.genChildren(node.children)))
-            if (hasCtrl) {
-                return '\u01A9.ctrl(' + avalon.quote(hasCtrl) + ', __vmodel__,function(__vmodel__){ \n                 return ' + json + '\n             })'
-            } else {
-                return json
-            }
-        },
-        genDirs: function genDirs(dirs, node) {
-            var arr = parseAttributes(dirs, node)
-            if (arr.length) {
-                return 'dirs:[' + arr.map(function (dir) {
-                    return toJSONByArray('type: ' + avalon.quote(dir.type), 'attrName:' + avalon.quote(dir.attrName), dir.param ? 'param:' + avalon.quote(dir.param) : '', 'expr:' + createExpr(dir.expr))
-                }) + ']'
-            }
-            return ''
-        }
-    }
-
-    var rneedQuote = /[W\:-]/
-
-    function fixKey(k) {
-        return rneedQuote.test(k) || keyMap[k] ? avalon.quote(k) : k
-    }
-
-    function toJSONByArray() {
-        return '{' + avalon.slice(arguments, 0).filter(function (el) {
-            return el
-        }).join(',') + '}'
-    }
-
-    function toJSONByObject(obj) {
-        var arr = []
-        for (var i in obj) {
-            if (obj[i] === undefined || obj[i] === '') continue
-            arr.push(fixKey(i) + ':' + avalon.quote(obj[i]))
-        }
-        return '{' + arr + '}'
-    }
-
-    function getChildren(arr) {
-        var count = 0
-        for (var i = 0, el; el = arr[i++];) {
-            if (el.nodeName === '#document-fragment') {
-                count += getChildren(el.children)
-            } else {
-                count += 1
-            }
-        }
-        return count
-    }
-    function groupTree(parent, children) {
-        children && children.forEach(function (vdom) {
-            if (!vdom) return
-            var vlength = vdom.children && getChildren(vdom.children)
-            if (vdom.nodeName === '#document-fragment') {
-                var dom = createFragment()
-            } else {
-                dom = avalon$2.vdom(vdom, 'toDOM')
-                var domlength = dom.childNodes && dom.childNodes.length
-                if (domlength && vlength && domlength > vlength) {
-                    if (!appendChildMayThrowError[dom.nodeName]) {
-                        avalon$2.clearHTML(dom)
-                    }
-                }
-            }
-            if (vlength) {
-                groupTree(dom, vdom.children)
-            }
-            //高级版本可以尝试 querySelectorAll
-
-            try {
-                if (!appendChildMayThrowError[parent.nodeName]) {
-                    parent.appendChild(dom)
-                }
-            } catch (e) {}
-        })
-    }
-
-    function dumpTree(elem) {
-        var firstChild
-        while (firstChild = elem.firstChild) {
-            if (firstChild.nodeType === 1) {
-                dumpTree(firstChild)
-            }
-            elem.removeChild(firstChild)
-        }
-    }
-
-    function getRange(childNodes, node) {
-        var i = childNodes.indexOf(node) + 1
-        var deep = 1,
-            nodes = [],
-            end
-        nodes.start = i
-        while (node = childNodes[i++]) {
-            nodes.push(node)
-            if (node.nodeName === '#comment') {
-                if (startWith(node.nodeValue, 'ms-for:')) {
-                    deep++
-                } else if (node.nodeValue === 'ms-for-end:') {
-                    deep--
-                    if (deep === 0) {
-                        //  node.nodeValue = 'msfor-end:'
-                        end = node
-                        nodes.pop()
-                        break
-                    }
-                }
-            }
-        }
-        nodes.end = end
-        return nodes
-    }
-
-    function startWith(long, short) {
-        return long.indexOf(short) === 0
-    }
-
-    var appendChildMayThrowError = {
-        '#text': 1,
-        '#comment': 1,
-        script: 1,
-        style: 1,
-        noscript: 1
-    }
-
-    /**
-     * 生成一个渲染器,并作为它第一个遇到的ms-controller对应的VM的$render属性
-     * @param {String|DOM} node
-     * @param {ViewModel|Undefined} vm
-     * @param {Function|Undefined} beforeReady
-     * @returns {Render}
-     */
-    avalon$2.scan = function (node, vm, beforeReady) {
-        return new Render(node, vm, beforeReady || avalon$2.noop)
-    }
-
-    /**
-     * avalon.scan 的内部实现
-     */
-    function Render(node, vm, noexe) {
-        this.root = node //如果传入的字符串,确保只有一个标签作为根节点
-        this.vm = vm
-        this.noexe = !noexe
-        this.bindings = [] //收集待加工的绑定属性
-        this.callbacks = []
-        this.staticIndex = 0
-        this.staticTree = {}
-        this.directives = []
-        this.init()
-
-        this._scope = vm
-    }
-
-    Render.prototype = {
-        /**
-         * 开始扫描指定区域
-         * 收集绑定属性
-         * 生成指令并建立与VM的关联
-         */
-        init: function init() {
-            var vnodes
-            if (this.root && this.root.nodeType > 0) {
-                vnodes = fromDOM(this.root) //转换虚拟DOM
-                //将扫描区域的每一个节点与其父节点分离,更少指令对DOM操作时,对首屏输出造成的频繁重绘
-                dumpTree(this.root)
-            } else if (typeof this.root === 'string') {
-                vnodes = fromString(this.root) //转换虚拟DOM
-            } else {
-                return avalon$2.warn('avalon.scan first argument must element or HTML string')
-            }
-
-            this.root = vnodes[0]
-            this.vnodes = vnodes
-            this.scanChildren(vnodes, this.vm, true)
-        },
-
-        static: function _static(i) {
-            return this.staticTree[i]
-        },
-        text: function text(a) {
-            return a + ''
-        },
-        scanChildren: function scanChildren(children, scope, isRoot) {
-            for (var i = 0; i < children.length; i++) {
-                var vdom = children[i]
-                switch (vdom.nodeName) {
-                    case '#text':
-                        this.scanText(vdom, scope)
-                        break
-                    case '#comment':
-                        this.scanComment(vdom, scope, children)
-                        break
-                    default:
-                        this.scanTag(vdom, scope, children, false)
-                        break
-                }
-            }
-            if (isRoot) {
-                this.complete()
-            }
-        },
-
-        ctrl: function ctrl(id, scope, cb) {
-            var dir = directives['controller']
-            scope = dir.getScope.call(this, id, scope)
-            return cb(scope)
-        },
-        /**
-         * 从文本节点获取指令
-         * @param {type} vdom 
-         * @param {type} scope
-         * @returns {undefined}
-         */
-        scanText: function scanText(vdom, scope) {
-            if (config.rexpr.test(vdom.nodeValue)) {
-                vdom.dynamic = true
-            }
-        },
-
-
-        /**
-         * 从注释节点获取指令
-         * @param {type} vdom 
-         * @param {type} scope
-         * @param {type} parentChildren
-         * @returns {undefined}
-         */
-        scanComment: function scanComment(vdom, scope, parentChildren) {
-            if (startWith(vdom.nodeValue, 'ms-for:')) {
-                vdom.dynamic = true
-                this.getForBinding(vdom, scope, parentChildren)
-            }
-        },
-
-
-        /**
-         * 从元素节点的nodeName与属性中获取指令
-         * @param {type} vdom 
-         * @param {type} scope
-         * @param {type} parentChildren
-         * @param {type} isRoot 用于执行complete方法
-         * @returns {undefined}
-         */
-        scanTag: function scanTag(vdom, scope, parentChildren, isRoot) {
-            var dirs = {},
-                attrs = vdom.props,
-                hasDir,
-                hasFor
-            for (var attr in attrs) {
-                var value = attrs[attr]
-                var oldName = attr
-                if (attr.charAt(0) === ':') {
-                    attr = 'ms-' + attr.slice(1)
-                }
-                if (startWith(attr, 'ms-')) {
-                    dirs[attr] = value
-                    var type = attr.match(/\w+/g)[1]
-                    type = eventMap[type] || type
-                    if (!directives[type]) {
-                        avalon$2.warn(attr + ' has not registered!')
-                    }
-                    hasDir = true
-                }
-                if (attr === 'ms-for') {
-                    hasFor = value
-                    delete attrs[oldName]
-                }
-            }
-            var $id = dirs['ms-important'] || dirs['ms-controller']
-            if ($id) {
-                /**
-                 * 后端渲染
-                 * serverTemplates后端给avalon添加的对象,里面都是模板,
-                 * 将原来后端渲染好的区域再还原成原始样子,再被扫描
-                 */
-
-                //推算出指令类型
-                var type = dirs['ms-important'] === $id ? 'important' : 'controller'
-                //推算出用户定义时属性名,是使用ms-属性还是:属性
-                var attrName = 'ms-' + type in attrs ? 'ms-' + type : ':' + type
-
-                if (inBrowser) {
-                    delete attrs[attrName]
-                }
-                var dir = directives[type]
-                scope = dir.getScope.call(this, $id, scope)
-
-                if (!scope) {
-                    return
-                } else {
-                    if (!this._scope) this._scope = scope
-                    vdom.dynamic = true
-                    var clazz = attrs['class']
-                    if (clazz) {
-                        attrs['class'] = (' ' + clazz + ' ').replace(' ms-controller ', '').trim()
-                    }
-                }
-                var render = this
-                scope.$render = render
-                //            this.callbacks.push(function() {
-                //                //用于删除ms-controller
-                //                dir.update.call(render, vdom, attrName, $id)
-                //            })
-            }
-            if (hasFor) {
-                if (vdom.dom) {
-                    vdom.dom.removeAttribute(oldName)
-                }
-                //  return this.getForBindingByElement(vdom, scope, parentChildren, hasFor)
-            }
-
-            if (/^ms\-/.test(vdom.nodeName)) {
-                attrs.is = vdom.nodeName
-            }
-
-            if (attrs['is']) {
-                if (!dirs['ms-widget']) {
-                    dirs['ms-widget'] = '{}'
-                }
-                hasDir = true
-            }
-            if (hasDir) {
-                vdom.dirs = dirs
-                vdom.dynamic = true
-                //  this.bindings.push([vdom, scope, dirs])
-            }
-            var children = vdom.children
-            //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
-            if (!orphanTag[vdom.nodeName] && children && children.length && !delayCompileNodes(dirs)) {
-                this.scanChildren(children, scope, false)
-            }
-        },
-
-
-        /**
-         * 将绑定属性转换为指令
-         * 执行各种回调与优化指令
-         * @returns {undefined}
-         */
-        complete: function complete() {
-            optimize(this.root)
-            this.Yield = Yield
-            var fn = new Yield(this.vnodes, this)
-            this.templateBody = fn.templateBody
-            if (this.noexe) {
-                var nodes = fn.templateFn(this._scope, this)
-                console.log(nodes)
-            }
-
-            //        this.yieldDirectives()
-            //        this.beforeReady()
-            //        if (inBrowser) {
-            //            var root = this.root
-            //            if (inBrowser) {
-            //                var rootDom = avalon.vdom(root, 'toDOM')
-            //                groupTree(rootDom, root.children)
-            //            }
-            //        }
-            //
-            //        this.mount = true
-            //        var fn
-            //        while (fn = this.callbacks.pop()) {
-            //            fn()
-            //        }
-            //        this.optimizeDirectives()
-        },
-
-
-        /**
-         * 将收集到的绑定属性进行深加工,最后转换指令
-         * @returns {Array<tuple>}
-         */
-        yieldDirectives: function yieldDirectives() {
-            var tuple
-            while (tuple = this.bindings.shift()) {
-                var vdom = tuple[0],
-                    scope = tuple[1],
-                    dirs = tuple[2],
-                    bindings = []
-                if ('nodeValue' in dirs) {
-                    bindings = parseInterpolate(dirs)
-                } else if (!('ms-skip' in dirs)) {
-                    bindings = parseAttributes(dirs, tuple)
-                }
-                for (var i = 0, binding; binding = bindings[i++];) {
-                    var dir = directives[binding.type]
-                    if (!inBrowser && /on|duplex|active|hover/.test(binding.type)) {
-                        continue
-                    }
-                    if (dir.beforeInit) {
-                        dir.beforeInit.call(binding)
-                    }
-
-                    var directive$$1 = new Directive(scope, binding, vdom, this)
-                    this.directives.push(directive$$1)
-                }
-            }
-        },
-
-
-        /**
-         * 修改指令的update与callback方法,让它们以后执行时更加高效
-         * @returns {undefined}
-         */
-        optimizeDirectives: function optimizeDirectives() {
-            for (var i = 0, el; el = this.directives[i++];) {
-                el.callback = directives[el.type].update
-                el.update = newUpdate
-                el._isScheduled = false
-            }
-        },
-
-        update: function update() {
-            for (var i = 0, el; el = this.directives[i++];) {
-                el.update()
-            }
-        },
-
-        /**
-         * 销毁所有指令
-         * @returns {undefined}
-         */
-        dispose: function dispose() {
-            var list = this.directives || []
-            for (var i = 0, el; el = list[i++];) {
-                el.dispose()
-            }
-            //防止其他地方的this.innerRender && this.innerRender.dispose报错
-            for (var _i8 in this) {
-                if (_i8 !== 'dispose') delete this[_i8]
-            }
-        },
-
-
-        /**
-         * 将循环区域转换为for指令
-         * @param {type} begin 注释节点
-         * @param {type} scope
-         * @param {type} parentChildren
-         * @param {type} userCb 循环结束回调
-         * @returns {undefined}
-         */
-        getForBinding: function getForBinding(begin, scope, parentChildren, userCb) {
-            var expr = begin.nodeValue.replace('ms-for:', '').trim()
-            begin.nodeValue = 'ms-for:' + expr
-            var nodes = getRange(parentChildren, begin)
-            var end = nodes.end
-            var fragment = avalon$2.vdom(nodes, 'toHTML')
-            parentChildren.splice(nodes.start, nodes.length)
-            begin.props = {}
-            this.bindings.push([begin, scope, {
-                'ms-for': expr
-            }, {
-                begin: begin,
-                end: end,
-                expr: expr,
-                userCb: userCb,
-                fragment: fragment,
-                parentChildren: parentChildren
-            }])
-        },
-
-
-        /**
-         * 在带ms-for元素节点旁添加两个注释节点,组成循环区域
-         * @param {type} vdom
-         * @param {type} scope
-         * @param {type} parentChildren
-         * @param {type} expr
-         * @returns {undefined}
-         */
-        getForBindingByElement: function getForBindingByElement(vdom, scope, parentChildren, expr) {
-            var index = parentChildren.indexOf(vdom) //原来带ms-for的元素节点
-            var props = vdom.props
-            var begin = {
-                nodeName: '#comment',
-                nodeValue: 'ms-for:' + expr
-            }
-            if (props.slot) {
-                begin.slot = props.slot
-                delete props.slot
-            }
-            var end = {
-                nodeName: '#comment',
-                nodeValue: 'ms-for-end:'
-            }
-            parentChildren.splice(index, 1, begin, vdom, end)
-            this.getForBinding(begin, scope, parentChildren, props['data-for-rendered'])
-        }
-    }
-    var viewID
-
-    function newUpdate() {
-        var oldVal = this.beforeUpdate()
-        var newVal = this.value = this.get()
-        if (this.callback && this.diff(newVal, oldVal)) {
-            this.callback(this.node, this.value)
-            var vm = this.vm
-            var $render = vm.$render
-            var list = vm.$events['onViewChange']
-            /* istanbul ignore if */
-            if (list && $render && $render.root && !avalon$2.viewChanging) {
-                if (viewID) {
-                    clearTimeout(viewID)
-                    viewID = null
-                }
-                viewID = setTimeout(function () {
-                    list.forEach(function (el) {
-                        el.callback.call(vm, {
-                            type: 'viewchange',
-                            target: $render.root,
-                            vmodel: vm
-                        })
-                    })
-                })
-            }
-        }
-        this._isScheduled = false
     }
 
     var events = 'onInit,onReady,onViewChange,onDispose,onEnter,onLeave'
@@ -6832,154 +6891,99 @@ IE7的checked属性应该使用defaultChecked来设置
     }
     var componentQueue = []
     avalon$2.directive('widget', {
-        delay: true,
+
         priority: 4,
         deep: true,
-        init: function init() {
+        init: function init(oldVal, vdom, newVdom, afterCb) {
             //cached属性必须定义在组件容器里面,不是template中
-            var vdom = this.node
-            this.cacheVm = !!vdom.props.cached
-            if (vdom.dom && vdom.nodeName === '#comment') {
-                var comment = vdom.dom
-            }
-            var oldValue = this.getValue()
-            var value = toObject(oldValue)
-            //外部VM与内部VM
-            // ＝＝＝创建组件的VM＝＝BEGIN＝＝＝
-            var is = vdom.props.is || value.is
+            this.cacheVm = !!newVdom.props.cached
+            //将数组形式转换为对象形式
+            var value = toObject(oldVal)
+
+            var is = newVdom.props.is || value.is
             this.is = is
             var component = avalon$2.components[is]
-            //外部传入的总大于内部
-            if (!('fragment' in this)) {
-                if (!vdom.isVoidTag) {
-                    //提取组件容器内部的东西作为模板
-                    var text = vdom.children[0]
-                    if (text && text.nodeValue) {
-                        this.fragment = text.nodeValue
-                    } else {
-                        this.fragment = avalon$2.vdom(vdom.children, 'toHTML')
-                    }
-                } else {
-                    this.fragment = false
-                }
-            }
             //如果组件还没有注册，那么将原元素变成一个占位用的注释节点
             if (!component) {
                 this.readyState = 0
-                vdom.nodeName = '#comment'
-                vdom.nodeValue = 'unresolved component placeholder'
-                delete vdom.dom
+                newVdom.nodeName = '#comment'
+                newVdom.nodeValue = 'unresolved component placeholder'
+                newVdom.dom = newVdom.props = null
                 avalon$2.Array.ensure(componentQueue, this)
                 return
             }
+
             this.readyState = 1
-            //如果是非空元素，比如说xmp, ms-*, template
-            var id = value.id || value.$id
-            var hasCache = avalon$2.vmodels[id]
-            var fromCache = false
 
-            if (hasCache) {
-                comVm = hasCache
-                this.comVm = comVm
-                replaceRoot(this, comVm.$render)
-                fromCache = true
-            } else {
-                var comVm = createComponentVm(component, value, is)
-                fireComponentHook(comVm, vdom, 'Init')
-                this.comVm = comVm
+            var id = value.id || value.$id,
+                innerRender,
+                comVm
+            var fromCache = avalon$2.vmodels[id]
 
-                // ＝＝＝创建组件的VM＝＝END＝＝＝
-                var innerRender = avalon$2.scan(component.template, comVm)
-                comVm.$render = innerRender
-                replaceRoot(this, innerRender)
-                var nodesWithSlot = []
-                var directives$$1 = []
-                if (this.fragment || component.soleSlot) {
-                    var curVM = this.fragment ? this.vm : comVm
-                    var curText = this.fragment || '{{##' + component.soleSlot + '}}'
-                    var childBoss = avalon$2.scan('<div>' + curText + '</div>', curVM, function () {
-                        nodesWithSlot = this.root.children
-                    })
-                    directives$$1 = childBoss.directives
-                    this.childBoss = childBoss
-                    for (var i in childBoss) {
-                        delete childBoss[i]
-                    }
-                }
-                Array.prototype.push.apply(innerRender.directives, directives$$1)
-
-                var arraySlot = [],
-                    objectSlot = {}
-                //从用户写的元素内部 收集要移动到 新创建的组件内部的元素
-                if (component.soleSlot) {
-                    arraySlot = nodesWithSlot
-                } else {
-                    nodesWithSlot.forEach(function (el, i) {
-                        //要求带slot属性
-                        if (el.slot) {
-                            var nodes = getRange(nodesWithSlot, el)
-                            nodes.push(nodes.end)
-                            nodes.unshift(el)
-                            objectSlot[el.slot] = nodes
-                        } else if (el.props) {
-                            var name = el.props.slot
-                            if (name) {
-                                delete el.props.slot
-                                if (Array.isArray(objectSlot[name])) {
-                                    objectSlot[name].push(el)
-                                } else {
-                                    objectSlot[name] = [el]
-                                }
-                            }
-                        }
-                    })
-                }
-                //将原来元素的所有孩子，全部移动新的元素的第一个slot的位置上
-                if (component.soleSlot) {
-                    insertArraySlot(innerRender.vnodes, arraySlot)
-                } else {
-                    insertObjectSlot(innerRender.vnodes, objectSlot)
-                }
-            }
-
-            if (comment) {
-                var dom = avalon$2.vdom(vdom, 'toDOM')
-                comment.parentNode.replaceChild(dom, comment)
-                comVm.$element = innerRender.root.dom = dom
-                delete this.reInit
-            }
-
-            //处理DOM节点
-
-            dumpTree(vdom.dom)
-            comVm.$element = vdom.dom
-            groupTree(vdom.dom, vdom.children)
             if (fromCache) {
-                fireComponentHook(comVm, vdom, 'Enter')
+                comVm = fromCache
+                this.comVm = comVm
+                innerRender = comVm.$render
             } else {
-                fireComponentHook(comVm, vdom, 'Ready')
+                comVm = createComponentVm(component, value, is)
+                fireComponentHook(newVdom.vm, vdom, 'Init')
+                this.comVm = comVm
+                innerRender = avalon$2.scan(component.template, comVm, false)
+
+                if (component.soleSlot) {
+                    this.getter = this.getter || createGetter('@' + component.soleSlot)
+                    innerRender.slots.defaults = { dynamic: true, nodeName: '#text', nodeValue: this.getter(comVm) || '' }
+                } else {
+                    this.slots = innerRender.slots = newVdom.slots
+                }
+
+                innerRender.exe = innerRender.noDiff = true
+                innerRender.complete()
+                delete vdom.dom
             }
+
+            //当组件生成出来，slot元素应该在它应在的位置，然后旧的组件也有slot元素 
+
+
+            this.vdom = vdom
+            var root$$1 = innerRender.root
+            Array('nodeName', 'vtype', 'props', 'children', 'dom').forEach(function (prop) {
+                newVdom[prop] = vdom[prop] = root$$1[prop]
+            })
+
+            afterCb.push(function (vdom) {
+                comVm.$element = vdom.dom
+                root$$1.dom = vdom.dom
+                if (fromCache) {
+                    fireComponentHook(comVm, vdom, 'Enter')
+                } else {
+                    fireComponentHook(comVm, vdom, 'Ready')
+                }
+            })
         },
-        diff: function diff(newVal, oldVal) {
-            if (cssDiff.call(this, newVal, oldVal)) {
+        diff: function diff(oldVal, newVal, vdom, newVdom) {
+            diffSlots(this.slots, newVdom.slots)
+
+            if (cssDiff.call(this, oldVal, newVal)) {
+                if (!this.readyState) this.readyState = 0
+                this.delay = false
                 return true
             }
+            this.delay = true
+            console.log('diff return false')
         },
 
-        update: function update(vdom, value) {
+        update: function update(value, vdom, newVdom, afterCb) {
             // this.oldValue = value //★★防止递归
             this.value = avalon$2.mix(true, {}, value)
             switch (this.readyState) {
                 case 0:
-                    if (this.reInit) {
-                        this.init()
-                    }
+                    this.init(value, vdom, newVdom, afterCb)
                     break
-                case 1:
-                    this.readyState++
-                    break
+
                 default:
                     this.readyState++
+
                     var comVm = this.comVm
                     avalon$2.viewChanging = true
                     avalon$2.transaction(function () {
@@ -6998,31 +7002,17 @@ IE7的checked属性应该使用defaultChecked来设置
         },
         beforeDispose: function beforeDispose() {
             var comVm = this.comVm
-            if (!this.cacheVm) {
-                fireComponentHook(comVm, this.node, 'Dispose')
-                comVm.$hashcode = false
-                delete avalon$2.vmodels[comVm.$id]
-                this.innerRender && this.innerRender.dispose()
-            } else {
-                fireComponentHook(comVm, this.node, 'Leave')
-            }
+            console.log(comVm, 'dispose')
+            //        if (!this.cacheVm) {
+            //            fireComponentHook(comVm, this.node, 'Dispose')
+            //            comVm.$hashcode = false
+            //            delete avalon.vmodels[comVm.$id]
+            //            this.innerRender && this.innerRender.dispose()
+            //        } else {
+            //            fireComponentHook(comVm, this.node, 'Leave')
+            //        }
         }
     })
-
-    function replaceRoot(instance, innerRender) {
-        instance.innerRender = innerRender
-        var root$$1 = innerRender.root
-        var vdom = instance.node
-        var slot = vdom.props.slot
-        for (var i in root$$1) {
-            vdom[i] = root$$1[i]
-        }
-        if (vdom.props && slot) {
-            vdom.props.slot = slot
-        }
-        innerRender.root = vdom
-        innerRender.vnodes[0] = vdom
-    }
 
     function fireComponentHook(vm, vdom, name) {
         var list = vm.$events['on' + name]
@@ -7075,38 +7065,6 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     }
 
-    function resetParentChildren(nodes, arr) {
-        var dir = arr && arr[0] && arr[0].forDir
-        if (dir) {
-            dir.parentChildren = nodes
-        }
-    }
-
-    function insertArraySlot(nodes, arr) {
-        for (var i = 0, el; el = nodes[i]; i++) {
-            if (el.nodeName === 'slot') {
-                resetParentChildren(nodes, arr)
-                nodes.splice.apply(nodes, [i, 1].concat(arr))
-                break
-            } else if (el.children) {
-                insertArraySlot(el.children, arr)
-            }
-        }
-    }
-
-    function insertObjectSlot(nodes, obj) {
-        for (var i = 0, el; el = nodes[i]; i++) {
-            if (el.nodeName === 'slot') {
-                var name = el.props.name
-                resetParentChildren(nodes, obj[name])
-                nodes.splice.apply(nodes, [i, 1].concat(obj[name]))
-                continue
-            } else if (el.children) {
-                insertObjectSlot(el.children, obj)
-            }
-        }
-    }
-
     avalon$2.components = {}
     avalon$2.component = function (name, component) {
         /**
@@ -7115,6 +7073,10 @@ IE7的checked属性应该使用defaultChecked来设置
          * soleSlot: string
          */
         avalon$2.components[name] = component
+        component.extend = function (child) {
+            var obj = avalon$2.mix(true, {}, this.defaults, child)
+            return avalon$2.component(name, obj)
+        }
         for (var el, i = 0; el = componentQueue[i]; i++) {
             if (el.is === name) {
                 componentQueue.splice(i, 1)
@@ -7124,6 +7086,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 i--
             }
         }
+        return component
     }
 
     return avalon$2

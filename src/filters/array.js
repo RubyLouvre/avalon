@@ -43,10 +43,10 @@ export function orderBy(array, by, decend) {
     })
 }
 
-function __repeat(array, isArray, cb) {
+export function __repeat(array, isArray, cb) {
     if (isArray) {
         array.forEach(function(val, index) {
-            cb(index)
+            cb(index, true)
         })
     } else if (typeof array.$track === 'string') {
         array.$track.replace(/[^☥]+/g, function(k) {

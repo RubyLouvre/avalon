@@ -37,6 +37,9 @@ if (typeof Proxy === 'function') {
         for (let i in clone) {
             vm[i] = clone[i]
         }
+        vm.hasOwnProperty = function(a) {
+            return wrapIt(this.$track).indexOf(wrapIt(a)) !== -1
+        }
         var $computed = clone.$computed
             //再添加计算属性
         if ($computed) {
@@ -59,8 +62,8 @@ if (typeof Proxy === 'function') {
                     delete $computed[i]
                 }
             }
+
             for (let i in $computed) {
-                
                 vm[i] = $computed[i]
             }
         }
@@ -97,17 +100,18 @@ if (typeof Proxy === 'function') {
             }
             //收集依赖
             var m = target.$accessors[name]
-            if(m && m.get){
+            if (m && m.get) {
                 return m.get()
             }
-            
+
             return target[name]
         },
         set(target, name, value) {
+         
             if (name === '$model') {
                 return true
             }
-            if (name === '$computed') {
+            if (name === '$computed' || 'hasOwnProperty' === name) {
                 target[name] = value
                 return true
             }

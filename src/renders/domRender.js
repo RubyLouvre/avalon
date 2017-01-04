@@ -8,6 +8,7 @@ import { runActions, collectDeps } from '../vmodel/transaction'
 
 import { eventMap } from '../parser/attributes'
 import { $$skipArray } from '../vmodel/reserved'
+import { __repeat } from '../filters/array'
 
 import { startWith, dumpTree, getRange } from './share'
 import { diff } from './diff'
@@ -283,18 +284,9 @@ Render.prototype = {
         var nodes = []
         var keys = str.split(',')
         nodes.cb = keys.splice(3, 7).join(',')
-
-        if (Array.isArray(obj)) {
-            for (var i = 0, n = obj.length; i < n; i++) {
-                repeatCb(obj, obj[i], i, keys, nodes, cb, true)
-            }
-        } else if (avalon.isObject(obj)) {
-            for (var i in obj) {
-                if (obj.hasOwnProperty(i) && !(i in $$skipArray)) {
-                    repeatCb(obj, obj[i], i, keys, nodes, cb)
-                }
-            }
-        }
+        __repeat(obj, Array.isArray(obj), function(i, flag){
+             repeatCb(obj, obj[i], i, keys, nodes, cb, flag)
+        })         
         return nodes
     },
     schedule() {

@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-2:0:10 version 2.2.3 by 司徒正美
+built in 2017-1-5:1:49 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -1185,6 +1185,31 @@ IE7的checked属性应该使用defaultChecked来设置
     locate.SHORTMONTH = locate.MONTH;
     dateFilter.locate = locate;
 
+    /**
+    $$skipArray:是系统级通用的不可监听属性
+    $skipArray: 是当前对象特有的不可监听属性
+    
+     不同点是
+     $$skipArray被hasOwnProperty后返回false
+     $skipArray被hasOwnProperty后返回true
+     */
+    var falsy;
+    var $$skipArray = {
+        $id: falsy,
+        $render: falsy,
+        $track: falsy,
+        $element: falsy,
+        $watch: falsy,
+        $fire: falsy,
+        $events: falsy,
+        $computed: falsy,
+        $accessors: falsy,
+        $hashcode: falsy,
+        $mutations: falsy,
+        $vbthis: falsy,
+        $vbsetter: falsy
+    };
+
     /*
     https://github.com/hufyhang/orderBy/blob/master/index.js
     */
@@ -1199,20 +1224,16 @@ IE7的checked属性应该使用defaultChecked来设置
         };
         var mapping = {};
         var temp = [];
-        var index = 0;
-        for (var key in array) {
-            if (array.hasOwnProperty(key)) {
-                var val = array[key];
-                var k = criteria(val, key);
-                if (k in mapping) {
-                    mapping[k].push(key);
-                } else {
-                    mapping[k] = [key];
-                }
-
-                temp.push(k);
+        __repeat(array, Array.isArray(array), function (key) {
+            var val = array[key];
+            var k = criteria(val, key);
+            if (k in mapping) {
+                mapping[k].push(key);
+            } else {
+                mapping[k] = [key];
             }
-        }
+            temp.push(k);
+        });
 
         temp.sort();
         if (decend < 0) {
@@ -1228,6 +1249,24 @@ IE7的checked属性应该使用defaultChecked来设置
                 target[key] = array[key];
             }
         });
+    }
+
+    function __repeat(array, isArray$$1, cb) {
+        if (isArray$$1) {
+            array.forEach(function (val, index) {
+                cb(index, true);
+            });
+        } else if (typeof array.$track === 'string') {
+            array.$track.replace(/[^☥]+/g, function (k) {
+                cb(k);
+            });
+        } else {
+            for (var i in array) {
+                if (array.hasOwnProperty(i)) {
+                    cb(i);
+                }
+            }
+        }
     }
     function filterBy(array, search) {
         var type = avalon.type(array);
@@ -1248,20 +1287,21 @@ IE7的checked属性应该使用defaultChecked来设置
         } else {
             return array;
         }
-
-        array = convertArray(array).filter(function (el, i) {
-            return !!criteria.apply(el, [el.value, i].concat(args));
-        });
-
+        var index = 0;
         var isArray$$1 = type === 'array';
         var target = isArray$$1 ? [] : {};
-        return recovery(target, array, function (el) {
-            if (isArray$$1) {
-                target.push(el.value);
-            } else {
-                target[el.key] = el.value;
+        __repeat(array, isArray$$1, function (key) {
+            var val = array[key];
+            if (criteria.apply(val, [val, index].concat(args))) {
+                if (isArray$$1) {
+                    target.push(val);
+                } else {
+                    target[key] = val;
+                }
             }
+            index++;
         });
+        return target;
     }
 
     function selectBy(data, array, defaults) {
@@ -1288,7 +1328,7 @@ IE7的checked属性应该使用defaultChecked来设置
         }
         //将目标转换为数组
         if (type === 'object') {
-            input = convertArray(input);
+            input = convertArray(input, false);
         }
         var n = input.length;
         limit = Math.floor(Math.min(n, limit));
@@ -1322,19 +1362,17 @@ IE7的checked属性应该使用defaultChecked来设置
 
     //Chrome谷歌浏览器中js代码Array.sort排序的bug乱序解决办法
     //http://www.cnblogs.com/yzeng/p/3949182.html
-    function convertArray(array) {
+    function convertArray(array, isArray$$1) {
         var ret = [],
             i = 0;
-        for (var key in array) {
-            if (array.hasOwnProperty(key)) {
-                ret[i] = {
-                    oldIndex: i,
-                    value: array[key],
-                    key: key
-                };
-                i++;
-            }
-        }
+        __repeat(array, isArray$$1, function (key) {
+            ret[i] = {
+                oldIndex: i,
+                value: array[key],
+                key: key
+            };
+            i++;
+        });
         return ret;
     }
 
@@ -3284,30 +3322,6 @@ IE7的checked属性应该使用defaultChecked来设置
         }
         return ret;
     }
-
-    /**
-    $$skipArray:是系统级通用的不可监听属性
-    $skipArray: 是当前对象特有的不可监听属性
-    
-     不同点是
-     $$skipArray被hasOwnProperty后返回false
-     $skipArray被hasOwnProperty后返回true
-     */
-    var falsy;
-    var $$skipArray = {
-        $id: falsy,
-        $render: falsy,
-        $track: falsy,
-        $element: falsy,
-        $watch: falsy,
-        $fire: falsy,
-        $events: falsy,
-        $accessors: falsy,
-        $hashcode: falsy,
-        $mutations: falsy,
-        $vbthis: falsy,
-        $vbsetter: falsy
-    };
 
     avalon.pendingActions = [];
     avalon.uniqActions = {};
@@ -5324,6 +5338,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
             if (dirs) {
                 var hasCtrl = dirs['ms-controller'] || dirs['ms-important'];
+                var isImport = 'ms-important' in dirs;
                 if (dirs['ms-widget']) {
                     return this.genComponent(node, dirs);
                 }
@@ -5358,7 +5373,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 json = hasIf + ' ? ' + json + ' : \u01A9.comment(\'if\')';
             }
             if (hasCtrl) {
-                return '\u01A9.ctrl( ' + avalon.quote(hasCtrl) + ', __vmodel__, function(__vmodel__) {\n                return ' + json + '\n            }) ';
+                return '\u01A9.ctrl( ' + avalon.quote(hasCtrl) + ', __vmodel__, ' + isImport + ', function(__vmodel__) {\n                return ' + json + '\n            }) ';
             } else {
                 return json;
             }
@@ -6049,8 +6064,9 @@ IE7的checked属性应该使用defaultChecked来设置
             a.slot = name;
             return a;
         },
-        ctrl: function ctrl(id, scope, cb) {
-            var dir = directives['controller'];
+        ctrl: function ctrl(id, scope, isImport, cb) {
+            var name = isImport ? 'important' : 'controller';
+            var dir = directives[name];
             scope = dir.getScope.call(this, id, scope);
             return cb(scope);
         },
@@ -6058,18 +6074,11 @@ IE7的checked属性应该使用defaultChecked来设置
             var nodes = [];
             var keys = str.split(',');
             nodes.cb = keys.splice(3, 7).join(',');
+            __repeat(obj, Array.isArray(obj), function (i, flag) {
+                repeatCb(obj, obj[i], i, keys, nodes, cb, flag);
+            });
+            console.log(keys);
 
-            if (Array.isArray(obj)) {
-                for (var i = 0, n = obj.length; i < n; i++) {
-                    repeatCb(obj, obj[i], i, keys, nodes, cb, true);
-                }
-            } else if (avalon.isObject(obj)) {
-                for (var i in obj) {
-                    if (obj.hasOwnProperty(i)) {
-                        repeatCb(obj, obj[i], i, keys, nodes, cb);
-                    }
-                }
-            }
             return nodes;
         },
         schedule: function schedule() {
@@ -6244,12 +6253,7 @@ IE7的checked属性应该使用defaultChecked来设置
             });
             return new Function('$event', '$$l', ret.join('\n'));
         },
-        diff: function diff(oldVal, newVal, a, b) {
-            if (oldVal !== newVal || a === b) {
-                this.value = newVal + '';
-                return true;
-            }
-        },
+        diff: impDir.diff,
         update: function update(value, vdom, _) {
 
             var uuid = (this.name + '_' + value).replace(/^(\:|ms\-)/, 'e').replace('-', '_').replace(/\s/g, '').replace(/[^$a-z]/ig, function (e) {
@@ -7396,7 +7400,6 @@ IE7的checked属性应该使用defaultChecked来设置
             if (vdom.validator) {
                 return;
             }
-            console.log(newVal);
             if (isObject(newVal)) {
                 //注意，这个Form标签的虚拟DOM有两个验证对象
                 //一个是vmValidator，它是用户VM上的那个原始子对象，也是一个VM
@@ -7422,8 +7425,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 dom._ms_validate_ = validator;
                 var fields = validator.fields;
                 collectFeild(vdom.children, fields, validator);
-                console.log('999999', validator);
-                avalon.bind(window, 'keyup', function (e) {
+                avalon.bind(document, 'focusin', function (e) {
                     var dom = e.target;
                     var duplex = dom._ms_duplex_;
                     var vdom = (duplex || {}).vdom;
@@ -7512,7 +7514,7 @@ IE7的checked属性应该使用defaultChecked来设置
             }
             /* istanbul ignore if */
             if (elem.disabled) return;
-            var rules = field.rules;
+            var rules = field.vdom.rules;
             var ngs = [],
                 isOk = true;
             if (!(rules.norequired && value === '')) {
