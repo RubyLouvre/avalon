@@ -19,10 +19,19 @@ export var impDir = avalon.directive('important', {
     update: function(val, vdom, newVdom, afterCb) {
         var vm = newVdom.vm
         afterCb.push(function() {
-            vm.$element = vdom.dom
-            avalon(vdom.dom).removeClass('ms-controller')
-            vm.$fire('onReady')
-            delete vm.$events.onReady
+            var dom = vdom.dom
+            vm.$element = dom
+            avalon(dom).removeClass('ms-controller')
+            var fn = vm.$hooks.onReady
+            if (fn) {
+                fn({
+                    vmodel: vm,
+                    target: dom,
+                    type: 'ready'
+                })
+                delete vm.$hooks.onReady
+            }
+
         })
 
     }

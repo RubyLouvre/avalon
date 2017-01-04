@@ -41,7 +41,12 @@ export function hideProperty(host, name, value) {
 
 export function watchFactory(core) {
     return function $watch(expr, callback, deep) {
-        var w = new Action(core.__proxy__, {
+        var vm = core.__proxy__
+        if(expr == 'onReady'){
+            vm.$hooks[expr] = callback
+            return
+        }
+        var w = new Action(vm, {
             deep: deep,
             type: 'user',
             expr: '@'+expr

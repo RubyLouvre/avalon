@@ -16,6 +16,7 @@ export var $$skipArray = {
     $fire: falsy,
     $events: falsy,
     $computed: falsy,
+    $hooks: falsy,
     $accessors: falsy,
     $hashcode: falsy,
     $mutations: falsy,

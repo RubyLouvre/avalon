@@ -25,6 +25,10 @@ function $fire(expr, a) {
 }
 
 function $watch(expr, callback, deep) {
+    if(expr == 'onReady'){
+        this.$hooks[expr] = callback
+        return
+    }
     var core = this.$events
     var w = new Action(this, {
         deep: deep,

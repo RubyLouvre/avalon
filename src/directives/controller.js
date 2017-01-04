@@ -5,18 +5,18 @@ avalon.directive('controller', {
     priority: 2,
     diff: impDir.diff,
     update: impDir.update,
-    getScope: function(name, scope) {
-        var v = avalon.vmodels[name]
-        if (v) {
-            v.$render = this
-            if (scope && scope !== v) {
-                var key = scope.$id + '-' + name
+    getScope: function(bname, upper) {
+        var lower  = avalon.vmodels[bname]
+        if (lower) {
+            lower.$render = this
+            if (lower && lower !== upper) {
+                var key = upper.$id + '-' + bname
                 if (cachedCtrl[key])
                     return cachedCtrl[key]
-                return cachedCtrl[key] = platform.fuseFactory(scope, v)
+                return cachedCtrl[key] = platform.fuseFactory(upper, lower)
             }
-            return v
+            return lower
         }
-        return scope
+        return upper
     }
 })
