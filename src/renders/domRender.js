@@ -257,8 +257,8 @@ Render.prototype = {
         return { nodeName: '#comment', nodeValue: value }
     },
     text: function(a, d) {
-        a = a == null ? '\u200b' : a + ''
-        return { nodeName: '#text', nodeValue: a || '', dynamic: !!d }
+        var b = avalon.text(a) || '\u200b' 
+        return { nodeName: '#text', nodeValue: b, dynamic: !!d }
     },
     collectSlot: function(node, slots) {
         var name = node.props.slot

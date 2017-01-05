@@ -25,7 +25,7 @@ export function parseInterpolate(expr) {
                 }
             }
             if (rimprovePriority) {
-                expr = '(' + expr + ')'
+                expr = 'avalon.text(' + expr + ')'
             }
             tokens.push(expr)
 
@@ -33,4 +33,7 @@ export function parseInterpolate(expr) {
         }
     } while (str.length)
     return tokens.join('+')
+}
+avalon.text = function(a){
+    return a == null ? '': a+''
 }

@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-5:1:49 version 2.2.3 by 司徒正美
+built in 2017-1-5:11:22 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -1203,6 +1203,7 @@ IE7的checked属性应该使用defaultChecked来设置
         $fire: falsy,
         $events: falsy,
         $computed: falsy,
+        $hooks: falsy,
         $accessors: falsy,
         $hashcode: falsy,
         $mutations: falsy,
@@ -3978,6 +3979,7 @@ IE7的checked属性应该使用defaultChecked来设置
         this.$events = {
             __dep__: dd || new Mutation(this.$id)
         };
+        this.$hooks = this.$hooks || {};
         if (avalon.config.inProxyMode) {
             delete this.$mutations;
             this.$accessors = {};
@@ -4076,22 +4078,22 @@ IE7的checked属性应该使用defaultChecked来设置
 
     platform.createProxy = createProxy;
 
-    platform.itemFactory = function itemFactory(before, after) {
-        var keyMap = before.$model;
-        var core = new IProxy(keyMap);
-        var state = avalon.shadowCopy(core.$accessors, before.$accessors); //防止互相污染
-        var data = after.data;
-        //core是包含系统属性的对象
-        //keyMap是不包含系统属性的对象, keys
-        for (var key in data) {
-            var val = keyMap[key] = core[key] = data[key];
-            state[key] = createAccessor(key, val);
-        }
-        var keys = Object.keys(keyMap);
-        var vm = platform.createViewModel(core, state, core);
-        platform.afterCreate(vm, core, keys);
-        return vm;
-    };
+    //platform.itemFactory = function itemFactory(before, after) {
+    //    var keyMap = before.$model
+    //    var core = new IProxy(keyMap)
+    //    var state = avalon.shadowCopy(core.$accessors, before.$accessors) //防止互相污染
+    //    var data = after.data
+    //        //core是包含系统属性的对象
+    //        //keyMap是不包含系统属性的对象, keys
+    //    for (var key in data) {
+    //        var val = keyMap[key] = core[key] = data[key]
+    //        state[key] = createAccessor(key, val)
+    //    }
+    //    var keys = Object.keys(keyMap)
+    //    var vm = platform.createViewModel(core, state, core)
+    //    platform.afterCreate(vm, core, keys)
+    //    return vm
+    //}
     function createAccessor(key, val, isComputed) {
         var mutation = null;
         var Accessor = isComputed ? Computed : Mutation;
@@ -4116,7 +4118,8 @@ IE7的checked属性应该使用defaultChecked来设置
     platform.fuseFactory = function fuseFactory(before, after) {
         var keyMap = avalon.mix(before.$model, after.$model);
         var core = new IProxy(avalon.mix(keyMap, {
-            $id: before.$id + after.$id
+            $id: before.$id + after.$id,
+            $hooks: avalon.mix({}, before.$hooks, after.$hooks)
         }));
         var state = avalon.mix(core.$accessors, before.$accessors, after.$accessors); //防止互相污染
 
@@ -4300,7 +4303,12 @@ IE7的checked属性应该使用defaultChecked来设置
 
     function watchFactory(core) {
         return function $watch(expr, callback, deep) {
-            var w = new Action(core.__proxy__, {
+            var vm = core.__proxy__;
+            if (expr == 'onReady') {
+                vm.$hooks[expr] = callback;
+                return;
+            }
+            var w = new Action(vm, {
                 deep: deep,
                 type: 'user',
                 expr: '@' + expr
@@ -4489,10 +4497,18 @@ IE7的checked属性应该使用defaultChecked来设置
         update: function update(val, vdom, newVdom, afterCb) {
             var vm = newVdom.vm;
             afterCb.push(function () {
-                vm.$element = vdom.dom;
-                avalon(vdom.dom).removeClass('ms-controller');
-                vm.$fire('onReady');
-                delete vm.$events.onReady;
+                var dom = vdom.dom;
+                vm.$element = dom;
+                avalon(dom).removeClass('ms-controller');
+                var fn = vm.$hooks.onReady;
+                if (fn) {
+                    fn({
+                        vmodel: vm,
+                        target: dom,
+                        type: 'ready'
+                    });
+                    delete vm.$hooks.onReady;
+                }
             });
         }
     });
@@ -4502,18 +4518,18 @@ IE7的checked属性应该使用defaultChecked来设置
         priority: 2,
         diff: impDir.diff,
         update: impDir.update,
-        getScope: function getScope(name, scope) {
-            var v = avalon.vmodels[name];
-            if (v) {
-                v.$render = this;
-                if (scope && scope !== v) {
-                    var key = scope.$id + '-' + name;
+        getScope: function getScope(bname, upper) {
+            var lower = avalon.vmodels[bname];
+            if (lower) {
+                lower.$render = this;
+                if (lower && lower !== upper) {
+                    var key = upper.$id + '-' + bname;
                     if (cachedCtrl[key]) return cachedCtrl[key];
-                    return cachedCtrl[key] = platform.fuseFactory(scope, v);
+                    return cachedCtrl[key] = platform.fuseFactory(upper, lower);
                 }
-                return v;
+                return lower;
             }
-            return scope;
+            return upper;
         }
     });
 
@@ -5256,7 +5272,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     }
                 }
                 if (rimprovePriority) {
-                    expr = '(' + expr + ')';
+                    expr = 'avalon.text(' + expr + ')';
                 }
                 tokens.push(expr);
 
@@ -5265,6 +5281,9 @@ IE7的checked属性应该使用defaultChecked来设置
         } while (str.length);
         return tokens.join('+');
     }
+    avalon.text = function (a) {
+        return a == null ? '' : a;
+    };
 
     function Lexer(nodes) {
         this.staticIndex = 0;
@@ -6077,8 +6096,6 @@ IE7的checked属性应该使用defaultChecked来设置
             __repeat(obj, Array.isArray(obj), function (i, flag) {
                 repeatCb(obj, obj[i], i, keys, nodes, cb, flag);
             });
-            console.log(keys);
-
             return nodes;
         },
         schedule: function schedule() {
