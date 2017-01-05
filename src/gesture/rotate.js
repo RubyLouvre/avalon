@@ -1,13 +1,13 @@
-var Recognizer = require('./recognizer')
+import { Recognizer } from './recognizer'
 
 var rotateRecognizer = {
     events: ['rotate', 'rotatestart', 'rotateend'],
-    getAngle180: function (p1, p2) {
+    getAngle180: function(p1, p2) {
         // 角度， 范围在{0-180}， 用来识别旋转角度
         var agl = Math.atan((p2.pageY - p1.pageY) * -1 / (p2.pageX - p1.pageX)) * (180 / Math.PI)
         return parseInt((agl < 0 ? (agl + 180) : agl), 10)
     },
-    rotate: function (event, status) {
+    rotate: function(event, status) {
         var finger = rotateRecognizer.finger
         var endAngel = rotateRecognizer.getAngle180(rotateRecognizer.center, finger.lastTouch)
         var diff = rotateRecognizer.startAngel - endAngel
@@ -39,7 +39,7 @@ var rotateRecognizer = {
             Recognizer.fire(finger.element, 'rotate', extra)
         }
     },
-    touchstart: function (event) {
+    touchstart: function(event) {
         var pointers = Recognizer.pointers
         Recognizer.start(event, avalon.noop)
         var finger
@@ -47,7 +47,7 @@ var rotateRecognizer = {
             if (pointers[p].startTime) {
                 if (!finger) {
                     finger = pointers[p]
-                } else {//如果超过一个指头就中止旋转
+                } else { //如果超过一个指头就中止旋转
                     return
                 }
             }
@@ -55,17 +55,17 @@ var rotateRecognizer = {
         rotateRecognizer.finger = finger
         var el = finger.element
         var docOff = avalon(el).offset()
-        rotateRecognizer.center = {//求得元素的中心
+        rotateRecognizer.center = { //求得元素的中心
             pageX: docOff.left + el.offsetWidth / 2,
             pageY: docOff.top + el.offsetHeight / 2
         }
         rotateRecognizer.startAngel = rotateRecognizer.getAngle180(rotateRecognizer.center, finger.startTouch)
     },
-    touchmove: function (event) {
+    touchmove: function(event) {
         Recognizer.move(event, avalon.noop)
         rotateRecognizer.rotate(event)
     },
-    touchend: function (event) {
+    touchend: function(event) {
         rotateRecognizer.rotate(event, "end")
         Recognizer.end(event, avalon.noop)
     }

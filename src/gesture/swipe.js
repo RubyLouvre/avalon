@@ -1,35 +1,35 @@
-var Recognizer = require('./recognizer')
+import { Recognizer } from './recognizer'
 
 var swipeRecognizer = {
     events: ['swipe', 'swipeleft', 'swiperight', 'swipeup', 'swipedown'],
-    getAngle: function (x, y ) {
-       return Math.atan2(y, x) * 180 / Math.PI
+    getAngle: function(x, y) {
+        return Math.atan2(y, x) * 180 / Math.PI
     },
-    getDirection: function (x, y) {
+    getDirection: function(x, y) {
         if (Math.abs(x) >= Math.abs(y)) {
-           return x < 0 ? 'left' : 'right'
+            return x < 0 ? 'left' : 'right'
         }
         return y < 0 ? 'up' : 'down'
     },
-    touchstart: function (event) {
+    touchstart: function(event) {
         Recognizer.start(event, avalon.noop)
     },
-    touchmove: function (event) {
+    touchmove: function(event) {
         Recognizer.move(event, avalon.noop)
     },
-    touchend: function (event) {
-        if(event.changedTouches.length !== 1){
+    touchend: function(event) {
+        if (event.changedTouches.length !== 1) {
             return
         }
-        Recognizer.end(event, function (pointer, touch) {
+        Recognizer.end(event, function(pointer, touch) {
             var isflick = (pointer.distance > 30 && pointer.distance / pointer.duration > 0.65)
             if (isflick) {
                 var extra = {
-                    deltaX : pointer.deltaX,
+                    deltaX: pointer.deltaX,
                     deltaY: pointer.deltaY,
                     touch: touch,
                     touchEvent: event,
-                    direction:  swipeRecognizer.getDirection(pointer.deltaX, pointer.deltaY),
+                    direction: swipeRecognizer.getDirection(pointer.deltaX, pointer.deltaY),
                     isVertical: pointer.isVertical
                 }
                 var target = pointer.element

@@ -17,7 +17,6 @@ import './renders/domRender'
 import './effect/index.js'
 import './component/index'
 
-import './gesture/recognizer'
 import './gesture/tap'
 
 export default avalon

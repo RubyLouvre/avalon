@@ -1,12 +1,13 @@
-var Recognizer = require('./recognizer')
+import { Recognizer } from './recognizer'
 //https://github.com/manuelstofer/pinchzoom
 var pinchRecognizer = {
     events: ['pinchstart', 'pinch', 'pinchin', 'pinchuot', 'pinchend'],
-    getScale: function (x1, y1, x2, y2, x3, y3, x4, y4) {
+    getScale: function(x1, y1, x2, y2, x3, y3, x4, y4) {
         return Math.sqrt((Math.pow(y4 - y3, 2) + Math.pow(x4 - x3, 2)) / (Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2)))
     },
-    getCommonAncestor: function (arr) {
-        var el = arr[0], el2 = arr[1]
+    getCommonAncestor: function(arr) {
+        var el = arr[0],
+            el2 = arr[1]
         while (el) {
             if (el.contains(el2) || el === el2) {
                 return el
@@ -15,7 +16,7 @@ var pinchRecognizer = {
         }
         return null
     },
-    touchstart: function (event) {
+    touchstart: function(event) {
         var pointers = Recognizer.pointers
         Recognizer.start(event, avalon.noop)
         var elements = []
@@ -36,10 +37,10 @@ var pinchRecognizer = {
             })
         }
     },
-    touchmove: function (event) {
+    touchmove: function(event) {
         if (pinchRecognizer.element && event.touches.length > 1) {
             var position = [],
-                    current = []
+                current = []
             for (var i = 0; i < event.touches.length; i++) {
                 var touch = event.touches[i]
                 var gesture = Recognizer.pointers[touch.identifier]
@@ -48,7 +49,7 @@ var pinchRecognizer = {
             }
 
             var scale = pinchRecognizer.getScale(position[0][0], position[0][1], position[1][0], position[1][1],
-                    current[0][0], current[0][1], current[1][0], current[1][1])
+                current[0][0], current[0][1], current[1][0], current[1][1])
             pinchRecognizer.scale = scale
             Recognizer.fire(pinchRecognizer.element, 'pinch', {
                 scale: scale,
@@ -73,7 +74,7 @@ var pinchRecognizer = {
         }
         event.preventDefault()
     },
-    touchend: function (event) {
+    touchend: function(event) {
         if (pinchRecognizer.element) {
             Recognizer.fire(pinchRecognizer.element, 'pinchend', {
                 scale: pinchRecognizer.scale,

@@ -1,14 +1,14 @@
-var Recognizer = require('./recognizer')
+import { Recognizer } from './recognizer'
 
 var pressRecognizer = {
     events: ['longtap', 'doubletap'],
-    cancelPress: function (pointer) {
+    cancelPress: function(pointer) {
         clearTimeout(pointer.pressingHandler)
         pointer.pressingHandler = null
     },
-    touchstart: function (event) {
-        Recognizer.start(event, function (pointer, touch) {
-            pointer.pressingHandler = setTimeout(function () {
+    touchstart: function(event) {
+        Recognizer.start(event, function(pointer, touch) {
+            pointer.pressingHandler = setTimeout(function() {
                 if (pointer.status === 'tapping') {
                     Recognizer.fire(event.target, 'longtap', {
                         touch: touch,
@@ -23,8 +23,8 @@ var pressRecognizer = {
         })
 
     },
-    touchmove: function (event) {
-        Recognizer.move(event, function (pointer) {
+    touchmove: function(event) {
+        Recognizer.move(event, function(pointer) {
             if (pointer.distance > 10 && pointer.pressingHandler) {
                 pressRecognizer.cancelPress(pointer)
                 if (pointer.status === 'tapping') {
@@ -33,8 +33,8 @@ var pressRecognizer = {
             }
         })
     },
-    touchend: function (event) {
-        Recognizer.end(event, function (pointer, touch) {
+    touchend: function(event) {
+        Recognizer.end(event, function(pointer, touch) {
             pressRecognizer.cancelPress(pointer)
             if (pointer.status === 'tapping') {
                 pointer.lastTime = Date.now()
@@ -50,8 +50,8 @@ var pressRecognizer = {
         })
 
     },
-    touchcancel: function (event) {
-        Recognizer.end(event, function (pointer) {
+    touchcancel: function(event) {
+        Recognizer.end(event, function(pointer) {
             pressRecognizer.cancelPress(pointer)
         })
     }
