@@ -16,8 +16,24 @@ export var impDir = avalon.directive('important', {
             return true
         }
     },
+    beforeDispose: function() {
+        var vm = this.vm
+        if (vm) {
+            var fn = vm.$hooks.onDispose
+            delete this.vm
+            if (fn) {
+                fn({
+                    vmodel: vm,
+                    target: vm.$element,
+                    type: 'dispose'
+                })
+            }
+        }
+
+    },
     update: function(val, vdom, newVdom, afterCb) {
-        var vm = newVdom.vm
+
+        var vm = this.vm = newVdom.vm
         afterCb.push(function() {
             var dom = vdom.dom
             vm.$element = dom

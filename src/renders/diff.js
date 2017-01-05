@@ -81,7 +81,7 @@ export function diff(a, b) {
             //可以在这里回收节点
             if (b.nodeName === '#comment') {
                 //ms-if ms-widget 元素节点要变成注释节点
-                a.props = a.props = a.dom = null
+                a.props = b.props = a.dom = null
                 handleIf(a, b)
                 stop = true
             }
@@ -127,7 +127,7 @@ export function diff(a, b) {
 
             if (afterCb.length) {
                 afterCb.forEach(function(fn) {
-                    fn(a)
+                    fn()
                 })
             }
             if (a.staticRoot) {
@@ -165,7 +165,7 @@ function reInitDires(a) {
     if (a.dirs) {
         a.dirs.forEach(function(dir) {
             delete dir.inited
-        })      
+        })
     }
     if (a.children) {
         a.children.forEach(function(child) {
@@ -176,15 +176,15 @@ function reInitDires(a) {
 
 function handleDispose(a) {
     if (a.dirs) {
-        for (var i = 0, el; el = a.dirs[i++];) {
+        for (let i = 0, el; el = a.dirs[i++];) {
             if (el.beforeDispose) {
                 el.beforeDispose()
             }
         }
     }
-    var arr = a.children || Array.isArray(a) ? a : false
+    var arr = a.children || (Array.isArray(a) && a)
     if (arr) {
-        for (var i = 0, el; el = arr[i++];) {
+        for (let i = 0, el; el = arr[i++];) {
             handleDispose(el)
         }
     }

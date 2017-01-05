@@ -5,6 +5,7 @@ avalon.directive('controller', {
     priority: 2,
     diff: impDir.diff,
     update: impDir.update,
+    beforeDispose: impDir.beforeDispose,
     getScope: function(bname, upper) {
         var lower  = avalon.vmodels[bname]
         if (lower) {
