@@ -34,10 +34,10 @@ export function from(node) {
                 children: []
             }
             if (type === 'option') {
-                if (option.selected) {
+                if (props.selected) {
                     props.selected = true
                 }
-                if (option.disabled) {
+                if (props.disabled) {
                     props.disabled = true
                 }
             }
