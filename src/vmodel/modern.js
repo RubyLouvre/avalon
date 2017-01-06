@@ -63,11 +63,13 @@ export function afterCreate(vm, core, keys, bindThis) {
     for (let i = 0; i < keys.length; i++) {
         let key = keys[i]
         if (!(key in ac)) {
-            if (bindThis && typeof core[key] === 'function') {
-                vm[key] = core[key].bind(vm)
+            let val = core[key]
+            if (bindThis && typeof val === 'function') {
+                vm[key] = val.bind(vm)
+                vm[key]._orig = val
                 continue
             }
-            vm[key] = core[key]
+            vm[key] = val
         }
     }
     vm.$track = keys.join('☥')

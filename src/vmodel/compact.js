@@ -23,7 +23,7 @@ try {
 
 
 var protectedVB = { $vbthis: 1, $vbsetter: 1 }
-/* istanbul ignore next */
+    /* istanbul ignore next */
 export function hideProperty(host, name, value) {
     if (canHideProperty) {
         Object.defineProperty(host, name, {
@@ -52,7 +52,7 @@ export function watchFactory(core) {
             core[expr].push(w)
         }
 
-        return function () {
+        return function() {
             w.dispose()
             avalon.Array.remove(core[expr], w)
             if (core[expr].length === 0) {
@@ -79,7 +79,7 @@ function wrapIt(str) {
 
 export function afterCreate(vm, core, keys, bindThis) {
     var ac = vm.$accessors
-    //隐藏系统属性
+        //隐藏系统属性
     for (let key in $$skipArray) {
         if (avalon.msie < 9 && core[key] === void 0)
             continue
@@ -89,11 +89,13 @@ export function afterCreate(vm, core, keys, bindThis) {
     for (let i = 0; i < keys.length; i++) {
         let key = keys[i]
         if (!(key in ac)) {
-            if (bindThis && typeof core[key] === 'function') {
-                vm[key] = core[key].bind(vm)
+            let val = core[key]
+            if (bindThis && typeof val === 'function') {
+                vm[key] = val.bind(vm)
+                vm[key]._orig = val
                 continue
             }
-            vm[key] = core[key]
+            vm[key] = val
         }
     }
     vm.$track = keys.join('☥')
@@ -118,10 +120,10 @@ var createViewModel = Object.defineProperties
 var defineProperty
 
 var timeBucket = new Date() - 0
-/* istanbul ignore if*/
+    /* istanbul ignore if*/
 if (!canHideProperty) {
     if ('__defineGetter__' in avalon) {
-        defineProperty = function (obj, prop, desc) {
+        defineProperty = function(obj, prop, desc) {
             if ('value' in desc) {
                 obj[prop] = desc.value
             }
@@ -133,7 +135,7 @@ if (!canHideProperty) {
             }
             return obj
         }
-        createViewModel = function (obj, descs) {
+        createViewModel = function(obj, descs) {
             for (var prop in descs) {
                 if (descs.hasOwnProperty(prop)) {
                     defineProperty(obj, prop, descs[prop])
@@ -151,7 +153,7 @@ if (!canHideProperty) {
             'End Function' //转换一段文本为VB代码
         ].join('\n'), 'VBScript');
 
-        var VBMediator = function (instance, accessors, name, value) { // jshint ignore:line
+        var VBMediator = function(instance, accessors, name, value) { // jshint ignore:line
             var accessor = accessors[name]
             if (arguments.length === 4) {
                 accessor.set.call(instance, value)
@@ -159,17 +161,17 @@ if (!canHideProperty) {
                 return accessor.get.call(instance)
             }
         }
-        createViewModel = function (name, accessors, properties) {
+        createViewModel = function(name, accessors, properties) {
             // jshint ignore:line
             var buffer = []
             buffer.push(
-                '\tPrivate [$vbsetter]',
-                '\tPublic  [$accessors]',
-                '\tPublic Default Function [$vbthis](ac' + timeBucket + ', s' + timeBucket + ')',
-                '\t\tSet  [$accessors] = ac' + timeBucket + ': set [$vbsetter] = s' + timeBucket,
-                '\t\tSet  [$vbthis]    = Me', //链式调用
-                '\tEnd Function')
-            //添加普通属性,因为VBScript对象不能像JS那样随意增删属性，必须在这里预先定义好
+                    '\tPrivate [$vbsetter]',
+                    '\tPublic  [$accessors]',
+                    '\tPublic Default Function [$vbthis](ac' + timeBucket + ', s' + timeBucket + ')',
+                    '\t\tSet  [$accessors] = ac' + timeBucket + ': set [$vbsetter] = s' + timeBucket,
+                    '\t\tSet  [$vbthis]    = Me', //链式调用
+                    '\tEnd Function')
+                //添加普通属性,因为VBScript对象不能像JS那样随意增删属性，必须在这里预先定义好
             var uniq = {
                 $vbthis: true,
                 $vbsetter: true,

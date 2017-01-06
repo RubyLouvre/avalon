@@ -1,6 +1,6 @@
 /*!
-built in 2017-1-4:13:3 version 2.2.4 by 司徒正美
-https://github.com/RubyLouvre/avalon/tree/2.2.3
+built in 2017-1-6:14:23 version 2.2.4 by 司徒正美
+https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 更改下载Promise的提示
 修正IE下 orderBy BUG
@@ -978,7 +978,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.3
         var args = avalon$2.slice(arguments, 2)
         var stype = avalon$2.type(search)
         if (stype === 'function') {
-            var criteria = search
+            var criteria = search._orig || search
         } else if (stype === 'string' || stype === 'number') {
             if (search === '') {
                 return array
@@ -991,19 +991,19 @@ https://github.com/RubyLouvre/avalon/tree/2.2.3
         } else {
             return array
         }
-        var index = 0
         var isArray$$1 = type === 'array'
         var target = isArray$$1 ? [] : {}
         __repeat(array, isArray$$1, function (key) {
             var val = array[key]
-            if (criteria.apply(val, [val, index].concat(args))) {
+            if (criteria.apply({
+                key: key
+            }, [val, key].concat(args))) {
                 if (isArray$$1) {
                     target.push(val)
                 } else {
                     target[key] = val
                 }
             }
-            index++
         })
         return target
     }
@@ -3847,11 +3847,13 @@ https://github.com/RubyLouvre/avalon/tree/2.2.3
         for (var i = 0; i < keys.length; i++) {
             var _key2 = keys[i]
             if (!(_key2 in ac)) {
-                if (bindThis && typeof core[_key2] === 'function') {
-                    vm[_key2] = core[_key2].bind(vm)
+                var val = core[_key2]
+                if (bindThis && typeof val === 'function') {
+                    vm[_key2] = val.bind(vm)
+                    vm[_key2]._orig = val
                     continue
                 }
-                vm[_key2] = core[_key2]
+                vm[_key2] = val
             }
         }
         vm.$track = keys.join('☥')

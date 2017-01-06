@@ -131,16 +131,19 @@ describe('filters', function () {
             expect(fn(['aa11', '1122', '66', '2113'], function (a) {
                 return /2/.test(a)
             })).toEqual(['1122', '2113'])
+            var kv = []
             expect(fn({
                 a: 111,
                 b: 212,
                 c: 332
-            }, function (a) {
+            }, function (a, b) {
+                kv.push(a,b)
                 return /2/.test(a)
             })).toEqual({
                 b: 212,
                 c: 332
             })
+            expect(kv+'').toEqual('111,a,212,b,332,c')
 
         })
     })

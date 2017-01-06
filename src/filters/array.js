@@ -67,7 +67,7 @@ export function filterBy(array, search) {
     var args = avalon.slice(arguments, 2)
     var stype = avalon.type(search)
     if (stype === 'function') {
-        var criteria = search
+        var criteria = search._orig || search
     } else if (stype === 'string' || stype === 'number') {
         if (search === '') {
             return array
@@ -80,19 +80,19 @@ export function filterBy(array, search) {
     } else {
         return array
     }
-    var index = 0
     var isArray = type === 'array'
     var target = isArray ? [] : {}
     __repeat(array, isArray, function(key) {
         var val = array[key]
-        if (criteria.apply(val, [val, index].concat(args))) {
+        if (criteria.apply({
+            key: key
+        }, [val, key].concat(args))) {
             if (isArray) {
                 target.push(val)
             } else {
                 target[key] = val
             }
         }
-        index++
     })
     return target
 }
