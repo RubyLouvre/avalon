@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-5:11:22 version 2.2.3 by 司徒正美
+built in 2017-1-6:1:27 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
       fix ms-controller BUG, 上下VM相同时,不会进行合并
 ms-for不再生成代理VM
@@ -3868,8 +3868,23 @@ IE7的checked属性应该使用defaultChecked来设置
                 return true
             }
         },
+        beforeDispose: function beforeDispose() {
+            var vm = this.vm
+            if (vm) {
+                var fn = vm.$hooks.onDispose
+                delete this.vm
+                if (fn) {
+                    fn({
+                        vmodel: vm,
+                        target: vm.$element,
+                        type: 'dispose'
+                    })
+                }
+            }
+        },
         update: function update(val, vdom, newVdom, afterCb) {
-            var vm = newVdom.vm
+
+            var vm = this.vm = newVdom.vm
             afterCb.push(function () {
                 var dom = vdom.dom
                 vm.$element = dom
@@ -3892,6 +3907,7 @@ IE7的checked属性应该使用defaultChecked来设置
         priority: 2,
         diff: impDir.diff,
         update: impDir.update,
+        beforeDispose: impDir.beforeDispose,
         getScope: function getScope(bname, upper) {
             var lower = avalon$2.vmodels[bname]
             if (lower) {
@@ -4654,7 +4670,7 @@ IE7的checked属性应该使用defaultChecked来设置
         return tokens.join('+')
     }
     avalon$2.text = function (a) {
-        return a == null ? '' : a
+        return a == null ? '' : a + ''
     }
 
     function Lexer(nodes) {
@@ -5086,7 +5102,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 //可以在这里回收节点
                 if (b.nodeName === '#comment') {
                     //ms-if ms-widget 元素节点要变成注释节点
-                    a.props = a.props = a.dom = null
+                    a.props = b.props = a.dom = null
                     handleIf(a, b)
                     stop = true
                 }
@@ -5134,7 +5150,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
                 if (afterCb.length) {
                     afterCb.forEach(function (fn) {
-                        fn(a)
+                        fn()
                     })
                 }
                 if (a.staticRoot) {
@@ -5186,10 +5202,10 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
             }
         }
-        var arr = a.children || Array.isArray(a) ? a : false
+        var arr = a.children || Array.isArray(a) && a
         if (arr) {
-            for (var i = 0, el; el = arr[i++];) {
-                handleDispose(el)
+            for (var _i8 = 0, _el; _el = arr[_i8++];) {
+                handleDispose(_el)
             }
         }
     }
@@ -5438,8 +5454,8 @@ IE7的checked属性应该使用defaultChecked来设置
             return { nodeName: '#comment', nodeValue: value }
         },
         text: function text(a, d) {
-            a = a == null ? '\u200B' : a + ''
-            return { nodeName: '#text', nodeValue: a || '', dynamic: !!d }
+            var b = avalon$2.text(a) || '\u200B'
+            return { nodeName: '#text', nodeValue: b, dynamic: !!d }
         },
         collectSlot: function collectSlot(node, slots) {
             var name = node.props.slot
