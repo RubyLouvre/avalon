@@ -1,6 +1,6 @@
 /**
  * ------------------------------------------------------------
- * avalon2.1.1的新式lexer
+ * avalon2.2.4的新式lexer
  * 将字符串变成一个虚拟DOM树,方便以后进一步变成模板函数
  * 此阶段只会生成VElement,VText,VComment
  * ------------------------------------------------------------
@@ -24,10 +24,21 @@ var rlineSp = /\\n\s*/g
 var rattrs = /([^=\s]+)(?:\s*=\s*(\S+))?/
 
 var rcontent = /\S/ //判定里面有没有内容
-export function fromString(str) {
-    return from(str)
+export function StringConvertor(str) {
+    var cacheKey = str
+    var cached = strCache.get(cacheKey)
+    if (cached) {
+        return avalon.mix(true, [], cached)
+    }
+    stringPool.map = {}
+    str = clearString(str)
+
+    vdomAst.init(str)
+    var ret = vdomAst.gen()
+    strCache.put(cacheKey, avalon.mix(true, [], ret))
+    return ret
 }
-avalon.lexer = fromString
+avalon.lexer = StringConvertor
 
 var strCache = new Cache(100)
 
@@ -220,19 +231,3 @@ AST.prototype = {
 }
 
 var vdomAst = new AST()
-
-function from(str) {
-    var cacheKey = str
-    var cached = strCache.get(cacheKey)
-    if (cached) {
-        return avalon.mix(true, [], cached)
-    }
-    stringPool.map = {}
-    str = clearString(str)
-
-    vdomAst.init(str)
-    var ret = vdomAst.gen()
-    strCache.put(cacheKey, avalon.mix(true, [], ret))
-    return ret
-
-}

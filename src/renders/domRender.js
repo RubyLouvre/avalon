@@ -257,7 +257,7 @@ Render.prototype = {
         return { nodeName: '#comment', nodeValue: value }
     },
     text: function(a, d) {
-        var b = avalon.text(a) || '\u200b' 
+        var b = avalon.text(a) || '\u200b'
         return { nodeName: '#text', nodeValue: b, dynamic: !!d }
     },
     collectSlot: function(node, slots) {
@@ -275,18 +275,22 @@ Render.prototype = {
         return a
     },
     ctrl: function(id, scope, isImport, cb) {
+        // this为render
         var name = isImport ? 'important' : 'controller'
         var dir = directives[name]
-        scope = dir.getScope.call(this, id, scope)
-        return cb(scope)
+        var scope2 = dir.getScope.call(this, id, scope)
+        var isSkip = isImport && scope && scope !== scope2
+        console.log(isImport, isSkip)
+            //  console.log(isImport, !!scope, this.vm, scope !== scope2)
+        return cb(scope2, isSkip)
     },
     repeat: function(obj, str, cb) {
         var nodes = []
         var keys = str.split(',')
         nodes.cb = keys.splice(3, 7).join(',')
-        __repeat(obj, Array.isArray(obj), function(i, flag){
-             repeatCb(obj, obj[i], i, keys, nodes, cb, flag)
-        })         
+        __repeat(obj, Array.isArray(obj), function(i, flag) {
+            repeatCb(obj, obj[i], i, keys, nodes, cb, flag)
+        })
         return nodes
     },
     schedule() {

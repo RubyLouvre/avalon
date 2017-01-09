@@ -8,13 +8,42 @@ export var impDir = avalon.directive('important', {
             return v
         throw 'error! no vmodel called ' + name
     },
-    diff: function(oldVal, newVal) {
-        if (!this.inited)
+    diff: function(oldVal, newVal, vdom, newVdom) {
+        if (!this.inited) {
             oldVal = null
+
+        }
+        if (this.inited) {
+            this.delay = true
+            return true
+        }
+
         if (oldVal !== newVal) {
             this.value = newVal
             return true
         }
+    },
+
+    update: function(val, vdom, newVdom, afterCb) {
+        var vm = this.vm = newVdom.vm
+        if (this.delay) {
+            console.log('99999')
+            return
+        }
+        afterCb.push(function() {
+            var dom = vm.$element = vdom.dom
+            avalon(dom).removeClass('ms-controller')
+            var fn = vm.$hooks.onReady
+            if (fn) {
+                fn({
+                    vmodel: vm,
+                    target: dom,
+                    type: 'ready'
+                })
+            }
+
+        })
+
     },
     beforeDispose: function() {
         var vm = this.vm
@@ -29,26 +58,6 @@ export var impDir = avalon.directive('important', {
                 })
             }
         }
-
-    },
-    update: function(val, vdom, newVdom, afterCb) {
-
-        var vm = this.vm = newVdom.vm
-        afterCb.push(function() {
-            var dom = vdom.dom
-            vm.$element = dom
-            avalon(dom).removeClass('ms-controller')
-            var fn = vm.$hooks.onReady
-            if (fn) {
-                fn({
-                    vmodel: vm,
-                    target: dom,
-                    type: 'ready'
-                })
-                delete vm.$hooks.onReady
-            }
-
-        })
 
     }
 })

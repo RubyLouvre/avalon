@@ -1,8 +1,12 @@
-import { orphanTag, makeOrphan } from './orphanTag'
-import { voidTag } from './voidTag'
+import {
+    orphanTag,
+    voidTag,
+    makeOrphan
+} from './tags'
 
-export function fromDOM(dom) {
-    return [from(dom)]
+
+export function DOMConvertor(dom) {
+    return [fromDOM(dom)]
 }
 /**
  * 虚拟元素节点有如下属性
@@ -13,7 +17,7 @@ export function fromDOM(dom) {
  * props: 属性集合
  * dirs: 指令数组
  */
-export function from(node) {
+export function fromDOM(node) {
     var type = node.nodeName.toLowerCase()
     switch (type) {
         case '#text':

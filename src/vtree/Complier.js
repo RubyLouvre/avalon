@@ -1,13 +1,5 @@
-import { parseAttributes } from '../parser/attributes'
-import { parseInterpolate } from '../parser/interpolate'
-import { keyMap, createExpr } from '../parser/index'
-import { avalon, config, directives } from '../seed/core'
-import { fromString } from '../vtree/fromString'
-
-
 export function Lexer(nodes) {
-    this.staticIndex = 0
-    this.staticTree = {}
+    //这里需要第二个配置项，用于防止多次扫描
     var body = this.genChildren(nodes)
     this.fork = Function('__vmodel__', '$$l',
         'var \u01A9 = __vmodel__.$render;' +
@@ -86,11 +78,9 @@ Lexer.prototype = {
             return `\u01A9.slot(${ avalon.quote(node.props.name || "defaults") })`
         }
 
-        if (node.staticRoot) {
-            var index = avalon.staticIndex
-            avalon.staticTree[index] = node
-            avalon.staticIndex++;
-            return `\u01A9.static(${ index })`
+        if (node.staticID) {
+
+            return `\u01A9.static(${ node.staticID })`
         }
         var dirs = node.dirs,
             props = node.props
@@ -146,15 +136,7 @@ Lexer.prototype = {
         }
         if (hasCtrl) {
             var vm = avalon.vmodels[hasCtrl]
-            console.log(hasCtrl)
-            vm.renders = {
-                root: node,
-                vm: vm,
-                template: json,
-                fork: Function('__vmodel__', '$$l',
-                    'var \u01A9 = __vmodel__.$render;' +
-                    'return ' + json)
-            }
+            new Render(vm, node, json)
             return `\u01A9.ctrl( ${ avalon.quote(hasCtrl) }, __vmodel__, ${isImport}, function(__vmodel__) {
                
                 return ${ json }

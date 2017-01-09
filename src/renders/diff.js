@@ -86,6 +86,7 @@ export function diff(a, b) {
                 stop = true
             }
             if (!a.vtype && !stop) {
+                console.log('diff')
                 var childNodes = parentNode.childNodes
                 var achild = a.children.concat()
                 var bchild = b.children.concat()
