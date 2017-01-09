@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-6:1:27 version 2.2.3 by 司徒正美
+built in 2017-1-7:12:13 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -3268,10 +3268,10 @@ IE7的checked属性应该使用defaultChecked来设置
                     children: []
                 };
                 if (type === 'option') {
-                    if (option.selected) {
+                    if (props.selected) {
                         props.selected = true;
                     }
-                    if (option.disabled) {
+                    if (props.disabled) {
                         props.disabled = true;
                     }
                 }
@@ -4487,12 +4487,39 @@ IE7的checked属性应该使用defaultChecked来设置
             if (v) return v;
             throw 'error! no vmodel called ' + name;
         },
-        diff: function diff(oldVal, newVal) {
-            if (!this.inited) oldVal = null;
+        diff: function diff(oldVal, newVal, vdom, newVdom) {
+            if (!this.inited) {
+                oldVal = null;
+            }
+            if (this.inited) {
+                this.delay = true;
+                return true;
+            }
+
             if (oldVal !== newVal) {
                 this.value = newVal;
                 return true;
             }
+        },
+
+        update: function update(val, vdom, newVdom, afterCb) {
+            var vm = this.vm = newVdom.vm;
+            if (this.delay) {
+                console.log('99999');
+                return;
+            }
+            afterCb.push(function () {
+                var dom = vm.$element = vdom.dom;
+                avalon(dom).removeClass('ms-controller');
+                var fn = vm.$hooks.onReady;
+                if (fn) {
+                    fn({
+                        vmodel: vm,
+                        target: dom,
+                        type: 'ready'
+                    });
+                }
+            });
         },
         beforeDispose: function beforeDispose() {
             var vm = this.vm;
@@ -4507,31 +4534,20 @@ IE7的checked属性应该使用defaultChecked来设置
                     });
                 }
             }
-        },
-        update: function update(val, vdom, newVdom, afterCb) {
-
-            var vm = this.vm = newVdom.vm;
-            afterCb.push(function () {
-                var dom = vdom.dom;
-                vm.$element = dom;
-                avalon(dom).removeClass('ms-controller');
-                var fn = vm.$hooks.onReady;
-                if (fn) {
-                    fn({
-                        vmodel: vm,
-                        target: dom,
-                        type: 'ready'
-                    });
-                    delete vm.$hooks.onReady;
-                }
-            });
         }
     });
 
     var cachedCtrl = {};
     avalon.directive('controller', {
         priority: 2,
-        diff: impDir.diff,
+        diff: function diff(oldVal, newVal, vdom, newVdom) {
+            if (!this.inited) oldVal = null;
+            console.log('controller diff');
+            if (oldVal !== newVal) {
+                this.value = newVal;
+                return true;
+            }
+        },
         update: impDir.update,
         beforeDispose: impDir.beforeDispose,
         getScope: function getScope(bname, upper) {
@@ -5408,7 +5424,12 @@ IE7的checked属性应该使用defaultChecked来设置
                 json = hasIf + ' ? ' + json + ' : \u01A9.comment(\'if\')';
             }
             if (hasCtrl) {
-                return '\u01A9.ctrl( ' + avalon.quote(hasCtrl) + ', __vmodel__, ' + isImport + ', function(__vmodel__) {\n                return ' + json + '\n            }) ';
+                var vm = avalon.vmodels[hasCtrl];
+                console.log(hasCtrl);
+                vm.renders = {
+                    template: json
+                };
+                return '\u01A9.ctrl( ' + avalon.quote(hasCtrl) + ', __vmodel__, ' + isImport + ', function(__vmodel__) {\n               \n                return ' + json + '\n            }) ';
             } else {
                 return json;
             }
@@ -5735,6 +5756,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     stop = true;
                 }
                 if (!a.vtype && !stop) {
+                    console.log('diff');
                     var childNodes = parentNode.childNodes;
                     var achild = a.children.concat();
                     var bchild = b.children.concat();
@@ -6100,10 +6122,14 @@ IE7的checked属性应该使用defaultChecked来设置
             return a;
         },
         ctrl: function ctrl(id, scope, isImport, cb) {
+            // this为render
             var name = isImport ? 'important' : 'controller';
             var dir = directives[name];
-            scope = dir.getScope.call(this, id, scope);
-            return cb(scope);
+            var scope2 = dir.getScope.call(this, id, scope);
+            var isSkip = isImport && scope && scope !== scope2;
+            console.log(isImport, isSkip);
+            //  console.log(isImport, !!scope, this.vm, scope !== scope2)
+            return cb(scope2, isSkip);
         },
         repeat: function repeat(obj, str, cb) {
             var nodes = [];
