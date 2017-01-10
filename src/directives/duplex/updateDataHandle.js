@@ -32,6 +32,11 @@ export function updateDataHandle(event) {
                 updateDataActions[field.dtype].call(field)
             }, left)
         }
+    } else if(field.isChanged){
+        setTimeout(function() {
+            //https://github.com/RubyLouvre/avalon/issues/1908
+            updateDataActions[field.dtype].call(field)
+        }, 4)
     } else {
         updateDataActions[field.dtype].call(field)
     }

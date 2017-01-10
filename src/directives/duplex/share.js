@@ -60,7 +60,7 @@ export function duplexInit() {
     //判定是否使用了 change debounce 过滤器
     // this.isChecked = /boolean/.test(parsers)
     if (dtype !== 'input' && dtype !== 'contenteditable') {
-        delete this.isChange
+        delete this.isChanged
         delete this.debounceTime
     } else if (!this.isChecked) {
         this.isString = true

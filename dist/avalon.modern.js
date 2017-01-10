@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-6:14:23 version 2.2.4 by 司徒正美
+built in 2017-1-10:20:8 version 2.2.4 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 更改下载Promise的提示
@@ -5392,6 +5392,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                     updateDataActions[field.dtype].call(field)
                 }, left)
             }
+        } else if (field.isChanged) {
+            setTimeout(function () {
+                //https://github.com/RubyLouvre/avalon/issues/1908
+                updateDataActions[field.dtype].call(field)
+            }, 4)
         } else {
             updateDataActions[field.dtype].call(field)
         }
@@ -5449,7 +5454,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         //判定是否使用了 change debounce 过滤器
         // this.isChecked = /boolean/.test(parsers)
         if (dtype !== 'input' && dtype !== 'contenteditable') {
-            delete this.isChange
+            delete this.isChanged
             delete this.debounceTime
         } else if (!this.isChecked) {
             this.isString = true
