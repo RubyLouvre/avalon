@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-10:20:8 version 2.2.4 by 司徒正美
+built in 2017-1-10:21:14 version 2.2.4 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 更改下载Promise的提示
@@ -3203,8 +3203,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
          * 在更新视图前保存原有的value
          */
         beforeUpdate: function beforeUpdate() {
-            var v = this.value
-            return this.oldValue = v && v.$events ? v.$model : v
+            return this.oldValue = getPlainObject(this.value)
         },
         update: function update(args, uuid) {
             var oldVal = this.beforeUpdate()
@@ -3255,6 +3254,28 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             for (var i in this) {
                 delete this[i]
             }
+        }
+    }
+
+    function getPlainObject(v) {
+        if (v && typeof v === 'object') {
+            if (v && v.$events) {
+                return v.$model
+            } else if (Array.isArray(v)) {
+                var ret = []
+                for (var i, n = v.length; i < n; i++) {
+                    ret.push(getPlainObject(v[i]))
+                }
+                return ret
+            } else {
+                var _ret = {}
+                for (var _i3 in v) {
+                    _ret[_i3] = getPlainObject(v[_i3])
+                }
+                return _ret
+            }
+        } else {
+            return v
         }
     }
 
@@ -3900,15 +3921,15 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
                 var vm = toProxy(proxy)
                 //先添加普通属性与监控属性
-                for (var _i3 in clone) {
-                    vm[_i3] = clone[_i3]
+                for (var _i4 in clone) {
+                    vm[_i4] = clone[_i4]
                 }
                 var $computed = clone.$computed
                 //再添加计算属性
                 if ($computed) {
                     delete clone.$computed
-                    for (var _i4 in $computed) {
-                        var val = $computed[_i4]
+                    for (var _i5 in $computed) {
+                        var val = $computed[_i5]
                         if (typeof val === 'function') {
                             var _val = val
                             val = { get: _val }
@@ -3918,14 +3939,14 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                             //在set方法中的target是IProxy，需要重写成Proxy，才能依赖收集
                             val.vm = vm
                             if (val.set) val.setter = val.set
-                            $computed[_i4] = val
-                            delete clone[_i4] //去掉重名的监控属性
+                            $computed[_i5] = val
+                            delete clone[_i5] //去掉重名的监控属性
                         } else {
-                            delete $computed[_i4]
+                            delete $computed[_i5]
                         }
                     }
-                    for (var _i5 in $computed) {
-                        vm[_i5] = $computed[_i5]
+                    for (var _i6 in $computed) {
+                        vm[_i6] = $computed[_i6]
                     }
                 }
 
@@ -4102,19 +4123,19 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                             patch[i] = newVal[i]
                         }
                     } else {
-                        for (var _i6 in newVal) {
+                        for (var _i7 in newVal) {
                             //diff差异点
-                            if (newVal[_i6] !== oldVal[_i6]) {
+                            if (newVal[_i7] !== oldVal[_i7]) {
                                 hasChange = true
                             }
-                            patch[_i6] = newVal[_i6]
+                            patch[_i7] = newVal[_i7]
                         }
                     }
 
-                    for (var _i7 in oldVal) {
-                        if (!(_i7 in patch)) {
+                    for (var _i8 in oldVal) {
+                        if (!(_i8 in patch)) {
                             hasChange = true
-                            patch[_i7] = ''
+                            patch[_i8] = ''
                         }
                     }
                 }
@@ -6618,8 +6639,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 el.dispose()
             }
             //防止其他地方的this.innerRender && this.innerRender.dispose报错
-            for (var _i8 in this) {
-                if (_i8 !== 'dispose') delete this[_i8]
+            for (var _i9 in this) {
+                if (_i9 !== 'dispose') delete this[_i9]
             }
         },
 

@@ -602,7 +602,7 @@
             }
 
             //6. 目标链接是用于下载资源或指向外部
-            if (el.hasAttribute('download') || el.getAttribute('rel') === 'external')
+            if (el.getAttribute('download') || el.getAttribute('rel') === 'external')
                 return
 
             //7. 只是邮箱地址

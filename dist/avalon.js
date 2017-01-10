@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-10:20:8 version 2.2.4 by 司徒正美
+built in 2017-1-10:21:14 version 2.2.4 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 修正IE下 orderBy BUG
@@ -3935,8 +3935,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
          * 在更新视图前保存原有的value
          */
         beforeUpdate: function beforeUpdate() {
-            var v = this.value;
-            return this.oldValue = v && v.$events ? v.$model : v;
+            return this.oldValue = getPlainObject(this.value);
         },
         update: function update(args, uuid) {
             var oldVal = this.beforeUpdate();
@@ -3989,6 +3988,28 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
         }
     };
+
+    function getPlainObject(v) {
+        if (v && typeof v === 'object') {
+            if (v && v.$events) {
+                return v.$model;
+            } else if (Array.isArray(v)) {
+                var ret = [];
+                for (var i, n = v.length; i < n; i++) {
+                    ret.push(getPlainObject(v[i]));
+                }
+                return ret;
+            } else {
+                var _ret = {};
+                for (var _i3 in v) {
+                    _ret[_i3] = getPlainObject(v[_i3]);
+                }
+                return _ret;
+            }
+        } else {
+            return v;
+        }
+    }
 
     var protectedMenbers = {
         vm: 1,
@@ -4811,19 +4832,19 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                             patch[i] = newVal[i];
                         }
                     } else {
-                        for (var _i3 in newVal) {
+                        for (var _i4 in newVal) {
                             //diff差异点
-                            if (newVal[_i3] !== oldVal[_i3]) {
+                            if (newVal[_i4] !== oldVal[_i4]) {
                                 hasChange = true;
                             }
-                            patch[_i3] = newVal[_i3];
+                            patch[_i4] = newVal[_i4];
                         }
                     }
 
-                    for (var _i4 in oldVal) {
-                        if (!(_i4 in patch)) {
+                    for (var _i5 in oldVal) {
+                        if (!(_i5 in patch)) {
                             hasChange = true;
-                            patch[_i4] = '';
+                            patch[_i5] = '';
                         }
                     }
                 }
@@ -7455,8 +7476,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 el.dispose();
             }
             //防止其他地方的this.innerRender && this.innerRender.dispose报错
-            for (var _i5 in this) {
-                if (_i5 !== 'dispose') delete this[_i5];
+            for (var _i6 in this) {
+                if (_i6 !== 'dispose') delete this[_i6];
             }
         },
 

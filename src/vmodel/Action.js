@@ -82,8 +82,7 @@ Action.prototype = {
      * 在更新视图前保存原有的value
      */
     beforeUpdate() {
-        var v = this.value
-        return this.oldValue = v && v.$events ? v.$model : v
+        return this.oldValue = getPlainObject(this.value)
     },
 
 
@@ -139,7 +138,27 @@ Action.prototype = {
 
 }
 
-
+function getPlainObject(v) {
+    if (v && typeof v === 'object') {
+        if (v && v.$events) {
+            return v.$model
+        } else if (Array.isArray(v)) {
+            let ret = []
+            for (let i, n = v.length; i < n; i++) {
+                ret.push(getPlainObject(v[i]))
+            }
+            return ret
+        } else {
+            let ret = {}
+            for (let i in v) {
+                ret[i] = getPlainObject(v[i])
+            }
+            return ret
+        }
+    } else {
+        return v
+    }
+}
 
 export var protectedMenbers = {
     vm: 1,

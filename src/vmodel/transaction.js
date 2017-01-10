@@ -49,7 +49,6 @@ export function reportObserved(target) {
 }
 
 
-
 var targetStack = []
 
 export function collectDeps(action, getter) {
