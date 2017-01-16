@@ -44,7 +44,8 @@ import * as avalon from 'avalon2'
 ###[QuickStart](https://github.com/crazyliuzc/webpack-avalon2-SPA-seed.git)
 大家期望已久的avalon2+mmRouter+各种组件的综合示例,不断完善中
 
-
+###[友情推广朋友写的UI库](http://weeksun23.github.io/AvalonBootstrap/index.html#overview)
+基于avalon2+bootstrap
 
 ###谁在用avalon
 
@@ -56,6 +57,10 @@ import * as avalon from 'avalon2'
 ###超高性能
 
 <img src="http://avalonjs.coding.me/styles/performance.jpg" width='770' height='451' />
+
+
+
+
 
 
 测试页面 perf目录下的index.html, index1.4.html, index-ng.html, index-vue.html,index-react.html
