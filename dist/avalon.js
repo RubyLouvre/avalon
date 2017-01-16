@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-17:1:34 version 2.2.3 by 司徒正美
+built in 2017-1-17:1:54 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -5474,6 +5474,7 @@ IE7的checked属性应该使用defaultChecked来设置
         this.fork = fork;
         this.template = fork + '';
         this.vm = vm;
+        this.uuid = Math.random();
         this.vnodes = vnodes;
         vm.$render = this;
     }
@@ -5536,14 +5537,16 @@ IE7的checked属性应该使用defaultChecked来设置
         dispose: function dispose() {},
         update: function update() {
             this.vm.$render = this;
+            var oldRoot = this.vnodes[0];
             var nodes = this.fork(this.vm, {});
-            var root$$1 = this.root = nodes[0];
+            var root$$1 = nodes[0];
+
             if (this.noDiff) {
                 return;
             }
             try {
-                diff(this.vnodes[0], root$$1);
-                this.vm.$element = this.vnodes[0];
+                diff(oldRoot, root$$1);
+                this.vm.$element = oldRoot.dom;
             } catch (diffError) {
                 avalon.log(diffError);
             }
@@ -5971,7 +5974,8 @@ IE7的checked属性应该使用defaultChecked来设置
         var vnodes = new HighConvertor(node);
         var c = new Compiler(vnodes, vm, false);
         c.renders.forEach(function (cc) {
-            cc.update();
+            collectDeps(cc, cc.update);
+            //cc.update()
         });
     };
 

@@ -4,6 +4,7 @@ import { avalon, config, inBrowser, delayCompileNodes, directives } from '../see
 import { getRange } from './share'
 import { eventMap } from '../parser/index'
 import { Compiler } from './Compiler'
+import { collectDeps } from '../vmodel/transaction'
 
 /**
  * 此转换器主要是AST节点添加dirs属性，dymatic属性， 循环区域
@@ -24,7 +25,8 @@ avalon.scan = function(node, vm) {
     var vnodes = new HighConvertor(node)
     var c = new Compiler(vnodes, vm, false)
     c.renders.forEach(function(cc){
-        cc.update()
+         collectDeps(cc, cc.update)
+        //cc.update()
     })
 }
 

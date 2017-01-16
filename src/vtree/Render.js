@@ -13,6 +13,7 @@ export function Render(vm, vnodes, body) {
     this.fork = fork
     this.template = fork + ''
     this.vm = vm
+    this.uuid = Math.random()
     this.vnodes = vnodes
     vm.$render = this
 }

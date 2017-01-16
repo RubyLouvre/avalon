@@ -39,7 +39,7 @@ export function diff(a, b) {
             //两个元素节点进行比较
             //先处理静态节点,静态节点不会变动,不用比较
             //如果上面有指令,应用指令
-            if (a.staticRoot && a.hasScan) {
+            if (a.staticID && a.hasScan) {
                 toDOM(a)
                 return
             }
@@ -131,7 +131,7 @@ export function diff(a, b) {
                     fn()
                 })
             }
-            if (a.staticRoot) {
+            if (a.staticID) {
                 a.hasScan = true
             }
             break
