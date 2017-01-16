@@ -5,13 +5,13 @@ import './seed/lang.compact'
 import './filters/index'
 import './dom/compact'
 
-import './vtree/fromString'
-import './vtree/fromDOM'
+
 
 import './vmodel/compact'
 import './directives/compact'
 
-import './renders/domRender'
+import './renders/HighConvertor'
+import './renders/Compiler'
 
 import './effect/index'
 import './component/index'

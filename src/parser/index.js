@@ -1,4 +1,4 @@
-import { avalon, msie, Cache } from '../seed/core'
+import { avalon, msie, Cache, config } from '../seed/core'
 import { clearString, stringPool, fill, rfill, dig } from '../vtree/clearString'
 
 export var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false," +
@@ -91,6 +91,7 @@ export function addScope(expr, type) {
     }
     return exprCache.put(cacheKey, [body, filters])
 }
+
 var rhandleName = /^__vmodel__\.[$\w\.]+$/
 var rfixIE678 = /__vmodel__\.([^(]+)\(([^)]*)\)/
 export function makeHandle(body) {
@@ -105,6 +106,7 @@ export function makeHandle(body) {
     }
     return body
 }
+
 export function createGetter(expr, type) {
     var arr = addScope(expr, type),
         body
@@ -149,4 +151,104 @@ export function createSetter(expr, type) {
         avalon.log('parse setter: ', expr, ' error')
         return avalon.noop
     }
+}
+
+
+export var eventMap = avalon.oneObject('animationend,blur,change,input,' +
+    'click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,' +
+    'mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit', 'on')
+export function parseAttributes(dirs, node) {
+    var uniq = {},
+        bindings = [],
+        props = node.props,
+        hasIf = false
+    for (var name in dirs) {
+        var value = dirs[name]
+        var arr = name.split('-')
+            // ms-click
+        if (name in props) {
+            var attrName = name
+        } else {
+            attrName = ':' + name.slice(3)
+        }
+        if (eventMap[arr[1]]) {
+            arr.splice(1, 0, 'on')
+        }
+        //ms-on-click
+        if (arr[1] === 'on') {
+            arr[3] = parseFloat(arr[3]) || 0
+        }
+
+        var type = arr[1]
+
+        if (directives[type]) {
+            delete props[attrName]
+            var binding = {
+                type: type,
+                param: arr[2],
+                name: attrName,
+
+                expr: value,
+                priority: directives[type].priority || type.charCodeAt(0) * 100
+            }
+
+            avalon.mix(binding, directives[type])
+
+            if (type === 'on') {
+                binding.priority += arr[3]
+            }
+            if (!uniq[binding.name]) {
+                uniq[binding.name] = value
+                bindings.push(binding)
+                if (type === 'for') {
+                    return [avalon.mix(binding, tuple[3])]
+                }
+            }
+
+        }
+    }
+    bindings.sort(byPriority)
+    return bindings
+}
+export function byPriority(a, b) {
+    return a.priority - b.priority
+}
+
+
+var rimprovePriority = /[+-\?]/
+var rinnerValue = /__value__\)$/
+export function parseInterpolate(expr) {
+    var rlineSp = /\n\r?/g
+    var str = String(expr).trim().replace(rlineSp, '')
+    var tokens = []
+    do { //aaa{{@bbb}}ccc
+        var index = str.indexOf(config.openTag)
+        index = index === -1 ? str.length : index
+        var value = str.slice(0, index)
+        if (/\S/.test(value)) {
+            tokens.push(avalon.quote(avalon._decode(value)))
+        }
+        str = str.slice(index + config.openTag.length)
+        if (str) {
+            index = str.indexOf(config.closeTag)
+            var value = str.slice(0, index)
+            var expr = avalon.unescapeHTML(value)
+            if (/\|\s*\w/.test(expr)) { //如果存在过滤器，优化干掉
+                var arr = addScope(expr, 'expr')
+                if (arr[1]) {
+                    expr = arr[1].replace(rinnerValue, arr[0] + ')')
+                }
+            }
+            if (rimprovePriority) {
+                expr = 'avalon.text(' + expr + ')'
+            }
+            tokens.push(expr)
+
+            str = str.slice(index + config.closeTag.length)
+        }
+    } while (str.length)
+    return tokens.join('+')
+}
+avalon.text = function(a){
+    return a == null ? '': a+''
 }

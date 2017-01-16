@@ -1,6 +1,5 @@
 import { avalon, config, inBrowser, delayCompileNodes, directives } from '../seed/core'
-import { fromDOM } from '../vtree/fromDOM'
-import { fromString } from '../vtree/fromString'
+
 
 import { optimize } from '../vtree/optimize'
 import { Lexer } from './toTemplate'

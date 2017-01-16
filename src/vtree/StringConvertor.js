@@ -7,10 +7,9 @@
  */
 import { avalon, Cache } from '../seed/core'
 import { clearString, stringPool, fill, rfill } from "./clearString"
-import { voidTag } from "./voidTag"
-import { orphanTag, makeOrphan } from "./orphanTag"
+import { voidTag, orphanTag, makeOrphan } from "./tags"
 import { makeTbody } from "./makeTbody"
-import { validateDOMNesting } from "./validateDOMNesting"
+import { validateDOMNesting } from "./nestRules"
 
 function nomalString(str) {
     return avalon.unescapeHTML(str.replace(rfill, fill))

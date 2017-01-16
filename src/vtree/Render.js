@@ -1,9 +1,15 @@
-Render(vm, root, body) {
+import { avalon, config, inBrowser, delayCompileNodes, directives } from '../seed/core'
+import { runActions, collectDeps } from '../vmodel/transaction'
+
+import { __repeat } from '../filters/array'
+
+function Render(vm, root, body) {
     var fork = Function('__vmodel__', '$$l',
         'var \u01A9 = __vmodel__.$render;' +
         'return ' + body)
     this.fork = fork
     this.template = fork + ''
+    this.vm = vm
     vm.$render = this
 }
 Render.prototype = {
@@ -95,66 +101,6 @@ Render.prototype = {
             avalon.log(diffError)
         }
         this._isScheduled = false
-    },
-
-
-    /**
-     * 将循环区域转换为for指令
-     * @param {type} begin 注释节点
-     * @param {type} scope
-     * @param {type} parentChildren
-     * @param {type} userCb 循环结束回调
-     * @returns {undefined}
-     */
-    getForBinding(begin, scope, parentChildren, cb) {
-        var expr = begin.nodeValue.replace('ms-for:', '').trim()
-        begin.nodeValue = 'ms-for:' + expr
-
-        var nodes = getRange(parentChildren, begin)
-        this.scanChildren(nodes, scope, false)
-        var end = nodes.end
-        begin.dynamic = true
-        parentChildren.splice(nodes.start, nodes.length, [])
-
-        begin.for = {
-            begin,
-            end,
-            expr,
-            nodes,
-            cb
-
-        }
-
-    },
-    /**
-     * 在带ms-for元素节点旁添加两个注释节点,组成循环区域
-     * @param {type} vdom
-     * @param {type} scope
-     * @param {type} parentChildren
-     * @param {type} expr
-     * @returns {undefined}
-     */
-    getForBindingByElement(vdom, scope, parentChildren, expr) {
-        var index = parentChildren.indexOf(vdom) //原来带ms-for的元素节点
-        var props = vdom.props
-        var begin = {
-            nodeName: '#comment',
-            nodeValue: 'ms-for:' + expr
-        }
-        if (props.slot) {
-            begin.slot = props.slot
-            delete props.slot
-        }
-        var end = {
-            nodeName: '#comment',
-            nodeValue: 'ms-for-end:'
-        }
-        parentChildren.splice(index, 1, begin, vdom, end)
-        var cbName = 'data-for-rendered'
-        var cb = props[cbName]
-        delete props[cbName]
-        this.getForBinding(begin, scope, parentChildren, cb || '')
-
     }
 
 }

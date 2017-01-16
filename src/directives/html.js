@@ -1,5 +1,6 @@
 import { avalon } from '../seed/core'
-import { Render } from '../renders/domRender'
+import { Render } from '../vtree/Compiler'
+import { HighConvertor } from '../vtree/HighConvertor'
 
 avalon.directive('html', {
     diff: function(oldVal, newVal, vdom, newVdom) { //oldVal, newVal, oldVdom, newVdom
@@ -21,8 +22,9 @@ avalon.directive('html', {
         this.beforeDispose()
         var vm = newVdom.vm
 
-        var render = this.innerRender = new Render(value, vm, true)
 
+        var nodes = (new HighConvertor(value)).nodes
+        var render = this.innerRender = new Compiler(nodes, render.vm, true)
         var children = render.fork(render.vm, newVdom.locale)
 
         newVdom.children = vdom.children = children

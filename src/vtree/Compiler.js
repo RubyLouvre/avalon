@@ -1,13 +1,17 @@
-export function Lexer(nodes) {
+import { Render } from './Render'
+
+
+import { createExpr, parseInterpolate, parseAttribute } from '../parser/index'
+
+export function Compiler(nodes, vm, force) {
     //这里需要第二个配置项，用于防止多次扫描
     var body = this.genChildren(nodes)
-    this.fork = Function('__vmodel__', '$$l',
-        'var \u01A9 = __vmodel__.$render;' +
-        'return ' + body)
+    if (vm) {
+        return new Render(vm, nodes, body)
+    }
 }
 
-
-Lexer.prototype = {
+Compiler.prototype = {
     genChildren(nodes) {
         if (nodes.length) {
             var arr = []
@@ -119,7 +123,7 @@ Lexer.prototype = {
         var json = toJSONByArray(
             `nodeName: '${node.nodeName}'`,
             node.vtype ? `vtype: ${ node.vtype }` : '',
-            node.staticRoot ? 'staticRoot: true' : '',
+            node.staticID ? 'staticID: ' + node.staticID : '',
             dirs ? this.genDirs(dirs, node) : '',
             dirs ? 'vm: __vmodel__' : '',
             dirs ? 'local: $$l' : '',
@@ -138,7 +142,6 @@ Lexer.prototype = {
             var vm = avalon.vmodels[hasCtrl]
             new Render(vm, node, json)
             return `\u01A9.ctrl( ${ avalon.quote(hasCtrl) }, __vmodel__, ${isImport}, function(__vmodel__) {
-               
                 return ${ json }
             }) `
         } else {

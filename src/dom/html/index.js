@@ -1,14 +1,14 @@
-import {avalon, Cache, document, createFragment} from '../../seed/core'
-import {fromString} from '../../vtree/fromString'
-export {avalon}
+import { avalon, Cache, document, createFragment } from '../../seed/core'
+import { StringConvertor } from '../../vtree/StringConvertor'
+export { avalon }
 
 var rhtml = /<|&#?\w+;/
 var htmlCache = new Cache(128)
 var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig
 
-avalon.parseHTML = function (html) {
+avalon.parseHTML = function(html) {
     var fragment = createFragment()
-    //处理非字符串
+        //处理非字符串
     if (typeof html !== 'string') {
         return fragment
     }
@@ -22,8 +22,8 @@ avalon.parseHTML = function (html) {
     if (hasCache) {
         return avalon.cloneNode(hasCache)
     }
-    var vnodes = fromString(html)
-    for (var i = 0, el; el = vnodes[i++]; ) {
+    var vnodes = StringConvertor(html)
+    for (var i = 0, el; el = vnodes[i++];) {
         var child = avalon.vdom(el, 'toDOM')
         fragment.appendChild(child)
     }
@@ -33,30 +33,28 @@ avalon.parseHTML = function (html) {
     return fragment
 }
 
-avalon.innerHTML = function (node, html) {
+avalon.innerHTML = function(node, html) {
     var parsed = avalon.parseHTML(html)
     this.clearHTML(node)
     node.appendChild(parsed)
 }
 
 //https://github.com/karloespiritu/escapehtmlent/blob/master/index.js
-avalon.unescapeHTML = function (html) {
+avalon.unescapeHTML = function(html) {
     return String(html)
-            .replace(/&quot;/g, '"')
-            .replace(/&#39;/g, '\'')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, '\'')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
 }
 
 
 
-avalon.clearHTML = function (node) {
+avalon.clearHTML = function(node) {
     /* istanbul ignore next */
     while (node.lastChild) {
         node.removeChild(node.lastChild)
     }
     return node
 }
-
-       

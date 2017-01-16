@@ -4,14 +4,13 @@ import './seed/lang.modern'
 import './filters/index'
 import './dom/modern'
 
-import './vtree/fromString'
-import './vtree/fromDOM'
-
 import './vmodel/modern'
 import './vmodel/proxy'
 
 import './directives/modern'
-import './renders/domRender'
+
+import './renders/HighConvertor'
+import './renders/Compiler'
 
 import './effect/index'
 import './component/index'

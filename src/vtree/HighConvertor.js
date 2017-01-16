@@ -1,7 +1,12 @@
 import { DOMConvertor } from './DOMConvertor'
 import { StringConvertor } from './StringConvertor'
 import { avalon, config, inBrowser, delayCompileNodes, directives } from '../seed/core'
+import { getRange } from './share'
+import { eventMap } from '../parser/index'
 
+/**
+ * 此转换器主要是AST节点添加dirs属性，dymatic属性， 循环区域
+ */
 
 
 function HighConvertor(node) {
@@ -36,6 +41,9 @@ HighConvertor.prototype = {
             this.complete()
         }
     },
+    complete() {
+        avalon.log('扫描完毕')
+    },
     /**
      * 从文本节点获取指令
      * @param {type} vdom 
@@ -55,7 +63,7 @@ HighConvertor.prototype = {
      * @returns {undefined}
      */
     scanComment(vdom, parentChildren) {
-        if (startWith(vdom.nodeValue, 'ms-for:')) {
+        if (vdom.nodeValue.slice(0, 7) === 'ms-for:') {
             this.scanRange(vdom, parentChildren)
         }
     },
@@ -88,6 +96,9 @@ HighConvertor.prototype = {
         this.scanRange(begin, parentChildren, cb || '')
 
     },
+    /**
+     * 为没有设置ms-widget的组件添加ms-widget属性
+     */
     scanWidget(vdom, attrs, dirs) {
         if (/^ms\-/.test(vdom.nodeName)) {
             attrs.is = vdom.nodeName
@@ -101,7 +112,7 @@ HighConvertor.prototype = {
         }
         if (dirs['ms-widget']) {
             var children = vdom.vtype === 2 ?
-                fromString(vdom.children[0].nodeValue) :
+                StringConvertor(vdom.children[0].nodeValue) :
                 vdom.vtype !== 1 ? vdom.children.concat() : []
             vdom._children = children
             this.scanChildren(children)
@@ -112,6 +123,9 @@ HighConvertor.prototype = {
         }
 
     },
+    /**
+     * 创建循环区域
+     */
     scanRange(begin, parentChildren, cb) {
         var expr = begin.nodeValue.replace('ms-for:', '').trim()
         begin.nodeValue = 'ms-for:' + expr
@@ -148,7 +162,7 @@ HighConvertor.prototype = {
             if (attr.charAt(0) === ':') {
                 attr = 'ms-' + attr.slice(1)
             }
-            if (startWith(attr, 'ms-')) {
+            if (attr.slice(0, 3) === 'ms-') {
                 dirs[attr] = value
                 var type = attr.match(/\w+/g)[1]
                 type = eventMap[type] || type
