@@ -9,8 +9,8 @@ import './vmodel/proxy'
 
 import './directives/modern'
 
-import './renders/HighConvertor'
-import './renders/Compiler'
+import './vtree/HighConvertor'
+import './vtree/Compiler'
 
 import './effect/index'
 import './component/index'

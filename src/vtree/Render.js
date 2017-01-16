@@ -3,7 +3,7 @@ import { runActions, collectDeps } from '../vmodel/transaction'
 
 import { __repeat } from '../filters/array'
 
-function Render(vm, root, body) {
+export function Render(vm, root, body) {
     var fork = Function('__vmodel__', '$$l',
         'var \u01A9 = __vmodel__.$render;' +
         'return ' + body)

@@ -1,8 +1,8 @@
 import { avalon, isObject, platform } from '../seed/core'
 import { cssDiff } from '../directives/css'
-import { getRange, dumpTree } from '../renders/share'
+import { getRange, dumpTree } from '../vtree/share'
 import { toDOM } from '../renders/toDOM'
-import { diff, diffSlots } from '../renders/diff'
+import { diff, diffSlots } from '../vtree/diff'
 import { createGetter } from '../parser/index'
 
 

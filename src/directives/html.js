@@ -1,5 +1,5 @@
 import { avalon } from '../seed/core'
-import { Render } from '../vtree/Compiler'
+import { Compiler } from '../vtree/Compiler'
 import { HighConvertor } from '../vtree/HighConvertor'
 
 avalon.directive('html', {
@@ -24,8 +24,8 @@ avalon.directive('html', {
 
 
         var nodes = (new HighConvertor(value)).nodes
-        var render = this.innerRender = new Compiler(nodes, render.vm, true)
-        var children = render.fork(render.vm, newVdom.locale)
+        var render = this.innerRender = new Compiler(nodes, vm, true)
+        var children = render.fork(vm, newVdom.locale)
 
         newVdom.children = vdom.children = children
         if (vdom.dom)

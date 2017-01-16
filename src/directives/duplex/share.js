@@ -1,7 +1,7 @@
 import { avalon, createFragment } from '../../seed/core'
 import { rcheckedType } from '../../dom/rcheckedType'
 import { lookupOption } from './option'
-import { fromString } from '../../vtree/fromString'
+import { StringConvertor } from '../../vtree/StringConvertor'
 import { updateModel } from './updateDataHandle'
 import { addScope, makeHandle, createSetter } from '../../parser/index'
 import { toDOM } from '../../renders/toDOM'
@@ -217,7 +217,7 @@ export var updateView = {
     },
     contenteditable: function() { //处理单个innerHTML 
 
-        var vnodes = fromString(this.value)
+        var vnodes = new StringConvertor(this.value)
         var fragment = toDOM(vnodes)
         var dom = this.vdom.dom
         avalon.clearHTML(dom).appendChild(fragment)

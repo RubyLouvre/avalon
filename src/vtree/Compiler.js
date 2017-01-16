@@ -1,7 +1,7 @@
 import { Render } from './Render'
 
 
-import { createExpr, parseInterpolate, parseAttribute } from '../parser/index'
+import { createExpr, parseInterpolate, parseAttributes } from '../parser/index'
 
 export function Compiler(nodes, vm, force) {
     //这里需要第二个配置项，用于防止多次扫描

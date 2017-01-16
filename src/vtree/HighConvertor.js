@@ -9,7 +9,7 @@ import { eventMap } from '../parser/index'
  */
 
 
-function HighConvertor(node) {
+export function HighConvertor(node) {
     if (typeof node === 'string') {
         var vnodes = StringConvertor(node)
     } else {

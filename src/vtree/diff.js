@@ -1,5 +1,5 @@
 import { avalon, directives } from '../seed/core'
-import { toDOM } from './toDOM'
+import { toDOM } from '../renders/toDOM'
 
 //a是旧的虚拟DOM, b是新的
 export function diff(a, b) {

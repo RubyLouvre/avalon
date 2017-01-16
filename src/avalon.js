@@ -10,8 +10,8 @@ import './dom/compact'
 import './vmodel/compact'
 import './directives/compact'
 
-import './renders/HighConvertor'
-import './renders/Compiler'
+import './vtree/HighConvertor'
+import './vtree/Compiler'
 
 import './effect/index'
 import './component/index'
