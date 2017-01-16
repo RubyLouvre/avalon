@@ -54,7 +54,7 @@ export function fromDOM(node) {
             } else if (!vnode.vtype) {
 
                 for (var i = 0, el; el = node.childNodes[i++];) {
-                    var child = from(el)
+                    var child = fromDOM(el)
                     if (/\S/.test(child.nodeValue)) {
                         vnode.children.push(child)
                     }

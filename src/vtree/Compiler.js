@@ -6,7 +6,7 @@ import { createExpr, parseInterpolate, parseAttributes } from '../parser/index'
 export function Compiler(nodes, vm, force) {
     //这里需要第二个配置项，用于防止多次扫描
     var body = this.genChildren(nodes)
-    if (vm) {
+    if (force && vm) {
         return new Render(vm, nodes, body)
     }
 }
@@ -140,7 +140,8 @@ Compiler.prototype = {
         }
         if (hasCtrl) {
             var vm = avalon.vmodels[hasCtrl]
-            new Render(vm, node, json)
+            
+            this.render = new Render(vm, node, json)
             return `\u01A9.ctrl( ${ avalon.quote(hasCtrl) }, __vmodel__, ${isImport}, function(__vmodel__) {
                 return ${ json }
             }) `

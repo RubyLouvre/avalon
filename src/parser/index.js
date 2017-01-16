@@ -1,4 +1,4 @@
-import { avalon, msie, Cache, config } from '../seed/core'
+import { avalon, msie, Cache, config, directives } from '../seed/core'
 import { clearString, stringPool, fill, rfill, dig } from '../vtree/clearString'
 
 export var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false," +

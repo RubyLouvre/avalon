@@ -3,13 +3,16 @@ import { runActions, collectDeps } from '../vmodel/transaction'
 
 import { __repeat } from '../filters/array'
 
-export function Render(vm, root, body) {
+
+
+export function Render(vm, vnodes, body) {
     var fork = Function('__vmodel__', '$$l',
         'var \u01A9 = __vmodel__.$render;' +
         'return ' + body)
     this.fork = fork
     this.template = fork + ''
     this.vm = vm
+    this.vnodes = vnodes
     vm.$render = this
 }
 Render.prototype = {
@@ -67,21 +70,7 @@ Render.prototype = {
         }
 
     },
-    update: function() {
-        this.vm.$render = this
-        var nodes = this.fork(this.vm, {})
-        var root = this.root = nodes[0]
-        if (this.noDiff) {
-            return
-        }
-        try {
-            diff(this.vnodes[0], root)
-            this.vm.$element = this.vnodes[0]
-        } catch (diffError) {
-            avalon.log(diffError)
-        }
-        this._isScheduled = false
-    },
+   
 
 
     dispose: function() {

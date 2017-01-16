@@ -3,6 +3,7 @@ import { StringConvertor } from './StringConvertor'
 import { avalon, config, inBrowser, delayCompileNodes, directives } from '../seed/core'
 import { getRange } from './share'
 import { eventMap } from '../parser/index'
+import { Compiler } from './Compiler'
 
 /**
  * 此转换器主要是AST节点添加dirs属性，dymatic属性， 循环区域
@@ -13,10 +14,17 @@ export function HighConvertor(node) {
     if (typeof node === 'string') {
         var vnodes = StringConvertor(node)
     } else {
-        vnodes = StringConvertor(node)
+        vnodes = DOMConvertor(node)
     }
-    this.scanChildren(vnodes, isRoot)
+    this.scanChildren(vnodes, true)
+    return vnodes
 }
+
+avalon.scan = function(node, vm) {
+    var vnodes = new HighConvertor(node)
+    new Compiler(vnodes, vm, false)
+}
+
 
 HighConvertor.prototype = {
     scanChildren(children, isRoot) {
