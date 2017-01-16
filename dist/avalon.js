@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-16:15:20 version 2.2.3 by 司徒正美
+built in 2017-1-17:1:34 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -15,8 +15,6 @@ IE7的checked属性应该使用defaultChecked来设置
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() : typeof define === 'function' && define.amd ? define(factory) : global.avalon = factory();
 })(this, function () {
     'use strict';
-
-    var _Render$prototype;
 
     var win = typeof window === 'object' ? window : typeof global === 'object' ? global : {};
 
@@ -3545,7 +3543,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
             var type = arr[1];
 
-            if (directives[type]) {
+            if (directives$1[type]) {
                 delete props[attrName];
                 var binding = {
                     type: type,
@@ -3553,10 +3551,10 @@ IE7的checked属性应该使用defaultChecked来设置
                     name: attrName,
 
                     expr: value,
-                    priority: directives[type].priority || type.charCodeAt(0) * 100
+                    priority: directives$1[type].priority || type.charCodeAt(0) * 100
                 };
 
-                avalon.mix(binding, directives[type]);
+                avalon.mix(binding, directives$1[type]);
 
                 if (type === 'on') {
                     binding.priority += arr[3];
@@ -5180,14 +5178,306 @@ IE7的checked属性应该使用defaultChecked来设置
 
     //绑定对象只有value不一样，
 
-    function Render(vm, root$$1, body) {
+    function toDOM(el, b) {
+
+        if (el.props) {
+            if (el.dom) {
+                return el.dom;
+            }
+            var elem = el.dom = document.createElement(el.nodeName);
+
+            for (var i in el.props) {
+                var value = el.props[i];
+                if (typeof elem[i] === 'boolean') {
+                    elem[i] = !!value;
+                } else if (specalAttrs[i]) {
+                    specalAttrs[i](elem, value);
+                } else {
+                    elem.setAttribute(i, value);
+                }
+            }
+            if (container[el.nodeName]) {
+                var t = (el.children[0] || {}).nodeValue || '';
+                container[el.nodeName](elem, t);
+            } else if (el.children && !el.vtype && !el.dirs) {
+                appendChild(elem, el.children);
+            }
+            return el.dom;
+        } else if (el.nodeName === '#comment') {
+            return el.dom || (el.dom = document.createComment(el.nodeValue));
+        } else if (el.nodeName === '#document-fragment') {
+            var dom = document.createDocumentFragment();
+            appendChild(dom, el.children);
+            el.dom = dom;
+            return el.dom = dom;
+        } else if (el.nodeName === '#text') {
+            if (el.dom) {
+                return el.dom;
+            }
+            return el.dom = document.createTextNode(el.nodeValue);
+        }
+    }
+
+    function appendChild(parent, children) {
+        for (var i = 0, n = children.length; i < n; i++) {
+            var b = toDOM(children[i]);
+            if (b) {
+                parent.appendChild(b);
+            }
+        }
+    }
+
+    var container = {
+        script: function script(dom, template) {
+            try {
+                dom.text = template;
+            } catch (e) {
+                avalon.log(vdom);
+            }
+        },
+        noscript: function noscript(dom, template) {
+            dom.textContent = template;
+        },
+        xmp: function xmp(dom, template) {
+            //IE6-8,XMP元素里面只能有文本节点,不能使用innerHTML
+            dom.textContent = template;
+        },
+        option: function option(dom, template) {
+            //IE6-8,为option添加文本子节点,不会同步到text属性中
+            /* istanbul ignore next */
+            if (msie < 9) dom.text = template;
+        },
+        style: function style(dom, template) {
+            try {
+                dom.innerHTML = template;
+            } catch (e) {
+                dom.setAttribute('type', 'text/css');
+                dom.styleSheet.cssText = template;
+            }
+        }
+    };
+
+    var specalAttrs = {
+        "class": function _class(dom, val) {
+            dom.className = val;
+        },
+        style: function style(dom, val) {
+            dom.style.cssText = val;
+        },
+        type: function type(dom, val) {
+            try {
+                //textarea,button 元素在IE6,7设置 type 属性会抛错
+                dom.type = val;
+            } catch (e) {}
+        },
+        'for': function _for(dom, val) {
+            dom.setAttribute('for', val);
+            dom.htmlFor = val;
+        }
+    };
+
+    var svgTags = avalon.oneObject('circle,defs,ellipse,image,line,' + 'path,polygon,polyline,rect,symbol,text,use,g,svg');
+
+    var VMLTags = avalon.oneObject('shape,line,polyline,rect,roundrect,oval,arc,' + 'curve,background,image,shapetype,group,fill,' + 'stroke,shadow, extrusion, textbox, imagedata, textpath');
+
+    //a是旧的虚拟DOM, b是新的
+    function diff(a, b) {
+
+        switch (a.nodeName) {
+            case '#text':
+                //两个文本节点进行比较
+                toDOM(a);
+                if (a.nodeValue !== b.nodeValue) {
+                    a.nodeValue = b.nodeValue;
+                    if (a.dom) {
+                        a.dom.nodeValue = b.nodeValue;
+                    }
+                }
+                break;
+            case '#comment':
+                //两个注释节点进行比较
+                if (b.nodeName !== '#comment') {
+                    //ms-if 注释节点要变成元素节点
+                    for (var i in b) {
+                        a[i] = b[i];
+                    }
+                    delete a.dom;
+                    reInitDires(a);
+                    diff(a, b);
+                } else {
+                    toDOM(a);
+                }
+                break;
+            case '#document-fragment':
+                break;
+            case void 0:
+                //两个数组(循环区域进行比较 )
+                return directives$1['for'].diff(a, b);
+                break;
+            default:
+                //两个元素节点进行比较
+                //先处理静态节点,静态节点不会变动,不用比较
+                //如果上面有指令,应用指令
+                if (a.staticRoot && a.hasScan) {
+                    toDOM(a);
+                    return;
+                }
+                toDOM(a);
+                var parentNode = a.dom;
+                var stop = false;
+                var afterCb = [];
+                if (b.dirs) {
+                    for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
+                        var adir = a.dirs[i];
+                        if (!adir.diff) {
+                            avalon.mix(adir, directives$1[adir.type]);
+                        }
+                        //diff时依次传入指令的旧值,指令的新值, 旧的虚拟DOM, 新的虚拟DOM
+                        if (adir.diff && adir.diff(adir.value, bdir.value, a, b)) {
+                            toDOM(a);
+                            adir.inited = true;
+                            adir.update(adir.value, a, b, afterCb);
+                            //如果组件没有加载,a,b分别为wbr, #comment
+                            //如果成功加载,a,b分别为div, div
+                            //如果是widget, a.dom会被删掉
+                            if (a.dom !== parentNode) {
+                                toDOM(a);
+                                var p = parentNode.parentNode;
+
+                                if (p) {
+                                    p.replaceChild(a.dom, parentNode);
+                                }
+                                parentNode = a.dom;
+                            }
+                            if (!adir.removeName && parentNode.removeAttribute) {
+                                parentNode.removeAttribute(adir.name);
+                                adir.removeName = true;
+                            }
+                        }
+                        stop = stop || adir.delay;
+                    }
+                }
+                //可以在这里回收节点
+                if (b.nodeName === '#comment') {
+                    //ms-if ms-widget 元素节点要变成注释节点
+                    a.props = b.props = a.dom = null;
+                    handleIf(a, b);
+                    stop = true;
+                }
+                if (!a.vtype && !stop) {
+                    console.log('diff');
+                    var childNodes = parentNode.childNodes;
+                    var achild = a.children.concat();
+                    var bchild = b.children.concat();
+                    for (var _i4 = 0; _i4 < achild.length; _i4++) {
+
+                        var c = achild[_i4];
+                        var d = bchild[_i4];
+
+                        if (d) {
+                            //如果数量相等则进行比较
+                            var arr = diff(c, d);
+                            if (typeof arr === 'number') {
+                                directives$1['for'].update(c, d, achild, bchild, _i4, afterCb);
+                                c = achild[_i4];
+                                d = bchild[_i4];
+                                diff(c, d);
+                            }
+                        }
+
+                        if (c.dom !== childNodes[_i4]) {
+                            if (!childNodes[_i4]) {
+                                //数量一致就添加
+                                parentNode.appendChild(c.dom);
+                            } else {
+                                try {
+                                    parentNode.insertBefore(c.dom, childNodes[_i4]);
+                                } catch (e) {
+                                    avalon.log(c.dom, childNodes[_i4], 'error', e);
+                                }
+                            }
+                        }
+                    }
+                    //移除多余节点
+                    if (childNodes.length > achild.length) {
+                        var j = achild.length;
+                        while (childNodes[j]) {
+                            parentNode.removeChild(childNodes[j]);
+                        }
+                    }
+                }
+
+                if (afterCb.length) {
+                    afterCb.forEach(function (fn) {
+                        fn();
+                    });
+                }
+                if (a.staticRoot) {
+                    a.hasScan = true;
+                }
+                break;
+        }
+    }
+
+    function handleIf(a, b) {
+        handleDispose(a);
+        for (var i in b) {
+            a[i] = b[i];
+        }
+        toDOM(a);
+    }
+    function diffSlots(a, b) {
+        if (!a) {
+            return;
+        }
+        for (var i in a) {
+            if (!a.hasOwnProperty(i)) return;
+            var aslot = a[i];
+            var bslot = b[i];
+            aslot.forEach(function (el, index) {
+                diff(el, bslot[index]);
+            });
+        }
+    }
+
+    function reInitDires(a) {
+        if (a.dirs) {
+            a.dirs.forEach(function (dir) {
+                delete dir.inited;
+            });
+        }
+        if (a.children) {
+            a.children.forEach(function (child) {
+                reInitDires(child);
+            });
+        }
+    }
+
+    function handleDispose(a) {
+        if (a.dirs) {
+            for (var i = 0, el; el = a.dirs[i++];) {
+                if (el.beforeDispose) {
+                    el.beforeDispose();
+                }
+            }
+        }
+        var arr = a.children || Array.isArray(a) && a;
+        if (arr) {
+            for (var _i5 = 0, _el; _el = arr[_i5++];) {
+                handleDispose(_el);
+            }
+        }
+    }
+
+    function Render(vm, vnodes, body) {
         var fork = Function('__vmodel__', '$$l', 'var \u01A9 = __vmodel__.$render;' + 'return ' + body);
         this.fork = fork;
         this.template = fork + '';
         this.vm = vm;
+        this.vnodes = vnodes;
         vm.$render = this;
     }
-    Render.prototype = (_Render$prototype = {
+    Render.prototype = {
 
         "static": function _static(i) {
             return avalon.staticNodes[i];
@@ -5242,6 +5532,8 @@ IE7的checked属性应该使用defaultChecked来设置
             }
         },
 
+
+        dispose: function dispose() {},
         update: function update() {
             this.vm.$render = this;
             var nodes = this.fork(this.vm, {});
@@ -5256,24 +5548,9 @@ IE7的checked属性应该使用defaultChecked来设置
                 avalon.log(diffError);
             }
             this._isScheduled = false;
-        },
+        }
 
-        dispose: function dispose() {}
-    }, _Render$prototype['update'] = function update() {
-        this.vm.$render = this;
-        var nodes = this.fork(this.vm, {});
-        var root$$1 = this.root = nodes[0];
-        if (this.noDiff) {
-            return;
-        }
-        try {
-            diff(this.vnodes[0], root$$1);
-            this.vm.$element = this.vnodes[0];
-        } catch (diffError) {
-            avalon.log(diffError);
-        }
-        this._isScheduled = false;
-    }, _Render$prototype);
+    };
 
     function getTraceKey(item) {
         var type = typeof item;
@@ -5301,20 +5578,25 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     }
 
+    /**
+     * Compiler方法会将一堆虚拟DOM根据作用域划分为多个Render
+     */
     function Compiler(nodes, vm, force) {
         //这里需要第二个配置项，用于防止多次扫描
-        var body = this.genChildren(nodes);
-        if (vm) {
+        this.renders = [];
+        var body = this.genChildren(nodes, null);
+
+        if (force && vm) {
             return new Render(vm, nodes, body);
         }
     }
 
     Compiler.prototype = {
-        genChildren: function genChildren(nodes) {
+        genChildren: function genChildren(nodes, scope) {
             if (nodes.length) {
                 var arr = [];
                 nodes.forEach(function (node) {
-                    var a = this.genNode(node);
+                    var a = this.genNode(node, scope);
                     if (a) {
                         arr.push(a);
                     }
@@ -5324,9 +5606,9 @@ IE7的checked属性应该使用defaultChecked来设置
                 return '[]';
             }
         },
-        genNode: function genNode(node) {
+        genNode: function genNode(node, scope) {
             if (node.props) {
-                return this.genElement(node);
+                return this.genElement(node, scope);
             } else if (node.nodeName === '#comment') {
                 return this.genComment(node);
             } else if (node.nodeName === '#text') {
@@ -5358,25 +5640,29 @@ IE7的checked属性应该使用defaultChecked来设置
             delete node._children;
             return '(function() {\n                var slots = {}\n                var slotedElements = ' + this.genChildren(_children) + '\n                return ' + json + '\n            })()';
         },
-        genElement: function genElement(node) {
+        genElement: function genElement(node, scope) {
             if (node.nodeName === 'slot') {
                 return '\u01A9.slot(' + avalon.quote(node.props.name || "defaults") + ')';
             }
 
             if (node.staticID) {
-
                 return '\u01A9.static(' + node.staticID + ')';
             }
             var dirs = node.dirs,
                 props = node.props;
 
             if (dirs) {
+                //优化处理指令
+                if (dirs['ms-widget']) {
+                    return this.genComponent(node, dirs, scope);
+                }
                 var hasCtrl = dirs['ms-controller'] || dirs['ms-important'];
                 var isImport = 'ms-important' in dirs;
-                if (dirs['ms-widget']) {
-                    return this.genComponent(node, dirs);
-                }
-
+                //判定其原上方是否有vm
+                var topScope = scope;
+                var scope = avalon.vmodels[hasCtrl];
+                //处理各种指令的冲突,因为有的指令出现后,另一些指令需要无效化
+                //比如ms-text的优先级向于ms-html
                 if (dirs['ms-text']) {
                     var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag);
                     var code = createExpr(expr, 'text');
@@ -5398,17 +5684,22 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
             }
 
-            var json = toJSONByArray('nodeName: \'' + node.nodeName + '\'', node.vtype ? 'vtype: ' + node.vtype : '', node.staticID ? 'staticID: ' + node.staticID : '', dirs ? this.genDirs(dirs, node) : '', dirs ? 'vm: __vmodel__' : '', dirs ? 'local: $$l' : '', 'props: ' + toJSONByObject(node.props), 'children: ' + (node.template || this.genChildren(node.children)));
+            var json = toJSONByArray('nodeName: \'' + node.nodeName + '\'', node.vtype ? 'vtype: ' + node.vtype : '', node.staticID ? 'staticID: ' + node.staticID : '', dirs ? this.genDirs(dirs, node) : '', dirs ? 'vm: __vmodel__' : '', dirs ? 'local: $$l' : '', 'props: ' + toJSONByObject(node.props), 'children: ' + (node.template || this.genChildren(node.children, scope)));
+            //将slot属性变成collectSlot方法
             if (node.props.slot) {
                 json = '\u01A9.collectSlot(' + json + ',slots)';
             }
-
+            //将ms-if指令变成三目运算符
             if (hasIf) {
                 json = hasIf + ' ? ' + json + ' : \u01A9.comment(\'if\')';
             }
+            //将作用域指令变成ctrl方法
             if (hasCtrl) {
-                var vm = avalon.vmodels[hasCtrl];
-                new Render(vm, node, json);
+                var render = new Render(scope, [node], '[' + json + ']');
+                if (!topScope) {
+                    console.log(this);
+                    this.renders.push(render);
+                }
                 return '\u01A9.ctrl( ' + avalon.quote(hasCtrl) + ', __vmodel__, ' + isImport + ', function(__vmodel__) {\n                return ' + json + '\n            }) ';
             } else {
                 return json;
@@ -5461,6 +5752,9 @@ IE7的checked属性应该使用defaultChecked来设置
         return '{' + arr + '}';
     }
 
+    function DOMConvertor(dom) {
+        return [fromDOM(dom)];
+    }
     /**
      * 虚拟元素节点有如下属性
      * nodeName: 标签名,一律小写
@@ -5507,7 +5801,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 } else if (!vnode.vtype) {
 
                     for (var i = 0, el; el = node.childNodes[i++];) {
-                        var child = from(el);
+                        var child = fromDOM(el);
                         if (/\S/.test(child.nodeValue)) {
                             vnode.children.push(child);
                         }
@@ -5667,10 +5961,19 @@ IE7的checked属性应该使用defaultChecked来设置
         if (typeof node === 'string') {
             var vnodes = StringConvertor(node);
         } else {
-            vnodes = StringConvertor(node);
+            vnodes = DOMConvertor(node);
         }
-        this.scanChildren(vnodes, isRoot);
+        this.scanChildren(vnodes, true);
+        return vnodes;
     }
+
+    avalon.scan = function (node, vm) {
+        var vnodes = new HighConvertor(node);
+        var c = new Compiler(vnodes, vm, false);
+        c.renders.forEach(function (cc) {
+            cc.update();
+        });
+    };
 
     HighConvertor.prototype = {
         scanChildren: function scanChildren(children, isRoot) {
@@ -6440,108 +6743,6 @@ IE7的checked属性应该使用defaultChecked来设置
             updateDataActions[field.dtype].call(field);
         }
     }
-
-    function toDOM(el, b) {
-
-        if (el.props) {
-            if (el.dom) {
-                return el.dom;
-            }
-            var elem = el.dom = document.createElement(el.nodeName);
-
-            for (var i in el.props) {
-                var value = el.props[i];
-                if (typeof elem[i] === 'boolean') {
-                    elem[i] = !!value;
-                } else if (specalAttrs[i]) {
-                    specalAttrs[i](elem, value);
-                } else {
-                    elem.setAttribute(i, value);
-                }
-            }
-            if (container[el.nodeName]) {
-                var t = (el.children[0] || {}).nodeValue || '';
-                container[el.nodeName](elem, t);
-            } else if (el.children && !el.vtype && !el.dirs) {
-                appendChild(elem, el.children);
-            }
-            return el.dom;
-        } else if (el.nodeName === '#comment') {
-            return el.dom || (el.dom = document.createComment(el.nodeValue));
-        } else if (el.nodeName === '#document-fragment') {
-            var dom = document.createDocumentFragment();
-            appendChild(dom, el.children);
-            el.dom = dom;
-            return el.dom = dom;
-        } else if (el.nodeName === '#text') {
-            if (el.dom) {
-                return el.dom;
-            }
-            return el.dom = document.createTextNode(el.nodeValue);
-        }
-    }
-
-    function appendChild(parent, children) {
-        for (var i = 0, n = children.length; i < n; i++) {
-            var b = toDOM(children[i]);
-            if (b) {
-                parent.appendChild(b);
-            }
-        }
-    }
-
-    var container = {
-        script: function script(dom, template) {
-            try {
-                dom.text = template;
-            } catch (e) {
-                avalon.log(vdom);
-            }
-        },
-        noscript: function noscript(dom, template) {
-            dom.textContent = template;
-        },
-        xmp: function xmp(dom, template) {
-            //IE6-8,XMP元素里面只能有文本节点,不能使用innerHTML
-            dom.textContent = template;
-        },
-        option: function option(dom, template) {
-            //IE6-8,为option添加文本子节点,不会同步到text属性中
-            /* istanbul ignore next */
-            if (msie < 9) dom.text = template;
-        },
-        style: function style(dom, template) {
-            try {
-                dom.innerHTML = template;
-            } catch (e) {
-                dom.setAttribute('type', 'text/css');
-                dom.styleSheet.cssText = template;
-            }
-        }
-    };
-
-    var specalAttrs = {
-        "class": function _class(dom, val) {
-            dom.className = val;
-        },
-        style: function style(dom, val) {
-            dom.style.cssText = val;
-        },
-        type: function type(dom, val) {
-            try {
-                //textarea,button 元素在IE6,7设置 type 属性会抛错
-                dom.type = val;
-            } catch (e) {}
-        },
-        'for': function _for(dom, val) {
-            dom.setAttribute('for', val);
-            dom.htmlFor = val;
-        }
-    };
-
-    var svgTags = avalon.oneObject('circle,defs,ellipse,image,line,' + 'path,polygon,polyline,rect,symbol,text,use,g,svg');
-
-    var VMLTags = avalon.oneObject('shape,line,polyline,rect,roundrect,oval,arc,' + 'curve,background,image,shapetype,group,fill,' + 'stroke,shadow, extrusion, textbox, imagedata, textpath');
 
     var rchangeFilter = /\|\s*change\b/;
     var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/;
@@ -7404,195 +7605,6 @@ IE7的checked属性应该使用defaultChecked来设置
         resetInFocus: true, //@config {Boolean} true，在focus事件中执行onReset回调,
         deduplicateInValidateAll: false //@config {Boolean} false，在validateAll回调中对reason数组根据元素节点进行去重
     };
-
-    //a是旧的虚拟DOM, b是新的
-    function diff$1(a, b) {
-
-        switch (a.nodeName) {
-            case '#text':
-                //两个文本节点进行比较
-                toDOM(a);
-                if (a.nodeValue !== b.nodeValue) {
-                    a.nodeValue = b.nodeValue;
-                    if (a.dom) {
-                        a.dom.nodeValue = b.nodeValue;
-                    }
-                }
-                break;
-            case '#comment':
-                //两个注释节点进行比较
-                if (b.nodeName !== '#comment') {
-                    //ms-if 注释节点要变成元素节点
-                    for (var i in b) {
-                        a[i] = b[i];
-                    }
-                    delete a.dom;
-                    reInitDires(a);
-                    diff$1(a, b);
-                } else {
-                    toDOM(a);
-                }
-                break;
-            case '#document-fragment':
-                break;
-            case void 0:
-                //两个数组(循环区域进行比较 )
-                return directives$1['for'].diff(a, b);
-                break;
-            default:
-                //两个元素节点进行比较
-                //先处理静态节点,静态节点不会变动,不用比较
-                //如果上面有指令,应用指令
-                if (a.staticRoot && a.hasScan) {
-                    toDOM(a);
-                    return;
-                }
-                toDOM(a);
-                var parentNode = a.dom;
-                var stop = false;
-                var afterCb = [];
-                if (b.dirs) {
-                    for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
-                        var adir = a.dirs[i];
-                        if (!adir.diff) {
-                            avalon.mix(adir, directives$1[adir.type]);
-                        }
-                        //diff时依次传入指令的旧值,指令的新值, 旧的虚拟DOM, 新的虚拟DOM
-                        if (adir.diff && adir.diff(adir.value, bdir.value, a, b)) {
-                            toDOM(a);
-                            adir.inited = true;
-                            adir.update(adir.value, a, b, afterCb);
-                            //如果组件没有加载,a,b分别为wbr, #comment
-                            //如果成功加载,a,b分别为div, div
-                            //如果是widget, a.dom会被删掉
-                            if (a.dom !== parentNode) {
-                                toDOM(a);
-                                var p = parentNode.parentNode;
-
-                                if (p) {
-                                    p.replaceChild(a.dom, parentNode);
-                                }
-                                parentNode = a.dom;
-                            }
-                            if (!adir.removeName && parentNode.removeAttribute) {
-                                parentNode.removeAttribute(adir.name);
-                                adir.removeName = true;
-                            }
-                        }
-                        stop = stop || adir.delay;
-                    }
-                }
-                //可以在这里回收节点
-                if (b.nodeName === '#comment') {
-                    //ms-if ms-widget 元素节点要变成注释节点
-                    a.props = b.props = a.dom = null;
-                    handleIf(a, b);
-                    stop = true;
-                }
-                if (!a.vtype && !stop) {
-                    console.log('diff');
-                    var childNodes = parentNode.childNodes;
-                    var achild = a.children.concat();
-                    var bchild = b.children.concat();
-                    for (var _i4 = 0; _i4 < achild.length; _i4++) {
-
-                        var c = achild[_i4];
-                        var d = bchild[_i4];
-
-                        if (d) {
-                            //如果数量相等则进行比较
-                            var arr = diff$1(c, d);
-                            if (typeof arr === 'number') {
-                                directives$1['for'].update(c, d, achild, bchild, _i4, afterCb);
-                                c = achild[_i4];
-                                d = bchild[_i4];
-                                diff$1(c, d);
-                            }
-                        }
-
-                        if (c.dom !== childNodes[_i4]) {
-                            if (!childNodes[_i4]) {
-                                //数量一致就添加
-                                parentNode.appendChild(c.dom);
-                            } else {
-                                try {
-                                    parentNode.insertBefore(c.dom, childNodes[_i4]);
-                                } catch (e) {
-                                    avalon.log(c.dom, childNodes[_i4], 'error', e);
-                                }
-                            }
-                        }
-                    }
-                    //移除多余节点
-                    if (childNodes.length > achild.length) {
-                        var j = achild.length;
-                        while (childNodes[j]) {
-                            parentNode.removeChild(childNodes[j]);
-                        }
-                    }
-                }
-
-                if (afterCb.length) {
-                    afterCb.forEach(function (fn) {
-                        fn();
-                    });
-                }
-                if (a.staticRoot) {
-                    a.hasScan = true;
-                }
-                break;
-        }
-    }
-
-    function handleIf(a, b) {
-        handleDispose(a);
-        for (var i in b) {
-            a[i] = b[i];
-        }
-        toDOM(a);
-    }
-    function diffSlots(a, b) {
-        if (!a) {
-            return;
-        }
-        for (var i in a) {
-            if (!a.hasOwnProperty(i)) return;
-            var aslot = a[i];
-            var bslot = b[i];
-            aslot.forEach(function (el, index) {
-                diff$1(el, bslot[index]);
-            });
-        }
-    }
-
-    function reInitDires(a) {
-        if (a.dirs) {
-            a.dirs.forEach(function (dir) {
-                delete dir.inited;
-            });
-        }
-        if (a.children) {
-            a.children.forEach(function (child) {
-                reInitDires(child);
-            });
-        }
-    }
-
-    function handleDispose(a) {
-        if (a.dirs) {
-            for (var i = 0, el; el = a.dirs[i++];) {
-                if (el.beforeDispose) {
-                    el.beforeDispose();
-                }
-            }
-        }
-        var arr = a.children || Array.isArray(a) && a;
-        if (arr) {
-            for (var _i5 = 0, _el; _el = arr[_i5++];) {
-                handleDispose(_el);
-            }
-        }
-    }
 
     var events = 'onInit,onReady,onViewChange,onDispose,onEnter,onLeave';
     var componentEvents = avalon.oneObject(events);

@@ -2,21 +2,25 @@ import { Render } from './Render'
 
 
 import { createExpr, parseInterpolate, parseAttributes } from '../parser/index'
-
+/**
+ * Compiler方法会将一堆虚拟DOM根据作用域划分为多个Render
+ */
 export function Compiler(nodes, vm, force) {
     //这里需要第二个配置项，用于防止多次扫描
-    var body = this.genChildren(nodes)
+    this.renders = []
+    var body = this.genChildren(nodes, null)
+    
     if (force && vm) {
         return new Render(vm, nodes, body)
     }
 }
 
 Compiler.prototype = {
-    genChildren(nodes) {
+    genChildren(nodes, scope) {
         if (nodes.length) {
             var arr = []
             nodes.forEach(function(node) {
-                var a = this.genNode(node)
+                var a = this.genNode(node, scope)
                 if (a) {
                     arr.push(a)
                 }
@@ -27,9 +31,9 @@ Compiler.prototype = {
         }
     },
 
-    genNode(node) {
+    genNode(node, scope) {
         if (node.props) {
-            return this.genElement(node)
+            return this.genElement(node, scope)
         } else if (node.nodeName === '#comment') {
             return this.genComment(node)
         } else if (node.nodeName === '#text') {
@@ -77,25 +81,29 @@ Compiler.prototype = {
             })()`
 
     },
-    genElement(node) {
+    genElement(node, scope) {
         if (node.nodeName === 'slot') {
             return `\u01A9.slot(${ avalon.quote(node.props.name || "defaults") })`
         }
 
         if (node.staticID) {
-
             return `\u01A9.static(${ node.staticID })`
         }
         var dirs = node.dirs,
             props = node.props
 
         if (dirs) {
+            //优化处理指令
+            if (dirs['ms-widget']) {
+                return this.genComponent(node, dirs, scope)
+            }
             var hasCtrl = dirs['ms-controller'] || dirs['ms-important']
             var isImport = 'ms-important' in dirs
-            if (dirs['ms-widget']) {
-                return this.genComponent(node, dirs)
-            }
-
+            //判定其原上方是否有vm
+            var topScope = scope
+            var scope = avalon.vmodels[hasCtrl]
+            //处理各种指令的冲突,因为有的指令出现后,另一些指令需要无效化
+            //比如ms-text的优先级向于ms-html
             if (dirs['ms-text']) {
                 var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag)
                 var code = createExpr(expr, 'text')
@@ -103,7 +111,6 @@ Compiler.prototype = {
                 node.children = [{ dynamic: true, nodeName: '#text', nodeValue: NaN }]
                 removeDir('text', dirs, props)
                 removeDir('html', dirs, props)
-
             }
 
 
@@ -128,20 +135,24 @@ Compiler.prototype = {
             dirs ? 'vm: __vmodel__' : '',
             dirs ? 'local: $$l' : '',
             `props: ${ toJSONByObject(node.props) }`,
-            `children: ${ node.template || this.genChildren(node.children) }`
+            `children: ${ node.template || this.genChildren(node.children, scope) }`
 
         )
+        //将slot属性变成collectSlot方法
         if (node.props.slot) {
             json = `\u01A9.collectSlot(${json},slots)`
         }
-
+        //将ms-if指令变成三目运算符
         if (hasIf) {
             json = `${ hasIf } ? ${ json } : \u01A9.comment('if')`
         }
+        //将作用域指令变成ctrl方法
         if (hasCtrl) {
-            var vm = avalon.vmodels[hasCtrl]
-            
-            this.render = new Render(vm, node, json)
+            var render = new Render(scope, [node], '['+json+']')
+            if(!topScope){
+                console.log(this)
+               this.renders.push( render)
+            }
             return `\u01A9.ctrl( ${ avalon.quote(hasCtrl) }, __vmodel__, ${isImport}, function(__vmodel__) {
                 return ${ json }
             }) `

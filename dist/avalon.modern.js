@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-16:15:20 version 2.2.3 by 司徒正美
+built in 2017-1-16:19:53 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
       fix ms-controller BUG, 上下VM相同时,不会进行合并
 ms-for不再生成代理VM

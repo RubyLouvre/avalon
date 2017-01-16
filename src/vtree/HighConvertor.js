@@ -22,7 +22,10 @@ export function HighConvertor(node) {
 
 avalon.scan = function(node, vm) {
     var vnodes = new HighConvertor(node)
-    new Compiler(vnodes, vm, false)
+    var c = new Compiler(vnodes, vm, false)
+    c.renders.forEach(function(cc){
+        cc.update()
+    })
 }
 
 

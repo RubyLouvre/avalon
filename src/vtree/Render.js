@@ -3,6 +3,7 @@ import { runActions, collectDeps } from '../vmodel/transaction'
 
 import { __repeat } from '../filters/array'
 
+import { diff } from './diff'
 
 
 export function Render(vm, vnodes, body) {
@@ -78,14 +79,16 @@ Render.prototype = {
     },
     update: function() {
         this.vm.$render = this
+        var oldRoot = this.vnodes[0]
         var nodes = this.fork(this.vm, {})
-        var root = this.root = nodes[0]
+        var root = nodes[0]
+        
         if (this.noDiff) {
             return
         }
         try {
-            diff(this.vnodes[0], root)
-            this.vm.$element = this.vnodes[0]
+            diff(oldRoot, root)
+            this.vm.$element = oldRoot.dom
         } catch (diffError) {
             avalon.log(diffError)
         }
