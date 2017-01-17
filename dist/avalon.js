@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-17:1:54 version 2.2.3 by 司徒正美
+built in 2017-1-17:11:13 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -5318,7 +5318,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 //两个元素节点进行比较
                 //先处理静态节点,静态节点不会变动,不用比较
                 //如果上面有指令,应用指令
-                if (a.staticRoot && a.hasScan) {
+                if (a.staticID && a.hasScan) {
                     toDOM(a);
                     return;
                 }
@@ -5412,7 +5412,7 @@ IE7的checked属性应该使用defaultChecked来设置
                         fn();
                     });
                 }
-                if (a.staticRoot) {
+                if (a.staticID) {
                     a.hasScan = true;
                 }
                 break;
@@ -5956,6 +5956,65 @@ IE7的checked属性应该使用defaultChecked来设置
         noscript: 1
     };
 
+    function optimize(node) {
+        markStatic(node);
+        markStaticID(node);
+        return node;
+    }
+    /**
+     * 为这个节点及它下面所有节点添加static属性
+     */
+    function markStatic(node) {
+        node["static"] = isStatic(node);
+        if (node.props && !node.vtype) {
+
+            if (node.props['ms-skip'] || node.props[':skip']) {
+                delete node["static"];
+                return;
+            }
+            var ret = true;
+            for (var i = 0, l = node.children.length; i < l; i++) {
+                var child = node.children[i];
+
+                ret = ret & markStatic(child);
+            }
+            if (!ret) {
+                delete node["static"];
+            }
+        }
+    }
+    avalon.staticNodes = {};
+    /**
+     * 为局部元素添加staticID,我们可以通过它，在avalon.staticNodes中找到它们，并进行重复利用
+     */
+    function markStaticID(node) {
+        var ret = true;
+        var children = node.children;
+        if (children) {
+            for (var i = 0, l = children.length; i < l; i++) {
+                var child = children[i];
+                ret = ret & markStaticID(child);
+            }
+            if (ret && node["static"]) {
+                var id = node.staticID = Math.random();
+                var old = avalon.staticNodes[id];
+                if (old === node) {
+                    id = node.staticID = Math.random();
+                    old = avalon.staticNodes[id];
+                    if (old === node) {
+                        id = node.staticID = Math.random();
+                    }
+                    avalon.staticNodes[id] = node;
+                }
+            }
+        }
+        return ret;
+    }
+
+    function isStatic(node) {
+        return !node.dynamic && node.nodeName !== 'slot';
+    }
+
     /**
      * 此转换器主要是AST节点添加dirs属性，dymatic属性， 循环区域
      */
@@ -5973,6 +6032,10 @@ IE7的checked属性应该使用defaultChecked来设置
     avalon.scan = function (node, vm) {
         var vnodes = new HighConvertor(node);
         var c = new Compiler(vnodes, vm, false);
+        if (vnodes.length === 1) {
+            console.log(vnodes);
+            optimize(vnodes[0]);
+        }
         c.renders.forEach(function (cc) {
             collectDeps(cc, cc.update);
             //cc.update()

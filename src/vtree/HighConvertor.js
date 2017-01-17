@@ -4,6 +4,8 @@ import { avalon, config, inBrowser, delayCompileNodes, directives } from '../see
 import { getRange } from './share'
 import { eventMap } from '../parser/index'
 import { Compiler } from './Compiler'
+import { optimize } from './optimize'
+
 import { collectDeps } from '../vmodel/transaction'
 
 /**
@@ -24,6 +26,10 @@ export function HighConvertor(node) {
 avalon.scan = function(node, vm) {
     var vnodes = new HighConvertor(node)
     var c = new Compiler(vnodes, vm, false)
+    if(vnodes.length === 1){
+        console.log(vnodes)
+        optimize(vnodes[0])
+    }
     c.renders.forEach(function(cc){
          collectDeps(cc, cc.update)
         //cc.update()

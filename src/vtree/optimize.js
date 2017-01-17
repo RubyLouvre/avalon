@@ -20,6 +20,7 @@ function markStatic(node) {
         var ret = true
         for (var i = 0, l = node.children.length; i < l; i++) {
             var child = node.children[i]
+            
             ret = ret & markStatic(child)
         }
         if (!ret) {
@@ -27,14 +28,16 @@ function markStatic(node) {
         }
     }
 }
+avalon.staticNodes = {}
 /**
  * 为局部元素添加staticID,我们可以通过它，在avalon.staticNodes中找到它们，并进行重复利用
  */
 function markStaticID(node) {
     var ret = true
-    if (node.children) {
-        for (var i = 0, l = node.children.length; i < l; i++) {
-            var child = node.children[i];
+    var children = node.children
+    if (children) {
+        for (let i = 0, l = children.length; i < l; i++) {
+            let child = children[i];
             ret = ret & markStaticID(child);
         }
         if (ret && node.static) {
