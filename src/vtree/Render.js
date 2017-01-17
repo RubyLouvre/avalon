@@ -44,15 +44,15 @@ Render.prototype = {
         return a
     },
     //如果下方没有扫描过,继续扫描
-    ctrl: function(id, scope, isImport, vnode, cb) {
+    ctrl: function(id, top, isImport, vnode, cb) {
         var name = isImport ? 'important' : 'controller'
         var dir = directives[name]
-        var scope2 = dir.getScope(id, scope)
+        var vm = vnode.vm = dir.getScope(id, top)
+        vnode.curVm = avalon.vmodels[id]
         if(isImport){
-            vnode.topVm = scope
-            vnode.vm = scope2
+           vnode.topVm = top
         }
-        return cb(scope2, vnode)
+        return cb(vm, vnode)
     },
     repeat: function(obj, str, cb) {
         var nodes = []

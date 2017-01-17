@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-17:20:31 version 2.2.3 by 司徒正美
+built in 2017-1-17:22:35 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -4525,9 +4525,12 @@ IE7的checked属性应该使用defaultChecked来设置
 
         update: function update(val, vdom, newVdom, afterCb) {
             var vm = newVdom.vm;
-            if (this.delay) {
-                return;
+            var cur = newVdom.curVm;
+            if (cur) {
+                //改写当前vm的渲染器vm为融合vm
+                cur.$render.vm = vm;
             }
+
             afterCb.push(function () {
                 var dom = vm.$element = vdom.dom;
                 avalon(dom).removeClass('ms-controller');
@@ -5524,15 +5527,15 @@ IE7的checked属性应该使用defaultChecked来设置
             return a;
         },
         //如果下方没有扫描过,继续扫描
-        ctrl: function ctrl(id, scope, isImport, vnode, cb) {
+        ctrl: function ctrl(id, top, isImport, vnode, cb) {
             var name = isImport ? 'important' : 'controller';
             var dir = directives$1[name];
-            var scope2 = dir.getScope(id, scope);
+            var vm = vnode.vm = dir.getScope(id, top);
+            vnode.curVm = avalon.vmodels[id];
             if (isImport) {
-                vnode.topVm = scope;
-                vnode.vm = scope2;
+                vnode.topVm = top;
             }
-            return cb(scope2, vnode);
+            return cb(vm, vnode);
         },
         repeat: function repeat(obj, str, cb) {
             var nodes = [];
