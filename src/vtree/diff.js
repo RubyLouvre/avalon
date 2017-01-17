@@ -1,5 +1,6 @@
 import { avalon, directives } from '../seed/core'
 import { toDOM } from '../renders/toDOM'
+import { collectNode } from './recycler'
 
 //a是旧的虚拟DOM, b是新的
 export function diff(a, b) {
@@ -126,7 +127,8 @@ export function diff(a, b) {
                 if (childNodes.length > achild.length) {
                     let j = achild.length
                     while (childNodes[j]) {
-                        parentNode.removeChild(childNodes[j])
+                        collectNode(childNodes[j])
+                            // parentNode.removeChild(childNodes[j])
                     }
                 }
             }
@@ -166,13 +168,17 @@ export function diffSlots(a, b) {
     }
 
 }
-
+/**
+ * 重置所有指令对象,因为diff的双方都是同一个虚拟DOM,那么指令对象也一样,需要去掉
+ * inited属性,那么在比较时,oldVal就自动变成null
+ */
 function reInitDires(a) {
     if (a.dirs) {
         a.dirs.forEach(function(dir) {
             delete dir.inited
         })
     }
+
     if (a.children) {
         a.children.forEach(function(child) {
             reInitDires(child)
@@ -180,7 +186,7 @@ function reInitDires(a) {
     }
 }
 
-function handleDispose(a) {
+function handleDispose(a, keep) {
     if (a.dirs) {
         for (let i = 0, el; el = a.dirs[i++];) {
             if (el.beforeDispose) {
@@ -188,10 +194,15 @@ function handleDispose(a) {
             }
         }
     }
+    keep = keep || (a.props && a.props.cached)
+    if (a.dom && !keep) {
+        collectNode(a.dom)
+        delete a.dom
+    }
     var arr = a.children || (Array.isArray(a) && a)
     if (arr) {
         for (let i = 0, el; el = arr[i++];) {
-            handleDispose(el)
+            handleDispose(el, keep)
         }
     }
 }

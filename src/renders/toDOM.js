@@ -1,10 +1,12 @@
+import {createNode} from '../vtree/recycler'
 export function toDOM(el, b) {
 
     if (el.props) {
         if (el.dom) {
             return el.dom
         }
-        var elem = el.dom = document.createElement(el.nodeName)
+        
+        var elem = el.dom = createNode(el.nodeName)
 
         for (var i in el.props) {
             var value = el.props[i]

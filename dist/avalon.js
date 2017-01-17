@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-17:23:54 version 2.2.3 by 司徒正美
+built in 2017-1-18:1:50 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -4526,7 +4526,6 @@ IE7的checked属性应该使用defaultChecked来设置
         update: function update(val, vdom, newVdom, afterCb) {
             var vm = newVdom.vm;
             var cur = newVdom.curVm;
-            console.log(vm, cur);
             if (cur) {
                 //改写当前vm的渲染器vm为融合vm
                 cur.$render.vm = vm;
@@ -5197,13 +5196,44 @@ IE7的checked属性应该使用defaultChecked来设置
 
     //绑定对象只有value不一样，
 
+    var nodes = {};
+    //回收元素节点
+    function removeNode(node) {
+        var p = node.parentNode;
+        if (p) {
+            p.removeChild(node);
+        }
+    }
+    function collectNode(node) {
+        removeNode(node);
+        if (node.nodeType === 1) {
+            var name = node.lowerName || node.nodeName.toLowerCase();
+            var list = nodes[name] || (nodes[name] = []);
+            list.push(node);
+        }
+    }
+
+    //只重复利用元素节点
+    function createNode(nodeName, isSvg) {
+        var name = nodeName.toLowerCase();
+        var node = nodes[name] && nodes[name].pop();
+        if (!node) {
+            node = isSvg ? document.createElementNS('http://www.w3.org/2000/svg', nodeName) : document.createElement(nodeName);
+        }
+        node.lowerName = name;
+        node.className = node.style.cssText = '';
+        node._ms_duplex_ = node._ms_local_ = node._ms_context_ = void 0;
+        return node;
+    }
+
     function toDOM(el, b) {
 
         if (el.props) {
             if (el.dom) {
                 return el.dom;
             }
-            var elem = el.dom = document.createElement(el.nodeName);
+
+            var elem = el.dom = createNode(el.nodeName);
 
             for (var i in el.props) {
                 var value = el.props[i];
@@ -5426,7 +5456,8 @@ IE7的checked属性应该使用defaultChecked来设置
                     if (childNodes.length > achild.length) {
                         var j = achild.length;
                         while (childNodes[j]) {
-                            parentNode.removeChild(childNodes[j]);
+                            collectNode(childNodes[j]);
+                            // parentNode.removeChild(childNodes[j])
                         }
                     }
                 }
@@ -5463,13 +5494,17 @@ IE7的checked属性应该使用defaultChecked来设置
             });
         }
     }
-
+    /**
+     * 重置所有指令对象,因为diff的双方都是同一个虚拟DOM,那么指令对象也一样,需要去掉
+     * inited属性,那么在比较时,oldVal就自动变成null
+     */
     function reInitDires(a) {
         if (a.dirs) {
             a.dirs.forEach(function (dir) {
                 delete dir.inited;
             });
         }
+
         if (a.children) {
             a.children.forEach(function (child) {
                 reInitDires(child);
@@ -5477,7 +5512,7 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     }
 
-    function handleDispose(a) {
+    function handleDispose(a, keep) {
         if (a.dirs) {
             for (var i = 0, el; el = a.dirs[i++];) {
                 if (el.beforeDispose) {
@@ -5485,10 +5520,15 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
             }
         }
+        keep = keep || a.props && a.props.cached;
+        if (a.dom && !keep) {
+            collectNode(a.dom);
+            delete a.dom;
+        }
         var arr = a.children || Array.isArray(a) && a;
         if (arr) {
             for (var _i5 = 0, _el; _el = arr[_i5++];) {
-                handleDispose(_el);
+                handleDispose(_el, keep);
             }
         }
     }
@@ -5534,8 +5574,7 @@ IE7的checked属性应该使用defaultChecked来设置
             var dir = directives$1[name];
             var vm = dir.getScope(id, topVm);
             var curVm = avalon.vmodels[id];
-            console.log(vm, curVm, topVm, '99999');
-            return cb(vm, curVm, isImport ? topVm : null);
+            return cb(vm, curVm, isImport && topVm);
         },
         repeat: function repeat(obj, str, cb) {
             var nodes = [];
@@ -5709,8 +5748,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     dirs = null;
                 }
             }
-            //  hasCtrl? 'curVm: _1': '',
-            //       isImport? 'topVm: _2': '',
+
             var json = toJSONByArray('nodeName: \'' + node.nodeName + '\'', node.vtype ? 'vtype: ' + node.vtype : '', dirs ? 'vm: __vmodel__' : '', dirs ? 'local: $$l' : '', 'props: ' + toJSONByObject(node.props), node.staticID ? 'staticID: ' + node.staticID : '', dirs ? this.genDirs(dirs, node) : '', 'children: ' + (node.template || this.genChildren(node.children, scope)));
             //将slot属性变成collectSlot方法
             if (node.props.slot) {
@@ -5722,9 +5760,7 @@ IE7的checked属性应该使用defaultChecked来设置
             }
             //将作用域指令变成ctrl方法
             if (hasCtrl) {
-
                 var render = new Render(scope, [node], '[' + json + ']');
-
                 if (!topScope) {
                     this.renders.push(render);
                 } else {
@@ -5734,8 +5770,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
                 //如果存在两个ms-controller,它们会产生融合vm, 当底层的vm的属性变动时,
                 //它可能让上面的vm进行diff,或可能让融合vm进行diff
-
-                return '\u01A9.ctrl( ' + avalon.quote(hasCtrl) + ', __vmodel__, ' + isImport + ', function(__vmodel__, _1,_2) {\n                var a = ' + json + '\n                a.curVm = arguments[1]\n                a.topVm = arguments[2]\n                return a\n            }) ';
+                return '\u01A9.ctrl( ' + avalon.quote(hasCtrl) + ', __vmodel__, ' + isImport + ', function(__vmodel__, _1,_2) {\n                var a = ' + json + '\n                a.curVm = _1\n                a.topVm = _2\n                return a\n            }) ';
             } else {
                 return json;
             }
@@ -6273,7 +6308,6 @@ IE7的checked属性应该使用defaultChecked来设置
             if (!this.inited) {
                 oldVal = null;
             }
-            console.log(oldVal, newVal, newVdom.vm);
             oldVal = (oldVal == null ? '' : oldVal).toString().trim();
             newVal = (newVal == null ? '' : newVal).toString().trim();
             var render = this.innerRender;
@@ -6292,7 +6326,6 @@ IE7的checked属性应该使用defaultChecked来设置
             var vnodes = new HighConvertor(value);
             var render = this.innerRender = new Compiler(vnodes, vm, true);
             newVdom.children = vdom.children = render.fork(vm, newVdom.locale);
-            console.log('-----');
             if (vdom.dom) avalon.clearHTML(vdom.dom);
         },
         beforeDispose: function beforeDispose() {
