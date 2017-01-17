@@ -49,8 +49,7 @@ Render.prototype = {
         var dir = directives[name]
         var vm = dir.getScope(id, topVm)
         var curVm = avalon.vmodels[id]
-        console.log(vm, curVm, topVm, '99999')
-        return cb(vm, curVm, isImport ? topVm : null)
+        return cb(vm, curVm, isImport && topVm)
     },
     repeat: function(obj, str, cb) {
         var nodes = []
