@@ -43,14 +43,16 @@ Render.prototype = {
         a.slot = name
         return a
     },
-    ctrl: function(id, scope, isImport, cb) {
-        // this为render
+    //如果下方没有扫描过,继续扫描
+    ctrl: function(id, scope, isImport, vnode, cb) {
         var name = isImport ? 'important' : 'controller'
         var dir = directives[name]
-        var scope2 = dir.getScope.call(this, id, scope)
-        var isSkip = isImport && scope && scope !== scope2
-
-        return cb(scope2, isSkip)
+        var scope2 = dir.getScope(id, scope)
+        if(isImport){
+            vnode.topVm = scope
+            vnode.vm = scope2
+        }
+        return cb(scope2, vnode)
     },
     repeat: function(obj, str, cb) {
         var nodes = []

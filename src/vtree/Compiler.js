@@ -153,8 +153,7 @@ Compiler.prototype = {
            
             var render = new Render(scope, [node], '['+json+']')
            
-            if(!topScope){
-               
+            if(!topScope){ 
                this.renders.push( render)
             }else{
                 render.noDiff = true
@@ -164,8 +163,8 @@ Compiler.prototype = {
             }
             //如果存在两个ms-controller,它们会产生融合vm, 当底层的vm的属性变动时,
             //它可能让上面的vm进行diff,或可能让融合vm进行diff
-            return `\u01A9.ctrl( ${ avalon.quote(hasCtrl) }, __vmodel__, ${isImport}, function(__vmodel__) {
-                return ${ json }
+            return `\u01A9.ctrl( ${ avalon.quote(hasCtrl) }, __vmodel__, ${isImport},${ json }, function(__vmodel__, vnode) {
+                return vnode
             }) `
         } else {
             return json

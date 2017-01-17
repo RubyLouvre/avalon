@@ -1,7 +1,7 @@
 import { avalon, platform } from '../seed/core'
 import { impDir } from './important'
 var cachedCtrl = {}
-avalon.directive('controller', {
+export var ctrDir = avalon.directive('controller', {
     priority: 2,
     diff: function(oldVal, newVal) {
         if (!this.inited)

@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-17:18:32 version 2.2.3 by 司徒正美
+built in 2017-1-17:20:31 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -4515,8 +4515,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 oldVal = null;
             }
             if (this.inited) {
-                this.delay = true;
-                return true;
+                this.delay = newVdom.topVm && newVdom.vm !== newVdom.topVm;
             }
             if (oldVal !== newVal) {
                 this.value = newVal;
@@ -4525,7 +4524,7 @@ IE7的checked属性应该使用defaultChecked来设置
         },
 
         update: function update(val, vdom, newVdom, afterCb) {
-            var vm = this.vm = newVdom.vm;
+            var vm = newVdom.vm;
             if (this.delay) {
                 return;
             }
@@ -4559,7 +4558,7 @@ IE7的checked属性应该使用defaultChecked来设置
     });
 
     var cachedCtrl = {};
-    avalon.directive('controller', {
+    var ctrDir = avalon.directive('controller', {
         priority: 2,
         diff: function diff(oldVal, newVal) {
             if (!this.inited) oldVal = null;
@@ -5351,7 +5350,9 @@ IE7的checked属性应该使用defaultChecked来设置
                         //diff时依次传入指令的旧值,指令的新值, 旧的虚拟DOM, 新的虚拟DOM
                         if (adir.diff && adir.diff(adir.value, bdir.value, a, b)) {
                             toDOM(a);
+
                             adir.inited = true;
+
                             adir.update(adir.value, a, b, afterCb);
                             //如果组件没有加载,a,b分别为wbr, #comment
                             //如果成功加载,a,b分别为div, div
@@ -5374,6 +5375,7 @@ IE7的checked属性应该使用defaultChecked来设置
                         stop = stop || adir.delay;
                     }
                 }
+
                 //可以在这里回收节点
                 if (b.nodeName === '#comment') {
                     //ms-if ms-widget 元素节点要变成注释节点
@@ -5521,14 +5523,16 @@ IE7的checked属性应该使用defaultChecked来设置
             a.slot = name;
             return a;
         },
-        ctrl: function ctrl(id, scope, isImport, cb) {
-            // this为render
+        //如果下方没有扫描过,继续扫描
+        ctrl: function ctrl(id, scope, isImport, vnode, cb) {
             var name = isImport ? 'important' : 'controller';
             var dir = directives$1[name];
-            var scope2 = dir.getScope.call(this, id, scope);
-            var isSkip = isImport && scope && scope !== scope2;
-
-            return cb(scope2, isSkip);
+            var scope2 = dir.getScope(id, scope);
+            if (isImport) {
+                vnode.topVm = scope;
+                vnode.vm = scope2;
+            }
+            return cb(scope2, vnode);
         },
         repeat: function repeat(obj, str, cb) {
             var nodes = [];
@@ -5718,7 +5722,6 @@ IE7的checked属性应该使用defaultChecked来设置
                 var render = new Render(scope, [node], '[' + json + ']');
 
                 if (!topScope) {
-
                     this.renders.push(render);
                 } else {
                     render.noDiff = true;
@@ -5727,7 +5730,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
                 //如果存在两个ms-controller,它们会产生融合vm, 当底层的vm的属性变动时,
                 //它可能让上面的vm进行diff,或可能让融合vm进行diff
-                return '\u01A9.ctrl( ' + avalon.quote(hasCtrl) + ', __vmodel__, ' + isImport + ', function(__vmodel__) {\n                return ' + json + '\n            }) ';
+                return '\u01A9.ctrl( ' + avalon.quote(hasCtrl) + ', __vmodel__, ' + isImport + ',' + json + ', function(__vmodel__, vnode) {\n                return vnode\n            }) ';
             } else {
                 return json;
             }
@@ -6289,7 +6292,6 @@ IE7的checked属性应该使用defaultChecked来设置
         },
         beforeDispose: function beforeDispose() {
             if (this.innerRender) {
-
                 this.innerRender.dispose();
                 delete this.innerRender;
             }
@@ -6318,13 +6320,7 @@ IE7的checked属性应该使用defaultChecked来设置
             });
             return new Function('$event', '$$l', ret.join('\n'));
         },
-        diff: function diff(oldVal, newVal) {
-            if (!this.inited) oldVal = null;
-            if (oldVal !== newVal) {
-                this.value = newVal;
-                return true;
-            }
-        },
+        diff: ctrDir.diff,
         update: function update(value, vdom, _) {
             var uuid = (this.name + '_' + value).replace(/^(\:|ms\-)/, 'e').replace('-', '_').replace(/\s/g, '').replace(/[^$a-z]/ig, function (e) {
                 return e.charCodeAt(0);

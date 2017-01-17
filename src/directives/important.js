@@ -13,8 +13,7 @@ export var impDir = avalon.directive('important', {
             oldVal = null
         }
         if (this.inited) {
-            this.delay = true
-            return true
+            this.delay = newVdom.topVm && newVdom.vm !== newVdom.topVm
         }
         if (oldVal !== newVal) {
             this.value = newVal
@@ -23,7 +22,7 @@ export var impDir = avalon.directive('important', {
     },
 
     update: function(val, vdom, newVdom, afterCb) {
-        var vm = this.vm = newVdom.vm
+        var vm = newVdom.vm
         if (this.delay) {
             return
         }

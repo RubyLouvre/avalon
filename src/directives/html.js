@@ -33,8 +33,6 @@ avalon.directive('html', {
     },
     beforeDispose: function() {
         if (this.innerRender) {
-
-
             this.innerRender.dispose()
             delete this.innerRender
         }

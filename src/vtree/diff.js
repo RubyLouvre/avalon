@@ -56,7 +56,9 @@ export function diff(a, b) {
                     //diff时依次传入指令的旧值,指令的新值, 旧的虚拟DOM, 新的虚拟DOM
                     if (adir.diff && adir.diff(adir.value, bdir.value, a, b)) {
                         toDOM(a)
+                        
                         adir.inited = true
+
                         adir.update(adir.value, a, b, afterCb)
                             //如果组件没有加载,a,b分别为wbr, #comment
                             //如果成功加载,a,b分别为div, div
@@ -79,6 +81,7 @@ export function diff(a, b) {
                     stop = stop || adir.delay
                 }
             }
+           
             //可以在这里回收节点
             if (b.nodeName === '#comment') {
                 //ms-if ms-widget 元素节点要变成注释节点

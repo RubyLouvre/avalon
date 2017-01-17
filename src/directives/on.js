@@ -1,5 +1,5 @@
 import { avalon, inBrowser } from '../seed/core'
-import { impDir } from './important'
+import { ctrDir } from './controller'
 
 import { addScope, makeHandle } from '../parser/index'
 
@@ -25,14 +25,7 @@ avalon.directive('on', {
             })
             return new Function('$event','$$l', ret.join('\n'))
     },
-    diff:function(oldVal, newVal) {
-        if (!this.inited)
-            oldVal = null
-        if (oldVal !== newVal) {
-            this.value = newVal
-            return true
-        }
-    },
+    diff: ctrDir.diff,
     update: function(value, vdom, _) {
         var uuid = (this.name+'_'+ value).
                 replace(/^(\:|ms\-)/, 'e').
