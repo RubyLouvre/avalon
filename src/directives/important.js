@@ -11,13 +11,10 @@ export var impDir = avalon.directive('important', {
     diff: function(oldVal, newVal, vdom, newVdom) {
         if (!this.inited) {
             oldVal = null
-
         }
         if (this.inited) {
             this.delay = true
-            return true
         }
-
         if (oldVal !== newVal) {
             this.value = newVal
             return true

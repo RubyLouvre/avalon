@@ -1,8 +1,10 @@
-import { Render } from './Render'
+
+import { avalon, config } from '../seed/core'
 
 import { collectDeps } from '../vmodel/transaction'
-
 import { createExpr, parseInterpolate, parseAttributes } from '../parser/index'
+import { Render } from './Render'
+
 /**
  * Compiler方法会将一堆虚拟DOM根据作用域划分为多个Render
  */
@@ -10,7 +12,6 @@ export function Compiler(nodes, vm, force) {
     //这里需要第二个配置项，用于防止多次扫描
     this.renders = []
     var body = this.genChildren(nodes, null)
-    
     if (force && vm) {
         return new Render(vm, nodes, body)
     }
@@ -156,11 +157,10 @@ Compiler.prototype = {
                
                this.renders.push( render)
             }else{
-                 render.noDiff = true
-                 console.log(render.vm.$id, '00000000')
-           collectDeps(render,render.update)
-render.noDiff = false
-console.log(render.vm,'-----')
+                render.noDiff = true
+                collectDeps(render,render.update)
+                render.noDiff = false
+
             }
             //如果存在两个ms-controller,它们会产生融合vm, 当底层的vm的属性变动时,
             //它可能让上面的vm进行diff,或可能让融合vm进行diff

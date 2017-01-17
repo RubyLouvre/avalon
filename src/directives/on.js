@@ -1,5 +1,5 @@
 import { avalon, inBrowser } from '../seed/core'
-import { impDir } from './important'
+//import { impDir } from './important'
 
 import { addScope, makeHandle } from '../parser/index'
 
@@ -25,9 +25,17 @@ avalon.directive('on', {
             })
             return new Function('$event','$$l', ret.join('\n'))
     },
-    diff: impDir.diff,
-    update: function(value, vdom, _) {
+    diff: function(oldVal, newVal) {
+        if (!this.inited) {
+            oldVal = null
+        }
         
+        if (oldVal !== newVal) {
+            this.value = newVal
+            return true
+        }
+    },
+    update: function(value, vdom, _) {
         var uuid = (this.name+'_'+ value).
                 replace(/^(\:|ms\-)/, 'e').
                 replace('-', '_').
@@ -45,7 +53,6 @@ avalon.directive('on', {
         dom._ms_context_ = _.vm
         dom._ms_local_ = _.local
         this.eventType = this.param.replace(/\-(\d)$/, '')
-        delete this.param
         this.vdom = vdom
         avalon(dom).bind(this.eventType, fn)
     },
