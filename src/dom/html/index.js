@@ -1,6 +1,15 @@
-import { avalon, Cache, document, createFragment } from '../../seed/core'
-import { StringConvertor } from '../../vtree/StringConvertor'
-export { avalon }
+import {
+    avalon,
+    Cache,
+    document,
+    createFragment
+} from '../../seed/core'
+import {
+    StringConvertor
+} from '../../vtree/StringConvertor'
+export {
+    avalon
+}
 
 var rhtml = /<|&#?\w+;/
 var htmlCache = new Cache(128)

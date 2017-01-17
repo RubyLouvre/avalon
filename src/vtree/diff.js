@@ -54,9 +54,10 @@ export function diff(a, b) {
                         avalon.mix(adir, directives[adir.type])
                     }
                     //diff时依次传入指令的旧值,指令的新值, 旧的虚拟DOM, 新的虚拟DOM
+
                     if (adir.diff && adir.diff(adir.value, bdir.value, a, b)) {
                         toDOM(a)
-                        
+
                         adir.inited = true
 
                         adir.update(adir.value, a, b, afterCb)
@@ -81,7 +82,7 @@ export function diff(a, b) {
                     stop = stop || adir.delay
                 }
             }
-           
+
             //可以在这里回收节点
             if (b.nodeName === '#comment') {
                 //ms-if ms-widget 元素节点要变成注释节点
@@ -97,9 +98,9 @@ export function diff(a, b) {
 
                     let c = achild[i]
                     let d = bchild[i]
-                   
+
                     if (d) { //如果数量相等则进行比较
-                        
+
                         let arr = diff(c, d)
                         if (typeof arr === 'number') {
                             directives['for'].update(c, d, achild, bchild, i, afterCb)

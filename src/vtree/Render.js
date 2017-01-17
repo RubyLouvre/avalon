@@ -44,15 +44,13 @@ Render.prototype = {
         return a
     },
     //如果下方没有扫描过,继续扫描
-    ctrl: function(id, top, isImport, vnode, cb) {
+    ctrl: function(id, topVm, isImport, cb) {
         var name = isImport ? 'important' : 'controller'
         var dir = directives[name]
-        var vm = vnode.vm = dir.getScope(id, top)
-        vnode.curVm = avalon.vmodels[id]
-        if(isImport){
-           vnode.topVm = top
-        }
-        return cb(vm, vnode)
+        var vm = dir.getScope(id, topVm)
+        var curVm = avalon.vmodels[id]
+        console.log(vm, curVm, topVm, '99999')
+        return cb(vm, curVm, isImport ? topVm : null)
     },
     repeat: function(obj, str, cb) {
         var nodes = []
@@ -74,7 +72,7 @@ Render.prototype = {
         }
 
     },
-   
+
 
 
     dispose: function() {
@@ -85,7 +83,7 @@ Render.prototype = {
         var oldRoot = this.vnodes[0]
         var nodes = this.fork(this.vm, {})
         var root = nodes[0]
-        
+
         if (this.noDiff) {
             return
         }

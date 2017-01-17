@@ -1,4 +1,3 @@
-
 import { avalon, config } from '../seed/core'
 
 import { collectDeps } from '../vmodel/transaction'
@@ -8,12 +7,12 @@ import { Render } from './Render'
 /**
  * Compiler方法会将一堆虚拟DOM根据作用域划分为多个Render
  */
-export function Compiler(nodes, vm, force) {
+export function Compiler(vnodes, vm, force) {
     //这里需要第二个配置项，用于防止多次扫描
     this.renders = []
-    var body = this.genChildren(nodes, null)
+    var body = this.genChildren(vnodes, null)
     if (force && vm) {
-        return new Render(vm, nodes, body)
+        return new Render(vm, vnodes, body)
     }
 }
 
@@ -101,11 +100,11 @@ Compiler.prototype = {
             }
             var hasCtrl = dirs['ms-controller'] || dirs['ms-important']
             var isImport = 'ms-important' in dirs
-            //判定其原上方是否有vm
+                //判定其原上方是否有vm
             var topScope = scope
             var scope = avalon.vmodels[hasCtrl]
-            //处理各种指令的冲突,因为有的指令出现后,另一些指令需要无效化
-            //比如ms-text的优先级向于ms-html
+                //处理各种指令的冲突,因为有的指令出现后,另一些指令需要无效化
+                //比如ms-text的优先级向于ms-html
             if (dirs['ms-text']) {
                 var expr = parseInterpolate(config.openTag + dirs['ms-text'] + config.closeTag)
                 var code = createExpr(expr, 'text')
@@ -130,17 +129,16 @@ Compiler.prototype = {
         }
 
         var json = toJSONByArray(
-            `nodeName: '${node.nodeName}'`,
-            node.vtype ? `vtype: ${ node.vtype }` : '',
-            node.staticID ? 'staticID: ' + node.staticID : '',
-            dirs ? this.genDirs(dirs, node) : '',
-            dirs ? 'vm: __vmodel__' : '',
-            dirs ? 'local: $$l' : '',
-            `props: ${ toJSONByObject(node.props) }`,
-            `children: ${ node.template || this.genChildren(node.children, scope) }`
-
-        )
-        //将slot属性变成collectSlot方法
+                `nodeName: '${node.nodeName}'`,
+                node.vtype ? `vtype: ${ node.vtype }` : '',
+                dirs ? 'vm: __vmodel__' : '',
+                dirs ? 'local: $$l' : '',
+                `props: ${ toJSONByObject(node.props) }`,
+                node.staticID ? 'staticID: ' + node.staticID : '',
+                dirs ? this.genDirs(dirs, node) : '',
+                `children: ${ node.template || this.genChildren(node.children, scope) }`
+            )
+            //将slot属性变成collectSlot方法
         if (node.props.slot) {
             json = `\u01A9.collectSlot(${json},slots)`
         }
@@ -150,21 +148,21 @@ Compiler.prototype = {
         }
         //将作用域指令变成ctrl方法
         if (hasCtrl) {
-           
-            var render = new Render(scope, [node], '['+json+']')
-           
-            if(!topScope){ 
-               this.renders.push( render)
-            }else{
+            var render = new Render(scope, [node], '[' + json + ']')
+            if (!topScope) {
+                this.renders.push(render)
+            } else {
                 render.noDiff = true
-                collectDeps(render,render.update)
+                collectDeps(render, render.update)
                 render.noDiff = false
-
             }
             //如果存在两个ms-controller,它们会产生融合vm, 当底层的vm的属性变动时,
             //它可能让上面的vm进行diff,或可能让融合vm进行diff
-            return `\u01A9.ctrl( ${ avalon.quote(hasCtrl) }, __vmodel__, ${isImport},${ json }, function(__vmodel__, vnode) {
-                return vnode
+            return `\u01A9.ctrl( ${ avalon.quote(hasCtrl) }, __vmodel__, ${isImport}, function(__vmodel__, _1,_2) {
+                var a = ${json}
+                a.curVm = _1
+                a.topVm = _2
+                return a
             }) `
         } else {
             return json

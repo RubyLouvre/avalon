@@ -7,6 +7,7 @@ avalon.directive('html', {
         if (!this.inited) {
             oldVal = null
         }
+        console.log(oldVal, newVal,newVdom.vm)
         oldVal = (oldVal == null ? '' : oldVal).toString().trim()
         newVal = (newVal == null ? '' : newVal).toString().trim()
         var render = this.innerRender
@@ -19,15 +20,13 @@ avalon.directive('html', {
         }
     },
     update: function(value, vdom, newVdom) {
+       
         this.beforeDispose()
         var vm = newVdom.vm
-
-
-        var nodes = (new HighConvertor(value)).nodes
-        var render = this.innerRender = new Compiler(nodes, vm, true)
-        var children = render.fork(vm, newVdom.locale)
-
-        newVdom.children = vdom.children = children
+        var vnodes = new HighConvertor(value)
+        var render = this.innerRender = new Compiler(vnodes, vm, true)
+        newVdom.children = vdom.children = render.fork(vm, newVdom.locale)
+         console.log('-----')
         if (vdom.dom)
             avalon.clearHTML(vdom.dom)
     },

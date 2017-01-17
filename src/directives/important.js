@@ -24,10 +24,10 @@ export var impDir = avalon.directive('important', {
     update: function(val, vdom, newVdom, afterCb) {
         var vm = newVdom.vm
         var cur = newVdom.curVm
-        if(cur){//改写当前vm的渲染器vm为融合vm
-           cur.$render.vm = vm
+        if (cur) { //改写当前vm的渲染器vm为融合vm
+            cur.$render.vm = vm
         }
-       
+
         afterCb.push(function() {
             var dom = vm.$element = vdom.dom
             avalon(dom).removeClass('ms-controller')

@@ -26,11 +26,11 @@ export function HighConvertor(node) {
 avalon.scan = function(node, vm) {
     var vnodes = new HighConvertor(node)
     var c = new Compiler(vnodes, vm, false)
-    if(vnodes.length === 1){
+    if (vnodes.length === 1) {
         optimize(vnodes[0])
     }
-    c.renders.forEach(function(cc){
-         collectDeps(cc, cc.update)
+    c.renders.forEach(function(cc) {
+        collectDeps(cc, cc.update)
     })
 }
 
