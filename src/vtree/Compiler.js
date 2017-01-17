@@ -1,5 +1,6 @@
 import { Render } from './Render'
 
+import { collectDeps } from '../vmodel/transaction'
 
 import { createExpr, parseInterpolate, parseAttributes } from '../parser/index'
 /**
@@ -148,11 +149,21 @@ Compiler.prototype = {
         }
         //将作用域指令变成ctrl方法
         if (hasCtrl) {
+           
             var render = new Render(scope, [node], '['+json+']')
+           
             if(!topScope){
-                console.log(this)
+               
                this.renders.push( render)
+            }else{
+                 render.noDiff = true
+                 console.log(render.vm.$id, '00000000')
+           collectDeps(render,render.update)
+render.noDiff = false
+console.log(render.vm,'-----')
             }
+            //如果存在两个ms-controller,它们会产生融合vm, 当底层的vm的属性变动时,
+            //它可能让上面的vm进行diff,或可能让融合vm进行diff
             return `\u01A9.ctrl( ${ avalon.quote(hasCtrl) }, __vmodel__, ${isImport}, function(__vmodel__) {
                 return ${ json }
             }) `

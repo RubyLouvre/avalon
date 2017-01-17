@@ -27,7 +27,6 @@ export var impDir = avalon.directive('important', {
     update: function(val, vdom, newVdom, afterCb) {
         var vm = this.vm = newVdom.vm
         if (this.delay) {
-            console.log('99999')
             return
         }
         afterCb.push(function() {

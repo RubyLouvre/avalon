@@ -87,14 +87,32 @@ export function collectDeps(action, getter) {
 
 }
 
+//得到一个vm的所有mutation的id
+function getMID(vm){
+    var uuids = []
+    var m = vm.$mutations
+    for(var i in m){
+        if(m.hasOwnProperty(i) ){
+            //必须变成字符串
+           uuids.push( m[i].uuid+'')
+        }
+    }
+    return uuids
+}
 
 function resetDeps(action) {
     var prev = action.observers,
         curr = [],
         checked = {},
         ids = []
+    var uuids = getMID(action.vm)
+    
     for (let i in action.mapIDs) {
         let dep = action.mapIDs[i]
+        //只收集本vm相关的mutation
+        if(uuids.indexOf(i) === -1){
+            continue
+        }
         if (!dep.isAction) {
             if (!dep.observers) { //如果它已经被销毁
                 delete action.mapIDs[i]

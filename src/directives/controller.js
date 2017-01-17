@@ -6,7 +6,6 @@ avalon.directive('controller', {
     diff: function(oldVal, newVal, vdom, newVdom) {
         if (!this.inited)
             oldVal = null
-        console.log('controller diff')
         if (oldVal !== newVal) {
             this.value = newVal
             return true
@@ -17,7 +16,7 @@ avalon.directive('controller', {
     getScope: function(bname, upper) {
         var lower  = avalon.vmodels[bname]
         if (lower) {
-            lower.$render = this
+            // lower.$render = this
             if (lower && lower !== upper) {
                 var key = upper.$id + '-' + bname
                 if (cachedCtrl[key])

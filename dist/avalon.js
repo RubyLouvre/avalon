@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-17:11:13 version 2.2.3 by 司徒正美
+built in 2017-1-17:17:36 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -3309,13 +3309,32 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     }
 
+    //得到一个vm的所有mutation的id
+    function getMID(vm) {
+        var uuids = [];
+        var m = vm.$mutations;
+        for (var i in m) {
+            if (m.hasOwnProperty(i)) {
+                //必须变成字符串
+                uuids.push(m[i].uuid + '');
+            }
+        }
+        return uuids;
+    }
+
     function resetDeps(action) {
         var prev = action.observers,
             curr = [],
             checked = {},
             ids = [];
+        var uuids = getMID(action.vm);
+
         for (var i in action.mapIDs) {
             var dep = action.mapIDs[i];
+            //只收集本vm相关的mutation
+            if (uuids.indexOf(i) === -1) {
+                continue;
+            }
             if (!dep.isAction) {
                 if (!dep.observers) {
                     //如果它已经被销毁
@@ -4509,7 +4528,6 @@ IE7的checked属性应该使用defaultChecked来设置
         update: function update(val, vdom, newVdom, afterCb) {
             var vm = this.vm = newVdom.vm;
             if (this.delay) {
-                console.log('99999');
                 return;
             }
             afterCb.push(function () {
@@ -4546,7 +4564,6 @@ IE7的checked属性应该使用defaultChecked来设置
         priority: 2,
         diff: function diff(oldVal, newVal, vdom, newVdom) {
             if (!this.inited) oldVal = null;
-            console.log('controller diff');
             if (oldVal !== newVal) {
                 this.value = newVal;
                 return true;
@@ -4557,7 +4574,7 @@ IE7的checked属性应该使用defaultChecked来设置
         getScope: function getScope(bname, upper) {
             var lower = avalon.vmodels[bname];
             if (lower) {
-                lower.$render = this;
+                // lower.$render = this
                 if (lower && lower !== upper) {
                     var key = upper.$id + '-' + bname;
                     if (cachedCtrl[key]) return cachedCtrl[key];
@@ -5698,11 +5715,21 @@ IE7的checked属性应该使用defaultChecked来设置
             }
             //将作用域指令变成ctrl方法
             if (hasCtrl) {
+
                 var render = new Render(scope, [node], '[' + json + ']');
+
                 if (!topScope) {
-                    console.log(this);
+
                     this.renders.push(render);
+                } else {
+                    render.noDiff = true;
+                    console.log(render.vm.$id, '00000000');
+                    collectDeps(render, render.update);
+                    render.noDiff = false;
+                    console.log(render.vm, '-----');
                 }
+                //如果存在两个ms-controller,它们会产生融合vm, 当底层的vm的属性变动时,
+                //它可能让上面的vm进行diff,或可能让融合vm进行diff
                 return '\u01A9.ctrl( ' + avalon.quote(hasCtrl) + ', __vmodel__, ' + isImport + ', function(__vmodel__) {\n                return ' + json + '\n            }) ';
             } else {
                 return json;
@@ -6033,12 +6060,10 @@ IE7的checked属性应该使用defaultChecked来设置
         var vnodes = new HighConvertor(node);
         var c = new Compiler(vnodes, vm, false);
         if (vnodes.length === 1) {
-            console.log(vnodes);
             optimize(vnodes[0]);
         }
         c.renders.forEach(function (cc) {
             collectDeps(cc, cc.update);
-            //cc.update()
         });
     };
 
