@@ -1,5 +1,5 @@
 import { avalon, inBrowser } from '../seed/core'
-//import { impDir } from './important'
+import { impDir } from './important'
 
 import { addScope, makeHandle } from '../parser/index'
 
@@ -25,11 +25,9 @@ avalon.directive('on', {
             })
             return new Function('$event','$$l', ret.join('\n'))
     },
-    diff: function(oldVal, newVal) {
-        if (!this.inited) {
+    diff:function(oldVal, newVal) {
+        if (!this.inited)
             oldVal = null
-        }
-        
         if (oldVal !== newVal) {
             this.value = newVal
             return true

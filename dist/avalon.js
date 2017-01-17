@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-17:17:36 version 2.2.3 by 司徒正美
+built in 2017-1-17:18:32 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -362,13 +362,13 @@ IE7的checked属性应该使用defaultChecked来设置
     });
 
     //============== config ============
-    function config$1(settings) {
+    function config(settings) {
         for (var p in settings) {
             var val = settings[p];
-            if (typeof config$1.plugins[p] === 'function') {
-                config$1.plugins[p](val);
+            if (typeof config.plugins[p] === 'function') {
+                config.plugins[p](val);
             } else {
-                config$1[p] = val;
+                config[p] = val;
             }
         }
         return this;
@@ -387,18 +387,18 @@ IE7的checked属性应该使用defaultChecked来设置
                 throw new SyntaxError('interpolate cannot contains "<" or ">"');
             }
 
-            config$1.openTag = openTag;
-            config$1.closeTag = closeTag;
+            config.openTag = openTag;
+            config.closeTag = closeTag;
             var o = escapeRegExp(openTag);
             var c = escapeRegExp(closeTag);
 
-            config$1.rtext = new RegExp(o + '(.+?)' + c, 'g');
-            config$1.rexpr = new RegExp(o + '([\\s\\S]*)' + c);
+            config.rtext = new RegExp(o + '(.+?)' + c, 'g');
+            config.rexpr = new RegExp(o + '([\\s\\S]*)' + c);
         }
     };
 
-    config$1.plugins = plugins;
-    config$1({
+    config.plugins = plugins;
+    config({
         interpolate: ['{{', '}}'],
         debug: true
     });
@@ -426,7 +426,7 @@ IE7的checked属性应该使用defaultChecked来设置
         noop: noop,
         warn: warn,
         error: error,
-        config: config$1,
+        config: config,
 
         modern: modern,
         msie: msie$1,
@@ -3232,9 +3232,9 @@ IE7的checked属性应该使用defaultChecked来设置
     avalon.pendingActions = [];
     avalon.uniqActions = {};
     avalon.inTransaction = 0;
-    config$1.trackDeps = false;
+    config.trackDeps = false;
     avalon.track = function () {
-        if (config$1.trackDeps) {
+        if (config.trackDeps) {
             avalon.log.apply(avalon, arguments);
         }
     };
@@ -3602,15 +3602,15 @@ IE7的checked属性应该使用defaultChecked来设置
         var tokens = [];
         do {
             //aaa{{@bbb}}ccc
-            var index = str.indexOf(config$1.openTag);
+            var index = str.indexOf(config.openTag);
             index = index === -1 ? str.length : index;
             var value = str.slice(0, index);
             if (/\S/.test(value)) {
                 tokens.push(avalon.quote(avalon._decode(value)));
             }
-            str = str.slice(index + config$1.openTag.length);
+            str = str.slice(index + config.openTag.length);
             if (str) {
-                index = str.indexOf(config$1.closeTag);
+                index = str.indexOf(config.closeTag);
                 var value = str.slice(0, index);
                 var expr = avalon.unescapeHTML(value);
                 if (/\|\s*\w/.test(expr)) {
@@ -3625,7 +3625,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
                 tokens.push(expr);
 
-                str = str.slice(index + config$1.closeTag.length);
+                str = str.slice(index + config.closeTag.length);
             }
         } while (str.length);
         return tokens.join('+');
@@ -4518,7 +4518,6 @@ IE7的checked属性应该使用defaultChecked来设置
                 this.delay = true;
                 return true;
             }
-
             if (oldVal !== newVal) {
                 this.value = newVal;
                 return true;
@@ -4562,7 +4561,7 @@ IE7的checked属性应该使用defaultChecked来设置
     var cachedCtrl = {};
     avalon.directive('controller', {
         priority: 2,
-        diff: function diff(oldVal, newVal, vdom, newVdom) {
+        diff: function diff(oldVal, newVal) {
             if (!this.inited) oldVal = null;
             if (oldVal !== newVal) {
                 this.value = newVal;
@@ -5371,6 +5370,7 @@ IE7的checked属性应该使用defaultChecked来设置
                                 adir.removeName = true;
                             }
                         }
+                        //ms-important会阻止继续diff
                         stop = stop || adir.delay;
                     }
                 }
@@ -5382,7 +5382,6 @@ IE7的checked属性应该使用defaultChecked来设置
                     stop = true;
                 }
                 if (!a.vtype && !stop) {
-                    console.log('diff');
                     var childNodes = parentNode.childNodes;
                     var achild = a.children.concat();
                     var bchild = b.children.concat();
@@ -5393,6 +5392,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
                         if (d) {
                             //如果数量相等则进行比较
+
                             var arr = diff(c, d);
                             if (typeof arr === 'number') {
                                 directives$1['for'].update(c, d, achild, bchild, _i4, afterCb);
@@ -5605,7 +5605,6 @@ IE7的checked属性应该使用defaultChecked来设置
         //这里需要第二个配置项，用于防止多次扫描
         this.renders = [];
         var body = this.genChildren(nodes, null);
-
         if (force && vm) {
             return new Render(vm, nodes, body);
         }
@@ -5723,10 +5722,8 @@ IE7的checked属性应该使用defaultChecked来设置
                     this.renders.push(render);
                 } else {
                     render.noDiff = true;
-                    console.log(render.vm.$id, '00000000');
                     collectDeps(render, render.update);
                     render.noDiff = false;
-                    console.log(render.vm, '-----');
                 }
                 //如果存在两个ms-controller,它们会产生融合vm, 当底层的vm的属性变动时,
                 //它可能让上面的vm进行diff,或可能让融合vm进行diff
@@ -6101,7 +6098,7 @@ IE7的checked属性应该使用defaultChecked来设置
          * @returns {undefined}
          */
         scanText: function scanText(vdom) {
-            if (config$1.rexpr.test(vdom.nodeValue)) {
+            if (config.rexpr.test(vdom.nodeValue)) {
                 vdom.dynamic = true;
             }
         },
@@ -6321,9 +6318,14 @@ IE7的checked属性应该使用defaultChecked来设置
             });
             return new Function('$event', '$$l', ret.join('\n'));
         },
-        diff: impDir.diff,
+        diff: function diff(oldVal, newVal) {
+            if (!this.inited) oldVal = null;
+            if (oldVal !== newVal) {
+                this.value = newVal;
+                return true;
+            }
+        },
         update: function update(value, vdom, _) {
-
             var uuid = (this.name + '_' + value).replace(/^(\:|ms\-)/, 'e').replace('-', '_').replace(/\s/g, '').replace(/[^$a-z]/ig, function (e) {
                 return e.charCodeAt(0);
             });
@@ -6337,7 +6339,6 @@ IE7的checked属性应该使用defaultChecked来设置
             dom._ms_context_ = _.vm;
             dom._ms_local_ = _.local;
             this.eventType = this.param.replace(/\-(\d)$/, '');
-            delete this.param;
             this.vdom = vdom;
             avalon(dom).bind(this.eventType, fn);
         },

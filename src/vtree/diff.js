@@ -75,6 +75,7 @@ export function diff(a, b) {
                             adir.removeName = true
                         }
                     }
+                    //ms-important会阻止继续diff
                     stop = stop || adir.delay
                 }
             }
@@ -86,7 +87,6 @@ export function diff(a, b) {
                 stop = true
             }
             if (!a.vtype && !stop) {
-                console.log('diff')
                 var childNodes = parentNode.childNodes
                 var achild = a.children.concat()
                 var bchild = b.children.concat()
@@ -94,8 +94,9 @@ export function diff(a, b) {
 
                     let c = achild[i]
                     let d = bchild[i]
-
+                   
                     if (d) { //如果数量相等则进行比较
+                        
                         let arr = diff(c, d)
                         if (typeof arr === 'number') {
                             directives['for'].update(c, d, achild, bchild, i, afterCb)

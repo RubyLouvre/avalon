@@ -14,6 +14,7 @@ export var impDir = avalon.directive('important', {
         }
         if (this.inited) {
             this.delay = true
+            return true
         }
         if (oldVal !== newVal) {
             this.value = newVal

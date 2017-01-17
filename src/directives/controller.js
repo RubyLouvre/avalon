@@ -3,7 +3,7 @@ import { impDir } from './important'
 var cachedCtrl = {}
 avalon.directive('controller', {
     priority: 2,
-    diff: function(oldVal, newVal, vdom, newVdom) {
+    diff: function(oldVal, newVal) {
         if (!this.inited)
             oldVal = null
         if (oldVal !== newVal) {
