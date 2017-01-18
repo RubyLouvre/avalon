@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-18:1:50 version 2.2.3 by 司徒正美
+built in 2017-1-18:12:7 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -147,13 +147,13 @@ IE7的checked属性应该使用defaultChecked来设置
 
     var delayCompile = {};
 
-    var directives$1 = {};
+    var directives = {};
 
     function directive(name, opts) {
-        if (directives$1[name]) {
+        if (directives[name]) {
             avalon.warn(name, 'directive have defined! ');
         }
-        directives$1[name] = opts;
+        directives[name] = opts;
         if (!opts.update) {
             opts.update = function () {};
         }
@@ -414,7 +414,7 @@ IE7的checked属性应该使用defaultChecked来设置
         version: "2.2.3",
         vmodels: {},
 
-        directives: directives$1,
+        directives: directives,
         directive: directive,
 
         eventHooks: eventHooks,
@@ -3562,7 +3562,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
             var type = arr[1];
 
-            if (directives$1[type]) {
+            if (directives[type]) {
                 delete props[attrName];
                 var binding = {
                     type: type,
@@ -3570,10 +3570,10 @@ IE7的checked属性应该使用defaultChecked来设置
                     name: attrName,
 
                     expr: value,
-                    priority: directives$1[type].priority || type.charCodeAt(0) * 100
+                    priority: directives[type].priority || type.charCodeAt(0) * 100
                 };
 
-                avalon.mix(binding, directives$1[type]);
+                avalon.mix(binding, directives[type]);
 
                 if (type === 'on') {
                     binding.priority += arr[3];
@@ -5361,7 +5361,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 break;
             case void 0:
                 //两个数组(循环区域进行比较 )
-                return directives$1['for'].diff(a, b);
+                return directives['for'].diff(a, b);
                 break;
             default:
                 //两个元素节点进行比较
@@ -5379,7 +5379,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     for (var i = 0, bdir; bdir = b.dirs[i]; i++) {
                         var adir = a.dirs[i];
                         if (!adir.diff) {
-                            avalon.mix(adir, directives$1[adir.type]);
+                            avalon.mix(adir, directives[adir.type]);
                         }
                         //diff时依次传入指令的旧值,指令的新值, 旧的虚拟DOM, 新的虚拟DOM
 
@@ -5432,7 +5432,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
                             var arr = diff(c, d);
                             if (typeof arr === 'number') {
-                                directives$1['for'].update(c, d, achild, bchild, _i4, afterCb);
+                                directives['for'].update(c, d, achild, bchild, _i4, afterCb);
                                 c = achild[_i4];
                                 d = bchild[_i4];
                                 diff(c, d);
@@ -5571,7 +5571,7 @@ IE7的checked属性应该使用defaultChecked来设置
         //如果下方没有扫描过,继续扫描
         ctrl: function ctrl(id, topVm, isImport, cb) {
             var name = isImport ? 'important' : 'controller';
-            var dir = directives$1[name];
+            var dir = directives[name];
             var vm = dir.getScope(id, topVm);
             var curVm = avalon.vmodels[id];
             return cb(vm, curVm, isImport && topVm);
@@ -6137,7 +6137,6 @@ IE7的checked属性应该使用defaultChecked来设置
         /**
          * 从文本节点获取指令
          * @param {type} vdom 
-         * @param {type} scope
          * @returns {undefined}
          */
         scanText: function scanText(vdom) {
@@ -6149,7 +6148,6 @@ IE7的checked属性应该使用defaultChecked来设置
         /**
          * 从注释节点获取指令
          * @param {type} vdom 
-         * @param {type} scope
          * @param {type} parentChildren
          * @returns {undefined}
          */
@@ -6219,7 +6217,6 @@ IE7的checked属性应该使用defaultChecked来设置
         scanRange: function scanRange(begin, parentChildren, cb) {
             var expr = begin.nodeValue.replace('ms-for:', '').trim();
             begin.nodeValue = 'ms-for:' + expr;
-
             var nodes = getRange(parentChildren, begin);
             this.scanChildren(nodes, false);
             var end = nodes.end;
@@ -6238,9 +6235,7 @@ IE7的checked属性应该使用defaultChecked来设置
         /**
          *  从attrs中扫描出指令
          * @param {type} vdom 
-         * @param {type} scope
-         * @param {type} parentChildren
-         * @param {type} isRoot 用于执行complete方法
+         * @param {type} attrs
          * @returns {undefined}
          */
         scanDirs: function scanDirs(vdom, attrs) {
@@ -6256,7 +6251,7 @@ IE7的checked属性应该使用defaultChecked来设置
                     dirs[attr] = value;
                     var type = attr.match(/\w+/g)[1];
                     type = eventMap[type] || type;
-                    if (!directives$1[type]) {
+                    if (!directives[type]) {
                         avalon.warn('\u4E0D\u5B58\u5728' + attr + '\xA0\u6307\u4EE4');
                     } else if (attr === 'ms-for') {
                         if (vdom.dom) {
@@ -6273,12 +6268,11 @@ IE7的checked属性应该使用defaultChecked来设置
         /**
          * 从元素节点的nodeName与属性中获取指令
          * @param {type} vdom 
-         * @param {type} scope
          * @param {type} parentChildren
          * @param {type} isRoot 用于执行complete方法
          * @returns {undefined}
          */
-        scanTag: function scanTag(vdom, scope, parentChildren, isRoot) {
+        scanTag: function scanTag(vdom, parentChildren, isRoot) {
             var attrs = vdom.props;
 
             //处理dirs
@@ -6297,7 +6291,7 @@ IE7的checked属性应该使用defaultChecked来设置
             var noDelay = !dirs || !delayCompileNodes(dirs);
             //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
             if (noDelay && !vdom.vtype && children.length) {
-                this.scanChildren(children, scope, false);
+                this.scanChildren(children, false);
             }
         }
     };
@@ -6687,7 +6681,7 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     });
 
-    directives$1.active = directives$1.hover = directives$1['class'];
+    directives.active = directives.hover = directives['class'];
 
     var classMap = {
         mouseenter: 'change-hover',

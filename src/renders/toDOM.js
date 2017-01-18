@@ -1,4 +1,4 @@
-import {createNode} from '../vtree/recycler'
+import {createNode, createText} from '../vtree/recycler'
 export function toDOM(el, b) {
 
     if (el.props) {
@@ -36,7 +36,7 @@ export function toDOM(el, b) {
         if (el.dom) {
             return el.dom
         }
-       return el.dom = document.createTextNode(el.nodeValue)
+       return el.dom = createText(el.nodeValue)
     } 
 }
 

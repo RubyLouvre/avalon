@@ -1,6 +1,6 @@
 import { avalon, directives } from '../seed/core'
 import { toDOM } from '../renders/toDOM'
-import { collectNode } from './recycler'
+import { collectNode, handleDispose } from './recycler'
 
 //a是旧的虚拟DOM, b是新的
 export function diff(a, b) {
@@ -186,23 +186,3 @@ function reInitDires(a) {
     }
 }
 
-function handleDispose(a, keep) {
-    if (a.dirs) {
-        for (let i = 0, el; el = a.dirs[i++];) {
-            if (el.beforeDispose) {
-                el.beforeDispose()
-            }
-        }
-    }
-    keep = keep || (a.props && a.props.cached)
-    if (a.dom && !keep) {
-        collectNode(a.dom)
-        delete a.dom
-    }
-    var arr = a.children || (Array.isArray(a) && a)
-    if (arr) {
-        for (let i = 0, el; el = arr[i++];) {
-            handleDispose(el, keep)
-        }
-    }
-}

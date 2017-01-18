@@ -1,8 +1,6 @@
-import { avalon, createFragment, platform, isObject, ap } from '../seed/core'
-
-
+import { avalon, createFragment } from '../seed/core'
 import { addScope, makeHandle } from '../parser/index'
-
+import { handleDispose } from '../vtree/diff'
 
 var rforAs = /\s+as\s+([$\w]+)/
 var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/
@@ -56,9 +54,10 @@ avalon.directive('for', {
 
     },
     update: function(oldVal, newVal, oldChild, newChild, i, afterCb) {
-       
+
         if (oldVal.same) {
-            //只是单纯将循环区域里的节点抽取出来,同步到父节点的children中
+            //如果元素个数一致,则只需单纯将循环区域里的节点抽取出来,
+            //同步到父节点的children中
 
             var args1 = oldVal.cachedArgs || getFlattenNodes(oldVal, i)
             oldChild.splice.apply(oldChild, args1)
@@ -80,8 +79,8 @@ avalon.directive('for', {
             var args5 = getFlattenNodes(newVal, i)
             newChild.splice.apply(newChild, args5)
         }
-        if(!oldVal.slot){
-            var comment = newChild[i-1]
+        if (!oldVal.slot) {
+            var comment = newChild[i - 1]
             var render = oldVal.cb
             var string = newVal.cb
             if (!render && string && string !== 'undefined') {
@@ -89,13 +88,13 @@ avalon.directive('for', {
                 var body = makeHandle(arr[0])
                 render = oldVal.cb = new Function('$event', '$$l', 'var __vmodel__ = this\nreturn ' + body)
             }
-            if(!render)
-                return 
-            afterCb.push(function(vdom){
+            if (!render)
+                return
+            afterCb.push(function(vdom) {
                 render.call(comment.vm, {
                     type: 'rendered',
                     target: vdom.dom
-                },comment.local)
+                }, comment.local)
             })
         }
     }
@@ -174,6 +173,7 @@ function diffRepeatRange(oldVal, newVal, flattenNodes) {
 
     for (let el, i = 0; el = oldVal[i]; i++) {
         if (el._dispose) {
+            handleDispose(el)
             oldVal.splice(i, 1);
             i--
         } else {
