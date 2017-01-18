@@ -64,7 +64,6 @@ HighConvertor.prototype = {
     /**
      * 从文本节点获取指令
      * @param {type} vdom 
-     * @param {type} scope
      * @returns {undefined}
      */
     scanText(vdom) {
@@ -75,7 +74,6 @@ HighConvertor.prototype = {
     /**
      * 从注释节点获取指令
      * @param {type} vdom 
-     * @param {type} scope
      * @param {type} parentChildren
      * @returns {undefined}
      */
@@ -146,7 +144,6 @@ HighConvertor.prototype = {
     scanRange(begin, parentChildren, cb) {
         var expr = begin.nodeValue.replace('ms-for:', '').trim()
         begin.nodeValue = 'ms-for:' + expr
-
         var nodes = getRange(parentChildren, begin)
         this.scanChildren(nodes, false)
         var end = nodes.end
@@ -165,9 +162,7 @@ HighConvertor.prototype = {
     /**
      *  从attrs中扫描出指令
      * @param {type} vdom 
-     * @param {type} scope
-     * @param {type} parentChildren
-     * @param {type} isRoot 用于执行complete方法
+     * @param {type} attrs
      * @returns {undefined}
      */
     scanDirs(vdom, attrs) {
@@ -199,12 +194,11 @@ HighConvertor.prototype = {
     /**
      * 从元素节点的nodeName与属性中获取指令
      * @param {type} vdom 
-     * @param {type} scope
      * @param {type} parentChildren
      * @param {type} isRoot 用于执行complete方法
      * @returns {undefined}
      */
-    scanTag(vdom, scope, parentChildren, isRoot) {
+    scanTag(vdom, parentChildren, isRoot) {
         var attrs = vdom.props
 
         //处理dirs
@@ -223,7 +217,7 @@ HighConvertor.prototype = {
         var noDelay = !dirs || !delayCompileNodes(dirs)
             //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
         if (noDelay && !vdom.vtype && children.length) {
-            this.scanChildren(children, scope, false)
+            this.scanChildren(children, false)
         }
     },
 }

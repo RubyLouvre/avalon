@@ -1,4 +1,4 @@
-import { avalon, config } from '../seed/core'
+import { avalon, config,directives } from '../seed/core'
 
 import { collectDeps } from '../vmodel/transaction'
 import { createExpr, parseInterpolate, parseAttributes } from '../parser/index'
