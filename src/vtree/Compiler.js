@@ -1,9 +1,8 @@
-import { avalon, config,directives } from '../seed/core'
+import { avalon, config, directives } from '../seed/core'
 
 import { collectDeps } from '../vmodel/transaction'
 import { createExpr, parseInterpolate, parseAttributes } from '../parser/index'
 import { Render } from './Render'
-
 /**
  * Compiler方法会将一堆虚拟DOM根据作用域划分为多个Render
  */

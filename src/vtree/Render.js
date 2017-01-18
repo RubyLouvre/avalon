@@ -2,10 +2,22 @@ import { avalon, config, inBrowser, delayCompileNodes, directives } from '../see
 import { runActions, collectDeps } from '../vmodel/transaction'
 
 import { __repeat } from '../filters/array'
-
 import { diff } from './diff'
+import { HighConvertor } from './HighConvertor'
 
+import { Compiler } from './Compiler'
+import { optimize } from './optimize'
 
+avalon.scan = function(node, vm) {
+    var vnodes = new HighConvertor(node)
+    var c = new Compiler(vnodes, vm, false)
+    if (vnodes.length === 1) {
+        optimize(vnodes[0])
+    }
+    c.renders.forEach(function(cc) {
+        collectDeps(cc, cc.update)
+    })
+}
 export function Render(vm, vnodes, body) {
     var fork = Function('__vmodel__', '$$l',
         'var \u01A9 = __vmodel__.$render;' +

@@ -1,12 +1,11 @@
 import { DOMConvertor } from './DOMConvertor'
 import { StringConvertor } from './StringConvertor'
-import { avalon, config, inBrowser, delayCompileNodes, directives } from '../seed/core'
+import { avalon, config, delayCompileNodes, directives } from '../seed/core'
 import { getRange } from './share'
 import { eventMap } from '../parser/index'
-import { Compiler } from './Compiler'
-import { optimize } from './optimize'
 
-import { collectDeps } from '../vmodel/transaction'
+
+
 
 /**
  * 此转换器主要是AST节点添加dirs属性，dymatic属性， 循环区域
@@ -23,16 +22,7 @@ export function HighConvertor(node) {
     return vnodes
 }
 
-avalon.scan = function(node, vm) {
-    var vnodes = new HighConvertor(node)
-    var c = new Compiler(vnodes, vm, false)
-    if (vnodes.length === 1) {
-        optimize(vnodes[0])
-    }
-    c.renders.forEach(function(cc) {
-        collectDeps(cc, cc.update)
-    })
-}
+
 
 
 HighConvertor.prototype = {
