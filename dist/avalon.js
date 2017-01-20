@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-18:12:7 version 2.2.3 by 司徒正美
+built in 2017-1-20:14:53 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -3393,7 +3393,7 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     }
 
-    var keyMap$1 = avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false," + "finally,for,function,if,in,instanceof,new,null,return,switch,this," + "throw,true,try,typeof,var,void,while,with," + /* 关键字*/
+    var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false," + "finally,for,function,if,in,instanceof,new,null,return,switch,this," + "throw,true,try,typeof,var,void,while,with," + /* 关键字*/
     "abstract,boolean,byte,char,class,const,double,enum,export,extends," + "final,float,goto,implements,import,int,interface,long,native," + "package,private,protected,public,short,static,super,synchronized," + "throws,transient,volatile");
 
     var skipMap = avalon.mix({
@@ -3403,7 +3403,7 @@ IE7的checked属性应该使用defaultChecked来设置
         window: 1,
         __vmodel__: 1,
         avalon: 1
-    }, keyMap$1);
+    }, keyMap);
 
     var rvmKey = /(^|[^\w\u00c0-\uFFFF_])(@|##)(?=[$\w])/g;
     var ruselessSp = /\s*(\.|\|)\s*/g;
@@ -5196,7 +5196,14 @@ IE7的checked属性应该使用defaultChecked来设置
 
     //绑定对象只有value不一样，
 
-    var nodes = {};
+    var nodes = {
+        p: [],
+        div: [],
+        span: [],
+        li: [],
+        '#text': []
+    };
+    var textCache = nodes['#text'];
     //回收元素节点
     function removeNode(node) {
         var p = node.parentNode;
@@ -5210,9 +5217,39 @@ IE7的checked属性应该使用defaultChecked来设置
             var name = node.lowerName || node.nodeName.toLowerCase();
             var list = nodes[name] || (nodes[name] = []);
             list.push(node);
+        } else if (node.nodeType === 3) {
+            textCache.push(node);
         }
     }
 
+    function handleDispose(a, keep) {
+        if (a.dirs) {
+            for (var i = 0, el; el = a.dirs[i++];) {
+                if (el.beforeDispose) {
+                    el.beforeDispose();
+                }
+            }
+        }
+        keep = keep || a.props && a.props.cached;
+        if (a.dom && !keep) {
+            collectNode(a.dom);
+            delete a.dom;
+        }
+        var arr = a.children || Array.isArray(a) && a;
+        if (arr) {
+            for (var _i4 = 0, _el; _el = arr[_i4++];) {
+                handleDispose(_el, keep);
+            }
+        }
+    }
+    function createText(text) {
+        var node = textCache.pop();
+        if (node) {
+            node.nodeValue = text;
+            return node;
+        }
+        return document.createTextNode(text);
+    }
     //只重复利用元素节点
     function createNode(nodeName, isSvg) {
         var name = nodeName.toLowerCase();
@@ -5263,7 +5300,7 @@ IE7的checked属性应该使用defaultChecked来设置
             if (el.dom) {
                 return el.dom;
             }
-            return el.dom = document.createTextNode(el.nodeValue);
+            return el.dom = createText(el.nodeValue);
         }
     }
 
@@ -5422,32 +5459,32 @@ IE7的checked属性应该使用defaultChecked来设置
                     var childNodes = parentNode.childNodes;
                     var achild = a.children.concat();
                     var bchild = b.children.concat();
-                    for (var _i4 = 0; _i4 < achild.length; _i4++) {
+                    for (var _i5 = 0; _i5 < achild.length; _i5++) {
 
-                        var c = achild[_i4];
-                        var d = bchild[_i4];
+                        var c = achild[_i5];
+                        var d = bchild[_i5];
 
                         if (d) {
                             //如果数量相等则进行比较
 
                             var arr = diff(c, d);
                             if (typeof arr === 'number') {
-                                directives['for'].update(c, d, achild, bchild, _i4, afterCb);
-                                c = achild[_i4];
-                                d = bchild[_i4];
+                                directives['for'].update(c, d, achild, bchild, _i5, afterCb);
+                                c = achild[_i5];
+                                d = bchild[_i5];
                                 diff(c, d);
                             }
                         }
 
-                        if (c.dom !== childNodes[_i4]) {
-                            if (!childNodes[_i4]) {
+                        if (c.dom !== childNodes[_i5]) {
+                            if (!childNodes[_i5]) {
                                 //数量一致就添加
                                 parentNode.appendChild(c.dom);
                             } else {
                                 try {
-                                    parentNode.insertBefore(c.dom, childNodes[_i4]);
+                                    parentNode.insertBefore(c.dom, childNodes[_i5]);
                                 } catch (e) {
-                                    avalon.log(c.dom, childNodes[_i4], 'error', e);
+                                    avalon.log(c.dom, childNodes[_i5], 'error', e);
                                 }
                             }
                         }
@@ -5512,32 +5549,485 @@ IE7的checked属性应该使用defaultChecked来设置
         }
     }
 
-    function handleDispose(a, keep) {
-        if (a.dirs) {
-            for (var i = 0, el; el = a.dirs[i++];) {
-                if (el.beforeDispose) {
-                    el.beforeDispose();
+    function DOMConvertor(dom) {
+        return [fromDOM(dom)];
+    }
+    /**
+     * 虚拟元素节点有如下属性
+     * nodeName: 标签名,一律小写
+     * ns: svg | vml | html
+     * dom: 原来的元素节点
+     * vtype: 1 闭合 2容器(里面都是文本,存兼容问题) 0 不闭合;原先的isVoidTag被废掉
+     * props: 属性集合
+     * dirs: 指令数组
+     */
+    function fromDOM(node) {
+        var type = node.nodeName.toLowerCase();
+        switch (type) {
+            case '#text':
+
+            case '#comment':
+                return {
+                    nodeName: type,
+                    dom: node,
+                    nodeValue: node.nodeValue
+                };
+            default:
+                var props = markProps(node, node.attributes || []);
+                var vnode = {
+                    nodeName: type,
+                    dom: node,
+                    vtype: voidTag[type] || orphanTag[type] || 0,
+                    props: props,
+                    children: []
+                };
+                if (type === 'option') {
+                    if (props.selected) {
+                        props.selected = true;
+                    }
+                    if (props.disabled) {
+                        props.disabled = true;
+                    }
                 }
-            }
-        }
-        keep = keep || a.props && a.props.cached;
-        if (a.dom && !keep) {
-            collectNode(a.dom);
-            delete a.dom;
-        }
-        var arr = a.children || Array.isArray(a) && a;
-        if (arr) {
-            for (var _i5 = 0, _el; _el = arr[_i5++];) {
-                handleDispose(_el, keep);
-            }
+
+                if (type in orphanTag) {
+                    makeOrphan(vnode, type, node.text || node.innerHTML);
+                    if (node.childNodes.length === 1) {
+                        vnode.children[0].dom = node.firstChild;
+                    }
+                } else if (!vnode.vtype) {
+
+                    for (var i = 0, el; el = node.childNodes[i++];) {
+                        var child = fromDOM(el);
+                        if (/\S/.test(child.nodeValue)) {
+                            vnode.children.push(child);
+                        }
+                    }
+                }
+                return vnode;
         }
     }
 
+    var rformElement = /input|textarea|select/i;
+
+    function markProps(node, attrs) {
+        var ret = {};
+        for (var i = 0, n = attrs.length; i < n; i++) {
+            var attr = attrs[i];
+            if (attr.specified) {
+                //IE6-9不会将属性名变小写,比如它会将用户的contenteditable变成contentEditable
+                ret[attr.name.toLowerCase()] = attr.value;
+            }
+        }
+        if (rformElement.test(node.nodeName)) {
+            ret.type = node.type;
+            var a = node.getAttributeNode('value');
+            if (a && /\S/.test(a.value)) {
+                //IE6,7中无法取得checkbox,radio的value
+                ret.value = a.value;
+            }
+        }
+        var style = node.style.cssText;
+        if (style) {
+            ret.style = style;
+        }
+        //类名 = 去重(静态类名+动态类名+ hover类名? + active类名)
+        if (ret.type === 'select-one') {
+            ret.selectedIndex = node.selectedIndex;
+        }
+        return ret;
+    }
+
+    var orphanTag$1 = {
+        script: 2,
+        style: 2,
+        textarea: 2,
+        xmp: 2,
+        noscript: 2,
+        template: 2,
+        option: 0
+    };
+
+    /* 
+     *  此模块只用于文本转虚拟DOM, 
+     *  因为在真实浏览器会对我们的HTML做更多处理,
+     *  如, 添加额外属性, 改变结构
+     *  此模块就是用于模拟这些行为
+     */
+
+    //专门用于处理option标签里面的标签
+    var rtrimHTML$1 = /<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi;
+
+    function trimHTML$1(v) {
+        return String(v).replace(rtrimHTML$1, '').trim();
+    }
+
+    function getChildren(arr) {
+        var count = 0;
+        for (var i = 0, el; el = arr[i++];) {
+            if (el.nodeName === '#document-fragment') {
+                count += getChildren(el.children);
+            } else {
+                count += 1;
+            }
+        }
+        return count;
+    }
+    function groupTree(parent, children) {
+        children && children.forEach(function (vdom) {
+            if (!vdom) return;
+            var vlength = vdom.children && getChildren(vdom.children);
+            if (vdom.nodeName === '#document-fragment') {
+                var dom = createFragment();
+            } else {
+                dom = avalon.vdom(vdom, 'toDOM');
+                var domlength = dom.childNodes && dom.childNodes.length;
+                if (domlength && vlength && domlength > vlength) {
+                    if (!appendChildMayThrowError[dom.nodeName]) {
+                        avalon.clearHTML(dom);
+                    }
+                }
+            }
+            if (vlength) {
+                groupTree(dom, vdom.children);
+            }
+            //高级版本可以尝试 querySelectorAll
+
+            try {
+                if (!appendChildMayThrowError[parent.nodeName]) {
+                    parent.appendChild(dom);
+                }
+            } catch (e) {}
+        });
+    }
+
+    function dumpTree(elem) {
+        var firstChild;
+        if (orphanTag$1[elem.nodeName.toLowerCase()]) return;
+        while (firstChild = elem.firstChild) {
+            if (firstChild.nodeType === 1) {
+                dumpTree(firstChild);
+            }
+            elem.removeChild(firstChild);
+        }
+    }
+
+    function getRange(childNodes, node) {
+        var i = childNodes.indexOf(node) + 1;
+        var deep = 1,
+            nodes = [],
+            end;
+        nodes.start = i;
+        while (node = childNodes[i++]) {
+            nodes.push(node);
+            if (node.nodeName === '#comment') {
+                if (startWith(node.nodeValue, 'ms-for:')) {
+                    deep++;
+                } else if (node.nodeValue === 'ms-for-end:') {
+                    deep--;
+                    if (deep === 0) {
+                        //  node.nodeValue = 'msfor-end:'
+                        end = node;
+                        nodes.pop();
+                        break;
+                    }
+                }
+            }
+        }
+        nodes.end = end;
+        return nodes;
+    }
+
+    function startWith(long, short) {
+        return long.indexOf(short) === 0;
+    }
+
+    var appendChildMayThrowError = {
+        '#text': 1,
+        '#comment': 1,
+        script: 1,
+        style: 1,
+        noscript: 1
+    };
+
+    /**
+     * 此转换器主要是AST节点添加dirs属性，dymatic属性， 循环区域
+     */
+
+    function HighConvertor(node) {
+        if (typeof node === 'string') {
+            var vnodes = StringConvertor(node);
+        } else {
+            vnodes = DOMConvertor(node);
+        }
+        this.scanChildren(vnodes, true);
+        return vnodes;
+    }
+
+    HighConvertor.prototype = {
+        scanChildren: function scanChildren(children, isRoot) {
+            for (var i = 0; i < children.length; i++) {
+                var vdom = children[i];
+                if (vdom.nodeName) {
+                    switch (vdom.nodeName) {
+                        case '#text':
+                            this.scanText(vdom);
+                            break;
+                        case '#comment':
+                            this.scanComment(vdom, children);
+                            break;
+                        default:
+                            this.scanTag(vdom, children, false);
+                            break;
+                    }
+                }
+            }
+
+            if (isRoot && this.vm) {
+                this.complete();
+            }
+        },
+        complete: function complete() {
+            avalon.log('扫描完毕');
+        },
+
+        /**
+         * 从文本节点获取指令
+         * @param {type} vdom 
+         * @returns {undefined}
+         */
+        scanText: function scanText(vdom) {
+            if (config.rexpr.test(vdom.nodeValue)) {
+                vdom.dynamic = true;
+            }
+        },
+
+        /**
+         * 从注释节点获取指令
+         * @param {type} vdom 
+         * @param {type} parentChildren
+         * @returns {undefined}
+         */
+        scanComment: function scanComment(vdom, parentChildren) {
+            if (vdom.nodeValue.slice(0, 7) === 'ms-for:') {
+                this.scanRange(vdom, parentChildren);
+            }
+        },
+
+        /**
+         * 在带ms-for元素节点旁添加两个注释节点,组成循环区域
+         * @param {type} vdom
+         * @param {type} parentChildren
+         * @param {type} expr
+         * @returns {undefined}
+         */
+        _scanRange: function _scanRange(vdom, parentChildren, expr) {
+            var index = parentChildren.indexOf(vdom); //原来带ms-for的元素节点
+            var props = vdom.props;
+            var begin = {
+                nodeName: '#comment',
+                nodeValue: 'ms-for:' + expr
+            };
+            if (props.slot) {
+                begin.slot = props.slot;
+                delete props.slot;
+            }
+            var end = {
+                nodeName: '#comment',
+                nodeValue: 'ms-for-end:'
+            };
+            parentChildren.splice(index, 1, begin, vdom, end);
+            var cbName = 'data-for-rendered';
+            var cb = props[cbName];
+            delete props[cbName];
+            this.scanRange(begin, parentChildren, cb || '');
+        },
+
+        /**
+         * 为没有设置ms-widget的组件添加ms-widget属性
+         */
+        scanWidget: function scanWidget(vdom, attrs, dirs) {
+            if (/^ms\-/.test(vdom.nodeName)) {
+                attrs.is = vdom.nodeName;
+            }
+
+            if (attrs['is']) {
+                dirs = dirs || {};
+                if (!dirs['ms-widget']) {
+                    dirs['ms-widget'] = '{}';
+                }
+            }
+            if (dirs['ms-widget']) {
+                var children = vdom.vtype === 2 ? StringConvertor(vdom.children[0].nodeValue) : vdom.vtype !== 1 ? vdom.children.concat() : [];
+                vdom._children = children;
+                this.scanChildren(children);
+            }
+            if (dirs) {
+                vdom.dirs = dirs;
+                vdom.dynamic = true;
+            }
+        },
+
+        /**
+         * 创建循环区域
+         */
+        scanRange: function scanRange(begin, parentChildren, cb) {
+            var expr = begin.nodeValue.replace('ms-for:', '').trim();
+            begin.nodeValue = 'ms-for:' + expr;
+            var nodes = getRange(parentChildren, begin);
+            this.scanChildren(nodes, false);
+            var end = nodes.end;
+            begin.dynamic = true;
+            parentChildren.splice(nodes.start, nodes.length, []);
+
+            begin["for"] = {
+                begin: begin,
+                end: end,
+                expr: expr,
+                nodes: nodes,
+                cb: cb
+            };
+        },
+
+        /**
+         *  从attrs中扫描出指令
+         * @param {type} vdom 
+         * @param {type} attrs
+         * @returns {undefined}
+         */
+        scanDirs: function scanDirs(vdom, attrs) {
+            var dirs = {},
+                hasDir;
+            for (var attr in attrs) {
+                var value = attrs[attr];
+                var oldName = attr;
+                if (attr.charAt(0) === ':') {
+                    attr = 'ms-' + attr.slice(1);
+                }
+                if (attr.slice(0, 3) === 'ms-') {
+                    dirs[attr] = value;
+                    var type = attr.match(/\w+/g)[1];
+                    type = eventMap[type] || type;
+                    if (!directives[type]) {
+                        avalon.warn('\u4E0D\u5B58\u5728' + attr + '\xA0\u6307\u4EE4');
+                    } else if (attr === 'ms-for') {
+                        if (vdom.dom) {
+                            vdom.dom.removeAttribute(oldName);
+                        }
+                        delete attrs[oldName];
+                    }
+                    hasDir = true;
+                }
+            }
+            return hasDir ? dirs : false;
+        },
+
+        /**
+         * 从元素节点的nodeName与属性中获取指令
+         * @param {type} vdom 
+         * @param {type} parentChildren
+         * @param {type} isRoot 用于执行complete方法
+         * @returns {undefined}
+         */
+        scanTag: function scanTag(vdom, parentChildren, isRoot) {
+            var attrs = vdom.props;
+
+            //处理dirs
+            var dirs = this.scanDirs(vdom, attrs);
+
+            //处理for
+            if (dirs['ms-for']) {
+                return this._scanRange(vdom, parentChildren, dirs['ms-for']);
+            }
+
+            //处理widget
+            this.scanWidget(vdom, attrs, dirs);
+
+            //处理children
+            var children = vdom.children;
+            var noDelay = !dirs || !delayCompileNodes(dirs);
+            //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
+            if (noDelay && !vdom.vtype && children.length) {
+                this.scanChildren(children, false);
+            }
+        }
+    };
+
+    function optimize(node) {
+        markStatic(node);
+        markStaticID(node);
+        return node;
+    }
+    /**
+     * 为这个节点及它下面所有节点添加static属性
+     */
+    function markStatic(node) {
+        node["static"] = isStatic(node);
+        if (node.props && !node.vtype) {
+
+            if (node.props['ms-skip'] || node.props[':skip']) {
+                delete node["static"];
+                return;
+            }
+            var ret = true;
+            for (var i = 0, l = node.children.length; i < l; i++) {
+                var child = node.children[i];
+
+                ret = ret & markStatic(child);
+            }
+            if (!ret) {
+                delete node["static"];
+            }
+        }
+    }
+    avalon.staticNodes = {};
+    /**
+     * 为局部元素添加staticID,我们可以通过它，在avalon.staticNodes中找到它们，并进行重复利用
+     */
+    function markStaticID(node) {
+        var ret = true;
+        var children = node.children;
+        if (children) {
+            for (var i = 0, l = children.length; i < l; i++) {
+                var child = children[i];
+                ret = ret & markStaticID(child);
+            }
+            if (ret && node["static"]) {
+                var id = node.staticID = Math.random();
+                var old = avalon.staticNodes[id];
+                if (old === node) {
+                    id = node.staticID = Math.random();
+                    old = avalon.staticNodes[id];
+                    if (old === node) {
+                        id = node.staticID = Math.random();
+                    }
+                    avalon.staticNodes[id] = node;
+                }
+            }
+        }
+        return ret;
+    }
+
+    function isStatic(node) {
+        return !node.dynamic && node.nodeName !== 'slot';
+    }
+
+    avalon.scan = function (node, vm) {
+        var vnodes = new HighConvertor(node);
+        var c = new Compiler(vnodes, vm, false);
+        if (vnodes.length === 1) {
+            optimize(vnodes[0]);
+        }
+        c.renders.forEach(function (cc) {
+            collectDeps(cc, cc.update);
+        });
+    };
     function Render(vm, vnodes, body) {
         var fork = Function('__vmodel__', '$$l', 'var \u01A9 = __vmodel__.$render;' + 'return ' + body);
         this.fork = fork;
         this.template = fork + '';
         this.vm = vm;
+        this.slots = {};
         this.uuid = Math.random();
         this.vnodes = vnodes;
         vm.$render = this;
@@ -5822,480 +6312,6 @@ IE7的checked属性应该使用defaultChecked来设置
         return '{' + arr + '}';
     }
 
-    function DOMConvertor(dom) {
-        return [fromDOM(dom)];
-    }
-    /**
-     * 虚拟元素节点有如下属性
-     * nodeName: 标签名,一律小写
-     * ns: svg | vml | html
-     * dom: 原来的元素节点
-     * vtype: 1 闭合 2容器(里面都是文本,存兼容问题) 0 不闭合;原先的isVoidTag被废掉
-     * props: 属性集合
-     * dirs: 指令数组
-     */
-    function fromDOM(node) {
-        var type = node.nodeName.toLowerCase();
-        switch (type) {
-            case '#text':
-
-            case '#comment':
-                return {
-                    nodeName: type,
-                    dom: node,
-                    nodeValue: node.nodeValue
-                };
-            default:
-                var props = markProps(node, node.attributes || []);
-                var vnode = {
-                    nodeName: type,
-                    dom: node,
-                    vtype: voidTag[type] || orphanTag[type] || 0,
-                    props: props,
-                    children: []
-                };
-                if (type === 'option') {
-                    if (props.selected) {
-                        props.selected = true;
-                    }
-                    if (props.disabled) {
-                        props.disabled = true;
-                    }
-                }
-
-                if (type in orphanTag) {
-                    makeOrphan(vnode, type, node.text || node.innerHTML);
-                    if (node.childNodes.length === 1) {
-                        vnode.children[0].dom = node.firstChild;
-                    }
-                } else if (!vnode.vtype) {
-
-                    for (var i = 0, el; el = node.childNodes[i++];) {
-                        var child = fromDOM(el);
-                        if (/\S/.test(child.nodeValue)) {
-                            vnode.children.push(child);
-                        }
-                    }
-                }
-                return vnode;
-        }
-    }
-
-    var rformElement = /input|textarea|select/i;
-
-    function markProps(node, attrs) {
-        var ret = {};
-        for (var i = 0, n = attrs.length; i < n; i++) {
-            var attr = attrs[i];
-            if (attr.specified) {
-                //IE6-9不会将属性名变小写,比如它会将用户的contenteditable变成contentEditable
-                ret[attr.name.toLowerCase()] = attr.value;
-            }
-        }
-        if (rformElement.test(node.nodeName)) {
-            ret.type = node.type;
-            var a = node.getAttributeNode('value');
-            if (a && /\S/.test(a.value)) {
-                //IE6,7中无法取得checkbox,radio的value
-                ret.value = a.value;
-            }
-        }
-        var style = node.style.cssText;
-        if (style) {
-            ret.style = style;
-        }
-        //类名 = 去重(静态类名+动态类名+ hover类名? + active类名)
-        if (ret.type === 'select-one') {
-            ret.selectedIndex = node.selectedIndex;
-        }
-        return ret;
-    }
-
-    var orphanTag$1 = {
-        script: 2,
-        style: 2,
-        textarea: 2,
-        xmp: 2,
-        noscript: 2,
-        template: 2,
-        option: 0
-    };
-
-    /* 
-     *  此模块只用于文本转虚拟DOM, 
-     *  因为在真实浏览器会对我们的HTML做更多处理,
-     *  如, 添加额外属性, 改变结构
-     *  此模块就是用于模拟这些行为
-     */
-
-    //专门用于处理option标签里面的标签
-    var rtrimHTML$1 = /<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi;
-
-    function trimHTML$1(v) {
-        return String(v).replace(rtrimHTML$1, '').trim();
-    }
-
-    function getChildren(arr) {
-        var count = 0;
-        for (var i = 0, el; el = arr[i++];) {
-            if (el.nodeName === '#document-fragment') {
-                count += getChildren(el.children);
-            } else {
-                count += 1;
-            }
-        }
-        return count;
-    }
-    function groupTree(parent, children) {
-        children && children.forEach(function (vdom) {
-            if (!vdom) return;
-            var vlength = vdom.children && getChildren(vdom.children);
-            if (vdom.nodeName === '#document-fragment') {
-                var dom = createFragment();
-            } else {
-                dom = avalon.vdom(vdom, 'toDOM');
-                var domlength = dom.childNodes && dom.childNodes.length;
-                if (domlength && vlength && domlength > vlength) {
-                    if (!appendChildMayThrowError[dom.nodeName]) {
-                        avalon.clearHTML(dom);
-                    }
-                }
-            }
-            if (vlength) {
-                groupTree(dom, vdom.children);
-            }
-            //高级版本可以尝试 querySelectorAll
-
-            try {
-                if (!appendChildMayThrowError[parent.nodeName]) {
-                    parent.appendChild(dom);
-                }
-            } catch (e) {}
-        });
-    }
-
-    function dumpTree(elem) {
-        var firstChild;
-        if (orphanTag$1[elem.nodeName.toLowerCase()]) return;
-        while (firstChild = elem.firstChild) {
-            if (firstChild.nodeType === 1) {
-                dumpTree(firstChild);
-            }
-            elem.removeChild(firstChild);
-        }
-    }
-
-    function getRange(childNodes, node) {
-        var i = childNodes.indexOf(node) + 1;
-        var deep = 1,
-            nodes = [],
-            end;
-        nodes.start = i;
-        while (node = childNodes[i++]) {
-            nodes.push(node);
-            if (node.nodeName === '#comment') {
-                if (startWith(node.nodeValue, 'ms-for:')) {
-                    deep++;
-                } else if (node.nodeValue === 'ms-for-end:') {
-                    deep--;
-                    if (deep === 0) {
-                        //  node.nodeValue = 'msfor-end:'
-                        end = node;
-                        nodes.pop();
-                        break;
-                    }
-                }
-            }
-        }
-        nodes.end = end;
-        return nodes;
-    }
-
-    function startWith(long, short) {
-        return long.indexOf(short) === 0;
-    }
-
-    var appendChildMayThrowError = {
-        '#text': 1,
-        '#comment': 1,
-        script: 1,
-        style: 1,
-        noscript: 1
-    };
-
-    function optimize(node) {
-        markStatic(node);
-        markStaticID(node);
-        return node;
-    }
-    /**
-     * 为这个节点及它下面所有节点添加static属性
-     */
-    function markStatic(node) {
-        node["static"] = isStatic(node);
-        if (node.props && !node.vtype) {
-
-            if (node.props['ms-skip'] || node.props[':skip']) {
-                delete node["static"];
-                return;
-            }
-            var ret = true;
-            for (var i = 0, l = node.children.length; i < l; i++) {
-                var child = node.children[i];
-
-                ret = ret & markStatic(child);
-            }
-            if (!ret) {
-                delete node["static"];
-            }
-        }
-    }
-    avalon.staticNodes = {};
-    /**
-     * 为局部元素添加staticID,我们可以通过它，在avalon.staticNodes中找到它们，并进行重复利用
-     */
-    function markStaticID(node) {
-        var ret = true;
-        var children = node.children;
-        if (children) {
-            for (var i = 0, l = children.length; i < l; i++) {
-                var child = children[i];
-                ret = ret & markStaticID(child);
-            }
-            if (ret && node["static"]) {
-                var id = node.staticID = Math.random();
-                var old = avalon.staticNodes[id];
-                if (old === node) {
-                    id = node.staticID = Math.random();
-                    old = avalon.staticNodes[id];
-                    if (old === node) {
-                        id = node.staticID = Math.random();
-                    }
-                    avalon.staticNodes[id] = node;
-                }
-            }
-        }
-        return ret;
-    }
-
-    function isStatic(node) {
-        return !node.dynamic && node.nodeName !== 'slot';
-    }
-
-    /**
-     * 此转换器主要是AST节点添加dirs属性，dymatic属性， 循环区域
-     */
-
-    function HighConvertor(node) {
-        if (typeof node === 'string') {
-            var vnodes = StringConvertor(node);
-        } else {
-            vnodes = DOMConvertor(node);
-        }
-        this.scanChildren(vnodes, true);
-        return vnodes;
-    }
-
-    avalon.scan = function (node, vm) {
-        var vnodes = new HighConvertor(node);
-        var c = new Compiler(vnodes, vm, false);
-        if (vnodes.length === 1) {
-            optimize(vnodes[0]);
-        }
-        c.renders.forEach(function (cc) {
-            collectDeps(cc, cc.update);
-        });
-    };
-
-    HighConvertor.prototype = {
-        scanChildren: function scanChildren(children, isRoot) {
-            for (var i = 0; i < children.length; i++) {
-                var vdom = children[i];
-                if (vdom.nodeName) {
-                    switch (vdom.nodeName) {
-                        case '#text':
-                            this.scanText(vdom);
-                            break;
-                        case '#comment':
-                            this.scanComment(vdom, children);
-                            break;
-                        default:
-                            this.scanTag(vdom, children, false);
-                            break;
-                    }
-                }
-            }
-
-            if (isRoot && this.vm) {
-                this.complete();
-            }
-        },
-        complete: function complete() {
-            avalon.log('扫描完毕');
-        },
-
-        /**
-         * 从文本节点获取指令
-         * @param {type} vdom 
-         * @returns {undefined}
-         */
-        scanText: function scanText(vdom) {
-            if (config.rexpr.test(vdom.nodeValue)) {
-                vdom.dynamic = true;
-            }
-        },
-
-        /**
-         * 从注释节点获取指令
-         * @param {type} vdom 
-         * @param {type} parentChildren
-         * @returns {undefined}
-         */
-        scanComment: function scanComment(vdom, parentChildren) {
-            if (vdom.nodeValue.slice(0, 7) === 'ms-for:') {
-                this.scanRange(vdom, parentChildren);
-            }
-        },
-
-        /**
-         * 在带ms-for元素节点旁添加两个注释节点,组成循环区域
-         * @param {type} vdom
-         * @param {type} parentChildren
-         * @param {type} expr
-         * @returns {undefined}
-         */
-        _scanRange: function _scanRange(vdom, parentChildren, expr) {
-            var index = parentChildren.indexOf(vdom); //原来带ms-for的元素节点
-            var props = vdom.props;
-            var begin = {
-                nodeName: '#comment',
-                nodeValue: 'ms-for:' + expr
-            };
-            if (props.slot) {
-                begin.slot = props.slot;
-                delete props.slot;
-            }
-            var end = {
-                nodeName: '#comment',
-                nodeValue: 'ms-for-end:'
-            };
-            parentChildren.splice(index, 1, begin, vdom, end);
-            var cbName = 'data-for-rendered';
-            var cb = props[cbName];
-            delete props[cbName];
-            this.scanRange(begin, parentChildren, cb || '');
-        },
-
-        /**
-         * 为没有设置ms-widget的组件添加ms-widget属性
-         */
-        scanWidget: function scanWidget(vdom, attrs, dirs) {
-            if (/^ms\-/.test(vdom.nodeName)) {
-                attrs.is = vdom.nodeName;
-            }
-
-            if (attrs['is']) {
-                dirs = dirs || {};
-                if (!dirs['ms-widget']) {
-                    dirs['ms-widget'] = '{}';
-                }
-            }
-            if (dirs['ms-widget']) {
-                var children = vdom.vtype === 2 ? StringConvertor(vdom.children[0].nodeValue) : vdom.vtype !== 1 ? vdom.children.concat() : [];
-                vdom._children = children;
-                this.scanChildren(children);
-            }
-            if (dirs) {
-                vdom.dirs = dirs;
-                vdom.dynamic = true;
-            }
-        },
-
-        /**
-         * 创建循环区域
-         */
-        scanRange: function scanRange(begin, parentChildren, cb) {
-            var expr = begin.nodeValue.replace('ms-for:', '').trim();
-            begin.nodeValue = 'ms-for:' + expr;
-            var nodes = getRange(parentChildren, begin);
-            this.scanChildren(nodes, false);
-            var end = nodes.end;
-            begin.dynamic = true;
-            parentChildren.splice(nodes.start, nodes.length, []);
-
-            begin["for"] = {
-                begin: begin,
-                end: end,
-                expr: expr,
-                nodes: nodes,
-                cb: cb
-            };
-        },
-
-        /**
-         *  从attrs中扫描出指令
-         * @param {type} vdom 
-         * @param {type} attrs
-         * @returns {undefined}
-         */
-        scanDirs: function scanDirs(vdom, attrs) {
-            var dirs = {},
-                hasDir;
-            for (var attr in attrs) {
-                var value = attrs[attr];
-                var oldName = attr;
-                if (attr.charAt(0) === ':') {
-                    attr = 'ms-' + attr.slice(1);
-                }
-                if (attr.slice(0, 3) === 'ms-') {
-                    dirs[attr] = value;
-                    var type = attr.match(/\w+/g)[1];
-                    type = eventMap[type] || type;
-                    if (!directives[type]) {
-                        avalon.warn('\u4E0D\u5B58\u5728' + attr + '\xA0\u6307\u4EE4');
-                    } else if (attr === 'ms-for') {
-                        if (vdom.dom) {
-                            vdom.dom.removeAttribute(oldName);
-                        }
-                        delete attrs[oldName];
-                    }
-                    hasDir = true;
-                }
-            }
-            return hasDir ? dirs : false;
-        },
-
-        /**
-         * 从元素节点的nodeName与属性中获取指令
-         * @param {type} vdom 
-         * @param {type} parentChildren
-         * @param {type} isRoot 用于执行complete方法
-         * @returns {undefined}
-         */
-        scanTag: function scanTag(vdom, parentChildren, isRoot) {
-            var attrs = vdom.props;
-
-            //处理dirs
-            var dirs = this.scanDirs(vdom, attrs);
-
-            //处理for
-            if (dirs['ms-for']) {
-                return this._scanRange(vdom, parentChildren, dirs['ms-for']);
-            }
-
-            //处理widget
-            this.scanWidget(vdom, attrs, dirs);
-
-            //处理children
-            var children = vdom.children;
-            var noDelay = !dirs || !delayCompileNodes(dirs);
-            //如果存在子节点,并且不是容器元素(script, stype, textarea, xmp...)
-            if (noDelay && !vdom.vtype && children.length) {
-                this.scanChildren(children, false);
-            }
-        }
-    };
-
     avalon.directive('html', {
         diff: function diff(oldVal, newVal, vdom, newVdom) {
             //oldVal, newVal, oldVdom, newVdom
@@ -6429,7 +6445,8 @@ IE7的checked属性应该使用defaultChecked来设置
         update: function update(oldVal, newVal, oldChild, newChild, i, afterCb) {
 
             if (oldVal.same) {
-                //只是单纯将循环区域里的节点抽取出来,同步到父节点的children中
+                //如果元素个数一致,则只需单纯将循环区域里的节点抽取出来,
+                //同步到父节点的children中
 
                 var args1 = oldVal.cachedArgs || getFlattenNodes(oldVal, i);
                 oldChild.splice.apply(oldChild, args1);
@@ -6542,6 +6559,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
         for (var el, i = 0; el = oldVal[i]; i++) {
             if (el._dispose) {
+                handleDispose(el);
                 oldVal.splice(i, 1);
                 i--;
             } else {
@@ -7780,7 +7798,9 @@ IE7的checked属性应该使用defaultChecked来设置
                 comVm = createComponentVm(component, value, is);
                 fireComponentHook(newVdom.vm, vdom, 'Init');
                 this.comVm = comVm;
-                innerRender = avalon.scan(component.template, comVm, false);
+                var vnodes = new HighConvertor(component.template);
+                innerRender = new Compiler(vnodes, comVm, true);
+                // innerRender = avalon.scan(component.template, comVm, false)
 
                 if (component.soleSlot) {
                     this.getter = this.getter || createGetter('@' + component.soleSlot);
@@ -7790,7 +7810,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 }
 
                 innerRender.exe = innerRender.noDiff = true;
-                innerRender.complete();
+                // innerRender.complete()
                 delete vdom.dom;
             }
 

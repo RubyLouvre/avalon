@@ -60,9 +60,9 @@ avalon.directive('widget', {
             comVm = createComponentVm(component, value, is)
             fireComponentHook(newVdom.vm, vdom, 'Init')
             this.comVm = comVm
-             var vnodes = new HighConvertor(value)
+             var vnodes = new HighConvertor(component.template)
             innerRender =  new Compiler(vnodes, comVm, true)
-            innerRender = avalon.scan(component.template, comVm, false)
+           // innerRender = avalon.scan(component.template, comVm, false)
 
             if (component.soleSlot) {
                 this.getter = this.getter || createGetter('@' + component.soleSlot)
@@ -72,7 +72,7 @@ avalon.directive('widget', {
             }
            
             innerRender.exe = innerRender.noDiff = true
-            innerRender.complete()
+           // innerRender.complete()
             delete vdom.dom   
         }
 
