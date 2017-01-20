@@ -205,7 +205,7 @@ Effect.prototype = {
         if (!isLeave)
             before(el) //这里可能做插入DOM树的操作,因此必须在修改类名前执行
         var cssCallback = function (cancel) {
-            el.removeEventListener(me.cssEvent, me.cssCallback)
+            avalon.unbind(el, me.cssEvent, me.cssCallback)
             if (isLeave) {
                 before(el) //这里可能做移出DOM树操作,因此必须位于动画之后
                 avalon(el).removeClass(me.cssClass)
@@ -229,7 +229,7 @@ Effect.prototype = {
             me.cssCallback = cssCallback
 
             me.update = function () {
-                el.addEventListener(me.cssEvent, me.cssCallback)
+                avalon.bind(el, me.cssEvent, me.cssCallback)
                 if (!isLeave && me.driver === "t") {//transtion延迟触发
                     avalon(el).removeClass(me.cssClass)
                 }
