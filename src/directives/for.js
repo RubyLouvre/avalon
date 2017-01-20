@@ -1,6 +1,6 @@
 import { avalon, createFragment } from '../seed/core'
 import { addScope, makeHandle } from '../parser/index'
-import { handleDispose } from '../vtree/diff'
+import { handleDispose } from '../vtree/recycler'
 
 var rforAs = /\s+as\s+([$\w]+)/
 var rident = /^[$a-zA-Z_][$a-zA-Z0-9_]*$/

@@ -1,8 +1,9 @@
-import { avalon, isObject, platform } from '../seed/core'
+import { avalon, platform } from '../seed/core'
 import { cssDiff } from '../directives/css'
-import { getRange, dumpTree } from '../vtree/share'
 import { toDOM } from '../renders/toDOM'
-import { diff, diffSlots } from '../vtree/diff'
+import { Compiler } from '../vtree/Compiler'
+import { HighConvertor } from '../vtree/HighConvertor'
+import { diffSlots } from '../vtree/diff'
 import { createGetter } from '../parser/index'
 
 
@@ -59,6 +60,8 @@ avalon.directive('widget', {
             comVm = createComponentVm(component, value, is)
             fireComponentHook(newVdom.vm, vdom, 'Init')
             this.comVm = comVm
+             var vnodes = new HighConvertor(value)
+            innerRender =  new Compiler(vnodes, comVm, true)
             innerRender = avalon.scan(component.template, comVm, false)
 
             if (component.soleSlot) {

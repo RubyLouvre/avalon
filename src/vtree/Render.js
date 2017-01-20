@@ -1,5 +1,6 @@
 import { avalon, config, inBrowser, delayCompileNodes, directives } from '../seed/core'
 import { runActions, collectDeps } from '../vmodel/transaction'
+import { addScope, makeHandle } from '../parser/index'
 
 import { __repeat } from '../filters/array'
 import { diff } from './diff'
@@ -25,6 +26,7 @@ export function Render(vm, vnodes, body) {
     this.fork = fork
     this.template = fork + ''
     this.vm = vm
+    this.slots = {}
     this.uuid = Math.random()
     this.vnodes = vnodes
     vm.$render = this
