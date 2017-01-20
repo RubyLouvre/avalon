@@ -21,13 +21,12 @@ avalon.scan = function(node, vm) {
 }
 export function Render(vm, vnodes, body) {
     var fork = Function('__vmodel__', '$$l',
-        'var \u01A9 = __vmodel__.$render;' +
-        'return ' + body)
+        `var \u01A9 = __vmodel__.$render; return ${body} `)
     this.fork = fork
     this.template = fork + ''
     this.vm = vm
-    this.slots = {}
     this.uuid = Math.random()
+    this.slots = {}
     this.vnodes = vnodes
     vm.$render = this
 }

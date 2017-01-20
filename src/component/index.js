@@ -30,13 +30,13 @@ avalon.directive('widget', {
     init: function(oldVal, vdom, newVdom, afterCb) {
         //cached属性必须定义在组件容器里面,不是template中
         this.cacheVm = !!newVdom.props.cached
-        //将数组形式转换为对象形式
+            //将数组形式转换为对象形式
         var value = toObject(oldVal)
 
         var is = newVdom.props.is || value.is
         this.is = is
         var component = avalon.components[is]
-        //如果组件还没有注册，那么将原元素变成一个占位用的注释节点
+            //如果组件还没有注册，那么将原元素变成一个占位用的注释节点
         if (!component) {
             this.readyState = 0
             newVdom.nodeName = '#comment'
@@ -45,12 +45,13 @@ avalon.directive('widget', {
             avalon.Array.ensure(componentQueue, this)
             return
         }
-        
+
         this.readyState = 1
 
-        var id = value.id || value.$id, innerRender,comVm
+        var id = value.id || value.$id,
+            innerRender, comVm
         var fromCache = avalon.vmodels[id]
-        
+
         if (fromCache) {
             comVm = fromCache
             this.comVm = comVm
@@ -60,34 +61,31 @@ avalon.directive('widget', {
             comVm = createComponentVm(component, value, is)
             fireComponentHook(newVdom.vm, vdom, 'Init')
             this.comVm = comVm
-             var vnodes = new HighConvertor(component.template)
-            innerRender =  new Compiler(vnodes, comVm, true)
-           // innerRender = avalon.scan(component.template, comVm, false)
-
+            var vnodes = new HighConvertor(component.template)
+            innerRender = new Compiler(vnodes, comVm, true)
             if (component.soleSlot) {
                 this.getter = this.getter || createGetter('@' + component.soleSlot)
-                innerRender.slots.defaults = { dynamic: true, nodeName: '#text', nodeValue: this.getter(comVm) || '' }
+                this.slots = innerRender.slots.defaults = { dynamic: true, nodeName: '#text', nodeValue: this.getter(comVm) || '' }
             } else {
-                this.slots = innerRender.slots = newVdom.slots
+                this.slots = newVdom.slots
             }
-           
-            innerRender.exe = innerRender.noDiff = true
-           // innerRender.complete()
-            delete vdom.dom   
+ 
+            var nodes = innerRender.fork(comVm, newVdom.locale)
+            innerRender.root = nodes[0]
+            delete vdom.dom
         }
-
 
         //当组件生成出来，slot元素应该在它应在的位置，然后旧的组件也有slot元素 
 
-        
         this.vdom = vdom
         var root = innerRender.root
+
         Array('nodeName', 'vtype', 'props', 'children', 'dom').forEach(function(prop) {
             newVdom[prop] = vdom[prop] = root[prop]
         })
 
 
-        afterCb.push(function(vdom) {
+        afterCb.push(function() {
             comVm.$element = vdom.dom
             root.dom = vdom.dom
             if (fromCache) {
