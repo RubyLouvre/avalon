@@ -5,6 +5,7 @@ import { Compiler } from '../vtree/Compiler'
 import { HighConvertor } from '../vtree/HighConvertor'
 import { diffSlots } from '../vtree/diff'
 import { createGetter } from '../parser/index'
+import { handleDispose } from '../vtree/recycler'
 
 
 var legalTags = { wbr: 1, xmp: 1, template: 1 }
@@ -65,26 +66,26 @@ avalon.directive('widget', {
             innerRender = new Compiler(vnodes, comVm, true)
             if (component.soleSlot) {
                 this.getter = this.getter || createGetter('@' + component.soleSlot)
-                this.slots = innerRender.slots.defaults = { dynamic: true, nodeName: '#text', nodeValue: this.getter(comVm) || '' }
+                innerRender.slots.defaults = { dynamic: true, nodeName: '#text', nodeValue: this.getter(comVm) || '' }
             } else {
-                this.slots = newVdom.slots
+                innerRender.slots = newVdom.slots
             }
- 
-            var nodes = innerRender.fork(comVm, newVdom.locale)
+            
+            innerRender.local = newVdom.local
+            var nodes = innerRender.collectDeps()
+           
             innerRender.root = nodes[0]
             delete vdom.dom
         }
 
         //当组件生成出来，slot元素应该在它应在的位置，然后旧的组件也有slot元素 
 
-        this.vdom = vdom
         var root = innerRender.root
 
         Array('nodeName', 'vtype', 'props', 'children', 'dom').forEach(function(prop) {
             newVdom[prop] = vdom[prop] = root[prop]
         })
-
-
+        
         afterCb.push(function() {
             comVm.$element = vdom.dom
             root.dom = vdom.dom
@@ -97,8 +98,9 @@ avalon.directive('widget', {
 
     },
     diff: function(oldVal, newVal, vdom, newVdom) {
-        diffSlots(this.slots, newVdom.slots)
-
+        if(this.innerRender){
+           diffSlots(this.innerRender.slots, newVdom.slots)
+        }
         if (cssDiff.call(this, oldVal, newVal)) {
             if (!this.readyState)
                 this.readyState = 0

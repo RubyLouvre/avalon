@@ -1,6 +1,5 @@
 import { avalon, config, directives } from '../seed/core'
 
-import { collectDeps } from '../vmodel/transaction'
 import { createExpr,keyMap, parseInterpolate, parseAttributes } from '../parser/index'
 import { Render } from './Render'
 /**
@@ -151,9 +150,7 @@ Compiler.prototype = {
             if (!topScope) {
                 this.renders.push(render)
             } else {
-                render.noDiff = true
-                collectDeps(render, render.update)
-                render.noDiff = false
+                render.collectDeps()
             }
             //如果存在两个ms-controller,它们会产生融合vm, 当底层的vm的属性变动时,
             //它可能让上面的vm进行diff,或可能让融合vm进行diff

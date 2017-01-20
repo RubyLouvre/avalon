@@ -86,19 +86,26 @@ Render.prototype = {
     },
 
 
-
+    collectDeps: function(){
+        this.noDiff = true
+        collectDeps(this, this.update)
+        delete this.noDiff
+        var ret = this._nodes
+        delete this._nodes
+        return ret
+    },
     dispose: function() {
 
     },
     update: function() {
-        this.vm.$render = this
-        var oldRoot = this.vnodes[0]
-        var nodes = this.fork(this.vm, {})
+        //this.vm.$render = this
+        var nodes = this.fork(this.vm, this.local || {})
         var root = nodes[0]
 
         if (this.noDiff) {
-            return
+            return  (this._nodes = nodes)
         }
+        var oldRoot = this.vnodes[0]
         try {
             diff(oldRoot, root)
             this.vm.$element = oldRoot.dom

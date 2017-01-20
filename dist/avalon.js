@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-20:14:53 version 2.2.3 by 司徒正美
+built in 2017-1-20:17:5 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -3274,7 +3274,7 @@ IE7的checked属性应该使用defaultChecked来设置
 
     var targetStack = [];
 
-    function collectDeps(action, getter) {
+    function _collectDeps(action, getter) {
 
         var preAction = avalon.trackingAction;
         if (preAction) {
@@ -3692,7 +3692,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 avalon.deepCollect = true;
             }
 
-            var value = collectDeps(this, this.getValue);
+            var value = _collectDeps(this, this.getValue);
             if (this.deep && avalon.deepCollect) {
                 avalon.deepCollect = false;
             }
@@ -3910,7 +3910,7 @@ IE7的checked属性应该使用defaultChecked来设置
             if (this.isStable && this.depsCount > 0) {
                 this.getValue();
             } else {
-                collectDeps(this, this.getValue.bind(this));
+                _collectDeps(this, this.getValue.bind(this));
             }
         };
 
@@ -6019,16 +6019,16 @@ IE7的checked属性应该使用defaultChecked来设置
             optimize(vnodes[0]);
         }
         c.renders.forEach(function (cc) {
-            collectDeps(cc, cc.update);
+            _collectDeps(cc, cc.update);
         });
     };
     function Render(vm, vnodes, body) {
-        var fork = Function('__vmodel__', '$$l', 'var \u01A9 = __vmodel__.$render;' + 'return ' + body);
+        var fork = Function('__vmodel__', '$$l', 'var \u01A9 = __vmodel__.$render; return ' + body + ' ');
         this.fork = fork;
         this.template = fork + '';
         this.vm = vm;
-        this.slots = {};
         this.uuid = Math.random();
+        this.slots = {};
         this.vnodes = vnodes;
         vm.$render = this;
     }
@@ -6087,16 +6087,24 @@ IE7的checked属性应该使用defaultChecked来设置
         },
 
 
+        collectDeps: function collectDeps() {
+            this.noDiff = true;
+            _collectDeps(this, this.update);
+            delete this.noDiff;
+            var ret = this._nodes;
+            delete this._nodes;
+            return ret;
+        },
         dispose: function dispose() {},
         update: function update() {
-            this.vm.$render = this;
-            var oldRoot = this.vnodes[0];
-            var nodes = this.fork(this.vm, {});
+            //this.vm.$render = this
+            var nodes = this.fork(this.vm, this.local || {});
             var root$$1 = nodes[0];
 
             if (this.noDiff) {
-                return;
+                return this._nodes = nodes;
             }
+            var oldRoot = this.vnodes[0];
             try {
                 diff(oldRoot, root$$1);
                 this.vm.$element = oldRoot.dom;
@@ -6254,9 +6262,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 if (!topScope) {
                     this.renders.push(render);
                 } else {
-                    render.noDiff = true;
-                    collectDeps(render, render.update);
-                    render.noDiff = false;
+                    render.collectDeps();
                 }
                 //如果存在两个ms-controller,它们会产生融合vm, 当底层的vm的属性变动时,
                 //它可能让上面的vm进行diff,或可能让融合vm进行diff
@@ -7800,30 +7806,29 @@ IE7的checked属性应该使用defaultChecked来设置
                 this.comVm = comVm;
                 var vnodes = new HighConvertor(component.template);
                 innerRender = new Compiler(vnodes, comVm, true);
-                // innerRender = avalon.scan(component.template, comVm, false)
-
                 if (component.soleSlot) {
                     this.getter = this.getter || createGetter('@' + component.soleSlot);
                     innerRender.slots.defaults = { dynamic: true, nodeName: '#text', nodeValue: this.getter(comVm) || '' };
                 } else {
-                    this.slots = innerRender.slots = newVdom.slots;
+                    innerRender.slots = newVdom.slots;
                 }
 
-                innerRender.exe = innerRender.noDiff = true;
-                // innerRender.complete()
+                innerRender.local = newVdom.local;
+                var nodes = innerRender.collectDeps();
+
+                innerRender.root = nodes[0];
                 delete vdom.dom;
             }
 
             //当组件生成出来，slot元素应该在它应在的位置，然后旧的组件也有slot元素 
 
-
-            this.vdom = vdom;
             var root$$1 = innerRender.root;
+
             Array('nodeName', 'vtype', 'props', 'children', 'dom').forEach(function (prop) {
                 newVdom[prop] = vdom[prop] = root$$1[prop];
             });
 
-            afterCb.push(function (vdom) {
+            afterCb.push(function () {
                 comVm.$element = vdom.dom;
                 root$$1.dom = vdom.dom;
                 if (fromCache) {
@@ -7834,8 +7839,9 @@ IE7的checked属性应该使用defaultChecked来设置
             });
         },
         diff: function diff(oldVal, newVal, vdom, newVdom) {
-            diffSlots(this.slots, newVdom.slots);
-
+            if (this.innerRender) {
+                diffSlots(this.innerRender.slots, newVdom.slots);
+            }
             if (cssDiff.call(this, oldVal, newVal)) {
                 if (!this.readyState) this.readyState = 0;
                 this.delay = false;
