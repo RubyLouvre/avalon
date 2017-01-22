@@ -6,6 +6,7 @@ import { HighConvertor } from '../vtree/HighConvertor'
 import { diffSlots } from '../vtree/diff'
 import { createGetter } from '../parser/index'
 import { handleDispose } from '../vtree/recycler'
+import { fireHooks, mergeHooks } from '../vmodel/hooks'
 
 
 var legalTags = { wbr: 1, xmp: 1, template: 1 }
@@ -60,7 +61,7 @@ avalon.directive('widget', {
 
         } else {
             comVm = createComponentVm(component, value, is)
-            fireComponentHook(newVdom.vm, vdom, 'Init')
+            fireHooks(newVdom.vm, 'Init')
             this.comVm = comVm
             var vnodes = new HighConvertor(component.template)
             innerRender = new Compiler(vnodes, comVm, true)
@@ -90,9 +91,9 @@ avalon.directive('widget', {
             comVm.$element = vdom.dom
             root.dom = vdom.dom
             if (fromCache) {
-                fireComponentHook(comVm, vdom, 'Enter')
+                fireHooks(comVm, 'Enter')
             } else {
-                fireComponentHook(comVm, vdom, 'Ready')
+                fireHooks(comVm, 'Ready')
             }
         })
 
@@ -131,45 +132,29 @@ avalon.directive('widget', {
                         }
                     }
                 })
-
                 //要保证要先触发孩子的ViewChange 然后再到它自己的ViewChange
-                fireComponentHook(comVm, vdom, 'ViewChange')
+                fireHooks(comVm, 'ViewChange')
                 delete avalon.viewChanging
                 break
         }
     },
     beforeDispose: function() {
         var comVm = this.comVm
-        console.log(comVm, 'dispose')
-            //        if (!this.cacheVm) {
-            //            fireComponentHook(comVm, this.node, 'Dispose')
-            //            comVm.$hashcode = false
-            //            delete avalon.vmodels[comVm.$id]
-            //            this.innerRender && this.innerRender.dispose()
-            //        } else {
-            //            fireComponentHook(comVm, this.node, 'Leave')
-            //        }
+        if (!this.cacheVm) {
+            fireHooks(comVm, 'Dispose')
+            comVm.$hashcode = false
+            delete avalon.vmodels[comVm.$id]
+            this.innerRender && this.innerRender.dispose()
+        } else {
+            fireHooks(comVm, 'Leave')
+        }
     },
 })
 
 
 
-function fireComponentHook(vm, vdom, name) {
-    var list = vm.$events['on' + name]
-    if (list) {
-        list.forEach(function(el) {
-            el.callback.call(vm, {
-                type: name.toLowerCase(),
-                target: vdom.dom,
-                vmodel: vm
-            })
-        })
-    }
-}
-
-
 export function createComponentVm(component, value, is) {
-    var hooks = []
+    var hooks = {}
     var defaults = component.defaults
     collectHooks(defaults, hooks)
     collectHooks(value, hooks)
@@ -184,23 +169,17 @@ export function createComponentVm(component, value, is) {
     }
     obj.$id = value.id || value.$id || avalon.makeHashCode(is)
     delete obj.id
-    var def = avalon.mix(true, {}, obj)
+    var def = avalon.mix(true, { }, obj)
     var vm = avalon.define(def)
-    hooks.forEach(function(el) {
-        vm.$watch(el.type, el.cb)
-    })
+    avalon.shadowCopy(vm.$hooks, hooks)
     return vm
 }
 
-function collectHooks(a, list) {
+function collectHooks(a, hooks) {
     for (var i in a) {
         if (componentEvents[i]) {
-            if (typeof a[i] === 'function' &&
-                i.indexOf('on') === 0) {
-                list.unshift({
-                    type: i,
-                    cb: a[i]
-                })
+            if (typeof a[i] === 'function') {
+               mergeHooks(hooks,  i, a[i])
             }
             //delete a[i] 这里不能删除,会导致再次切换时没有onReady
         }

@@ -1,4 +1,5 @@
 import { avalon } from '../seed/core'
+import { fireHooks } from '../vmodel/hooks'
 
 export var impDir = avalon.directive('important', {
     priority: 1,
@@ -31,31 +32,15 @@ export var impDir = avalon.directive('important', {
         afterCb.push(function() {
             var dom = vm.$element = vdom.dom
             avalon(dom).removeClass('ms-controller')
-            var fn = vm.$hooks.onReady
-            if (fn) {
-                fn({
-                    vmodel: vm,
-                    target: dom,
-                    type: 'ready'
-                })
-            }
-
+            fireHooks(vm, 'Ready')
         })
 
     },
     beforeDispose: function() {
         var vm = this.vm
         if (vm) {
-            var fn = vm.$hooks.onDispose
             delete this.vm
-            if (fn) {
-                fn({
-                    vmodel: vm,
-                    target: vm.$element,
-                    type: 'dispose'
-                })
-            }
+            fireHooks(vm, 'Dispose')
         }
-
     }
 })

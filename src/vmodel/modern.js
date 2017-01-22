@@ -1,9 +1,12 @@
 import { avalon, platform, modern } from '../seed/core'
 import { $$skipArray } from './reserved'
 import { Action } from './Action'
+import {
+    mergeHooks
+} from './hooks'
 import './share'
 import './ProxyArray'
-export { avalon, platform }
+
 
 
 export function hideProperty(host, name, value) {
@@ -25,15 +28,15 @@ function $fire(expr, a) {
 }
 
 function $watch(expr, callback, deep) {
-    if(expr == 'onReady'){
-        this.$hooks[expr] = callback
+    f(expr == 'onReady' || expr === 'onDispose') {
+        mergeHooks(this.$hooks, expr, callback)
         return
     }
     var core = this.$events
     var w = new Action(this, {
         deep: deep,
         type: 'user',
-        expr: '@'+expr
+        expr: '@' + expr
     }, callback)
     if (!core[expr]) {
         core[expr] = [w]
