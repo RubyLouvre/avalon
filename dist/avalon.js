@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-20:17:5 version 2.2.3 by 司徒正美
+built in 2017-1-22:15:25 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -3787,6 +3787,25 @@ IE7的checked属性应该使用defaultChecked来设置
         dispose: 1
     };
 
+    function mergeHooks(hooks, name, hook) {
+        var arr = hooks[name];
+        arr = arr ? Array.isArray(arr) ? arr.push(hook) : [arr, hook] : [hook];
+        hooks[name] = arr;
+    }
+
+    function fireHooks(vm, name) {
+        var hooks = vm.$hooks['on' + name];
+        if (hooks) {
+            hooks.forEach(function (hook) {
+                hook.call(vm, {
+                    type: name.toLowerCase(),
+                    target: vm.$element,
+                    vmodel: vm
+                });
+            });
+        }
+    }
+
     /**
     * 
      与Computed等共享UUID
@@ -4327,8 +4346,8 @@ IE7的checked属性应该使用defaultChecked来设置
     function watchFactory(core) {
         return function $watch(expr, callback, deep) {
             var vm = core.__proxy__;
-            if (expr == 'onReady') {
-                vm.$hooks[expr] = callback;
+            if (expr == 'onReady' || expr === 'onDispose') {
+                mergeHooks(vm.$hooks, expr, callback);
                 return;
             }
             var w = new Action(vm, {
@@ -4534,28 +4553,14 @@ IE7的checked属性应该使用defaultChecked来设置
             afterCb.push(function () {
                 var dom = vm.$element = vdom.dom;
                 avalon(dom).removeClass('ms-controller');
-                var fn = vm.$hooks.onReady;
-                if (fn) {
-                    fn({
-                        vmodel: vm,
-                        target: dom,
-                        type: 'ready'
-                    });
-                }
+                fireHooks(vm, 'Ready');
             });
         },
         beforeDispose: function beforeDispose() {
             var vm = this.vm;
             if (vm) {
-                var fn = vm.$hooks.onDispose;
                 delete this.vm;
-                if (fn) {
-                    fn({
-                        vmodel: vm,
-                        target: vm.$element,
-                        type: 'dispose'
-                    });
-                }
+                fireHooks(vm, 'Dispose');
             }
         }
     });
@@ -7802,7 +7807,7 @@ IE7的checked属性应该使用defaultChecked来设置
                 innerRender = comVm.$render;
             } else {
                 comVm = createComponentVm(component, value, is);
-                fireComponentHook(newVdom.vm, vdom, 'Init');
+                fireHooks(newVdom.vm, 'Init');
                 this.comVm = comVm;
                 var vnodes = new HighConvertor(component.template);
                 innerRender = new Compiler(vnodes, comVm, true);
@@ -7832,9 +7837,9 @@ IE7的checked属性应该使用defaultChecked来设置
                 comVm.$element = vdom.dom;
                 root$$1.dom = vdom.dom;
                 if (fromCache) {
-                    fireComponentHook(comVm, vdom, 'Enter');
+                    fireHooks(comVm, 'Enter');
                 } else {
-                    fireComponentHook(comVm, vdom, 'Ready');
+                    fireHooks(comVm, 'Ready');
                 }
             });
         },
@@ -7871,42 +7876,27 @@ IE7的checked属性应该使用defaultChecked来设置
                             }
                         }
                     });
-
                     //要保证要先触发孩子的ViewChange 然后再到它自己的ViewChange
-                    fireComponentHook(comVm, vdom, 'ViewChange');
+                    fireHooks(comVm, 'ViewChange');
                     delete avalon.viewChanging;
                     break;
             }
         },
         beforeDispose: function beforeDispose() {
             var comVm = this.comVm;
-            console.log(comVm, 'dispose');
-            //        if (!this.cacheVm) {
-            //            fireComponentHook(comVm, this.node, 'Dispose')
-            //            comVm.$hashcode = false
-            //            delete avalon.vmodels[comVm.$id]
-            //            this.innerRender && this.innerRender.dispose()
-            //        } else {
-            //            fireComponentHook(comVm, this.node, 'Leave')
-            //        }
+            if (!this.cacheVm) {
+                fireHooks(comVm, 'Dispose');
+                comVm.$hashcode = false;
+                delete avalon.vmodels[comVm.$id];
+                this.innerRender && this.innerRender.dispose();
+            } else {
+                fireHooks(comVm, 'Leave');
+            }
         }
     });
 
-    function fireComponentHook(vm, vdom, name) {
-        var list = vm.$events['on' + name];
-        if (list) {
-            list.forEach(function (el) {
-                el.callback.call(vm, {
-                    type: name.toLowerCase(),
-                    target: vdom.dom,
-                    vmodel: vm
-                });
-            });
-        }
-    }
-
     function createComponentVm(component, value, is) {
-        var hooks = [];
+        var hooks = {};
         var defaults = component.defaults;
         collectHooks(defaults, hooks);
         collectHooks(value, hooks);
@@ -7923,20 +7913,15 @@ IE7的checked属性应该使用defaultChecked来设置
         delete obj.id;
         var def = avalon.mix(true, {}, obj);
         var vm = avalon.define(def);
-        hooks.forEach(function (el) {
-            vm.$watch(el.type, el.cb);
-        });
+        avalon.shadowCopy(vm.$hooks, hooks);
         return vm;
     }
 
-    function collectHooks(a, list) {
+    function collectHooks(a, hooks) {
         for (var i in a) {
             if (componentEvents[i]) {
-                if (typeof a[i] === 'function' && i.indexOf('on') === 0) {
-                    list.unshift({
-                        type: i,
-                        cb: a[i]
-                    });
+                if (typeof a[i] === 'function') {
+                    mergeHooks(hooks, i, a[i]);
                 }
                 //delete a[i] 这里不能删除,会导致再次切换时没有onReady
             }
