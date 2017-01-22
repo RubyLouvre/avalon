@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-22:15:25 version 2.2.3 by 司徒正美
+built in 2017-1-22:15:59 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -3789,13 +3789,25 @@ IE7的checked属性应该使用defaultChecked来设置
 
     function mergeHooks(hooks, name, hook) {
         var arr = hooks[name];
-        arr = arr ? Array.isArray(arr) ? arr.push(hook) : [arr, hook] : [hook];
+        if (arr) {
+            if (Array.isArray(arr)) {
+                arr.push(hook);
+            } else {
+                arr = [arr, hook];
+            }
+        } else {
+            arr = [hook];
+        }
         hooks[name] = arr;
     }
 
     function fireHooks(vm, name) {
-        var hooks = vm.$hooks['on' + name];
+        var key = 'on' + name;
+        var hooks = vm.$hooks[key];
         if (hooks) {
+            if (typeof hooks === 'function') {
+                hooks = vm.$hooks[key] = [hooks];
+            }
             hooks.forEach(function (hook) {
                 hook.call(vm, {
                     type: name.toLowerCase(),
@@ -7903,11 +7915,8 @@ IE7的checked属性应该使用defaultChecked来设置
         var obj = {};
         for (var i in defaults) {
             var val = value[i];
-            if (val == null) {
-                obj[i] = defaults[i];
-            } else {
-                obj[i] = val;
-            }
+            if (i in componentEvents) continue;
+            obj[i] = val == null ? defaults[i] : val;
         }
         obj.$id = value.id || value.$id || avalon.makeHashCode(is);
         delete obj.id;

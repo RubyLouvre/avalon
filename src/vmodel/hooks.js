@@ -1,14 +1,25 @@
 export function mergeHooks(hooks, name, hook) {
     var arr = hooks[name]
-    arr = arr ? (Array.isArray(arr) ?
-        arr.push(hook) : [arr, hook]) : [hook]
+    if(arr){
+        if(Array.isArray(arr)){
+            arr.push(hook)
+        }else{
+            arr = [arr, hook]
+        }
+    }else{
+        arr = [hook]
+    }
     hooks[name] = arr
 }
 
 
 export function fireHooks(vm, name) {
-    var hooks = vm.$hooks['on' + name]
+    var key = 'on' + name
+    var hooks = vm.$hooks[key]
     if (hooks) {
+        if(typeof hooks ==='function'){
+           hooks = vm.$hooks[key] = [hooks]
+        }
         hooks.forEach(function(hook) {
             hook.call(vm, {
                 type: name.toLowerCase(),
