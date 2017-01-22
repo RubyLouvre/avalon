@@ -63,19 +63,20 @@ Compiler.prototype = {
             if (i !== 'ms-widget')
                 delete dirs[i]
         }
+        var soleSlot = node.soleSlot
         var json = toJSONByArray(
             `nodeName: '${node.nodeName}'`,
             this.genDirs(dirs, node),
             'vm: __vmodel__',
             'slots: slots',
             `props: ${toJSONByObject(node.props)}`,
-            `children: ${this.genChildren(node.children)}`
+            `children: ${this.genChildren(node.children)}`,
+            soleSlot && soleSlot.length ? `soleSlot: ${this.genChildren(soleSlot)}`: ''
         )
-        var _children = node._children
-        delete node._children
+     
         return `(function() {
-                var slots = {}
-                var slotedElements = ${this.genChildren(_children)}
+                var slots = { }
+               // console.log(slotedElements)
                 return ${ json }
             })()`
 

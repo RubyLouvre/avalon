@@ -119,7 +119,7 @@ HighConvertor.prototype = {
             var children = vdom.vtype === 2 ?
                 StringConvertor(vdom.children[0].nodeValue) :
                 vdom.vtype !== 1 ? vdom.children.concat() : []
-            vdom._children = children
+            vdom.soleSlot = children 
             this.scanChildren(children)
         }
         if (dirs) {

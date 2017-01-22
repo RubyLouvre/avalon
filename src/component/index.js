@@ -3,7 +3,7 @@ import { cssDiff } from '../directives/css'
 import { toDOM } from '../renders/toDOM'
 import { Compiler } from '../vtree/Compiler'
 import { HighConvertor } from '../vtree/HighConvertor'
-import { diffSlots } from '../vtree/diff'
+import { diffSlots, diff } from '../vtree/diff'
 import { createGetter } from '../parser/index'
 import { handleDispose } from '../vtree/recycler'
 import { fireHooks, mergeHooks } from '../vmodel/hooks'
@@ -65,28 +65,43 @@ avalon.directive('widget', {
             this.comVm = comVm
             var vnodes = new HighConvertor(component.template)
             innerRender = new Compiler(vnodes, comVm, true)
+                //slot机制分两种，一种是soleSlot,  另一种是slots
             if (component.soleSlot) {
-                this.getter = this.getter || createGetter('@' + component.soleSlot)
-                innerRender.slots.defaults = { dynamic: true, nodeName: '#text', nodeValue: this.getter(comVm) || '' }
+                this.slotMode = 1
+                this._text = this._text || createGetter('@' + component.soleSlot)
+                this.getSoleSlot = this.getSoleSlot || function(newVdom) {
+                    if (newVdom.soleSlot) {
+                        return newVdom.soleSlot
+                    } else {
+                        return {
+                            dynamic: true,
+                            nodeName: '#text',
+                            nodeValue: this._text(this.comVm) || ''
+                        }
+                    }
+                }
+                innerRender.slots.defaults = this.getSoleSlot(newVdom)
             } else {
+                this.slotMode = 2
                 innerRender.slots = newVdom.slots
             }
-            
+
             innerRender.local = newVdom.local
             var nodes = innerRender.collectDeps()
-           
+
             innerRender.root = nodes[0]
             delete vdom.dom
         }
 
         //当组件生成出来，slot元素应该在它应在的位置，然后旧的组件也有slot元素 
+        this.innerRender = innerRender
+        var root =  innerRender.root
 
-        var root = innerRender.root
 
         Array('nodeName', 'vtype', 'props', 'children', 'dom').forEach(function(prop) {
             newVdom[prop] = vdom[prop] = root[prop]
         })
-        
+
         afterCb.push(function() {
             comVm.$element = vdom.dom
             root.dom = vdom.dom
@@ -99,8 +114,10 @@ avalon.directive('widget', {
 
     },
     diff: function(oldVal, newVal, vdom, newVdom) {
-        if(this.innerRender){
-           diffSlots(this.innerRender.slots, newVdom.slots)
+        if (this.slotMode === 1) {
+            diffSlots(this.innerRender.slots,{defaults: this.getSoleSlot(newVdom) })
+        } else if (this.slotMode === 2) {
+            diffSlots(this.innerRender.slots, newVdom.slots)
         }
         if (cssDiff.call(this, oldVal, newVal)) {
             if (!this.readyState)
@@ -126,13 +143,13 @@ avalon.directive('widget', {
                 var comVm = this.comVm
                 avalon.viewChanging = true
                 avalon.transaction(function() {
-                    for (var i in value) {
-                        if (comVm.hasOwnProperty(i)) {
-                            comVm[i] = value[i]
+                        for (var i in value) {
+                            if (comVm.hasOwnProperty(i)) {
+                                comVm[i] = value[i]
+                            }
                         }
-                    }
-                })
-                //要保证要先触发孩子的ViewChange 然后再到它自己的ViewChange
+                    })
+                    //要保证要先触发孩子的ViewChange 然后再到它自己的ViewChange
                 fireHooks(comVm, 'ViewChange')
                 delete avalon.viewChanging
                 break
@@ -140,6 +157,8 @@ avalon.directive('widget', {
     },
     beforeDispose: function() {
         var comVm = this.comVm
+        if (!comVm)
+            return
         if (!this.cacheVm) {
             fireHooks(comVm, 'Dispose')
             comVm.$hashcode = false
@@ -161,13 +180,13 @@ export function createComponentVm(component, value, is) {
     var obj = {}
     for (var i in defaults) {
         var val = value[i]
-        if(i in componentEvents)
-            continue 
-        obj[i] = val == null ? defaults[i]: val
+        if (i in componentEvents)
+            continue
+        obj[i] = val == null ? defaults[i] : val
     }
     obj.$id = value.id || value.$id || avalon.makeHashCode(is)
     delete obj.id
-    var def = avalon.mix(true, { }, obj)
+    var def = avalon.mix(true, {}, obj)
     var vm = avalon.define(def)
     avalon.shadowCopy(vm.$hooks, hooks)
     return vm
@@ -177,7 +196,7 @@ function collectHooks(a, hooks) {
     for (var i in a) {
         if (componentEvents[i]) {
             if (typeof a[i] === 'function') {
-               mergeHooks(hooks,  i, a[i])
+                mergeHooks(hooks, i, a[i])
             }
             //delete a[i] 这里不能删除,会导致再次切换时没有onReady
         }
