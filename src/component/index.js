@@ -161,11 +161,9 @@ export function createComponentVm(component, value, is) {
     var obj = {}
     for (var i in defaults) {
         var val = value[i]
-        if (val == null) {
-            obj[i] = defaults[i]
-        } else {
-            obj[i] = val
-        }
+        if(i in componentEvents)
+            continue 
+        obj[i] = val == null ? defaults[i]: val
     }
     obj.$id = value.id || value.$id || avalon.makeHashCode(is)
     delete obj.id
