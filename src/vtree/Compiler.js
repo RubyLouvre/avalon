@@ -1,6 +1,6 @@
 import { avalon, config, directives } from '../seed/core'
 
-import { createExpr,keyMap, parseInterpolate, parseAttributes } from '../parser/index'
+import { createExpr, keyMap, parseInterpolate, parseAttributes } from '../parser/index'
 import { Render } from './Render'
 /**
  * Compiler方法会将一堆虚拟DOM根据作用域划分为多个Render
@@ -64,18 +64,37 @@ Compiler.prototype = {
                 delete dirs[i]
         }
         var soleSlot = node.soleSlot
+
+        var widget = toJSONByArray(
+            `type: ${ avalon.quote(dir.type) }`,
+            `name: ${ avalon.quote(dir.name) }`,
+            `value:  createExpr(dir.expr) }`
+        )
         var json = toJSONByArray(
             `nodeName: '${node.nodeName}'`,
             this.genDirs(dirs, node),
             'vm: __vmodel__',
+            'widget: widget',
+            'local: $$l',
             'slots: slots',
+            'warn': soleSlot && soleSlot.length ===0',
             `props: ${toJSONByObject(node.props)}`,
-            `children: ${this.genChildren(node.children)}`,
-            soleSlot && soleSlot.length ? `soleSlot: ${this.genChildren(soleSlot)}`: ''
+            `children: []`
         )
-     
+        var is = node.props.is
         return `(function() {
                 var slots = { }
+                var widget = avalon.toObject(${widget})
+                var is = ${is} || widgetValue.is
+                var component = avalon.components[is]
+                if(component){
+                    if(component.soloSlot){
+                        slots.defaults = ${this.genChildren(soleSlot)}
+                    }else{
+                        ${this.genChildren(soleSlot)}
+                    }
+                }
+                
                // console.log(slotedElements)
                 return ${ json }
             })()`

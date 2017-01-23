@@ -1,15 +1,39 @@
-import { avalon, platform } from '../seed/core'
-import { cssDiff } from '../directives/css'
-import { toDOM } from '../renders/toDOM'
-import { Compiler } from '../vtree/Compiler'
-import { HighConvertor } from '../vtree/HighConvertor'
-import { diffSlots, diff } from '../vtree/diff'
-import { createGetter } from '../parser/index'
-import { handleDispose } from '../vtree/recycler'
-import { fireHooks, mergeHooks } from '../vmodel/hooks'
+import {
+    avalon,
+    platform
+} from '../seed/core'
+import {
+    cssDiff
+} from '../directives/css'
+import {
+    toDOM
+} from '../renders/toDOM'
+import {
+    Compiler
+} from '../vtree/Compiler'
+import {
+    HighConvertor
+} from '../vtree/HighConvertor'
+import {
+    diffSlots
+} from '../vtree/diff'
+import {
+    createGetter
+} from '../parser/index'
+import {
+    handleDispose
+} from '../vtree/recycler'
+import {
+    fireHooks,
+    mergeHooks
+} from '../vmodel/hooks'
 
 
-var legalTags = { wbr: 1, xmp: 1, template: 1 }
+var legalTags = {
+    wbr: 1,
+    xmp: 1,
+    template: 1
+}
 var events = 'onInit,onReady,onViewChange,onDispose,onEnter,onLeave'
 var componentEvents = avalon.oneObject(events)
 
@@ -24,6 +48,7 @@ function toObject(value) {
     }
     return value
 }
+avalon.toObject = toObject
 var componentQueue = []
 avalon.directive('widget', {
 
@@ -33,22 +58,19 @@ avalon.directive('widget', {
         //cached属性必须定义在组件容器里面,不是template中
         this.cacheVm = !!newVdom.props.cached
             //将数组形式转换为对象形式
-        var value = toObject(oldVal)
+        var value = newVdom.widgetValue
 
         var is = newVdom.props.is || value.is
         this.is = is
         var component = avalon.components[is]
             //如果组件还没有注册，那么将原元素变成一个占位用的注释节点
         if (!component) {
-            this.readyState = 0
             newVdom.nodeName = '#comment'
             newVdom.nodeValue = 'unresolved component placeholder'
             newVdom.dom = newVdom.props = null
             avalon.Array.ensure(componentQueue, this)
             return
         }
-
-        this.readyState = 1
 
         var id = value.id || value.$id,
             innerRender, comVm
@@ -61,31 +83,15 @@ avalon.directive('widget', {
 
         } else {
             comVm = createComponentVm(component, value, is)
-            fireHooks(newVdom.vm, 'Init')
+            fireHooks(comVm, 'Init')
             this.comVm = comVm
             var vnodes = new HighConvertor(component.template)
             innerRender = new Compiler(vnodes, comVm, true)
                 //slot机制分两种，一种是soleSlot,  另一种是slots
-            if (component.soleSlot) {
-                this.slotMode = 1
-                this._text = this._text || createGetter('@' + component.soleSlot)
-                this.getSoleSlot = this.getSoleSlot || function(newVdom) {
-                    if (newVdom.soleSlot) {
-                        return newVdom.soleSlot
-                    } else {
-                        return {
-                            dynamic: true,
-                            nodeName: '#text',
-                            nodeValue: this._text(this.comVm) || ''
-                        }
-                    }
-                }
-                innerRender.slots.defaults = this.getSoleSlot(newVdom)
-            } else {
-                this.slotMode = 2
-                innerRender.slots = newVdom.slots
+            if(component.soloSolt && newVdom.warn){
+                avalon.warn('avalon2.2.4, 组件使用soleSlot,如果组件容器内部为空,那么不再提供默认值了')
             }
-
+            innerRender.slots = newVdom.slots
             innerRender.local = newVdom.local
             var nodes = innerRender.collectDeps()
 
@@ -95,7 +101,7 @@ avalon.directive('widget', {
 
         //当组件生成出来，slot元素应该在它应在的位置，然后旧的组件也有slot元素 
         this.innerRender = innerRender
-        var root =  innerRender.root
+        var root = innerRender.root
 
 
         Array('nodeName', 'vtype', 'props', 'children', 'dom').forEach(function(prop) {
@@ -114,14 +120,13 @@ avalon.directive('widget', {
 
     },
     diff: function(oldVal, newVal, vdom, newVdom) {
-        if (this.slotMode === 1) {
-            diffSlots(this.innerRender.slots,{defaults: this.getSoleSlot(newVdom) })
-        } else if (this.slotMode === 2) {
-            diffSlots(this.innerRender.slots, newVdom.slots)
+        var render = this.innerRender
+        if (render) {
+            
+            diffSlots(render.slots, newVdom.slots)
+            
         }
         if (cssDiff.call(this, oldVal, newVal)) {
-            if (!this.readyState)
-                this.readyState = 0
             this.delay = false
             return true
         }
@@ -132,27 +137,21 @@ avalon.directive('widget', {
     update: function(value, vdom, newVdom, afterCb) {
         // this.oldValue = value //★★防止递归
         this.value = avalon.mix(true, {}, value)
-        switch (this.readyState) {
-            case 0:
-                this.init(value, vdom, newVdom, afterCb)
-                break
-
-            default:
-                this.readyState++;
-
-                var comVm = this.comVm
-                avalon.viewChanging = true
-                avalon.transaction(function() {
-                        for (var i in value) {
-                            if (comVm.hasOwnProperty(i)) {
-                                comVm[i] = value[i]
-                            }
+        if (!this.innerRender) {
+            this.init(value, vdom, newVdom, afterCb)
+        } else {
+            var comVm = this.comVm
+            avalon.viewChanging = true
+            avalon.transaction(function() {
+                    for (var i in value) {
+                        if (comVm.hasOwnProperty(i)) {
+                            comVm[i] = value[i]
                         }
-                    })
-                    //要保证要先触发孩子的ViewChange 然后再到它自己的ViewChange
-                fireHooks(comVm, 'ViewChange')
-                delete avalon.viewChanging
-                break
+                    }
+                })
+                //要保证要先触发孩子的ViewChange 然后再到它自己的ViewChange
+            fireHooks(comVm, 'ViewChange')
+            delete avalon.viewChanging
         }
     },
     beforeDispose: function() {
