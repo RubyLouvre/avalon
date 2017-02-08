@@ -40,6 +40,7 @@ import * as avalon from 'avalon2'
 ###[avalon2官网](http://avalonjs.coding.me/)
 这是基于gitbook制作的,对移动端支持很好,大家上班或睡觉时,可以过目一下.
 
+###[avalon2+webpack2手脚架](https://github.com/sayll/avalon-webpack-start)
 
 ###[QuickStart](https://github.com/crazyliuzc/webpack-avalon2-SPA-seed.git)
 大家期望已久的avalon2+mmRouter+各种组件的综合示例,不断完善中
