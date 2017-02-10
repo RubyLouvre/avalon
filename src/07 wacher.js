@@ -120,7 +120,11 @@ function notifySubscribers(subs, args) {
         if (sub.type === "user-watcher") {
             users.push(sub)
         } else {
-            renders.push(sub)
+            //有一些Node已经不在Document里了，阻止死亡节点的更新
+            //https://github.com/RubyLouvre/avalon/issues/1919
+            if(sub.update && avalon.contains(DOC, sub.element)){
+                renders.push(sub)
+            }
         }
     }
     if (kernel.async) {

@@ -35,6 +35,13 @@ avalon.injectBinding = function (binding) {
 
     binding.handler = binding.handler || directives[binding.type].update || noop
     binding.update = function () {
+
+        if(!avalon.contains(DOC, binding.element)){
+            //已经删除的节点不再更新
+            //https://github.com/RubyLouvre/avalon/issues/1919
+            return
+        }
+        
         var begin = false
         if (!binding.getter) {
             begin = true
