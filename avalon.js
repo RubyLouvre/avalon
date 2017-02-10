@@ -5,7 +5,7 @@
  http://weibo.com/jslouvre/
  
  Released under the MIT license
- avalon.js 1.5.9 built in 2016.11.27
+ avalon.js 1.5.9 built in 2017.2.10
  support IE6+ and other browsers
  ==================================================*/
 (function(global, factory) {
@@ -68,7 +68,7 @@ var root = DOC.documentElement
 var avalonFragment = DOC.createDocumentFragment()
 var cinerator = DOC.createElement("div")
 var class2type = {}
-"Boolean Number String Function Array Date RegExp Object Error".replace(rword, function (name) {
+"Boolean Number String Function Array Date RegExp Object Error".replace(rword, function(name) {
     class2type["[object " + name + "]"] = name.toLowerCase()
 })
 var bindingID = 1024
@@ -77,8 +77,9 @@ if (window.VBArray) {
     IEVersion = document.documentMode || (window.XMLHttpRequest ? 7 : 6)
 }
 
-function noop(){}
-function scpCompile(array){
+function noop() {}
+
+function scpCompile(array) {
     return Function.apply(noop, array)
 }
 
@@ -87,7 +88,7 @@ function oneObject(array, val) {
         array = array.match(rword) || []
     }
     var result = {},
-            value = val !== void 0 ? val : 1
+        value = val !== void 0 ? val : 1
     for (var i = 0, n = array.length; i < n; i++) {
         result[array[i]] = value
     }
@@ -95,49 +96,49 @@ function oneObject(array, val) {
 }
 
 //生成UUID http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-var generateID = function (prefix) {
+var generateID = function(prefix) {
     prefix = prefix || "avalon"
     return String(Math.random() + Math.random()).replace(/\d\.\d{4}/, prefix)
 }
 
-avalon = function (el) { //创建jQuery式的无new 实例化结构
+var avalon = function(el) { //创建jQuery式的无new 实例化结构
     return new avalon.init(el)
 }
 
 /*视浏览器情况采用最快的异步回调*/
-avalon.nextTick = new function () {// jshint ignore:line
-    var tickImmediate = window.setImmediate
-    var tickObserver = window.MutationObserver
-    if (tickImmediate) {
-        return tickImmediate.bind(window)
-    }
-
-    var queue = []
-    function callback() {
-        var n = queue.length
-        for (var i = 0; i < n; i++) {
-            queue[i]()
+avalon.nextTick = new function() { // jshint ignore:line
+        var tickImmediate = window.setImmediate
+        var tickObserver = window.MutationObserver
+        if (tickImmediate) {
+            return tickImmediate.bind(window)
         }
-        queue = queue.slice(n)
-    }
 
-    if (tickObserver) {
-        var node = document.createTextNode("avalon")
-        new tickObserver(callback).observe(node, {characterData: true})// jshint ignore:line
-        var bool = false
-        return function (fn) {
-            queue.push(fn)
-            bool = !bool
-            node.data = bool
+        var queue = []
+
+        function callback() {
+            var n = queue.length
+            for (var i = 0; i < n; i++) {
+                queue[i]()
+            }
+            queue = queue.slice(n)
         }
-    }
+
+        if (tickObserver) {
+            var node = document.createTextNode("avalon")
+            new tickObserver(callback).observe(node, { characterData: true }) // jshint ignore:line
+            var bool = false
+            return function(fn) {
+                queue.push(fn)
+                bool = !bool
+                node.data = bool
+            }
+        }
 
 
-    return function (fn) {
-        setTimeout(fn, 4)
-    }
-}// jshint ignore:line
-
+        return function(fn) {
+            setTimeout(fn, 4)
+        }
+    } // jshint ignore:line
 /*********************************************************************
  *                         javascript 底层补丁                        *
  **********************************************************************/
@@ -1115,7 +1116,11 @@ function notifySubscribers(subs, args) {
         if (sub.type === "user-watcher") {
             users.push(sub)
         } else {
-            renders.push(sub)
+            //有一些Node已经不在Document里了，阻止死亡节点的更新
+            //https://github.com/RubyLouvre/avalon/issues/1919
+            if(sub.update && avalon.contains(DOC, sub.element)){
+                renders.push(sub)
+            }
         }
     }
     if (kernel.async) {
@@ -1819,6 +1824,13 @@ avalon.injectBinding = function (binding) {
 
     binding.handler = binding.handler || directives[binding.type].update || noop
     binding.update = function () {
+
+        if(!avalon.contains(DOC, binding.element)){
+            //已经删除的节点不再更新
+            //https://github.com/RubyLouvre/avalon/issues/1919
+            return
+        }
+        
         var begin = false
         if (!binding.getter) {
             begin = true
@@ -4554,7 +4566,7 @@ Effect.prototype = {
         if (!isLeave)
             before(el) //这里可能做插入DOM树的操作,因此必须在修改类名前执行
         var cssCallback = function (cancel) {
-            el.removeEventListener(me.cssEvent, me.cssCallback)
+            avalon.unbind(el, me.cssEvent, me.cssCallback)
             if (isLeave) {
                 before(el) //这里可能做移出DOM树操作,因此必须位于动画之后
                 avalon(el).removeClass(me.cssClass)
@@ -4578,7 +4590,7 @@ Effect.prototype = {
             me.cssCallback = cssCallback
 
             me.update = function () {
-                el.addEventListener(me.cssEvent, me.cssCallback)
+                avalon.bind(el, me.cssEvent, me.cssCallback)
                 if (!isLeave && me.driver === "t") {//transtion延迟触发
                     avalon(el).removeClass(me.cssClass)
                 }
