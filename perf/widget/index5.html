@@ -7,7 +7,9 @@
     </head>
     <body>
         <div ms-controller='widget1' >
-            <ms-button ms-if="@bbb">{{@aaa}}</ms-button>
+            <div ms-if="@bbb">
+            <ms-button >{{@aaa}}</ms-button>
+            </div>
             <p ms-attr='{title:@ddd}'>这个元素不受影响</p>
         </div>
         <h1>使用ms-if, 开始看不见, 后来又出现 </h1>
