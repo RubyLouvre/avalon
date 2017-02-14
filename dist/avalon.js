@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-23:18:3 version 2.2.3 by 司徒正美
+built in 2017-2-10:18:0 version 2.2.3 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.1
 
 
@@ -6216,9 +6216,9 @@ IE7的checked属性应该使用defaultChecked来设置
                 if (i !== 'ms-widget') delete dirs[i];
             }
             var soleSlot = node.soleSlot;
-
+            var dir = dirs['ms-widget'];
             var widget = toJSONByArray('type: ' + avalon.quote(dir.type), 'name: ' + avalon.quote(dir.name), 'value:  createExpr(dir.expr) }');
-            var json = toJSONByArray('nodeName: \'' + node.nodeName + '\'', this.genDirs(dirs, node), 'vm: __vmodel__', 'widget: widget', 'local: $$l', 'slots: slots', 'props: ' + toJSONByObject(node.props), 'children: []');
+            var json = toJSONByArray('nodeName: \'' + node.nodeName + '\'', this.genDirs(dirs, node), 'vm: __vmodel__', 'widget: widget', 'local: $$l', 'slots: slots', 'warn: ' + (soleSlot && soleSlot.length === 0), 'props: ' + toJSONByObject(node.props), 'children: []');
             var is = node.props.is;
             return '(function() {\n                var slots = { }\n                var widget = avalon.toObject(' + widget + ')\n                var is = ' + is + ' || widgetValue.is\n                var component = avalon.components[is]\n                if(component){\n                    if(component.soloSlot){\n                        slots.defaults = ' + this.genChildren(soleSlot) + '\n                    }else{\n                        ' + this.genChildren(soleSlot) + '\n                    }\n                }\n                \n               // console.log(slotedElements)\n                return ' + json + '\n            })()';
         },
@@ -7773,6 +7773,18 @@ IE7的checked属性应该使用defaultChecked来设置
     var events = 'onInit,onReady,onViewChange,onDispose,onEnter,onLeave';
     var componentEvents = avalon.oneObject(events);
 
+    function toObject(value) {
+        var value = platform.toJson(value);
+        if (Array.isArray(value)) {
+            var v = {};
+            value.forEach(function (el) {
+                el && avalon.shadowCopy(v, el);
+            });
+            return v;
+        }
+        return value;
+    }
+    avalon.toObject = toObject;
     var componentQueue = [];
     avalon.directive('widget', {
 
@@ -7812,7 +7824,9 @@ IE7的checked属性应该使用defaultChecked来设置
                 var vnodes = new HighConvertor(component.template);
                 innerRender = new Compiler(vnodes, comVm, true);
                 //slot机制分两种，一种是soleSlot,  另一种是slots
-
+                if (component.soloSolt && newVdom.warn) {
+                    avalon.warn('avalon2.2.4, 组件使用soleSlot,如果组件容器内部为空,那么不再提供默认值了');
+                }
                 innerRender.slots = newVdom.slots;
                 innerRender.local = newVdom.local;
                 var nodes = innerRender.collectDeps();

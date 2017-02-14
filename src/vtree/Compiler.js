@@ -62,10 +62,11 @@ Compiler.prototype = {
         for (var i in dirs) {
             if (i !== 'ms-widget')
                 delete dirs[i]
+            
         }
         var soleSlot = node.soleSlot
-
-        var widget = toJSONByArray(
+        let dir = dirs['ms-widget']
+        let widget = toJSONByArray(
             `type: ${ avalon.quote(dir.type) }`,
             `name: ${ avalon.quote(dir.name) }`,
             `value:  createExpr(dir.expr) }`
@@ -77,7 +78,7 @@ Compiler.prototype = {
             'widget: widget',
             'local: $$l',
             'slots: slots',
-            'warn': soleSlot && soleSlot.length ===0',
+            `warn: ${soleSlot && soleSlot.length === 0}`,
             `props: ${toJSONByObject(node.props)}`,
             `children: []`
         )
