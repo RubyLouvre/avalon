@@ -24,7 +24,7 @@
     "babel-preset-avalon": "^1.0.0",
     "codecov": "^1.0.1",
     "es3ify": "^0.2.2",
-    "karma": "^0.12.0",
+    "karma": "^0.12.37",
     "karma-chrome-launcher": "^0.1.2",
     "karma-coverage": "^1.1.1",
     "karma-firefox-launcher": "^1.0.0",
