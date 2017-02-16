@@ -1,5 +1,5 @@
 /*!
-built in 2017-1-10:21:14 version 2.2.4 by 司徒正美
+built in 2017-2-16:11:56 version 2.2.4 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 修正IE下 orderBy BUG
@@ -1674,14 +1674,14 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         }
     });
 
-    var propMap = { //不规则的属性名映射
-        'accept-charset': 'acceptCharset',
-        'char': 'ch',
-        charoff: 'chOff',
-        'class': 'className',
-        'for': 'htmlFor',
-        'http-equiv': 'httpEquiv'
-    };
+    var propMap = {}; //不规则的属性名映射
+
+
+    //防止压缩时出错
+    'accept-charset,acceptCharset|char,ch|charoff,chOff|class,className|for,htmlFor|http-equiv,httpEquiv'.replace(/[^\|]+/g, function (a) {
+        var k = a.split(',');
+        propMap[k[0]] = k[1];
+    });
     /*
     contenteditable不是布尔属性
     http://www.zhangxinxu.com/wordpress/2016/01/contenteditable-plaintext-only/
@@ -1815,9 +1815,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         }
     };
 
-    var cssMap = {
-        'float': 'cssFloat'
-    };
+    var cssMap = oneObject('float', 'cssFloat');
     avalon.cssNumber = oneObject('animationIterationCount,columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom');
     var prefixes = ['', '-webkit-', '-o-', '-moz-', '-ms-'];
     /* istanbul ignore next */
@@ -2063,7 +2061,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
     /* istanbul ignore if */
     if (msie < 9) {
-        cssMap['float'] = 'styleFloat';
+        avalon.shadowCopy(cssMap, oneObject('float', 'styleFloat'));
         var rnumnonpx = /^-?(?:\d*\.)?\d+(?!px)[^\d\s]+$/i;
         var rposition = /^(top|right|bottom|left)$/;
         var ralpha = /alpha\([^)]+\)/i;
