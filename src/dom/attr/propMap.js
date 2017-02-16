@@ -1,11 +1,11 @@
-export var propMap = {//不规则的属性名映射
-    'accept-charset': 'acceptCharset',
-    'char': 'ch',
-    charoff: 'chOff',
-    'class': 'className',
-    'for': 'htmlFor',
-    'http-equiv': 'httpEquiv'
-}
+export var propMap = {}//不规则的属性名映射
+
+
+//防止压缩时出错
+'accept-charset,acceptCharset|char,ch|charoff,chOff|class,className|for,htmlFor|http-equiv,httpEquiv'.replace(/[^\|]+/g,function(a){
+var k = a.split(',')
+propMap[k[0]] = k[1]
+})
 /*
 contenteditable不是布尔属性
 http://www.zhangxinxu.com/wordpress/2016/01/contenteditable-plaintext-only/
@@ -35,4 +35,3 @@ anomaly.replace(/\w+/g, function (name) {
     propMap[name.toLowerCase()] = name
 })
 
-//module.exports = propMap

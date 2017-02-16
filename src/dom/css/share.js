@@ -1,7 +1,6 @@
 import { avalon, oneObject, cssHooks, window } from '../../seed/core'
-var cssMap = {
-    'float': 'cssFloat'
-}
+var cssMap = oneObject('float','cssFloat')
+
 export {
     cssMap,
     cssHooks
