@@ -1,5 +1,5 @@
 /*!
-built in 2017-2-16:11:56 version 2.2.4 by 司徒正美
+built in 2017-2-17:17:59 version 2.2.4 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 修正IE下 orderBy BUG
@@ -6757,7 +6757,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             dom._ms_validate_ = validator;
             var fields = validator.fields;
             collectFeild(vdom.children, fields, validator);
-            avalon.bind(document, 'focusin', function (e) {
+            var type = window.netscape ? 'keypress' : 'focusin';
+            avalon.bind(document, type, function (e) {
                 var dom = e.target;
                 var duplex = dom._ms_duplex_;
                 var vdom = (duplex || {}).vdom;
