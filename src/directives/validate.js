@@ -26,13 +26,14 @@ var valiDir = avalon.directive('validate', {
     },
     update: function(value, vdom, newVdom, afterCb) {
         afterCb.push(function() {
-            
+
             var validator = vdom.validator
             var dom = validator.dom = vdom.dom
             dom._ms_validate_ = validator
             var fields = validator.fields
             collectFeild(vdom.children, fields, validator)
-            avalon.bind(document, 'focusin', function(e) {
+            var type = window.netscape ? 'keypress' : 'focusin'
+            avalon.bind(document, type, function(e) {
                 var dom = e.target
                 var duplex = dom._ms_duplex_
                 var vdom = (duplex || {}).vdom
@@ -80,7 +81,7 @@ var valiDir = avalon.directive('validate', {
     validateAll: function(callback) {
         var vdom = this
         var validator = vdom.validator
-   
+
         var fields = validator.fields = []
         collectFeild(vdom.children, fields, validator)
 
