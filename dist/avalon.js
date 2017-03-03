@@ -4201,7 +4201,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
             //当被设置了就不稳定,当它被访问了一次就是稳定
             this.collect();
-
             if (this.shouldCompute()) {
                 this.trackAndCompute();
                 // console.log('computed 2 分支')
