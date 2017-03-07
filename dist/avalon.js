@@ -1,5 +1,5 @@
 /*!
-built in 2017-2-17:17:59 version 2.2.4 by 司徒正美
+built in 2017-3-8:0:37 version 2.2.4 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 修正IE下 orderBy BUG
@@ -2302,12 +2302,13 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         }
         return str;
     }
-
-    function readString(str) {
-        var end,
-            s = 0;
-        var ret = [];
-        for (var i = 0, n = str.length; i < n; i++) {
+    //https://github.com/RubyLouvre/avalon/issues/1944
+    function readString(str, i, ret) {
+        var end = false,
+            s = 0,
+            i = i || 0;
+        ret = ret || [];
+        for (var n = str.length; i < n; i++) {
             var c = str.charAt(i);
             if (!end) {
                 if (c === "'") {
@@ -2323,6 +2324,9 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                     end = false;
                 }
             }
+        }
+        if (end !== false) {
+            return readString(str, s + 1, ret);
         }
         return ret;
     }
@@ -4201,6 +4205,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
             //当被设置了就不稳定,当它被访问了一次就是稳定
             this.collect();
+
             if (this.shouldCompute()) {
                 this.trackAndCompute();
                 // console.log('computed 2 分支')

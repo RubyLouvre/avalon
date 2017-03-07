@@ -8,7 +8,7 @@ export var stringPool = {
 export var rfill = /\?\?\d+/g
 export function dig(a) {
     var key = '??' + stringNum++
-    stringPool.map[key] = a
+        stringPool.map[key] = a
     return key + ' '
 }
 export function fill(a) {
@@ -22,26 +22,31 @@ export function clearString(str) {
     }
     return str
 }
-
-function readString(str) {
-    var end, s = 0
-    var ret = []
-    for (var i = 0, n = str.length; i < n; i++) {
-        var c = str.charAt(i)
+//https://github.com/RubyLouvre/avalon/issues/1944
+function readString(str, i, ret) {
+    var end = false,
+        s = 0,
+        i = i || 0
+    ret = ret || [];
+    for (var n = str.length; i < n; i++) {
+        var c = str.charAt(i);
         if (!end) {
             if (c === "'") {
-                end = "'"
-                s = i
+                end = "'";
+                s = i;
             } else if (c === '"') {
-                end = '"'
-                s = i
+                end = '"';
+                s = i;
             }
         } else {
             if (c === end) {
-                ret.push(str.slice(s, i + 1))
-                end = false
+                ret.push(str.slice(s, i + 1));
+                end = false;
             }
         }
     }
-    return ret
+    if (end !== false) {
+        return readString(str, s + 1, ret)
+    }
+    return ret;
 }
