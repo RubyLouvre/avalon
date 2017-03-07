@@ -45,7 +45,7 @@ import * as avalon from 'avalon2'
 ###[QuickStart](https://github.com/crazyliuzc/webpack-avalon2-SPA-seed.git)
 大家期望已久的avalon2+mmRouter+各种组件的综合示例,不断完善中
 
-###UI库1](http://weeksun23.github.io/AvalonBootstrap/index.html#overview)
+###[UI库1](http://weeksun23.github.io/AvalonBootstrap/index.html#overview)
 
 ###[UI库2](https://github.com/aLoNeIT/flyUI)
 
@@ -107,3 +107,5 @@ ms-important与ms-controller对应的vm.$id一个页面上只能用一次,不能
    <div ms-controller='test'>{{@bbb}}<!--test已经使用了1次!会导致程序出错--></div>
    <div ms-important='test'>{{@bbb}}<!--test已经使用了2次!会导致程序出错--></div>
 ```
+
+
