@@ -152,7 +152,7 @@ Render.prototype = {
             var temp = templateCaches && templateCaches[$id]
             if (temp) {
                 avalon.log('前端再次渲染后端传过来的模板')
-                var node = fromString(tmpl)[0]
+                var node = fromString(temp)[0]
                 for (var i in node) {
                     vdom[i] = node[i]
                 }
