@@ -7,7 +7,7 @@ var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete
     "abstract,boolean,byte,char,class,const,double,enum,export,extends," +
     "final,float,goto,implements,import,int,interface,long,native," +
     "package,private,protected,public,short,static,super,synchronized," +
-    "throws,transient,volatile")
+    "throws,transient,volatile,arguments")
 
 export var skipMap = avalon.mix({
     Math: 1,
@@ -25,7 +25,7 @@ var brackets = /\(([^)]*)\)/
 var rpipeline = /\|(?=\?\?)/
 var rregexp = /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/g
 var robjectProp = /\.[\w\.\$]+/g //对象的属性 el.xxx 中的xxx
-var robjectKey = /(\{|\,)\s*([\$\w]+)\s*:/g  //对象的键名与冒号 {xxx:1,yyy: 2}中的xxx, yyy
+var robjectKey = /(\{|\,)\s*([\$\w]+)\s*:/g //对象的键名与冒号 {xxx:1,yyy: 2}中的xxx, yyy
 var rfilterName = /\|(\w+)/g
 var rlocalVar = /[$a-zA-Z_][$a-zA-Z0-9_]*/g
 
@@ -33,12 +33,12 @@ var exprCache = new Cache(300)
 
 function addScopeForLocal(str) {
     return str.replace(robjectProp, dig).
-        replace(rlocalVar, function (el) {
-            if (!skipMap[el]) {
-                return "__vmodel__." + el
-            }
-            return el
-        })
+    replace(rlocalVar, function(el) {
+        if (!skipMap[el]) {
+            return "__vmodel__." + el
+        }
+        return el
+    })
 }
 
 export function addScope(expr, type) {
@@ -49,34 +49,34 @@ export function addScope(expr, type) {
     }
 
     stringPool.map = {}
-    //https://github.com/RubyLouvre/avalon/issues/1849
-    var input = expr.replace(rregexp, function(a,b){
-         return b+dig(a.slice(b.length))
-    })       //移除所有正则
-    input = clearString(input)                   //移除所有字符串
-    input = input.replace(rshortCircuit, dig).   //移除所有短路运算符
-        replace(ruselessSp, '$1').               //移除.|两端空白
-       
-        replace(robjectKey, function(_,a,b){     //移除所有键名
-            return a+dig(b)+':'                  //比如 ms-widget="[{is:'ms-address-wrap', $id:'address'}]"这样极端的情况 
-        }).
-        replace(rvmKey, '$1__vmodel__.').        //转换@与##为__vmodel__
-        replace(rfilterName, function (a, b) {   //移除所有过滤器的名字
-            return '|' + dig(b)
-        })
-    input = addScopeForLocal(input)              //在本地变量前添加__vmodel__
+        //https://github.com/RubyLouvre/avalon/issues/1849
+    var input = expr.replace(rregexp, function(a, b) {
+            return b + dig(a.slice(b.length))
+        }) //移除所有正则
+    input = clearString(input) //移除所有字符串
+    input = input.replace(rshortCircuit, dig). //移除所有短路运算符
+    replace(ruselessSp, '$1'). //移除.|两端空白
 
-    var filters = input.split(rpipeline)         //根据管道符切割表达式
+    replace(robjectKey, function(_, a, b) { //移除所有键名
+        return a + dig(b) + ':' //比如 ms-widget="[{is:'ms-address-wrap', $id:'address'}]"这样极端的情况 
+    }).
+    replace(rvmKey, '$1__vmodel__.'). //转换@与##为__vmodel__
+    replace(rfilterName, function(a, b) { //移除所有过滤器的名字
+        return '|' + dig(b)
+    })
+    input = addScopeForLocal(input) //在本地变量前添加__vmodel__
+
+    var filters = input.split(rpipeline) //根据管道符切割表达式
     var body = filters.shift().replace(rfill, fill).trim()
     if (/\?\?\d/.test(body)) {
         body = body.replace(rfill, fill)
     }
     if (filters.length) {
-        filters = filters.map(function (filter) {
+        filters = filters.map(function(filter) {
             var bracketArgs = ''
-            filter = filter.replace(brackets, function (a, b) {
+            filter = filter.replace(brackets, function(a, b) {
                 if (/\S/.test(b)) {
-                    bracketArgs += ',' + b        //还原字符串,正则,短路运算符
+                    bracketArgs += ',' + b //还原字符串,正则,短路运算符
                 }
                 return ''
             })
@@ -99,14 +99,15 @@ export function makeHandle(body) {
     }
     /* istanbul ignore if */
     if (msie < 9) {
-        body = body.replace(rfixIE678, function (a, b, c) {
+        body = body.replace(rfixIE678, function(a, b, c) {
             return '__vmodel__.' + b + '.call(__vmodel__' + (/\S/.test(c) ? ',' + c : '') + ')'
         })
     }
     return body
 }
 export function createGetter(expr, type) {
-    var arr = addScope(expr, type), body
+    var arr = addScope(expr, type),
+        body
     if (!arr[1]) {
         body = arr[0]
     } else {
@@ -114,7 +115,7 @@ export function createGetter(expr, type) {
     }
     try {
         return new Function('__vmodel__', 'return ' + body + ';')
-        /* istanbul ignore next */
+            /* istanbul ignore next */
     } catch (e) {
         avalon.log('parse getter: [', expr, body, ']error')
         return avalon.noop
@@ -130,7 +131,7 @@ export function createSetter(expr, type) {
     var body = 'try{ ' + arr[0] + ' = __value__}catch(e){}'
     try {
         return new Function('__vmodel__', '__value__', body + ';')
-        /* istanbul ignore next */
+            /* istanbul ignore next */
     } catch (e) {
         avalon.log('parse setter: ', expr, ' error')
         return avalon.noop

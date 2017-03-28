@@ -1,5 +1,5 @@
 /*!
-built in 2017-3-8:0:37 version 2.2.4 by 司徒正美
+built in 2017-3-28:16:0 version 2.2.4 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 修正IE下 orderBy BUG
@@ -3736,7 +3736,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
 
     var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false," + "finally,for,function,if,in,instanceof,new,null,return,switch,this," + "throw,true,try,typeof,var,void,while,with," + /* 关键字*/
-    "abstract,boolean,byte,char,class,const,double,enum,export,extends," + "final,float,goto,implements,import,int,interface,long,native," + "package,private,protected,public,short,static,super,synchronized," + "throws,transient,volatile");
+    "abstract,boolean,byte,char,class,const,double,enum,export,extends," + "final,float,goto,implements,import,int,interface,long,native," + "package,private,protected,public,short,static,super,synchronized," + "throws,transient,volatile,arguments");
 
     var skipMap = avalon.mix({
         Math: 1,
@@ -7333,7 +7333,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 var temp = templateCaches && templateCaches[$id];
                 if (temp) {
                     avalon.log('前端再次渲染后端传过来的模板');
-                    var node = fromString(tmpl)[0];
+                    var node = fromString(temp)[0];
                     for (var i in node) {
                         vdom[i] = node[i];
                     }
