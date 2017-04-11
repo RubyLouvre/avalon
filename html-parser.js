@@ -29,7 +29,7 @@ function getAttributes(str) {
     return attrsMap
 }
 
-function lex(html) {
+function lexer(html) {
     let string = html
     let tokens = []
     var stopIndex = 999999
@@ -82,6 +82,7 @@ function lex(html) {
                     string = string.slice(v + 2 + tag.length + 1)
                     continue
                 }
+
                 const type = !!MAKER.empty[tag] || match[0].slice(-2) === '/>' ? 'tag-empty' : 'tag-start'
                 tokens.push({
                     tag: tag,
@@ -124,7 +125,7 @@ function lex(html) {
 
 function parse(tokens, one) {
     let root = {
-        tag: "root ",
+        tag: "root",
         children: []
     }
     let tagArray = [root]
@@ -155,6 +156,7 @@ function parse(tokens, one) {
             } : {
                 type: token.tag,
                 props: token.props,
+                selfClose: token.children.length ? false : true,
                 children: token.children || []
             }
             tagArray.last().children.push(obj)
@@ -166,7 +168,11 @@ function parse(tokens, one) {
             }
             node.children.push(child)
         } else if (node.type === 'table') {
-
+            makeTbody(node.children)
+        } else if (node.type === 'xmp') {
+            node.children = [
+                { type: '#text', nodeValue: getHTML(node) }
+            ]
         }
 
     }
@@ -174,7 +180,7 @@ function parse(tokens, one) {
 }
 
 function htmlParser(html) {
-    return parse(lex(html))
+    return parse(lexer(html))
 }
 
 function getText(node) {
@@ -185,6 +191,26 @@ function getText(node) {
         } else if (el.children) {
             ret += getText(el)
         }
+    })
+    return ret
+}
+
+function getHTML(node) {
+    if (node.type === '#text') {
+        return node.nodeValue
+    } else if (node.type === '#comment') {
+        return '<!--' + node.nodeValue + '-->'
+    }
+    var attrs = ''
+    for (var i in node.props) {
+        i += (' ' + i + '=' + JSON.stringify(node.props[i]))
+    }
+    var ret = '<' + node.tag + attrs
+    if (node.selfClose) {
+        return ret + '/>'
+    }
+    node.children.forEach(function(el) {
+        ret + getHTML(el)
     })
     return ret
 }
