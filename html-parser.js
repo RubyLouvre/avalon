@@ -132,8 +132,9 @@ function parse(tokens, one) {
     tagArray.last = () => tagArray[tagArray.length - 1]
     for (var i = 0; i < tokens.length; i++) {
         const token = tokens[i]
+        let node
         if (token.type === 'tag-start') {
-            const node = {
+            node = {
                 type: token.tag,
                 props: token.props,
                 children: []
@@ -141,16 +142,19 @@ function parse(tokens, one) {
             tagArray.push(node)
         } else if (token.type === 'tag-end') {
             let parent = tagArray[tagArray.length - 2]
-            let node = tagArray.pop()
+            node = tagArray.pop()
+            if (node.type !== token.tag) {
+                throw '必须以' + node.type + '进行闭合'
+            }
             parent.children.push(node)
         } else if (token.type === 'text') {
-            const node = {
+            node = {
                 type: '#text',
                 nodeValue: token.text
             }
             tagArray.last().children.push(node)
         } else if (token.type === 'tag-empty') {
-            var node = token.tag === '#comment' ? {
+            node = token.tag === '#comment' ? {
                 type: '#comment',
                 nodeValue: token.text
             } : {
@@ -162,7 +166,7 @@ function parse(tokens, one) {
             tagArray.last().children.push(obj)
         }
         if (node.type === 'option') {
-            var child = {
+            const child = {
                 nodeValue: getText(node),
                 type: '#text'
             }
