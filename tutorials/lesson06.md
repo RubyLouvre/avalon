@@ -1,5 +1,5 @@
-#006样式操作  
-#006STYLE  
+# 006样式操作  
+# 006STYLE  
 avalon2的ms-css的变革思路与ms-attr一样，将多个操作合并成到一个对象里面处理，因此没有ms-css-name="value"，只有ms-css="Object"或ms-css="Array".  
 avalon2 redesigned `ms-css` in a same way as `ms-attr`,gather all your css values into one single object,so there is `ms-css-name="value"` no more,only `ms-css=Object"` or `ms-css=Array` will work properly.  
 

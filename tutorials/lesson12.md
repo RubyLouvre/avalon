@@ -1,5 +1,5 @@
-#数据验证
-#Data Validation
+# 数据验证
+# Data Validation
 avalon2砍掉了不少功能（如ms-include,ms-data），腾出空间加了其他更有用的功能。数据验证就是其中之一。
 
 Many features have been stripped from avalon 2, such as ms-include and ms-data,to provide enough room for the other useful features.Data validation is one of those important features.

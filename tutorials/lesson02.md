@@ -1,5 +1,5 @@
-#将内容输出到页面
-##Output the content to the page
+# 将内容输出到页面
+## Output the content to the page
 
 与后端模板一样,avalon能将动态的内容放到它们该呆的地方.并且提供多种便捷的方式. 第一种就是双花括号`{{}}`,第二种是`ms-text`属性.如果要输出大段HTML内容,还可以用ms-html 
 
