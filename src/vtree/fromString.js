@@ -1,30 +1,20 @@
 /**
  * ------------------------------------------------------------
- * avalon2.1.1的新式lexer
+ * avalon2.2.6的新式lexer
  * 将字符串变成一个虚拟DOM树,方便以后进一步变成模板函数
  * 此阶段只会生成VElement,VText,VComment
  * ------------------------------------------------------------
  */
-import { avalon, Cache } from '../seed/core'
-import { clearString, stringPool, fill, rfill } from "./clearString"
+import { avalon, Cache, config } from '../seed/core'
 import { voidTag } from "./voidTag"
-import { orphanTag } from "./orphanTag"
-import { makeOrphan } from "./makeOrphan"
-import { makeTbody } from "./makeTbody"
+
 import { validateDOMNesting } from "./validateDOMNesting"
 
-function nomalString(str) {
-    return avalon.unescapeHTML(str.replace(rfill, fill))
-}
-//https://github.com/rviscomi/trunk8/blob/master/trunk8.js
 
-var ropenTag = /^<([-A-Za-z0-9_]+)\s*([^>]*?)(\/?)>/
-var rendTag = /^<\/([^>]+)>/
-var rtagStart = /[\!\/a-z]/i //闭标签的第一个字符,开标签的第一个英文,注释节点的!
-var rlineSp = /\\n\s*/g
-var rattrs = /([^=\s]+)(?:\s*=\s*(\S+))?/
-
+var specalTag = { xmp: 1, style: 1, script: 1, noscript: 1, textarea: 1, '#comment': 1, template: 1 }
+var hiddenTag = { style: 1, script: 1, noscript: 1, template: 1 }
 var rcontent = /\S/ //判定里面有没有内容
+var rsp = /\s/
 export function fromString(str) {
     return from(str)
 }
@@ -32,195 +22,6 @@ avalon.lexer = fromString
 
 var strCache = new Cache(100)
 
-function AST() {}
-AST.prototype = {
-    init(str) {
-        this.ret = []
-        var stack = []
-        stack.last = function() {
-            return stack[stack.length - 1]
-        }
-        this.stack = stack
-        this.str = str
-    },
-    gen() {
-        var breakIndex = 999999
-        do {
-            this.tryGenText()
-            this.tryGenComment()
-            this.tryGenOpenTag()
-            this.tryGenCloseTag()
-            var node = this.node
-            this.node = 0
-            if (!node || --breakIndex === 0) {
-                break
-            }
-            if (node.end) {
-                if (node.nodeName === 'table') {
-                    makeTbody(node.children)
-                }
-                delete node.end
-            }
-        } while (this.str.length);
-        return this.ret
-    },
-    fixPos: function(str, i) {
-        var tryCount = str.length - i
-        while (tryCount--) {
-            if (!rtagStart.test(str.charAt(i + 1))) {
-                i = str.indexOf('<', i + 1)
-            } else {
-                break
-            }
-        }
-        if (tryCount === 0) {
-            i = str.length
-        }
-        return i
-    },
-    tryGenText() {
-        var str = this.str
-        if (str.charAt(0) !== '<') { //处理文本节点
-            var i = str.indexOf('<')
-            if (i === -1) {
-                i = str.length
-            } else if (!rtagStart.test(str.charAt(i + 1))) {
-                //处理`内容2 {{ (idx1 < < <  1 ? 'red' : 'blue' ) + a }} ` 的情况 
-                i = this.fixPos(str, i)
-            }
-            var nodeValue = str.slice(0, i).replace(rfill, fill)
-            this.str = str.slice(i)
-            this.node = {
-                nodeName: '#text',
-                nodeValue: nodeValue
-            }
-            if (rcontent.test(nodeValue)) {
-                this.tryGenChildren() //不收集空白节点
-            }
-        }
-    },
-    tryGenComment() {
-        if (!this.node) {
-            var str = this.str
-            var i = str.indexOf('<!--') //处理注释节点
-                /* istanbul ignore if*/
-            if (i === 0) {
-                var l = str.indexOf('-->')
-                if (l === -1) {
-                    avalon.error('注释节点没有闭合' + str)
-                }
-                var nodeValue = str.slice(4, l).replace(rfill, fill)
-                this.str = str.slice(l + 3)
-                this.node = {
-                    nodeName: '#comment',
-                    nodeValue: nodeValue
-                }
-                this.tryGenChildren()
-            }
-        }
-    },
-    tryGenOpenTag() {
-        if (!this.node) {
-            var str = this.str
-            var match = str.match(ropenTag) //处理元素节点开始部分
-            if (match) {
-                var nodeName = match[1]
-                var props = {}
-                if (/^[A-Z]/.test(nodeName) && avalon.components[nodeName]) {
-                    props.is = nodeName
-                }
-                nodeName = nodeName.toLowerCase()
-                var isVoidTag = !!voidTag[nodeName] || match[3] === '\/'
-                var node = this.node = {
-                    nodeName: nodeName,
-                    props: {},
-                    children: [],
-                    isVoidTag: isVoidTag
-                }
-                var attrs = match[2]
-                if (attrs) {
-                    this.genProps(attrs, node.props)
-                }
-                this.tryGenChildren()
-                str = str.slice(match[0].length)
-                if (isVoidTag) {
-                    node.end = true
-                } else {
-                    this.stack.push(node)
-                    if (orphanTag[nodeName] || nodeName === 'option') {
-                        var index = str.indexOf('</' + nodeName + '>')
-                        var innerHTML = str.slice(0, index).trim()
-                        str = str.slice(index)
-                        makeOrphan(node, nodeName, nomalString(innerHTML))
-                    }
-                }
-                this.str = str
-            }
-        }
-    },
-    tryGenCloseTag() {
-        if (!this.node) {
-            var str = this.str
-            var match = str.match(rendTag) //处理元素节点结束部分
-            if (match) {
-                var nodeName = match[1].toLowerCase()
-                var last = this.stack.last()
-                    /* istanbul ignore if*/
-                if (!last) {
-                    avalon.error(match[0] + '前面缺少<' + nodeName + '>')
-                        /* istanbul ignore else*/
-                } else if (last.nodeName !== nodeName) {
-                    var errMsg = last.nodeName + '没有闭合,请注意属性的引号'
-                    avalon.warn(errMsg)
-                    avalon.error(errMsg)
-                }
-                var node = this.stack.pop()
-                node.end = true
-                this.node = node
-                this.str = str.slice(match[0].length)
-            }
-        }
-    },
-    tryGenChildren() {
-        var node = this.node
-        var p = this.stack.last()
-        if (p) {
-            validateDOMNesting(p, node)
-            p.children.push(node)
-        } else {
-            this.ret.push(node)
-        }
-    },
-    genProps(attrs, props) {
-        
-        while (attrs) {
-            var arr = rattrs.exec(attrs)
-   
-            if (arr) {
-                var name = arr[1]
-                var value = arr[2] || ''
-                attrs = attrs.replace(arr[0], '')
-                if (value) {
-                    //https://github.com/RubyLouvre/avalon/issues/1844
-                    if (value.indexOf('??') === 0) {
-                        value = nomalString(value).
-                        replace(rlineSp, '').
-                        
-                        slice(1, -1)
-                       
-                    }
-                }
-                if (!(name in props)) {
-                    props[name] = value
-                }
-            } else {
-                break
-            }
-        }
-    }
-}
-
-var vdomAst = new AST()
 
 function from(str) {
     var cacheKey = str
@@ -228,12 +29,379 @@ function from(str) {
     if (cached) {
         return avalon.mix(true, [], cached)
     }
-    stringPool.map = {}
-    str = clearString(str)
 
-    vdomAst.init(str)
-    var ret = vdomAst.gen()
+    var ret = parse(str, false)
     strCache.put(cacheKey, avalon.mix(true, [], ret))
     return ret
 
+}
+
+/**
+ * 
+ * 
+ * @param {any} string 
+ * @param {any} getOne 只返回一个节点
+ * @returns 
+ */
+function parse(string, getOne) {
+    getOne = (getOne === void 666 || getOne === true)
+    var ret = lexer(string, getOne)
+    if (getOne) {
+        return typeof ret[0] === 'string' ? ret[1] : ret[0]
+    }
+    return ret
+}
+
+function lexer(string, getOne) {
+    var tokens = []
+    var breakIndex = 9990
+    var stack = []
+    var origString = string
+    var origLength = string.length
+
+    stack.last = function() {
+        return stack[stack.length - 1]
+    }
+    var ret = []
+
+    function addNode(node) {
+        var p = stack.last()
+        if (p && p.children) {
+            p.children.push(node)
+        } else {
+            ret.push(node)
+        }
+    }
+
+    var lastNode
+    do {
+        if (--breakIndex === 0) {
+            break
+        }
+        var arr = getCloseTag(string)
+
+        if (arr) { //处理关闭标签
+            string = string.replace(arr[0], '')
+            const node = stack.pop()
+                //处理下面两种特殊情况：
+                //1. option会自动移除元素节点，将它们的nodeValue组成新的文本节点
+                //2. table会将没有被thead, tbody, tfoot包起来的tr或文本节点，收集到一个新的tbody元素中
+            if (node.nodeName === 'option') {
+                node.children = [{
+                    nodeName: '#text',
+                    nodeValue: getText(node)
+                }]
+            } else if (node.nodeName === 'table') {
+                insertTbody(node.children)
+            }
+            lastNode = null
+            if (getOne && ret.length === 1 && !stack.length) {
+                return [origString.slice(0, origLength - string.length), ret[0]]
+            }
+            continue
+        }
+
+        var arr = getOpenTag(string)
+        if (arr) {
+            string = string.replace(arr[0], '')
+            var node = arr[1]
+            addNode(node)
+            var selfClose = !!(node.isVoidTag || specalTag[node.nodeName])
+            if (!selfClose) { //放到这里可以添加孩子
+                stack.push(node)
+            }
+            if (getOne && selfClose && !stack.length) {
+                return [origString.slice(0, origLength - string.length), node]
+            }
+            lastNode = node
+            continue
+        }
+
+        var text = ''
+        do {
+            //处理<div><<<<<<div>的情况
+            const index = string.indexOf('<')
+            if (index === 0) {
+                text += string.slice(0, 1)
+                string = string.slice(1)
+
+            } else {
+                break
+            }
+        } while (string.length);
+
+
+
+        //处理<div>{aaa}</div>,<div>xxx{aaa}xxx</div>,<div>xxx</div>{aaa}sss的情况
+        const index = string.indexOf('<') //判定它后面是否存在标签
+        if (index === -1) {
+            text = string
+            string = ''
+        } else {
+            const openIndex = string.indexOf(config.openTag)
+
+            if (openIndex !== -1 && openIndex < index) {
+                if (openIndex !== 0) {
+                    text += string.slice(0, openIndex)
+                }
+                var dirString = string.slice(openIndex)
+                var textDir = parseTextDir(dirString)
+                text += textDir
+                string = dirString.slice(textDir.length)
+            } else {
+                text += string.slice(0, index)
+                string = string.slice(index)
+            }
+        }
+        var mayNode = addText(lastNode, text, addNode)
+        if (mayNode) {
+            lastNode = mayNode
+        }
+
+
+    } while (string.length);
+    return ret
+}
+
+
+function addText(lastNode, text, addNode) {
+    if (rcontent.test(text)) {
+        if (lastNode && lastNode.nodeName === '#text') {
+            lastNode.nodeValue += text
+            return lastNode
+        } else {
+            lastNode = {
+                nodeName: '#text',
+                nodeValue: text
+            }
+            addNode(lastNode)
+            return lastNode
+        }
+    }
+}
+
+
+
+function parseTextDir(string) {
+    var closeTag = config.closeTag
+    var closeTagFirst = closeTag.charAt(0)
+    var closeTagLength = closeTag.length
+    var state = 'code',
+        quote,
+        escape
+    for (var i = config.openTag.length, n = string.length; i < n; i++) {
+
+        var c = string[i]
+        switch (state) {
+            case 'code':
+                if (c === '"' || c === "'") {
+                    state = 'string'
+                    quote = c
+                } else if (c === closeTagFirst) { //如果遇到}
+                    if (string.substr(i, closeTagLength) === closeTag) {
+                        return string.slice(0, i + closeTagLength)
+                    }
+                }
+                break
+            case 'string':
+                if (c === '\\') {
+                    escape = !escape
+                }
+                if (c === quote && !escape) {
+                    state = 'code'
+                }
+                break
+        }
+    }
+    throw '找不到界定符' + closeTag
+
+}
+
+
+
+function insertTbody(nodes) {
+    var tbody = false
+    for (var i = 0, n = nodes.length; i < n; i++) {
+        var node = nodes[i]
+        if (/^(tbody|thead|tfoot)$/.test(node.nodeName)) {
+            tbody = false
+            continue
+        }
+
+        if (node.nodeName === 'tr') {
+            if (tbody) {
+                nodes.splice(i, 1)
+                tbody.children.push(node)
+                n--
+                i--
+            } else {
+                tbody = {
+                    nodeName: 'tbody',
+                    props: {},
+                    children: [node]
+                }
+                nodes.splice(i, 1, tbody)
+            }
+        } else {
+            if (tbody) {
+                nodes.splice(i, 1)
+                tbody.children.push(node)
+                n--
+                i--
+            }
+        }
+    }
+}
+
+//<div>{{<div/>}}</div>
+function getCloseTag(string) {
+    if (string.indexOf("</") === 0) {
+        var match = string.match(/\<\/(\w+)>/)
+        if (match) {
+            var tag = match[1]
+            string = string.slice(3 + tag.length)
+            return [match[0], {
+                nodeName: tag
+            }]
+        }
+    }
+    return null
+}
+
+function getOpenTag(string) {
+    if (string.indexOf("<") === 0) {
+        var i = string.indexOf('<!--') //处理注释节点
+        if (i === 0) {
+            var l = string.indexOf('-->')
+            if (l === -1) {
+                thow('注释节点没有闭合 ' + string.slice(0, 100))
+            }
+            var node = {
+                nodeName: '#comment',
+                nodeValue: string.slice(4, l)
+            }
+            return [string.slice(0, l + 3), node]
+        }
+        var match = string.match(/\<(\w[^\s\/\>]*)/) //处理元素节点
+        if (match) {
+            var leftContent = match[0],
+                tag = match[1]
+            var node = {
+                nodeName: tag,
+                props: {},
+                children: []
+            }
+
+            string = string.replace(leftContent, '') //去掉标签名(rightContent)
+            var arr = getAttrs(string) //处理属性
+            if (arr) {
+                node.props = arr[1]
+                string = string.replace(arr[0], '')
+                leftContent += arr[0]
+            }
+
+            if (string[0] === '>') { //处理开标签的边界符
+                leftContent += '>'
+                string = string.slice(1)
+                if (voidTag[node.nodeName]) {
+                    node.isVoidTag = true
+                }
+            } else if (string.slice(0, 2) === '/>') { //处理开标签的边界符
+                leftContent += '/>'
+                string = string.slice(2)
+                node.isVoidTag = true
+            }
+
+            if (!node.isVoidTag && specalTag[tag]) { //如果是script, style, xmp等元素
+                var closeTag = '</' + tag + '>'
+                var j = string.indexOf(closeTag)
+                var nodeValue = string.slice(0, j)
+                leftContent += nodeValue + closeTag
+                node.children.push({
+                    nodeName: '#text',
+                    nodeValue: nodeValue
+                })
+                if (tag === 'textarea') {
+                    node.props.type = tag
+                    node.props.value = nodeValue
+                }
+            }
+            return [leftContent, node]
+        }
+    }
+}
+
+function getText(node) {
+    var ret = ''
+    node.children.forEach(function(el) {
+        if (el.nodeName === '#text') {
+            ret += el.nodeValue
+        } else if (el.children && !hiddenTag[el.nodeName]) {
+            ret += getText(el)
+        }
+    })
+    return ret
+}
+
+function getAttrs(string) {
+    var state = 'AttrName',
+        attrName = '',
+        attrValue = '',
+        quote,
+        escape,
+        props = {}
+
+    for (var i = 0, n = string.length; i < n; i++) {
+        var c = string[i]
+        switch (state) {
+            case 'AttrName':
+                if (c === '/' || c === '>') {
+                    if (attrName)
+                        props[attrName] = attrName
+                    return [string.slice(0, i), props]
+                }
+                if (rsp.test(c)) {
+                    if (attrName) {
+                        state = 'AttrEqual'
+                    }
+                } else if (c === '=') {
+                    if (!attrName) {
+                        throw '必须指定属性名'
+                    }
+                    state = 'AttrQuote'
+                } else {
+                    attrName += c
+                }
+                break
+            case 'AttrEqual':
+                if (c === '=') {
+                    state = 'AttrQuote'
+                } else if (rcontent.test(c)) {
+                    props[attrName] = attrName
+                    attrName = c
+                    state = 'AttrName'
+                }
+                break
+            case 'AttrQuote':
+                if (c === '"' || c === "'") {
+                    quote = c
+                    state = 'AttrValue'
+                    escape = false
+                }
+                break
+            case 'AttrValue':
+                if (c === '\\') {
+                    escape = !escape
+                }
+                if (c !== quote) {
+                    attrValue += c
+                } else if (c === quote && !escape) {
+                    props[attrName] = attrValue
+                    attrName = attrValue = ''
+                    state = 'AttrName'
+                }
+                break
+        }
+    }
+    throw '必须关闭标签'
 }
