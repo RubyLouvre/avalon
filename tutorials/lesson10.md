@@ -1,5 +1,5 @@
-#事件绑定
-#Events binding
+# 事件绑定
+# Events binding
 avalon2的事件指令，比起avalon1来强大多了。  
 avalon2 has much more powerful evevts directive than 1.X versions.  
 首先其内部是使用事件代理实现的，能冒泡的事件全部绑定document上。只有旧式IE的几个事件还绑定在原元素上。  
