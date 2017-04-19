@@ -1,5 +1,5 @@
 /*!
-built in 2017-4-19:17:56 version 2.2.5 by 司徒正美
+built in 2017-4-19:18:47 version 2.2.5 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 更改下载Promise的提示
@@ -1923,7 +1923,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             escape
         for (var i = config.openTag.length, n = string.length; i < n; i++) {
 
-            var c = string[i]
+            var c = string.charAt(i)
             switch (state) {
                 case 'code':
                     if (c === '"' || c === "'") {
@@ -1937,7 +1937,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                     }
                     break
                 case 'string':
-                    if (c === '\\') {
+                    if (c === '\\' && /"'/.test(string.charAt(i + 1))) {
                         escape = !escape
                     }
                     if (c === quote$$1 && !escape) {
@@ -1945,8 +1945,9 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                     }
                     break
             }
+
+            throw '找不到界定符' + closeTag
         }
-        throw '找不到界定符' + closeTag
     }
 
     function insertTbody(nodes) {
@@ -2023,14 +2024,16 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 }
 
                 string = string.replace(leftContent, '') //去掉标签名(rightContent)
-                var arr = getAttrs(string) //处理属性
+                try {
+                    var arr = getAttrs(string) //处理属性
+                } catch (e) {}
                 if (arr) {
                     node.props = arr[1]
                     string = string.replace(arr[0], '')
                     leftContent += arr[0]
                 }
 
-                if (string[0] === '>') {
+                if (string.charAt(0) === '>') {
                     //处理开标签的边界符
                     leftContent += '>'
                     string = string.slice(1)
@@ -2083,12 +2086,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             quote$$1,
             escape,
             props = {}
-
         for (var i = 0, n = string.length; i < n; i++) {
-            var c = string[i]
+            var c = string.charAt(i)
             switch (state) {
                 case 'AttrName':
-                    if (c === '/' || c === '>') {
+                    if (c === '/' && string.charAt(i + 1) === '>' || c === '>') {
                         if (attrName) props[attrName] = attrName
                         return [string.slice(0, i), props]
                     }
@@ -2122,7 +2124,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                     }
                     break
                 case 'AttrValue':
-                    if (c === '\\') {
+                    if (c === '\\' && /"'/.test(string.charAt(i + 1))) {
                         escape = !escape
                     }
                     if (c !== quote$$1) {

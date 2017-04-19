@@ -2,10 +2,10 @@ import { avalon, vdom } from '../../src/vdom/compact'
 
 import { fromString } from '../../src/vtree/fromString'
 
-describe('fromString', function () {
+describe('fromString', function() {
 
-    it('makeTbody1', function () {
-        var str = heredoc(function () {
+    it('makeTbody1', function() {
+        var str = heredoc(function() {
             /*
              <table ms-controller="render1">
              <tr id='tbodyChild' ms-for="el in @arr"><td>222</td></tr>
@@ -19,8 +19,8 @@ describe('fromString', function () {
         var table = f.childNodes[0]
         expect(table.getElementsByTagName('tbody').length).toBe(1)
     })
-    it('makeTbody2', function(){
-        var str2 = heredoc(function () {
+    it('makeTbody2', function() {
+        var str2 = heredoc(function() {
             /*
              <table ms-controller="render1">
              <tr ><td>1</td></tr>
@@ -48,10 +48,35 @@ describe('fromString', function () {
         expect(nodes[4].isVoidTag).toBe(true)
         var f = avalon.vdom(nodes, 'toDOM')
         var table = f.childNodes[0]
-        expect(table.getElementsByTagName('tbody').length+"!!").toBe('3!!')
+        expect(table.getElementsByTagName('tbody').length + "!!").toBe('3!!')
     })
-    it('自动移除option下面的标签', function () {
-        var str = heredoc(function () {
+    it('makeTbody3', function() {
+        var str = heredoc(function() {
+            /*
+            <table>
+        <thead></thead>
+        <!--comment-->
+        <tr></tr>
+        <tr></tr>
+        <!--comment-->
+        <tfoot></tfoot>
+        <!--comment-->
+        <tr></tr>
+        <thead>
+            <tr></tr>
+        </thead>
+    </table>
+             */
+        })
+        var nodes = fromString(str)
+        expect(nodes[0].nodeName).toBe('table')
+        var children = nodes[0].children
+        expect(children[0].nodeName).toBe('thead')
+        expect(children[1].nodeName).toBe('#comment')
+        expect(children[2].nodeName).toBe('tbody')
+    })
+    it('自动移除option下面的标签', function() {
+        var str = heredoc(function() {
             /*
              <select ms-controller="render2">
              <option><span>111</span><i>222</i></option>
@@ -65,8 +90,8 @@ describe('fromString', function () {
         expect(select.children[1].children[0].nodeValue).toBe('222')
 
     })
-    it('将textarea里面的内容变成value', function () {
-        var str = heredoc(function () {
+    it('将textarea里面的内容变成value', function() {
+        var str = heredoc(function() {
             /*
              <textarea ms-controller="render3"><span>333</span></textarea>
              
@@ -79,8 +104,8 @@ describe('fromString', function () {
 
     })
 
-    it('将script/noscript/xmp/template的内容变成文本节点', function () {
-        var str = heredoc(function () {
+    it('将script/noscript/xmp/template的内容变成文本节点', function() {
+        var str = heredoc(function() {
             /*
              <div ms-controller="render4">
              <script><span>111</span></script>
@@ -101,8 +126,8 @@ describe('fromString', function () {
         expect(c[3].children[0].nodeValue).toBe('<span>444</span>')
         expect(c[4].children[0].nodeValue).toBe('body{color:12px;}')
     })
-    it('许多尖括号的', function () {
-        var str = heredoc(function () {
+    it('许多尖括号的', function() {
+        var str = heredoc(function() {
             /*
              <strong>
              内容2 {{ (idx1 < < < < 1 ? 'red' : idx1 > 1 ? 'green' : 'blue') + '-' + item2 }}
@@ -110,10 +135,9 @@ describe('fromString', function () {
              */
         })
         var div = fromString(str)[0]
-
+        console.log(div, '-------------')
         expect(div.children.length).toBe(1)
         expect(div.children[0].nodeValue.trim()).toMatch(/\{\{.+\}\}/)
-       
+
     })
 })
-

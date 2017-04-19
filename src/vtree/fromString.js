@@ -191,7 +191,7 @@ function parseTextDir(string) {
         escape
     for (var i = config.openTag.length, n = string.length; i < n; i++) {
 
-        var c = string[i]
+        var c = string.charAt(i)
         switch (state) {
             case 'code':
                 if (c === '"' || c === "'") {
@@ -204,7 +204,7 @@ function parseTextDir(string) {
                 }
                 break
             case 'string':
-                if (c === '\\') {
+                if (c === '\\' && /"'/.test(string.charAt(i + 1))) {
                     escape = !escape
                 }
                 if (c === quote && !escape) {
@@ -212,11 +212,11 @@ function parseTextDir(string) {
                 }
                 break
         }
+
+        throw '找不到界定符' + closeTag
+
     }
-    throw '找不到界定符' + closeTag
-
 }
-
 
 
 function insertTbody(nodes) {
@@ -293,14 +293,16 @@ function getOpenTag(string) {
             }
 
             string = string.replace(leftContent, '') //去掉标签名(rightContent)
-            var arr = getAttrs(string) //处理属性
+            try {
+                var arr = getAttrs(string) //处理属性
+            } catch (e) {}
             if (arr) {
                 node.props = arr[1]
                 string = string.replace(arr[0], '')
                 leftContent += arr[0]
             }
 
-            if (string[0] === '>') { //处理开标签的边界符
+            if (string.charAt(0) === '>') { //处理开标签的边界符
                 leftContent += '>'
                 string = string.slice(1)
                 if (voidTag[node.nodeName]) {
@@ -350,12 +352,11 @@ function getAttrs(string) {
         quote,
         escape,
         props = {}
-
     for (var i = 0, n = string.length; i < n; i++) {
-        var c = string[i]
+        var c = string.charAt(i)
         switch (state) {
             case 'AttrName':
-                if (c === '/' || c === '>') {
+                if (c === '/' && string.charAt(i + 1) === '>' || c === '>') {
                     if (attrName)
                         props[attrName] = attrName
                     return [string.slice(0, i), props]
@@ -390,7 +391,7 @@ function getAttrs(string) {
                 }
                 break
             case 'AttrValue':
-                if (c === '\\') {
+                if (c === '\\' && /"'/.test(string.charAt(i + 1))) {
                     escape = !escape
                 }
                 if (c !== quote) {
