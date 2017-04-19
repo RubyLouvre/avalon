@@ -128,7 +128,7 @@ export function createGetter(expr, type) {
  */
 export function createSetter(expr, type) {
     var arr = addScope(expr, type)
-    var body = 'try{ ' + arr[0] + ' = __value__}catch(e){}'
+    var body = 'try{ ' + arr[0] + ' = __value__}catch(e){avalon.log(e, "in on dir")}'
     try {
         return new Function('__vmodel__', '__value__', body + ';')
             /* istanbul ignore next */
