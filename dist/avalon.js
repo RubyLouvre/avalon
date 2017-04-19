@@ -1,5 +1,5 @@
 /*!
-built in 2017-3-28:16:5 version 2.2.5 by 司徒正美
+built in 2017-4-19:16:1 version 2.2.5 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 修正IE下 orderBy BUG
@@ -2406,48 +2406,37 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
     //widget rule duplex validate
 
-    //如果直接将tr元素写table下面,那么浏览器将将它们(相邻的那几个),放到一个动态创建的tbody底下
+    //只有遇到第一个直接放在table下的tr元素，才会插入新tbody，并收集接下来的其他非tbody, thead, tfoot元素
+
+    var rtbody = /^(tbody|thead|tfoot)$/;
     function makeTbody(nodes) {
-        var tbody,
-            needAddTbody = false,
-            count = 0,
-            start = 0,
-            n = nodes.length;
-        for (var i = 0; i < n; i++) {
+        var tbody = false;
+        for (var i = 0, n = nodes.length; i < n; i++) {
             var node = nodes[i];
-            if (!tbody) {
-                if (node.nodeName === 'tr') {
-                    //收集tr及tr两旁的注释节点
+            if (rtbody.test(node.nodeName)) {
+                tbody = false;
+                continue;
+            }
+            if (node.nodeName === 'tr') {
+                if (tbody) {
+                    nodes.splice(i, 1);
+                    tbody.children.push(node);
+                    n--;
+                    i--;
+                } else {
                     tbody = {
                         nodeName: 'tbody',
                         props: {},
-                        children: []
+                        children: [node]
                     };
-                    tbody.children.push(node);
-                    needAddTbody = true;
-                    if (start === 0) start = i;
-                    nodes[i] = tbody;
+                    nodes.splice(i, 1, tbody);
                 }
             } else {
-                if (node.nodeName !== 'tr' && node.children) {
-                    tbody = false;
-                } else {
-                    tbody.children.push(node);
-                    count++;
-                    nodes[i] = 0;
-                }
-            }
-        }
-
-        if (needAddTbody) {
-            for (i = start; i < n; i++) {
-                if (nodes[i] === 0) {
+                if (tbody) {
                     nodes.splice(i, 1);
+                    tbody.children.push(node);
+                    n--;
                     i--;
-                    count--;
-                    if (count === 0) {
-                        break;
-                    }
                 }
             }
         }
@@ -3856,7 +3845,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
      */
     function createSetter(expr, type) {
         var arr = addScope(expr, type);
-        var body = 'try{ ' + arr[0] + ' = __value__}catch(e){}';
+        var body = 'try{ ' + arr[0] + ' = __value__}catch(e){avalon.log(e, "in on dir")}';
         try {
             return new Function('__vmodel__', '__value__', body + ';');
             /* istanbul ignore next */
