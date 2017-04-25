@@ -184,12 +184,13 @@ function addText(lastNode, text, addNode) {
 
 function parseTextDir(string) {
     var closeTag = config.closeTag
+    var openTag = config.openTag
     var closeTagFirst = closeTag.charAt(0)
     var closeTagLength = closeTag.length
     var state = 'code',
         quote,
         escape
-    for (var i = config.openTag.length, n = string.length; i < n; i++) {
+    for (var i = openTag.length, n = string.length; i < n; i++) {
 
         var c = string.charAt(i)
         switch (state) {
@@ -212,18 +213,18 @@ function parseTextDir(string) {
                 }
                 break
         }
-
-        throw '找不到界定符' + closeTag
-
     }
+    throw '找不到界定符' + closeTag
+
 }
 
+var rtbody = /^(tbody|thead|tfoot)$/
 
 function insertTbody(nodes) {
     var tbody = false
     for (var i = 0, n = nodes.length; i < n; i++) {
         var node = nodes[i]
-        if (/^(tbody|thead|tfoot)$/.test(node.nodeName)) {
+        if (rtbody.test(node.nodeName)) {
             tbody = false
             continue
         }
@@ -267,6 +268,7 @@ function getCloseTag(string) {
     }
     return null
 }
+var ropenTag = /\<(\w[^\s\/\>]*)/
 
 function getOpenTag(string) {
     if (string.indexOf("<") === 0) {
@@ -282,7 +284,7 @@ function getOpenTag(string) {
             }
             return [string.slice(0, l + 3), node]
         }
-        var match = string.match(/\<(\w[^\s\/\>]*)/) //处理元素节点
+        var match = string.match(ropenTag) //处理元素节点
         if (match) {
             var leftContent = match[0],
                 tag = match[1]

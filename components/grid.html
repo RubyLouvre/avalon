@@ -1,0 +1,61 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>test</title>
+    <script src="../dist/avalon.js"></script>
+    <!--  <script src="./src/vtree/fromString2.js"></script> -->
+</head>
+
+<body>
+    <div ms-controller="grid">
+        <table border=1>
+            <tr>
+                <td>a</td>
+                <td>b</td>
+                <td>c</td>
+            </tr>
+            <tr ms-for='el in @arr'>
+                <td>{{ el.a}}</td>
+                <td>{{ el.b }}</td>
+                <td>{{ el.c }}</td>
+            </tr>
+
+        </table>
+    </div>
+
+    <style>
+
+    </style>
+    <script>
+        var vm = avalon.define({
+            $id: 'grid',
+            arr: [{
+                a: 111,
+                b: 222,
+                c: 333
+            }, {
+                a: 1111,
+                b: 2222,
+                c: 3333
+            }, {
+                a: 11111,
+                b: 22222,
+                c: 33333
+            }]
+        });
+        setTimeout(function() {
+            vm.arr = [{
+                a: "aaa",
+                b: 'bbb',
+                c: "ccc"
+            }, {
+                a: "xxx",
+                b: 'yyy',
+                c: "zzz"
+            }]
+        }, 1000)
+    </script>
+</body>
+
+</html>
