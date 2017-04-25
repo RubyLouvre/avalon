@@ -1,5 +1,5 @@
 /*!
-built in 2017-4-25:13:48 version 2.2.5 by 司徒正美
+built in 2017-4-25:13:57 version 2.2.6 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 修正IE下 orderBy BUG
@@ -410,7 +410,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         inspect: inspect,
         ohasOwn: ohasOwn,
         rword: rword,
-        version: "2.2.5",
+        version: "2.2.6",
         vmodels: {},
 
         directives: directives,
