@@ -1,5 +1,5 @@
 /*!
-built in 2017-4-25:13:57 version 2.2.6 by 司徒正美
+built in 2017-4-25:15:9 version 2.2.6 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 修正IE下 orderBy BUG
@@ -2411,9 +2411,13 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 //处理关闭标签
                 string = string.replace(arr[0], '');
                 var _node = stack.pop();
+                if (!_node) {
+                    throw '是不是有属性值没有用引号括起';
+                }
                 //处理下面两种特殊情况：
                 //1. option会自动移除元素节点，将它们的nodeValue组成新的文本节点
                 //2. table会将没有被thead, tbody, tfoot包起来的tr或文本节点，收集到一个新的tbody元素中
+
                 if (_node.nodeName === 'option') {
                     _node.children = [{
                         nodeName: '#text',

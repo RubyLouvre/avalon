@@ -1,46 +1,46 @@
 {
-  "name": "avalon2",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/RubyLouvre/avalon.git"
-  },
-  "version": "2.2.6",
-  "description": "an elegant efficient express mvvm framework",
-  "main": "dist/avalon.js",
-  "keywords": [
-    "javascript",
-    "mvvm",
-    "virtual dom"
-  ],
-  "scripts": {
-    "buildAvalon": "node build",
-    "build": "karma start karma.conf",
-    "sauce": "karma start karma.sauce"
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "babel-core": "^6.17.0",
-    "babel-preset-avalon": "^1.0.0",
-    "codecov": "^1.0.1",
-    "es3ify": "^0.2.2",
-    "karma": "^0.12.37",
-    "karma-chrome-launcher": "^0.1.2",
-    "karma-coverage": "^1.1.1",
-    "karma-firefox-launcher": "^1.0.0",
-    "karma-ie-launcher": "^1.0.0",
-    "karma-jasmine": "^0.2.2",
-    "karma-opera-launcher": "^1.0.0",
-    "karma-phantomjs-launcher": "^1.0.2",
-    "karma-sauce-launcher": "^0.2.14",
-    "karma-sourcemap-loader": "^0.3.7",
-    "karma-spec-reporter": "0.0.26",
-    "rollup": "^0.36.3",
-    "rollup-plugin-istanbul": "^1.1.0",
-    "rollup-plugin-sourcemaps": "^0.4.1",
-    "semicolon-less": "^0.7.0"
-  },
-  "bugs": {
-    "url": "https://github.com/RubyLouvre/avalon/issues"
-  }
+    "name": "avalon2",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/RubyLouvre/avalon.git"
+    },
+    "version": "2.2.5",
+    "description": "an elegant efficient express mvvm framework",
+    "main": "dist/avalon.js",
+    "keywords": [
+        "javascript",
+        "mvvm",
+        "virtual dom"
+    ],
+    "scripts": {
+        "buildAvalon": "node build",
+        "build": "karma start karma.conf",
+        "sauce": "karma start karma.sauce"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "babel-core": "^6.17.0",
+        "babel-preset-avalon": "^1.0.0",
+        "codecov": "^1.0.1",
+        "es3ify": "^0.2.2",
+        "karma": "^0.12.37",
+        "karma-chrome-launcher": "^0.1.2",
+        "karma-coverage": "^1.1.1",
+        "karma-firefox-launcher": "^1.0.0",
+        "karma-ie-launcher": "^1.0.0",
+        "karma-jasmine": "^0.2.2",
+        "karma-opera-launcher": "^1.0.0",
+        "karma-phantomjs-launcher": "^1.0.2",
+        "karma-sauce-launcher": "^0.2.14",
+        "karma-sourcemap-loader": "^0.3.7",
+        "karma-spec-reporter": "0.0.26",
+        "rollup": "^0.36.3",
+        "rollup-plugin-istanbul": "^1.1.0",
+        "rollup-plugin-sourcemaps": "^0.4.1",
+        "semicolon-less": "^0.7.0"
+    },
+    "bugs": {
+        "url": "https://github.com/RubyLouvre/avalon/issues"
+    }
 }
