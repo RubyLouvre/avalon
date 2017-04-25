@@ -8,8 +8,8 @@
 </head>
 
 <body>
-    <div ms-controller="grid">
-        <table border=1>
+    <script type='text' id='aaa'>
+        <table border='1'>
             <tr>
                 <td>a</td>
                 <td>b</td>
@@ -22,6 +22,9 @@
             </tr>
 
         </table>
+    </script>
+    <div ms-controller="grid" ms-html='@html'>
+        异步的模板与异步的数据
     </div>
 
     <style>
@@ -30,6 +33,7 @@
     <script>
         var vm = avalon.define({
             $id: 'grid',
+            html: '',
             arr: [{
                 a: 111,
                 b: 222,
@@ -45,15 +49,18 @@
             }]
         });
         setTimeout(function() {
-            vm.arr = [{
-                a: "aaa",
-                b: 'bbb',
-                c: "ccc"
-            }, {
-                a: "xxx",
-                b: 'yyy',
-                c: "zzz"
-            }]
+            vm.html = document.getElementById('aaa').text
+            setTimeout(function() {
+                vm.arr = [{
+                    a: "aaa",
+                    b: 'bbb',
+                    c: "ccc"
+                }, {
+                    a: "xxx",
+                    b: 'yyy',
+                    c: "zzz"
+                }]
+            }, 1000)
         }, 1000)
     </script>
 </body>
