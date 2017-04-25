@@ -83,9 +83,13 @@ function lexer(string, getOne) {
         if (arr) { //处理关闭标签
             string = string.replace(arr[0], '')
             const node = stack.pop()
-                //处理下面两种特殊情况：
-                //1. option会自动移除元素节点，将它们的nodeValue组成新的文本节点
-                //2. table会将没有被thead, tbody, tfoot包起来的tr或文本节点，收集到一个新的tbody元素中
+            if (!node) {
+                throw '是不是有属性值没有用引号括起'
+            }
+            //处理下面两种特殊情况：
+            //1. option会自动移除元素节点，将它们的nodeValue组成新的文本节点
+            //2. table会将没有被thead, tbody, tfoot包起来的tr或文本节点，收集到一个新的tbody元素中
+
             if (node.nodeName === 'option') {
                 node.children = [{
                     nodeName: '#text',
