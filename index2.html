@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>   
+     <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=8" />
+    <title>测试页</title>
+    <script src="./dist/avalon.js"></script>
+</head>
+
+<body>
+    <!--页头-->
+    <div class="container" :controller="test">
+        <ul>
+            <li ms-for="el in @arr">
+                <p>{{el.name}}</p>
+                     <div ms-for="elem in el.aa">{{elem}}</div>
+            </li>
+       </ul>
+    </div>
+        <script>
+        avalon.define({
+            $id: "test",
+            arr: [{name: '111', aa: [1,2]},{name: '222', aa: [3,4]}]
+        })
+
+    </script>
+
+</body>
+
+</html>
