@@ -400,6 +400,9 @@ function getAttrs(string) {
                 if (c === '\\' && /"'/.test(string.charAt(i + 1))) {
                     escape = !escape
                 }
+                if (c === '\n') {
+                    break;
+                }
                 if (c !== quote) {
                     attrValue += c
                 } else if (c === quote && !escape) {
