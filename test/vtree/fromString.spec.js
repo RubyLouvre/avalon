@@ -140,4 +140,18 @@ describe('fromString', function() {
         expect(div.children[0].nodeValue.trim()).toMatch(/\{\{.+\}\}/)
 
     })
+
+    it('正确解析自定义标签名', function() {
+        var str = heredoc(function() {
+            /*
+             <div>
+                <ms-dialog></ms-dialog>
+                <ms-checkbox-group></ms-checkbox-group>
+             </div>
+             */
+        })
+        var div = fromString(str)[0];
+        expect(div.children[0].nodeName).toBe('ms-dialog')
+        expect(div.children[1].nodeName).toBe('ms-checkbox-group')
+    })
 })
