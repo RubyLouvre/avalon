@@ -154,4 +154,21 @@ describe('fromString', function() {
         expect(div.children[0].nodeName).toBe('ms-dialog')
         expect(div.children[1].nodeName).toBe('ms-checkbox-group')
     })
+
+    it('过滤节点属性值中的换行符', function() {
+        var str = heredoc(function() {
+            /*
+             <div>
+                <ms-checkbox-group
+                    :widget="{value:@record.hobby,col:'hobby',options:[
+                                { label: '编程', value: 'code' },
+                                { label: '其他', value: 'other' }
+                            ],$rules:{required:true,type:'array'}}">
+                </ms-checkbox-group>
+             </div>
+             */
+        })
+        var div = fromString(str)[0];
+        expect(div.children[0].props[':widget']).not.toMatch(/\n/);
+    })
 })
