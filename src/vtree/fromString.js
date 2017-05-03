@@ -261,7 +261,7 @@ function insertTbody(nodes) {
 //<div>{{<div/>}}</div>
 function getCloseTag(string) {
     if (string.indexOf("</") === 0) {
-        var match = string.match(/\<\/(\w+)>/)
+        var match = string.match(/\<\/(\w+[^\s\/\>]*)>/);
         if (match) {
             var tag = match[1]
             string = string.slice(3 + tag.length)
