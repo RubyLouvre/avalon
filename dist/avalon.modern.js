@@ -1,5 +1,5 @@
 /*!
-built in 2017-4-25:15:41 version 2.2.5 by 司徒正美
+built in 2017-5-5:10:30 version 2.2.6 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 更改下载Promise的提示
@@ -410,7 +410,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         inspect: inspect,
         ohasOwn: ohasOwn,
         rword: rword,
-        version: "2.2.5",
+        version: "2.2.6",
         vmodels: {},
 
         directives: directives,
@@ -1993,7 +1993,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     //<div>{{<div/>}}</div>
     function getCloseTag(string) {
         if (string.indexOf("</") === 0) {
-            var match = string.match(/\<\/(\w+)>/)
+            var match = string.match(/\<\/(\w+[^\s\/\>]*)>/)
             if (match) {
                 var tag = match[1]
                 string = string.slice(3 + tag.length)
@@ -2133,6 +2133,9 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 case 'AttrValue':
                     if (c === '\\' && /"'/.test(string.charAt(i + 1))) {
                         escape = !escape
+                    }
+                    if (c === '\n') {
+                        break
                     }
                     if (c !== quote$$1) {
                         attrValue += c

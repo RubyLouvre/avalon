@@ -1,5 +1,5 @@
 /*!
-built in 2017-4-25:15:9 version 2.2.6 by 司徒正美
+built in 2017-5-5:10:30 version 2.2.6 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 修正IE下 orderBy BUG
@@ -8,10 +8,9 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 修复effect内部传参 BUG
 重构ms-validate的绑定事件的机制
 
-*/
-(function(global, factory) {
+*/(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() : typeof define === 'function' && define.amd ? define(factory) : global.avalon = factory();
-})(this, function() {
+})(this, function () {
     'use strict';
 
     var win = typeof window === 'object' ? window : typeof global === 'object' ? global : {};
@@ -33,8 +32,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         objectobject: 7, //IE7-8
         objectundefined: 6, //IE6
         undefinedfunction: NaN, // other modern browsers
-        undefinedobject: NaN
-    };
+        undefinedobject: NaN };
     /* istanbul ignore next  */
     var msie = document$1.documentMode || versions[typeof document$1.all + typeof XMLHttpRequest];
 
@@ -154,7 +152,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         }
         directives[name] = opts;
         if (!opts.update) {
-            opts.update = function() {};
+            opts.update = function () {};
         }
         if (opts.delay) {
             delayCompile[name] = 1;
@@ -171,12 +169,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
 
     var window$1 = win;
-
     function avalon(el) {
         return new avalon.init(el);
     }
 
-    avalon.init = function(el) {
+    avalon.init = function (el) {
         this[0] = this.element = el;
     };
 
@@ -206,7 +203,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
 
     var op = Object.prototype;
-
     function quote(str) {
         return avalon._quote(str);
     }
@@ -216,13 +212,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
     var hasConsole = typeof console === 'object';
     avalon.config = { debug: true };
-
     function log() {
         if (hasConsole && avalon.config.debug) {
             Function.apply.call(console.log, console, arguments);
         }
     }
-
     function warn() {
         if (hasConsole && avalon.config.debug) {
             var method = console.warn || console.log;
@@ -230,13 +224,10 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             Function.apply.call(method, console, arguments);
         }
     }
-
     function error(str, e) {
         throw (e || Error)(str);
     }
-
     function noop() {}
-
     function isObject(a) {
         return a !== null && typeof a === 'object';
     }
@@ -259,27 +250,24 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
 
     var rhyphen = /([a-z\d])([A-Z]+)/g;
-
     function hyphen(target) {
         //转换为连字符线风格
         return target.replace(rhyphen, '$1-$2').toLowerCase();
     }
 
     var rcamelize = /[-_][^-_]/g;
-
     function camelize(target) {
         //提前判断，提高getStyle等的效率
         if (!target || target.indexOf('-') < 0 && target.indexOf('_') < 0) {
             return target;
         }
         //转换为驼峰风格
-        return target.replace(rcamelize, function(match) {
+        return target.replace(rcamelize, function (match) {
             return match.charAt(1).toUpperCase();
         });
     }
 
     var _slice = ap.slice;
-
     function slice(nodes, start, end) {
         return _slice.call(nodes, start, end);
     }
@@ -305,7 +293,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
 
     var rescape = /[-.*+?^${}()|[\]\/\\]/g;
-
     function escapeRegExp(target) {
         //http://stevenlevithan.com/regex/xregexp/
         //将字符串安全格式化为正则表达式的源码
@@ -406,7 +393,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             config.rexpr = new RegExp(o + '([\\s\\S]*)' + c);
         }
     };
-
     function createAnchor(nodeValue) {
         return document$1.createComment(nodeValue);
     }
@@ -464,21 +450,22 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
      * 此模块用于修复语言的底层缺陷
      */
     function isNative(fn) {
-        return (/\[native code\]/.test(fn));
+        return (/\[native code\]/.test(fn)
+        );
     }
 
     /* istanbul ignore if*/
     if (!isNative('司徒正美'.trim)) {
         var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
-        String.prototype.trim = function() {
+        String.prototype.trim = function () {
             return this.replace(rtrim, '');
         };
     }
     if (!Object.create) {
-        Object.create = function() {
+        Object.create = function () {
             function F() {}
 
-            return function(o) {
+            return function (o) {
                 if (arguments.length != 1) {
                     throw new Error('Object.create implementation only accepts one parameter.');
                 }
@@ -490,12 +477,12 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     var hasDontEnumBug = !{
         'toString': null
     }.propertyIsEnumerable('toString');
-    var hasProtoEnumBug = function() {}.propertyIsEnumerable('prototype');
+    var hasProtoEnumBug = function () {}.propertyIsEnumerable('prototype');
     var dontEnums = ['toString', 'toLocaleString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'constructor'];
     var dontEnumsLength = dontEnums.length;
     /* istanbul ignore if*/
     if (!isNative(Object.keys)) {
-        Object.keys = function(object) {
+        Object.keys = function (object) {
             //ecma262v5 15.2.3.14
             var theKeys = [];
             var skipProto = hasProtoEnumBug && typeof object === 'function';
@@ -526,7 +513,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
     /* istanbul ignore if*/
     if (!isNative(Array.isArray)) {
-        Array.isArray = function(a) {
+        Array.isArray = function (a) {
             return Object.prototype.toString.call(a) === '[object Array]';
         };
     }
@@ -534,20 +521,18 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     /* istanbul ignore if*/
     if (!isNative(isNative.bind)) {
         /* istanbul ignore next*/
-        Function.prototype.bind = function(scope) {
+        Function.prototype.bind = function (scope) {
             if (arguments.length < 2 && scope === void 0) return this;
             var fn = this,
                 argv = arguments;
-            return function() {
+            return function () {
                 var args = [],
                     i;
                 for (i = 1; i < argv.length; i++) {
                     args.push(argv[i]);
-                }
-                for (i = 0; i < arguments.length; i++) {
+                }for (i = 0; i < arguments.length; i++) {
                     args.push(arguments[i]);
-                }
-                return fn.apply(scope, args);
+                }return fn.apply(scope, args);
             };
         };
     }
@@ -572,7 +557,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         // NodeList (e.g., getElementsByTagName), HTMLCollection (e.g., childNodes),
         // and will not fail on other DOM objects (as do DOM elements in IE < 9)
         /* istanbul ignore next*/
-        ap.slice = function(begin, end) {
+        ap.slice = function (begin, end) {
             // IE < 9 gets unhappy with an undefined end argument
             end = typeof end !== 'undefined' ? end : this.length;
 
@@ -633,8 +618,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 if (i < 0) i += n;
                 for (; i < n; i++) {
                     if (this[i] === item) return i;
-                }
-                return -1;
+                }return -1;
             },
             //定位操作，同上，不过是从后遍历。
             lastIndexOf: function lastIndexOf(item, index) {
@@ -643,8 +627,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 if (i < 0) i = Math.max(0, n + i);
                 for (; i >= 0; i--) {
                     if (this[i] === item) return i;
-                }
-                return -1;
+                }return -1;
             },
             //迭代操作，将数组的元素挨个儿传入一个函数中执行。Prototype.js的对应名字为each。
             forEach: iterator('', '_', ''),
@@ -660,7 +643,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
 
     //这里放置存在异议的方法
-    var compaceQuote = function() {
+    var compaceQuote = function () {
         //https://github.com/bestiejs/json3/blob/master/lib/json3.js
         var Escapes = {
             92: "\\\\",
@@ -686,7 +669,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             return unicodePrefix + toPaddedString(2, charCode.toString(16));
         };
         var reEscape = /[\x00-\x1f\x22\x5c]/g;
-        return function(value) {
+        return function (value) {
             /* istanbul ignore next */
             reEscape.lastIndex = 0;
             /* istanbul ignore next */
@@ -701,11 +684,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
 
     var class2type = {};
-    'Boolean Number String Function Array Date RegExp Object Error'.replace(avalon.rword, function(name) {
+    'Boolean Number String Function Array Date RegExp Object Error'.replace(avalon.rword, function (name) {
         class2type['[object ' + name + ']'] = name.toLowerCase();
     });
 
-    avalon.type = function(obj) {
+    avalon.type = function (obj) {
         //取得目标的类型
         if (obj == null) {
             return String(obj);
@@ -716,7 +699,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
     var rfunction = /^\s*\bfunction\b/;
 
-    avalon.isFunction = /* istanbul ignore if */ typeof alert === 'object' ? function(fn) {
+    avalon.isFunction = /* istanbul ignore if */typeof alert === 'object' ? function (fn) {
         /* istanbul ignore next */
         try {
             /* istanbul ignore next */
@@ -725,7 +708,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             /* istanbul ignore next */
             return false;
         }
-    } : function(fn) {
+    } : function (fn) {
         return inspect.call(fn) === '[object Function]';
     };
 
@@ -793,7 +776,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
     //与jQuery.extend方法，可用于浅拷贝，深拷贝
     /* istanbul ignore next */
-    avalon.mix = avalon.fn.mix = function() {
+    avalon.mix = avalon.fn.mix = function () {
         var n = arguments.length,
             isDeep = false,
             i = 0,
@@ -882,7 +865,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         return false;
     }
 
-    avalon.each = function(obj, fn) {
+    avalon.each = function (obj, fn) {
         if (obj) {
             //排除null, undefined
             var i = 0;
@@ -899,7 +882,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
         }
     };
-    (function() {
+    (function () {
         var welcomeIntro = ["%cavalon.js %c" + avalon.version + " %cin debug mode, %cmore...", "color: rgb(114, 157, 52); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(85, 85, 85); font-weight: normal;", "color: rgb(82, 140, 224); font-weight: normal; text-decoration: underline;"];
         var welcomeMessage = "You're running avalon in debug mode - messages will be printed to the console to help you fix problems and optimise your application.\n\n" + 'To disable debug mode, add this line at the start of your app:\n\n  avalon.config({debug: false});\n\n' + 'Debug mode also automatically shut down amicably when your app is minified.\n\n' + "Get help and support:\n  https://segmentfault.com/t/avalon\n  http://avalonjs.coding.me/\n  http://www.baidu-x.com/?q=avalonjs\n  http://www.avalon.org.cn/\n\nFound a bug? Raise an issue:\n  https://github.com/RubyLouvre/avalon/issues\n\n";
         if (typeof console === 'object') {
@@ -917,7 +900,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         var k = Math.pow(10, prec);
         return '' + (Math.round(n * k) / k).toFixed(prec);
     }
-
     function numberFilter(number, decimals, point, thousands) {
         //https://github.com/txgruppi/number_format
         //form http://phpjs.org/functions/number_format/
@@ -964,13 +946,13 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     //    <a href="jav&#x09;ascript:alert('XSS');">IE67chrome</a>
     //    <a href="jav&#x0A;ascript:alert('XSS');">IE67chrome</a>
     function sanitizeFilter(str) {
-        return str.replace(rscripts, "").replace(ropen, function(a, b) {
+        return str.replace(rscripts, "").replace(ropen, function (a, b) {
             var match = a.toLowerCase().match(/<(\w+)\s/);
             if (match) {
                 //处理a标签的href属性，img标签的src属性，form标签的action属性
                 var reg = rsanitize[match[1]];
                 if (reg) {
-                    a = a.replace(reg, function(s, name, value) {
+                    a = a.replace(reg, function (s, name, value) {
                         var quote = value.charAt(0);
                         return name + "=" + quote + "javascript:void(0)" + quote; // jshint ignore:line
                     });
@@ -1028,13 +1010,12 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         num = '' + num;
         while (num.length < digits) {
             num = '0' + num;
-        }
-        if (trim) num = num.substr(num.length - digits);
+        }if (trim) num = num.substr(num.length - digits);
         return neg + num;
     }
 
     function dateGetter(name, size, offset, trim) {
-        return function(date) {
+        return function (date) {
             var value = date["get" + name]();
             if (offset > 0 || value > -offset) value += offset;
             if (value === 0 && offset === -12) {
@@ -1046,7 +1027,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
 
     function dateStrGetter(name, shortForm) {
-        return function(date, formats) {
+        return function (date, formats) {
             var value = date["get" + name]();
             var get = (shortForm ? "SHORT" + name : name).toUpperCase();
             return formats[get][value];
@@ -1089,7 +1070,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     };
     var rdateFormat = /((?:[^yMdHhmsaZE']+)|(?:'(?:[^']|'')*')|(?:E+|y+|M+|d+|H+|h+|m+|s+|a|Z))(.*)/;
     var raspnetjson = /^\/Date\((\d+)\)\/$/;
-
     function dateFilter(date, format) {
         var locate = dateFilter.locate,
             text = "",
@@ -1108,7 +1088,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 var dateArray = [0, 0, 0, 0, 0, 0, 0];
                 var oDate = new Date(0);
                 //取得年月日
-                trimDate = trimDate.replace(/^(\d+)\D(\d+)\D(\d+)/, function(_, a, b, c) {
+                trimDate = trimDate.replace(/^(\d+)\D(\d+)\D(\d+)/, function (_, a, b, c) {
                     var array = c.length === 4 ? [c, a, b] : [a, b, c];
                     dateArray[0] = toInt(array[0]); //年
                     dateArray[1] = toInt(array[1]) - 1; //月
@@ -1117,7 +1097,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 });
                 var dateSetter = oDate.setFullYear;
                 var timeSetter = oDate.setHours;
-                trimDate = trimDate.replace(/[T\s](\d+):(\d+):?(\d+)?\.?(\d)?/, function(_, a, b, c, d) {
+                trimDate = trimDate.replace(/[T\s](\d+):(\d+):?(\d+)?\.?(\d)?/, function (_, a, b, c, d) {
                     dateArray[3] = toInt(a); //小时
                     dateArray[4] = toInt(b); //分钟
                     dateArray[5] = toInt(c); //秒
@@ -1129,7 +1109,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 });
                 var tzHour = 0;
                 var tzMin = 0;
-                trimDate = trimDate.replace(/Z|([+-])(\d\d):?(\d\d)/, function(z, symbol, c, d) {
+                trimDate = trimDate.replace(/Z|([+-])(\d\d):?(\d\d)/, function (z, symbol, c, d) {
                     dateSetter = oDate.setUTCFullYear;
                     timeSetter = oDate.setUTCHours;
                     if (symbol) {
@@ -1161,7 +1141,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 format = null;
             }
         }
-        parts.forEach(function(value) {
+        parts.forEach(function (value) {
             fn = DATE_FORMATS[value];
             text += fn ? fn(date, locate) : value.replace(/(^'|'$)/g, "").replace(/''/g, "'");
         });
@@ -1249,14 +1229,14 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     function orderBy(array, by, decend) {
         var type = avalon.type(array);
         if (type !== 'array' && type !== 'object') throw 'orderBy只能处理对象或数组';
-        var criteria = typeof by == 'string' ? function(el) {
+        var criteria = typeof by == 'string' ? function (el) {
             return el && el[by];
-        } : typeof by === 'function' ? by : function(el) {
+        } : typeof by === 'function' ? by : function (el) {
             return el;
         };
         var mapping = {};
         var temp = [];
-        __repeat(array, Array.isArray(array), function(key) {
+        __repeat(array, Array.isArray(array), function (key) {
             var val = array[key];
             var k = criteria(val, key);
             if (k in mapping) {
@@ -1273,7 +1253,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         }
         var _array = type === 'array';
         var target = _array ? [] : {};
-        return recovery(target, temp, function(k) {
+        return recovery(target, temp, function (k) {
             var key = mapping[k].shift();
             if (_array) {
                 target.push(array[key]);
@@ -1285,11 +1265,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
     function __repeat(array, isArray$$1, cb) {
         if (isArray$$1) {
-            array.forEach(function(val, index) {
+            array.forEach(function (val, index) {
                 cb(index);
             });
         } else if (typeof array.$track === 'string') {
-            array.$track.replace(/[^\u2625]+/g, function(k) {
+            array.$track.replace(/[^☥]+/g, function (k) {
                 cb(k);
             });
         } else {
@@ -1300,7 +1280,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
         }
     }
-
     function filterBy(array, search) {
         var type = avalon.type(array);
         if (type !== 'array' && type !== 'object') throw 'filterBy只能处理对象或数组';
@@ -1322,11 +1301,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         }
         var isArray$$1 = type === 'array';
         var target = isArray$$1 ? [] : {};
-        __repeat(array, isArray$$1, function(key) {
+        __repeat(array, isArray$$1, function (key) {
             var val = array[key];
             if (criteria.apply({
-                    key: key
-                }, [val, key].concat(args))) {
+                key: key
+            }, [val, key].concat(args))) {
                 if (isArray$$1) {
                     target.push(val);
                 } else {
@@ -1340,7 +1319,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     function selectBy(data, array, defaults) {
         if (avalon.isObject(data) && !Array.isArray(data)) {
             var target = [];
-            return recovery(target, array, function(name) {
+            return recovery(target, array, function (name) {
                 target.push(data.hasOwnProperty(name) ? data[name] : defaults ? defaults[name] : '');
             });
         } else {
@@ -1381,7 +1360,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             return data;
         }
         var target = {};
-        return recovery(target, data, function(el) {
+        return recovery(target, data, function (el) {
             target[el.key] = el.value;
         });
     }
@@ -1398,7 +1377,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     function convertArray(array, isArray$$1) {
         var ret = [],
             i = 0;
-        __repeat(array, isArray$$1, function(key) {
+        __repeat(array, isArray$$1, function (key) {
             ret[i] = {
                 oldIndex: i,
                 value: array[key],
@@ -1431,8 +1410,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         down: 40
     };
     for (var name$1 in keys) {
-        (function(filter, key) {
-            eventFilters[filter] = function(e) {
+        (function (filter, key) {
+            eventFilters[filter] = function (e) {
                 if (e.which !== key) {
                     e.$return = true;
                 }
@@ -1450,9 +1429,9 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
     var filters = avalon.filters = {};
 
-    avalon.composeFilters = function() {
+    avalon.composeFilters = function () {
         var args = arguments;
-        return function(value) {
+        return function (value) {
             for (var i = 0, arr; arr = args[i++];) {
                 var name = arr[0];
                 var filter = avalon.filters[name];
@@ -1487,7 +1466,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
             end = typeof end === "string" ? end : "...";
             return str.length > length ? str.slice(0, length - end.length) + end : /* istanbul ignore else*/
-                str;
+            str;
         },
 
         camelize: avalon.camelize,
@@ -1496,7 +1475,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         sanitize: sanitizeFilter,
         number: numberFilter,
         currency: function currency(amount, symbol, fractionSize) {
-            return (symbol || '\xA5') + numberFilter(amount, isFinite(fractionSize) ? /* istanbul ignore else*/ fractionSize : 2);
+            return (symbol || '\xA5') + numberFilter(amount, isFinite(fractionSize) ? /* istanbul ignore else*/fractionSize : 2);
         }
     }, { filterBy: filterBy, orderBy: orderBy, selectBy: selectBy, limitBy: limitBy }, eventFilters);
 
@@ -1567,7 +1546,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
     avalon.contains = fixContains;
 
-    avalon.cloneNode = function(a) {
+    avalon.cloneNode = function (a) {
         return a.cloneNode(true);
     };
 
@@ -1578,13 +1557,13 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             avalon.cloneNode = fixClone;
         }
         if (!document$1.contains) {
-            document$1.contains = function(b) {
+            document$1.contains = function (b) {
                 return fixContains(document$1, b);
             };
         }
         if (avalon.modern) {
             if (!document$1.createTextNode('x').contains) {
-                Node.prototype.contains = function(child) {
+                Node.prototype.contains = function (child) {
                     //IE6-8没有Node对象
                     return fixContains(this, child);
                 };
@@ -1596,12 +1575,12 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 HTMLElement.prototype.__defineGetter__(prop, cb);
             }
         }
-        fixFF('outerHTML', function() {
+        fixFF('outerHTML', function () {
             var div = document$1.createElement('div');
             div.appendChild(this);
             return div.innerHTML;
         });
-        fixFF('children', function() {
+        fixFF('children', function () {
             var children = [];
             for (var i = 0, el; el = this.childNodes[i++];) {
                 if (el.nodeType === 1) {
@@ -1610,7 +1589,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
             return children;
         });
-        fixFF('innerText', function() {
+        fixFF('innerText', function () {
             //firefox45+, chrome4+ http://caniuse.com/#feat=innertext
             return this.textContent;
         });
@@ -1666,12 +1645,12 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         return node.classList;
     }
 
-    'add,remove'.replace(rword, function(method) {
-        avalon.fn[method + 'Class'] = function(cls) {
+    'add,remove'.replace(rword, function (method) {
+        avalon.fn[method + 'Class'] = function (cls) {
             var el = this[0] || {};
             //https://developer.mozilla.org/zh-CN/docs/Mozilla/Firefox/Releases/26
             if (cls && typeof cls === 'string' && el.nodeType === 1) {
-                cls.replace(rnowhite, function(c) {
+                cls.replace(rnowhite, function (c) {
                     classListFactory(el)[method](c);
                 });
             }
@@ -1687,7 +1666,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         toggleClass: function toggleClass(value, stateVal) {
             var isBool = typeof stateVal === 'boolean';
             var me = this;
-            String(value).replace(rnowhite, function(c) {
+            String(value).replace(rnowhite, function (c) {
                 var state = isBool ? stateVal : !me.hasClass(c);
                 me[state ? 'addClass' : 'removeClass'](c);
             });
@@ -1699,7 +1678,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 
     //防止压缩时出错
-    'accept-charset,acceptCharset|char,ch|charoff,chOff|class,className|for,htmlFor|http-equiv,httpEquiv'.replace(/[^\|]+/g, function(a) {
+    'accept-charset,acceptCharset|char,ch|charoff,chOff|class,className|for,htmlFor|http-equiv,httpEquiv'.replace(/[^\|]+/g, function (a) {
         var k = a.split(',');
         propMap[k[0]] = k[1];
     });
@@ -1715,13 +1694,13 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
      */
     var bools = ['autofocus,autoplay,async,allowTransparency,checked,controls', 'declare,disabled,defer,defaultChecked,defaultSelected,', 'isMap,loop,multiple,noHref,noResize,noShade', 'open,readOnly,selected'].join(',');
 
-    bools.replace(/\w+/g, function(name) {
+    bools.replace(/\w+/g, function (name) {
         propMap[name.toLowerCase()] = name;
     });
 
     var anomaly = ['accessKey,bgColor,cellPadding,cellSpacing,codeBase,codeType,colSpan', 'dateTime,defaultValue,contentEditable,frameBorder,longDesc,maxLength,' + 'marginWidth,marginHeight,rowSpan,tabIndex,useMap,vSpace,valueType,vAlign'].join(',');
 
-    anomaly.replace(/\w+/g, function(name) {
+    anomaly.replace(/\w+/g, function (name) {
         propMap[name.toLowerCase()] = name;
     });
 
@@ -1752,7 +1731,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
     var rsvg = /^\[object SVG\w*Element\]$/;
     var ramp = /&amp;/g;
-
     function updateAttrs(node, attrs) {
         for (var attrName in attrs) {
             try {
@@ -1828,7 +1806,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         avalon.parseJSON = compactParseJSON;
     }
 
-    avalon.fn.attr = function(name, value) {
+    avalon.fn.attr = function (name, value) {
         if (arguments.length === 2) {
             this[0].setAttribute(name, value);
             return this;
@@ -1841,7 +1819,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     avalon.cssNumber = oneObject('animationIterationCount,columnCount,order,flex,flexGrow,flexShrink,fillOpacity,fontWeight,lineHeight,opacity,orphans,widows,zIndex,zoom');
     var prefixes = ['', '-webkit-', '-o-', '-moz-', '-ms-'];
     /* istanbul ignore next */
-    avalon.cssName = function(name, host, camelCase) {
+    avalon.cssName = function (name, host, camelCase) {
         if (cssMap[name]) {
             return cssMap[name];
         }
@@ -1855,7 +1833,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         return null;
     };
     /* istanbul ignore next */
-    avalon.css = function(node, name, value, fn) {
+    avalon.css = function (node, name, value, fn) {
         //读写删除元素节点的样式
         if (node instanceof avalon) {
             node = node[0];
@@ -1864,7 +1842,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             return;
         }
         var prop = avalon.camelize(name);
-        name = avalon.cssName(prop) || /* istanbul ignore next*/ prop;
+        name = avalon.cssName(prop) || /* istanbul ignore next*/prop;
         if (value === void 0 || typeof value === 'boolean') {
             //获取样式
             fn = cssHooks[prop + ':get'] || cssHooks['@:get'];
@@ -1889,7 +1867,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         }
     };
     /* istanbul ignore next */
-    avalon.fn.css = function(name, value) {
+    avalon.fn.css = function (name, value) {
         if (avalon.isPlainObject(name)) {
             for (var i in name) {
                 avalon.css(this, i, name[i]);
@@ -1900,14 +1878,14 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         return ret !== void 0 ? ret : this;
     };
     /* istanbul ignore next */
-    avalon.fn.position = function() {
+    avalon.fn.position = function () {
         var offsetParent,
             offset,
             elem = this[0],
             parentOffset = {
-                top: 0,
-                left: 0
-            };
+            top: 0,
+            left: 0
+        };
         if (!elem) {
             return parentOffset;
         }
@@ -1932,7 +1910,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         };
     };
     /* istanbul ignore next */
-    avalon.fn.offsetParent = function() {
+    avalon.fn.offsetParent = function () {
         var offsetParent = this[0].offsetParent;
         while (offsetParent && avalon.css(offsetParent, 'position') === 'static') {
             offsetParent = offsetParent.offsetParent;
@@ -1941,7 +1919,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     };
 
     /* istanbul ignore next */
-    cssHooks['@:set'] = function(node, name, value) {
+    cssHooks['@:set'] = function (node, name, value) {
         try {
             //node.style.width = NaN;node.style.width = 'xxxxxxx';
             //node.style.width = undefine 在旧式IE下会抛异常
@@ -1949,7 +1927,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         } catch (e) {}
     };
     /* istanbul ignore next */
-    cssHooks['@:get'] = function(node, name) {
+    cssHooks['@:get'] = function (node, name) {
         if (!node || !node.style) {
             throw new Error('getComputedStyle要求传入一个节点 ' + node);
         }
@@ -1964,15 +1942,16 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         return ret;
     };
 
-    cssHooks['opacity:get'] = function(node) {
+    cssHooks['opacity:get'] = function (node) {
         var ret = cssHooks['@:get'](node, 'opacity');
         return ret === '' ? '1' : ret;
     };
 
-    'top,left'.replace(avalon.rword, function(name) {
-        cssHooks[name + ':get'] = function(node) {
+    'top,left'.replace(avalon.rword, function (name) {
+        cssHooks[name + ':get'] = function (node) {
             var computed = cssHooks['@:get'](node, name);
-            return (/px$/.test(computed) ? computed : avalon(node).position()[name] + 'px');
+            return (/px$/.test(computed) ? computed : avalon(node).position()[name] + 'px'
+            );
         };
     });
 
@@ -2008,11 +1987,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     avalon.each({
         Width: 'width',
         Height: 'height'
-    }, function(name, method) {
+    }, function (name, method) {
         var clientProp = 'client' + name,
             scrollProp = 'scroll' + name,
             offsetProp = 'offset' + name;
-        cssHooks[method + ':get'] = function(node, which, override) {
+        cssHooks[method + ':get'] = function (node, which, override) {
             var boxSizing = -4;
             if (typeof override === 'number') {
                 boxSizing = override;
@@ -2033,7 +2012,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
             return ret;
         };
-        cssHooks[method + '&get'] = function(node) {
+        cssHooks[method + '&get'] = function (node) {
             var hidden = [];
             showHidden(node, hidden);
             var val = cssHooks[method + ':get'](node);
@@ -2047,7 +2026,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
             return val;
         };
-        avalon.fn[method] = function(value) {
+        avalon.fn[method] = function (value) {
             //会忽视其display
             var node = this[0];
             if (arguments.length === 0) {
@@ -2068,10 +2047,10 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 return this.css(method, value);
             }
         };
-        avalon.fn['inner' + name] = function() {
+        avalon.fn['inner' + name] = function () {
             return cssHooks[method + ':get'](this[0], void 0, -2);
         };
-        avalon.fn['outer' + name] = function(includeMargin) {
+        avalon.fn['outer' + name] = function (includeMargin) {
             return cssHooks[method + ':get'](this[0], void 0, includeMargin === true ? 2 : 0);
         };
     });
@@ -2094,7 +2073,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             medium: ie8 ? '3px' : '4px',
             thick: ie8 ? '5px' : '6px'
         };
-        cssHooks['@:get'] = function(node, name) {
+        cssHooks['@:get'] = function (node, name) {
             //取得精确值，不过它有可能是带em,pc,mm,pt,%等单位
             var currentStyle = node.currentStyle;
             var ret = currentStyle[name];
@@ -2124,7 +2103,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
             return ret === '' ? 'auto' : border[ret] || ret;
         };
-        cssHooks['opacity:set'] = function(node, name, value) {
+        cssHooks['opacity:set'] = function (node, name, value) {
             var style = node.style;
 
             var opacity = Number(value) <= 1 ? 'alpha(opacity=' + value * 100 + ')' : '';
@@ -2138,7 +2117,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 style.removeAttribute('filter');
             }
         };
-        cssHooks['opacity:get'] = function(node) {
+        cssHooks['opacity:get'] = function (node) {
             var match = node.style.filter.match(ropactiy) || [];
             var ret = false;
             for (var i = 0, el; el = match[i++];) {
@@ -2153,13 +2132,13 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
 
     /* istanbul ignore next */
-    avalon.fn.offset = function() {
+    avalon.fn.offset = function () {
         //取得距离页面左右角的坐标
         var node = this[0],
             box = {
-                left: 0,
-                top: 0
-            };
+            left: 0,
+            top: 0
+        };
         if (!node || !node.tagName || !node.ownerDocument) {
             return box;
         }
@@ -2195,8 +2174,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     avalon.each({
         scrollLeft: 'pageXOffset',
         scrollTop: 'pageYOffset'
-    }, function(method, prop) {
-        avalon.fn[method] = function(val) {
+    }, function (method, prop) {
+        avalon.fn[method] = function (val) {
             var node = this[0] || {};
             var win = getWindow(node);
             var root$$1 = avalon.root;
@@ -2239,7 +2218,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
 
     var valHooks = {
-        'option:get': msie ? getOption : function(node) {
+        'option:get': msie ? getOption : function (node) {
             return node.value;
         },
         'select:get': function selectGet(node, value) {
@@ -2282,7 +2261,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         }
     };
 
-    avalon.fn.val = function(value) {
+    avalon.fn.val = function (value) {
         var node = this[0];
         if (node && node.nodeType === 1) {
             var get = arguments.length === 0;
@@ -2365,7 +2344,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     var hiddenTag = { style: 1, script: 1, noscript: 1, template: 1 };
     var rcontent = /\S/; //判定里面有没有内容
     var rsp = /\s/;
-
     function fromString(str) {
         return from(str);
     }
@@ -2408,7 +2386,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         var origString = string;
         var origLength = string.length;
 
-        stack.last = function() {
+        stack.last = function () {
             return stack[stack.length - 1];
         };
         var ret = [];
@@ -2604,7 +2582,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     //<div>{{<div/>}}</div>
     function getCloseTag(string) {
         if (string.indexOf("</") === 0) {
-            var match = string.match(/\<\/(\w+)>/);
+            var match = string.match(/\<\/(\w+[^\s\/\>]*)>/);
             if (match) {
                 var tag = match[1];
                 string = string.slice(3 + tag.length);
@@ -2687,7 +2665,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
     function getText(node) {
         var ret = '';
-        node.children.forEach(function(el) {
+        node.children.forEach(function (el) {
             if (el.nodeName === '#text') {
                 ret += el.nodeValue;
             } else if (el.children && !hiddenTag[el.nodeName]) {
@@ -2745,6 +2723,9 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                     if (c === '\\' && /"'/.test(string.charAt(i + 1))) {
                         escape = !escape;
                     }
+                    if (c === '\n') {
+                        break;
+                    }
                     if (c !== quote$$1) {
                         attrValue += c;
                     } else if (c === quote$$1 && !escape) {
@@ -2762,7 +2743,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     var htmlCache = new Cache(128);
     var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig;
 
-    avalon.parseHTML = function(html) {
+    avalon.parseHTML = function (html) {
         var fragment = createFragment();
         //处理非字符串
         if (typeof html !== 'string') {
@@ -2789,18 +2770,18 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         return fragment;
     };
 
-    avalon.innerHTML = function(node, html) {
+    avalon.innerHTML = function (node, html) {
         var parsed = avalon.parseHTML(html);
         this.clearHTML(node);
         node.appendChild(parsed);
     };
 
     //https://github.com/karloespiritu/escapehtmlent/blob/master/index.js
-    avalon.unescapeHTML = function(html) {
+    avalon.unescapeHTML = function (html) {
         return String(html).replace(/&quot;/g, '"').replace(/&#39;/g, '\'').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
     };
 
-    avalon.clearHTML = function(node) {
+    avalon.clearHTML = function (node) {
         /* istanbul ignore next */
         while (node.lastChild) {
             node.removeChild(node.lastChild);
@@ -2850,14 +2831,14 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     var hackSafari = avalon.modern && document$1.ontouchstart;
 
     //添加fn.bind, fn.unbind, bind, unbind
-    avalon.fn.bind = function(type, fn, phase) {
+    avalon.fn.bind = function (type, fn, phase) {
         if (this[0]) {
             //此方法不会链
             return avalon.bind(this[0], type, fn, phase);
         }
     };
 
-    avalon.fn.unbind = function(type, fn, phase) {
+    avalon.fn.unbind = function (type, fn, phase) {
         if (this[0]) {
             var args = _slice.call(arguments);
             args.unshift(this[0]);
@@ -2867,7 +2848,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     };
 
     /*绑定事件*/
-    avalon.bind = function(elem, type, fn) {
+    avalon.bind = function (elem, type, fn) {
         if (elem.nodeType === 1) {
             var value = elem.getAttribute('avalon-events') || '';
             //如果是使用ms-on-*绑定的回调,其uuid格式为e12122324,
@@ -2923,7 +2904,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         node.setAttribute('avalon-events', value);
     }
     /* istanbul ignore next */
-    avalon.unbind = function(elem, type, fn) {
+    avalon.unbind = function (elem, type, fn) {
         if (elem.nodeType === 1) {
             var value = elem.getAttribute('avalon-events') || '';
             switch (arguments.length) {
@@ -2932,14 +2913,14 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                     elem.removeAttribute('avalon-events');
                     break;
                 case 2:
-                    value = value.split(',').filter(function(str) {
+                    value = value.split(',').filter(function (str) {
                         return str.indexOf(type + ':') === -1;
                     }).join(',');
                     setEventId(elem, value);
                     break;
                 default:
                     var search = type + ':' + fn.uuid;
-                    value = value.split(',').filter(function(str) {
+                    value = value.split(',').filter(function (str) {
                         return str !== search;
                     }).join(',');
                     setEventId(elem, value);
@@ -2958,7 +2939,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         if (value && (elem.disabled !== true || type !== 'click')) {
             var uuids = [];
             var reg = typeRegExp[type] || (typeRegExp[type] = new RegExp("\\b" + type + '\\:([^,\\s]+)', 'g'));
-            value.replace(reg, function(a, b) {
+            value.replace(reg, function (a, b) {
                 uuids.push(b);
                 return a;
             });
@@ -3080,11 +3061,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         avalon.each({
             mouseenter: 'mouseover',
             mouseleave: 'mouseout'
-        }, function(origType, fixType) {
+        }, function (origType, fixType) {
             eventHooks[origType] = {
                 type: fixType,
                 fix: function fix(elem, fn) {
-                    return function(e) {
+                    return function (e) {
                         var t = e.relatedTarget;
                         if (!t || t !== elem && !(elem.compareDocumentPosition(t) & 16)) {
                             delete e.type;
@@ -3100,7 +3081,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     avalon.each({
         AnimationEvent: 'animationend',
         WebKitAnimationEvent: 'webkitAnimationEnd'
-    }, function(construct, fixType) {
+    }, function (construct, fixType) {
         if (window$1[construct] && !eventHooks.animationend) {
             eventHooks.animationend = {
                 type: fixType
@@ -3120,7 +3101,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         eventHooks.mousewheel = {
             type: fixWheelType,
             fix: function fix(elem, fn) {
-                return function(e) {
+                return function (e) {
                     var delta = e[fixWheelDelta] > 0 ? -120 : 120;
                     e.wheelDelta = ~~elem._ms_wheel_ + delta;
                     elem._ms_wheel_ = e.wheelDeltaY = e.wheelDelta;
@@ -3142,19 +3123,19 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         delete canBubbleUp.select;
     }
     /* istanbul ignore next */
-    avalon._nativeBind = modern ? function(el, type, fn, capture) {
+    avalon._nativeBind = modern ? function (el, type, fn, capture) {
         el.addEventListener(type, fn, !!capture);
-    } : function(el, type, fn) {
+    } : function (el, type, fn) {
         el.attachEvent('on' + type, fn);
     };
     /* istanbul ignore next */
-    avalon._nativeUnBind = modern ? function(el, type, fn, a) {
+    avalon._nativeUnBind = modern ? function (el, type, fn, a) {
         el.removeEventListener(type, fn, !!a);
-    } : function(el, type, fn) {
+    } : function (el, type, fn) {
         el.detachEvent('on' + type, fn);
     };
     /* istanbul ignore next */
-    avalon.fireDom = function(elem, type, opts) {
+    avalon.fireDom = function (elem, type, opts) {
         if (document$1.createEvent) {
             var hackEvent = document$1.createEvent('Events');
             hackEvent.initEvent(type, true, true, opts);
@@ -3174,7 +3155,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
     var rmouseEvent = /^(?:mouse|contextmenu|drag)|click/;
     /* istanbul ignore next */
-    avEvent.prototype.fixEvent = function() {
+    avEvent.prototype.fixEvent = function () {
         var event = this;
         if (event.which == null && event.type.indexOf('key') === 0) {
             event.which = event.charCode != null ? event.charCode : event.keyCode;
@@ -3195,7 +3176,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         eventHooks.input = {
             type: 'propertychange',
             fix: function fix(elem, fn) {
-                return function(e) {
+                return function (e) {
                     if (e.propertyName === 'value') {
                         e.type = 'input';
                         return fn.apply(this, arguments);
@@ -3214,14 +3195,14 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         }
     }
 
-    avalon.ready = function(fn) {
+    avalon.ready = function (fn) {
         readyList.push(fn);
         if (avalon.isReady) {
             fireReady();
         }
     };
 
-    avalon.ready(function() {
+    avalon.ready(function () {
         avalon.scan && avalon.scan(document$1.body);
     });
 
@@ -3243,7 +3224,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         } else if (document$1.attachEvent) {
             //必须传入三个参数，否则在firefox4-26中报错
             //caught exception: [Exception... "Not enough arguments"  nsresult: "0x
-            document$1.attachEvent('onreadystatechange', function() {
+            document$1.attachEvent('onreadystatechange', function () {
                 if (document$1.readyState === 'complete') {
                     fireReady();
                 }
@@ -3317,7 +3298,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
     //专门用于处理option标签里面的标签
     var rtrimHTML = /<\w+(\s+("[^"]*"|'[^']*'|[^>])+)?>|<\/\w+>/gi;
-
     function trimHTML(v) {
         return String(v).replace(rtrimHTML, '').trim();
     }
@@ -3496,7 +3476,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 default:
                     /* istanbul ignore next */
                     if (!this.isVoidTag && this.children) {
-                        this.children.forEach(function(el) {
+                        this.children.forEach(function (el) {
                             return c && dom.appendChild(avalon.vdom(c, 'toDOM'));
                         });
                     }
@@ -3523,14 +3503,13 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
             str += '>';
             if (this.children) {
-                str += this.children.map(function(el) {
+                str += this.children.map(function (el) {
                     return el ? avalon.vdom(el, 'toHTML') : '';
                 }).join('');
             }
             return str + '</' + this.nodeName + '>';
         }
     };
-
     function hackIE(dom, nodeName, template) {
         switch (nodeName) {
             case 'style':
@@ -3543,7 +3522,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 break;
         }
     }
-
     function skipFalseAndFunction(a) {
         return a !== false && Object(a) !== a;
     }
@@ -3622,14 +3600,14 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         },
         toFragment: function toFragment() {
             var f = createFragment();
-            this.children.forEach(function(el) {
+            this.children.forEach(function (el) {
                 return f.appendChild(avalon.vdom(el, 'toDOM'));
             });
             return f;
         },
         toHTML: function toHTML() {
             var c = this.children;
-            return c.map(function(el) {
+            return c.map(function (el) {
                 return avalon.vdom(el, 'toHTML');
             }).join('');
         }
@@ -3651,7 +3629,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         '#comment': 'VComment'
     };
 
-    var vdom = avalon.vdomAdaptor = avalon.vdom = function(obj, method) {
+    var vdom = avalon.vdomAdaptor = avalon.vdom = function (obj, method) {
         if (!obj) {
             //obj在ms-for循环里面可能是null
             return method === "toHTML" ? '' : createFragment();
@@ -3664,7 +3642,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         return avalon[constName].prototype[method].call(obj);
     };
 
-    avalon.domize = function(a) {
+    avalon.domize = function (a) {
         return avalon.vdom(a, 'toDOM');
     };
 
@@ -3672,7 +3650,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     avalon.uniqActions = {};
     avalon.inTransaction = 0;
     config.trackDeps = false;
-    avalon.track = function() {
+    avalon.track = function () {
         if (config.trackDeps) {
             avalon.log.apply(avalon, arguments);
         }
@@ -3823,18 +3801,15 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         map: {}
     };
     var rfill = /\?\?\d+/g;
-
     function dig(a) {
         var key = '??' + stringNum++;
         stringPool.map[key] = a;
         return key + ' ';
     }
-
     function fill(a) {
         var val = stringPool.map[a];
         return val;
     }
-
     function clearString(str) {
         var array = readString(str);
         for (var i = 0, n = array.length; i < n; i++) {
@@ -3872,7 +3847,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
 
     var keyMap = avalon.oneObject("break,case,catch,continue,debugger,default,delete,do,else,false," + "finally,for,function,if,in,instanceof,new,null,return,switch,this," + "throw,true,try,typeof,var,void,while,with," + /* 关键字*/
-        "abstract,boolean,byte,char,class,const,double,enum,export,extends," + "final,float,goto,implements,import,int,interface,long,native," + "package,private,protected,public,short,static,super,synchronized," + "throws,transient,volatile,arguments");
+    "abstract,boolean,byte,char,class,const,double,enum,export,extends," + "final,float,goto,implements,import,int,interface,long,native," + "package,private,protected,public,short,static,super,synchronized," + "throws,transient,volatile,arguments");
 
     var skipMap = avalon.mix({
         Math: 1,
@@ -3897,7 +3872,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     var exprCache = new Cache(300);
 
     function addScopeForLocal(str) {
-        return str.replace(robjectProp, dig).replace(rlocalVar, function(el) {
+        return str.replace(robjectProp, dig).replace(rlocalVar, function (el) {
             if (!skipMap[el]) {
                 return "__vmodel__." + el;
             }
@@ -3914,18 +3889,18 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
         stringPool.map = {};
         //https://github.com/RubyLouvre/avalon/issues/1849
-        var input = expr.replace(rregexp, function(a, b) {
+        var input = expr.replace(rregexp, function (a, b) {
             return b + dig(a.slice(b.length));
         }); //移除所有正则
         input = clearString(input); //移除所有字符串
         input = input.replace(rshortCircuit, dig). //移除所有短路运算符
         replace(ruselessSp, '$1'). //移除.|两端空白
 
-        replace(robjectKey, function(_, a, b) {
-                //移除所有键名
-                return a + dig(b) + ':'; //比如 ms-widget="[{is:'ms-address-wrap', $id:'address'}]"这样极端的情况 
-            }).replace(rvmKey, '$1__vmodel__.'). //转换@与##为__vmodel__
-        replace(rfilterName, function(a, b) {
+        replace(robjectKey, function (_, a, b) {
+            //移除所有键名
+            return a + dig(b) + ':'; //比如 ms-widget="[{is:'ms-address-wrap', $id:'address'}]"这样极端的情况 
+        }).replace(rvmKey, '$1__vmodel__.'). //转换@与##为__vmodel__
+        replace(rfilterName, function (a, b) {
             //移除所有过滤器的名字
             return '|' + dig(b);
         });
@@ -3937,9 +3912,9 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             body = body.replace(rfill, fill);
         }
         if (filters.length) {
-            filters = filters.map(function(filter) {
+            filters = filters.map(function (filter) {
                 var bracketArgs = '';
-                filter = filter.replace(brackets, function(a, b) {
+                filter = filter.replace(brackets, function (a, b) {
                     if (/\S/.test(b)) {
                         bracketArgs += ',' + b; //还原字符串,正则,短路运算符
                     }
@@ -3957,20 +3932,18 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
     var rhandleName = /^__vmodel__\.[$\w\.]+$/;
     var rfixIE678 = /__vmodel__\.([^(]+)\(([^)]*)\)/;
-
     function makeHandle(body) {
         if (rhandleName.test(body)) {
             body = body + '($event)';
         }
         /* istanbul ignore if */
         if (msie < 9) {
-            body = body.replace(rfixIE678, function(a, b, c) {
+            body = body.replace(rfixIE678, function (a, b, c) {
                 return '__vmodel__.' + b + '.call(__vmodel__' + (/\S/.test(c) ? ',' + c : '') + ')';
             });
         }
         return body;
     }
-
     function createGetter(expr, type) {
         var arr = addScope(expr, type),
             body;
@@ -4100,7 +4073,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         },
         removeDepends: function removeDepends() {
             var self = this;
-            this.observers.forEach(function(depend) {
+            this.observers.forEach(function (depend) {
                 avalon.Array.remove(depend.observers, self);
             });
         },
@@ -4183,7 +4156,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
      与Computed等共享UUID
     */
     var obid = 1;
-
     function Mutation(expr, value, vm) {
         //构造函数
         this.expr = expr;
@@ -4211,7 +4183,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 var childOb = this.value;
                 if (childOb && childOb.$events) {
                     if (Array.isArray(childOb)) {
-                        childOb.forEach(function(item) {
+                        childOb.forEach(function (item) {
                             if (item && item.$events) {
                                 item.$events.__dep__.collect();
                             }
@@ -4278,7 +4250,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             proto.constructor = child;
         }
     }
-    var Computed = function(_super) {
+    var Computed = function (_super) {
         __extends(Computed, _super);
 
         function Computed(name, options, vm) {
@@ -4298,7 +4270,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
         }
         var cp = Computed.prototype;
-        cp.trackAndCompute = function() {
+        cp.trackAndCompute = function () {
             if (this.isStable && this.depsCount > 0) {
                 this.getValue();
             } else {
@@ -4306,11 +4278,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
         };
 
-        cp.getValue = function() {
+        cp.getValue = function () {
             return this.value = this.getter.call(this.vm);
         };
 
-        cp.schedule = function() {
+        cp.schedule = function () {
             var observers = this.observers;
             var i = observers.length;
             while (i--) {
@@ -4321,7 +4293,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
         };
 
-        cp.shouldCompute = function() {
+        cp.shouldCompute = function () {
             if (this.isStable) {
                 //如果变动因子确定,那么只比较变动因子的版本
                 var toComputed = false;
@@ -4335,12 +4307,12 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
             return true;
         };
-        cp.set = function() {
+        cp.set = function () {
             if (this.setter) {
                 avalon.transaction(this.setter, this.vm, arguments);
             }
         };
-        cp.get = function() {
+        cp.get = function () {
 
             //当被设置了就不稳定,当它被访问了一次就是稳定
             this.collect();
@@ -4370,7 +4342,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
      * fuseFactory: 两个ms-controller间产生的代理VM的生成工厂
      */
 
-    avalon.define = function(definition) {
+    avalon.define = function (definition) {
         var $id = definition.$id;
         if (!$id) {
             avalon.error('vm.$id must be specified');
@@ -4555,8 +4527,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         } else if (xtype === 'object') {
             if (typeof val.$track === 'string') {
                 var obj = {};
-                var arr = val.$track.match(/[^\u2625]+/g) || [];
-                arr.forEach(function(i) {
+                var arr = val.$track.match(/[^☥]+/g) || [];
+                arr.forEach(function (i) {
                     var value = val[i];
                     obj[i] = value && value.$events ? toJson(value) : value;
                 });
@@ -4625,7 +4597,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         removeAll: function removeAll(all) {
             //移除N个元素
             var size = this.length;
-            var eliminate = Array.isArray(all) ? function(el) {
+            var eliminate = Array.isArray(all) ? function (el) {
                 return all.indexOf(el) !== -1;
             } : typeof all === 'function' ? all : false;
 
@@ -4642,7 +4614,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             this.$events.__dep__.notify();
         }
     };
-
     function hijackMethods(array) {
         for (var i in __array__) {
             platform.hideProperty(array, i, __array__[i]);
@@ -4650,9 +4621,9 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
     var __method__ = ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse'];
 
-    __method__.forEach(function(method) {
+    __method__.forEach(function (method) {
         var original = ap[method];
-        __array__[method] = function() {
+        __array__[method] = function () {
             // 继续尝试劫持数组元素的属性
             var core = this.$events;
 
@@ -4729,7 +4700,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 core[expr].push(w);
             }
 
-            return function() {
+            return function () {
                 w.dispose();
                 avalon.Array.remove(core[expr], w);
                 if (core[expr].length === 0) {
@@ -4821,8 +4792,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         /* istanbul ignore if*/
         if (msie < 9) {
             var VBClassPool = {};
-            window.execScript([ // jshint ignore:line
-                'Function parseVB(code)', '\tExecuteGlobal(code)', 'End Function' //转换一段文本为VB代码
+            window.execScript([// jshint ignore:line
+            'Function parseVB(code)', '\tExecuteGlobal(code)', 'End Function' //转换一段文本为VB代码
             ].join('\n'), 'VBScript');
 
             var VBMediator = function VBMediator(instance, accessors, name, value) {
@@ -4838,7 +4809,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 // jshint ignore:line
                 var buffer = [];
                 buffer.push('\tPrivate [$vbsetter]', '\tPublic  [$accessors]', '\tPublic Default Function [$vbthis](ac' + timeBucket + ', s' + timeBucket + ')', '\t\tSet  [$accessors] = ac' + timeBucket + ': set [$vbsetter] = s' + timeBucket, '\t\tSet  [$vbthis]    = Me', //链式调用
-                    '\tEnd Function');
+                '\tEnd Function');
                 //添加普通属性,因为VBScript对象不能像JS那样随意增删属性，必须在这里预先定义好
                 var uniq = {
                     $vbthis: true,
@@ -4858,12 +4829,12 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                     }
                     uniq[name] = true;
                     buffer.push(
-                        //由于不知对方会传入什么,因此set, let都用上
-                        '\tPublic Property Let [' + name + '](val' + timeBucket + ')', //setter
-                        '\t\tCall [$vbsetter](Me, [$accessors], "' + name + '", val' + timeBucket + ')', '\tEnd Property', '\tPublic Property Set [' + name + '](val' + timeBucket + ')', //setter
-                        '\t\tCall [$vbsetter](Me, [$accessors], "' + name + '", val' + timeBucket + ')', '\tEnd Property', '\tPublic Property Get [' + name + ']', //getter
-                        '\tOn Error Resume Next', //必须优先使用set语句,否则它会误将数组当字符串返回
-                        '\t\tSet[' + name + '] = [$vbsetter](Me, [$accessors],"' + name + '")', '\tIf Err.Number <> 0 Then', '\t\t[' + name + '] = [$vbsetter](Me, [$accessors],"' + name + '")', '\tEnd If', '\tOn Error Goto 0', '\tEnd Property');
+                    //由于不知对方会传入什么,因此set, let都用上
+                    '\tPublic Property Let [' + name + '](val' + timeBucket + ')', //setter
+                    '\t\tCall [$vbsetter](Me, [$accessors], "' + name + '", val' + timeBucket + ')', '\tEnd Property', '\tPublic Property Set [' + name + '](val' + timeBucket + ')', //setter
+                    '\t\tCall [$vbsetter](Me, [$accessors], "' + name + '", val' + timeBucket + ')', '\tEnd Property', '\tPublic Property Get [' + name + ']', //getter
+                    '\tOn Error Resume Next', //必须优先使用set语句,否则它会误将数组当字符串返回
+                    '\t\tSet[' + name + '] = [$vbsetter](Me, [$accessors],"' + name + '")', '\tIf Err.Number <> 0 Then', '\t\t[' + name + '] = [$vbsetter](Me, [$accessors],"' + name + '")', '\tEnd If', '\tOn Error Goto 0', '\tEnd Property');
                 }
 
                 for (name in properties) {
@@ -4881,8 +4852,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                     className = avalon.makeHashCode('VBClass');
                     window.parseVB('Class ' + className + body);
                     window.parseVB(['Function ' + className + 'Factory(acc, vbm)', //创建实例并传入两个关键的参数
-                        '\tDim o', '\tSet o = (New ' + className + ')(acc, vbm)', '\tSet ' + className + 'Factory = o', 'End Function'
-                    ].join('\r\n'));
+                    '\tDim o', '\tSet o = (New ' + className + ')(acc, vbm)', '\tSet ' + className + 'Factory = o', 'End Function'].join('\r\n'));
                     VBClassPool[body] = className;
                 }
                 var ret = window[className + 'Factory'](accessors, VBMediator); //得到其产品
@@ -4947,7 +4917,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 if (Array.isArray(newVal)) {
                     //转换成对象
                     var b = {};
-                    newVal.forEach(function(el) {
+                    newVal.forEach(function (el) {
                         el && avalon.shadowCopy(b, el);
                     });
                     newVal = b;
@@ -5016,8 +4986,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         var res = [];
         for (var key in obj) {
             res.push(key);
-        }
-        return res;
+        }return res;
     }
 
     function deepEquals(a, b, level) {
@@ -5143,7 +5112,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             var ok = cssDiff.call(this, effect, this.oldValue);
             var me = this;
             if (ok) {
-                setTimeout(function() {
+                setTimeout(function () {
                     vdom.animating = true;
                     effectDir.update.call(me, vdom, vdom.effect);
                 });
@@ -5178,7 +5147,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 avalon.mix(finalOption, globalOption, option, { action: action });
 
                 if (finalOption.queue) {
-                    animationQueue.push(function() {
+                    animationQueue.push(function () {
                         effect[action](finalOption);
                     });
                     callNextAnimation();
@@ -5204,7 +5173,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     };
 
     var animationQueue = [];
-
     function callNextAnimation() {
         var fn = animationQueue[0];
         if (fn) {
@@ -5213,7 +5181,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
 
     avalon.effects = {};
-    avalon.effect = function(name, opts) {
+    avalon.effect = function (name, opts) {
         var definition = avalon.effects[name] = opts || {};
         if (css3 && definition.css !== false) {
             patchObject(definition, 'enterClass', name + '-enter');
@@ -5254,7 +5222,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
     function createAction(action) {
         var lower = action.toLowerCase();
-        return function(option) {
+        return function (option) {
             var dom = this.dom;
             var elem = avalon(dom);
             //处理与ms-for指令相关的stagger
@@ -5297,7 +5265,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
             if (option[lower]) {
                 //使用JS方式执行动画
-                option[lower](dom, function(ok) {
+                option[lower](dom, function (ok) {
                     animationDone(ok !== false);
                 });
             } else if (css3) {
@@ -5313,7 +5281,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 } else {
                     dom.__ms_effect_++;
                 }
-                setTimeout(function() {
+                setTimeout(function () {
                     //用xxx-active代替xxx类名的方式 触发CSS3动画
                     var time = avalon.root.offsetWidth === NaN;
                     elem.addClass(option[lower + 'ActiveClass']);
@@ -5325,7 +5293,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                     } else if (!staggerTime) {
                         //如果动画超出时长还没有调用结束事件,这可能是元素被移除了
                         //如果强制结束动画
-                        stopAnimationID = setTimeout(function() {
+                        stopAnimationID = setTimeout(function () {
                             animationDone(false);
                         }, time + 32);
                     }
@@ -5334,7 +5302,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         };
     }
 
-    avalon.applyEffect = function(dom, vdom, opts) {
+    avalon.applyEffect = function (dom, vdom, opts) {
         var cb = opts.cb;
         var curEffect = vdom.effect;
         if (curEffect && dom && dom.nodeType === 1) {
@@ -5368,7 +5336,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
      */
     function getNeedRemoved(options, name) {
         var name = name === 'leave' ? 'enter' : 'leave';
-        return Array(name + 'Class', name + 'ActiveClass').map(function(cls) {
+        return Array(name + 'Class', name + 'ActiveClass').map(function (cls) {
             return options[cls];
         }).join(' ');
     }
@@ -5378,7 +5346,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     var transitionDuration = avalon.cssName('transition-duration');
     var animationDuration = avalon.cssName('animation-duration');
     var rsecond = /\d+s$/;
-
     function toMillisecond(str) {
         var ratio = rsecond.test(str) ? 1000 : 1;
         return parseFloat(str) * ratio;
@@ -5436,7 +5403,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
      */
 
     var none = 'none';
-
     function parseDisplay(elem, val) {
         //用于取得此类标签的默认display值
         var doc = elem.ownerDocument;
@@ -5480,8 +5446,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                         }
                     }
                     if (dom.style.display === '' && avalon(dom).css('display') === none &&
-                        // fix firefox BUG,必须挂到页面上
-                        avalon.contains(dom.ownerDocument, dom)) {
+                    // fix firefox BUG,必须挂到页面上
+                    avalon.contains(dom.ownerDocument, dom)) {
                         value = parseDisplay(dom);
                     }
                 } else {
@@ -5524,7 +5490,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             this.type = this.name = type;
             var directive$$1 = avalon.directives[type];
             var me = this;
-            this.callback = function(value) {
+            this.callback = function (value) {
                 directive$$1.update.call(me, me.node, value);
             };
         }
@@ -5562,7 +5528,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         update: function update(vdom, value) {
             this.beforeDispose();
 
-            this.innerRender = avalon.scan('<div class="ms-html-container">' + value + '</div>', this.vm, function() {
+            this.innerRender = avalon.scan('<div class="ms-html-container">' + value + '</div>', this.vm, function () {
                 var oldRoot = this.root;
                 if (vdom.children) vdom.children.length = 0;
                 vdom.children = oldRoot.children;
@@ -5641,7 +5607,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         init: function init() {
             var vdom = this.node;
             var underline = this.name.replace('ms-on-', 'e').replace('-', '_');
-            var uuid = underline + '_' + this.expr.replace(/\s/g, '').replace(/[^$a-z]/ig, function(e) {
+            var uuid = underline + '_' + this.expr.replace(/\s/g, '').replace(/[^$a-z]/ig, function (e) {
                 return e.charCodeAt(0);
             });
             var fn = avalon.eventListeners[uuid];
@@ -5655,8 +5621,9 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                     filters = filters.replace(/__value__/g, '$event');
                     filters += '\nif($event.$return){\n\treturn;\n}';
                 }
-                var ret = ['try{', '\tvar __vmodel__ = this;', '\t' + filters, '\treturn ' + body, '}catch(e){avalon.log(e, "in on dir")}'].filter(function(el) {
-                    return (/\S/.test(el));
+                var ret = ['try{', '\tvar __vmodel__ = this;', '\t' + filters, '\treturn ' + body, '}catch(e){avalon.log(e, "in on dir")}'].filter(function (el) {
+                    return (/\S/.test(el)
+                    );
                 });
                 fn = new Function('$event', ret.join('\n'));
                 fn.uuid = uuid;
@@ -5686,7 +5653,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         beforeInit: function beforeInit() {
             var str = this.expr,
                 asName;
-            str = str.replace(rforAs, function(a, b) {
+            str = str.replace(rforAs, function (a, b) {
                 /* istanbul ignore if */
                 if (!rident.test(b) || rinvalid.test(b)) {
                     avalon.error('alias ' + b + ' is invalid --- must be a valid JS identifier which is not a reserved name.');
@@ -5750,7 +5717,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
             if (this.userCb) {
                 var me = this;
-                setTimeout(function() {
+                setTimeout(function () {
                     me.userCb.call(me.vm, {
                         type: 'rendered',
                         target: me.begin.dom,
@@ -5761,7 +5728,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             delete this.updating;
         },
         beforeDispose: function beforeDispose() {
-            this.fragments.forEach(function(el) {
+            this.fragments.forEach(function (el) {
                 el.dispose();
             });
         }
@@ -5783,7 +5750,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             instance.isArray = array;
             if (instance.fragments) {
                 instance.preFragments = instance.fragments;
-                avalon.each(obj, function(key, value) {
+                avalon.each(obj, function (key, value) {
                     var k = array ? getTraceKey(value) : key;
 
                     fragments.push({
@@ -5795,7 +5762,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 });
                 instance.fragments = fragments;
             } else {
-                avalon.each(obj, function(key, value) {
+                avalon.each(obj, function (key, value) {
                     if (!(key in $$skipArray)) {
                         var k = array ? getTraceKey(value) : key;
                         fragments.push(new VFragment([], k, value, i++));
@@ -5811,7 +5778,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
 
     function mountList(instance) {
-        var args = instance.fragments.map(function(fragment, index) {
+        var args = instance.fragments.map(function (fragment, index) {
             FragmentDecorator(fragment, instance, index);
             saveInCache(instance.cache, fragment);
             return fragment;
@@ -5827,11 +5794,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         var fuzzy = [];
         var list = instance.preFragments;
 
-        list.forEach(function(el) {
+        list.forEach(function (el) {
             el._dispose = true;
         });
 
-        instance.fragments.forEach(function(c, index) {
+        instance.fragments.forEach(function (c, index) {
             var fragment = isInCache(cache, c.key);
             //取出之前的文档碎片
             if (fragment) {
@@ -5848,7 +5815,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 fuzzy.push(c);
             }
         });
-        fuzzy.forEach(function(c) {
+        fuzzy.forEach(function (c) {
             var fragment = fuzzyMatchCache(cache, c.key);
             if (fragment) {
                 //重复利用
@@ -5870,7 +5837,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         });
 
         instance.fragments = list;
-        list.sort(function(a, b) {
+        list.sort(function (a, b) {
             return a.index - b.index;
         });
         instance.cache = newCache;
@@ -5931,19 +5898,19 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             data: data
         });
         if (instance.isArray) {
-            vm.$watch(instance.valName, function(a) {
+            vm.$watch(instance.valName, function (a) {
                 if (instance.value && instance.value.set) {
                     instance.value.set(vm[instance.keyName], a);
                 }
             });
         } else {
-            vm.$watch(instance.valName, function(a) {
+            vm.$watch(instance.valName, function (a) {
                 instance.value[fragment.key] = a;
             });
         }
 
         fragment.index = index;
-        fragment.innerRender = avalon.scan(instance.fragment, vm, function() {
+        fragment.innerRender = avalon.scan(instance.fragment, vm, function () {
             var oldRoot = this.root;
             ap.push.apply(fragment.children, oldRoot.children);
             this.root = fragment;
@@ -6058,7 +6025,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                     vdom.classEvent = {};
                 }
                 var names = ['class', 'hover', 'active'];
-                names.forEach(function(type) {
+                names.forEach(function (type) {
                     if (dirType !== type) return;
                     if (type === 'class') {
                         dom && setClass(dom, value);
@@ -6110,7 +6077,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     getLongID(abandonClass);
 
     function lookupOption(vdom, values) {
-        vdom.children && vdom.children.forEach(function(el) {
+        vdom.children && vdom.children.forEach(function (el) {
             if (el.nodeName === 'option') {
                 setOption(el, values);
             } else {
@@ -6138,7 +6105,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             return props.value + '';
         }
         var arr = [];
-        vdom.children.forEach(function(el) {
+        vdom.children.forEach(function (el) {
             if (el.nodeName === '#text') {
                 arr.push(el.nodeValue);
             } else if (el.nodeName === '#document-fragment') {
@@ -6149,7 +6116,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
 
     function getSelectedValue(vdom, arr) {
-        vdom.children.forEach(function(el) {
+        vdom.children.forEach(function (el) {
             if (el.nodeName === 'option') {
                 if (el.props.selected === true) arr.push(getOptionValue(el, el.props));
             } else if (el.children) {
@@ -6212,7 +6179,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             if (val + '' !== this.value + '') {
                 if (Array.isArray(val)) {
                     //转换布尔数组或其他
-                    val = val.map(function(v) {
+                    val = val.map(function (v) {
                         return field.parseValue(v);
                     });
                 } else {
@@ -6264,12 +6231,12 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 /* istanbul ignore else*/
             } else {
                 clearTimeout(field.debounceID);
-                field.debounceID = setTimeout(function() {
+                field.debounceID = setTimeout(function () {
                     updateDataActions[field.dtype].call(field);
                 }, left);
             }
         } else if (field.isChanged) {
-            setTimeout(function() {
+            setTimeout(function () {
                 //https://github.com/RubyLouvre/avalon/issues/1908
                 updateDataActions[field.dtype].call(field);
             }, 4);
@@ -6280,7 +6247,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
     var rchangeFilter = /\|\s*change\b/;
     var rdebounceFilter = /\|\s*debounce(?:\(([^)]+)\))?/;
-
     function duplexBeforeInit() {
         var expr = this.expr;
         if (rchangeFilter.test(expr)) {
@@ -6296,7 +6262,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         }
         this.expr = expr;
     }
-
     function duplexInit() {
         var expr = this.expr;
         var node = this.node;
@@ -6306,7 +6271,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         var parsers = this.param,
             dtype;
         var isChecked = false;
-        parsers = parsers ? parsers.split('-').map(function(a) {
+        parsers = parsers ? parsers.split('-').map(function (a) {
             if (a === 'checked') {
                 isChecked = true;
             }
@@ -6345,7 +6310,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             this.userCb = new Function('$event', 'var __vmodel__ = this\nreturn ' + body);
         }
     }
-
     function duplexDiff(newVal, oldVal) {
         if (Array.isArray(newVal)) {
             if (newVal + '' !== this.compareVal) {
@@ -6447,7 +6411,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             var props = node.props;
             var value = props.value + '';
             var values = [].concat(this.value);
-            var checked = values.some(function(el) {
+            var checked = values.some(function (el) {
                 return el + '' === value;
             });
 
@@ -6580,7 +6544,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
     function updateModelDelay(e) {
         var elem = this;
-        setTimeout(function() {
+        setTimeout(function () {
             updateDataHandle.call(elem, e);
         }, 0);
     }
@@ -6627,7 +6591,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     function setCaret(target, cursorPosition) {
         var range$$1;
         if (target.createTextRange) {
-            mayBeAsync(function() {
+            mayBeAsync(function () {
                 target.focus();
                 range$$1 = target.createTextRange();
                 range$$1.collapse(true);
@@ -6700,7 +6664,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         var dom = this.dom;
         if (this.isString && valueHijack$$1 && !isIE && !dom.valueHijack) {
             dom.valueHijack = updateDataHandle;
-            var intervalID = setInterval(function() {
+            var intervalID = setInterval(function () {
                 if (!avalon.contains(avalon.root, dom)) {
                     clearInterval(intervalID);
                 } else {
@@ -6714,10 +6678,10 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     /* istanbul ignore if */
     if (avalon.msie < 8) {
         var oldUpdate = updateView.updateChecked;
-        updateView.updateChecked = function(vdom, checked) {
+        updateView.updateChecked = function (vdom, checked) {
             var dom = vdom.dom;
             if (dom) {
-                setTimeout(function() {
+                setTimeout(function () {
                     oldUpdate(vdom, checked);
                     dom.firstCheckedIt = 1;
                 }, dom.firstCheckedIt ? 31 : 16);
@@ -6737,13 +6701,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
         }
     });
-
     function isRegExp(value) {
         return avalon.type(value) === 'regexp';
     }
     var rmail = /^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/i;
     var rurl = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/;
-
     function isCorrectDate(value) {
         if (typeof value === "string" && value) {
             //是字符串但不能是空字符
@@ -6911,7 +6873,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             var fields = validator.fields;
             collectFeild(vdom.children, fields, validator);
             var type = window.netscape ? 'keypress' : 'focusin';
-            avalon.bind(document, type, function(e) {
+            avalon.bind(document, type, function (e) {
                 var dom = e.target;
                 var duplex = dom._ms_duplex_;
                 var vdom = (duplex || {}).vdom;
@@ -6936,7 +6898,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
             /* istanbul ignore if */
             if (validator.validateAllInSubmit) {
-                avalon.bind(dom, 'submit', function(e) {
+                avalon.bind(dom, 'submit', function (e) {
                     e.preventDefault();
                     onManual();
                 });
@@ -6948,18 +6910,18 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             var fields = validator.fields = [];
             collectFeild(vdom.children, fields, validator);
             var fn = typeof callback === 'function' ? callback : validator.onValidateAll;
-            var promises = validator.fields.filter(function(field) {
+            var promises = validator.fields.filter(function (field) {
                 var el = field.dom;
                 return el && !el.disabled && validator.dom.contains(el);
-            }).map(function(field) {
+            }).map(function (field) {
                 return valiDir.validate(field, true);
             });
             var uniq = {};
-            return Promise.all(promises).then(function(array) {
+            return Promise.all(promises).then(function (array) {
                 var reasons = array.concat.apply([], array);
                 if (validator.deduplicateInValidateAll) {
 
-                    reasons = reasons.filter(function(reason) {
+                    reasons = reasons.filter(function (reason) {
                         var el = reason.element;
                         var uuid = el.uniqueID || (el.uniqueID = setTimeout('1'));
 
@@ -6995,7 +6957,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                     if (ruleValue === false) continue;
                     var hook = avalon.validators[ruleName];
                     var resolve;
-                    promises.push(new Promise(function(a, b) {
+                    promises.push(new Promise(function (a, b) {
                         resolve = a;
                     }));
                     var next = function next(a) {
@@ -7021,7 +6983,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
 
             //如果promises不为空，说明经过验证拦截器
-            return Promise.all(promises).then(function(array) {
+            return Promise.all(promises).then(function (array) {
                 if (!isValidateAll) {
                     var validator = field.validator;
                     if (isOk) {
@@ -7062,19 +7024,19 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         field.validator = validator;
         /* istanbul ignore if */
         if (validator.validateInKeyup && !field.isChanged && !field.debounceTime) {
-            avalon.bind(node, 'keyup', function(e) {
+            avalon.bind(node, 'keyup', function (e) {
                 validator.validate(field, 0, e);
             });
         }
         /* istanbul ignore if */
         if (validator.validateInBlur) {
-            avalon.bind(node, 'blur', function(e) {
+            avalon.bind(node, 'blur', function (e) {
                 validator.validate(field, 0, e);
             });
         }
         /* istanbul ignore if */
         if (validator.resetInFocus) {
-            avalon.bind(node, 'focus', function(e) {
+            avalon.bind(node, 'focus', function (e) {
                 validator.onReset.call(node, e, field);
             });
         }
@@ -7083,7 +7045,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
 
     function getMessage() {
         var data = this.data || {};
-        return this.message.replace(rformat, function(_, name) {
+        return this.message.replace(rformat, function (_, name) {
             return data[name] == null ? '' : data[name];
         });
     }
@@ -7118,9 +7080,9 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
             }
             vdom.dom = dom;
         }
-        var callback = decorator.update ? function(value) {
+        var callback = decorator.update ? function (value) {
             if (!render.mount && /css|visible|duplex/.test(type)) {
-                render.callbacks.push(function() {
+                render.callbacks.push(function () {
                     decorator.update.call(directive$$1, directive$$1.node, value);
                 });
             } else {
@@ -7141,7 +7103,6 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
 
     var eventMap = avalon.oneObject('animationend,blur,change,input,' + 'click,dblclick,focus,keydown,keypress,keyup,mousedown,mouseenter,' + 'mouseleave,mousemove,mouseout,mouseover,mouseup,scan,scroll,submit', 'on');
-
     function parseAttributes(dirs, tuple) {
         var node = tuple[0],
             uniq = {},
@@ -7204,14 +7165,12 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         }
         return bindings;
     }
-
     function byPriority(a, b) {
         return a.priority - b.priority;
     }
 
     var rimprovePriority = /[+-\?]/;
     var rinnerValue = /__value__\)$/;
-
     function parseInterpolate(dir) {
         var rlineSp = /\n\r?/g;
         var str = dir.nodeValue.trim().replace(rlineSp, '');
@@ -7262,9 +7221,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         }
         return count;
     }
-
     function groupTree(parent, children) {
-        children && children.forEach(function(vdom) {
+        children && children.forEach(function (vdom) {
             if (!vdom) return;
             var vlength = vdom.children && getChildren(vdom.children);
             if (vdom.nodeName === '#document-fragment') {
@@ -7350,7 +7308,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
      * @param {Function|Undefined} beforeReady
      * @returns {Render}
      */
-    avalon.scan = function(node, vm, beforeReady) {
+    avalon.scan = function (node, vm, beforeReady) {
         return new Render(node, vm, beforeReady || avalon.noop);
     };
 
@@ -7514,7 +7472,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 }
                 var render = this;
                 scope.$render = render;
-                this.callbacks.push(function() {
+                this.callbacks.push(function () {
                     //用于删除ms-controller
                     dir.update.call(render, vdom, attrName, $id);
                 });
@@ -7710,8 +7668,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                     clearTimeout(viewID);
                     viewID = null;
                 }
-                viewID = setTimeout(function() {
-                    list.forEach(function(el) {
+                viewID = setTimeout(function () {
+                    list.forEach(function (el) {
                         el.callback.call(vm, {
                             type: 'viewchange',
                             target: $render.root,
@@ -7731,7 +7689,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         var value = platform.toJson(value);
         if (Array.isArray(value)) {
             var v = {};
-            value.forEach(function(el) {
+            value.forEach(function (el) {
                 el && avalon.shadowCopy(v, el);
             });
             return v;
@@ -7809,7 +7767,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 if (this.fragment || component.soleSlot) {
                     var curVM = this.fragment ? this.vm : comVm;
                     var curText = this.fragment || '{{##' + component.soleSlot + '}}';
-                    var childBoss = avalon.scan('<div>' + curText + '</div>', curVM, function() {
+                    var childBoss = avalon.scan('<div>' + curText + '</div>', curVM, function () {
                         nodesWithSlot = this.root.children;
                     });
                     directives$$1 = childBoss.directives;
@@ -7826,7 +7784,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 if (component.soleSlot) {
                     arraySlot = nodesWithSlot;
                 } else {
-                    nodesWithSlot.forEach(function(el, i) {
+                    nodesWithSlot.forEach(function (el, i) {
                         //要求带slot属性
                         if (el.slot) {
                             var nodes = getRange(nodesWithSlot, el);
@@ -7895,7 +7853,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                     this.readyState++;
                     var comVm = this.comVm;
                     avalon.viewChanging = true;
-                    avalon.transaction(function() {
+                    avalon.transaction(function () {
                         for (var i in value) {
                             if (comVm.hasOwnProperty(i)) {
                                 if (Array.isArray(value[i])) {
@@ -7945,8 +7903,8 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     function fireComponentHook(vm, vdom, name) {
         var list = vm.$events['on' + name];
         if (list) {
-            list.forEach(function(el) {
-                setTimeout(function() {
+            list.forEach(function (el) {
+                setTimeout(function () {
                     el.callback.call(vm, {
                         type: name.toLowerCase(),
                         target: vdom.dom,
@@ -7975,7 +7933,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         delete obj.id;
         var def = avalon.mix(true, {}, obj);
         var vm = avalon.define(def);
-        hooks.forEach(function(el) {
+        hooks.forEach(function (el) {
             vm.$watch(el.type, el.cb);
         });
         return vm;
@@ -8028,12 +7986,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
     }
 
     avalon.components = {};
-    avalon.component = function(name, component) {
+    avalon.component = function (name, component) {
 
         component.extend = componentExtend;
         return addToQueue(name, component);
     };
-
     function addToQueue(name, component) {
         avalon.components[name] = component;
         for (var el, i = 0; el = componentQueue[i]; i++) {
