@@ -144,7 +144,7 @@ function getPlainObject(v) {
             return v.$model
         } else if (Array.isArray(v)) {
             let ret = []
-            for (let i, n = v.length; i < n; i++) {
+            for (let i = 0, n = v.length; i < n; i++) {
                 ret.push(getPlainObject(v[i]))
             }
             return ret
