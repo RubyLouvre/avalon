@@ -10,57 +10,50 @@ var valiDir = avalon.directive('validate', {
             //一个是vmValidator，它是用户VM上的那个原始子对象，也是一个VM
             //一个是validator，它是vmValidator.$model， 这是为了防止IE6－8添加子属性时添加的hack
             //也可以称之为safeValidate
-            vdom.vmValidator = validator
+            vdom.validator = validator
             validator = platform.toJson(validator)
             validator.vdom = vdom
-            vdom.validator = validator
+            validator.dom = vdom.dom
+
             for (var name in valiDir.defaults) {
                 if (!validator.hasOwnProperty(name)) {
                     validator[name] = valiDir.defaults[name]
                 }
             }
             validator.fields = validator.fields || []
+            vdom.vmValidator = validator
             return true
         }
     },
     update: function(vdom) {
 
+        var vmValidator = vdom.vmValidator
         var validator = vdom.validator
-        var dom = validator.dom = vdom.dom
-        dom._ms_validate_ = validator
-        var fields = validator.fields
-        collectFeild(vdom.children, fields, validator)
+        var dom = vdom.dom
+        dom._ms_validate_ = vmValidator
+
+        collectFeild(vdom.children, vmValidator.fields, vmValidator)
         var type = window.netscape ? 'keypress' : 'focusin'
-        avalon.bind(document, type, function(e) {
-            var dom = e.target
-            var duplex = dom._ms_duplex_
-            var vdom = (duplex || {}).vdom
-            if (duplex && vdom.rules && !duplex.validator) {
-                if (avalon.Array.ensure(fields, duplex)) {
-                    bindValidateEvent(duplex, validator)
-                }
+        avalon.bind(document, type, findValidator)
+            //为了方便用户手动执行验证，我们需要为原始vmValidate上添加一个onManual方法
+        function onManual() {
+            var v = this
+            v && valiDir.validateAll.call(v, v.onValidateAll)
+        }
 
-            }
-        })
-
-        //为了方便用户手动执行验证，我们需要为原始vmValidate上添加一个onManual方法
-        var v = vdom.vmValidator
         try {
-            v.onManual = onManual
-        } catch (e) {}
+            var fn = vmValidator.onManual = onManual.bind(vmValidator)
+            validator.onManual = fn
+        } catch (e) {
+            avalon.warn('要想使用onManual方法，必须在validate对象预定义一个空的onManual函数')
+        }
         delete vdom.vmValidator
 
         dom.setAttribute('novalidate', 'novalidate')
 
-        function onManual() {
-            valiDir.validateAll.call(validator, validator.onValidateAll)
-        }
         /* istanbul ignore if */
-        if (validator.validateAllInSubmit) {
-            avalon.bind(dom, 'submit', function(e) {
-                e.preventDefault()
-                onManual()
-            })
+        if (vmValidator.validateAllInSubmit) {
+            avalon.bind(dom, 'submit', validateAllInSubmitFn)
         }
 
     },
@@ -80,11 +73,9 @@ var valiDir = avalon.directive('validate', {
         return Promise.all(promises).then(function(array) {
             var reasons = array.concat.apply([], array)
             if (validator.deduplicateInValidateAll) {
-
                 reasons = reasons.filter(function(reason) {
                     var el = reason.element
                     var uuid = el.uniqueID || (el.uniqueID = setTimeout('1'))
-
                     if (uniq[uuid]) {
                         return false
                     } else {
@@ -92,16 +83,16 @@ var valiDir = avalon.directive('validate', {
                     }
                 })
             }
-            fn.call(validator.dom, reasons) //这里只放置未通过验证的组件
+            fn.call(vdom.dom, reasons) //这里只放置未通过验证的组件
         })
     },
 
     validate: function(field, isValidateAll, event) {
+
         var promises = []
         var value = field.value
         var elem = field.dom
-
-        /* istanbul ignore if */
+            /* istanbul ignore if */
         if (typeof Promise !== 'function') { //avalon-promise不支持phantomjs
             avalon.warn('浏览器不支持原生Promise,请下载并<script src=url>引入\nhttps://github.com/RubyLouvre/avalon/blob/master/test/promise.js')
         }
@@ -162,6 +153,21 @@ var valiDir = avalon.directive('validate', {
     }
 })
 
+function getValidate(dom) {
+    while (dom.tagName !== 'FORM') {
+        dom = dom.parentNode
+    }
+    return dom._ms_validate_
+}
+
+function validateAllInSubmitFn(e) {
+    e.preventDefault()
+    var v = getValidate(e.target)
+    if (v && v.onManual) {
+        v.onManual()
+    }
+}
+
 function collectFeild(nodes, fields, validator) {
     for (var i = 0, vdom; vdom = nodes[i++];) {
         var duplex = vdom.rules && vdom.duplex
@@ -176,6 +182,25 @@ function collectFeild(nodes, fields, validator) {
     }
 }
 
+function findValidator(e) {
+    var dom = e.target
+    var duplex = dom._ms_duplex_
+    var vdom = (duplex || {}).vdom
+    if (duplex && vdom.rules && !duplex.validator) {
+        var msValidator = getValidate(dom)
+        if (msValidator && avalon.Array.ensure(msValidator.fields, duplex)) {
+            bindValidateEvent(duplex, msValidator)
+        }
+    }
+}
+
+function singleValidate(e) {
+    var dom = e.target
+    var duplex = dom._ms_duplex_
+    var msValidator = getValidate(e.target)
+    msValidator && msValidator.validate(duplex, 0, e)
+}
+
 function bindValidateEvent(field, validator) {
 
     var node = field.dom
@@ -185,20 +210,19 @@ function bindValidateEvent(field, validator) {
     field.validator = validator
         /* istanbul ignore if */
     if (validator.validateInKeyup && (!field.isChanged && !field.debounceTime)) {
-        avalon.bind(node, 'keyup', function(e) {
-            validator.validate(field, 0, e)
-        })
+        avalon.bind(node, 'keyup', singleValidate)
     }
     /* istanbul ignore if */
     if (validator.validateInBlur) {
-        avalon.bind(node, 'blur', function(e) {
-            validator.validate(field, 0, e)
-        })
+        avalon.bind(node, 'blur', singleValidate)
     }
     /* istanbul ignore if */
     if (validator.resetInFocus) {
         avalon.bind(node, 'focus', function(e) {
-            validator.onReset.call(node, e, field)
+            var dom = e.target
+            var field = dom._ms_duplex_
+            var validator = getValidate(e.target)
+            validator && validator.onReset.call(dom, e, field)
         })
     }
 }
