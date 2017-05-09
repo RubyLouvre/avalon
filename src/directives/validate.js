@@ -151,8 +151,9 @@ var valiDir = avalon.directive('validate', {
             return ngs
         })
     }
-})
+});
 
+//https://github.com/RubyLouvre/avalon/issues/1977
 function getValidate(dom) {
     while (dom.tagName !== 'FORM') {
         dom = dom.parentNode

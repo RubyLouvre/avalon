@@ -6,103 +6,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src='./dist/avalon.js'></script>
+    <style>
+        div {
+            width: 400px;
+            height: 200px;
+            border: 1px #000 solid;
+        }
+    </style>
 </head>
 
 <body>
     <script>
-        var vm = avalon.define({
-            $id: "test",
-            action: '',
-            name: '',
-            email: '',
-            add: function(e) {
-                e.preventDefault()
-                this.action = "add.php";
-                this.validate.onManual();
-            },
-            update: function(e) {
-                e.preventDefault()
-                this.action = "update.php";
-                this.validate.onManual();
-            },
-            add2: function(e) {
-                e.preventDefault()
-                this.action = "add.php";
-                this.validate2.onManual();
-            },
-            update2: function(e) {
-                e.preventDefault()
-                this.action = "update.php";
-                this.validate2.onManual();
-            },
-            validate: {
-                name: 'validate1',
-                validateAllInSubmit: false,
-                onSuccess: function(reasons, event) {
-                    console.log('成功', reasons)
-                },
-                onError: function(reasons, event) {
-                    console.log('第1个表单没有通过验证 ', reasons.map(function(e) {
-                        return e.getMessage()
-                    }).join(' '))
-                },
-                onValidateAll: function(reasons) {
-
-                    var form = this
-                    if (reasons.length) {
-                        // 表单有错误
-                        console.log("第1个表单没有通过验证 ", reasons.map(function(e) {
-                            return e.getMessage()
-                        }).join(' '));
-                        return false;
-                    } else {
-                        // 验证成功
-                        // console.log(form) //在chrome控制台console面板勾选preserve log
-                        form.submit() //这里会发生跳转
-                    }
-                }
-            },
-            validate2: {
-                name: 'validate2',
-                validateAllInSubmit: false,
-                onSuccess: function(reasons, event) {
-                    console.log('成功', reasons)
-                },
-                onError: function(reasons, event) {
-                    console.log('第二个表单没有通过验证!', reasons.map(function(e) {
-                        return e.getMessage()
-                    }).join(' '))
-                },
-                onValidateAll: function(reasons) {
-
-                    var form = this
-                    if (reasons.length) {
-                        // 表单有错误
-                        console.log("第二个表单没有通过验证!", reasons.map(function(e) {
-                            return e.getMessage()
-                        }).join(' '));
-                        return false;
-                    } else {
-                        // 验证成功
-                        //console.log(form) //在chrome控制台console面板勾选preserve log
-                        form.submit() //这里会发生跳转
-                    }
-                }
-            }
+        avalon.define({
+            $id: 'duplex',
+            content: ''
         })
     </script>
 
-    <div ms-controller="test">
-        <form :validate="@validate" id="f1" :attr="{ action: @action }">
-            <input type="text" placeholder="input your name" :duplex="@name" :rules="{ required: true, number:true }" />
-            <input type="submit" value="新建用户" :click="@add" />
-            <input type="submit" value="修改用户" :click="@update" />
-        </form>
-        <form :validate="@validate2" id="f2" :attr="{ action: @action }">
-            <input type="text" placeholder="input your email" :duplex="@email" :rules="{ required: true, email:true }" />
-            <input type="submit" value="新建邮箱" :click="@add2" />
-            <input type="submit" value="修改邮箱" :click="@update2" />
-        </form>
+    <div ms-controller="duplex">
+        <div contenteditable="true" ms-duplex="content"></div>
     </div>
 </body>
 

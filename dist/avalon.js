@@ -1,5 +1,5 @@
 /*!
-built in 2017-5-9:11:6 version 2.2.6 by 司徒正美
+built in 2017-5-9:11:38 version 2.2.6 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 修正IE下 orderBy BUG
@@ -6993,6 +6993,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         }
     });
 
+    //https://github.com/RubyLouvre/avalon/issues/1977
     function getValidate(dom) {
         while (dom.tagName !== 'FORM') {
             dom = dom.parentNode;
