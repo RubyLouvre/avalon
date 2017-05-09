@@ -1,5 +1,5 @@
 /*!
-built in 2017-5-9:11:6 version 2.2.6 by 司徒正美
+built in 2017-5-9:16:4 version 2.2.7 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 更改下载Promise的提示
@@ -410,7 +410,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         inspect: inspect,
         ohasOwn: ohasOwn,
         rword: rword,
-        version: "2.2.6",
+        version: "2.2.7",
         vmodels: {},
 
         directives: directives,
@@ -6152,6 +6152,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         }
     })
 
+    //https://github.com/RubyLouvre/avalon/issues/1977
     function getValidate(dom) {
         while (dom.tagName !== 'FORM') {
             dom = dom.parentNode
