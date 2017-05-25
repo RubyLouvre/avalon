@@ -75,7 +75,7 @@ export var Computed = (function(_super) {
             for (var i in this.deps) {
                 if (this.deps[i].version !== this.depsVersion[i]) {
                     toComputed = true
-                    this.deps[i].version = this.depsVersion[i]
+                    this.depsVersion[i] = this.deps[i].version
                 }
             }
             return toComputed
