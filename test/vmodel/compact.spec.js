@@ -291,6 +291,44 @@ describe('Computed', function () {
         expect(vm.c).toBe(25)
         delete avalon.vmodels.computed01
     })
+
+    it('test2', function (done) {
+        var body = document.body
+        var div = document.createElement('div')
+        div.innerHTML = heredoc(function() {
+            /*
+            <div :controller="computed02">
+                <div>{{@b}}</div>
+                <div>{{@c}}</div>
+            </div>
+             */
+        })
+        body.appendChild(div)
+
+        var vm =  avalon.define({
+            $id: 'computed02',
+            $computed: {
+                b: function(){
+                    return this.a + 1
+                },
+                c: function(){
+                    return this.a + 2
+                }
+            },
+            a: 1
+        })
+        avalon.scan(div)
+
+        setTimeout(function () {
+            vm.a = 10
+            expect(vm.b).toBe(11)
+            expect(vm.c).toBe(12)
+
+            body.removeChild(div)
+            delete avalon.vmodels.computed02
+            done()
+        }, 500);
+    })
 })
 
 describe('Action', function () {
