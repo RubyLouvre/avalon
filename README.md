@@ -49,9 +49,11 @@ import * as avalon from 'avalon2'
 
 ### [UI库2](https://github.com/aLoNeIT/flyUI)
 
-### [avalon2+FIS3 组件库和SPA脚手架 MS-BUS](https://github.com/xxapp/ms-bus)
-1. 一个 SPA 的脚手架（以组件为单位的路由/完整的增删改查示例）
-2. 也是一个基于 bootstrap 的组件库（ms-table/ms-form/ms-dialog/ms-input/ms-checkbox-group/...）
+### [avalon2 SPA脚手架 MS-BUS](https://github.com/xxapp/ms-bus)
+一个 SPA 的脚手架（模块组织加载方式、单页面局部刷新技术、路由控制、后端数据的接入与模拟等实践/完整的增删改查示例）
+
+### [avalon2 组件库 ANE](https://github.com/xxapp/ane)
+一个基于 bootstrap 的组件库，有用于数据展示的 table 组件、用于数据提交的 form 组件、用于消息提示的 message 与 notification 组件、dialog 组件和用户输入组件（input/textarea/checkbox/radio/select/datepicker/timepicker/upload）等，并且还在不断完善中
 
 ---
 
