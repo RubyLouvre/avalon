@@ -5,7 +5,7 @@
     <title>TODO supply a title</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src='./dist/avalon.js'></script>
+    <script src='https://cdn.bootcss.com/avalon.js/2.2.4/avalon.js'></script>
     <style>
         div {
             width: 400px;
@@ -17,15 +17,48 @@
 
 <body>
     <script>
-        avalon.define({
-            $id: 'duplex',
-            content: ''
-        })
+        var vm = avalon.define({
+            $id: "test",
+            data: [{
+                checked: false
+            }, {
+                checked: false
+            }, {
+                checked: false
+            }],
+            allchecked: false,
+            checkAll: function(e) {
+                var checked = e.target.checked
+                vm.data.forEach(function(el) {
+                    el.checked = checked
+                })
+            },
+            checkOne: function(e) {
+                var checked = e.target.checked
+                if (checked === false) {
+                    vm.allchecked = false
+                } else {
+                    vm.allchecked = vm.data.every(function(el) {
+                        return el.checked
+                    })
+                }
+            }
+        });
     </script>
 
-    <div ms-controller="duplex">
-        <div contenteditable="true" ms-duplex="content"></div>
-    </div>
+    <table ms-controller="test" border="1">
+        <tr>
+            <td><input type="checkbox" ms-duplex-checked="@allchecked" data-duplex-changed="@checkAll" />全选</td>
+        </tr>
+        <tr ms-for="($index, el) in @data">
+            <td>
+                <input type="checkbox" ms-duplex-checked="el.checked" data-duplex-changed="@checkOne" />{{$index}}::{{el.checked}}
+
+                <label :dblclick="@checkOne">这一行代码 :dblclick="@checkOne" 将会吧checkbox的双向绑定给搞挂掉</label>
+            </td>
+
+        </tr>
+    </table>
 </body>
 
 </html>

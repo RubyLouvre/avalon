@@ -62,8 +62,8 @@ avalon.bind = function(elem, type, fn) {
         return fn
     } else {
         /* istanbul ignore next */
-        function cb(e){
-           fn.call(elem,  new avEvent(e))
+        function cb(e) {
+            fn.call(elem, new avEvent(e))
         }
         avalon._nativeBind(elem, type, cb)
         return cb
@@ -178,30 +178,30 @@ function delegateEvent(type) {
 }
 
 var eventProto = {
-    webkitMovementY:1,
+    webkitMovementY: 1,
     webkitMovementX: 1,
-    keyLocation:1,
-    fixEvent: function () { },
-    preventDefault: function () {
+    keyLocation: 1,
+    fixEvent: function() {},
+    preventDefault: function() {
         var e = this.originalEvent || {}
         e.returnValue = this.returnValue = false
         if (modern && e.preventDefault) {
             e.preventDefault()
         }
     },
-    stopPropagation: function () {
+    stopPropagation: function() {
         var e = this.originalEvent || {}
         e.cancelBubble = this.cancelBubble = true
         if (modern && e.stopPropagation) {
             e.stopPropagation()
         }
     },
-    stopImmediatePropagation: function () {
+    stopImmediatePropagation: function() {
         this.stopPropagation()
         this.stopImmediate = true
     },
-    toString: function () {
-        return '[object Event]'//#1619
+    toString: function() {
+        return '[object Event]' //#1619
     }
 }
 
@@ -223,8 +223,8 @@ export function avEvent(event) {
     this.originalEvent = event
 }
 avEvent.prototype = eventProto
-//针对firefox, chrome修正mouseenter, mouseleave
-/* istanbul ignore if */
+    //针对firefox, chrome修正mouseenter, mouseleave
+    /* istanbul ignore if */
 if (!('onmouseenter' in root)) {
     avalon.each({
         mouseenter: 'mouseover',

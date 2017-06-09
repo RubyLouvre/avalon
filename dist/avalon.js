@@ -1,5 +1,5 @@
 /*!
-built in 2017-5-9:16:4 version 2.2.7 by 司徒正美
+built in 2017-5-9:16:31 version 2.2.7 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.4
 
 修正IE下 orderBy BUG
