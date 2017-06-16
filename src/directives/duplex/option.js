@@ -13,7 +13,11 @@ function setOption(vdom, values) {
     if (!('disabled' in props)) {
         var value = getOptionValue(vdom, props)
             value = String(value || '').trim()
-        props.selected = values.indexOf(value) !== -1
+       if(typeof values === 'string'){
+            props.selected = value === values
+        }else{
+            props.selected = values.indexOf(value) !== -1;
+        }
        
         if (vdom.dom) {
             vdom.dom.selected = props.selected

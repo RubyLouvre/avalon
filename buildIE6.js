@@ -51,13 +51,8 @@ module.exports = rollup.rollup({
     }
     var feather = heredoc(function() {
         /*
-https://github.com/RubyLouvre/avalon/tree/2.2.4
-
-修正IE下 orderBy BUG
-更改下载Promise的提示
-修复avalon.modern 在Proxy 模式下使用ms-for 循环对象时出错的BUG
-修复effect内部传参 BUG
-重构ms-validate的绑定事件的机制     
+https://github.com/RubyLouvre/avalon/tree/2.2.8
+fix select的无法正确匹配value
       
 */
     })

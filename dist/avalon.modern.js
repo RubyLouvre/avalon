@@ -1,12 +1,8 @@
 /*!
-built in 2017-5-9:16:4 version 2.2.7 by 司徒正美
-https://github.com/RubyLouvre/avalon/tree/2.2.4
+built in 2017-6-16:13:54 version 2.2.7 by 司徒正美
+https://github.com/RubyLouvre/avalon/tree/2.2.8
 
-更改下载Promise的提示
-修正IE下 orderBy BUG
-修复ms-for在循环利用对象数组的元素时,旧有元素的指令没有进行刷新的BUG
-修复effect内部传参 BUG
-重构ms-validate的绑定事件的机制
+fix select的无法正确匹配value
 
 */;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() : typeof define === 'function' && define.amd ? define(factory) : global.avalon = factory()
@@ -3568,7 +3564,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
                 for (var i in this.deps) {
                     if (this.deps[i].version !== this.depsVersion[i]) {
                         toComputed = true
-                        this.deps[i].version = this.depsVersion[i]
+                        this.depsVersion[i] = this.deps[i].version
                     }
                 }
                 return toComputed
@@ -5378,7 +5374,11 @@ https://github.com/RubyLouvre/avalon/tree/2.2.4
         if (!('disabled' in props)) {
             var value = getOptionValue(vdom, props)
             value = String(value || '').trim()
-            props.selected = values.indexOf(value) !== -1
+            if (typeof values === 'string') {
+                props.selected = value === values
+            } else {
+                props.selected = values.indexOf(value) !== -1
+            }
 
             if (vdom.dom) {
                 vdom.dom.selected = props.selected
