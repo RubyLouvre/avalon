@@ -1,5 +1,5 @@
 /*!
-built in 2017-6-16:13:54 version 2.2.7 by 司徒正美
+built in 2017-6-16:14:0 version 2.2.8 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.8
 fix select的无法正确匹配value
 
@@ -405,7 +405,7 @@ fix select的无法正确匹配value
         inspect: inspect,
         ohasOwn: ohasOwn,
         rword: rword,
-        version: "2.2.7",
+        version: "2.2.8",
         vmodels: {},
 
         directives: directives,
