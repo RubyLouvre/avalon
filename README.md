@@ -57,8 +57,11 @@ import * as avalon from 'avalon2'
 
 ---
 
-CDN: `https://unpkg.com/avalon2@2.2.4/dist/avalon.js`
+CDN: `https://unpkg.com/avalon2@2.2.8/dist/avalon.js`
+
 用法见[https://unpkg.com/#/](https://unpkg.com/#/)
+
+ 请不要用2.0s这个最古老的版本
 
 ### 谁在用avalon
 
