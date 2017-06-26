@@ -49,6 +49,8 @@ import * as avalon from 'avalon2'
 
 ### [UI库2](https://github.com/aLoNeIT/flyUI)
 
+###[avalon 单页后台管理系统框架：webpack+avalon+自定义avalon-router组件+jquery+bootstrap](https://github.com/Levan-Du/avalon-spa-app)
+
 ### [avalon2 SPA脚手架 MS-BUS](https://github.com/xxapp/ms-bus)
 一个 SPA 的脚手架（模块组织加载方式、单页面局部刷新技术、路由控制、后端数据的接入与模拟等实践/完整的增删改查示例）
 
