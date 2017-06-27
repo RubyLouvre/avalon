@@ -37,7 +37,7 @@ export var compaceQuote = (function() {
     }
 })()
 try {
-    avalon._quote = JSON.stringify
+    avalon._quote = msie <= 8 ? compaceQuote : JSON.stringify;
 } catch (e) {
     /* istanbul ignore next  */
     avalon._quote = compaceQuote
