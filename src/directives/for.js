@@ -4,6 +4,7 @@ import { VFragment } from '../vdom/VFragment'
 import { $$skipArray } from '../vmodel/reserved'
 
 import { addScope, makeHandle } from '../parser/index'
+import { updateView } from './duplex/share'
 
 
 var rforAs = /\s+as\s+([$\w]+)/
@@ -232,6 +233,7 @@ function updateList(instance) {
     var parent = before.parentNode
     var list = instance.fragments
     var end = instance.end.dom
+    
     for (var i = 0, item; item = list[i]; i++) {
         if (item._dispose) {
             list.splice(i, 1)
@@ -254,6 +256,9 @@ function updateList(instance) {
     var endIndex = ch.indexOf(instance.end)
 
     list.splice.apply(ch, [startIndex + 1, endIndex - startIndex].concat(list))
+    if(parent.nodeName ==='SELECT' && parent._ms_duplex_){
+        updateView['select'].call(parent._ms_duplex_)
+    }
 }
 
 
