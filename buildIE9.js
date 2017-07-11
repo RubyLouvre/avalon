@@ -50,10 +50,9 @@ module.exports = rollup.rollup({
     }
     var feather = heredoc(function() {
         /*
-https://github.com/RubyLouvre/avalon/tree/2.2.8
-
-fix select的无法正确匹配value
-      
+https://github.com/RubyLouvre/avalon/tree/2.2.9
+修复ms-for循环生成option与ms-deplex的联动问题
+修复多个计算属性不更新的问题 
 */
     })
     var now = new Date
