@@ -1,5 +1,5 @@
 /*!
-built in 2017-7-11:11:27 version 2.2.9 by 司徒正美
+built in 2017-7-12:11:2 version 2.2.9 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.9
 修复ms-for循环生成option与ms-deplex的联动问题
 解决 IE8 html 属性中的中文被转成 unicode 字符串问题 
