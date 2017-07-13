@@ -52,8 +52,8 @@ export function IProxy(definition, dd) {
         }
     }
     if (dd === void 0) {
-        this.$watch = platform.watchFactory(this.$events)
-        this.$fire = platform.fireFactory(this.$events)
+        this.$watch = platform.watchFactory()
+        this.$fire = platform.fireFactory()
     } else {
         delete this.$watch
         delete this.$fire
