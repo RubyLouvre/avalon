@@ -44,11 +44,11 @@ function $watch(expr, callback, deep) {
         }
     }
 }
-export function watchFactory(core) {
+export function watchFactory() {
     return $watch
 }
 
-export function fireFactory(core) {
+export function fireFactory() {
     return $fire
 }
 
