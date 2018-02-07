@@ -1,5 +1,5 @@
 import { avalon, createFragment } from '../seed/core'
-import { lookupOption,getSelectedValue } from '../directives/duplex/option'
+import { lookupOption, getSelectedValue } from '../directives/duplex/option'
 
 function getChildren(arr) {
     var count = 0
@@ -13,7 +13,7 @@ function getChildren(arr) {
     return count
 }
 export function groupTree(parent, children) {
-    children && children.forEach(function(vdom) {
+    children && children.forEach(function (vdom) {
         if (!vdom)
             return
         var vlength = vdom.children && getChildren(vdom.children)
@@ -30,7 +30,7 @@ export function groupTree(parent, children) {
         }
         if (vlength) {
             groupTree(dom, vdom.children)
-            if(vdom.nodeName === 'select'){
+            if (vdom.nodeName === 'select') {
                 var values = []
                 getSelectedValue(vdom, values)
                 lookupOption(vdom, values)
@@ -42,17 +42,19 @@ export function groupTree(parent, children) {
             if (!appendChildMayThrowError[parent.nodeName]) {
                 parent.appendChild(dom)
             }
-        } catch (e) {}
+        } catch (e) { }
     })
 }
 
 export function dumpTree(elem) {
-    var firstChild
-    while (firstChild = elem.firstChild) {
-        if (firstChild.nodeType === 1) {
-            dumpTree(firstChild)
+    if (elem) {
+        var firstChild
+        while (firstChild = elem.firstChild) {
+            if (firstChild.nodeType === 1) {
+                dumpTree(firstChild)
+            }
+            elem.removeChild(firstChild)
         }
-        elem.removeChild(firstChild)
     }
 }
 

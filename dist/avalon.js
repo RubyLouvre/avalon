@@ -1,5 +1,5 @@
 /*!
-built in 2017-7-12:11:2 version 2.2.9 by 司徒正美
+built in 2018-2-7:20:8 version 2.2.9 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.9
 修复ms-for循环生成option与ms-deplex的联动问题
 解决 IE8 html 属性中的中文被转成 unicode 字符串问题 
@@ -29,7 +29,9 @@ https://github.com/RubyLouvre/avalon/tree/2.2.9
         objectobject: 7, //IE7-8
         objectundefined: 6, //IE6
         undefinedfunction: NaN, // other modern browsers
-        undefinedobject: NaN };
+        undefinedobject: NaN //Mobile Safari 8.0.0 (iOS 8.4.0) 
+        //objectfunction chrome 47
+    };
     /* istanbul ignore next  */
     var msie$1 = document$1.documentMode || versions[typeof document$1.all + typeof XMLHttpRequest];
 
@@ -7286,12 +7288,14 @@ https://github.com/RubyLouvre/avalon/tree/2.2.9
     }
 
     function dumpTree(elem) {
-        var firstChild;
-        while (firstChild = elem.firstChild) {
-            if (firstChild.nodeType === 1) {
-                dumpTree(firstChild);
+        if (elem) {
+            var firstChild;
+            while (firstChild = elem.firstChild) {
+                if (firstChild.nodeType === 1) {
+                    dumpTree(firstChild);
+                }
+                elem.removeChild(firstChild);
             }
-            elem.removeChild(firstChild);
         }
     }
 

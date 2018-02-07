@@ -4,9 +4,6 @@ function serverRender(vm, str) {
     collectTemplate(nodes, templates)
     var render = avalon.scan(str)
     var html = avalon.vdom(render.root, 'toHTML', false)
-    console.log('=======begin========')
-    console.log(html)
-    console.log('========end=========')
     return {
         templates: templates,
         html: html
