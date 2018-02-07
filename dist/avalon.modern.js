@@ -1,5 +1,5 @@
 /*!
-built in 2018-2-7:20:7 version 2.2.9 by 司徒正美
+built in 2018-2-7:20:16 version 2.2.10 by 司徒正美
 https://github.com/RubyLouvre/avalon/tree/2.2.9
 修复ms-for循环生成option与ms-deplex的联动问题
 修复多个计算属性不更新的问题
@@ -408,7 +408,7 @@ https://github.com/RubyLouvre/avalon/tree/2.2.9
         inspect: inspect,
         ohasOwn: ohasOwn,
         rword: rword,
-        version: "2.2.9",
+        version: "2.2.10",
         vmodels: {},
 
         directives: directives,
