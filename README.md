@@ -26,7 +26,7 @@
 npm install avalon2
 ```
 
-es6调用方式 
+es6调用方式
 ```
 import * as avalon from 'avalon2'
 ```
@@ -49,7 +49,7 @@ import * as avalon from 'avalon2'
 
 ### [UI库2](https://github.com/aLoNeIT/flyUI)
 
-###[avalon 单页后台管理系统框架：webpack+avalon+自定义avalon-router组件+jquery+bootstrap](https://github.com/Levan-Du/avalon-spa-app)
+### [avalon 单页后台管理系统框架：webpack+avalon+自定义avalon-router组件+jquery+bootstrap](https://github.com/Levan-Du/avalon-spa-app)
 
 ### [avalon2 SPA脚手架 MS-BUS](https://github.com/xxapp/ms-bus)
 一个 SPA 的脚手架（模块组织加载方式、单页面局部刷新技术、路由控制、后端数据的接入与模拟等实践/完整的增删改查示例）
@@ -83,7 +83,7 @@ CDN: `https://unpkg.com/avalon2@2.2.8/dist/avalon.js`
 
 测试页面 perf目录下的index.html, index1.4.html, index-ng.html, index-vue.html,index-react.html
 
-亮点,如果页面上存在一个大表格或列表,其他框架会在浏览器加载页面时会卡一下(白屏), 
+亮点,如果页面上存在一个大表格或列表,其他框架会在浏览器加载页面时会卡一下(白屏),
 而avalon则平缓多了
 
 thanks http://charts.udpwork.com/
@@ -120,5 +120,3 @@ ms-important与ms-controller对应的vm.$id一个页面上只能用一次,不能
    <div ms-controller='test'>{{@bbb}}<!--test已经使用了1次!会导致程序出错--></div>
    <div ms-important='test'>{{@bbb}}<!--test已经使用了2次!会导致程序出错--></div>
 ```
-
-
