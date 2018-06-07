@@ -2,7 +2,7 @@
 import { avalon, ohasOwn, inspect } from './core'
 export { avalon }
 var rwindow = /^\[object (?:Window|DOMWindow|global)\]$/
-var rarraylike = /(Array|List|Collection|Map|Arguments)\]$/
+var rarraylike = /(Array|List|Collection|Map|Arguments|Set)\]$/
 
 
 // avalon.type
