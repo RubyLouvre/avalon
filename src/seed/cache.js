@@ -40,9 +40,8 @@ Cache.prototype = {
             /* istanbul ignore if */
         if (this.size === this.limit) {
             this.shift()
-        } else {
-            this.size++
         }
+        this.size++  //#2098
         return value
     },
 
